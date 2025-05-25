@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { DataSet, Timeline } from 'vis-timeline/standalone';
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css';
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '../app/firebase/firebase-client';
+import { db } from '../firebase/firebase-client';
 
 interface TimelineItem {
   id: string;

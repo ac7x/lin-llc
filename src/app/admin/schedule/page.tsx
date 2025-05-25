@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import TimelineComponent from '../../../components/Timeline';
 import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../firebase/firebase-client';
+import { db } from '../../../firebase/firebase-client';
 
 const SchedulePage: React.FC = () => {
   const [groupName, setGroupName] = useState('');
