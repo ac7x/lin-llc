@@ -1,4 +1,3 @@
-// src/app/admin/schedule/page.tsx
 "use client";
 
 import React, { useState } from 'react';
@@ -10,11 +9,13 @@ const SchedulePage: React.FC = () => {
   const [groupName, setGroupName] = useState('');
   const [itemName, setItemName] = useState('');
   const [itemStart, setItemStart] = useState('');
+  const [itemEnd, setItemEnd] = useState('');
 
   const handleAddGroup = async () => {
     try {
       await addDoc(collection(db, 'groups'), { name: groupName });
       console.log('Group added successfully');
+      setGroupName('');
     } catch (error) {
       console.error('Error adding group:', error);
     }
@@ -22,40 +23,62 @@ const SchedulePage: React.FC = () => {
 
   const handleAddItem = async () => {
     try {
-      await addDoc(collection(db, 'timelineItems'), { content: itemName, start: itemStart });
+      await addDoc(collection(db, 'timelineItems'), {
+        content: itemName,
+        start: new Date(itemStart).toISOString(),
+        end: itemEnd ? new Date(itemEnd).toISOString() : null,
+      });
       console.log('Item added successfully');
+      setItemName('');
+      setItemStart('');
+      setItemEnd('');
     } catch (error) {
       console.error('Error adding item:', error);
     }
   };
 
   return (
-    <div>
-      <h1>Schedule</h1>
-      <div>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Schedule</h1>
+
+      <div className="mb-4 space-x-2">
         <input
           type="text"
           value={groupName}
           onChange={(e) => setGroupName(e.target.value)}
           placeholder="Group Name"
+          className="border px-2 py-1"
         />
-        <button onClick={handleAddGroup}>Add Group</button>
+        <button onClick={handleAddGroup} className="bg-blue-500 text-white px-4 py-1 rounded">
+          Add Group
+        </button>
       </div>
-      <div>
+
+      <div className="mb-4 space-x-2">
         <input
           type="text"
           value={itemName}
           onChange={(e) => setItemName(e.target.value)}
           placeholder="Item Name"
+          className="border px-2 py-1"
         />
         <input
-          type="text"
+          type="datetime-local"
           value={itemStart}
           onChange={(e) => setItemStart(e.target.value)}
-          placeholder="Item Start Date"
+          className="border px-2 py-1"
         />
-        <button onClick={handleAddItem}>Add Item</button>
+        <input
+          type="datetime-local"
+          value={itemEnd}
+          onChange={(e) => setItemEnd(e.target.value)}
+          className="border px-2 py-1"
+        />
+        <button onClick={handleAddItem} className="bg-green-500 text-white px-4 py-1 rounded">
+          Add Item
+        </button>
       </div>
+
       <TimelineComponent />
     </div>
   );
