@@ -2,44 +2,52 @@
 
 import React, { useState } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../firebase/firebase-client';  // 請依你專案路徑調整
+import { db } from '../firebase/firebase-client'; // 確保路徑正確
 
-const FirestoreTestPage: React.FC = () => {
-  const [text, setText] = useState('');
-  const [loading, setLoading] = useState(false);
+const GroupAddTestPage: React.FC = () => {
+  const [groupName, setGroupName] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleWrite = async () => {
-    setLoading(true);
+  const handleAddGroup = async () => {
+    if (!groupName.trim()) {
+      setMessage('請輸入有效的組名稱');
+      return;
+    }
+
     try {
-      const docRef = await addDoc(collection(db, 'testCollection'), {
-        content: text,
-        createdAt: new Date().toISOString(),
+      const docRef = await addDoc(collection(db, 'groups'), {
+        name: groupName.trim()
       });
-      console.log('寫入成功，ID:', docRef.id);
-      alert('寫入成功');
-      setText('');
+      setMessage(`成功新增 group：${docRef.id}`);
+      setGroupName('');
     } catch (error) {
       console.error('寫入失敗:', error);
-      alert('寫入失敗，請看console');
+      setMessage('寫入失敗，請檢查 console 錯誤');
     }
-    setLoading(false);
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Firestore 寫入測試</h1>
+    <div className="p-6 max-w-lg mx-auto space-y-4">
+      <h1 className="text-2xl font-bold">測試寫入 Firestore - groups</h1>
+
       <input
+        className="border px-3 py-2 w-full"
         type="text"
-        value={text}
-        onChange={e => setText(e.target.value)}
-        placeholder="輸入測試文字"
-        style={{ padding: 8, width: '300px', marginRight: 8 }}
+        placeholder="請輸入 Group 名稱"
+        value={groupName}
+        onChange={(e) => setGroupName(e.target.value)}
       />
-      <button onClick={handleWrite} disabled={loading || !text}>
-        {loading ? '寫入中...' : '寫入 Firestore'}
+
+      <button
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        onClick={handleAddGroup}
+      >
+        新增 Group
       </button>
+
+      {message && <p className="text-sm mt-2">{message}</p>}
     </div>
   );
 };
 
-export default FirestoreTestPage;
+export default GroupAddTestPage;
