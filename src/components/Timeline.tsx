@@ -25,7 +25,7 @@ const TimelineComponent: React.FC = () => {
   const [groups, setGroups] = useState<DataSet<TimelineGroup>>(new DataSet());
 
   useEffect(() => {
-    const itemsRef = collection(db, 'timelines', TIMELINE_ID, 'items');
+    const itemsRef = collection(db, 'timelines', TIMELINE_ID, 'timelineItems');
     const unsubscribe = onSnapshot(itemsRef, (snapshot) => {
       const newItems = snapshot.docs.map(doc => {
         const data = doc.data();
