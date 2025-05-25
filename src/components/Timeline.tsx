@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useRef, useState } from 'react';
 import { DataSet, Timeline } from 'vis-timeline/standalone';
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css';
@@ -19,12 +21,12 @@ interface TimelineGroup {
 
 const TimelineComponent: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
-  const [items, setItems] = useState<DataSet<TimelineItem>>(new DataSet());
-  const [groups, setGroups] = useState<DataSet<TimelineGroup>>(new DataSet());
+  const [items, setItems] = useState<TimelineItem[]>([]);
+  const [groups, setGroups] = useState<TimelineGroup[]>([]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'timelineItems'), (snapshot) => {
-      const newItems = snapshot.docs.map(doc => {
+      const newItems = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -32,29 +34,32 @@ const TimelineComponent: React.FC = () => {
           start: data.start,
           end: data.end,
           group: data.group,
-        } as TimelineItem;
+        };
       });
-      setItems(new DataSet(newItems));
+      setItems(newItems);
     });
 
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    const unsubscribeGroups = onSnapshot(collection(db, 'groups'), (snapshot) => {
-      const newGroups = snapshot.docs.map(doc => ({
+    const unsubscribe = onSnapshot(collection(db, 'groups'), (snapshot) => {
+      const newGroups = snapshot.docs.map((doc) => ({
         id: doc.id,
         content: doc.data().name,
       }));
-      setGroups(new DataSet(newGroups));
+      setGroups(newGroups);
     });
 
-    return () => unsubscribeGroups();
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (timelineRef.current) {
-      const timeline = new Timeline(timelineRef.current, items, groups, {
+    if (timelineRef.current && items.length >= 0 && groups.length >= 0) {
+      const itemDataSet = new DataSet(items);
+      const groupDataSet = new DataSet(groups);
+
+      const timeline = new Timeline(timelineRef.current, itemDataSet, groupDataSet, {
         groupOrder: 'content',
         editable: {
           add: true,
@@ -78,10 +83,17 @@ const TimelineComponent: React.FC = () => {
       timeline.on('add', async (event) => {
         const { content, start, end, group } = event;
         try {
-          await addDoc(collection(db, 'timelineItems'), {
+          const docRef = await addDoc(collection(db, 'timelineItems'), {
             content,
             start: start.toISOString(),
             end: end?.toISOString() || null,
+            group,
+          });
+          itemDataSet.add({
+            id: docRef.id,
+            content,
+            start: start.toISOString(),
+            end: end?.toISOString(),
             group,
           });
         } catch (error) {
@@ -93,6 +105,7 @@ const TimelineComponent: React.FC = () => {
         const { item } = event;
         try {
           await deleteDoc(doc(db, 'timelineItems', item));
+          itemDataSet.remove(item);
         } catch (error) {
           console.error('Error removing item:', error);
         }
