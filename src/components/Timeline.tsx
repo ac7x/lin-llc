@@ -88,7 +88,12 @@ const TimelineComponent: React.FC = () => {
 
   // Function to add a new group
   const addGroup = async (name: string) => {
-    await addDoc(collection(db, 'groups'), { name, items: [] });
+    try {
+      await addDoc(collection(db, 'groups'), { name, items: [] });
+      console.log('Group added successfully');
+    } catch (error) {
+      console.error('Error adding group:', error);
+    }
   };
 
   return (
