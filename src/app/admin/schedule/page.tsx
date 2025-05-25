@@ -3,18 +3,30 @@
 
 import React, { useState } from 'react';
 import TimelineComponent from '../../../components/Timeline';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../../firebase/firebase-client';
 
 const SchedulePage: React.FC = () => {
   const [groupName, setGroupName] = useState('');
   const [itemName, setItemName] = useState('');
   const [itemStart, setItemStart] = useState('');
 
-  const handleAddGroup = () => {
-    // Logic to add group
+  const handleAddGroup = async () => {
+    try {
+      await addDoc(collection(db, 'groups'), { name: groupName });
+      console.log('Group added successfully');
+    } catch (error) {
+      console.error('Error adding group:', error);
+    }
   };
 
-  const handleAddItem = () => {
-    // Logic to add item
+  const handleAddItem = async () => {
+    try {
+      await addDoc(collection(db, 'timelineItems'), { content: itemName, start: itemStart });
+      console.log('Item added successfully');
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
   };
 
   return (
