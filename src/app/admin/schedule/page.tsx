@@ -1,9 +1,11 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
 import TimelineComponent from '../../../components/Timeline';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase-client';
+
+const TIMELINE_ID = 'default'; // 可改成動態 ID
 
 const SchedulePage: React.FC = () => {
   const [groupName, setGroupName] = useState('');
@@ -13,8 +15,7 @@ const SchedulePage: React.FC = () => {
 
   const handleAddGroup = async () => {
     try {
-      await addDoc(collection(db, 'groups'), { name: groupName });
-      console.log('Group added successfully');
+      await addDoc(collection(db, 'timelines', TIMELINE_ID, 'groups'), { name: groupName });
       setGroupName('');
     } catch (error) {
       console.error('Error adding group:', error);
@@ -23,12 +24,12 @@ const SchedulePage: React.FC = () => {
 
   const handleAddItem = async () => {
     try {
-      await addDoc(collection(db, 'timelineItems'), {
+      await addDoc(collection(db, 'timelines', TIMELINE_ID, 'items'), {
         content: itemName,
         start: new Date(itemStart).toISOString(),
         end: itemEnd ? new Date(itemEnd).toISOString() : null,
+        group: null, // 或選擇指定 group id
       });
-      console.log('Item added successfully');
       setItemName('');
       setItemStart('');
       setItemEnd('');
