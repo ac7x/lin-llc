@@ -24,7 +24,7 @@ const SchedulePage: React.FC = () => {
 
   const handleAddItem = async () => {
     try {
-      await addDoc(collection(db, 'timelines', TIMELINE_ID, 'timelineItems'), {
+      await addDoc(collection(db, 'timelines', TIMELINE_ID, 'items'), {
         content: itemName,
         start: new Date(itemStart).toISOString(),
         end: itemEnd ? new Date(itemEnd).toISOString() : null,
