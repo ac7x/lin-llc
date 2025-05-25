@@ -1,18 +1,8 @@
-// features/infrastructure/firebase-config.ts
+// firebase/firebase-client.ts
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
-interface FirebaseConfig {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
-  storageBucket: string;
-  messagingSenderId: string;
-  appId: string;
-  measurementId: string;
-}
-
-const firebaseConfig: FirebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
   authDomain: "lin-llc.firebaseapp.com",
   projectId: "lin-llc",
@@ -23,6 +13,4 @@ const firebaseConfig: FirebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export { app, db };
+export const db = getFirestore(app);
