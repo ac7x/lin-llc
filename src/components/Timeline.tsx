@@ -7,7 +7,8 @@ import { db } from '../firebase/firebase-client';
 interface TimelineItem {
   id: string;
   content: string;
-  start: string; // ISO format string
+  start: string;
+  end?: string;
   group?: string;
 }
 
@@ -17,130 +18,89 @@ interface TimelineGroup {
 }
 
 const TimelineComponent: React.FC = () => {
-  const timelineContainerRef = useRef<HTMLDivElement | null>(null);
-  const timelineInstanceRef = useRef<Timeline | null>(null);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const [items, setItems] = useState<DataSet<TimelineItem>>(new DataSet());
+  const [groups, setGroups] = useState<DataSet<TimelineGroup>>(new DataSet());
 
-  const itemsRef = useRef<DataSet<TimelineItem>>(new DataSet());
-  const groupsRef = useRef<DataSet<TimelineGroup>>(new DataSet());
-
-  // --- Firestore Sync: Items ---
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'timelineItems'), (snapshot) => {
-      const newItems = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as TimelineItem[];
-
-      itemsRef.current.clear();
-      itemsRef.current.add(newItems);
-
-      if (timelineInstanceRef.current) {
-        timelineInstanceRef.current.setItems(itemsRef.current);
-      }
+      const newItems = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          content: data.content,
+          start: data.start,
+          end: data.end,
+          group: data.group,
+        } as TimelineItem;
+      });
+      setItems(new DataSet(newItems));
     });
 
     return () => unsubscribe();
   }, []);
 
-  // --- Firestore Sync: Groups ---
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'groups'), (snapshot) => {
+    const unsubscribeGroups = onSnapshot(collection(db, 'groups'), (snapshot) => {
       const newGroups = snapshot.docs.map(doc => ({
         id: doc.id,
         content: doc.data().name,
-      })) as TimelineGroup[];
-
-      groupsRef.current.clear();
-      groupsRef.current.add(newGroups);
-
-      if (timelineInstanceRef.current) {
-        timelineInstanceRef.current.setGroups(groupsRef.current);
-      }
+      }));
+      setGroups(new DataSet(newGroups));
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeGroups();
   }, []);
 
-  // --- Initialize Timeline ---
   useEffect(() => {
-    if (!timelineContainerRef.current) return;
-
-    timelineInstanceRef.current = new Timeline(
-      timelineContainerRef.current,
-      itemsRef.current,
-      groupsRef.current,
-      {
+    if (timelineRef.current) {
+      const timeline = new Timeline(timelineRef.current, items, groups, {
+        groupOrder: 'content',
         editable: {
           add: true,
           updateTime: true,
           remove: true,
         },
-        groupOrder: 'content',
-      }
-    );
-
-    // --- 拖曳更新 ---
-    timelineInstanceRef.current.on('move', async (event) => {
-      const { item, start, end } = event;
-      try {
-        await updateDoc(doc(db, 'timelineItems', item), {
-          start: start?.toISOString(),
-          end: end?.toISOString(),
-        });
-      } catch (err) {
-        console.error('move error', err);
-      }
-    });
-
-    // --- 新增事件 ---
-    timelineInstanceRef.current.on('add', async (event, callback) => {
-      try {
-        const newDoc = await addDoc(collection(db, 'timelineItems'), {
-          content: event.content || 'New Item',
-          start: event.start?.toISOString(),
-          end: event.end?.toISOString() || null,
-          group: event.group || null,
-        });
-        callback({ ...event, id: newDoc.id }); // 回傳新 id 給 timeline
-      } catch (err) {
-        console.error('add error', err);
-        callback(null); // 取消
-      }
-    });
-
-    // --- 刪除事件 ---
-    timelineInstanceRef.current.on('remove', async (event, callback) => {
-      try {
-        await deleteDoc(doc(db, 'timelineItems', event.item));
-        callback(event);
-      } catch (err) {
-        console.error('delete error', err);
-        callback(null); // 取消
-      }
-    });
-
-    return () => {
-      timelineInstanceRef.current?.destroy();
-    };
-  }, []);
-
-  // --- 新增 Group ---
-  const addGroup = async (name: string) => {
-    try {
-      await addDoc(collection(db, 'groups'), {
-        name,
       });
-    } catch (err) {
-      console.error('add group error', err);
-    }
-  };
 
-  return (
-    <div>
-      <button onClick={() => addGroup('New Group')}>Add Group</button>
-      <div ref={timelineContainerRef} style={{ height: '400px' }} />
-    </div>
-  );
+      timeline.on('move', async (event) => {
+        const { item, start, end } = event;
+        try {
+          await updateDoc(doc(db, 'timelineItems', item), {
+            start: start.toISOString(),
+            end: end?.toISOString() || null,
+          });
+        } catch (error) {
+          console.error('Error updating item:', error);
+        }
+      });
+
+      timeline.on('add', async (event) => {
+        const { content, start, end, group } = event;
+        try {
+          await addDoc(collection(db, 'timelineItems'), {
+            content,
+            start: start.toISOString(),
+            end: end?.toISOString() || null,
+            group,
+          });
+        } catch (error) {
+          console.error('Error adding item:', error);
+        }
+      });
+
+      timeline.on('remove', async (event) => {
+        const { item } = event;
+        try {
+          await deleteDoc(doc(db, 'timelineItems', item));
+        } catch (error) {
+          console.error('Error removing item:', error);
+        }
+      });
+    }
+  }, [items, groups]);
+
+  return <div ref={timelineRef} style={{ height: '500px' }} />;
 };
 
 export default TimelineComponent;
