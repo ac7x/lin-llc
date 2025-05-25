@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useRef, useState } from 'react';
 import { DataSet, Timeline } from 'vis-timeline/standalone';
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css';
@@ -19,14 +17,17 @@ interface TimelineGroup {
   content: string;
 }
 
+const TIMELINE_ID = 'default'; // 可根據實際應用改變
+
 const TimelineComponent: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
-  const [items, setItems] = useState<TimelineItem[]>([]);
-  const [groups, setGroups] = useState<TimelineGroup[]>([]);
+  const [items, setItems] = useState<DataSet<TimelineItem>>(new DataSet());
+  const [groups, setGroups] = useState<DataSet<TimelineGroup>>(new DataSet());
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'timelineItems'), (snapshot) => {
-      const newItems = snapshot.docs.map((doc) => {
+    const itemsRef = collection(db, 'timelines', TIMELINE_ID, 'items');
+    const unsubscribe = onSnapshot(itemsRef, (snapshot) => {
+      const newItems = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -34,32 +35,30 @@ const TimelineComponent: React.FC = () => {
           start: data.start,
           end: data.end,
           group: data.group,
-        };
+        } as TimelineItem;
       });
-      setItems(newItems);
+      setItems(new DataSet(newItems));
     });
 
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'groups'), (snapshot) => {
-      const newGroups = snapshot.docs.map((doc) => ({
+    const groupsRef = collection(db, 'timelines', TIMELINE_ID, 'groups');
+    const unsubscribeGroups = onSnapshot(groupsRef, (snapshot) => {
+      const newGroups = snapshot.docs.map(doc => ({
         id: doc.id,
         content: doc.data().name,
       }));
-      setGroups(newGroups);
+      setGroups(new DataSet(newGroups));
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeGroups();
   }, []);
 
   useEffect(() => {
-    if (timelineRef.current && items.length >= 0 && groups.length >= 0) {
-      const itemDataSet = new DataSet(items);
-      const groupDataSet = new DataSet(groups);
-
-      const timeline = new Timeline(timelineRef.current, itemDataSet, groupDataSet, {
+    if (timelineRef.current) {
+      const timeline = new Timeline(timelineRef.current, items, groups, {
         groupOrder: 'content',
         editable: {
           add: true,
@@ -71,7 +70,7 @@ const TimelineComponent: React.FC = () => {
       timeline.on('move', async (event) => {
         const { item, start, end } = event;
         try {
-          await updateDoc(doc(db, 'timelineItems', item), {
+          await updateDoc(doc(db, 'timelines', TIMELINE_ID, 'items', item), {
             start: start.toISOString(),
             end: end?.toISOString() || null,
           });
@@ -83,17 +82,10 @@ const TimelineComponent: React.FC = () => {
       timeline.on('add', async (event) => {
         const { content, start, end, group } = event;
         try {
-          const docRef = await addDoc(collection(db, 'timelineItems'), {
+          await addDoc(collection(db, 'timelines', TIMELINE_ID, 'items'), {
             content,
             start: start.toISOString(),
             end: end?.toISOString() || null,
-            group,
-          });
-          itemDataSet.add({
-            id: docRef.id,
-            content,
-            start: start.toISOString(),
-            end: end?.toISOString(),
             group,
           });
         } catch (error) {
@@ -104,8 +96,7 @@ const TimelineComponent: React.FC = () => {
       timeline.on('remove', async (event) => {
         const { item } = event;
         try {
-          await deleteDoc(doc(db, 'timelineItems', item));
-          itemDataSet.remove(item);
+          await deleteDoc(doc(db, 'timelines', TIMELINE_ID, 'items', item));
         } catch (error) {
           console.error('Error removing item:', error);
         }
