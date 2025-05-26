@@ -73,36 +73,22 @@ const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) =>
       const { item, start, end } = props;
       dataSetRef.current?.update({ id: item, start, end });
       const itemRef = doc(db, 'schedules', item);
-      try {
-        await updateDoc(itemRef, { start, end });
-      } catch (err) {
-        // 若寫入失敗可在此處理（如顯示錯誤、回復原資料等），視需求增加
-        // 可選：重新 fetch Firestore 資料
-      }
+      await updateDoc(itemRef, { start, end });
     });
 
     // 刪除事件
     timelineInstanceRef.current.on('remove', async (props: RemoveEventProps) => {
       for (const itemId of props.items) {
         const itemRef = doc(db, 'schedules', itemId);
-        try {
-          await deleteDoc(itemRef);
-        } catch (err) {
-          // 可選：錯誤處理
-        }
+        await deleteDoc(itemRef);
       }
     });
 
     // 新增事件
     timelineInstanceRef.current.on('add', async (props: AddEventProps) => {
       const { start, end, content, group } = props;
-      try {
-        const docRef = await addDoc(collection(db, 'schedules'), { start, end, content, group });
-        // 本地先加上新 id，讓畫面即時更新
-        dataSetRef.current?.update({ ...props, id: docRef.id });
-      } catch (err) {
-        // 可選：錯誤處理
-      }
+      const docRef = await addDoc(collection(db, 'schedules'), { start, end, content, group });
+      dataSetRef.current?.update({ ...props, id: docRef.id });
     });
 
     // 監聽 Firestore schedule 集合
