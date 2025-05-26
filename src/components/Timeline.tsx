@@ -9,11 +9,29 @@ export interface TimelineItem {
   content: string;
   start: string | Date;
   end?: string | Date;
+  group?: string;
 }
 
 interface TimelineProps {
   items: TimelineItem[];
   onItemsChange: (items: TimelineItem[]) => void;
+}
+
+interface MoveEventProps {
+  item: string;
+  start: Date | string;
+  end?: Date | string;
+}
+
+interface RemoveEventProps {
+  items: string[];
+}
+
+interface AddEventProps {
+  start: Date | string;
+  end?: Date | string;
+  content: string;
+  group?: string;
 }
 
 const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) => {
@@ -24,10 +42,8 @@ const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) =>
   useEffect(() => {
     if (!timelineRef.current) return;
 
-    // 初始化 DataSet
     dataSetRef.current = new DataSet<TimelineItem>(items);
 
-    // Timeline options
     const options: TimelineOptions = {
       editable: {
         add: true,
@@ -38,11 +54,10 @@ const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) =>
       margin: { item: 10, axis: 5 },
     };
 
-    // 初始化 Timeline
     timelineInstanceRef.current = new Timeline(timelineRef.current, dataSetRef.current, options);
 
     // 拖曳/修改事件
-    timelineInstanceRef.current.on('move', async (props: any) => {
+    timelineInstanceRef.current.on('move', async (props: MoveEventProps) => {
       const { item, start, end } = props;
       const itemData = dataSetRef.current?.get(item);
       if (itemData) {
@@ -52,7 +67,7 @@ const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) =>
     });
 
     // 刪除事件
-    timelineInstanceRef.current.on('remove', async (props: any) => {
+    timelineInstanceRef.current.on('remove', async (props: RemoveEventProps) => {
       for (const itemId of props.items) {
         const itemRef = doc(db, 'schedules', itemId);
         await deleteDoc(itemRef);
@@ -60,10 +75,9 @@ const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) =>
     });
 
     // 新增事件
-    timelineInstanceRef.current.on('add', async (props: any) => {
-      const { item, start, end, content } = props;
-      const docRef = await addDoc(collection(db, 'schedules'), { start, end, content });
-      // 更新 vis-timeline 的 id
+    timelineInstanceRef.current.on('add', async (props: AddEventProps) => {
+      const { start, end, content, group } = props;
+      const docRef = await addDoc(collection(db, 'schedules'), { start, end, content, group });
       dataSetRef.current?.update({ ...props, id: docRef.id });
     });
 
@@ -77,6 +91,7 @@ const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) =>
           content: data.content,
           start: data.start,
           end: data.end,
+          group: data.group,
         });
       });
       dataSetRef.current?.clear();

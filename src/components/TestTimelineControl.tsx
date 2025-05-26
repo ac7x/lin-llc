@@ -2,16 +2,6 @@ import React, { useState } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../modules/shared/infrastructure/persistence/firebase/firebase-client';
 
-interface GroupInput {
-  title: string;
-}
-interface ItemInput {
-  content: string;
-  start: string;
-  end?: string;
-  group: string;
-}
-
 const TestTimelineControl: React.FC = () => {
   const [groupTitle, setGroupTitle] = useState('');
   const [itemContent, setItemContent] = useState('');
@@ -29,7 +19,7 @@ const TestTimelineControl: React.FC = () => {
       await addDoc(collection(db, 'schedules_groups'), { title: groupTitle });
       setGroupMsg('群組新增成功');
       setGroupTitle('');
-    } catch (err) {
+    } catch {
       setGroupMsg('群組新增失敗');
     }
   };
@@ -50,7 +40,7 @@ const TestTimelineControl: React.FC = () => {
       setItemStart('');
       setItemEnd('');
       setItemGroup('');
-    } catch (err) {
+    } catch {
       setItemMsg('項目新增失敗');
     }
   };
