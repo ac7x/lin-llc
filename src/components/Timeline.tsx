@@ -17,7 +17,7 @@ interface TimelineGroup {
   content: string;
 }
 
-const TIMELINE_ID = 'default'; // 可根據實際應用改變
+const TIMELINE_ID = 'default';
 
 const TimelineComponent: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
@@ -25,7 +25,7 @@ const TimelineComponent: React.FC = () => {
   const [groups, setGroups] = useState<DataSet<TimelineGroup>>(new DataSet());
 
   useEffect(() => {
-    const itemsRef = collection(db, 'Project');
+    const itemsRef = collection(db, 'Project', TIMELINE_ID, 'items');
     const unsubscribe = onSnapshot(itemsRef, (snapshot) => {
       const newItems = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -44,7 +44,7 @@ const TimelineComponent: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const groupsRef = collection(db, 'Project');
+    const groupsRef = collection(db, 'Project', TIMELINE_ID, 'groups');
     const unsubscribeGroups = onSnapshot(groupsRef, (snapshot) => {
       const newGroups = snapshot.docs.map(doc => ({
         id: doc.id,

@@ -15,7 +15,7 @@ const SchedulePage: React.FC = () => {
 
   const handleAddGroup = async () => {
     try {
-      await addDoc(collection(db, 'Project'), {
+      await addDoc(collection(db, 'Project', TIMELINE_ID, 'groups'), {
         name: groupName
       });
       setGroupName('');
@@ -26,11 +26,11 @@ const SchedulePage: React.FC = () => {
 
   const handleAddItem = async () => {
     try {
-      await addDoc(collection(db, 'Project'), {
+      await addDoc(collection(db, 'Project', TIMELINE_ID, 'items'), {
         content: itemName,
         start: new Date(itemStart).toISOString(),
         end: itemEnd ? new Date(itemEnd).toISOString() : null,
-        group: null, // 或選擇指定 group id
+        group: null, // 可指定 group ID
       });
       setItemName('');
       setItemStart('');
