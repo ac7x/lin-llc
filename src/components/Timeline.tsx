@@ -25,7 +25,7 @@ const TimelineComponent: React.FC = () => {
   const [groups, setGroups] = useState<DataSet<TimelineGroup>>(new DataSet());
 
   useEffect(() => {
-    const itemsRef = collection(db, 'timelines', TIMELINE_ID, 'items');
+    const itemsRef = collection(db, 'Project');
     const unsubscribe = onSnapshot(itemsRef, (snapshot) => {
       const newItems = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -44,7 +44,7 @@ const TimelineComponent: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const groupsRef = collection(db, 'timelines', TIMELINE_ID, 'groups');
+    const groupsRef = collection(db, 'Project');
     const unsubscribeGroups = onSnapshot(groupsRef, (snapshot) => {
       const newGroups = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -70,7 +70,7 @@ const TimelineComponent: React.FC = () => {
       timeline.on('move', async (event) => {
         const { item, start, end } = event;
         try {
-          await updateDoc(doc(db, 'timelines', TIMELINE_ID, 'items', item), {
+          await updateDoc(doc(db, 'Project', TIMELINE_ID, 'items', item), {
             start: start.toISOString(),
             end: end?.toISOString() || null,
           });
@@ -82,7 +82,7 @@ const TimelineComponent: React.FC = () => {
       timeline.on('add', async (event) => {
         const { content, start, end, group } = event;
         try {
-          await addDoc(collection(db, 'timelines', TIMELINE_ID, 'items'), {
+          await addDoc(collection(db, 'Project', TIMELINE_ID, 'items'), {
             content,
             start: start.toISOString(),
             end: end?.toISOString() || null,
@@ -96,7 +96,7 @@ const TimelineComponent: React.FC = () => {
       timeline.on('remove', async (event) => {
         const { item } = event;
         try {
-          await deleteDoc(doc(db, 'timelines', TIMELINE_ID, 'items', item));
+          await deleteDoc(doc(db, 'Project', TIMELINE_ID, 'items', item));
         } catch (error) {
           console.error('Error removing item:', error);
         }

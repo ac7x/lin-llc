@@ -15,7 +15,9 @@ const SchedulePage: React.FC = () => {
 
   const handleAddGroup = async () => {
     try {
-      await addDoc(collection(db, 'timelines', TIMELINE_ID, 'groups'), { name: groupName });
+      await addDoc(collection(db, 'Project'), {
+        name: groupName
+      });
       setGroupName('');
     } catch (error) {
       console.error('Error adding group:', error);
@@ -24,7 +26,7 @@ const SchedulePage: React.FC = () => {
 
   const handleAddItem = async () => {
     try {
-      await addDoc(collection(db, 'timelines', TIMELINE_ID, 'items'), {
+      await addDoc(collection(db, 'Project'), {
         content: itemName,
         start: new Date(itemStart).toISOString(),
         end: itemEnd ? new Date(itemEnd).toISOString() : null,
