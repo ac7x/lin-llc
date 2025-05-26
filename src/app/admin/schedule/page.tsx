@@ -26,12 +26,19 @@ const SchedulePage: React.FC = () => {
 
   const handleAddItem = async () => {
     try {
+      const startDate = new Date(itemStart);
+      startDate.setMinutes(0, 0, 0); // 對齊到整點
+
+      const endDate = itemEnd ? new Date(itemEnd) : null;
+      if (endDate) endDate.setMinutes(0, 0, 0); // 對齊到整點
+
       await addDoc(collection(db, 'Project', TIMELINE_ID, 'items'), {
         content: itemName,
-        start: new Date(itemStart).toISOString(),
-        end: itemEnd ? new Date(itemEnd).toISOString() : null,
+        start: startDate.toISOString(),
+        end: endDate ? endDate.toISOString() : null,
         group: null, // 可指定 group ID
       });
+
       setItemName('');
       setItemStart('');
       setItemEnd('');
