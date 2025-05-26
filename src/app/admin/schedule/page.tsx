@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import TimelineComponent from '../../../components/Timeline';
 import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../../firebase/firebase-client';
+import { db } from '../../../modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 const TIMELINE_ID = 'default'; // 可改成動態 ID
 

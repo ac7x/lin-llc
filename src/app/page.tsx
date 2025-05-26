@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../firebase/firebase-client'; // 確保路徑正確
+import { db } from '../modules/shared/infrastructure/persistence/firebase/firebase-client'; // 確保路徑正確
 
 const GroupAddTestPage: React.FC = () => {
   const [groupName, setGroupName] = useState('');
