@@ -39,6 +39,8 @@ const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) =>
   const dataSetRef = useRef<DataSet<TimelineItem> | null>(null);
   const timelineInstanceRef = useRef<Timeline | null>(null);
 
+  // items 只在初始化時用於建立 DataSet，onItemsChange 只在 Firestore 監聽時呼叫
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!timelineRef.current) return;
 
@@ -95,7 +97,10 @@ const TimelineComponent: React.FC<TimelineProps> = ({ items, onItemsChange }) =>
         });
       });
       dataSetRef.current?.clear();
-      dataSetRef.current?.add(newItems);
+      // 修正：add(...newItems) 會導致只顯示一個，應展開陣列
+      if (newItems.length > 0) {
+        dataSetRef.current?.add([...newItems]);
+      }
       onItemsChange(newItems);
     });
 
