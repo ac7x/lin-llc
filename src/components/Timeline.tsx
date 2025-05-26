@@ -8,8 +8,7 @@ interface TimelineItem {
   id: string;
   content: string;
   start: string;
-  end?: string;
-  group?: string;
+  group: string;
 }
 
 interface TimelineGroup {
@@ -17,94 +16,149 @@ interface TimelineGroup {
   content: string;
 }
 
-const TIMELINE_ID = 'default';
-
 const TimelineComponent: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
-  const [items, setItems] = useState<DataSet<TimelineItem>>(new DataSet());
-  const [groups, setGroups] = useState<DataSet<TimelineGroup>>(new DataSet());
+  const [items, setItems] = useState<TimelineItem[]>([]);
+  const [groups, setGroups] = useState<TimelineGroup[]>([]);
 
+  // UI State for adding
+  const [groupName, setGroupName] = useState('');
+  const [itemName, setItemName] = useState('');
+  const [itemStart, setItemStart] = useState('');
+  const [itemGroup, setItemGroup] = useState('');
+
+  // Sync timelineItems
   useEffect(() => {
-    const itemsRef = collection(db, 'Project', TIMELINE_ID, 'items');
-    const unsubscribe = onSnapshot(itemsRef, (snapshot) => {
-      const newItems = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          content: data.content,
-          start: data.start,
-          end: data.end,
-          group: data.group,
-        } as TimelineItem;
-      });
-      setItems(new DataSet(newItems));
+    const unsubscribe = onSnapshot(collection(db, 'timelineItems'), (snapshot) => {
+      const newItems = snapshot.docs.map(doc => ({
+        id: doc.id,
+        content: doc.data().content,
+        start: doc.data().start,
+        group: doc.data().group || '',
+      } as TimelineItem));
+      setItems(newItems);
     });
-
     return () => unsubscribe();
   }, []);
 
+  // Sync groups
   useEffect(() => {
-    const groupsRef = collection(db, 'Project', TIMELINE_ID, 'groups');
-    const unsubscribeGroups = onSnapshot(groupsRef, (snapshot) => {
+    const unsubscribe = onSnapshot(collection(db, 'groups'), (snapshot) => {
       const newGroups = snapshot.docs.map(doc => ({
         id: doc.id,
         content: doc.data().name,
-      }));
-      setGroups(new DataSet(newGroups));
+      } as TimelineGroup));
+      setGroups(newGroups);
     });
-
-    return () => unsubscribeGroups();
+    return () => unsubscribe();
   }, []);
 
+  // vis-timeline
   useEffect(() => {
     if (timelineRef.current) {
-      const timeline = new Timeline(timelineRef.current, items, groups, {
-        groupOrder: 'content',
-        editable: {
-          add: true,
-          updateTime: true,
-          remove: true,
-        },
+      const itemsDS = new DataSet(items);
+      const groupsDS = new DataSet(groups);
+
+      const timeline = new Timeline(timelineRef.current, itemsDS, groupsDS, {
+        groupOrder: 'content'
       });
 
+      // 拖曳修改
       timeline.on('move', async (event) => {
-        const { item, start, end } = event;
+        const { item, start, group } = event;
         try {
-          await updateDoc(doc(db, 'Project', TIMELINE_ID, 'items', item), {
-            start: start.toISOString(),
-            end: end?.toISOString() || null,
-          });
+          await updateDoc(doc(db, 'timelineItems', item), { start: start.toISOString(), group });
+          console.log('Item updated successfully');
         } catch (error) {
           console.error('Error updating item:', error);
         }
       });
 
-      timeline.on('add', async (event) => {
-        const { content, start, end, group } = event;
-        try {
-          await addDoc(collection(db, 'Project', TIMELINE_ID, 'items'), {
-            content,
-            start: start.toISOString(),
-            end: end?.toISOString() || null,
-            group,
-          });
-        } catch (error) {
-          console.error('Error adding item:', error);
-        }
-      });
-
+      // 刪除
       timeline.on('remove', async (event) => {
         const { item } = event;
         try {
-          await deleteDoc(doc(db, 'Project', TIMELINE_ID, 'items', item));
+          await deleteDoc(doc(db, 'timelineItems', item));
+          console.log('Item removed successfully');
         } catch (error) {
           console.error('Error removing item:', error);
         }
       });
+
+      return () => {
+        timeline.destroy();
+      };
     }
   }, [items, groups]);
 
-  return <div ref={timelineRef} style={{ height: '500px' }} />;
+  // 新增群組
+  const handleAddGroup = async () => {
+    if (!groupName.trim()) return;
+    try {
+      await addDoc(collection(db, 'groups'), { name: groupName.trim() });
+      setGroupName('');
+    } catch (error) {
+      console.error('Error adding group:', error);
+    }
+  };
+
+  // 新增項目
+  const handleAddItem = async () => {
+    if (!itemName.trim() || !itemStart.trim() || !itemGroup) return;
+    try {
+      await addDoc(collection(db, 'timelineItems'), {
+        content: itemName.trim(),
+        start: itemStart,
+        group: itemGroup,
+      });
+      setItemName('');
+      setItemStart('');
+      setItemGroup('');
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>群組管理</h2>
+      <div style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          value={groupName}
+          onChange={(e) => setGroupName(e.target.value)}
+          placeholder="群組名稱"
+        />
+        <button onClick={handleAddGroup}>新增群組</button>
+      </div>
+      <h2>項目管理</h2>
+      <div style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          value={itemName}
+          onChange={(e) => setItemName(e.target.value)}
+          placeholder="項目名稱"
+        />
+        <input
+          type="text"
+          value={itemStart}
+          onChange={(e) => setItemStart(e.target.value)}
+          placeholder="開始日期 (YYYY-MM-DD)"
+        />
+        <select
+          value={itemGroup}
+          onChange={(e) => setItemGroup(e.target.value)}
+        >
+          <option value="">選擇群組</option>
+          {groups.map(g => (
+            <option key={g.id} value={g.id}>{g.content}</option>
+          ))}
+        </select>
+        <button onClick={handleAddItem}>新增項目</button>
+      </div>
+      <div ref={timelineRef} />
+    </div>
+  );
 };
 
 export default TimelineComponent;
