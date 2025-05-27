@@ -19,7 +19,15 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/app/*": [
+        "./src/app/*"
+      ],
+      "@/modules/*": [
+        "./src/modules/*"
+      ]
     },
     "forceConsistentCasingInFileNames": true
   },

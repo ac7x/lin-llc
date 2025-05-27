@@ -267,8 +267,8 @@ const WorkScheduleManagementPage: React.FC = () => {
 						<Timeline
 							groups={groups}
 							items={items}
-							defaultTimeStart={defaultTimeStart}
-							defaultTimeEnd={defaultTimeEnd}
+							defaultTimeStart={defaultTimeStart.getTime()}
+							defaultTimeEnd={defaultTimeEnd.getTime()}
 							canMove
 							canResize="both"
 							canChangeGroup

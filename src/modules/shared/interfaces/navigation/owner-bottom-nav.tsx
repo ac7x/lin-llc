@@ -11,26 +11,26 @@ interface NavItem {
     active: boolean;
 }
 
-interface AdminBottomNavProps {
+interface OwnerBottomNavProps {
     items?: NavItem[];
 }
 
-const defaultAdminNavItems: NavItem[] = [
-    { href: '/admin/schedule', icon: '📅', label: '排程管理', active: false },
-    { href: '/admin/work-task', icon: '✅', label: '任務管理', active: false },
-    { href: '/admin/work-epic', icon: '📊', label: '工作規劃', active: false },
-    { href: '/admin/work-template', icon: '📋', label: '範本管理', active: false },
-    { href: '/admin/work-human-resource', icon: '👥', label: '人力資源', active: false },
+const defaultOwnerNavItems: NavItem[] = [
+    { href: '/owner/schedule-admin', icon: '📊', label: '儀表板', active: false },
+    { href: '/owner/dashboard', icon: '📊', label: '儀表板', active: false },
+    { href: '/owner/settings', icon: '⚙️', label: '設定', active: false },
+    { href: '/owner/profile', icon: '👤', label: '個人資料', active: false },
 ];
 
-export function AdminBottomNav({ items = defaultAdminNavItems }: AdminBottomNavProps) {
+export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavProps) {
     const pathname = usePathname();
 
-    const navItems = (items && items.length > 0 ? items : defaultAdminNavItems).map(item => ({
+    const navItems = (items && items.length > 0 ? items : defaultOwnerNavItems).map(item => ({
         ...item,
         active: pathname === item.href,
     }));
 
+    // ...existing code...
     return (
         <nav
             className="
