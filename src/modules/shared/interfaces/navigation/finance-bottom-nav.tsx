@@ -16,10 +16,10 @@ interface FinanceBottomNavProps {
 }
 
 const defaultFinanceNavItems: NavItem[] = [
-  { href: '/finance/invoices', icon: '🧾', label: '發票', active: false },
-  { href: '/finance/transactions', icon: '💳', label: '交易', active: false },
-  { href: '/finance/payroll', icon: '💸', label: '薪資', active: false },
-  { href: '/finance/reports', icon: '📊', label: '報表', active: false },
+  { href: '/finance/invoices', icon: '🧾', label: '發票x', active: false },
+  { href: '/finance/transactions', icon: '💳', label: '交易x', active: false },
+  { href: '/finance/payroll', icon: '💸', label: '薪資x', active: false },
+  { href: '/finance/reports', icon: '📊', label: '報表x', active: false },
 ];
 
 export function FinanceBottomNav({ items = defaultFinanceNavItems }: FinanceBottomNavProps) {

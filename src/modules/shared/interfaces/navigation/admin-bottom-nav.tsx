@@ -19,8 +19,8 @@ const defaultAdminNavItems: NavItem[] = [
     { href: '/admin/schedule', icon: '📅', label: '排程管理', active: false },
     { href: '/admin/projects', icon: '📁', label: '專案管理', active: false },
     { href: '/admin/templates', icon: '📋', label: '範本管理', active: false },
-    { href: '/admin/inventory', icon: '📦', label: '庫存管理', active: false },
-    { href: '/admin/contractors', icon: '👷', label: '協力廠商', active: false },
+    { href: '/admin/inventory', icon: '📦', label: '庫存管理x', active: false },
+    { href: '/admin/contractors', icon: '👷', label: '協力廠商x', active: false },
     { href: '/admin/users', icon: '👤', label: '用戶管理', active: false },
 ];
 
