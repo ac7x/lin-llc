@@ -31,25 +31,12 @@ export default function ProjectDetailPage() {
     e.preventDefault();
     setAreaMsg("");
     try {
-      // 1. 取得專案 templateId
+      // 取得專案名稱
       const projectDoc = await getDoc(doc(db, "projects", projectId));
-      const templateId = projectDoc.exists() ? projectDoc.data().templateId : null;
-      // 2. 新增區域
-      const areaDocRef = await addDoc(areasRef, { name: areaName, createdAt: new Date() });
-      // 3. 讀取 flows 並複製到區域 tasks
-      if (templateId) {
-        const flowsRef = collection(db, "templates", templateId, "flows");
-        const flowsSnap = await getDocs(flowsRef);
-        const tasksRef = collection(db, "projects", projectId, "areas", areaDocRef.id, "tasks");
-        for (const flowDoc of flowsSnap.docs) {
-          const flow = flowDoc.data();
-          await addDoc(tasksRef, {
-            name: flow.name,
-            order: typeof flow.order === "number" ? flow.order : 9999,
-            status: "pending",
-          });
-        }
-      }
+      const projectName = projectDoc.exists() ? projectDoc.data().name : "";
+      // name: 專案名稱-區域名稱
+      const areaFullName = `${projectName}-${areaName}`;
+      await addDoc(areasRef, { name: areaFullName, createdAt: new Date() });
       setAreaMsg("新增成功");
       setAreaName("");
       setAddingArea(false);
