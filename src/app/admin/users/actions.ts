@@ -4,6 +4,11 @@ export type FirebaseAuthUser = {
   uid: string;
   email?: string;
   displayName?: string;
+  metadata?: {
+    creationTime?: string;
+    lastSignInTime?: string;
+  };
+  disabled?: boolean;
 };
 
 export async function fetchUsers(): Promise<FirebaseAuthUser[]> {

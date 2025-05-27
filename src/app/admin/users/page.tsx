@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from 'react';
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { fetchUsers, deleteUser, FirebaseAuthUser } from './actions';
