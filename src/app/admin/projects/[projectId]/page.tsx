@@ -29,8 +29,9 @@ export default function ProjectDetailPage() {
     name: string;
     status?: string;
     order?: number;
-    quantity?: number; // <--- 新增這一行
-    // 其他欄位可依需求擴充
+    quantity?: number;
+    plannedStartTime?: string; // 新增
+    plannedEndTime?: string;   // 新增
   };
 
   const [areaTasks, setAreaTasks] = useState<{ [areaId: string]: AreaTask[] }>({});
@@ -146,6 +147,28 @@ export default function ProjectDetailPage() {
     setSavingQuantity(s => ({ ...s, [taskId]: false }));
   }
 
+  // 新增：追蹤每個任務的日期編輯狀態
+  const [editDates, setEditDates] = useState<{ [taskId: string]: { plannedStartTime: string; plannedEndTime: string } }>({});
+  const [savingDate, setSavingDate] = useState<{ [taskId: string]: boolean }>({});
+
+  // 儲存預計日期
+  async function handleSaveDates(areaId: string, taskId: string) {
+    const { plannedStartTime, plannedEndTime } = editDates[taskId] || {};
+    setSavingDate(s => ({ ...s, [taskId]: true }));
+    try {
+      await updateDoc(
+        doc(db, "projects", projectId, "areas", areaId, "tasks", taskId),
+        {
+          plannedStartTime: plannedStartTime || null,
+          plannedEndTime: plannedEndTime || null,
+        }
+      );
+    } catch {
+      // 可加錯誤提示
+    }
+    setSavingDate(s => ({ ...s, [taskId]: false }));
+  }
+
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">專案詳細頁</h1>
@@ -215,39 +238,91 @@ export default function ProjectDetailPage() {
                 <li className="text-xs text-gray-400">（無任務）</li>
               )}
               {areaTasks[doc.id]?.map(task => (
-                <li key={task.id} className="text-xs flex gap-2 items-center">
-                  <span>{task.name}</span>
-                  <span className="text-gray-400">{task.status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
-                  {/* 新增：數量編輯 */}
-                  <span>
-                    數量：
+                <li key={task.id} className="text-xs flex flex-col gap-1">
+                  <div className="flex gap-2 items-center">
+                    <span>{task.name}</span>
+                    <span className="text-gray-400">{task.status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
+                    {/* 數量編輯 */}
+                    <span>
+                      數量：
+                      <input
+                        type="number"
+                        min={0}
+                        className="border px-1 w-16 text-xs"
+                        value={
+                          editQuantities[task.id] !== undefined
+                            ? editQuantities[task.id]
+                            : (typeof task.quantity === "number" ? task.quantity : "")
+                        }
+                        onChange={e =>
+                          setEditQuantities(q => ({
+                            ...q,
+                            [task.id]: e.target.value === "" ? "" : Number(e.target.value)
+                          }))
+                        }
+                        style={{ width: 50 }}
+                      />
+                      <button
+                        className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs"
+                        style={{ fontSize: "0.75rem" }}
+                        disabled={savingQuantity[task.id]}
+                        onClick={() => handleSaveQuantity(doc.id, task.id)}
+                        type="button"
+                      >
+                        儲存
+                      </button>
+                    </span>
+                  </div>
+                  {/* 預計日期編輯 */}
+                  <div className="flex gap-2 items-center mt-1">
+                    <span>預計開始：</span>
                     <input
-                      type="number"
-                      min={0}
-                      className="border px-1 w-16 text-xs"
+                      type="date"
+                      className="border px-1 text-xs"
                       value={
-                        editQuantities[task.id] !== undefined
-                          ? editQuantities[task.id]
-                          : (typeof task.quantity === "number" ? task.quantity : "")
+                        editDates[task.id]?.plannedStartTime ??
+                        (task.plannedStartTime ? task.plannedStartTime.slice(0, 10) : "")
                       }
                       onChange={e =>
-                        setEditQuantities(q => ({
-                          ...q,
-                          [task.id]: e.target.value === "" ? "" : Number(e.target.value)
+                        setEditDates(d => ({
+                          ...d,
+                          [task.id]: {
+                            plannedStartTime: e.target.value,
+                            plannedEndTime: d[task.id]?.plannedEndTime ?? (task.plannedEndTime ? task.plannedEndTime.slice(0, 10) : "")
+                          }
                         }))
                       }
-                      style={{ width: 50 }}
+                      style={{ width: 130 }}
+                    />
+                    <span>結束：</span>
+                    <input
+                      type="date"
+                      className="border px-1 text-xs"
+                      value={
+                        editDates[task.id]?.plannedEndTime ??
+                        (task.plannedEndTime ? task.plannedEndTime.slice(0, 10) : "")
+                      }
+                      onChange={e =>
+                        setEditDates(d => ({
+                          ...d,
+                          [task.id]: {
+                            plannedStartTime: d[task.id]?.plannedStartTime ?? (task.plannedStartTime ? task.plannedStartTime.slice(0, 10) : ""),
+                            plannedEndTime: e.target.value
+                          }
+                        }))
+                      }
+                      style={{ width: 130 }}
                     />
                     <button
                       className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs"
                       style={{ fontSize: "0.75rem" }}
-                      disabled={savingQuantity[task.id]}
-                      onClick={() => handleSaveQuantity(doc.id, task.id)}
+                      disabled={savingDate[task.id]}
+                      onClick={() => handleSaveDates(doc.id, task.id)}
                       type="button"
                     >
                       儲存
                     </button>
-                  </span>
+                  </div>
                 </li>
               ))}
             </ul>
