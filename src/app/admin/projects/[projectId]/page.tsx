@@ -1,7 +1,7 @@
 "use client";
 
 import { app } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { getFirestore, collection, query, orderBy, addDoc, doc, getDoc, getDocs } from "firebase/firestore";
+import { getFirestore, collection, query, orderBy, addDoc, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -28,6 +28,7 @@ export default function ProjectDetailPage() {
     name: string;
     status?: string;
     order?: number;
+    quantity?: number; // <--- 新增這一行
     // 其他欄位可依需求擴充
   };
 
@@ -85,6 +86,26 @@ export default function ProjectDetailPage() {
     }
     if (projectId) fetchProject();
   }, [db, projectId]);
+
+  // 新增：追蹤每個區域任務的數量編輯狀態
+  const [editQuantities, setEditQuantities] = useState<{ [taskId: string]: number | "" }>({});
+  const [savingQuantity, setSavingQuantity] = useState<{ [taskId: string]: boolean }>({});
+
+  // 新增：儲存數量
+  async function handleSaveQuantity(areaId: string, taskId: string) {
+    const value = editQuantities[taskId];
+    if (value === "" || isNaN(Number(value))) return;
+    setSavingQuantity(s => ({ ...s, [taskId]: true }));
+    try {
+      await updateDoc(
+        doc(db, "projects", projectId, "areas", areaId, "tasks", taskId),
+        { quantity: Number(value) }
+      );
+    } catch {
+      // 可加錯誤提示
+    }
+    setSavingQuantity(s => ({ ...s, [taskId]: false }));
+  }
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -151,6 +172,36 @@ export default function ProjectDetailPage() {
                 <li key={task.id} className="text-xs flex gap-2 items-center">
                   <span>{task.name}</span>
                   <span className="text-gray-400">{task.status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
+                  {/* 新增：數量編輯 */}
+                  <span>
+                    數量：
+                    <input
+                      type="number"
+                      min={0}
+                      className="border px-1 w-16 text-xs"
+                      value={
+                        editQuantities[task.id] !== undefined
+                          ? editQuantities[task.id]
+                          : (typeof task.quantity === "number" ? task.quantity : "")
+                      }
+                      onChange={e =>
+                        setEditQuantities(q => ({
+                          ...q,
+                          [task.id]: e.target.value === "" ? "" : Number(e.target.value)
+                        }))
+                      }
+                      style={{ width: 50 }}
+                    />
+                    <button
+                      className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs"
+                      style={{ fontSize: "0.75rem" }}
+                      disabled={savingQuantity[task.id]}
+                      onClick={() => handleSaveQuantity(doc.id, task.id)}
+                      type="button"
+                    >
+                      儲存
+                    </button>
+                  </span>
                 </li>
               ))}
             </ul>
