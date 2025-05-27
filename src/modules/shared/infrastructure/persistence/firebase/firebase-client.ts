@@ -1,5 +1,5 @@
 // src/modules/shared/infrastructure/persistence/firebase/firebase-client.ts
-import { initializeApp } from 'firebase/app';
+import { getApps, initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 
@@ -13,8 +13,8 @@ const firebaseConfig = {
   measurementId: "G-62JEHK00G8"
 };
 
-// 初始化 Firebase
-export const app = initializeApp(firebaseConfig);
+// SSR/多次初始化防呆
+export const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
