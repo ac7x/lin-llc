@@ -35,6 +35,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [newLog, setNewLog] = useState("");
+  const [users, setUsers] = useState<{[key: string]: string}>({});
   const router = useRouter();
   const [user] = useAuthState(auth);
 
@@ -64,6 +65,18 @@ export default function ProjectDetailPage() {
     };
     fetchProject();
   }, [projectId]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const snapshot = await getDocs(collection(db, "users"));
+      const usersData = snapshot.docs.reduce((acc, doc) => ({
+        ...acc,
+        [doc.id]: doc.data().name || doc.id
+      }), {});
+      setUsers(usersData);
+    };
+    fetchUsers();
+  }, []);
 
   const handleAddLog = async () => {
     if (!newLog.trim() || !user) return;
@@ -98,14 +111,14 @@ export default function ProjectDetailPage() {
     <main>
       <h1>專案：{project.name || "(未命名專案)"}</h1>
       <p>專案 ID：{project.id}</p>
-      <p>建立者：{project.createdBy || "未知"}</p>
+      <p>建立者：{users[project.createdBy || ""] || "未知"}</p>
       <p>建立時間：{project.createdAt && typeof project.createdAt === "object" && "toDate" in project.createdAt
         ? (project.createdAt as Timestamp).toDate().toLocaleString()
         : String(project.createdAt) || "未知"}
       </p>
-      <p>負責人：{project.manager || "-"}</p>
-      <p>現場監工：{project.supervisors && project.supervisors.length > 0 ? project.supervisors.join(", ") : "-"}</p>
-      <p>現場公共安全人員：{project.safetyStaff && project.safetyStaff.length > 0 ? project.safetyStaff.join(", ") : "-"}</p>
+      <p>負責人：{users[project.manager || ""] || "-"}</p>
+      <p>現場監工：{project.supervisors?.map(id => users[id]).join(", ") || "-"}</p>
+      <p>現場公共安全人員：{project.safetyStaff?.map(id => users[id]).join(", ") || "-"}</p>
       <p>地區：{project.region || "-"}</p>
       <p>地址：{project.address || "-"}</p>
       <p>起始日：{project.startDate || "-"}</p>

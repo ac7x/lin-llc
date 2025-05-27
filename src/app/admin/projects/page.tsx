@@ -23,6 +23,7 @@ type Project = {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -37,6 +38,18 @@ export default function ProjectsPage() {
       setLoading(false);
     };
     fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const snapshot = await getDocs(collection(db, "users"));
+      const usersData = snapshot.docs.reduce((acc, doc) => ({
+        ...acc,
+        [doc.id]: doc.data().name || doc.id
+      }), {});
+      setUsers(usersData);
+    };
+    fetchUsers();
   }, []);
 
   return (
@@ -58,9 +71,9 @@ export default function ProjectsPage() {
                 <span className="project-title">{project.name || "(未命名專案)"}</span>
               </Link>
               <div className="project-meta">
-                <div><span className="meta-label">負責人：</span>{project.manager || "-"}</div>
-                <div><span className="meta-label">監工：</span>{(project.supervisors && project.supervisors.length > 0) ? project.supervisors.join(", ") : "-"}</div>
-                <div><span className="meta-label">公共安全人員：</span>{(project.safetyStaff && project.safetyStaff.length > 0) ? project.safetyStaff.join(", ") : "-"}</div>
+                <div><span className="meta-label">負責人：</span>{users[project.manager || ""] || "-"}</div>
+                <div><span className="meta-label">監工：</span>{project.supervisors?.map(id => users[id]).join(", ") || "-"}</div>
+                <div><span className="meta-label">公共安全人員：</span>{project.safetyStaff?.map(id => users[id]).join(", ") || "-"}</div>
                 <div><span className="meta-label">地區：</span>{project.region || "-"}</div>
                 <div><span className="meta-label">地址：</span>{project.address || "-"}</div>
                 <div><span className="meta-label">起始日：</span>{project.startDate || "-"}</div>

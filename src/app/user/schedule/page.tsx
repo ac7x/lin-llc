@@ -86,8 +86,6 @@ export default function UserSchedulePage() {
 
   return (
     <main>
-      <h1>專案時程表</h1>
-      <p>以時間軸方式檢視所有專案日程。</p>
       {loading && <div>載入中...</div>}
       {error && <div style={{ color: "red" }}>{error}</div>}
       {!loading && !error && (
@@ -96,6 +94,10 @@ export default function UserSchedulePage() {
           items={items}
           defaultTimeStart={defaultTimeStart.getTime()}
           defaultTimeEnd={defaultTimeEnd.getTime()}
+          canMove={false}
+          canResize={false}
+          canChangeGroup={false}
+          itemTouchSendsClick={false}
         />
       )}
     </main>
