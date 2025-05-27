@@ -1,6 +1,6 @@
-import memjs from "memjs";
+import Memcached from "memcached";
 
-const memcachedClient = memjs.Client.create(process.env.MEMCACHED_URL || "", {
+const memcachedClient = new Memcached(process.env.MEMCACHED_URL || "", {
     username: process.env.MEMCACHED_USERNAME || undefined,
     password: process.env.MEMCACHED_PASSWORD || undefined,
 });
