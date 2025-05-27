@@ -4,6 +4,7 @@ import { app } from "@/modules/shared/infrastructure/persistence/firebase/fireba
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { getUsersList } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 export default function EditProjectPage() {
   const params = useParams();
@@ -15,6 +16,14 @@ export default function EditProjectPage() {
   const [editDesc, setEditDesc] = useState("");
   const [editMsg, setEditMsg] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editManager, setEditManager] = useState("");
+  const [editSupervisor, setEditSupervisor] = useState("");
+  const [editSafety, setEditSafety] = useState("");
+  const [users, setUsers] = useState<{ uid: string; displayName?: string; email?: string }[]>([]);
+
+  useEffect(() => {
+    getUsersList().then(setUsers);
+  }, []);
 
   useEffect(() => {
     async function fetchProject() {
@@ -22,6 +31,9 @@ export default function EditProjectPage() {
       if (projectDoc.exists()) {
         setEditName(projectDoc.data().name || "");
         setEditDesc(projectDoc.data().description || "");
+        setEditManager(projectDoc.data().manager || "");
+        setEditSupervisor(projectDoc.data().supervisor || "");
+        setEditSafety(projectDoc.data().safety || "");
       }
     }
     if (projectId) fetchProject();
@@ -35,6 +47,9 @@ export default function EditProjectPage() {
       await updateDoc(doc(db, "projects", projectId), {
         name: editName,
         description: editDesc,
+        manager: editManager,
+        supervisor: editSupervisor,
+        safety: editSafety,
       });
       setEditMsg("儲存成功");
       setTimeout(() => router.back(), 600);
@@ -67,6 +82,33 @@ export default function EditProjectPage() {
             rows={2}
             disabled={saving}
           />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">負責人</label>
+          <select className="border px-2 py-1 w-full" value={editManager} onChange={e => setEditManager(e.target.value)} required disabled={saving}>
+            <option value="">請選擇</option>
+            {users.map(u => (
+              <option key={u.uid} value={u.uid}>{u.displayName || u.email || u.uid}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">現場監工</label>
+          <select className="border px-2 py-1 w-full" value={editSupervisor} onChange={e => setEditSupervisor(e.target.value)} required disabled={saving}>
+            <option value="">請選擇</option>
+            {users.map(u => (
+              <option key={u.uid} value={u.uid}>{u.displayName || u.email || u.uid}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">安全衛生人員</label>
+          <select className="border px-2 py-1 w-full" value={editSafety} onChange={e => setEditSafety(e.target.value)} required disabled={saving}>
+            <option value="">請選擇</option>
+            {users.map(u => (
+              <option key={u.uid} value={u.uid}>{u.displayName || u.email || u.uid}</option>
+            ))}
+          </select>
         </div>
         <div className="flex gap-2">
           <button

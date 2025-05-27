@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { getUsersList } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -76,16 +77,31 @@ export default function ProjectDetailPage() {
   // 取得專案資訊
   const [projectName, setProjectName] = useState("");
   const [projectDesc, setProjectDesc] = useState("");
+  const [managerName, setManagerName] = useState("");
+  const [supervisorName, setSupervisorName] = useState("");
+  const [safetyName, setSafetyName] = useState("");
+  const [users, setUsers] = useState<{ uid: string; displayName?: string; email?: string }[]>([]);
+
+  React.useEffect(() => {
+    getUsersList().then(setUsers);
+  }, []);
+
   React.useEffect(() => {
     async function fetchProject() {
       const projectDoc = await getDoc(doc(db, "projects", projectId));
       if (projectDoc.exists()) {
         setProjectName(projectDoc.data().name || "");
         setProjectDesc(projectDoc.data().description || "");
+        const m = projectDoc.data().manager;
+        const s = projectDoc.data().supervisor;
+        const sa = projectDoc.data().safety;
+        setManagerName(users.find(u => u.uid === m)?.displayName || users.find(u => u.uid === m)?.email || m || "");
+        setSupervisorName(users.find(u => u.uid === s)?.displayName || users.find(u => u.uid === s)?.email || s || "");
+        setSafetyName(users.find(u => u.uid === sa)?.displayName || users.find(u => u.uid === sa)?.email || sa || "");
       }
     }
-    if (projectId) fetchProject();
-  }, [db, projectId]);
+    if (projectId && users.length) fetchProject();
+  }, [db, projectId, users]);
 
   // 新增：追蹤每個區域任務的數量編輯狀態
   const [editQuantities, setEditQuantities] = useState<{ [taskId: string]: number | "" }>({});
@@ -124,6 +140,11 @@ export default function ProjectDetailPage() {
           </button>
         </div>
         <div className="text-gray-600">{projectDesc}</div>
+        <div className="text-sm text-gray-700 mt-2">
+          <div>負責人：{managerName || '—'}</div>
+          <div>現場監工：{supervisorName || '—'}</div>
+          <div>安全衛生人員：{safetyName || '—'}</div>
+        </div>
       </div>
       <h2 className="text-lg font-semibold mt-6 mb-2">任務清單</h2>
       <ul className="space-y-2">

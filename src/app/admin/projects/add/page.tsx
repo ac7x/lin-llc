@@ -1,19 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { app } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import { getUsersList } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 export default function AddProjectPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
+  const [manager, setManager] = useState("");
+  const [supervisor, setSupervisor] = useState("");
+  const [safety, setSafety] = useState("");
+  const [region, setRegion] = useState("");
+  const [address, setAddress] = useState("");
+  const [users, setUsers] = useState<{ uid: string; displayName?: string; email?: string }[]>([]);
   const router = useRouter();
 
   const db = getFirestore(app);
   const projectsRef = collection(db, "projects");
+
+  // 載入 users
+  useEffect(() => {
+    getUsersList().then(setUsers);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,6 +35,11 @@ export default function AddProjectPage() {
       const docRef = await addDoc(projectsRef, {
         name,
         description,
+        manager,
+        supervisor,
+        safety,
+        region,
+        address,
         createdAt: new Date(),
       });
       // 建立 default 初始區域
@@ -58,6 +75,84 @@ export default function AddProjectPage() {
             value={description}
             onChange={e => setDescription(e.target.value)}
             rows={2}
+            disabled={saving}
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">負責人</label>
+          <select
+            className="border px-2 py-1 w-full"
+            value={manager}
+            onChange={e => setManager(e.target.value)}
+            required
+            disabled={saving}
+          >
+            <option value="">請選擇</option>
+            {users.map(u => (
+              <option key={u.uid} value={u.uid}>
+                {u.displayName || u.email || u.uid}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">現場監工</label>
+          <select
+            className="border px-2 py-1 w-full"
+            value={supervisor}
+            onChange={e => setSupervisor(e.target.value)}
+            required
+            disabled={saving}
+          >
+            <option value="">請選擇</option>
+            {users.map(u => (
+              <option key={u.uid} value={u.uid}>
+                {u.displayName || u.email || u.uid}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">安全衛生人員</label>
+          <select
+            className="border px-2 py-1 w-full"
+            value={safety}
+            onChange={e => setSafety(e.target.value)}
+            required
+            disabled={saving}
+          >
+            <option value="">請選擇</option>
+            {users.map(u => (
+              <option key={u.uid} value={u.uid}>
+                {u.displayName || u.email || u.uid}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">地區</label>
+          <select
+            className="border px-2 py-1 w-full"
+            value={region}
+            onChange={e => setRegion(e.target.value)}
+            required
+            disabled={saving}
+          >
+            <option value="">請選擇</option>
+            <option value="北部">北部</option>
+            <option value="中部">中部</option>
+            <option value="南部">南部</option>
+            <option value="東部">東部</option>
+            <option value="離島">離島</option>
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">地址</label>
+          <input
+            className="border px-2 py-1 w-full"
+            value={address}
+            onChange={e => setAddress(e.target.value)}
+            required
             disabled={saving}
           />
         </div>

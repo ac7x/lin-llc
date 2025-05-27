@@ -4,7 +4,8 @@ import { app } from '@/modules/shared/infrastructure/persistence/firebase/fireba
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getUsersList } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 export default function AdminProjectsPage() {
   const db = getFirestore(app);
@@ -12,6 +13,7 @@ export default function AdminProjectsPage() {
   const [projectsSnap, loading, error] = useCollection(projectsRef);
   const router = useRouter();
   const [taskCounts, setTaskCounts] = useState<{ [id: string]: number }>({});
+  const [users, setUsers] = useState<{ uid: string; displayName?: string; email?: string }[]>([]);
 
   useEffect(() => {
     async function fetchTaskCounts() {
@@ -26,6 +28,10 @@ export default function AdminProjectsPage() {
     }
     fetchTaskCounts();
   }, [projectsSnap, db]);
+
+  useEffect(() => {
+    getUsersList().then(setUsers);
+  }, []);
 
   return (
     <div className="pb-20 max-w-2xl mx-auto">
@@ -49,6 +55,9 @@ export default function AdminProjectsPage() {
           )}
           {projectsSnap?.docs.map(docSnap => {
             const data = docSnap.data();
+            const manager = users.find(u => u.uid === data.manager);
+            const supervisor = users.find(u => u.uid === data.supervisor);
+            const safety = users.find(u => u.uid === data.safety);
             return (
               <li
                 key={docSnap.id}
@@ -67,8 +76,15 @@ export default function AdminProjectsPage() {
                   {data.name || docSnap.id}
                 </div>
                 <div className="text-sm text-gray-600 mt-1 line-clamp-2">{data.description || '—'}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  任務數量：{taskCounts[docSnap.id] ?? '...'}
+                <div className="text-xs text-gray-500 mt-1">任務數量：{taskCounts[docSnap.id] ?? '...'}</div>
+                <div className="text-xs text-gray-700 mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                  <span>負責人：{manager?.displayName || manager?.email || data.manager || '—'}</span>
+                  <span>現場監工：{supervisor?.displayName || supervisor?.email || data.supervisor || '—'}</span>
+                  <span>安全衛生人員：{safety?.displayName || safety?.email || data.safety || '—'}</span>
+                </div>
+                <div className="text-xs text-gray-700 mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                  <span>地區：{data.region || '—'}</span>
+                  <span>地址：{data.address || '—'}</span>
                 </div>
               </li>
             );
