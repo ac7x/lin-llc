@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
-import { DndContext, useDraggable, useDroppable, DragEndEvent } from "@dnd-kit/core"
+import { DndContext, useDraggable, useDroppable, DragEndEvent, DragOverlay } from "@dnd-kit/core"
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
@@ -76,6 +76,7 @@ function DraggableUnplannedTask({ task }: { task: AreaTask }) {
 export default function SchedulePage() {
 	const [groups, setGroups] = useState<AreaGroup[]>([])
 	const [tasks, setTasks] = useState<AreaTask[]>([])
+	const [activeDragTaskId, setActiveDragTaskId] = useState<string | null>(null)
 	const timelineRef = useRef<HTMLDivElement>(null)
 
 	// 載入所有專案的所有區域與任務
@@ -242,7 +243,13 @@ export default function SchedulePage() {
 	const { setNodeRef: setTimelineDroppableRef } = useDroppable({ id: "timeline-droppable" });
 
 	return (
-		<DndContext onDragEnd={handleTimelineDrop} id="unplanned-dnd-context">
+		<DndContext
+			onDragEnd={handleTimelineDrop}
+			id="unplanned-dnd-context"
+			onDragStart={e => setActiveDragTaskId(e.active.id as string)}
+			onDragCancel={() => setActiveDragTaskId(null)}
+			onDragOver={() => {}}
+		>
 			<div>
 				<div
 					ref={timelineRef}
@@ -310,6 +317,11 @@ export default function SchedulePage() {
 						</div>
 					)}
 				</div>
+				<DragOverlay>
+					{activeDragTaskId ? (
+						<DraggableUnplannedTask task={unplannedTasks.find(t => t.id === activeDragTaskId)!} />
+					) : null}
+				</DragOverlay>
 			</div>
 		</DndContext>
 	)
