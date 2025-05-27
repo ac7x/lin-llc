@@ -142,9 +142,8 @@ export default function AdminProjectsPage() {
                         return (
                             <li
                                 key={id}
-                                className="border p-2 rounded flex flex-col md:flex-row md:items-center md:justify-between cursor-pointer hover:bg-blue-50 transition group"
+                                className="border p-4 rounded flex flex-col cursor-pointer hover:bg-blue-50 transition group shadow-sm"
                                 onClick={e => {
-                                    // 避免點擊編輯/刪除按鈕時觸發跳轉
                                     if ((e.target as HTMLElement).closest('button')) return;
                                     router.push(`/admin/projects/${id}`);
                                 }}
@@ -157,32 +156,21 @@ export default function AdminProjectsPage() {
                                 role="button"
                                 aria-label={`前往專案 ${data.name} 詳細頁`}
                             >
-                                <div>
-                                    <span className="font-semibold text-blue-700 group-hover:underline group-hover:text-blue-900 transition">
-                                        {data.name}
-                                    </span>
-                                    <div className="text-sm text-gray-600">{data.description}</div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="font-bold text-lg text-blue-700 group-hover:underline group-hover:text-blue-900 transition">
+                                            {data.name}
+                                        </span>
+                                        {data.manager && (
+                                            <span className="ml-2 px-2 py-0.5 bg-gray-100 text-xs text-gray-700 rounded">負責人：{data.manager}</span>
+                                        )}
+                                    </div>
+                                    <div className="text-sm text-gray-600 mb-1 line-clamp-2">{data.description || '—'}</div>
+                                    {data.createdAt && (
+                                        <div className="text-xs text-gray-400">建立於 {data.createdAt.toDate ? data.createdAt.toDate().toLocaleDateString() : ''}</div>
+                                    )}
                                 </div>
-                                <div className="mt-2 md:mt-0 md:ml-4 flex space-x-2">
-                                    <button
-                                        className="bg-yellow-500 text-white px-3 py-1 rounded"
-                                        onClick={e => {
-                                            e.stopPropagation();
-                                            startEdit(id, data.name, data.description);
-                                        }}
-                                    >
-                                        編輯
-                                    </button>
-                                    <button
-                                        className="bg-red-600 text-white px-3 py-1 rounded"
-                                        onClick={e => {
-                                            e.stopPropagation();
-                                            handleDelete(id);
-                                        }}
-                                    >
-                                        刪除
-                                    </button>
-                                </div>
+                                {/* 編輯與刪除按鈕已移除，僅顯示卡片內容 */}
                             </li>
                         );
                     })}

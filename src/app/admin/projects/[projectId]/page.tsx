@@ -116,6 +116,22 @@ export default function ProjectDetailPage() {
                     {msg && <div className="text-sm mt-1 text-green-700">{msg}</div>}
                 </div>
             )}
+            {/* 新增：專案相關功能導覽 */}
+            <div className="mt-6 flex gap-4">
+                <a
+                    href={`/admin/projects/${projectId}/tasks`}
+                    className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+                >
+                    查看任務
+                </a>
+                <a
+                    href={`/admin/projects/${projectId}/schedule`}
+                    className="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded transition"
+                >
+                    查看排程
+                </a>
+            </div>
+            {/* 導覽結束 */}
         </div>
     );
 }
