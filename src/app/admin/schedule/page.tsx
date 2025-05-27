@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
-import { DndContext, useDraggable, useDroppable, DragEndEvent, DragOverlay } from "@dnd-kit/core"
+import { DndContext, useDraggable, useDroppable, DragEndEvent, DragOverlay } from '@dnd-kit/core'
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
@@ -173,8 +173,7 @@ export default function SchedulePage() {
 		const percent = x / timelineWidth
 		const timeRange = defaultTimeEnd.getTime() - defaultTimeStart.getTime()
 		const dropTime = new Date(defaultTimeStart.getTime() + percent * timeRange)
-		const startTime = new Date(dropTime)
-		startTime.setHours(0, 0, 0, 0)
+		const startTime = dropTime
 		const endTime = addDays(startTime, 1)
 		await updateDoc(
 			doc(
