@@ -48,6 +48,10 @@ export default function SchedulePage() {
 	const [groups, setGroups] = useState<AreaGroup[]>([])
 	const [tasks, setTasks] = useState<AreaTask[]>([])
 	const timelineRef = useRef<HTMLDivElement>(null)
+	const [showDateDialog, setShowDateDialog] = useState(false)
+	const [selectedTask, setSelectedTask] = useState<AreaTask | null>(null)
+	const [dateRange, setDateRange] = useState<{ start: string, end: string }>({ start: '', end: '' })
+	const [quantityTip, setQuantityTip] = useState<string | null>(null)
 
 	// 載入所有專案的所有區域與任務
 	useEffect(() => {
@@ -173,19 +177,26 @@ export default function SchedulePage() {
 		)
 	}
 
-	// 點擊未排程任務後輸入開始與結束日期，若有數量則先提示
-	const handleUnplannedTaskClick = async (task: AreaTask) => {
+	// 點擊未排程任務後顯示日期選擇彈窗
+	const handleUnplannedTaskClick = (task: AreaTask) => {
 		if (typeof task.quantity === "number" && task.quantity > 1) {
-			alert(`此任務數量為 ${task.quantity}`);
+			setQuantityTip(`此任務數量為 ${task.quantity}`)
+		} else {
+			setQuantityTip(null)
 		}
-		const startInput = window.prompt('請輸入開始日期 (YYYY-MM-DD)：')
-		if (!startInput) return
-		const endInput = window.prompt('請輸入結束日期 (YYYY-MM-DD)：')
-		if (!endInput) return
-		const startDate = new Date(startInput)
-		const endDate = new Date(endInput)
-		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-			alert('日期格式錯誤，請重新輸入')
+		setSelectedTask(task)
+		setDateRange({ start: '', end: '' })
+		setShowDateDialog(true)
+	}
+
+	// 確認選擇日期後寫入
+	const handleDateDialogConfirm = async () => {
+		if (!selectedTask) return
+		const { start, end } = dateRange
+		const startDate = new Date(start)
+		const endDate = new Date(end)
+		if (!start || !end || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+			alert('請選擇正確的日期')
 			return
 		}
 		startDate.setHours(0, 0, 0, 0)
@@ -194,11 +205,11 @@ export default function SchedulePage() {
 			doc(
 				firestore,
 				"projects",
-				task.projectId,
+				selectedTask.projectId,
 				"areas",
-				task.areaId,
+				selectedTask.areaId,
 				"tasks",
-				task.id
+				selectedTask.id
 			),
 			{
 				plannedStartTime: startDate.toISOString(),
@@ -241,10 +252,54 @@ export default function SchedulePage() {
 		}
 		setGroups(areaGroups)
 		setTasks(areaTasks)
+		setShowDateDialog(false)
+		setSelectedTask(null)
+		setQuantityTip(null)
 	}
 
 	return (
 		<div>
+			{/* 日期選擇彈窗 */}
+			{showDateDialog && (
+				<div
+					style={{
+						position: 'fixed',
+						top: 0,
+						left: 0,
+						width: '100vw',
+						height: '100vh',
+						background: 'rgba(0,0,0,0.2)',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						zIndex: 1000
+					}}
+				>
+					<div style={{ background: '#fff', padding: 24, borderRadius: 8, minWidth: 300 }}>
+						<div style={{ marginBottom: 8 }}>
+							{quantityTip && <div style={{ color: '#b45309', marginBottom: 8 }}>{quantityTip}</div>}
+							<div>請選擇開始與結束日期：</div>
+							<div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+								<input
+									type="date"
+									value={dateRange.start}
+									onChange={e => setDateRange(r => ({ ...r, start: e.target.value }))}
+								/>
+								<span>至</span>
+								<input
+									type="date"
+									value={dateRange.end}
+									onChange={e => setDateRange(r => ({ ...r, end: e.target.value }))}
+								/>
+							</div>
+						</div>
+						<div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+							<button onClick={() => { setShowDateDialog(false); setSelectedTask(null); setQuantityTip(null); }}>取消</button>
+							<button onClick={handleDateDialogConfirm} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '4px 12px', borderRadius: 4 }}>確認</button>
+						</div>
+					</div>
+				</div>
+			)}
 			<div>
 				<div
 					ref={timelineRef}
