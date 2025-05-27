@@ -1,22 +1,22 @@
-$item-color: white !default;
-$item-background: #2196f3 !default;
-$item-border: 1px solid #1a6fb3 !default;
-$item-selected-color: white !default;
-$item-selected-background: #ffc107 !default;
-$item-selected-border: 1px solid #ff9800 !default;
+$item-color: #fff !default;
+$item-background: #35527a !default;
+$item-border: 1px solid #23243a !default;
+$item-selected-color: #fff !default;
+$item-selected-background: #5e5b8c !default;
+$item-selected-border: 1px solid #4b5c8a !default;
 
-$row-background-even: transparent !default;
-$row-background-odd: rgba(0, 0, 0, 0.05) !default;
+$row-background-even: #23243a0d !default;
+$row-background-odd: #23243a1a !default;
 
-$border-color: #bbb !default;
+$border-color: #474559 !default;
 $border-width: 1px;
 $thick-border-width: 2px;
-$sidebar-color: #ffffff !default;
-$sidebar-background-color: #c52020 !default;
+$sidebar-color: #fff !default;
+$sidebar-background-color: #23243a !default;
 $list-item-padding: 0 4px;
-$weekend: rgba(250, 246, 225, 0.5) !default;
+$weekend: #47455933 !default;
 
-$date-header-background: rgb(240, 240, 240) !default;
+$date-header-background: #35527a !default;
 $date-header-color: #fff !default;
 
 .react-calendar-timeline {
