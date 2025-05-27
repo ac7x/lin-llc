@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
 import Timeline from "react-calendar-timeline";
-import "react-calendar-timeline/style.css";
+import "@/styles/react-calendar-timeline.scss";
 import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useAuthState } from "react-firebase-hooks/auth";

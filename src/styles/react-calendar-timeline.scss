@@ -1,22 +1,22 @@
-$item-color: #fff !default;
-$item-background: #35527a !default;
-$item-border: 1px solid #23243a !default;
-$item-selected-color: #fff !default;
-$item-selected-background: #5e5b8c !default;
-$item-selected-border: 1px solid #4b5c8a !default;
+$item-color: white !default;
+$item-background: #2196f3 !default;
+$item-border: 1px solid #1a6fb3 !default;
+$item-selected-color: white !default;
+$item-selected-background: #ffc107 !default;
+$item-selected-border: 1px solid #ff9800 !default;
 
-$row-background-even: #23243a0d !default;
-$row-background-odd: #23243a1a !default;
+$row-background-even: transparent !default;
+$row-background-odd: rgba(0, 0, 0, 0.05) !default;
 
-$border-color: #474559 !default;
+$border-color: #bbb !default;
 $border-width: 1px;
 $thick-border-width: 2px;
-$sidebar-color: #fff !default;
-$sidebar-background-color: #23243a !default;
+$sidebar-color: #ffffff !default;
+$sidebar-background-color: #c52020 !default;
 $list-item-padding: 0 4px;
-$weekend: #47455933 !default;
+$weekend: rgba(250, 246, 225, 0.5) !default;
 
-$date-header-background: #000 !default;
+$date-header-background: rgb(240, 240, 240) !default;
 $date-header-color: #fff !default;
 
 .react-calendar-timeline {
@@ -41,6 +41,8 @@ $date-header-color: #fff !default;
   }
 
   .rct-item {
+
+
     &:hover {
       z-index: 88;
     }
@@ -59,13 +61,12 @@ $date-header-color: #fff !default;
 
   .rct-sidebar {
     overflow: hidden;
-    white-space: normal;
+    white-space: normal; // was set to nowrap in .rct-outer
     display: inline-block;
     vertical-align: top;
     position: relative;
     box-sizing: border-box;
     border-right: $border-width solid $border-color;
-    width: 160px; 
 
     &.rct-sidebar-right {
       border-right: 0;
@@ -84,23 +85,22 @@ $date-header-color: #fff !default;
       &.rct-sidebar-row-odd {
         background: $row-background-odd;
       }
-
       &.rct-sidebar-row-even {
         background: $row-background-even;
       }
     }
   }
 
+  // TODO: rename or remove once we make breaking change to rename vertical lines
+  // to columns
   .rct-vertical-lines {
     .rct-vl {
       position: absolute;
       border-left: 1px solid $border-color;
       z-index: 30;
-
       &.rct-vl-first {
         border-left-width: 2px;
       }
-
       &.rct-day-6,
       &.rct-day-0 {
         background: $weekend;
@@ -120,11 +120,9 @@ $date-header-color: #fff !default;
       box-sizing: border-box;
       z-index: 40;
     }
-
     .rct-hl-odd {
       background: $row-background-odd;
     }
-
     .rct-hl-even {
       background: $row-background-even;
     }
@@ -137,14 +135,6 @@ $date-header-color: #fff !default;
     z-index: 51;
   }
 
-  .rct-today-marker {
-    background-color: red;
-    width: 2px;
-    z-index: 100;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-  }
 
   .rct-dateHeader {
     display: flex;
@@ -155,23 +145,23 @@ $date-header-color: #fff !default;
     cursor: pointer;
     font-size: 14px;
     background-color: $date-header-background;
-    border-left: 2px solid $border-color;
-    min-width: 160px; // 加大一倍
+    border-left:  2px solid $border-color;
   }
 
   .rct-dateHeader-primary {
     background-color: initial;
-    border-left: 1px solid $border-color;
+    border-left:  1px solid $border-color;
     border-right: 1px solid $border-color;
     color: $date-header-color;
   }
 
   .rct-header-root {
     background: $sidebar-background-color;
+    //color: #fff;
     border-bottom: 1px solid $border-color;
   }
 
   .rct-calendar-header {
-    border: 1px solid $border-color;
+    border: 1px solid $border-color
   }
 }
