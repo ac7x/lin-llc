@@ -84,6 +84,9 @@ export default function WorkTypeDetailPage() {
     const [copyMsg, setCopyMsg] = useState("");
     const [copying, setCopying] = useState(false);
 
+    // 新增：複製流程選擇狀態
+    const [selectedFlowIds, setSelectedFlowIds] = useState<string[]>([]);
+
     // flowsSnap 變動時同步本地 flows 狀態
     React.useEffect(() => {
         if (flowsSnap) {
@@ -98,6 +101,8 @@ export default function WorkTypeDetailPage() {
             });
             flowsList.sort((a, b) => a.order - b.order);
             setFlows(flowsList);
+            // 預設全選
+            setSelectedFlowIds(flowsList.map(f => f.id));
         }
     }, [flowsSnap]);
 
@@ -152,6 +157,12 @@ export default function WorkTypeDetailPage() {
         const newIndex = flows.findIndex(f => f.id === over.id);
         const newFlows = arrayMove(flows, oldIndex, newIndex).map((f, idx) => ({ ...f, order: idx + 1 }));
         setFlows(newFlows);
+        // 同步 selectedFlowIds 順序
+        setSelectedFlowIds(ids => {
+            // 只針對已選中的流程調整順序
+            const selectedFlows = newFlows.filter(f => ids.includes(f.id)).map(f => f.id);
+            return selectedFlows;
+        });
         // 批次更新 Firestore
         for (const f of newFlows) {
             await updateDoc(doc(db, 'templates', TypeId, 'flows', f.id), { order: f.order });
@@ -169,20 +180,36 @@ export default function WorkTypeDetailPage() {
         setAreasSnap(snap);
     }
 
-    // 複製 flows 到指定專案區域
+    // 勾選流程
+    function handleToggleFlow(flowId: string) {
+        setSelectedFlowIds(ids =>
+            ids.includes(flowId) ? ids.filter(id => id !== flowId) : [...ids, flowId]
+        );
+    }
+
+    // 全選/全不選
+    function handleToggleAllFlows() {
+        if (selectedFlowIds.length === flows.length) {
+            setSelectedFlowIds([]);
+        } else {
+            setSelectedFlowIds(flows.map(f => f.id));
+        }
+    }
+
+    // 複製 flows 到指定專案區域（只複製已選中的流程，順序依照 selectedFlowIds）
     async function handleCopyFlowsToArea() {
         if (!selectedProjectId || !selectedAreaId) return;
         setCopyMsg("");
         setCopying(true);
         try {
-            const flowsRef = collection(db, "templates", TypeId, "flows");
-            const flowsSnap = await getDocs(flowsRef);
+            // 依照 selectedFlowIds 順序取得流程
+            const flowsToCopy = flows.filter(f => selectedFlowIds.includes(f.id));
             const tasksRef = collection(db, "projects", selectedProjectId, "areas", selectedAreaId, "tasks");
-            for (const flowDoc of flowsSnap.docs) {
-                const flow = flowDoc.data();
+            for (let i = 0; i < flowsToCopy.length; i++) {
+                const flow = flowsToCopy[i];
                 await addDoc(tasksRef, {
                     name: flow.name,
-                    order: typeof flow.order === "number" ? flow.order : 9999,
+                    order: i + 1,
                     status: "pending",
                 });
             }
@@ -207,25 +234,44 @@ export default function WorkTypeDetailPage() {
                 <SortableContext items={flows.map(f => f.id)} strategy={verticalListSortingStrategy}>
                     <ul className="space-y-2">
                         {flows.map(flow => (
-                            <SortableFlowItem
-                                key={flow.id}
-                                id={flow.id}
-                                name={editingFlowId === flow.id ? '' : flow.name}
-                                editing={editingFlowId === flow.id}
-                                editingName={editingFlowName}
-                                onEdit={() => handleEditFlow(flow.id, flow.name)}
-                                onSave={() => handleSaveEditFlow(flow.id)}
-                                onChange={setEditingFlowName}
-                                onDelete={() => handleDeleteFlow(flow.id)}
-                            />
+                            <li key={flow.id} className="flex items-center gap-2">
+                                {/* 新增：複製選擇用 checkbox */}
+                                <input
+                                    type="checkbox"
+                                    checked={selectedFlowIds.includes(flow.id)}
+                                    onChange={() => handleToggleFlow(flow.id)}
+                                    className="accent-blue-600"
+                                    title="選擇要複製"
+                                />
+                                <SortableFlowItem
+                                    id={flow.id}
+                                    name={editingFlowId === flow.id ? '' : flow.name}
+                                    editing={editingFlowId === flow.id}
+                                    editingName={editingFlowName}
+                                    onEdit={() => handleEditFlow(flow.id, flow.name)}
+                                    onSave={() => handleSaveEditFlow(flow.id)}
+                                    onChange={setEditingFlowName}
+                                    onDelete={() => handleDeleteFlow(flow.id)}
+                                />
+                            </li>
                         ))}
                     </ul>
                 </SortableContext>
             </DndContext>
-
             {/* 複製流程到專案區域 */}
             <div className="border p-4 my-8 rounded bg-gray-50">
                 <div className="font-bold mb-2">複製本範本流程到專案區域</div>
+                {/* 新增：全選/全不選按鈕 */}
+                <button
+                    className="text-blue-600 underline text-sm mb-2"
+                    type="button"
+                    onClick={handleToggleAllFlows}
+                >
+                    {selectedFlowIds.length === flows.length ? "全不選" : "全選全部流程"}
+                </button>
+                <div className="mb-2 text-sm text-gray-600">
+                    已選 {selectedFlowIds.length} / {flows.length} 個流程，拖曳可調整複製順序
+                </div>
                 <div className="mb-2">
                     <label>選擇專案：</label>
                     <select value={selectedProjectId} onChange={e => handleProjectChange(e.target.value)} className="border px-2 py-1 rounded">
@@ -249,7 +295,7 @@ export default function WorkTypeDetailPage() {
                 <button
                     className="bg-blue-600 text-white px-3 py-1 rounded"
                     onClick={handleCopyFlowsToArea}
-                    disabled={!selectedProjectId || !selectedAreaId || copying}
+                    disabled={!selectedProjectId || !selectedAreaId || copying || selectedFlowIds.length === 0}
                 >
                     {copying ? "複製中..." : "複製流程"}
                 </button>
