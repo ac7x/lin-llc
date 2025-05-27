@@ -262,6 +262,16 @@ export default function ProjectsPage() {
             canResize="both"
             onItemMove={handleItemMove}
             onItemResize={handleItemResize}
+            lineHeight={50}
+            timeSteps={{
+              second: 0,
+              minute: 0,
+              hour: 12,
+              day: 1,
+              month: 1,
+              year: 1
+            }}
+            dragSnap={12 * 60 * 60 * 1000}      // 12小時的毫秒數
           />
           <h2>快速指派專案給用戶（建立新日程）</h2>
           <ul>
