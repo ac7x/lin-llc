@@ -1,31 +1,29 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { updateUserRole } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { updateUserRole, getUsersList, deleteUserFromFirestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 type FirebaseAuthUser = {
   uid: string;
   email?: string;
   displayName?: string;
+  emailVerified?: boolean;
+  photoURL?: string;
+  updatedAt?: Date;
+  role?: string;
   metadata?: {
     creationTime?: string;
     lastSignInTime?: string;
   };
   disabled?: boolean;
-  role?: string; // 新增 role 欄位
 };
 
 async function fetchUsers(): Promise<FirebaseAuthUser[]> {
-  // 僅供展示，實際應於 server 端實作
-  const res = await fetch('/api/admin/list-users');
-  if (!res.ok) throw new Error('無法取得用戶列表');
-  return res.json();
+  return await getUsersList();
 }
 
 async function deleteUser(uid: string): Promise<void> {
-  // 僅供展示，實際應於 server 端實作
-  const res = await fetch(`/api/admin/delete-user?uid=${uid}`, { method: 'POST' });
-  if (!res.ok) throw new Error('刪除失敗');
+  await deleteUserFromFirestore(uid);
 }
 
 export default function AdminUsersPage() {
@@ -101,9 +99,11 @@ export default function AdminUsersPage() {
                                         className="border rounded px-1 py-0.5 bg-white dark:bg-gray-800"
                                     >
                                         <option value="">—</option>
-                                        <option value="user">user</option>
                                         <option value="admin">admin</option>
+                                        <option value="finance">finance</option>
                                         <option value="owner">owner</option>
+                                        <option value="user">user</option>
+                                        <option value="vendor">vendor</option>
                                     </select>
                                 </td>
                                 <td className="border px-2 py-1">
