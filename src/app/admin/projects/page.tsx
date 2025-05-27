@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { getFirestore, collection, addDoc, Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, updateDoc, addDoc, doc, Timestamp } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useRouter } from 'next/navigation';
 
@@ -28,26 +28,6 @@ export default function AdminProjectsPage() {
         });
     }
 
-    // 刪除專案
-    async function handleDelete(id: string) {
-        if (!confirm('確定要刪除此專案嗎？')) return;
-        await deleteDoc(doc(db, 'projects', id));
-    }
-
-    // 進入編輯模式
-    function startEdit(id: string, name: string, description: string) {
-        setEditingId(id);
-        setEditName(name);
-        setEditDesc(description);
-    }
-
-    // 取消編輯
-    function cancelEdit() {
-        setEditingId(null);
-        setEditName('');
-        setEditDesc('');
-    }
-
     // 送出編輯
     async function submitEdit(e: React.FormEvent) {
         e.preventDefault();
@@ -56,6 +36,13 @@ export default function AdminProjectsPage() {
             name: editName,
             description: editDesc
         });
+        setEditingId(null);
+        setEditName('');
+        setEditDesc('');
+    }
+
+    // 取消編輯
+    function cancelEdit() {
         setEditingId(null);
         setEditName('');
         setEditDesc('');
