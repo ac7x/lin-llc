@@ -11,6 +11,7 @@ type Task = {
   id: string;
   name?: string;
   assignee?: string;
+  workspace?: string; // 新增 workspace 屬性
   // ...可擴充其他欄位
 };
 
@@ -43,6 +44,18 @@ export default function ProjectTasksPage() {
     }
     fetchWorkTypes();
   }, []);
+
+  // 取得所有工作區域
+  const [workspaces, setWorkspaces] = useState<{id: string, name: string}[]>([]);
+  const [selectedWorkspace, setSelectedWorkspace] = useState('');
+  useEffect(() => {
+    async function fetchWorkspaces() {
+      const db = getFirestore(app);
+      const snap = await getDocs(collection(db, 'projects', projectId, 'workspaces'));
+      setWorkspaces(snap.docs.map(doc => ({ id: doc.id, name: doc.data().name || doc.id })));
+    }
+    if (projectId) fetchWorkspaces();
+  }, [projectId]);
 
   // 複製範本任務到專案
   async function handleCopyTasks() {
@@ -100,11 +113,27 @@ export default function ProjectTasksPage() {
     ? tasksSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Task, 'id'>) }))
     : [];
 
+  // 過濾任務
+  const filteredTasks = selectedWorkspace
+    ? tasks.filter(task => task.workspace === selectedWorkspace)
+    : tasks;
+
   return (
     <div>
       <h2 className="text-xl font-bold">任務列表</h2>
-      {/* 從範本複製任務區塊 */}
+      {/* 工作區域過濾選單 */}
       <div className="mb-4 flex items-center gap-2">
+        <select
+          className="border px-2 py-1"
+          value={selectedWorkspace}
+          onChange={e => setSelectedWorkspace(e.target.value)}
+        >
+          <option value="">全部工作區域</option>
+          {workspaces.map(ws => (
+            <option key={ws.id} value={ws.id}>{ws.name}</option>
+          ))}
+        </select>
+        {/* 原本的範本選單與複製按鈕 */}
         <select
           className="border px-2 py-1"
           value={selectedWorkType}
@@ -124,15 +153,16 @@ export default function ProjectTasksPage() {
         </button>
         {copyMsg && <span className="text-green-700 ml-2">{copyMsg}</span>}
       </div>
-      {tasks.length === 0 ? (
+      {filteredTasks.length === 0 ? (
         <p>尚未有任務。</p>
       ) : (
         <ul className="mt-4 space-y-2">
-          {tasks.map(task => (
+          {filteredTasks.map(task => (
             <li key={task.id}>
               <div className="p-2 border rounded">
                 <p className="font-semibold">{task.name ?? '(未命名任務)'}</p>
                 <p>負責人：{task.assignee ?? '(未指定)'}</p>
+                <p className="text-xs text-gray-500">工作區域：{task.workspace || '—'}</p>
               </div>
             </li>
           ))}
