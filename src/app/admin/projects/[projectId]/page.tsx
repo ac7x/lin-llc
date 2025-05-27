@@ -1,10 +1,11 @@
 "use client";
 
 import { app } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { getFirestore, collection, query, orderBy, addDoc, doc, getDoc } from "firebase/firestore";
+import { getFirestore, collection, query, orderBy, addDoc, doc, getDoc, getDocs } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import React from "react";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -19,6 +20,35 @@ export default function ProjectDetailPage() {
   const [addingArea, setAddingArea] = useState(false);
   const areasRef = collection(db, "projects", projectId, "areas");
   const [areasSnap] = useCollection(areasRef);
+
+  // 新增：區域 tasks 狀態
+  type AreaTask = {
+    id: string;
+    name: string;
+    status?: string;
+    order?: number;
+    // 其他欄位可依需求擴充
+  };
+
+  const [areaTasks, setAreaTasks] = useState<{ [areaId: string]: AreaTask[] }>({});
+
+  // 新增：載入每個區域的 tasks
+  React.useEffect(() => {
+    async function fetchAreaTasks() {
+      if (!areasSnap) return;
+      const result: { [areaId: string]: AreaTask[] } = {};
+      for (const areaDoc of areasSnap.docs) {
+        const tasksRef = collection(db, "projects", projectId, "areas", areaDoc.id, "tasks");
+        const tasksSnap = await getDocs(tasksRef);
+        result[areaDoc.id] = tasksSnap.docs.map(d => ({
+          id: d.id,
+          ...(d.data() as Omit<AreaTask, "id">)
+        }));
+      }
+      setAreaTasks(result);
+    }
+    fetchAreaTasks();
+  }, [areasSnap, db, projectId]);
 
   // 新增區域並複製 flows
   async function handleAddArea(e: React.FormEvent) {
@@ -79,8 +109,20 @@ export default function ProjectDetailPage() {
       <ul className="space-y-2">
         {areasSnap?.docs.length === 0 && <li className="text-gray-500">尚無區域</li>}
         {areasSnap?.docs.map(doc => (
-          <li key={doc.id} className="border p-2 rounded flex items-center gap-2">
+          <li key={doc.id} className="border p-2 rounded flex flex-col gap-2">
             <span className="flex-1">{doc.data().name}</span>
+            {/* 新增：顯示該區域的 tasks */}
+            <ul className="ml-4 mt-1 space-y-1">
+              {areaTasks[doc.id]?.length === 0 && (
+                <li className="text-xs text-gray-400">（無任務）</li>
+              )}
+              {areaTasks[doc.id]?.map(task => (
+                <li key={task.id} className="text-xs flex gap-2 items-center">
+                  <span>{task.name}</span>
+                  <span className="text-gray-400">{task.status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
+                </li>
+              ))}
+            </ul>
           </li>
         ))}
       </ul>
