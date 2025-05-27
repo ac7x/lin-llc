@@ -1,6 +1,7 @@
 // src/modules/shared/infrastructure/persistence/firebase/firebase-client.ts
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -16,6 +17,7 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export const db = getFirestore(app);
 
 // Google 登入
 export const signInWithGooglePopup = () => signInWithPopup(auth, googleProvider);
@@ -23,3 +25,21 @@ export const signInWithGoogleRedirect = () => signInWithRedirect(auth, googlePro
 
 // 登出
 export const logout = () => signOut(auth);
+
+export async function saveUserToFirestore(user: {
+  uid: string;
+  email?: string | null;
+  emailVerified?: boolean;
+  displayName?: string | null;
+  photoURL?: string | null;
+}) {
+  if (!user?.uid) return;
+  await setDoc(doc(db, 'users', user.uid), {
+    uid: user.uid,
+    email: user.email || '',
+    emailVerified: user.emailVerified ?? false,
+    displayName: user.displayName || '',
+    photoURL: user.photoURL || '',
+    updatedAt: new Date(),
+  }, { merge: true });
+}

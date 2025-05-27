@@ -1,7 +1,7 @@
 // src/app/page.tsx
 "use client";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, signInWithGooglePopup, signInWithGoogleRedirect } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { auth, signInWithGooglePopup, signInWithGoogleRedirect, saveUserToFirestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -16,6 +16,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (user) {
+      saveUserToFirestore(user); // 寫入 Firestore users 集合
       router.push('/user/profile');
     }
   }, [user, router]);
