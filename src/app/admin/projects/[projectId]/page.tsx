@@ -5,7 +5,6 @@ import { app } from '@/modules/shared/infrastructure/persistence/firebase/fireba
 import { getFirestore, doc, updateDoc, deleteDoc, collection, addDoc } from 'firebase/firestore';
 import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useParams } from 'next/navigation';
@@ -147,9 +146,6 @@ export default function ProjectDetailPage() {
         <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
                 <h1 className="text-2xl font-bold">專案詳細頁</h1>
-                <Link href={`/admin/projects/${projectId}/tasks`} className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">查看任務</Link>
-                <Link href={`/admin/projects/${projectId}/schedule`} className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">查看排程</Link>
-                <Link href={`/admin/projects/${projectId}/edit`} className="text-sm bg-yellow-100 text-yellow-700 px-3 py-1 rounded hover:bg-yellow-200">編輯</Link>
                 <button onClick={handleDelete} className="text-sm bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200">刪除</button>
             </div>
             <div className="mb-2 text-gray-700">專案 ID: {projectId}</div>

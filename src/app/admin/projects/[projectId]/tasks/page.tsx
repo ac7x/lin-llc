@@ -51,6 +51,19 @@ export default function ProjectTasksPage() {
     setCopyMsg('');
     try {
       const db = getFirestore(app);
+      // 1. 複製 flows
+      const flowsSnap = await getDocs(collection(db, 'work-templates', selectedWorkType, 'flows'));
+      const flowIdMap: Record<string, string> = {};
+      for (const flowDoc of flowsSnap.docs) {
+        const data = flowDoc.data();
+        // 不複製 id，Firestore 會自動產生新 id
+        const newFlowRef = await addDoc(collection(db, 'projects', projectId, 'flows'), {
+          name: data.name || '',
+          order: data.order || 1
+        });
+        flowIdMap[flowDoc.id] = newFlowRef.id;
+      }
+      // 2. 複製 tasks，flowId 需對應新 id
       const tasksSnap = await getDocs(collection(db, 'work-templates', selectedWorkType, 'tasks'));
       if (tasksSnap.empty) {
         setCopyMsg('該範本沒有任務可複製');
@@ -59,15 +72,20 @@ export default function ProjectTasksPage() {
       }
       const batch = tasksSnap.docs.map(docSnap => {
         const data = docSnap.data();
+        // flowId 轉換
+        let newFlowId = data.flowId;
+        if (newFlowId && flowIdMap[newFlowId]) {
+          newFlowId = flowIdMap[newFlowId];
+        }
         return addDoc(collection(db, 'projects', projectId, 'tasks'), {
           name: data.name || '',
           description: data.description || '',
-          flowId: data.flowId || '',
+          flowId: newFlowId || '',
           order: data.order || 1
         });
       });
       await Promise.all(batch);
-      setCopyMsg('任務複製完成');
+      setCopyMsg('任務與流程複製完成');
     } catch {
       setCopyMsg('複製失敗');
     } finally {
