@@ -13,8 +13,8 @@ export default function ProjectDetailPage() {
   const params = useParams();
   const projectId = params?.projectId as string;
   const db = getFirestore(app);
-  const tasksRef = collection(db, "projects", projectId, "tasks");
-  const [tasksSnap] = useCollection(query(tasksRef, orderBy("order", "asc")));
+  // const tasksRef = collection(db, "projects", projectId, "tasks");
+  // const [tasksSnap] = useCollection(query(tasksRef, orderBy("order", "asc")));
 
   // 區域相關 state
   const [areaName, setAreaName] = useState("");
@@ -169,6 +169,16 @@ export default function ProjectDetailPage() {
     setSavingDate(s => ({ ...s, [taskId]: false }));
   }
 
+  // 新增：目前選擇的區域 tab
+  const [activeAreaId, setActiveAreaId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    // 若初次載入自動選第一個區域
+    if (areasSnap && areasSnap.docs.length > 0 && !activeAreaId) {
+      setActiveAreaId(areasSnap.docs[0].id);
+    }
+  }, [areasSnap, activeAreaId]);
+
   return (
     <div className="p-8 max-w-2xl mx-auto dark:bg-gray-900 min-h-screen">
       <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">專案詳細頁</h1>
@@ -194,6 +204,8 @@ export default function ProjectDetailPage() {
           <div>地址：{projectAddress || '—'}</div>
         </div>
       </div>
+      {/* 刪除原本的任務清單區塊 */}
+      {/* 
       <h2 className="text-lg font-semibold mt-6 mb-2 dark:text-gray-100">任務清單</h2>
       <ul className="space-y-2">
         {tasksSnap?.docs.length === 0 && <li className="text-gray-500 dark:text-gray-400">尚無任務</li>}
@@ -204,7 +216,7 @@ export default function ProjectDetailPage() {
           </li>
         ))}
       </ul>
-
+      */}
       {/* 區域管理 */}
       <h2 className="text-lg font-semibold mt-8 mb-2 dark:text-gray-100">區域管理</h2>
       <button
@@ -227,108 +239,130 @@ export default function ProjectDetailPage() {
         </form>
       )}
       {areaMsg && <div className="text-green-700 mb-2 dark:text-green-400">{areaMsg}</div>}
-      <ul className="space-y-2">
-        {areasSnap?.docs.length === 0 && <li className="text-gray-500 dark:text-gray-400">尚無區域</li>}
+
+      {/* Tabs for areas */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {areasSnap?.docs.length === 0 && (
+          <span className="text-gray-500 dark:text-gray-400">尚無區域</span>
+        )}
         {areasSnap?.docs.map(doc => (
-          <li key={doc.id} className="border p-2 rounded flex flex-col gap-2 dark:border-gray-700 dark:bg-gray-800">
-            <span className="flex-1 dark:text-gray-100">{doc.data().name}</span>
-            {/* 新增：顯示該區域的 tasks */}
-            <ul className="ml-4 mt-1 space-y-1">
-              {areaTasks[doc.id]?.length === 0 && (
-                <li className="text-xs text-gray-400 dark:text-gray-500">（無任務）</li>
-              )}
-              {areaTasks[doc.id]?.map(task => (
-                <li key={task.id} className="text-xs flex flex-col gap-1">
-                  <div className="flex gap-2 items-center">
-                    <span className="dark:text-gray-100">{task.name}</span>
-                    <span className="text-gray-400 dark:text-gray-500">{task.status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
-                    {/* 數量編輯 */}
-                    <span>
-                      數量：
-                      <input
-                        type="number"
-                        min={0}
-                        className="border px-1 w-16 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                        value={
-                          editQuantities[task.id] !== undefined
-                            ? editQuantities[task.id]
-                            : (typeof task.quantity === "number" ? task.quantity : "")
-                        }
-                        onChange={e =>
-                          setEditQuantities(q => ({
-                            ...q,
-                            [task.id]: e.target.value === "" ? "" : Number(e.target.value)
-                          }))
-                        }
-                        style={{ width: 50 }}
-                      />
-                      <button
-                        className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs dark:bg-blue-700"
-                        style={{ fontSize: "0.75rem" }}
-                        disabled={savingQuantity[task.id]}
-                        onClick={() => handleSaveQuantity(doc.id, task.id)}
-                        type="button"
-                      >
-                        儲存
-                      </button>
-                    </span>
-                  </div>
-                  {/* 預計日期編輯 */}
-                  <div className="flex gap-2 items-center mt-1">
-                    <span className="dark:text-gray-100">預計開始：</span>
+          <button
+            key={doc.id}
+            className={`px-4 py-1 rounded-t border-b-2 ${
+              activeAreaId === doc.id
+                ? "border-blue-600 bg-blue-100 dark:bg-blue-900 dark:border-blue-400"
+                : "border-transparent bg-gray-100 dark:bg-gray-800"
+            } dark:text-gray-100`}
+            onClick={() => setActiveAreaId(doc.id)}
+            type="button"
+          >
+            {doc.data().name}
+          </button>
+        ))}
+      </div>
+
+      {/* 區域內容 */}
+      {activeAreaId && (
+        <div className="border rounded-b p-4 dark:border-gray-700 dark:bg-gray-800">
+          <span className="font-bold dark:text-gray-100">
+            {areasSnap?.docs.find(d => d.id === activeAreaId)?.data().name}
+          </span>
+          {/* 顯示該區域的 tasks */}
+          <ul className="ml-2 mt-2 space-y-1">
+            {areaTasks[activeAreaId]?.length === 0 && (
+              <li className="text-xs text-gray-400 dark:text-gray-500">（無任務）</li>
+            )}
+            {areaTasks[activeAreaId]?.map(task => (
+              <li key={task.id} className="text-xs flex flex-col gap-1">
+                <div className="flex gap-2 items-center">
+                  <span className="dark:text-gray-100">{task.name}</span>
+                  <span className="text-gray-400 dark:text-gray-500">{task.status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
+                  {/* 數量編輯 */}
+                  <span>
+                    數量：
                     <input
-                      type="date"
-                      className="border px-1 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                      type="number"
+                      min={0}
+                      className="border px-1 w-16 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       value={
-                        editDates[task.id]?.plannedStartTime ??
-                        (task.plannedStartTime ? task.plannedStartTime.slice(0, 10) : "")
+                        editQuantities[task.id] !== undefined
+                          ? editQuantities[task.id]
+                          : (typeof task.quantity === "number" ? task.quantity : "")
                       }
                       onChange={e =>
-                        setEditDates(d => ({
-                          ...d,
-                          [task.id]: {
-                            plannedStartTime: e.target.value,
-                            plannedEndTime: d[task.id]?.plannedEndTime ?? (task.plannedEndTime ? task.plannedEndTime.slice(0, 10) : "")
-                          }
+                        setEditQuantities(q => ({
+                          ...q,
+                          [task.id]: e.target.value === "" ? "" : Number(e.target.value)
                         }))
                       }
-                      style={{ width: 130 }}
-                    />
-                    <span className="dark:text-gray-100">結束：</span>
-                    <input
-                      type="date"
-                      className="border px-1 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                      value={
-                        editDates[task.id]?.plannedEndTime ??
-                        (task.plannedEndTime ? task.plannedEndTime.slice(0, 10) : "")
-                      }
-                      onChange={e =>
-                        setEditDates(d => ({
-                          ...d,
-                          [task.id]: {
-                            plannedStartTime: d[task.id]?.plannedStartTime ?? (task.plannedStartTime ? task.plannedStartTime.slice(0, 10) : ""),
-                            plannedEndTime: e.target.value
-                          }
-                        }))
-                      }
-                      style={{ width: 130 }}
+                      style={{ width: 50 }}
                     />
                     <button
                       className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs dark:bg-blue-700"
                       style={{ fontSize: "0.75rem" }}
-                      disabled={savingDate[task.id]}
-                      onClick={() => handleSaveDates(doc.id, task.id)}
+                      disabled={savingQuantity[task.id]}
+                      onClick={() => handleSaveQuantity(activeAreaId, task.id)}
                       type="button"
                     >
                       儲存
                     </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
+                  </span>
+                </div>
+                {/* 預計日期編輯 */}
+                <div className="flex gap-2 items-center mt-1">
+                  <span className="dark:text-gray-100">預計開始：</span>
+                  <input
+                    type="date"
+                    className="border px-1 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                    value={
+                      editDates[task.id]?.plannedStartTime ??
+                      (task.plannedStartTime ? task.plannedStartTime.slice(0, 10) : "")
+                    }
+                    onChange={e =>
+                      setEditDates(d => ({
+                        ...d,
+                        [task.id]: {
+                          plannedStartTime: e.target.value,
+                          plannedEndTime: d[task.id]?.plannedEndTime ?? (task.plannedEndTime ? task.plannedEndTime.slice(0, 10) : "")
+                        }
+                      }))
+                    }
+                    style={{ width: 130 }}
+                  />
+                  <span className="dark:text-gray-100">結束：</span>
+                  <input
+                    type="date"
+                    className="border px-1 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                    value={
+                      editDates[task.id]?.plannedEndTime ??
+                      (task.plannedEndTime ? task.plannedEndTime.slice(0, 10) : "")
+                    }
+                    onChange={e =>
+                      setEditDates(d => ({
+                        ...d,
+                        [task.id]: {
+                          plannedStartTime: d[task.id]?.plannedStartTime ?? (task.plannedStartTime ? task.plannedStartTime.slice(0, 10) : ""),
+                          plannedEndTime: e.target.value
+                        }
+                      }))
+                    }
+                    style={{ width: 130 }}
+                  />
+                  <button
+                    className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs dark:bg-blue-700"
+                    style={{ fontSize: "0.75rem" }}
+                    disabled={savingDate[task.id]}
+                    onClick={() => handleSaveDates(activeAreaId, task.id)}
+                    type="button"
+                  >
+                    儲存
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
