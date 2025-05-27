@@ -117,7 +117,6 @@ const WorkScheduleManagementPage: React.FC = () => {
 			setAreaTasks(tasks);
 		}
 		fetchAreaGroupsAndTasks();
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []); // 只在 mount 時執行即可
 
 	useEffect(() => {
@@ -153,59 +152,9 @@ const WorkScheduleManagementPage: React.FC = () => {
 		[areaTasks]
 	);
 
-	const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
-		const item = items.find(i => i.id === itemId)
-		if (!item) { return }
-		const oldEpic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
-		if (!oldEpic) { return }
-		const wlIdx = (oldEpic.workLoads || []).findIndex(wl => wl.loadId === itemId)
-		if (wlIdx === -1) { return }
-		const newGroupId = groups[newGroupOrder].id as string
-		const newEpic = epics.find(e => e.epicId === newGroupId)
-		if (!newEpic) { return }
-		const newStart = new Date(dragTime)
-		const duration = differenceInMilliseconds(item.end_time as Date, item.start_time as Date)
-		const newEnd = new Date(newStart.getTime() + duration)
-		if (oldEpic.epicId !== newEpic.epicId) {
-			const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
-			await updateDoc(doc(firestore, 'workEpic', oldEpic.epicId), { workLoads: updatedOldWorkLoads })
-			const oldWorkload = (oldEpic.workLoads || [])[wlIdx]
-			const newWorkLoad: WorkLoadEntity = {
-				...oldWorkload,
-				plannedStartTime: newStart.toISOString(),
-				plannedEndTime: newEnd.toISOString()
-			}
-			const updatedNewWorkLoads = [...(newEpic.workLoads || []), newWorkLoad]
-			await updateDoc(doc(firestore, 'workEpic', newEpic.epicId), { workLoads: updatedNewWorkLoads })
-		} else {
-			const newWorkLoads = [...(oldEpic.workLoads || [])]
-			newWorkLoads[wlIdx] = {
-				...newWorkLoads[wlIdx],
-				plannedStartTime: newStart.toISOString(),
-				plannedEndTime: newEnd.toISOString()
-			}
-			await updateDoc(doc(firestore, 'workEpic', oldEpic.epicId), { workLoads: newWorkLoads })
-		}
-	}
-
-	const handleItemResize = async (itemId: string, time: number, edge: 'left' | 'right'): Promise<void> => {
-		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
-		if (!epic) { return }
-		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
-		if (wlIdx === -1) { return }
-		const wl = (epic.workLoads || [])[wlIdx]
-		let newStart = parseISO(wl.plannedStartTime)
-		let newEnd = wl.plannedEndTime ? parseISO(wl.plannedEndTime) : undefined
-		if (edge === 'left') { newStart = new Date(time) }
-		if (edge === 'right') { newEnd = new Date(time) }
-		const newWorkLoads = [...(epic.workLoads || [])]
-		newWorkLoads[wlIdx] = {
-			...wl,
-			plannedStartTime: newStart.toISOString(),
-			plannedEndTime: newEnd && isValid(newEnd) ? newEnd.toISOString() : ''
-		}
-		await updateDoc(doc(firestore, 'workEpic', epic.epicId), { workLoads: newWorkLoads })
-	}
+	// 刪除未使用的 handleItemMove 和 handleItemResize
+	// const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => { ... }
+	// const handleItemResize = async (itemId: string, time: number, edge: 'left' | 'right'): Promise<void> => { ... }
 
 	const handleItemRemove = async (itemId: string): Promise<void> => {
 		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
@@ -272,6 +221,55 @@ const WorkScheduleManagementPage: React.FC = () => {
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
+	// 新增：拖曳後更新 Firestore 的區域任務
+	const handleAreaTaskMove = async (itemId: string, dragTime: number, newGroupOrder: number) => {
+		const item = items.find(i => i.id === itemId);
+		if (!item) return;
+		const newGroup = groups[newGroupOrder];
+		if (!newGroup) return;
+		const newStart = new Date(dragTime);
+		const duration = differenceInMilliseconds(item.end_time as Date, item.start_time as Date);
+		const newEnd = new Date(newStart.getTime() + duration);
+
+		// 找到該 task 的 projectId, areaId
+		const task = areaTasks.find(t => t.id === itemId);
+		if (!task) return;
+
+		await updateDoc(
+			doc(
+				firestore,
+				"projects",
+				task.projectId,
+				"areas",
+				String(newGroup.id), // 這裡強制轉成 string
+				"tasks",
+				itemId
+			),
+			{
+				plannedStartTime: newStart.toISOString(),
+				plannedEndTime: newEnd.toISOString(),
+				// 若 group 變動，需移動 task 到新區域（需額外實作，這裡僅更新時間）
+			}
+		);
+	};
+
+	// 新增：調整長度
+	const handleAreaTaskResize = async (itemId: string, time: number, edge: 'left' | 'right') => {
+		const task = areaTasks.find(t => t.id === itemId);
+		if (!task) return;
+		let newStart = task.plannedStartTime ? parseISO(task.plannedStartTime) : new Date();
+		let newEnd = task.plannedEndTime ? parseISO(task.plannedEndTime) : addDays(newStart, 1);
+		if (edge === 'left') newStart = new Date(time);
+		if (edge === 'right') newEnd = new Date(time);
+		await updateDoc(
+			doc(firestore, "projects", task.projectId, "areas", task.areaId, "tasks", itemId),
+			{
+				plannedStartTime: newStart.toISOString(),
+				plannedEndTime: newEnd.toISOString(),
+			}
+		);
+	};
+
 	return (
 		<div>
 			<div>
@@ -321,7 +319,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 							minZoom={7 * 24 * 60 * 60 * 1000}
 							maxZoom={30 * 24 * 60 * 60 * 1000}
 							lineHeight={40}
-							sidebarWidth={75} // 原本 150，改為一半
+							sidebarWidth={75}
 							timeSteps={{
 								second: 1,
 								minute: 1,
@@ -330,8 +328,8 @@ const WorkScheduleManagementPage: React.FC = () => {
 								month: 1,
 								year: 1
 							}}
-							onItemMove={handleItemMove}
-							onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+							onItemMove={handleAreaTaskMove}
+							onItemResize={handleAreaTaskResize}
 							onItemDoubleClick={handleItemRemove}
 							groupRenderer={({ group }) => (
 								<div>
