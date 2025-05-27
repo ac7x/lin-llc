@@ -19,11 +19,20 @@ export default function ProjectDetailPage() {
     // 狀態：是否編輯、表單欄位
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({
-        name: '',
-        description: '',
-        manager: '',
-        supervisor: '',
-        safetyOfficer: ''
+        progress: '', // 進度
+        title: '',    // 標題
+        start: '',    // 開始
+        end: '',      // 結束
+        manager: '',  // 負責人
+        supervisor: '', // 現場監工
+        safetyOfficer: '', // 安全人員
+        status: '',   // 狀態
+        priority: '', // 優先
+        area: '',     // 區域
+        address: '',  // 地址
+        workspace: '', // 工作區
+        name: '',     // 舊欄位相容
+        description: '' // 舊欄位相容
     });
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState('');
@@ -33,11 +42,20 @@ export default function ProjectDetailPage() {
         if (projectSnap?.exists()) {
             const d = projectSnap.data() || {};
             setForm({
-                name: d.name || '',
-                description: d.description || '',
+                progress: d.progress || '',
+                title: d.title || '',
+                start: d.start || '',
+                end: d.end || '',
                 manager: d.manager || '',
                 supervisor: d.supervisor || '',
-                safetyOfficer: d.safetyOfficer || ''
+                safetyOfficer: d.safetyOfficer || '',
+                status: d.status || '',
+                priority: d.priority || '',
+                area: d.area || '',
+                address: d.address || '',
+                workspace: d.workspace || '',
+                name: d.name || '',
+                description: d.description || ''
             });
         }
     }, [projectSnap]);
@@ -57,11 +75,20 @@ export default function ProjectDetailPage() {
         setMsg('');
         try {
             await updateDoc(projectRef, {
-                name: form.name,
-                description: form.description,
+                progress: form.progress,
+                title: form.title,
+                start: form.start,
+                end: form.end,
                 manager: form.manager,
                 supervisor: form.supervisor,
-                safetyOfficer: form.safetyOfficer
+                safetyOfficer: form.safetyOfficer,
+                status: form.status,
+                priority: form.priority,
+                area: form.area,
+                address: form.address,
+                workspace: form.workspace,
+                name: form.name,
+                description: form.description
             });
             setMsg('儲存成功');
             setEditing(false);
@@ -80,24 +107,56 @@ export default function ProjectDetailPage() {
             {editing ? (
                 <form onSubmit={handleSave} className="space-y-3 max-w-md">
                     <div>
-                        <label className="font-semibold block mb-1">名稱</label>
-                        <input name="name" value={form.name} onChange={handleChange} className="border px-2 py-1 w-full" required />
+                        <label className="font-semibold block mb-1">進度</label>
+                        <input name="progress" value={form.progress} onChange={handleChange} className="border px-2 py-1 w-full" />
                     </div>
                     <div>
-                        <label className="font-semibold block mb-1">描述</label>
-                        <textarea name="description" value={form.description} onChange={handleChange} className="border px-2 py-1 w-full" />
+                        <label className="font-semibold block mb-1">標題</label>
+                        <input name="title" value={form.title} onChange={handleChange} className="border px-2 py-1 w-full" />
+                    </div>
+                    <div>
+                        <label className="font-semibold block mb-1">開始</label>
+                        <input name="start" value={form.start} onChange={handleChange} className="border px-2 py-1 w-full" type="date" />
+                    </div>
+                    <div>
+                        <label className="font-semibold block mb-1">結束</label>
+                        <input name="end" value={form.end} onChange={handleChange} className="border px-2 py-1 w-full" type="date" />
                     </div>
                     <div>
                         <label className="font-semibold block mb-1">負責人</label>
                         <input name="manager" value={form.manager} onChange={handleChange} className="border px-2 py-1 w-full" />
                     </div>
                     <div>
-                        <label className="font-semibold block mb-1">監工</label>
+                        <label className="font-semibold block mb-1">現場監工</label>
                         <input name="supervisor" value={form.supervisor} onChange={handleChange} className="border px-2 py-1 w-full" />
                     </div>
                     <div>
-                        <label className="font-semibold block mb-1">公安</label>
+                        <label className="font-semibold block mb-1">安全人員</label>
                         <input name="safetyOfficer" value={form.safetyOfficer} onChange={handleChange} className="border px-2 py-1 w-full" />
+                    </div>
+                    <div>
+                        <label className="font-semibold block mb-1">狀態</label>
+                        <input name="status" value={form.status} onChange={handleChange} className="border px-2 py-1 w-full" />
+                    </div>
+                    <div>
+                        <label className="font-semibold block mb-1">優先</label>
+                        <input name="priority" value={form.priority} onChange={handleChange} className="border px-2 py-1 w-full" />
+                    </div>
+                    <div>
+                        <label className="font-semibold block mb-1">區域</label>
+                        <input name="area" value={form.area} onChange={handleChange} className="border px-2 py-1 w-full" />
+                    </div>
+                    <div>
+                        <label className="font-semibold block mb-1">地址</label>
+                        <input name="address" value={form.address} onChange={handleChange} className="border px-2 py-1 w-full" />
+                    </div>
+                    <div>
+                        <label className="font-semibold block mb-1">工作區</label>
+                        <input name="workspace" value={form.workspace} onChange={handleChange} className="border px-2 py-1 w-full" />
+                    </div>
+                    <div>
+                        <label className="font-semibold block mb-1">描述</label>
+                        <textarea name="description" value={form.description} onChange={handleChange} className="border px-2 py-1 w-full" />
                     </div>
                     <div className="flex gap-2 mt-2">
                         <button type="submit" className="bg-blue-600 text-white px-4 py-1 rounded" disabled={saving}>儲存</button>
@@ -107,11 +166,19 @@ export default function ProjectDetailPage() {
                 </form>
             ) : (
                 <div>
-                    <div className="mb-2"><span className="font-semibold">名稱：</span>{form.name || '—'}</div>
-                    <div className="mb-2"><span className="font-semibold">描述：</span>{form.description || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">進度：</span>{form.progress || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">標題：</span>{form.title || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">開始：</span>{form.start || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">結束：</span>{form.end || '—'}</div>
                     <div className="mb-2"><span className="font-semibold">負責人：</span>{form.manager || '—'}</div>
-                    <div className="mb-2"><span className="font-semibold">監工：</span>{form.supervisor || '—'}</div>
-                    <div className="mb-2"><span className="font-semibold">公安：</span>{form.safetyOfficer || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">現場監工：</span>{form.supervisor || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">安全人員：</span>{form.safetyOfficer || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">狀態：</span>{form.status || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">優先：</span>{form.priority || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">區域：</span>{form.area || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">地址：</span>{form.address || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">工作區：</span>{form.workspace || '—'}</div>
+                    <div className="mb-2"><span className="font-semibold">描述：</span>{form.description || '—'}</div>
                     <button className="mt-4 bg-yellow-500 text-white px-4 py-1 rounded" onClick={() => setEditing(true)}>編輯</button>
                     {msg && <div className="text-sm mt-1 text-green-700">{msg}</div>}
                 </div>

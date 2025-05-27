@@ -1,20 +1,66 @@
 "use client";
 
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { getFirestore, collection } from 'firebase/firestore';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function AdminWorkTemplatesPage() {
     const db = getFirestore(app);
     const templatesRef = collection(db, 'work-templates');
     const [templatesSnap, loading, error] = useCollection(templatesRef);
     const router = useRouter();
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [msg, setMsg] = useState('');
+
+    // 建立範本
+    async function handleCreateTemplate(e: React.FormEvent) {
+        e.preventDefault();
+        setMsg('');
+        try {
+            await addDoc(templatesRef, {
+                name,
+                description,
+                createdAt: new Date()
+            });
+            setName('');
+            setDescription('');
+            setMsg('範本建立成功');
+        } catch (err) {
+            setMsg('建立失敗');
+        }
+    }
 
     return (
         <div className="pb-20 max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-4">範本管理</h1>
             <p className="mb-6 text-gray-600">管理所有工作範本，點擊卡片可進入詳細設定。</p>
+            <form onSubmit={handleCreateTemplate} className="mb-6 space-y-4">
+                <div>
+                    <label className="block mb-1 font-medium">範本名稱</label>
+                    <input
+                        className="border px-2 py-1 w-full"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block mb-1 font-medium">描述</label>
+                    <textarea
+                        className="border px-2 py-1 w-full"
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        rows={2}
+                    />
+                </div>
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+                    建立範本
+                </button>
+                {msg && <div className="mt-2 text-sm text-green-600">{msg}</div>}
+            </form>
             {loading ? (
                 <div>載入中...</div>
             ) : error ? (
