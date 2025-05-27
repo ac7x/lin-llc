@@ -2,19 +2,28 @@
 
 // 若未來需要可引入 firebase-client
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
-import { useDocument } from 'react-firebase-hooks/firestore';
+import { getFirestore, doc, updateDoc, deleteDoc, collection, addDoc } from 'firebase/firestore';
+import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { useParams } from 'next/navigation';
 
 export default function ProjectDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const projectId = params?.projectId as string;
 
     const db = getFirestore(app);
     const projectRef = doc(db, 'projects', projectId);
     const [projectSnap, loading, error] = useDocument(projectRef);
+
+    // 工作區域 Firestore 連結
+    const workspacesRef = collection(db, 'projects', projectId, 'workspaces');
+    const [workspacesSnap] = useCollection(workspacesRef);
+    const [newWorkspaceName, setNewWorkspaceName] = useState('');
+    const [workspaceMsg, setWorkspaceMsg] = useState('');
 
     // 狀態：是否編輯、表單欄位
     const [editing, setEditing] = useState(false);
@@ -100,9 +109,47 @@ export default function ProjectDetailPage() {
         }
     };
 
+    // 刪除專案
+    const handleDelete = async () => {
+        if (!window.confirm('確定要刪除此專案嗎？此動作無法復原。')) return;
+        try {
+            await deleteDoc(projectRef);
+            router.push('/admin/projects');
+        } catch (err) {
+            alert('刪除失敗');
+        }
+    };
+
+    // 新增工作區域
+    const handleAddWorkspace = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setWorkspaceMsg('');
+        if (!newWorkspaceName.trim()) return;
+        try {
+            await addDoc(workspacesRef, { name: newWorkspaceName });
+            setNewWorkspaceName('');
+            setWorkspaceMsg('新增成功');
+        } catch {
+            setWorkspaceMsg('新增失敗');
+        }
+    };
+    // 刪除工作區域
+    const handleDeleteWorkspace = async (id: string) => {
+        if (!window.confirm('確定要刪除此工作區域？')) return;
+        try {
+            await deleteDoc(doc(db, 'projects', projectId, 'workspaces', id));
+        } catch {}
+    };
+
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">專案詳細頁</h1>
+            <div className="flex items-center gap-3 mb-4">
+                <h1 className="text-2xl font-bold">專案詳細頁</h1>
+                <Link href={`/admin/projects/${projectId}/tasks`} className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">查看任務</Link>
+                <Link href={`/admin/projects/${projectId}/schedule`} className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">查看排程</Link>
+                <Link href={`/admin/projects/${projectId}/edit`} className="text-sm bg-yellow-100 text-yellow-700 px-3 py-1 rounded hover:bg-yellow-200">編輯</Link>
+                <button onClick={handleDelete} className="text-sm bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200">刪除</button>
+            </div>
             <div className="mb-2 text-gray-700">專案 ID: {projectId}</div>
             {editing ? (
                 <form onSubmit={handleSave} className="space-y-3 max-w-md">
@@ -204,6 +251,29 @@ export default function ProjectDetailPage() {
                 </a>
             </div>
             {/* 導覽結束 */}
+            <div className="mt-8">
+                <h2 className="text-lg font-bold mb-2">工作區域</h2>
+                <form onSubmit={handleAddWorkspace} className="flex gap-2 mb-4">
+                    <input
+                        className="border px-2 py-1 flex-1"
+                        value={newWorkspaceName}
+                        onChange={e => setNewWorkspaceName(e.target.value)}
+                        placeholder="輸入區域名稱"
+                        required
+                    />
+                    <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded">新增</button>
+                </form>
+                {workspaceMsg && <div className="text-green-700 mb-2">{workspaceMsg}</div>}
+                <ul className="space-y-2">
+                    {workspacesSnap?.docs.length === 0 && <li className="text-gray-500">尚無工作區域</li>}
+                    {workspacesSnap?.docs.map(ws => (
+                        <li key={ws.id} className="border p-2 rounded flex items-center justify-between">
+                            <span>{ws.data().name}</span>
+                            <button onClick={() => handleDeleteWorkspace(ws.id)} className="text-xs text-red-600 hover:underline">刪除</button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
         </div>
     );
 }

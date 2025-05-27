@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { getFirestore, collection, updateDoc, addDoc, doc, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, updateDoc, doc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function AdminProjectsPage() {
-    const [name, setName] = useState('');
-    const [message, setMessage] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
 
@@ -16,14 +15,6 @@ export default function AdminProjectsPage() {
     const projectsRef = collection(db, 'projects');
     const [projectsSnap, loading, error] = useCollection(projectsRef);
     const router = useRouter();
-
-    // 新增專案
-    async function createProject({ name }: { name: string }) {
-        await addDoc(projectsRef, {
-            name,
-            createdAt: Timestamp.now()
-        });
-    }
 
     // 送出編輯
     async function submitEdit(e: React.FormEvent) {
@@ -36,32 +27,16 @@ export default function AdminProjectsPage() {
         setEditName('');
     }
 
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        setMessage('');
-        try {
-            await createProject({ name });
-            setMessage('專案建立成功');
-            setName('');
-        } catch (err: unknown) {
-            let errorMsg = '建立失敗: 未知錯誤';
-            if (err instanceof Error) {
-                errorMsg = '建立失敗: ' + err.message;
-            }
-            setMessage(errorMsg);
-        }
-    }
-
     return (
         <div className="pb-20">
             <h1 className="text-2xl font-bold mb-4">專案管理</h1>
             <div className="mb-6">
-                <a
+                <Link
                   href="/admin/projects/add"
                   className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                 >
                   新增專案
-                </a>
+                </Link>
             </div>
             <h2 className="text-xl font-bold mb-2">專案列表</h2>
             {loading ? (

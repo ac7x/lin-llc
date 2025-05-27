@@ -28,7 +28,7 @@ export default function AdminWorkTemplatesPage() {
             setName('');
             setDescription('');
             setMsg('範本建立成功');
-        } catch (err) {
+        } catch {
             setMsg('建立失敗');
         }
     }

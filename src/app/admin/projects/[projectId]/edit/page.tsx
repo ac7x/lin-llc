@@ -27,7 +27,7 @@ export default function EditProjectPage() {
       setLoading(false);
     }
     fetchData();
-  }, [projectId]);
+  }, [projectId, projectRef]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
