@@ -1,10 +1,10 @@
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 
-export default function AdminWorkEpicPage() {
+export default function AdminSettingsPage() {
     return (
         <div className="pb-20">
-            <h1 className="text-2xl font-bold mb-4">工作規劃</h1>
-            <p>這是工作規劃頁面的內容。</p>
+            <h1 className="text-2xl font-bold mb-4">設定</h1>
+            <p>這是設定頁面的內容。</p>
             <AdminBottomNav />
         </div>
     );

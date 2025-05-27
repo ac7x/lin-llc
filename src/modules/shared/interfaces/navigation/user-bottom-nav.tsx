@@ -16,9 +16,9 @@ interface UserBottomNavProps {
 }
 
 const defaultNavItems: NavItem[] = [
-  { href: '/user/schedule', icon: '📅', label: '排程用戶端', active: false },
-  { href: '/user/task', icon: '📝', label: '工作任務', active: false },
-  { href: '/user/epic', icon: '📖', label: '工作史詩', active: false },
+  { href: '/user/tasks', icon: '📝', label: '工作任務', active: false },
+  { href: '/user/schedule', icon: '📅', label: '排程', active: false },
+  { href: '/user/projects', icon: '📖', label: '專案', active: false },
   { href: '/user/profile', icon: '🧑‍💼', label: '用戶', active: false },
 ];
 

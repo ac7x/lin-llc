@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 
 // 需建立一個 server action 來取得所有 firebase auth 用戶
 async function fetchUsers(): Promise<FirebaseAuthUser[]> {
@@ -92,6 +93,7 @@ export default function AdminUsersPage() {
                     </tbody>
                 </table>
             </div>
+            <AdminBottomNav />
         </div>
     );
 }

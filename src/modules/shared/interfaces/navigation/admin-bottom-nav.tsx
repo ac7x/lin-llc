@@ -16,11 +16,14 @@ interface AdminBottomNavProps {
 }
 
 const defaultAdminNavItems: NavItem[] = [
-    { href: '/admin/schedule', icon: '📅', label: '排程管理', active: false },
-    { href: '/admin/work-task', icon: '✅', label: '任務管理', active: false },
+    { href: '/admin/work-templates', icon: '📋', label: '範本管理', active: false },
     { href: '/admin/work-epic', icon: '📊', label: '工作規劃', active: false },
-    { href: '/admin/work-template', icon: '📋', label: '範本管理', active: false },
-    { href: '/admin/work-human-resource', icon: '👥', label: '人力資源', active: false },
+    { href: '/admin/users', icon: '👤', label: '用戶管理', active: false },
+    { href: '/admin/settings', icon: '⚙️', label: '設定', active: false },
+    { href: '/admin/schedule', icon: '📅', label: '排程管理', active: false },
+    { href: '/admin/projects', icon: '📁', label: '專案管理', active: false },
+    { href: '/admin/inventory', icon: '📦', label: '庫存管理', active: false },
+    { href: '/admin/contractors', icon: '👷', label: '協力廠商', active: false },
 ];
 
 export function AdminBottomNav({ items = defaultAdminNavItems }: AdminBottomNavProps) {

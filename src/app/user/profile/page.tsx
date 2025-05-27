@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { firebaseApp } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav';
 
 export default function UserProfilePage() {
     const [user, setUser] = useState<User | null>(null);
@@ -61,6 +62,7 @@ export default function UserProfilePage() {
                     </div>
                 )}
             </div>
+            <UserBottomNav />
         </main>
     );
 }

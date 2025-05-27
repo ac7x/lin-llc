@@ -1,33 +1,23 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { firebaseApp } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { useRouter } from 'next/navigation';
 
 const HomePage: React.FC = () => {
-  const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   const handleGoogleLogin = async () => {
-    setError(null);
     const auth = getAuth(firebaseApp);
     const provider = new GoogleAuthProvider();
     try {
-      const userCredential = await signInWithPopup(auth, provider);
-      setUser(userCredential.user);
-    } catch (err: any) {
-      setError(err.message);
+      await signInWithPopup(auth, provider);
+      router.push('/user/profile');
+    } catch (err) {
+      alert('登入失敗，請重試');
     }
   };
-
-  if (user) {
-    return (
-      <div className="p-6 max-w-lg mx-auto space-y-4">
-        <h1 className="text-2xl font-bold">歡迎, {user.displayName || user.email}</h1>
-        <p className="text-base">您已使用 Google 帳號登入。</p>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 max-w-lg mx-auto space-y-4">
@@ -39,7 +29,6 @@ const HomePage: React.FC = () => {
       >
         使用 Google 帳號登入
       </button>
-      {error && <div className="text-red-500">{error}</div>}
     </div>
   );
 };
