@@ -58,15 +58,18 @@ function DraggableUnplannedTask({ task }: { task: AreaTask }) {
 				opacity: isDragging ? 0.5 : 1,
 				cursor: "grab",
 				border: "1px solid #ddd",
-				padding: 8,
-				marginBottom: 4,
+				padding: 4,
+				marginBottom: 2,
 				background: "#fff",
-				borderRadius: 4,
+				borderRadius: 3,
+				fontSize: 14,
+				boxShadow: isDragging ? '0 2px 8px rgba(0,0,0,0.12)' : undefined,
+				transition: 'box-shadow 0.2s',
 			}}
 			title={`來自專案 ${task.projectId} 區域 ${task.areaId}`}
 		>
-			<div>{task.name || '（無標題）'}</div>
-			<div className="text-xs text-gray-500">
+			<div style={{ fontWeight: 500 }}>{task.name || '（無標題）'}</div>
+			<div className="text-xs text-gray-500" style={{ fontSize: 12 }}>
 				專案: {task.projectId} / 區域: {task.areaId}
 			</div>
 		</div>
