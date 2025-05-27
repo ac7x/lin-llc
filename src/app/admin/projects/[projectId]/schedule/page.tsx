@@ -4,10 +4,14 @@
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { getFirestore, doc } from 'firebase/firestore';
 import { useDocument } from 'react-firebase-hooks/firestore';
+import { useParams } from 'next/navigation';
 
-export default function ProjectSchedulePage({ params }: { params: { projectId: string } }) {
+export default function ProjectSchedulePage() {
+  const params = useParams();
+  const projectId = params?.projectId as string;
+
   const db = getFirestore(app);
-  const scheduleRef = doc(db, `projects/${params.projectId}/schedule/default`);
+  const scheduleRef = doc(db, `projects/${projectId}/schedule/default`);
   const [scheduleSnap, loading, error] = useDocument(scheduleRef);
 
   if (loading) return <div>載入中...</div>;
