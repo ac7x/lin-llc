@@ -31,6 +31,9 @@ export default function AdminUsersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // 新增表單狀態
+    const [newDisplayName, setNewDisplayName] = useState('');
+
     useEffect(() => {
         setLoading(true);
         fetchUsers()
@@ -64,10 +67,55 @@ export default function AdminUsersPage() {
         }
     };
 
+    // 虛擬用戶建立處理，只能建立 user 角色
+    const handleCreateVirtualUser = () => {
+        if (!newDisplayName) {
+            setError('請輸入名稱');
+            return;
+        }
+        const randomUid = 'virtual_' + Math.random().toString(36).slice(2, 12);
+        const now = new Date().toISOString();
+        const newUser: FirebaseAuthUser = {
+            uid: randomUid,
+            displayName: newDisplayName,
+            role: 'user',
+            email: undefined,
+            emailVerified: false,
+            photoURL: undefined,
+            updatedAt: new Date(),
+            metadata: {
+                creationTime: now,
+                lastSignInTime: now,
+            },
+            disabled: false,
+        };
+        setUsers(users => [newUser, ...users]);
+        setNewDisplayName('');
+        setError(null);
+    };
+
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
             <div className="max-w-3xl mx-auto px-2 py-8">
                 <h1 className="text-2xl font-bold mb-4 text-center">Firebase 用戶管理</h1>
+                {/* 新增虛擬用戶表單，只能建立 user 角色 */}
+                <div className="mb-6 flex flex-col sm:flex-row gap-2 items-center justify-center">
+                    <input
+                        type="text"
+                        placeholder="名稱"
+                        value={newDisplayName}
+                        onChange={e => setNewDisplayName(e.target.value)}
+                        className="border rounded px-2 py-1 w-40"
+                    />
+                    <span className="px-2">角色: <span className="font-semibold">user</span></span>
+                    <button
+                        onClick={handleCreateVirtualUser}
+                        className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+                        type="button"
+                    >
+                        建立虛擬用戶
+                    </button>
+                </div>
                 {loading && <div>載入中...</div>}
                 {error && <div className="text-red-600">{error}</div>}
                 <table className="w-full border-collapse mb-8 text-left">
