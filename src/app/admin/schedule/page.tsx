@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { collection, getDocs, addDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
 import Timeline from "react-calendar-timeline";
 import "react-calendar-timeline/style.css";
 import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
@@ -109,6 +109,72 @@ export default function ProjectsPage() {
     }
   };
 
+  // 拖拉或縮放專案時更新 Firestore
+  const handleItemMove = async (
+    itemId: string,
+    dragTime: number,
+    newGroupOrder: number
+  ) => {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+    const newGroup = groups[newGroupOrder]?.id || item.group;
+    const duration = item.end_time - item.start_time;
+    const newStart = dragTime;
+    const newEnd = dragTime + duration;
+    try {
+      await updateDoc(doc(db, "projects", itemId), {
+        createdAt: Timestamp.fromMillis(newStart),
+        // 若有 endAt 欄位可同步更新
+      });
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === itemId
+            ? {
+                ...it,
+                group: newGroup,
+                start_time: newStart,
+                end_time: newEnd,
+              }
+            : it
+        )
+      );
+    } catch {
+      alert("更新時間失敗");
+    }
+  };
+
+  const handleItemResize = async (
+    itemId: string,
+    time: number,
+    edge: "left" | "right"
+  ) => {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+    let newStart = item.start_time;
+    let newEnd = item.end_time;
+    if (edge === "left") newStart = time;
+    else newEnd = time;
+    try {
+      await updateDoc(doc(db, "projects", itemId), {
+        createdAt: Timestamp.fromMillis(newStart),
+        // 若有 endAt 欄位可同步更新
+      });
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === itemId
+            ? {
+                ...it,
+                start_time: newStart,
+                end_time: newEnd,
+              }
+            : it
+        )
+      );
+    } catch {
+      alert("更新時間失敗");
+    }
+  };
+
   // 計算顯示區間
   const now = new Date();
   const defaultTimeStart = subDays(startOfDay(now), 2);
@@ -132,6 +198,10 @@ export default function ProjectsPage() {
             items={items}
             defaultTimeStart={defaultTimeStart.getTime()}
             defaultTimeEnd={defaultTimeEnd.getTime()}
+            canMove
+            canResize="both"
+            onItemMove={handleItemMove}
+            onItemResize={handleItemResize}
           />
           <h2>快速指派地點給用戶</h2>
           <ul>
