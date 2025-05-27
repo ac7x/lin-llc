@@ -30,7 +30,10 @@ import {
   QueryConstraint,
   DocumentData,
   onSnapshot,
-  Timestamp
+  Timestamp,
+  Query,
+  QuerySnapshot,
+  DocumentSnapshot
 } from 'firebase/firestore';
 import { 
   getStorage, 
@@ -39,8 +42,7 @@ import {
   uploadBytes,
   uploadBytesResumable,
   getDownloadURL,
-  deleteObject,
-  StorageReference
+  deleteObject
 } from 'firebase/storage';
 import { 
   getAnalytics, 
@@ -83,8 +85,8 @@ class FirebaseClient {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
       return { success: true, user: userCredential.user };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -95,8 +97,8 @@ class FirebaseClient {
     try {
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
       return { success: true, user: userCredential.user };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -108,8 +110,8 @@ class FirebaseClient {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(this.auth, provider);
       return { success: true, user: result.user };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -120,8 +122,8 @@ class FirebaseClient {
     try {
       await signOut(this.auth);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -132,8 +134,8 @@ class FirebaseClient {
     try {
       await sendPasswordResetEmail(this.auth, email);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -147,8 +149,8 @@ class FirebaseClient {
         return { success: true };
       }
       return { success: false, error: 'No user signed in' };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -179,8 +181,8 @@ class FirebaseClient {
         updatedAt: Timestamp.now()
       });
       return { success: true, id: docRef.id };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -194,8 +196,8 @@ class FirebaseClient {
         updatedAt: Timestamp.now()
       }, { merge });
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -204,14 +206,14 @@ class FirebaseClient {
    */
   async getDocument(collectionName: string, docId: string) {
     try {
-      const docSnap = await getDoc(doc(this.db, collectionName, docId));
+      const docSnap: DocumentSnapshot<DocumentData> = await getDoc(doc(this.db, collectionName, docId));
       if (docSnap.exists()) {
         return { success: true, data: { id: docSnap.id, ...docSnap.data() } };
       } else {
         return { success: false, error: 'Document not found' };
       }
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -220,21 +222,21 @@ class FirebaseClient {
    */
   async getCollection(collectionName: string, constraints?: QueryConstraint[]) {
     try {
-      let q = collection(this.db, collectionName);
-      
+      let q: Query<DocumentData> = collection(this.db, collectionName);
+
       if (constraints && constraints.length > 0) {
-        q = query(q, ...constraints) as any;
+        q = query(q, ...constraints);
       }
 
-      const querySnapshot = await getDocs(q);
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
       const docs = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
       
       return { success: true, data: docs };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -248,8 +250,8 @@ class FirebaseClient {
         updatedAt: Timestamp.now()
       });
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -260,18 +262,22 @@ class FirebaseClient {
     try {
       await deleteDoc(doc(this.db, collectionName, docId));
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
   /**
    * 實時監聽文檔變化
    */
-  subscribeToDocument(collectionName: string, docId: string, callback: (data: any) => void) {
-    return onSnapshot(doc(this.db, collectionName, docId), (doc) => {
-      if (doc.exists()) {
-        callback({ id: doc.id, ...doc.data() });
+  subscribeToDocument(
+    collectionName: string,
+    docId: string,
+    callback: (data: { id: string; [key: string]: unknown } | null) => void
+  ) {
+    return onSnapshot(doc(this.db, collectionName, docId), (docSnap: DocumentSnapshot<DocumentData>) => {
+      if (docSnap.exists()) {
+        callback({ id: docSnap.id, ...docSnap.data() });
       } else {
         callback(null);
       }
@@ -281,14 +287,17 @@ class FirebaseClient {
   /**
    * 實時監聽集合變化
    */
-  subscribeToCollection(collectionName: string, callback: (data: any[]) => void, constraints?: QueryConstraint[]) {
-    let q = collection(this.db, collectionName);
-    
+  subscribeToCollection(
+    collectionName: string,
+    callback: (data: { id: string; [key: string]: unknown }[]) => void,
+    constraints?: QueryConstraint[]
+  ) {
+    let q: Query<DocumentData> = collection(this.db, collectionName);
     if (constraints && constraints.length > 0) {
-      q = query(q, ...constraints) as any;
+      q = query(q, ...constraints);
     }
 
-    return onSnapshot(q, (querySnapshot) => {
+    return onSnapshot(q, (querySnapshot: QuerySnapshot<DocumentData>) => {
       const docs = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -307,15 +316,15 @@ class FirebaseClient {
       const storageRef = ref(this.storage, path);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
-      
+
       return { 
         success: true, 
         downloadURL,
         ref: snapshot.ref,
         metadata: snapshot.metadata 
       };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -339,14 +348,14 @@ class FirebaseClient {
         onProgress?.(progress);
       },
       (error) => {
-        onError?.(error.message);
+        onError?.((error as Error).message);
       },
       async () => {
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           onComplete?.(downloadURL);
-        } catch (error: any) {
-          onError?.(error.message);
+        } catch (error) {
+          onError?.((error as Error).message);
         }
       }
     );
@@ -362,8 +371,8 @@ class FirebaseClient {
       const storageRef = ref(this.storage, path);
       const url = await getDownloadURL(storageRef);
       return { success: true, url };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -375,8 +384,8 @@ class FirebaseClient {
       const storageRef = ref(this.storage, path);
       await deleteObject(storageRef);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -385,12 +394,12 @@ class FirebaseClient {
   /**
    * 記錄自定義事件
    */
-  logAnalyticsEvent(eventName: string, parameters?: { [key: string]: any }) {
+  logAnalyticsEvent(eventName: string, parameters?: { [key: string]: unknown }) {
     try {
       logEvent(this.analytics, eventName, parameters);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -400,7 +409,7 @@ class FirebaseClient {
    * 創建查詢條件
    */
   createQueryConstraints(conditions: {
-    where?: { field: string; operator: any; value: any }[];
+    where?: { field: string; operator: unknown; value: unknown }[];
     orderBy?: { field: string; direction?: 'asc' | 'desc' }[];
     limit?: number;
   }): QueryConstraint[] {
@@ -408,7 +417,7 @@ class FirebaseClient {
 
     if (conditions.where) {
       conditions.where.forEach(({ field, operator, value }) => {
-        constraints.push(where(field, operator, value));
+        constraints.push(where(field, operator as any, value)); // operator 只接受 firebase 支援的
       });
     }
 
