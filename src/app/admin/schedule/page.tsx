@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
-import { DndContext, useDraggable, DragEndEvent } from "@dnd-kit/core"
+import { DndContext, useDraggable, useDroppable, DragEndEvent } from "@dnd-kit/core"
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
@@ -239,54 +239,59 @@ export default function SchedulePage() {
 		)
 	}
 
+	const { setNodeRef: setTimelineDroppableRef } = useDroppable({ id: "timeline-droppable" });
+
 	return (
-		<div>
+		<DndContext onDragEnd={handleTimelineDrop} id="unplanned-dnd-context">
 			<div>
 				<div
 					ref={timelineRef}
 					style={{ minHeight: 400 }}
 				>
-					<Timeline
-						groups={timelineGroups}
-						items={timelineItems}
-						defaultTimeStart={defaultTimeStart.getTime()}
-						defaultTimeEnd={defaultTimeEnd.getTime()}
-						canMove
-						canResize="both"
-						canChangeGroup
-						stackItems
-						minZoom={7 * 24 * 60 * 60 * 1000}
-						maxZoom={30 * 24 * 60 * 60 * 1000}
-						lineHeight={40}
-						sidebarWidth={75}
-						timeSteps={{
-							second: 1,
-							minute: 1,
-							hour: 1,
-							day: 1,
-							month: 1,
-							year: 1
-						}}
-						onItemMove={handleAreaTaskMove}
-						onItemResize={handleAreaTaskResize}
-						groupRenderer={({ group }) => (
-							<div>
-								{group.title}
-							</div>
-						)}
-						itemRenderer={({ item, getItemProps, getResizeProps }) => {
-							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-							return (
-								<div
-									{...getItemProps({})}
-								>
-									<div {...leftResizeProps} />
-									<span>{item.title}</span>
-									<div {...rightResizeProps} />
+					{/* 讓 Timeline 成為 drop target */}
+					<div ref={setTimelineDroppableRef}>
+						<Timeline
+							groups={timelineGroups}
+							items={timelineItems}
+							defaultTimeStart={defaultTimeStart.getTime()}
+							defaultTimeEnd={defaultTimeEnd.getTime()}
+							canMove
+							canResize="both"
+							canChangeGroup
+							stackItems
+							minZoom={7 * 24 * 60 * 60 * 1000}
+							maxZoom={30 * 24 * 60 * 60 * 1000}
+							lineHeight={40}
+							sidebarWidth={75}
+							timeSteps={{
+								second: 1,
+								minute: 1,
+								hour: 1,
+								day: 1,
+								month: 1,
+								year: 1
+							}}
+							onItemMove={handleAreaTaskMove}
+							onItemResize={handleAreaTaskResize}
+							groupRenderer={({ group }) => (
+								<div>
+									{group.title}
 								</div>
-							)
-						}}
-					/>
+							)}
+							itemRenderer={({ item, getItemProps, getResizeProps }) => {
+								const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+								return (
+									<div
+										{...getItemProps({})}
+									>
+										<div {...leftResizeProps} />
+										<span>{item.title}</span>
+										<div {...rightResizeProps} />
+									</div>
+								)
+							}}
+						/>
+					</div>
 				</div>
 				<div>
 					<h2>尚未安排時程</h2>
@@ -295,19 +300,17 @@ export default function SchedulePage() {
 							<span>（無未排程工作）</span>
 						</div>
 					) : (
-						<DndContext onDragEnd={handleTimelineDrop} id="unplanned-dnd-context">
-							<div
-								tabIndex={0}
-								aria-label="unplanned-jobs"
-							>
-								{unplannedTasks.map(t => (
-									<DraggableUnplannedTask key={t.id} task={t} />
-								))}
-							</div>
-						</DndContext>
+						<div
+							tabIndex={0}
+							aria-label="unplanned-jobs"
+						>
+							{unplannedTasks.map(t => (
+								<DraggableUnplannedTask key={t.id} task={t} />
+							))}
+						</div>
 					)}
 				</div>
 			</div>
-		</div>
+		</DndContext>
 	)
 }
