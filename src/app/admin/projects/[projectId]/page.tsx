@@ -138,7 +138,9 @@ export default function ProjectDetailPage() {
         if (!window.confirm('確定要刪除此工作區域？')) return;
         try {
             await deleteDoc(doc(db, 'projects', projectId, 'workspaces', id));
-        } catch {}
+        } catch {
+            // 錯誤處理可加上訊息顯示
+        }
     };
 
     return (
