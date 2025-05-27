@@ -152,7 +152,10 @@ export default function SchedulePage() {
 		[tasks]
 	)
 
-	// 拖曳到 timeline 時寫入 Firestore，開始時間對齊 0:00:00，結束+1天
+	// 讓 timeline 外層 div 成為 droppable 區域
+	const { setNodeRef: setTimelineDroppableRef } = useDroppable({ id: "timeline-droppable" });
+
+	// 拖曳到 timeline 時寫入 Firestore 並立即 setTasks
 	const handleTimelineDrop = async (event: DragEndEvent) => {
 		const task = unplannedTasks.find(t => t.id === event.active.id)
 		if (!task) return
@@ -188,6 +191,8 @@ export default function SchedulePage() {
 				plannedEndTime: endTime.toISOString(),
 			}
 		)
+		// 立即刷新
+		setTasks(prev => prev.map(t => t.id === task.id ? { ...t, plannedStartTime: startTime.toISOString(), plannedEndTime: endTime.toISOString() } : t))
 	}
 
 	// 支援 timeline 內部拖曳（可選）
@@ -240,8 +245,6 @@ export default function SchedulePage() {
 		)
 	}
 
-	const { setNodeRef: setTimelineDroppableRef } = useDroppable({ id: "timeline-droppable" });
-
 	return (
 		<DndContext
 			onDragEnd={handleTimelineDrop}
@@ -256,7 +259,7 @@ export default function SchedulePage() {
 					style={{ minHeight: 400 }}
 				>
 					{/* 讓 Timeline 成為 drop target */}
-					<div ref={setTimelineDroppableRef}>
+					<div ref={setTimelineDroppableRef} style={{ height: '100%' }}>
 						<Timeline
 							groups={timelineGroups}
 							items={timelineItems}
@@ -317,12 +320,12 @@ export default function SchedulePage() {
 						</div>
 					)}
 				</div>
-				<DragOverlay>
-					{activeDragTaskId ? (
-						<DraggableUnplannedTask task={unplannedTasks.find(t => t.id === activeDragTaskId)!} />
-					) : null}
-				</DragOverlay>
 			</div>
+			<DragOverlay>
+				{activeDragTaskId ? (
+					<DraggableUnplannedTask task={unplannedTasks.find(t => t.id === activeDragTaskId)!} />
+				) : null}
+			</DragOverlay>
 		</DndContext>
 	)
 }

@@ -43,7 +43,7 @@ export function AdminBottomNav({ items = defaultAdminNavItems }: AdminBottomNavP
                 paddingBottom: 'env(safe-area-inset-bottom)',
             }}
         >
-            <div className="flex h-full mx-auto items-center w-full overflow-x-auto whitespace-nowrap">
+            <div className="flex h-full mx-auto items-center w-full overflow-x-auto whitespace-nowrap justify-center">
                 {navItems.map((item, index) => (
                     <Link
                         key={index}
