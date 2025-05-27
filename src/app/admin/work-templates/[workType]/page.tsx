@@ -9,14 +9,6 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEn
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-type Task = {
-    id: string;
-    name?: string;
-    description?: string;
-    flowId?: string;
-    order?: number;
-};
-
 type Flow = {
     id: string;
     name: string;
@@ -83,17 +75,6 @@ export default function WorkTypeDetailPage() {
     const [editingFlowId, setEditingFlowId] = useState('');
     const [editingFlowName, setEditingFlowName] = useState('');
 
-    // 任務
-    const tasksRef = collection(db, 'work-templates', workTypeId, 'tasks');
-    const [tasksSnap] = useCollection(query(tasksRef, orderBy('order', 'asc')));
-    const [taskName, setTaskName] = useState('');
-    const [taskDesc, setTaskDesc] = useState('');
-    const [taskFlowId, setTaskFlowId] = useState('');
-    const [taskOrder, setTaskOrder] = useState(1);
-    const [taskMsg, setTaskMsg] = useState('');
-    const [editingTaskId, setEditingTaskId] = useState('');
-    const [editingTask, setEditingTask] = useState({ name: '', description: '', flowId: '', order: 1 });
-
     // flowsSnap 變動時同步本地 flows 狀態
     React.useEffect(() => {
         if (flowsSnap) {
@@ -127,41 +108,6 @@ export default function WorkTypeDetailPage() {
     // 刪除流程
     const handleDeleteFlow = async (id: string) => {
         await deleteDoc(doc(db, 'work-templates', workTypeId, 'flows', id));
-    };
-
-    // 新增任務
-    const handleAddTask = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setTaskMsg('');
-        try {
-            await addDoc(tasksRef, { name: taskName, description: taskDesc, flowId: taskFlowId, order: taskOrder });
-            setTaskName('');
-            setTaskDesc('');
-            setTaskFlowId('');
-            setTaskOrder(1);
-            setTaskMsg('新增成功');
-        } catch {
-            setTaskMsg('新增失敗');
-        }
-    };
-    // 編輯任務
-    const handleEditTask = (task: Task) => {
-        setEditingTaskId(task.id);
-        setEditingTask({
-            name: task.name || '',
-            description: task.description || '',
-            flowId: task.flowId || '',
-            order: task.order || 1
-        });
-    };
-    const handleSaveEditTask = async (id: string) => {
-        await updateDoc(doc(db, 'work-templates', workTypeId, 'tasks', id), editingTask);
-        setEditingTaskId('');
-        setEditingTask({ name: '', description: '', flowId: '', order: 1 });
-    };
-    // 刪除任務
-    const handleDeleteTask = async (id: string) => {
-        await deleteDoc(doc(db, 'work-templates', workTypeId, 'tasks', id));
     };
 
     // dnd-kit sensors
@@ -211,49 +157,6 @@ export default function WorkTypeDetailPage() {
                     </ul>
                 </SortableContext>
             </DndContext>
-            {/* 任務管理 */}
-            <h2 className="text-lg font-semibold mt-6 mb-2">任務</h2>
-            <form onSubmit={handleAddTask} className="flex gap-2 mb-4 flex-wrap">
-                <input className="border px-2 py-1" value={taskName} onChange={e => setTaskName(e.target.value)} placeholder="任務名稱" required />
-                <input className="border px-2 py-1" value={taskDesc} onChange={e => setTaskDesc(e.target.value)} placeholder="描述" />
-                <select className="border px-2 py-1" value={taskFlowId} onChange={e => setTaskFlowId(e.target.value)} required>
-                    <option value="">選擇流程</option>
-                    {flowsSnap?.docs.map(flow => (
-                        <option key={flow.id} value={flow.id}>{flow.data().name}</option>
-                    ))}
-                </select>
-                <input className="border px-2 py-1 w-20" type="number" value={taskOrder} onChange={e => setTaskOrder(Number(e.target.value))} min={1} placeholder="順序" />
-                <button className="bg-blue-600 text-white px-3 py-1 rounded" type="submit">新增任務</button>
-            </form>
-            {taskMsg && <div className="text-green-700 mb-2">{taskMsg}</div>}
-            <ul className="space-y-2">
-                {tasksSnap?.docs.map(task => (
-                    <li key={task.id} className="border p-2 rounded flex items-center gap-2">
-                        {editingTaskId === task.id ? (
-                            <>
-                                <input className="border px-2 py-1" value={editingTask.name} onChange={e => setEditingTask(t => ({ ...t, name: e.target.value }))} />
-                                <input className="border px-2 py-1" value={editingTask.description} onChange={e => setEditingTask(t => ({ ...t, description: e.target.value }))} />
-                                <select className="border px-2 py-1" value={editingTask.flowId} onChange={e => setEditingTask(t => ({ ...t, flowId: e.target.value }))} required>
-                                    <option value="">選擇流程</option>
-                                    {flowsSnap?.docs.map(flow => (
-                                        <option key={flow.id} value={flow.id}>{flow.data().name}</option>
-                                    ))}
-                                </select>
-                                <input className="border px-2 py-1 w-20" type="number" value={editingTask.order} onChange={e => setEditingTask(t => ({ ...t, order: Number(e.target.value) }))} min={1} />
-                                <button className="text-xs bg-green-500 text-white px-2 py-1 rounded" onClick={() => handleSaveEditTask(task.id)}>儲存</button>
-                                <button className="text-xs bg-gray-300 px-2 py-1 rounded" onClick={() => setEditingTaskId('')}>取消</button>
-                            </>
-                        ) : (
-                            <>
-                                <span className="flex-1">{task.data().name}（{task.data().description}）</span>
-                                <span className="text-xs text-gray-500">流程：{flowsSnap?.docs.find(f => f.id === task.data().flowId)?.data().name || '—'}</span>
-                                <button className="text-xs text-blue-600 hover:underline" onClick={() => handleEditTask({ id: task.id, ...task.data() })}>編輯</button>
-                                <button className="text-xs text-red-600 hover:underline" onClick={() => handleDeleteTask(task.id)}>刪除</button>
-                            </>
-                        )}
-                    </li>
-                ))}
-            </ul>
         </div>
     );
 }

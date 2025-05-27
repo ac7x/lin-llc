@@ -14,7 +14,7 @@ export default function AdminWorkTemplatesPage() {
     return (
         <div className="pb-20 max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-4">施工種類管理</h1>
-            <p className="mb-6 text-gray-600">管理所有施工種類（範本），點擊卡片可進入流程與任務設定。</p>
+            <p className="mb-6 text-gray-600">管理所有施工種類（範本），點擊卡片可進入設定施工流程。</p>
             <div className="mb-6">
                 <button
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
