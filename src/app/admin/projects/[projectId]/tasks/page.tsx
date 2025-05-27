@@ -2,9 +2,10 @@
 "use client";
 
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { getFirestore, collection } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, addDoc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type Task = {
   id: string;
@@ -13,6 +14,13 @@ type Task = {
   // ...可擴充其他欄位
 };
 
+// workTypes 型別明確化
+interface WorkType {
+  id: string;
+  name?: string;
+  description?: string;
+}
+
 export default function ProjectTasksPage() {
   const params = useParams();
   const projectId = params?.projectId as string;
@@ -20,6 +28,52 @@ export default function ProjectTasksPage() {
   const db = getFirestore(app);
   const tasksRef = collection(db, `projects/${projectId}/tasks`);
   const [tasksSnap, loading, error] = useCollection(tasksRef);
+
+  const [copying, setCopying] = useState(false);
+  const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
+  const [selectedWorkType, setSelectedWorkType] = useState('');
+  const [copyMsg, setCopyMsg] = useState('');
+
+  // 取得所有範本種類
+  useEffect(() => {
+    async function fetchWorkTypes() {
+      const db = getFirestore(app);
+      const snap = await getDocs(collection(db, 'work-templates'));
+      setWorkTypes(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WorkType)));
+    }
+    fetchWorkTypes();
+  }, []);
+
+  // 複製範本任務到專案
+  async function handleCopyTasks() {
+    if (!selectedWorkType) return;
+    setCopying(true);
+    setCopyMsg('');
+    try {
+      const db = getFirestore(app);
+      const tasksSnap = await getDocs(collection(db, 'work-templates', selectedWorkType, 'tasks'));
+      if (tasksSnap.empty) {
+        setCopyMsg('該範本沒有任務可複製');
+        setCopying(false);
+        return;
+      }
+      const batch = tasksSnap.docs.map(docSnap => {
+        const data = docSnap.data();
+        return addDoc(collection(db, 'projects', projectId, 'tasks'), {
+          name: data.name || '',
+          description: data.description || '',
+          flowId: data.flowId || '',
+          order: data.order || 1
+        });
+      });
+      await Promise.all(batch);
+      setCopyMsg('任務複製完成');
+    } catch {
+      setCopyMsg('複製失敗');
+    } finally {
+      setCopying(false);
+    }
+  }
 
   if (loading) return <div>載入中...</div>;
   if (error) return <div>發生錯誤: {error.message}</div>;
@@ -31,6 +85,27 @@ export default function ProjectTasksPage() {
   return (
     <div>
       <h2 className="text-xl font-bold">任務列表</h2>
+      {/* 從範本複製任務區塊 */}
+      <div className="mb-4 flex items-center gap-2">
+        <select
+          className="border px-2 py-1"
+          value={selectedWorkType}
+          onChange={e => setSelectedWorkType(e.target.value)}
+        >
+          <option value="">選擇範本種類</option>
+          {workTypes.map(wt => (
+            <option key={wt.id} value={wt.id}>{wt.name || wt.id}</option>
+          ))}
+        </select>
+        <button
+          className="bg-blue-600 text-white px-3 py-1 rounded"
+          onClick={handleCopyTasks}
+          disabled={!selectedWorkType || copying}
+        >
+          {copying ? '複製中...' : '從範本複製任務'}
+        </button>
+        {copyMsg && <span className="text-green-700 ml-2">{copyMsg}</span>}
+      </div>
       {tasks.length === 0 ? (
         <p>尚未有任務。</p>
       ) : (

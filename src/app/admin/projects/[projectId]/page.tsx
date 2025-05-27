@@ -115,7 +115,7 @@ export default function ProjectDetailPage() {
         try {
             await deleteDoc(projectRef);
             router.push('/admin/projects');
-        } catch (err) {
+        } catch {
             alert('刪除失敗');
         }
     };
