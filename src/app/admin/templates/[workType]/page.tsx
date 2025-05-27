@@ -60,13 +60,13 @@ function SortableFlowItem({ id, name, editing, editingName, onEdit, onSave, onCh
 
 export default function WorkTypeDetailPage() {
     const params = useParams();
-    const workTypeId = params?.workType as string;
+    const TypeId = params?.workType as string;
     const db = getFirestore(app);
-    const workTypeRef = doc(db, 'templates', workTypeId);
+    const workTypeRef = doc(db, 'templates', TypeId);
     const [workTypeSnap] = useDocument(workTypeRef);
 
     // 流程
-    const flowsRef = collection(db, 'templates', workTypeId, 'flows');
+    const flowsRef = collection(db, 'templates', TypeId, 'flows');
     const [flowsSnap] = useCollection(query(flowsRef, orderBy('order', 'asc')));
     const [flows, setFlows] = useState<Flow[]>([]);
     const [flowName, setFlowName] = useState('');
@@ -77,7 +77,17 @@ export default function WorkTypeDetailPage() {
     // flowsSnap 變動時同步本地 flows 狀態
     React.useEffect(() => {
         if (flowsSnap) {
-            setFlows(flowsSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Flow, 'id'>) })));
+            // 先將資料依 order 排序，order 缺失時放最後
+            const flowsList = flowsSnap.docs.map(doc => {
+                const data = doc.data() as Omit<Flow, 'id'>;
+                return {
+                    id: doc.id,
+                    name: data.name,
+                    order: typeof data.order === 'number' ? data.order : 9999,
+                };
+            });
+            flowsList.sort((a, b) => a.order - b.order);
+            setFlows(flowsList);
         }
     }, [flowsSnap]);
 
@@ -86,11 +96,19 @@ export default function WorkTypeDetailPage() {
         e.preventDefault();
         setFlowMsg('');
         try {
-            // 計算新的順序值（目前最大順序值 + 1）
-            const maxOrder = flows.reduce((max, flow) => Math.max(max, flow.order), 0);
-            await addDoc(flowsRef, { 
-                name: flowName, 
-                order: maxOrder + 1 
+            // 直接從 flowsSnap.docs 計算最大 order
+            let maxOrder = 0;
+            if (flowsSnap && flowsSnap.docs.length > 0) {
+                maxOrder = Math.max(
+                    ...flowsSnap.docs.map(doc => {
+                        const data = doc.data() as { order?: number };
+                        return typeof data.order === 'number' ? data.order : 0;
+                    })
+                );
+            }
+            await addDoc(flowsRef, {
+                name: flowName,
+                order: maxOrder + 1
             });
             setFlowName('');
             setFlowMsg('新增成功');
@@ -104,13 +122,13 @@ export default function WorkTypeDetailPage() {
         setEditingFlowName(name);
     };
     const handleSaveEditFlow = async (id: string) => {
-        await updateDoc(doc(db, 'templates', workTypeId, 'flows', id), { name: editingFlowName });
+        await updateDoc(doc(db, 'templates', TypeId, 'flows', id), { name: editingFlowName });
         setEditingFlowId('');
         setEditingFlowName('');
     };
-    // 刪除流程
+    // 刪除流程 });
     const handleDeleteFlow = async (id: string) => {
-        await deleteDoc(doc(db, 'templates', workTypeId, 'flows', id));
+        await deleteDoc(doc(db, 'templates', TypeId, 'flows', id));
     };
 
     // dnd-kit sensors
@@ -126,7 +144,7 @@ export default function WorkTypeDetailPage() {
         setFlows(newFlows);
         // 批次更新 Firestore
         for (const f of newFlows) {
-            await updateDoc(doc(db, 'templates', workTypeId, 'flows', f.id), { order: f.order });
+            await updateDoc(doc(db, 'templates', TypeId, 'flows', f.id), { order: f.order });
         }
     };
 
