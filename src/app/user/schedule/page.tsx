@@ -109,6 +109,17 @@ export default function SchedulePage() {
     [tasks]
   );
 
+  // 只顯示日期數字（如 20、21）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      document.querySelectorAll('.rct-dateHeader-primary').forEach(el => {
+        const match = el.textContent?.match(/\d+/);
+        if (match) el.textContent = match[0];
+      });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [timelineItems, timelineGroups]);
+
   return (
     <div>
       <div
