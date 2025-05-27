@@ -1,5 +1,8 @@
 "use client";
 
+// 若未來需要可引入 firebase-client
+// import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+
 import { useParams } from 'next/navigation';
 
 export default function ProjectDetailPage() {

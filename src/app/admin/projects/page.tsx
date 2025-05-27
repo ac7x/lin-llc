@@ -1,13 +1,24 @@
 "use client";
 
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
-import { createProject } from './actions';
 import { useState } from 'react';
+import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
 export default function AdminProjectsPage() {
     const [name, setName] = useState('');
     const [desc, setDesc] = useState('');
     const [message, setMessage] = useState('');
+
+    // 新增專案
+    async function createProject({ name, description }: { name: string; description: string }) {
+        const db = getFirestore(app);
+        await addDoc(collection(db, 'projects'), {
+            name,
+            description,
+            createdAt: new Date()
+        });
+    }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
