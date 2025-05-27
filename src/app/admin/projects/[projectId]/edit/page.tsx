@@ -66,13 +66,13 @@ export default function EditProjectPage() {
   }
 
   return (
-    <div className="p-8 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">編輯專案</h1>
-      <form onSubmit={handleEditSubmit} className="space-y-4 border p-4 rounded bg-gray-50">
+    <div className="p-8 max-w-md mx-auto dark:bg-gray-900 min-h-screen">
+      <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">編輯專案</h1>
+      <form onSubmit={handleEditSubmit} className="space-y-4 border p-4 rounded bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
         <div>
-          <label className="block mb-1 font-medium">名稱</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">名稱</label>
           <input
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             value={editName}
             onChange={e => setEditName(e.target.value)}
             required
@@ -80,9 +80,9 @@ export default function EditProjectPage() {
           />
         </div>
         <div>
-          <label className="block mb-1 font-medium">描述</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">描述</label>
           <textarea
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             value={editDesc}
             onChange={e => setEditDesc(e.target.value)}
             rows={2}
@@ -90,8 +90,8 @@ export default function EditProjectPage() {
           />
         </div>
         <div>
-          <label className="block mb-1 font-medium">負責人</label>
-          <select className="border px-2 py-1 w-full" value={editManager} onChange={e => setEditManager(e.target.value)} required disabled={saving}>
+          <label className="block mb-1 font-medium dark:text-gray-200">負責人</label>
+          <select className="border px-2 py-1 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" value={editManager} onChange={e => setEditManager(e.target.value)} required disabled={saving}>
             <option value="">請選擇</option>
             {users.map(u => (
               <option key={u.uid} value={u.uid}>{u.displayName || u.email || u.uid}</option>
@@ -99,9 +99,9 @@ export default function EditProjectPage() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">現場監工</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">現場監工</label>
           <select
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             value={editSupervisor}
             onChange={e => {
               const options = Array.from(e.target.selectedOptions).map(o => o.value);
@@ -119,9 +119,9 @@ export default function EditProjectPage() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">安全衛生人員</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">安全衛生人員</label>
           <select
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             value={editSafety}
             onChange={e => {
               const options = Array.from(e.target.selectedOptions).map(o => o.value);
@@ -139,9 +139,9 @@ export default function EditProjectPage() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">地區</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">地區</label>
           <select
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             value={editRegion}
             onChange={e => setEditRegion(e.target.value)}
             required
@@ -156,9 +156,9 @@ export default function EditProjectPage() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">地址</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">地址</label>
           <input
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             value={editAddress}
             onChange={e => setEditAddress(e.target.value)}
             required
@@ -168,21 +168,21 @@ export default function EditProjectPage() {
         <div className="flex gap-2">
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-1 rounded"
+            className="bg-blue-600 text-white px-4 py-1 rounded dark:bg-blue-500"
             disabled={saving}
           >
             {saving ? "儲存中..." : "儲存"}
           </button>
           <button
             type="button"
-            className="bg-gray-300 px-4 py-1 rounded"
+            className="bg-gray-300 px-4 py-1 rounded dark:bg-gray-600 dark:text-gray-100"
             onClick={() => router.back()}
             disabled={saving}
           >
             取消
           </button>
         </div>
-        {editMsg && <div className="text-green-700">{editMsg}</div>}
+        {editMsg && <div className="text-green-700 dark:text-green-400">{editMsg}</div>}
       </form>
     </div>
   );

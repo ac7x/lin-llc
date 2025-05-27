@@ -35,13 +35,13 @@ export default function AddWorkTypePage() {
   }
 
   return (
-    <div className="p-8 max-w-md mx-auto">
+    <div className="p-8 max-w-md mx-auto bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <h1 className="text-2xl font-bold mb-4">新增施工種類（範本）</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-1 font-medium">名稱</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">名稱</label>
           <input
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
             value={name}
             onChange={e => setName(e.target.value)}
             required
@@ -49,9 +49,9 @@ export default function AddWorkTypePage() {
           />
         </div>
         <div>
-          <label className="block mb-1 font-medium">描述</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">描述</label>
           <textarea
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
             value={description}
             onChange={e => setDescription(e.target.value)}
             rows={2}
@@ -60,12 +60,12 @@ export default function AddWorkTypePage() {
         </div>
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded dark:bg-blue-500 dark:hover:bg-blue-700"
           disabled={saving}
         >
           {saving ? "建立中..." : "建立範本"}
         </button>
-        {msg && <div className="mt-2 text-sm text-green-600">{msg}</div>}
+        {msg && <div className="mt-2 text-sm text-green-600 dark:text-green-400">{msg}</div>}
       </form>
     </div>
   );

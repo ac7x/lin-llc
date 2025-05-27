@@ -36,23 +36,23 @@ function SortableFlowItem({ id, name, editing, editingName, onEdit, onSave, onCh
         background: isDragging ? '#f3f4f6' : undefined
     };
     return (
-        <li ref={setNodeRef} style={style} className="border p-2 rounded flex items-center gap-2 bg-white">
-            <span {...attributes} {...listeners} className="cursor-move text-gray-400 select-none pr-2">☰</span>
+        <li ref={setNodeRef} style={style} className="border p-2 rounded flex items-center gap-2 bg-white dark:bg-gray-800 dark:border-gray-700">
+            <span {...attributes} {...listeners} className="cursor-move text-gray-400 dark:text-gray-500 select-none pr-2">☰</span>
             {editing ? (
                 <>
                     <input
-                        className="border px-2 py-1 flex-1"
+                        className="border px-2 py-1 flex-1 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                         value={editingName}
                         onChange={e => onChange(e.target.value)}
                         autoFocus
                     />
-                    <button className="text-blue-600 px-2" onClick={onSave}>儲存</button>
+                    <button className="text-blue-600 dark:text-blue-400 px-2" onClick={onSave}>儲存</button>
                 </>
             ) : (
                 <>
                     <span className="flex-1">{name}</span>
-                    <button className="text-yellow-600 px-2" onClick={onEdit}>編輯</button>
-                    <button className="text-red-600 px-2" onClick={onDelete}>刪除</button>
+                    <button className="text-yellow-600 dark:text-yellow-400 px-2" onClick={onEdit}>編輯</button>
+                    <button className="text-red-600 dark:text-red-400 px-2" onClick={onDelete}>刪除</button>
                 </>
             )}
         </li>
@@ -221,15 +221,15 @@ export default function WorkTypeDetailPage() {
     }
 
     return (
-        <div className="pb-20 max-w-2xl mx-auto">
+        <div className="pb-20 max-w-2xl mx-auto bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
             <h1 className="text-2xl font-bold mb-4">{workTypeSnap?.data()?.name || '工作種類'}</h1>
             {/* 施工流程管理 */}
             <h2 className="text-lg font-semibold mt-6 mb-2">施工流程</h2>
             <form onSubmit={handleAddFlow} className="flex gap-2 mb-4">
-                <input className="border px-2 py-1 flex-1" value={flowName} onChange={e => setFlowName(e.target.value)} placeholder="流程名稱" required />
-                <button className="bg-blue-600 text-white px-3 py-1 rounded" type="submit">新增</button>
+                <input className="border px-2 py-1 flex-1 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" value={flowName} onChange={e => setFlowName(e.target.value)} placeholder="流程名稱" required />
+                <button className="bg-blue-600 text-white px-3 py-1 rounded dark:bg-blue-500 dark:hover:bg-blue-700" type="submit">新增</button>
             </form>
-            {flowMsg && <div className="text-green-700 mb-2">{flowMsg}</div>}
+            {flowMsg && <div className="text-green-700 dark:text-green-400 mb-2">{flowMsg}</div>}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={flows.map(f => f.id)} strategy={verticalListSortingStrategy}>
                     <ul className="space-y-2">
@@ -240,7 +240,7 @@ export default function WorkTypeDetailPage() {
                                     type="checkbox"
                                     checked={selectedFlowIds.includes(flow.id)}
                                     onChange={() => handleToggleFlow(flow.id)}
-                                    className="accent-blue-600"
+                                    className="accent-blue-600 dark:accent-blue-400"
                                     title="選擇要複製"
                                 />
                                 <SortableFlowItem
@@ -259,22 +259,22 @@ export default function WorkTypeDetailPage() {
                 </SortableContext>
             </DndContext>
             {/* 複製流程到專案區域 */}
-            <div className="border p-4 my-8 rounded bg-gray-50">
+            <div className="border p-4 my-8 rounded bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
                 <div className="font-bold mb-2">複製本範本流程到專案區域</div>
                 {/* 新增：全選/全不選按鈕 */}
                 <button
-                    className="text-blue-600 underline text-sm mb-2"
+                    className="text-blue-600 dark:text-blue-400 underline text-sm mb-2"
                     type="button"
                     onClick={handleToggleAllFlows}
                 >
                     {selectedFlowIds.length === flows.length ? "全不選" : "全選全部流程"}
                 </button>
-                <div className="mb-2 text-sm text-gray-600">
+                <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">
                     已選 {selectedFlowIds.length} / {flows.length} 個流程，拖曳可調整複製順序
                 </div>
                 <div className="mb-2">
-                    <label>選擇專案：</label>
-                    <select value={selectedProjectId} onChange={e => handleProjectChange(e.target.value)} className="border px-2 py-1 rounded">
+                    <label className="dark:text-gray-200">選擇專案：</label>
+                    <select value={selectedProjectId} onChange={e => handleProjectChange(e.target.value)} className="border px-2 py-1 rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                         <option value="">請選擇</option>
                         {projectsSnap?.docs.map(doc => (
                             <option key={doc.id} value={doc.id}>{doc.data().name || doc.id}</option>
@@ -283,8 +283,8 @@ export default function WorkTypeDetailPage() {
                 </div>
                 {areasSnap && (
                     <div className="mb-2">
-                        <label>選擇區域：</label>
-                        <select value={selectedAreaId} onChange={e => setSelectedAreaId(e.target.value)} className="border px-2 py-1 rounded">
+                        <label className="dark:text-gray-200">選擇區域：</label>
+                        <select value={selectedAreaId} onChange={e => setSelectedAreaId(e.target.value)} className="border px-2 py-1 rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
                             <option value="">請選擇</option>
                             {areasSnap.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => (
                                 <option key={doc.id} value={doc.id}>{doc.data().name || doc.id}</option>
@@ -293,13 +293,13 @@ export default function WorkTypeDetailPage() {
                     </div>
                 )}
                 <button
-                    className="bg-blue-600 text-white px-3 py-1 rounded"
+                    className="bg-blue-600 text-white px-3 py-1 rounded dark:bg-blue-500 dark:hover:bg-blue-700"
                     onClick={handleCopyFlowsToArea}
                     disabled={!selectedProjectId || !selectedAreaId || copying || selectedFlowIds.length === 0}
                 >
                     {copying ? "複製中..." : "複製流程"}
                 </button>
-                {copyMsg && <div className="mt-2 text-green-700">{copyMsg}</div>}
+                {copyMsg && <div className="mt-2 text-green-700 dark:text-green-400">{copyMsg}</div>}
             </div>
         </div>
     );

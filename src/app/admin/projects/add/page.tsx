@@ -55,13 +55,13 @@ export default function AddProjectPage() {
   }
 
   return (
-    <div className="p-8 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">新增專案</h1>
+    <div className="p-8 max-w-md mx-auto dark:bg-gray-900 min-h-screen">
+      <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">新增專案</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-1 font-medium">名稱</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">名稱</label>
           <input
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={name}
             onChange={e => setName(e.target.value)}
             required
@@ -69,9 +69,9 @@ export default function AddProjectPage() {
           />
         </div>
         <div>
-          <label className="block mb-1 font-medium">描述</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">描述</label>
           <textarea
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={description}
             onChange={e => setDescription(e.target.value)}
             rows={2}
@@ -79,9 +79,9 @@ export default function AddProjectPage() {
           />
         </div>
         <div>
-          <label className="block mb-1 font-medium">負責人</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">負責人</label>
           <select
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={manager}
             onChange={e => setManager(e.target.value)}
             required
@@ -96,9 +96,9 @@ export default function AddProjectPage() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">現場監工</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">現場監工</label>
           <select
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={supervisor}
             onChange={e => {
               const options = Array.from(e.target.selectedOptions).map(o => o.value);
@@ -116,9 +116,9 @@ export default function AddProjectPage() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">安全衛生人員</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">安全衛生人員</label>
           <select
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={safety}
             onChange={e => {
               const options = Array.from(e.target.selectedOptions).map(o => o.value);
@@ -136,9 +136,9 @@ export default function AddProjectPage() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">地區</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">地區</label>
           <select
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={region}
             onChange={e => setRegion(e.target.value)}
             required
@@ -153,9 +153,9 @@ export default function AddProjectPage() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">地址</label>
+          <label className="block mb-1 font-medium dark:text-gray-200">地址</label>
           <input
-            className="border px-2 py-1 w-full"
+            className="border px-2 py-1 w-full dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={address}
             onChange={e => setAddress(e.target.value)}
             required
@@ -164,12 +164,12 @@ export default function AddProjectPage() {
         </div>
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded dark:bg-blue-500"
           disabled={saving}
         >
           {saving ? "建立中..." : "建立專案"}
         </button>
-        {msg && <div className="mt-2 text-sm text-green-600">{msg}</div>}
+        {msg && <div className="mt-2 text-sm text-green-600 dark:text-green-400">{msg}</div>}
       </form>
     </div>
   );

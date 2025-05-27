@@ -262,40 +262,37 @@ export default function SchedulePage() {
 			{/* 日期選擇彈窗 */}
 			{showDateDialog && (
 				<div
-					style={{
-						position: 'fixed',
-						top: 0,
-						left: 0,
-						width: '100vw',
-						height: '100vh',
-						background: 'rgba(0,0,0,0.2)',
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
-						zIndex: 1000
-					}}
+					className="fixed inset-0 bg-black/20 flex items-center justify-center z-[1000]"
 				>
-					<div style={{ background: '#fff', padding: 24, borderRadius: 8, minWidth: 300 }}>
-						<div style={{ marginBottom: 8 }}>
-							{quantityTip && <div style={{ color: '#b45309', marginBottom: 8 }}>{quantityTip}</div>}
+					<div className="bg-white dark:bg-gray-800 p-6 rounded-lg min-w-[300px]">
+						<div className="mb-2">
+							{quantityTip && <div className="text-amber-700 dark:text-amber-400 mb-2">{quantityTip}</div>}
 							<div>請選擇開始與結束日期：</div>
-							<div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+							<div className="flex gap-2 mt-2">
 								<input
 									type="date"
 									value={dateRange.start}
 									onChange={e => setDateRange(r => ({ ...r, start: e.target.value }))}
+									className="border rounded px-2 py-1 dark:bg-gray-700 dark:text-white"
 								/>
 								<span>至</span>
 								<input
 									type="date"
 									value={dateRange.end}
 									onChange={e => setDateRange(r => ({ ...r, end: e.target.value }))}
+									className="border rounded px-2 py-1 dark:bg-gray-700 dark:text-white"
 								/>
 							</div>
 						</div>
-						<div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-							<button onClick={() => { setShowDateDialog(false); setSelectedTask(null); setQuantityTip(null); }}>取消</button>
-							<button onClick={handleDateDialogConfirm} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '4px 12px', borderRadius: 4 }}>確認</button>
+						<div className="flex justify-end gap-2">
+							<button
+								onClick={() => { setShowDateDialog(false); setSelectedTask(null); setQuantityTip(null); }}
+								className="px-3 py-1 rounded border dark:bg-gray-700 dark:text-white"
+							>取消</button>
+							<button
+								onClick={handleDateDialogConfirm}
+								className="bg-blue-600 text-white border-none px-3 py-1 rounded"
+							>確認</button>
 						</div>
 					</div>
 				</div>
@@ -350,19 +347,12 @@ export default function SchedulePage() {
 							{unplannedTasks.map(t => (
 								<div
 									key={t.id}
-									style={{
-										border: "1px solid #ddd",
-										padding: 8,
-										marginBottom: 4,
-										background: "#fff",
-										borderRadius: 4,
-										cursor: "pointer"
-									}}
+									className="border border-gray-300 dark:border-gray-700 p-2 mb-1 bg-white dark:bg-gray-800 rounded cursor-pointer"
 									title={`來自專案 ${t.projectId} 區域 ${t.areaId}`}
 									onClick={() => handleUnplannedTaskClick(t)}
 								>
 									<div>{t.name || '（無標題）'}</div>
-									<div className="text-xs text-gray-500">
+									<div className="text-xs text-gray-500 dark:text-gray-400">
 										專案: {t.projectId} / 區域: {t.areaId}
 									</div>
 								</div>

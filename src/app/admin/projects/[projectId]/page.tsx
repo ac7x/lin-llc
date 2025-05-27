@@ -170,23 +170,23 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">專案詳細頁</h1>
-      <div>專案 ID: {projectId}</div>
+    <div className="p-8 max-w-2xl mx-auto dark:bg-gray-900 min-h-screen">
+      <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">專案詳細頁</h1>
+      <div className="dark:text-gray-300">專案 ID: {projectId}</div>
       {/* 專案資訊區塊 */}
       <div className="mb-4">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-lg">{projectName}</span>
+          <span className="font-bold text-lg dark:text-blue-200">{projectName}</span>
           <button
-            className="text-blue-600 underline"
+            className="text-blue-600 underline dark:text-blue-400"
             onClick={() => router.push(`/admin/projects/${projectId}/edit`)}
             type="button"
           >
             編輯
           </button>
         </div>
-        <div className="text-gray-600">{projectDesc}</div>
-        <div className="text-sm text-gray-700 mt-2">
+        <div className="text-gray-600 dark:text-gray-300">{projectDesc}</div>
+        <div className="text-sm text-gray-700 mt-2 dark:text-gray-200">
           <div>負責人：{managerName || '—'}</div>
           <div>現場監工：{supervisorNames}</div>
           <div>安全衛生人員：{safetyNames}</div>
@@ -194,21 +194,21 @@ export default function ProjectDetailPage() {
           <div>地址：{projectAddress || '—'}</div>
         </div>
       </div>
-      <h2 className="text-lg font-semibold mt-6 mb-2">任務清單</h2>
+      <h2 className="text-lg font-semibold mt-6 mb-2 dark:text-gray-100">任務清單</h2>
       <ul className="space-y-2">
-        {tasksSnap?.docs.length === 0 && <li className="text-gray-500">尚無任務</li>}
+        {tasksSnap?.docs.length === 0 && <li className="text-gray-500 dark:text-gray-400">尚無任務</li>}
         {tasksSnap?.docs.map(doc => (
-          <li key={doc.id} className="border p-2 rounded flex items-center gap-2">
-            <span className="flex-1">{doc.data().name}</span>
-            <span className="text-xs text-gray-500">{doc.data().status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
+          <li key={doc.id} className="border p-2 rounded flex items-center gap-2 dark:border-gray-700 dark:bg-gray-800">
+            <span className="flex-1 dark:text-gray-100">{doc.data().name}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{doc.data().status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
           </li>
         ))}
       </ul>
 
       {/* 區域管理 */}
-      <h2 className="text-lg font-semibold mt-8 mb-2">區域管理</h2>
+      <h2 className="text-lg font-semibold mt-8 mb-2 dark:text-gray-100">區域管理</h2>
       <button
-        className="bg-blue-600 text-white px-3 py-1 rounded mb-3"
+        className="bg-blue-600 text-white px-3 py-1 rounded mb-3 dark:bg-blue-500"
         onClick={() => setAddingArea(v => !v)}
         type="button"
       >
@@ -217,38 +217,38 @@ export default function ProjectDetailPage() {
       {addingArea && (
         <form onSubmit={handleAddArea} className="flex gap-2 mb-4">
           <input
-            className="border px-2 py-1 flex-1"
+            className="border px-2 py-1 flex-1 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             value={areaName}
             onChange={e => setAreaName(e.target.value)}
             placeholder="區域名稱"
             required
           />
-          <button type="submit" className="bg-green-600 text-white px-3 py-1 rounded">儲存</button>
+          <button type="submit" className="bg-green-600 text-white px-3 py-1 rounded dark:bg-green-700">儲存</button>
         </form>
       )}
-      {areaMsg && <div className="text-green-700 mb-2">{areaMsg}</div>}
+      {areaMsg && <div className="text-green-700 mb-2 dark:text-green-400">{areaMsg}</div>}
       <ul className="space-y-2">
-        {areasSnap?.docs.length === 0 && <li className="text-gray-500">尚無區域</li>}
+        {areasSnap?.docs.length === 0 && <li className="text-gray-500 dark:text-gray-400">尚無區域</li>}
         {areasSnap?.docs.map(doc => (
-          <li key={doc.id} className="border p-2 rounded flex flex-col gap-2">
-            <span className="flex-1">{doc.data().name}</span>
+          <li key={doc.id} className="border p-2 rounded flex flex-col gap-2 dark:border-gray-700 dark:bg-gray-800">
+            <span className="flex-1 dark:text-gray-100">{doc.data().name}</span>
             {/* 新增：顯示該區域的 tasks */}
             <ul className="ml-4 mt-1 space-y-1">
               {areaTasks[doc.id]?.length === 0 && (
-                <li className="text-xs text-gray-400">（無任務）</li>
+                <li className="text-xs text-gray-400 dark:text-gray-500">（無任務）</li>
               )}
               {areaTasks[doc.id]?.map(task => (
                 <li key={task.id} className="text-xs flex flex-col gap-1">
                   <div className="flex gap-2 items-center">
-                    <span>{task.name}</span>
-                    <span className="text-gray-400">{task.status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
+                    <span className="dark:text-gray-100">{task.name}</span>
+                    <span className="text-gray-400 dark:text-gray-500">{task.status === "done" ? "✅ 已完成" : "⏳ 未完成"}</span>
                     {/* 數量編輯 */}
                     <span>
                       數量：
                       <input
                         type="number"
                         min={0}
-                        className="border px-1 w-16 text-xs"
+                        className="border px-1 w-16 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                         value={
                           editQuantities[task.id] !== undefined
                             ? editQuantities[task.id]
@@ -263,7 +263,7 @@ export default function ProjectDetailPage() {
                         style={{ width: 50 }}
                       />
                       <button
-                        className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs"
+                        className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs dark:bg-blue-700"
                         style={{ fontSize: "0.75rem" }}
                         disabled={savingQuantity[task.id]}
                         onClick={() => handleSaveQuantity(doc.id, task.id)}
@@ -275,10 +275,10 @@ export default function ProjectDetailPage() {
                   </div>
                   {/* 預計日期編輯 */}
                   <div className="flex gap-2 items-center mt-1">
-                    <span>預計開始：</span>
+                    <span className="dark:text-gray-100">預計開始：</span>
                     <input
                       type="date"
-                      className="border px-1 text-xs"
+                      className="border px-1 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       value={
                         editDates[task.id]?.plannedStartTime ??
                         (task.plannedStartTime ? task.plannedStartTime.slice(0, 10) : "")
@@ -294,10 +294,10 @@ export default function ProjectDetailPage() {
                       }
                       style={{ width: 130 }}
                     />
-                    <span>結束：</span>
+                    <span className="dark:text-gray-100">結束：</span>
                     <input
                       type="date"
-                      className="border px-1 text-xs"
+                      className="border px-1 text-xs dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       value={
                         editDates[task.id]?.plannedEndTime ??
                         (task.plannedEndTime ? task.plannedEndTime.slice(0, 10) : "")
@@ -314,7 +314,7 @@ export default function ProjectDetailPage() {
                       style={{ width: 130 }}
                     />
                     <button
-                      className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs"
+                      className="ml-1 px-2 py-0.5 bg-blue-500 text-white rounded text-xs dark:bg-blue-700"
                       style={{ fontSize: "0.75rem" }}
                       disabled={savingDate[task.id]}
                       onClick={() => handleSaveDates(doc.id, task.id)}
