@@ -1,23 +1,62 @@
 "use client";
 
 import { useState } from 'react';
+import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { getFirestore, collection, addDoc, Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { useCollection } from 'react-firebase-hooks/firestore';
 
 export default function AdminProjectsPage() {
     const [name, setName] = useState('');
     const [desc, setDesc] = useState('');
     const [message, setMessage] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editDesc, setEditDesc] = useState('');
+
+    const db = getFirestore(app);
+    const projectsRef = collection(db, 'projects');
+    const [projectsSnap, loading, error] = useCollection(projectsRef);
 
     // 新增專案
     async function createProject({ name, description }: { name: string; description: string }) {
-        // 將 firebase-client 的 import 與初始化移到這裡
-        const { app } = await import('@/modules/shared/infrastructure/persistence/firebase/firebase-client');
-        const { getFirestore, collection, addDoc } = await import('firebase/firestore');
-        const db = getFirestore(app);
-        await addDoc(collection(db, 'projects'), {
+        await addDoc(projectsRef, {
             name,
             description,
-            createdAt: new Date()
+            createdAt: Timestamp.now()
         });
+    }
+
+    // 刪除專案
+    async function handleDelete(id: string) {
+        if (!confirm('確定要刪除此專案嗎？')) return;
+        await deleteDoc(doc(db, 'projects', id));
+    }
+
+    // 進入編輯模式
+    function startEdit(id: string, name: string, description: string) {
+        setEditingId(id);
+        setEditName(name);
+        setEditDesc(description);
+    }
+
+    // 取消編輯
+    function cancelEdit() {
+        setEditingId(null);
+        setEditName('');
+        setEditDesc('');
+    }
+
+    // 送出編輯
+    async function submitEdit(e: React.FormEvent) {
+        e.preventDefault();
+        if (!editingId) return;
+        await updateDoc(doc(db, 'projects', editingId), {
+            name: editName,
+            description: editDesc
+        });
+        setEditingId(null);
+        setEditName('');
+        setEditDesc('');
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -63,7 +102,66 @@ export default function AdminProjectsPage() {
                 </button>
                 {message && <div className="mt-2 text-sm text-green-600">{message}</div>}
             </form>
-            <p>這是專案管理頁面的內容。</p>
+            <h2 className="text-xl font-bold mb-2">專案列表</h2>
+            {loading ? (
+                <div>載入中...</div>
+            ) : error ? (
+                <div>發生錯誤: {error.message}</div>
+            ) : (
+                <ul className="space-y-2">
+                    {projectsSnap?.docs.map(docSnap => {
+                        const data = docSnap.data();
+                        const id = docSnap.id;
+                        if (editingId === id) {
+                            // 編輯模式
+                            return (
+                                <li key={id} className="border p-2 rounded bg-yellow-50">
+                                    <form onSubmit={submitEdit} className="space-y-2">
+                                        <input
+                                            className="border px-2 py-1 w-full"
+                                            value={editName}
+                                            onChange={e => setEditName(e.target.value)}
+                                            required
+                                        />
+                                        <textarea
+                                            className="border px-2 py-1 w-full"
+                                            value={editDesc}
+                                            onChange={e => setEditDesc(e.target.value)}
+                                        />
+                                        <div className="space-x-2">
+                                            <button type="submit" className="bg-green-600 text-white px-3 py-1 rounded">儲存</button>
+                                            <button type="button" className="bg-gray-400 text-white px-3 py-1 rounded" onClick={cancelEdit}>取消</button>
+                                        </div>
+                                    </form>
+                                </li>
+                            );
+                        }
+                        // 一般顯示模式
+                        return (
+                            <li key={id} className="border p-2 rounded flex flex-col md:flex-row md:items-center md:justify-between">
+                                <div>
+                                    <div className="font-semibold">{data.name}</div>
+                                    <div className="text-sm text-gray-600">{data.description}</div>
+                                </div>
+                                <div className="mt-2 md:mt-0 md:ml-4 flex space-x-2">
+                                    <button
+                                        className="bg-yellow-500 text-white px-3 py-1 rounded"
+                                        onClick={() => startEdit(id, data.name, data.description)}
+                                    >
+                                        編輯
+                                    </button>
+                                    <button
+                                        className="bg-red-600 text-white px-3 py-1 rounded"
+                                        onClick={() => handleDelete(id)}
+                                    >
+                                        刪除
+                                    </button>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
         </div>
     );
 }
