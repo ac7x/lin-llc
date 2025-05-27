@@ -11,6 +11,13 @@ type Project = {
   name?: string;
   createdBy?: string | null;
   createdAt?: Timestamp | Date | string | null;
+  manager?: string;
+  supervisors?: string[];
+  safetyStaff?: string[];
+  region?: string;
+  address?: string;
+  startDate?: string | null;
+  endDate?: string | null;
 };
 
 export default function ProjectDetailPage() {
@@ -43,6 +50,14 @@ export default function ProjectDetailPage() {
         ? (project.createdAt as Timestamp).toDate().toLocaleString()
         : String(project.createdAt) || "未知"}
       </p>
+      <p>負責人：{project.manager || "-"}</p>
+      <p>現場監工：{project.supervisors && project.supervisors.length > 0 ? project.supervisors.join(", ") : "-"}</p>
+      <p>現場公共安全人員：{project.safetyStaff && project.safetyStaff.length > 0 ? project.safetyStaff.join(", ") : "-"}</p>
+      <p>地區：{project.region || "-"}</p>
+      <p>地址：{project.address || "-"}</p>
+      <p>起始日：{project.startDate || "-"}</p>
+      <p>預估結束日：{project.endDate || "-"}</p>
+      {/* 若要顯示名稱，需額外查詢 users 集合並建立 id→name 對照表 */}
     </main>
   );
 }

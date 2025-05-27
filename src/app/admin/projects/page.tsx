@@ -11,6 +11,13 @@ type Project = {
   name?: string;
   createdBy?: string | null;
   createdAt?: Timestamp | Date | string | null;
+  manager?: string;
+  supervisors?: string[];
+  safetyStaff?: string[];
+  region?: string;
+  address?: string;
+  startDate?: string | null;
+  endDate?: string | null;
 };
 
 export default function ProjectsPage() {
@@ -50,10 +57,21 @@ export default function ProjectsPage() {
               <Link href={`/admin/projects/${project.id}`}>
                 {project.name || "(未命名專案)"}
               </Link>
+              {/* 顯示新欄位（僅顯示 ID） */}
+              <div style={{ fontSize: "0.9em", color: "#666" }}>
+                負責人: {project.manager || "-"}<br />
+                監工: {(project.supervisors && project.supervisors.length > 0) ? project.supervisors.join(", ") : "-"}<br />
+                公共安全人員: {(project.safetyStaff && project.safetyStaff.length > 0) ? project.safetyStaff.join(", ") : "-"}<br />
+                地區: {project.region || "-"}<br />
+                地址: {project.address || "-"}<br />
+                起始日: {project.startDate || "-"}<br />
+                預估結束日: {project.endDate || "-"}
+              </div>
             </li>
           ))}
         </ul>
       )}
+      {/* 若要顯示名稱，需額外查詢 users 集合並建立 id→name 對照表 */}
     </main>
   );
 }

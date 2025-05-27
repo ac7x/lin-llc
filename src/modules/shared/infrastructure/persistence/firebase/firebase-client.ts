@@ -96,9 +96,9 @@ export async function createVirtualUser({
         uid,
         displayName,
         role,
-        email: undefined,
+        email: '', // 修正: 不存 undefined
         emailVerified: false,
-        photoURL: undefined,
+        photoURL: '', // 修正: 不存 undefined
         updatedAt: now,
         metadata: {
             creationTime: now.toISOString(),
