@@ -55,21 +55,14 @@ export default function AdminProjectsPage() {
     return (
         <div className="pb-20">
             <h1 className="text-2xl font-bold mb-4">專案管理</h1>
-            <form onSubmit={handleSubmit} className="mb-6 space-y-4">
-                <div>
-                    <label className="block mb-1 font-medium">專案名稱</label>
-                    <input
-                        className="border px-2 py-1 w-full"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        required
-                    />
-                </div>
-                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-                    建立專案
-                </button>
-                {message && <div className="mt-2 text-sm text-green-600">{message}</div>}
-            </form>
+            <div className="mb-6">
+                <a
+                  href="/admin/projects/add"
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                >
+                  新增專案
+                </a>
+            </div>
             <h2 className="text-xl font-bold mb-2">專案列表</h2>
             {loading ? (
                 <div>載入中...</div>

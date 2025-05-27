@@ -179,7 +179,12 @@ export default function ProjectDetailPage() {
                     <div className="mb-2"><span className="font-semibold">地址：</span>{form.address || '—'}</div>
                     <div className="mb-2"><span className="font-semibold">工作區：</span>{form.workspace || '—'}</div>
                     <div className="mb-2"><span className="font-semibold">描述：</span>{form.description || '—'}</div>
-                    <button className="mt-4 bg-yellow-500 text-white px-4 py-1 rounded" onClick={() => setEditing(true)}>編輯</button>
+                    <a
+                      href={`/admin/projects/${projectId}/edit`}
+                      className="mt-4 bg-yellow-500 text-white px-4 py-1 rounded inline-block hover:bg-yellow-600 transition"
+                    >
+                      編輯
+                    </a>
                     {msg && <div className="text-sm mt-1 text-green-700">{msg}</div>}
                 </div>
             )}
