@@ -92,7 +92,7 @@ export default function SchedulePage() {
 	}, [])
 
 	const now = new Date()
-	const defaultTimeStart = subDays(startOfDay(now), 3)
+	const defaultTimeStart = subDays(startOfDay(now), 1)
 	const defaultTimeEnd = addDays(endOfDay(now), 7)
 
 	// Timeline groups
