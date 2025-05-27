@@ -37,7 +37,6 @@ import {
 } from 'firebase/firestore';
 import { 
   getStorage, 
-  Storage,
   ref,
   uploadBytes,
   uploadBytesResumable,
@@ -49,6 +48,11 @@ import {
   Analytics,
   logEvent
 } from 'firebase/analytics';
+
+// Firestore where 運算子型別定義
+type FirestoreWhereFilterOp =
+  '<' | '<=' | '==' | '!=' | '>=' | '>' |
+  'array-contains' | 'in' | 'not-in' | 'array-contains-any';
 
 // Firebase 配置
 const firebaseConfig = {
@@ -65,7 +69,7 @@ class FirebaseClient {
   private app: FirebaseApp;
   private auth: Auth;
   private db: Firestore;
-  private storage: Storage;
+  private storage: ReturnType<typeof getStorage>;
   private analytics: Analytics;
 
   constructor() {
@@ -78,9 +82,6 @@ class FirebaseClient {
 
   // ==================== 認證功能 ====================
   
-  /**
-   * 使用電子郵件和密碼登入
-   */
   async signInWithEmail(email: string, password: string) {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
@@ -90,9 +91,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 使用電子郵件和密碼註冊
-   */
   async signUpWithEmail(email: string, password: string) {
     try {
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
@@ -102,9 +100,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 使用 Google 登入
-   */
   async signInWithGoogle() {
     try {
       const provider = new GoogleAuthProvider();
@@ -115,9 +110,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 登出
-   */
   async signOut() {
     try {
       await signOut(this.auth);
@@ -127,9 +119,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 發送密碼重置郵件
-   */
   async sendPasswordReset(email: string) {
     try {
       await sendPasswordResetEmail(this.auth, email);
@@ -139,9 +128,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 更新用戶資料
-   */
   async updateUserProfile(displayName?: string, photoURL?: string) {
     try {
       if (this.auth.currentUser) {
@@ -154,25 +140,16 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 監聽認證狀態變化
-   */
   onAuthStateChange(callback: (user: User | null) => void) {
     return onAuthStateChanged(this.auth, callback);
   }
 
-  /**
-   * 獲取當前用戶
-   */
   getCurrentUser(): User | null {
     return this.auth.currentUser;
   }
 
   // ==================== Firestore 功能 ====================
 
-  /**
-   * 新增文檔
-   */
   async addDocument(collectionName: string, data: DocumentData) {
     try {
       const docRef = await addDoc(collection(this.db, collectionName), {
@@ -186,9 +163,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 設置文檔（指定 ID）
-   */
   async setDocument(collectionName: string, docId: string, data: DocumentData, merge = true) {
     try {
       await setDoc(doc(this.db, collectionName, docId), {
@@ -201,9 +175,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 獲取單個文檔
-   */
   async getDocument(collectionName: string, docId: string) {
     try {
       const docSnap: DocumentSnapshot<DocumentData> = await getDoc(doc(this.db, collectionName, docId));
@@ -217,9 +188,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 獲取集合中的所有文檔
-   */
   async getCollection(collectionName: string, constraints?: QueryConstraint[]) {
     try {
       let q: Query<DocumentData> = collection(this.db, collectionName);
@@ -240,9 +208,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 更新文檔
-   */
   async updateDocument(collectionName: string, docId: string, data: Partial<DocumentData>) {
     try {
       await updateDoc(doc(this.db, collectionName, docId), {
@@ -255,9 +220,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 刪除文檔
-   */
   async deleteDocument(collectionName: string, docId: string) {
     try {
       await deleteDoc(doc(this.db, collectionName, docId));
@@ -267,9 +229,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 實時監聽文檔變化
-   */
   subscribeToDocument(
     collectionName: string,
     docId: string,
@@ -284,9 +243,6 @@ class FirebaseClient {
     });
   }
 
-  /**
-   * 實時監聽集合變化
-   */
   subscribeToCollection(
     collectionName: string,
     callback: (data: { id: string; [key: string]: unknown }[]) => void,
@@ -308,9 +264,6 @@ class FirebaseClient {
 
   // ==================== Storage 功能 ====================
 
-  /**
-   * 上傳檔案
-   */
   async uploadFile(path: string, file: File | Blob) {
     try {
       const storageRef = ref(this.storage, path);
@@ -328,9 +281,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 上傳檔案（帶進度）
-   */
   uploadFileWithProgress(
     path: string, 
     file: File | Blob,
@@ -363,9 +313,6 @@ class FirebaseClient {
     return uploadTask;
   }
 
-  /**
-   * 獲取檔案下載 URL
-   */
   async getFileURL(path: string) {
     try {
       const storageRef = ref(this.storage, path);
@@ -376,9 +323,6 @@ class FirebaseClient {
     }
   }
 
-  /**
-   * 刪除檔案
-   */
   async deleteFile(path: string) {
     try {
       const storageRef = ref(this.storage, path);
@@ -391,9 +335,6 @@ class FirebaseClient {
 
   // ==================== Analytics 功能 ====================
 
-  /**
-   * 記錄自定義事件
-   */
   logAnalyticsEvent(eventName: string, parameters?: { [key: string]: unknown }) {
     try {
       logEvent(this.analytics, eventName, parameters);
@@ -405,11 +346,8 @@ class FirebaseClient {
 
   // ==================== 輔助方法 ====================
 
-  /**
-   * 創建查詢條件
-   */
   createQueryConstraints(conditions: {
-    where?: { field: string; operator: unknown; value: unknown }[];
+    where?: { field: string; operator: FirestoreWhereFilterOp; value: unknown }[];
     orderBy?: { field: string; direction?: 'asc' | 'desc' }[];
     limit?: number;
   }): QueryConstraint[] {
@@ -417,7 +355,7 @@ class FirebaseClient {
 
     if (conditions.where) {
       conditions.where.forEach(({ field, operator, value }) => {
-        constraints.push(where(field, operator as any, value)); // operator 只接受 firebase 支援的
+        constraints.push(where(field, operator, value));
       });
     }
 
@@ -434,9 +372,6 @@ class FirebaseClient {
     return constraints;
   }
 
-  /**
-   * 獲取 Firebase 實例
-   */
   getFirebaseInstances() {
     return {
       app: this.app,
