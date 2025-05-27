@@ -70,7 +70,6 @@ export default function WorkTypeDetailPage() {
     const [flowsSnap] = useCollection(query(flowsRef, orderBy('order', 'asc')));
     const [flows, setFlows] = useState<Flow[]>([]);
     const [flowName, setFlowName] = useState('');
-    const [flowOrder, setFlowOrder] = useState(1);
     const [flowMsg, setFlowMsg] = useState('');
     const [editingFlowId, setEditingFlowId] = useState('');
     const [editingFlowName, setEditingFlowName] = useState('');
@@ -87,9 +86,13 @@ export default function WorkTypeDetailPage() {
         e.preventDefault();
         setFlowMsg('');
         try {
-            await addDoc(flowsRef, { name: flowName, order: flowOrder });
+            // 計算新的順序值（目前最大順序值 + 1）
+            const maxOrder = flows.reduce((max, flow) => Math.max(max, flow.order), 0);
+            await addDoc(flowsRef, { 
+                name: flowName, 
+                order: maxOrder + 1 
+            });
             setFlowName('');
-            setFlowOrder(1);
             setFlowMsg('新增成功');
         } catch {
             setFlowMsg('新增失敗');
@@ -133,8 +136,7 @@ export default function WorkTypeDetailPage() {
             {/* 施工流程管理 */}
             <h2 className="text-lg font-semibold mt-6 mb-2">施工流程</h2>
             <form onSubmit={handleAddFlow} className="flex gap-2 mb-4">
-                <input className="border px-2 py-1" value={flowName} onChange={e => setFlowName(e.target.value)} placeholder="流程名稱" required />
-                <input className="border px-2 py-1 w-20" type="number" value={flowOrder} onChange={e => setFlowOrder(Number(e.target.value))} min={1} placeholder="順序" />
+                <input className="border px-2 py-1 flex-1" value={flowName} onChange={e => setFlowName(e.target.value)} placeholder="流程名稱" required />
                 <button className="bg-blue-600 text-white px-3 py-1 rounded" type="submit">新增</button>
             </form>
             {flowMsg && <div className="text-green-700 mb-2">{flowMsg}</div>}
