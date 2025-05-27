@@ -1,4 +1,4 @@
-import { initializeApp, type FirebaseApp } from 'firebase/app'
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -11,5 +11,8 @@ const firebaseConfig = {
   measurementId: "G-62JEHK00G8"
 }
 
-export const firebaseApp: FirebaseApp = initializeApp(firebaseConfig)
+// 只初始化一次
+export const firebaseApp: FirebaseApp =
+  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+
 export const firestore: Firestore = getFirestore(firebaseApp)
