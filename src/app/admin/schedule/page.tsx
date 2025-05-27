@@ -7,6 +7,7 @@ import {
 	collection,
 	doc,
 	DocumentData,
+	getDocs,
 	getFirestore,
 	QueryDocumentSnapshot,
 	updateDoc
@@ -59,53 +60,98 @@ const parseEpicSnapshot = (
 	return { epics, unplanned }
 }
 
-const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>): string =>
-	`${wl.title || '（無標題）'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : '（無執行者）'}`
-
 const WorkScheduleManagementPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
-	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
+	const [areaGroups, setAreaGroups] = useState<
+		{ id: string; title: string; projectId: string; areaId: string }[]
+	>([]);
+	type AreaTask = {
+		id: string;
+		name: string;
+		status?: string;
+		order?: number;
+		plannedStartTime?: string;
+		plannedEndTime?: string;
+		areaId: string;
+		projectId: string;
+	};
+	const [areaTasks, setAreaTasks] = useState<AreaTask[]>([]);
 	const [epicSnapshot] = useCollection(collection(firestore, 'workEpic'))
 	const timelineRef = useRef<HTMLDivElement>(null)
 
+	// 載入所有專案的所有區域作為 groups
+	useEffect(() => {
+		async function fetchAreaGroupsAndTasks() {
+			const projectsSnap = await getDocs(collection(firestore, 'projects'));
+			const groups: { id: string; title: string; projectId: string; areaId: string }[] = [];
+			const tasks: AreaTask[] = [];
+			for (const projectDoc of projectsSnap.docs) {
+				const projectName = projectDoc.data().name || projectDoc.id;
+				const areasSnap = await getDocs(collection(firestore, 'projects', projectDoc.id, 'areas'));
+				for (const areaDoc of areasSnap.docs) {
+					const areaName = areaDoc.data().name || areaDoc.id;
+					groups.push({
+						id: areaDoc.id,
+						title: `${projectName} - ${areaName}`,
+						projectId: projectDoc.id,
+						areaId: areaDoc.id,
+					});
+					// 讀取該區域下的 tasks
+					const tasksSnap = await getDocs(collection(firestore, 'projects', projectDoc.id, 'areas', areaDoc.id, 'tasks'));
+					for (const taskDoc of tasksSnap.docs) {
+						const taskData = taskDoc.data();
+						tasks.push({
+							id: taskDoc.id,
+							name: taskData.name || '',
+							status: taskData.status,
+							order: taskData.order,
+							plannedStartTime: taskData.plannedStartTime,
+							plannedEndTime: taskData.plannedEndTime,
+							areaId: areaDoc.id,
+							projectId: projectDoc.id,
+						});
+					}
+				}
+			}
+			setAreaGroups(groups);
+			setAreaTasks(tasks);
+		}
+		fetchAreaGroupsAndTasks();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // 只在 mount 時執行即可
+
 	useEffect(() => {
 		if (!epicSnapshot) { return }
-		const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs)
+		const { epics } = parseEpicSnapshot(epicSnapshot.docs)
 		setEpics(epics)
-		setUnplanned(unplanned)
 	}, [epicSnapshot])
 
-	const groupCount = 5
-	const groups: TimelineGroupBase[] = useMemo(() => {
-		const filledEpics: WorkEpicEntity[] = [...epics]
-		while (filledEpics.length < groupCount) {
-			filledEpics.push({
-				epicId: `empty-${filledEpics.length}`,
-				title: ''
-			})
-		}
-		return filledEpics.map(e => ({
-			id: e.epicId,
-			title: e.title
-		}))
-	}, [epics])
+	// groups 來源改為 areaGroups
+	const groups: TimelineGroupBase[] = areaGroups;
 
+	// items 來源改為 areaTasks
 	const items: TimelineItemBase<Date>[] = useMemo(() =>
-		epics.flatMap(e =>
-			(e.workLoads || [])
-				.filter(l => l.plannedStartTime)
-				.map(l => {
-					const start = parseISO(l.plannedStartTime)
-					const end = l.plannedEndTime ? parseISO(l.plannedEndTime) : addDays(start, 1)
-					return {
-						id: l.loadId,
-						group: e.epicId,
-						title: getWorkloadContent(l),
-						start_time: start,
-						end_time: end
-					}
-				})
-		), [epics])
+		areaTasks
+			.filter(t => t.plannedStartTime)
+			.map(t => {
+				const start = parseISO(t.plannedStartTime!);
+				const end = t.plannedEndTime ? parseISO(t.plannedEndTime) : addDays(start, 1);
+				return {
+					id: t.id,
+					group: t.areaId,
+					title: t.name,
+					start_time: start,
+					end_time: end,
+				};
+			}),
+		[areaTasks]
+	);
+
+	// 未排程工作：沒有 plannedStartTime 的 tasks
+	const unplannedTasks = useMemo(
+		() => areaTasks.filter(t => !t.plannedStartTime),
+		[areaTasks]
+	);
 
 	const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
 		const item = items.find(i => i.id === itemId)
@@ -309,34 +355,28 @@ const WorkScheduleManagementPage: React.FC = () => {
 				</div>
 				<div>
 					<div>
-						<h2>
-							未排程工作
-						</h2>
-						{unplanned.length === 0 ? (
+						<h2>未排程工作</h2>
+						{unplannedTasks.length === 0 ? (
 							<div>
-								<span>
-									（無未排程工作）
-								</span>
+								<span>（無未排程工作）</span>
 							</div>
 						) : (
 							<div
 								tabIndex={0}
 								aria-label="unplanned-jobs"
 							>
-								{unplanned.map(wl => (
+								{unplannedTasks.map(t => (
 									<div
-										key={wl.loadId}
+										key={t.id}
 										draggable={true}
 										onDragStart={e => {
-											e.dataTransfer.setData('application/json', JSON.stringify(wl))
+											e.dataTransfer.setData('application/json', JSON.stringify(t))
 										}}
-										title={`來自 ${wl.epicTitle}`}
+										title={`來自專案 ${t.projectId} 區域 ${t.areaId}`}
 									>
-										<div>
-											{wl.title || '（無標題）'}
-										</div>
-										<div>
-											{Array.isArray(wl.executor) && wl.executor.length > 0 ? wl.executor.join(', ') : '（無執行者）'}
+										<div>{t.name || '（無標題）'}</div>
+										<div className="text-xs text-gray-500">
+											專案: {t.projectId} / 區域: {t.areaId}
 										</div>
 									</div>
 								))}
