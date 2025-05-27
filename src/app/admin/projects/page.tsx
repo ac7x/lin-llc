@@ -41,37 +41,106 @@ export default function ProjectsPage() {
 
   return (
     <main>
-      <h1>專案管理</h1>
-      <p>這裡是管理所有專案的頁面。</p>
+      <h1 style={{ fontWeight: 700, fontSize: "2rem", marginBottom: 8 }}>專案管理</h1>
+      <p style={{ color: "#666", marginBottom: 24 }}>這裡是管理所有專案的頁面。</p>
       <Link href="/admin/projects/add">
-        <button>新增專案</button>
+        <button className="modern-btn">新增專案</button>
       </Link>
-      <hr style={{ margin: "24px 0" }} />
-      <h2>專案列表</h2>
+      <hr style={{ margin: "32px 0 24px 0", border: "none", borderTop: "1px solid #eee" }} />
+      <h2 style={{ fontWeight: 600, fontSize: "1.3rem", marginBottom: 16 }}>專案列表</h2>
       {loading ? (
         <div>載入中...</div>
       ) : (
-        <ul>
+        <div className="project-list">
           {projects.map((project) => (
-            <li key={project.id}>
-              <Link href={`/admin/projects/${project.id}`}>
-                {project.name || "(未命名專案)"}
+            <div className="project-card" key={project.id}>
+              <Link href={`/admin/projects/${project.id}`} className="project-title-link">
+                <span className="project-title">{project.name || "(未命名專案)"}</span>
               </Link>
-              {/* 顯示新欄位（僅顯示 ID） */}
-              <div style={{ fontSize: "0.9em", color: "#666" }}>
-                負責人: {project.manager || "-"}<br />
-                監工: {(project.supervisors && project.supervisors.length > 0) ? project.supervisors.join(", ") : "-"}<br />
-                公共安全人員: {(project.safetyStaff && project.safetyStaff.length > 0) ? project.safetyStaff.join(", ") : "-"}<br />
-                地區: {project.region || "-"}<br />
-                地址: {project.address || "-"}<br />
-                起始日: {project.startDate || "-"}<br />
-                預估結束日: {project.endDate || "-"}
+              <div className="project-meta">
+                <div><span className="meta-label">負責人：</span>{project.manager || "-"}</div>
+                <div><span className="meta-label">監工：</span>{(project.supervisors && project.supervisors.length > 0) ? project.supervisors.join(", ") : "-"}</div>
+                <div><span className="meta-label">公共安全人員：</span>{(project.safetyStaff && project.safetyStaff.length > 0) ? project.safetyStaff.join(", ") : "-"}</div>
+                <div><span className="meta-label">地區：</span>{project.region || "-"}</div>
+                <div><span className="meta-label">地址：</span>{project.address || "-"}</div>
+                <div><span className="meta-label">起始日：</span>{project.startDate || "-"}</div>
+                <div><span className="meta-label">預估結束日：</span>{project.endDate || "-"}</div>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
       {/* 若要顯示名稱，需額外查詢 users 集合並建立 id→name 對照表 */}
+      <style jsx>{`
+        .modern-btn {
+          background: linear-gradient(90deg, #4f8cff 0%, #2355d6 100%);
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          padding: 10px 24px;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(79,140,255,0.08);
+          transition: background 0.2s, box-shadow 0.2s;
+        }
+        .modern-btn:hover {
+          background: linear-gradient(90deg, #2355d6 0%, #4f8cff 100%);
+          box-shadow: 0 4px 16px rgba(79,140,255,0.15);
+        }
+        .project-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 24px;
+        }
+        .project-card {
+          background: #fff;
+          border-radius: 14px;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+          padding: 24px 20px 18px 20px;
+          transition: box-shadow 0.18s, transform 0.18s;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .project-card:hover {
+          box-shadow: 0 6px 32px rgba(79,140,255,0.13);
+          transform: translateY(-2px) scale(1.015);
+        }
+        .project-title-link {
+          text-decoration: none;
+        }
+        .project-title {
+          font-size: 1.18rem;
+          font-weight: 700;
+          color: #2355d6;
+          margin-bottom: 8px;
+          display: inline-block;
+        }
+        .project-title-link:hover .project-title {
+          text-decoration: underline;
+          color: #4f8cff;
+        }
+        .project-meta {
+          font-size: 0.98em;
+          color: #444;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .meta-label {
+          color: #888;
+          font-weight: 500;
+        }
+        @media (max-width: 600px) {
+          .project-list {
+            grid-template-columns: 1fr;
+          }
+          .project-card {
+            padding: 16px 10px 12px 10px;
+          }
+        }
+      `}</style>
     </main>
   );
 }

@@ -1,160 +1,103 @@
-'use client';
+"use client";
 
-import '@/styles/react-calendar-timeline.scss';
-import { addDays, endOfDay, parseISO, startOfDay, subDays } from 'date-fns';
-import { getApp, getApps, initializeApp } from 'firebase/app';
-import { collection, getDocs, getFirestore } from 'firebase/firestore';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline';
+import React, { useEffect, useState } from "react";
+import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { collection, getDocs } from "firebase/firestore";
+import Timeline from "react-calendar-timeline";
+import "react-calendar-timeline/style.css";
+import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
-  authDomain: 'lin-llc.firebaseapp.com',
-  projectId: 'lin-llc',
-  storageBucket: 'lin-llc.firbasestorage.app',
-  messagingSenderId: '394023041902',
-  appId: '1:394023041902:web:f9874be5d0d192557b1f7f',
-  measurementId: 'G-62JEHK00G8',
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const firestore = getFirestore(app);
-
-type AreaGroup = {
+type Group = {
   id: string;
   title: string;
-  projectId: string;
-  areaId: string;
 };
-type AreaTask = {
+
+type Project = {
   id: string;
   name: string;
-  status?: string;
-  order?: number;
-  plannedStartTime?: string;
-  plannedEndTime?: string;
-  areaId: string;
-  projectId: string;
 };
 
-export default function SchedulePage() {
-  const [groups, setGroups] = useState<AreaGroup[]>([]);
-  const [tasks, setTasks] = useState<AreaTask[]>([]);
-  const timelineRef = useRef<HTMLDivElement>(null);
+type ScheduleItem = {
+  id: string;
+  group: string; // userId
+  title: string; // project name
+  start_time: number;
+  end_time: number;
+  projectId: string;
+  userId: string;
+};
 
-  // 載入所有專案的所有區域與任務
+export default function UserSchedulePage() {
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [items, setItems] = useState<ScheduleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    async function fetchAll() {
-      const projectsSnap = await getDocs(collection(firestore, 'projects'));
-      const areaGroups: AreaGroup[] = [];
-      const areaTasks: AreaTask[] = [];
-      for (const projectDoc of projectsSnap.docs) {
-        const projectId = projectDoc.id;
-        const projectName = projectDoc.data().name || projectId;
-        const areasSnap = await getDocs(collection(firestore, 'projects', projectId, 'areas'));
-        for (const areaDoc of areasSnap.docs) {
-          const areaId = areaDoc.id;
-          const areaName = areaDoc.data().name || areaId;
-          areaGroups.push({
-            id: `${projectId}__${areaId}`,
-            title: `${projectName} - ${areaName}`,
-            projectId,
-            areaId,
-          });
-          const tasksSnap = await getDocs(collection(firestore, 'projects', projectId, 'areas', areaId, 'tasks'));
-          for (const taskDoc of tasksSnap.docs) {
-            const data = taskDoc.data();
-            areaTasks.push({
-              id: taskDoc.id,
-              name: data.name || '',
-              status: data.status,
-              order: data.order,
-              plannedStartTime: data.plannedStartTime,
-              plannedEndTime: data.plannedEndTime,
-              areaId,
-              projectId,
-            });
-          }
-        }
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // 取得 users 作為 groups
+        const usersSnap = await getDocs(collection(db, "users"));
+        const groupsData: Group[] = usersSnap.docs.map((doc) => ({
+          id: doc.id,
+          title: doc.data().displayName || doc.data().name || doc.id,
+        }));
+        setGroups(groupsData);
+
+        // 取得 projects
+        const projectsSnap = await getDocs(collection(db, "projects"));
+        const projectsData: Project[] = projectsSnap.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || "未命名專案",
+        }));
+
+        // 取得 schedules
+        const schedulesSnap = await getDocs(collection(db, "schedules"));
+        const itemsData: ScheduleItem[] = schedulesSnap.docs.map((doc) => {
+          const data = doc.data();
+          const project = projectsData.find((p) => p.id === data.projectId);
+          return {
+            id: doc.id,
+            group: data.userId,
+            title: project ? project.name : "未知專案",
+            start_time: data.start ? data.start.toMillis() : Date.now(),
+            end_time: data.end ? data.end.toMillis() : Date.now() + 24 * 60 * 60 * 1000,
+            projectId: data.projectId,
+            userId: data.userId,
+          };
+        });
+        setItems(itemsData);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+        else setError("載入失敗");
+      } finally {
+        setLoading(false);
       }
-      setGroups(areaGroups);
-      setTasks(areaTasks);
-    }
-    fetchAll();
+    };
+    fetchData();
   }, []);
 
+  // 計算顯示區間
   const now = new Date();
   const defaultTimeStart = subDays(startOfDay(now), 2);
   const defaultTimeEnd = addDays(endOfDay(now), 5);
 
-  // Timeline groups
-  const timelineGroups: TimelineGroupBase[] = groups;
-
-  // Timeline items（只顯示已排程）
-  const timelineItems: TimelineItemBase<Date>[] = useMemo(
-    () =>
-      tasks
-        .filter(t => t.plannedStartTime)
-        .map(t => {
-          const start = parseISO(t.plannedStartTime!);
-          const end = t.plannedEndTime ? parseISO(t.plannedEndTime) : addDays(start, 1);
-          return {
-            id: t.id,
-            group: `${t.projectId}__${t.areaId}`,
-            title: t.name,
-            start_time: start,
-            end_time: end,
-          };
-        }),
-    [tasks]
-  );
-
-  // 只顯示日期數字（如 20、21）
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      document.querySelectorAll('.rct-dateHeader-primary').forEach(el => {
-        const match = el.textContent?.match(/\d+/);
-        if (match) el.textContent = match[0];
-      });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [timelineItems, timelineGroups]);
-
   return (
-    <div>
-      <div
-        ref={timelineRef}
-        style={{ minHeight: 400 }}
-      >
+    <main>
+      <h1>專案時程表</h1>
+      <p>以時間軸方式檢視所有專案日程。</p>
+      {loading && <div>載入中...</div>}
+      {error && <div style={{ color: "red" }}>{error}</div>}
+      {!loading && !error && (
         <Timeline
-          groups={timelineGroups}
-          items={timelineItems}
+          groups={groups}
+          items={items}
           defaultTimeStart={defaultTimeStart.getTime()}
           defaultTimeEnd={defaultTimeEnd.getTime()}
-          canMove={false}
-          canResize={false}
-          canChangeGroup={false}
-          stackItems
-          minZoom={7 * 24 * 60 * 60 * 1000}
-          maxZoom={30 * 24 * 60 * 60 * 1000}
-          lineHeight={40}
-          sidebarWidth={75}
-          timeSteps={{
-            second: 1,
-            minute: 1,
-            hour: 1,
-            day: 1,
-            month: 1,
-            year: 1,
-          }}
-          groupRenderer={({ group }) => <div>{group.title}</div>}
-          itemRenderer={({ item, getItemProps }) => (
-            <div {...getItemProps({})}>
-              <span>{item.title}</span>
-            </div>
-          )}
         />
-      </div>
-    </div>
+      )}
+    </main>
   );
 }

@@ -14,18 +14,25 @@ type Group = {
   title: string;
 };
 
-type Item = {
+type Project = {
   id: string;
-  group: string; // For react-calendar-timeline display (primary user)
-  title: string;
+  name: string;
+};
+
+type ScheduleItem = {
+  id: string;
+  group: string; // userId
+  title: string; // project name
   start_time: number;
   end_time: number;
-  assignedUsers: string[]; // All assigned user IDs
+  projectId: string;
+  userId: string;
 };
 
 export default function ProjectsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
-  const [items, setItems] = useState<Item[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [items, setItems] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
@@ -45,43 +52,35 @@ export default function ProjectsPage() {
           id: doc.id,
           title: doc.data().displayName || doc.data().name || doc.id,
         }));
-        setGroups(groupsData); // Set groups early for default fallbacks
+        setGroups(groupsData);
 
-        // 取得 projects 作為 items
+        // 取得 projects
         const projectsSnap = await getDocs(collection(db, "projects"));
-        const itemsData: Item[] = projectsSnap.docs.map((doc) => {
+        const projectsData: Project[] = projectsSnap.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || "未命名專案",
+        }));
+        setProjects(projectsData);
+
+        // 取得 schedules
+        const schedulesSnap = await getDocs(collection(db, "schedules"));
+        const itemsData: ScheduleItem[] = schedulesSnap.docs.map((doc) => {
           const data = doc.data();
-          const start = data.createdAt?.toDate?.() || new Date();
-          const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-          
-          let assignedUsers: string[] = [];
-          if (Array.isArray(data.assignedUsers)) {
-            assignedUsers = data.assignedUsers;
-          } else if (data.createdBy) {
-            assignedUsers = [data.createdBy];
-          }
-
-          const displayGroupId = assignedUsers.length > 0 
-            ? assignedUsers[0] 
-            : (groupsData.length > 0 ? groupsData[0].id : "unknown");
-
+          const project = projectsData.find(p => p.id === data.projectId);
           return {
             id: doc.id,
-            group: displayGroupId,
-            assignedUsers: assignedUsers,
-            title: data.name || "未命名專案",
-            start_time: start.getTime(),
-            end_time: end.getTime(),
+            group: data.userId,
+            title: project ? project.name : "未知專案",
+            start_time: data.start ? data.start.toMillis() : Date.now(),
+            end_time: data.end ? data.end.toMillis() : Date.now() + 24*60*60*1000,
+            projectId: data.projectId,
+            userId: data.userId,
           };
         });
-
         setItems(itemsData);
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("載入失敗");
-        }
+        if (err instanceof Error) setError(err.message);
+        else setError("載入失敗");
       } finally {
         setLoading(false);
       }
@@ -99,58 +98,75 @@ export default function ProjectsPage() {
       return;
     }
     try {
+      // 建立專案
       const projectData = {
         name: newProjectName,
         createdAt: Timestamp.now(),
-        assignedUsers: [user.uid],
       };
-      const docRef = await addDoc(collection(db, "projects"), projectData);
-      
-      const newItem: Item = {
-        id: docRef.id,
-        group: user.uid, // Display under the creator's group initially
-        title: newProjectName,
-        start_time: projectData.createdAt.toDate().getTime(),
-        end_time: new Date(projectData.createdAt.toDate().getTime() + 24 * 60 * 60 * 1000).getTime(),
-        assignedUsers: [user.uid],
-      };
-      setItems(prevItems => [...prevItems, newItem]);
+      const projectRef = await addDoc(collection(db, "projects"), projectData);
 
+      // 建立 schedule (自己，now~now+1天)
+      const start = Timestamp.now();
+      const end = Timestamp.fromMillis(start.toMillis() + 24*60*60*1000);
+      const scheduleData = {
+        projectId: projectRef.id,
+        userId: user.uid,
+        start,
+        end,
+      };
+      const scheduleRef = await addDoc(collection(db, "schedules"), scheduleData);
+
+      // 更新本地 state
+      setProjects(prev => [...prev, { id: projectRef.id, name: newProjectName }]);
+      setItems(prev => [
+        ...prev,
+        {
+          id: scheduleRef.id,
+          group: user.uid,
+          title: newProjectName,
+          start_time: start.toMillis(),
+          end_time: end.toMillis(),
+          projectId: projectRef.id,
+          userId: user.uid,
+        }
+      ]);
       setCreateSuccess(true);
-      setNewProjectName(""); 
+      setNewProjectName("");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setCreateError(err.message);
-      } else {
-        setCreateError("建立專案失敗");
-      }
+      if (err instanceof Error) setCreateError(err.message);
+      else setCreateError("建立專案失敗");
     } finally {
       setCreateLoading(false);
     }
   };
 
-  const handleAssignProject = async (projectId: string, newUserIds: string[]) => {
+  // 指派 schedule 給 user（建立新日程）
+  const handleAssignSchedule = async (projectId: string, userId: string) => {
     try {
-      await updateDoc(doc(db, "projects", projectId), {
-        assignedUsers: newUserIds,
-      });
-      
-      const newDisplayGroup = newUserIds.length > 0 
-        ? newUserIds[0] 
-        : (groups.length > 0 ? groups[0].id : "unknown");
-
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === projectId
-            ? { ...it, assignedUsers: newUserIds, group: newDisplayGroup }
-            : it
-        )
-      );
+      // 預設時間 today~today+1天
+      const start = Timestamp.now();
+      const end = Timestamp.fromMillis(start.toMillis() + 24*60*60*1000);
+      const scheduleData = { projectId, userId, start, end };
+      const scheduleRef = await addDoc(collection(db, "schedules"), scheduleData);
+      const project = projects.find(p => p.id === projectId);
+      setItems(prev => [
+        ...prev,
+        {
+          id: scheduleRef.id,
+          group: userId,
+          title: project ? project.name : "未知專案",
+          start_time: start.toMillis(),
+          end_time: end.toMillis(),
+          projectId,
+          userId,
+        }
+      ]);
     } catch {
       alert("指派失敗");
     }
   };
 
+  // 移動/調整日程
   const handleItemMove = async (
     itemId: string,
     dragTime: number,
@@ -158,37 +174,26 @@ export default function ProjectsPage() {
   ) => {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
-
-    const newDisplayGroupId = groups[newGroupOrder]?.id;
-    if (!newDisplayGroupId) return; 
-
+    const newUserId = groups[newGroupOrder]?.id;
+    if (!newUserId) return;
     const duration = item.end_time - item.start_time;
     const newStart = dragTime;
     const newEnd = dragTime + duration;
-
-    // Ensure the new display group is part of assignedUsers
-    const updatedAssignedUsers = Array.from(new Set([newDisplayGroupId, ...item.assignedUsers]));
-
     try {
-      await updateDoc(doc(db, "projects", itemId), {
-        createdAt: Timestamp.fromMillis(newStart),
-        assignedUsers: updatedAssignedUsers,
+      await updateDoc(doc(db, "schedules", itemId), {
+        userId: newUserId,
+        start: Timestamp.fromMillis(newStart),
+        end: Timestamp.fromMillis(newEnd),
       });
       setItems((prev) =>
         prev.map((it) =>
           it.id === itemId
-            ? {
-                ...it,
-                group: newDisplayGroupId,
-                start_time: newStart,
-                end_time: newEnd,
-                assignedUsers: updatedAssignedUsers,
-              }
+            ? { ...it, group: newUserId, userId: newUserId, start_time: newStart, end_time: newEnd }
             : it
         )
       );
     } catch {
-      alert("更新時間或指派失敗");
+      alert("更新日程失敗");
     }
   };
 
@@ -204,18 +209,14 @@ export default function ProjectsPage() {
     if (edge === "left") newStart = time;
     else newEnd = time;
     try {
-      await updateDoc(doc(db, "projects", itemId), {
-        createdAt: Timestamp.fromMillis(newStart),
-        // 若有 endAt 欄位可同步更新
+      await updateDoc(doc(db, "schedules", itemId), {
+        start: Timestamp.fromMillis(newStart),
+        end: Timestamp.fromMillis(newEnd),
       });
       setItems((prev) =>
         prev.map((it) =>
           it.id === itemId
-            ? {
-                ...it,
-                start_time: newStart,
-                end_time: newEnd,
-              }
+            ? { ...it, start_time: newStart, end_time: newEnd }
             : it
         )
       );
@@ -232,7 +233,7 @@ export default function ProjectsPage() {
   return (
     <main>
       <h1>專案時程表</h1>
-      <p>以時間軸方式檢視所有專案。</p>
+      <p>以時間軸方式檢視所有專案日程。</p>
       <div style={{ marginBottom: 8 }}>
         <input
           type="text"
@@ -262,29 +263,19 @@ export default function ProjectsPage() {
             onItemMove={handleItemMove}
             onItemResize={handleItemResize}
           />
-          <h2>快速指派地點給用戶</h2>
+          <h2>快速指派專案給用戶（建立新日程）</h2>
           <ul>
-            {items.map((item) => (
-              <li key={item.id}>
-                {item.title}{" "}
+            {projects.map((project) => (
+              <li key={project.id}>
+                {project.name}{" "}
                 {groups.map((g) => (
-                  <label key={g.id} style={{ marginRight: 8, display: 'inline-block' }}>
-                    <input
-                      type="checkbox"
-                      checked={item.assignedUsers?.includes(g.id)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        let newAssignedUsers: string[];
-                        if (checked) {
-                          newAssignedUsers = Array.from(new Set([...(item.assignedUsers || []), g.id]));
-                        } else {
-                          newAssignedUsers = (item.assignedUsers || []).filter((uid) => uid !== g.id);
-                        }
-                        handleAssignProject(item.id, newAssignedUsers);
-                      }}
-                    />
-                    {g.title}
-                  </label>
+                  <button
+                    key={g.id}
+                    style={{ marginRight: 8 }}
+                    onClick={() => handleAssignSchedule(project.id, g.id)}
+                  >
+                    指派給 {g.title}
+                  </button>
                 ))}
               </li>
             ))}
