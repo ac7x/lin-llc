@@ -3,30 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import firebaseClient, { User } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
+const USERS_COLLECTION = "users";
+
 const HomePage: React.FC = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
-  const [emailLogin, setEmailLogin] = useState({
-    email: '',
-    password: ''
-  });
+  const [emailLogin, setEmailLogin] = useState({ email: '', password: '' });
   const [showEmailLogin, setShowEmailLogin] = useState(false);
 
   // 監聽認證狀態變化
   useEffect(() => {
-    const unsubscribe = firebaseClient.onAuthStateChange((user) => {
-      setUser(user);
+    const unsubscribe = firebaseClient.onAuthStateChange((u) => {
+      setUser(u);
       setLoading(false);
-      
-      // 如果用戶已登入，重定向到個人資料頁面
-      if (user) {
-        router.push('/user/profile');
-      }
+      if (u) router.push('/user/profile');
     });
-
-    // 清理監聽器
     return () => unsubscribe();
   }, [router]);
 
@@ -35,15 +28,22 @@ const HomePage: React.FC = () => {
     setLoginLoading(true);
     try {
       const result = await firebaseClient.signInWithGoogle();
-      
-      if (result.success) {
-        // 成功後會由 onAuthStateChange 處理重定向
-        console.log('Google 登入成功');
+      if (result.success && result.user) {
+        // 建立 Firestore 用戶資料
+        await firebaseClient.setDocument(
+          USERS_COLLECTION, 
+          result.user.uid, 
+          {
+            email: result.user.email || '',
+            displayName: result.user.displayName || '',
+            photoURL: result.user.photoURL || '',
+            createdAt: new Date()
+          }
+        );
       } else {
         alert(`登入失敗：${result.error}`);
       }
     } catch (error) {
-      console.error('Google 登入錯誤:', error);
       alert('登入失敗，請重試');
     } finally {
       setLoginLoading(false);
@@ -53,54 +53,53 @@ const HomePage: React.FC = () => {
   // 電子郵件登入
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!emailLogin.email || !emailLogin.password) {
       alert('請輸入電子郵件和密碼');
       return;
     }
-
     setLoginLoading(true);
     try {
       const result = await firebaseClient.signInWithEmail(emailLogin.email, emailLogin.password);
-      
-      if (result.success) {
-        console.log('電子郵件登入成功');
-        // 成功後會由 onAuthStateChange 處理重定向
-      } else {
+      if (!result.success) {
         alert(`登入失敗：${result.error}`);
       }
     } catch (error) {
-      console.error('電子郵件登入錯誤:', error);
       alert('登入失敗，請重試');
     } finally {
       setLoginLoading(false);
     }
   };
 
-  // 註冊新帳號
+  // 註冊新帳號並建立用戶資料
   const handleEmailSignUp = async () => {
     if (!emailLogin.email || !emailLogin.password) {
       alert('請輸入電子郵件和密碼');
       return;
     }
-
     if (emailLogin.password.length < 6) {
       alert('密碼至少需要 6 個字符');
       return;
     }
-
     setLoginLoading(true);
     try {
       const result = await firebaseClient.signUpWithEmail(emailLogin.email, emailLogin.password);
-      
-      if (result.success) {
+      if (result.success && result.user) {
+        // 註冊後建立 Firestore 用戶資料
+        await firebaseClient.setDocument(
+          USERS_COLLECTION,
+          result.user.uid,
+          {
+            email: result.user.email || '',
+            displayName: result.user.displayName || '',
+            photoURL: result.user.photoURL || '',
+            createdAt: new Date()
+          }
+        );
         alert('註冊成功！');
-        // 成功後會由 onAuthStateChange 處理重定向
       } else {
         alert(`註冊失敗：${result.error}`);
       }
     } catch (error) {
-      console.error('註冊錯誤:', error);
       alert('註冊失敗，請重試');
     } finally {
       setLoginLoading(false);
@@ -113,17 +112,14 @@ const HomePage: React.FC = () => {
       alert('請先輸入您的電子郵件地址');
       return;
     }
-
     try {
       const result = await firebaseClient.sendPasswordReset(emailLogin.email);
-      
       if (result.success) {
         alert('密碼重置郵件已發送，請檢查您的信箱');
       } else {
         alert(`發送失敗：${result.error}`);
       }
     } catch (error) {
-      console.error('發送密碼重置郵件錯誤:', error);
       alert('發送失敗，請重試');
     }
   };
@@ -137,7 +133,6 @@ const HomePage: React.FC = () => {
     }));
   };
 
-  // 載入中狀態
   if (loading) {
     return (
       <div className="p-6 max-w-lg mx-auto text-center">
@@ -147,31 +142,9 @@ const HomePage: React.FC = () => {
     );
   }
 
-  // 如果已登入，顯示用戶資訊
-  if (user) {
-    return (
-      <div className="p-6 max-w-lg mx-auto space-y-4">
-        <h1 className="text-2xl font-bold">歡迎回來！</h1>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-green-800">您已成功登入</p>
-          <p className="text-sm text-green-600 mt-1">
-            電子郵件: {user.email}
-          </p>
-          {user.displayName && (
-            <p className="text-sm text-green-600">
-              姓名: {user.displayName}
-            </p>
-          )}
-        </div>
-        <p className="text-gray-600">正在重定向到個人資料頁面...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 max-w-lg mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-center">登入或註冊</h1>
-      
       {/* Google 登入按鈕 */}
       <button
         className={`w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2 ${
@@ -234,7 +207,6 @@ const HomePage: React.FC = () => {
                 required
               />
             </div>
-            
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 密碼
@@ -251,7 +223,6 @@ const HomePage: React.FC = () => {
                 minLength={6}
               />
             </div>
-
             <div className="space-y-2">
               <button
                 type="submit"
@@ -262,7 +233,6 @@ const HomePage: React.FC = () => {
               >
                 {loginLoading ? '登入中...' : '登入'}
               </button>
-              
               <button
                 type="button"
                 onClick={handleEmailSignUp}
@@ -275,7 +245,6 @@ const HomePage: React.FC = () => {
               </button>
             </div>
           </form>
-
           <button
             type="button"
             onClick={handleForgotPassword}
@@ -286,7 +255,6 @@ const HomePage: React.FC = () => {
         </div>
       )}
 
-      {/* 提示文字 */}
       <p className="text-xs text-gray-500 text-center">
         登入即表示您同意我們的服務條款和隱私政策
       </p>
