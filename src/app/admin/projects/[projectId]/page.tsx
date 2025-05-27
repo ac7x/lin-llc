@@ -41,8 +41,10 @@ export default function ProjectDetailPage() {
       if (!areasSnap) return;
       const result: { [areaId: string]: AreaTask[] } = {};
       for (const areaDoc of areasSnap.docs) {
+        // 依 order 欄位排序
         const tasksRef = collection(db, "projects", projectId, "areas", areaDoc.id, "tasks");
-        const tasksSnap = await getDocs(tasksRef);
+        const q = query(tasksRef, orderBy("order", "asc"));
+        const tasksSnap = await getDocs(q);
         result[areaDoc.id] = tasksSnap.docs.map(d => ({
           id: d.id,
           ...(d.data() as Omit<AreaTask, "id">)
