@@ -43,3 +43,8 @@ export async function saveUserToFirestore(user: {
     updatedAt: new Date(),
   }, { merge: true });
 }
+
+export async function updateUserRole(uid: string, role: string) {
+  if (!uid || !role) return;
+  await setDoc(doc(db, 'users', uid), { role }, { merge: true });
+}
