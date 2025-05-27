@@ -5,7 +5,13 @@ import { app } from '@/modules/shared/infrastructure/persistence/firebase/fireba
 import { getFirestore, doc } from 'firebase/firestore';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
-export default function ProjectSchedulePage({ params }: { params: { projectId: string }}) {
+type PageProps = {
+  params: {
+    projectId: string;
+  };
+};
+
+export default function ProjectSchedulePage({ params }: PageProps) {
   const db = getFirestore(app);
   const scheduleRef = doc(db, `projects/${params.projectId}/schedule/default`);
   const [scheduleSnap, loading, error] = useDocument(scheduleRef);
