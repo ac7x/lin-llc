@@ -1,5 +1,7 @@
 'use server';
 
+import { firestoreAdmin } from '@/modules/shared/infrastructure/persistence/firebase/firebase-admin-client';
+
 export type FirebaseAuthUser = {
   uid: string;
   email?: string;
@@ -29,14 +31,16 @@ export type Project = {
 };
 
 export async function createProject(data: { name: string; description?: string }): Promise<Project> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/admin/create-project`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    }
-  );
-  if (!res.ok) throw new Error('無法建立專案');
-  return res.json();
+  const docRef = await firestoreAdmin.collection('projects').add({
+    name: data.name,
+    description: data.description ?? '',
+    createdAt: new Date().toISOString(),
+  });
+
+  return {
+    id: docRef.id,
+    name: data.name,
+    description: data.description,
+    createdAt: new Date().toISOString(),
+  };
 }
