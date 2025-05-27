@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { updateUserRole, getUsersList } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { updateUserRole, getUsersList, deleteUserFromFirestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 type FirebaseAuthUser = {
   uid: string;
@@ -23,8 +23,7 @@ async function fetchUsers(): Promise<FirebaseAuthUser[]> {
 }
 
 async function deleteUser(uid: string): Promise<void> {
-  // TODO: 實作刪除用戶功能
-  throw new Error('尚未實作刪除功能');
+  await deleteUserFromFirestore(uid);
 }
 
 export default function AdminUsersPage() {

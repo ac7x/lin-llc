@@ -1,7 +1,7 @@
 // src/modules/shared/infrastructure/persistence/firebase/firebase-client.ts
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { getFirestore, doc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -60,5 +60,15 @@ export async function getUsersList() {
   } catch (error) {
     console.error('Error getting users:', error);
     throw new Error('無法取得用戶列表');
+  }
+}
+
+export async function deleteUserFromFirestore(uid: string) {
+  try {
+    const userRef = doc(db, 'users', uid);
+    await deleteDoc(userRef);
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw new Error('刪除用戶失敗');
   }
 }
