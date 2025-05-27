@@ -7,6 +7,7 @@ const USERS_COLLECTION = "users";
 
 const HomePage: React.FC = () => {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
@@ -43,8 +44,6 @@ const HomePage: React.FC = () => {
       } else {
         alert(`登入失敗：${result.error}`);
       }
-    } catch (error) {
-      alert('登入失敗，請重試');
     } finally {
       setLoginLoading(false);
     }
@@ -63,8 +62,6 @@ const HomePage: React.FC = () => {
       if (!result.success) {
         alert(`登入失敗：${result.error}`);
       }
-    } catch (error) {
-      alert('登入失敗，請重試');
     } finally {
       setLoginLoading(false);
     }
@@ -99,8 +96,6 @@ const HomePage: React.FC = () => {
       } else {
         alert(`註冊失敗：${result.error}`);
       }
-    } catch (error) {
-      alert('註冊失敗，請重試');
     } finally {
       setLoginLoading(false);
     }
@@ -119,8 +114,8 @@ const HomePage: React.FC = () => {
       } else {
         alert(`發送失敗：${result.error}`);
       }
-    } catch (error) {
-      alert('發送失敗，請重試');
+    } finally {
+      // 無需做任何事
     }
   };
 
