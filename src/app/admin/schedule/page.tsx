@@ -1,50 +1,50 @@
 'use client'
 
+import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 import '@/styles/react-calendar-timeline.scss'
-import { addDays, endOfDay, parseISO, startOfDay, subDays, differenceInMilliseconds, isValid } from 'date-fns'
-import { getApp, getApps, initializeApp } from 'firebase/app'
+import { addDays, differenceInMilliseconds, endOfDay, isValid, parseISO, startOfDay, subDays } from 'date-fns'
+import { db as firestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client'
 import {
 	collection,
 	doc,
-	getFirestore,
-	updateDoc,
+	DocumentData,
 	QueryDocumentSnapshot,
-	DocumentData
+	updateDoc
 } from 'firebase/firestore'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
 import { useCollection } from 'react-firebase-hooks/firestore'
-import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 
-const firebaseConfig = {
-	apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
-	authDomain: 'lin-llc.firebaseapp.com',
-	projectId: 'lin-llc',
-	storageBucket: 'lin-llc.firbasestorage.app',
-	messagingSenderId: '394023041902',
-	appId: '1:394023041902:web:f9874be5d0d192557b1f7f',
-	measurementId: 'G-62JEHK00G8'
+interface WorkLoadEntity {
+	loadId: string
+	title: string
+	executor: string[]
+	plannedStartTime: string
+	plannedEndTime: string
 }
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
-const firestore = getFirestore(app)
-
-// 型別宣告（移到檔案最上方，確保所有地方都能正確引用）
-export interface WorkLoadEntity {
-  loadId: string
-  title: string
-  executor: string[]
-  plannedStartTime: string
-  plannedEndTime: string
+interface WorkEpicEntity {
+	epicId: string
+	title: string
+	workLoads?: WorkLoadEntity[]
 }
 
-export interface WorkEpicEntity {
-  epicId: string
-  title: string
-  workLoads?: WorkLoadEntity[]
-}
+type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
-export type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
+/** 解析 Epic Snapshot，取得 epics 與未排班工作 */
+const parseEpicSnapshot = (
+	docs: QueryDocumentSnapshot<DocumentData, DocumentData>[]
+): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
+	const epics: WorkEpicEntity[] = docs.map(
+		doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity)
+	)
+	const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
+		(e.workLoads || [])
+			.filter(l => !l.plannedStartTime)
+			.map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
+	)
+	return { epics, unplanned }
+}
 
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>): string =>
 	`${wl.title || '（無標題）'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : '（無執行者）'}`
@@ -101,7 +101,8 @@ const WorkScheduleManagementPage: React.FC = () => {
 		if (!oldEpic) { return }
 		const wlIdx = (oldEpic.workLoads || []).findIndex(wl => wl.loadId === itemId)
 		if (wlIdx === -1) { return }
-		const newEpic = epics[newGroupOrder]
+		const newGroupId = groups[newGroupOrder].id as string
+		const newEpic = epics.find(e => e.epicId === newGroupId)
 		if (!newEpic) { return }
 		const newStart = new Date(dragTime)
 		const duration = differenceInMilliseconds(item.end_time as Date, item.start_time as Date)
@@ -159,8 +160,8 @@ const WorkScheduleManagementPage: React.FC = () => {
 	}
 
 	const handleAssignToTimeline = async (
-		wlDragged: LooseWorkLoad,
-		targetGroupId: string,
+		wlDragged: LooseWorkLoad, // Item from the unplanned list
+		targetGroupId: string,    // epicId of the row it was dropped on
 		startTime: Date,
 		endTime: Date
 	) => {
@@ -182,7 +183,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 		}
 
 		if (originalEpicId === targetGroupId) {
-			const newWorkLoads = originalEpicState.workLoads.map((wl: WorkLoadEntity) =>
+			const newWorkLoads = originalEpicState.workLoads.map(wl =>
 				wl.loadId === workLoadId ? workloadWithNewTimes : wl
 			)
 			await updateDoc(doc(firestore, 'workEpic', originalEpicId), { workLoads: newWorkLoads })
@@ -190,7 +191,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 			const targetEpicState = epics.find(e => e.epicId === targetGroupId)
 			if (!targetEpicState) {
 				console.warn(`Target epic ${targetGroupId} not found. Item will be scheduled in its original epic.`)
-				const newWorkLoads = originalEpicState.workLoads.map((wl: WorkLoadEntity) =>
+				const newWorkLoads = originalEpicState.workLoads.map(wl =>
 					wl.loadId === workLoadId ? workloadWithNewTimes : wl
 				)
 				await updateDoc(doc(firestore, 'workEpic', originalEpicId), { workLoads: newWorkLoads })
@@ -198,7 +199,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 			}
 
 			const updatedOriginalWorkLoads = originalEpicState.workLoads.filter(
-				(wl: WorkLoadEntity) => wl.loadId !== workLoadId
+				wl => wl.loadId !== workLoadId
 			)
 
 			const newTargetWorkLoads = [...(targetEpicState.workLoads || []), workloadWithNewTimes]
@@ -234,6 +235,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 							const groupIndex = Math.floor(y / groupHeight)
 							const group = groups[groupIndex]
 							if (!group) { return }
+							const groupId = group.id as string
 							const timelineWidth = rect.width
 							const x = e.clientX - rect.left
 							const percent = x / timelineWidth
@@ -241,7 +243,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 							const dropTime = new Date(defaultTimeStart.getTime() + percent * timeRange)
 							const startTime = dropTime
 							const endTime = addDays(startTime, 1)
-							handleAssignToTimeline(droppedWl, group.id as string, startTime, endTime)
+							handleAssignToTimeline(droppedWl, groupId, startTime, endTime)
 						} catch (error) {
 							console.error('Error processing dropped item:', error)
 						}
@@ -260,7 +262,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 							minZoom={7 * 24 * 60 * 60 * 1000}
 							maxZoom={30 * 24 * 60 * 60 * 1000}
 							lineHeight={40}
-							sidebarWidth={75}
+							sidebarWidth={75} // 原本 150，改為一半
 							timeSteps={{
 								second: 1,
 								minute: 1,
@@ -308,7 +310,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 								tabIndex={0}
 								aria-label="unplanned-jobs"
 							>
-								{unplanned.map((wl: LooseWorkLoad) => (
+								{unplanned.map(wl => (
 									<div
 										key={wl.loadId}
 										draggable={true}
@@ -328,26 +330,11 @@ const WorkScheduleManagementPage: React.FC = () => {
 							</div>
 						)}
 					</div>
-					<AdminBottomNav />
 				</div>
+				<AdminBottomNav />
 			</div>
 		</div>
 	)
 }
 
 export default WorkScheduleManagementPage
-
-// 修正 parseEpicSnapshot 參數型別與 firestore 回傳型別相容
-const parseEpicSnapshot = (
-  docs: QueryDocumentSnapshot<DocumentData, DocumentData>[]
-): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
-  const epics: WorkEpicEntity[] = docs.map(
-    doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity)
-  )
-  const unplanned: LooseWorkLoad[] = epics.flatMap((e: WorkEpicEntity) =>
-    (e.workLoads || [])
-      .filter((l: WorkLoadEntity) => !l.plannedStartTime)
-      .map((l: WorkLoadEntity) => ({ ...l, epicId: e.epicId, epicTitle: e.title } as LooseWorkLoad))
-  )
-  return { epics, unplanned }
-}
