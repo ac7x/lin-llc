@@ -31,6 +31,10 @@ export default function AdminUsersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // 新增表單狀態
+    const [newDisplayName, setNewDisplayName] = useState('');
+    const [newRole, setNewRole] = useState('');
+
     useEffect(() => {
         setLoading(true);
         fetchUsers()
@@ -64,10 +68,68 @@ export default function AdminUsersPage() {
         }
     };
 
+    // 虛擬用戶建立處理
+    const handleCreateVirtualUser = () => {
+        if (!newDisplayName || !newRole) {
+            setError('請輸入名稱並選擇角色');
+            return;
+        }
+        // 隨機生成 uid
+        const randomUid = 'virtual_' + Math.random().toString(36).slice(2, 12);
+        const now = new Date().toISOString();
+        const newUser: FirebaseAuthUser = {
+            uid: randomUid,
+            displayName: newDisplayName,
+            role: newRole,
+            email: undefined,
+            emailVerified: false,
+            photoURL: undefined,
+            updatedAt: new Date(),
+            metadata: {
+                creationTime: now,
+                lastSignInTime: now,
+            },
+            disabled: false,
+        };
+        setUsers(users => [newUser, ...users]);
+        setNewDisplayName('');
+        setNewRole('');
+        setError(null);
+    };
+
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
             <div className="max-w-3xl mx-auto px-2 py-8">
                 <h1 className="text-2xl font-bold mb-4 text-center">Firebase 用戶管理</h1>
+                {/* 新增虛擬用戶表單 */}
+                <div className="mb-6 flex flex-col sm:flex-row gap-2 items-center justify-center">
+                    <input
+                        type="text"
+                        placeholder="名稱"
+                        value={newDisplayName}
+                        onChange={e => setNewDisplayName(e.target.value)}
+                        className="border rounded px-2 py-1 w-40"
+                    />
+                    <select
+                        value={newRole}
+                        onChange={e => setNewRole(e.target.value)}
+                        className="border rounded px-2 py-1 w-32 bg-white dark:bg-gray-800"
+                    >
+                        <option value="">選擇角色</option>
+                        <option value="admin">admin</option>
+                        <option value="finance">finance</option>
+                        <option value="owner">owner</option>
+                        <option value="user">user</option>
+                        <option value="vendor">vendor</option>
+                    </select>
+                    <button
+                        onClick={handleCreateVirtualUser}
+                        className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+                        type="button"
+                    >
+                        建立虛擬用戶
+                    </button>
+                </div>
                 {loading && <div>載入中...</div>}
                 {error && <div className="text-red-600">{error}</div>}
                 <table className="w-full border-collapse mb-8 text-left">
