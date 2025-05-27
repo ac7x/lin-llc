@@ -1,33 +1,6 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
-
-// 需建立一個 server action 來取得所有 firebase auth 用戶
-async function fetchUsers(): Promise<FirebaseAuthUser[]> {
-    'use server';
-    // 這裡假設有一個 server action /api/admin/list-users
-    const res = await fetch('/api/admin/list-users');
-    if (!res.ok) throw new Error('無法取得用戶列表');
-    return res.json();
-}
-
-// 需建立一個 server action 來刪除 firebase auth 用戶
-async function deleteUser(uid: string): Promise<void> {
-    'use server';
-    await fetch(`/api/admin/delete-user?uid=${uid}`, { method: 'POST' });
-}
-
-type FirebaseAuthUser = {
-    uid: string;
-    email?: string;
-    displayName?: string;
-    disabled: boolean;
-    metadata?: {
-        creationTime?: string;
-        lastSignInTime?: string;
-    };
-};
+import { fetchUsers, deleteUser, FirebaseAuthUser } from './actions';
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<FirebaseAuthUser[]>([]);
