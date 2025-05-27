@@ -97,11 +97,12 @@ export default function AdminUsersPage() {
                                         value={user.role || ''}
                                         onChange={e => handleRoleChange(user.uid, e.target.value)}
                                         className="border rounded px-1 py-0.5 bg-white dark:bg-gray-800"
+                                        disabled={user.role === 'owner'}
                                     >
                                         <option value="">—</option>
                                         <option value="admin">admin</option>
                                         <option value="finance">finance</option>
-                                        <option value="owner">owner</option>
+                                        {/* 不允許 admin 編輯 owner 角色，也不顯示 owner 選項 */}
                                         <option value="user">user</option>
                                         <option value="vendor">vendor</option>
                                     </select>
