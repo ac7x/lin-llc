@@ -12,7 +12,6 @@ import {
 } from 'firebase/firestore'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
-import { DndContext, useDraggable, DragEndEvent } from "@dnd-kit/core"
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
@@ -42,35 +41,7 @@ type AreaTask = {
 	plannedEndTime?: string
 	areaId: string
 	projectId: string
-}
-
-function DraggableUnplannedTask({ task }: { task: AreaTask }) {
-	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-		id: task.id,
-		data: { task }
-	})
-	return (
-		<div
-			ref={setNodeRef}
-			{...attributes}
-			{...listeners}
-			style={{
-				opacity: isDragging ? 0.5 : 1,
-				cursor: "grab",
-				border: "1px solid #ddd",
-				padding: 8,
-				marginBottom: 4,
-				background: "#fff",
-				borderRadius: 4,
-			}}
-			title={`來自專案 ${task.projectId} 區域 ${task.areaId}`}
-		>
-			<div>{task.name || '（無標題）'}</div>
-			<div className="text-xs text-gray-500">
-				專案: {task.projectId} / 區域: {task.areaId}
-			</div>
-		</div>
-	)
+	quantity?: number // 新增數量欄位
 }
 
 export default function SchedulePage() {
@@ -109,6 +80,7 @@ export default function SchedulePage() {
 							plannedEndTime: data.plannedEndTime,
 							areaId,
 							projectId,
+							quantity: data.quantity // 保留數量
 						})
 					}
 				}
@@ -150,44 +122,6 @@ export default function SchedulePage() {
 		() => tasks.filter(t => !t.plannedStartTime),
 		[tasks]
 	)
-
-	// 拖曳到 timeline 時寫入 Firestore，開始時間對齊 0:00:00，結束+1天
-	const handleTimelineDrop = async (event: DragEndEvent) => {
-		const task = unplannedTasks.find(t => t.id === event.active.id)
-		if (!task) return
-		const e = event.activatorEvent as DragEvent
-		const timelineElement = timelineRef.current?.querySelector('.react-calendar-timeline') as HTMLElement
-		if (!timelineElement || !e) return
-		const rect = timelineElement.getBoundingClientRect()
-		const y = e.clientY - rect.top
-		const groupHeight = rect.height / groups.length
-		const groupIndex = Math.floor(y / groupHeight)
-		const group = groups[groupIndex]
-		if (!group) return
-		const timelineWidth = rect.width
-		const x = e.clientX - rect.left
-		const percent = x / timelineWidth
-		const timeRange = defaultTimeEnd.getTime() - defaultTimeStart.getTime()
-		const dropTime = new Date(defaultTimeStart.getTime() + percent * timeRange)
-		const startTime = new Date(dropTime)
-		startTime.setHours(0, 0, 0, 0)
-		const endTime = addDays(startTime, 1)
-		await updateDoc(
-			doc(
-				firestore,
-				"projects",
-				task.projectId,
-				"areas",
-				task.areaId,
-				"tasks",
-				task.id
-			),
-			{
-				plannedStartTime: startTime.toISOString(),
-				plannedEndTime: endTime.toISOString(),
-			}
-		)
-	}
 
 	// 支援 timeline 內部拖曳（可選）
 	const handleAreaTaskMove = async (itemId: string, dragTime: number, newGroupOrder: number) => {
@@ -239,75 +173,161 @@ export default function SchedulePage() {
 		)
 	}
 
+	// 點擊未排程任務後輸入開始與結束日期，若有數量則先提示
+	const handleUnplannedTaskClick = async (task: AreaTask) => {
+		if (typeof task.quantity === "number" && task.quantity > 1) {
+			alert(`此任務數量為 ${task.quantity}`);
+		}
+		const startInput = window.prompt('請輸入開始日期 (YYYY-MM-DD)：')
+		if (!startInput) return
+		const endInput = window.prompt('請輸入結束日期 (YYYY-MM-DD)：')
+		if (!endInput) return
+		const startDate = new Date(startInput)
+		const endDate = new Date(endInput)
+		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+			alert('日期格式錯誤，請重新輸入')
+			return
+		}
+		startDate.setHours(0, 0, 0, 0)
+		endDate.setHours(0, 0, 0, 0)
+		await updateDoc(
+			doc(
+				firestore,
+				"projects",
+				task.projectId,
+				"areas",
+				task.areaId,
+				"tasks",
+				task.id
+			),
+			{
+				plannedStartTime: startDate.toISOString(),
+				plannedEndTime: endDate.toISOString(),
+			}
+		)
+		// 重新載入資料
+		const projectsSnap = await getDocs(collection(firestore, 'projects'))
+		const areaGroups: AreaGroup[] = []
+		const areaTasks: AreaTask[] = []
+		for (const projectDoc of projectsSnap.docs) {
+			const projectId = projectDoc.id
+			const projectName = projectDoc.data().name || projectId
+			const areasSnap = await getDocs(collection(firestore, 'projects', projectId, 'areas'))
+			for (const areaDoc of areasSnap.docs) {
+				const areaId = areaDoc.id
+				const areaName = areaDoc.data().name || areaId
+				areaGroups.push({
+					id: `${projectId}__${areaId}`,
+					title: `${projectName} - ${areaName}`,
+					projectId,
+					areaId,
+				})
+				const tasksSnap = await getDocs(collection(firestore, 'projects', projectId, 'areas', areaId, 'tasks'))
+				for (const taskDoc of tasksSnap.docs) {
+					const data = taskDoc.data()
+					areaTasks.push({
+						id: taskDoc.id,
+						name: data.name || '',
+						status: data.status,
+						order: data.order,
+						plannedStartTime: data.plannedStartTime,
+						plannedEndTime: data.plannedEndTime,
+						areaId,
+						projectId,
+						quantity: data.quantity // 保留數量
+					})
+				}
+			}
+		}
+		setGroups(areaGroups)
+		setTasks(areaTasks)
+	}
+
 	return (
 		<div>
-			<DndContext onDragEnd={handleTimelineDrop}>
-				<div>
-					<div
-						ref={timelineRef}
-						style={{ minHeight: 400 }}
-					>
-						<Timeline
-							groups={timelineGroups}
-							items={timelineItems}
-							defaultTimeStart={defaultTimeStart.getTime()}
-							defaultTimeEnd={defaultTimeEnd.getTime()}
-							canMove
-							canResize="both"
-							canChangeGroup
-							stackItems
-							minZoom={7 * 24 * 60 * 60 * 1000}
-							maxZoom={30 * 24 * 60 * 60 * 1000}
-							lineHeight={40}
-							sidebarWidth={75}
-							timeSteps={{
-								second: 1,
-								minute: 1,
-								hour: 1,
-								day: 1,
-								month: 1,
-								year: 1
-							}}
-							onItemMove={handleAreaTaskMove}
-							onItemResize={handleAreaTaskResize}
-							groupRenderer={({ group }) => (
-								<div>
-									{group.title}
-								</div>
-							)}
-							itemRenderer={({ item, getItemProps, getResizeProps }) => {
-								const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-								return (
-									<div
-										{...getItemProps({})}
-									>
-										<div {...leftResizeProps} />
-										<span>{item.title}</span>
-										<div {...rightResizeProps} />
-									</div>
-								)
-							}}
-						/>
-					</div>
-					<div>
-						<h2>尚未安排時程</h2>
-						{unplannedTasks.length === 0 ? (
+			<div>
+				<div
+					ref={timelineRef}
+					style={{ minHeight: 400 }}
+				>
+					<Timeline
+						groups={timelineGroups}
+						items={timelineItems}
+						defaultTimeStart={defaultTimeStart.getTime()}
+						defaultTimeEnd={defaultTimeEnd.getTime()}
+						canMove
+						canResize="both"
+						canChangeGroup
+						stackItems
+						minZoom={7 * 24 * 60 * 60 * 1000}
+						maxZoom={30 * 24 * 60 * 60 * 1000}
+						lineHeight={40}
+						sidebarWidth={75}
+						timeSteps={{
+							second: 1,
+							minute: 1,
+							hour: 1,
+							day: 1,
+							month: 1,
+							year: 1
+						}}
+						onItemMove={handleAreaTaskMove}
+						onItemResize={handleAreaTaskResize}
+						groupRenderer={({ group }) => (
 							<div>
-								<span>（無未排程工作）</span>
-							</div>
-						) : (
-							<div
-								tabIndex={0}
-								aria-label="unplanned-jobs"
-							>
-								{unplannedTasks.map(t => (
-									<DraggableUnplannedTask key={t.id} task={t} />
-								))}
+								{group.title}
 							</div>
 						)}
-					</div>
+						itemRenderer={({ item, getItemProps, getResizeProps }) => {
+							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+							return (
+								<div
+									{...getItemProps({})}
+								>
+									<div {...leftResizeProps} />
+									<span>{item.title}</span>
+									<div {...rightResizeProps} />
+								</div>
+							)
+						}}
+					/>
 				</div>
-			</DndContext>
+				<div>
+					<h2>尚未安排時程</h2>
+					{unplannedTasks.length === 0 ? (
+						<div>
+							<span>（無未排程工作）</span>
+						</div>
+					) : (
+						<div
+							tabIndex={0}
+							aria-label="unplanned-jobs"
+						>
+							{/* 點擊未排程任務可輸入日期 */}
+							{unplannedTasks.map(t => (
+								<div
+									key={t.id}
+									style={{
+										border: "1px solid #ddd",
+										padding: 8,
+										marginBottom: 4,
+										background: "#fff",
+										borderRadius: 4,
+										cursor: "pointer"
+									}}
+									title={`來自專案 ${t.projectId} 區域 ${t.areaId}`}
+									onClick={() => handleUnplannedTaskClick(t)}
+								>
+									<div>{t.name || '（無標題）'}</div>
+									<div className="text-xs text-gray-500">
+										專案: {t.projectId} / 區域: {t.areaId}
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+			</div>
 		</div>
 	)
 }
