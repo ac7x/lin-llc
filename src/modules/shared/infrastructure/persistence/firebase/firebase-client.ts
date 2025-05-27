@@ -1,6 +1,6 @@
 // src/modules/shared/infrastructure/persistence/firebase/firebase-client.ts
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -18,7 +18,8 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Google 登入
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const signInWithGooglePopup = () => signInWithPopup(auth, googleProvider);
+export const signInWithGoogleRedirect = () => signInWithRedirect(auth, googleProvider);
 
 // 登出
 export const logout = () => signOut(auth);

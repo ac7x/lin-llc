@@ -1,9 +1,14 @@
 // src/app/page.tsx
 "use client";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, signInWithGoogle } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { auth, signInWithGooglePopup, signInWithGoogleRedirect } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+
+const isMobile = () => {
+  if (typeof window === 'undefined') return false;
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+};
 
 export default function HomePage() {
   const [user, loading] = useAuthState(auth);
@@ -17,7 +22,11 @@ export default function HomePage() {
 
   const handleGoogleLogin = async () => {
     try {
-      await signInWithGoogle();
+      if (isMobile()) {
+        await signInWithGoogleRedirect();
+      } else {
+        await signInWithGooglePopup();
+      }
     } catch {
       alert('登入失敗');
     }
