@@ -24,7 +24,6 @@ const defaultOwnerNavItems: NavItem[] = [
     { href: '/owner/archive/reports', icon: '🗃️', label: '報表存檔', active: false },
     { href: '/owner/archive/projects', icon: '📁', label: '專案存檔', active: false },
     { href: '/owner/archive/finance', icon: '💰', label: '財務存檔', active: false },
-    { href: '/owner/settings', icon: '⚙️', label: '設定', active: false }, 
 ];
 
 export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavProps) {

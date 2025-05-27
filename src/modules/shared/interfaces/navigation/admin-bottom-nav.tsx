@@ -22,7 +22,6 @@ const defaultAdminNavItems: NavItem[] = [
     { href: '/admin/inventory', icon: '📦', label: '庫存管理', active: false },
     { href: '/admin/contractors', icon: '👷', label: '協力廠商', active: false },
     { href: '/admin/users', icon: '👤', label: '用戶管理', active: false },
-    { href: '/admin/settings', icon: '⚙️', label: '設定', active: false },
 ];
 
 export function AdminBottomNav({ items = defaultAdminNavItems }: AdminBottomNavProps) {
