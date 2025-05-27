@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { getFirestore, collection, addDoc, Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
+import Link from 'next/link';
 
 export default function AdminProjectsPage() {
     const [name, setName] = useState('');
@@ -140,7 +141,9 @@ export default function AdminProjectsPage() {
                         return (
                             <li key={id} className="border p-2 rounded flex flex-col md:flex-row md:items-center md:justify-between">
                                 <div>
-                                    <div className="font-semibold">{data.name}</div>
+                                    <Link href={`/admin/projects/${id}`} className="font-semibold text-blue-700 hover:underline hover:text-blue-900 transition">
+                                        {data.name}
+                                    </Link>
                                     <div className="text-sm text-gray-600">{data.description}</div>
                                 </div>
                                 <div className="mt-2 md:mt-0 md:ml-4 flex space-x-2">
