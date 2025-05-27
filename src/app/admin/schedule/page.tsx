@@ -16,10 +16,11 @@ type Group = {
 
 type Item = {
   id: string;
-  group: string;
+  group: string; // For react-calendar-timeline display (primary user)
   title: string;
   start_time: number;
   end_time: number;
+  assignedUsers: string[]; // All assigned user IDs
 };
 
 export default function ProjectsPage() {
@@ -31,6 +32,7 @@ export default function ProjectsPage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,24 +45,36 @@ export default function ProjectsPage() {
           id: doc.id,
           title: doc.data().displayName || doc.data().name || doc.id,
         }));
+        setGroups(groupsData); // Set groups early for default fallbacks
 
         // 取得 projects 作為 items
         const projectsSnap = await getDocs(collection(db, "projects"));
         const itemsData: Item[] = projectsSnap.docs.map((doc) => {
           const data = doc.data();
-          // 預設時間區間
           const start = data.createdAt?.toDate?.() || new Date();
           const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+          
+          let assignedUsers: string[] = [];
+          if (Array.isArray(data.assignedUsers)) {
+            assignedUsers = data.assignedUsers;
+          } else if (data.createdBy) {
+            assignedUsers = [data.createdBy];
+          }
+
+          const displayGroupId = assignedUsers.length > 0 
+            ? assignedUsers[0] 
+            : (groupsData.length > 0 ? groupsData[0].id : "unknown");
+
           return {
             id: doc.id,
-            group: data.createdBy || groupsData[0]?.id || "unknown",
+            group: displayGroupId,
+            assignedUsers: assignedUsers,
             title: data.name || "未命名專案",
             start_time: start.getTime(),
             end_time: end.getTime(),
           };
         });
 
-        setGroups(groupsData);
         setItems(itemsData);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -79,13 +93,31 @@ export default function ProjectsPage() {
     setCreateLoading(true);
     setCreateError(null);
     setCreateSuccess(false);
+    if (!user || !newProjectName.trim()) {
+      setCreateError("專案名稱不能為空且需要登入。");
+      setCreateLoading(false);
+      return;
+    }
     try {
-      await addDoc(collection(db, "projects"), {
-        name: "新專案",
-        createdAt: new Date(),
-        createdBy: user?.uid || null,
-      });
+      const projectData = {
+        name: newProjectName,
+        createdAt: Timestamp.now(),
+        assignedUsers: [user.uid],
+      };
+      const docRef = await addDoc(collection(db, "projects"), projectData);
+      
+      const newItem: Item = {
+        id: docRef.id,
+        group: user.uid, // Display under the creator's group initially
+        title: newProjectName,
+        start_time: projectData.createdAt.toDate().getTime(),
+        end_time: new Date(projectData.createdAt.toDate().getTime() + 24 * 60 * 60 * 1000).getTime(),
+        assignedUsers: [user.uid],
+      };
+      setItems(prevItems => [...prevItems, newItem]);
+
       setCreateSuccess(true);
+      setNewProjectName(""); 
     } catch (err: unknown) {
       if (err instanceof Error) {
         setCreateError(err.message);
@@ -97,19 +129,28 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleAssignProject = async (projectId: string, userId: string) => {
+  const handleAssignProject = async (projectId: string, newUserIds: string[]) => {
     try {
       await updateDoc(doc(db, "projects", projectId), {
-        createdBy: userId,
+        assignedUsers: newUserIds,
       });
-      // 重新載入資料
-      window.location.reload();
+      
+      const newDisplayGroup = newUserIds.length > 0 
+        ? newUserIds[0] 
+        : (groups.length > 0 ? groups[0].id : "unknown");
+
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === projectId
+            ? { ...it, assignedUsers: newUserIds, group: newDisplayGroup }
+            : it
+        )
+      );
     } catch {
       alert("指派失敗");
     }
   };
 
-  // 拖拉或縮放專案時更新 Firestore
   const handleItemMove = async (
     itemId: string,
     dragTime: number,
@@ -117,29 +158,37 @@ export default function ProjectsPage() {
   ) => {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
-    const newGroup = groups[newGroupOrder]?.id || item.group;
+
+    const newDisplayGroupId = groups[newGroupOrder]?.id;
+    if (!newDisplayGroupId) return; 
+
     const duration = item.end_time - item.start_time;
     const newStart = dragTime;
     const newEnd = dragTime + duration;
+
+    // Ensure the new display group is part of assignedUsers
+    const updatedAssignedUsers = Array.from(new Set([newDisplayGroupId, ...item.assignedUsers]));
+
     try {
       await updateDoc(doc(db, "projects", itemId), {
         createdAt: Timestamp.fromMillis(newStart),
-        // 若有 endAt 欄位可同步更新
+        assignedUsers: updatedAssignedUsers,
       });
       setItems((prev) =>
         prev.map((it) =>
           it.id === itemId
             ? {
                 ...it,
-                group: newGroup,
+                group: newDisplayGroupId,
                 start_time: newStart,
                 end_time: newEnd,
+                assignedUsers: updatedAssignedUsers,
               }
             : it
         )
       );
     } catch {
-      alert("更新時間失敗");
+      alert("更新時間或指派失敗");
     }
   };
 
@@ -184,11 +233,21 @@ export default function ProjectsPage() {
     <main>
       <h1>專案時程表</h1>
       <p>以時間軸方式檢視所有專案。</p>
-      <button onClick={handleCreateProject} disabled={createLoading || !user}>
-        {createLoading ? "建立中..." : "建立專案"}
-      </button>
+      <div style={{ marginBottom: 8 }}>
+        <input
+          type="text"
+          placeholder="請輸入專案名稱"
+          value={newProjectName}
+          onChange={(e) => setNewProjectName(e.target.value)}
+          disabled={createLoading}
+          style={{ marginRight: 8 }}
+        />
+        <button onClick={handleCreateProject} disabled={createLoading || !user || !newProjectName.trim()}>
+          {createLoading ? "建立中..." : "建立專案"}
+        </button>
+      </div>
       {createError && <div style={{ color: "red" }}>{createError}</div>}
-      {createSuccess && <div style={{ color: "green" }}>專案已建立！請重新整理查看。</div>}
+      {createSuccess && <div style={{ color: "green" }}>專案已建立！</div>}
       {loading && <div>載入中...</div>}
       {error && <div style={{ color: "red" }}>{error}</div>}
       {!loading && !error && (
@@ -208,16 +267,25 @@ export default function ProjectsPage() {
             {items.map((item) => (
               <li key={item.id}>
                 {item.title}{" "}
-                <select
-                  value={item.group}
-                  onChange={(e) => handleAssignProject(item.id, e.target.value)}
-                >
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.title}
-                    </option>
-                  ))}
-                </select>
+                {groups.map((g) => (
+                  <label key={g.id} style={{ marginRight: 8, display: 'inline-block' }}>
+                    <input
+                      type="checkbox"
+                      checked={item.assignedUsers?.includes(g.id)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        let newAssignedUsers: string[];
+                        if (checked) {
+                          newAssignedUsers = Array.from(new Set([...(item.assignedUsers || []), g.id]));
+                        } else {
+                          newAssignedUsers = (item.assignedUsers || []).filter((uid) => uid !== g.id);
+                        }
+                        handleAssignProject(item.id, newAssignedUsers);
+                      }}
+                    />
+                    {g.title}
+                  </label>
+                ))}
               </li>
             ))}
           </ul>
