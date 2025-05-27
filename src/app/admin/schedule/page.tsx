@@ -276,7 +276,7 @@ export default function SchedulePage() {
 					>
 						{/* 添加今天的紅線 */}
 						<TimelineMarkers>
-							<TodayMarker date={new Date()} />
+							<TodayMarker />
 						</TimelineMarkers>
 					</Timeline>
 				</div>
