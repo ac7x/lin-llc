@@ -4,6 +4,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, logout } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const [user, loading] = useAuthState(auth);
@@ -19,7 +20,7 @@ export default function ProfilePage() {
     try {
       await logout();
       router.push('/');
-    } catch (error) {
+    } catch {
       alert('登出失敗');
     }
   };
@@ -36,10 +37,12 @@ export default function ProfilePage() {
         <p><strong>姓名:</strong> {user.displayName}</p>
         <p><strong>電子郵件:</strong> {user.email}</p>
         {user.photoURL && (
-          <img 
+          <Image 
             src={user.photoURL} 
             alt="頭像" 
-            className="w-16 h-16 rounded-full mt-2"
+            width={64}
+            height={64}
+            className="rounded-full mt-2"
           />
         )}
       </div>

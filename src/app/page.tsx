@@ -18,7 +18,7 @@ export default function HomePage() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle();
-    } catch (error) {
+    } catch {
       alert('登入失敗');
     }
   };
