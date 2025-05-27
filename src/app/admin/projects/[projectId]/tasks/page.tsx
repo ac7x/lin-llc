@@ -4,6 +4,7 @@
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { getFirestore, collection } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
+import { useParams } from 'next/navigation';
 
 type Task = {
   id: string;
@@ -12,9 +13,12 @@ type Task = {
   // ...可擴充其他欄位
 };
 
-export default function ProjectTasksPage({ params }: { params: { projectId: string } }) {
+export default function ProjectTasksPage() {
+  const params = useParams();
+  const projectId = params?.projectId as string;
+
   const db = getFirestore(app);
-  const tasksRef = collection(db, `projects/${params.projectId}/tasks`);
+  const tasksRef = collection(db, `projects/${projectId}/tasks`);
   const [tasksSnap, loading, error] = useCollection(tasksRef);
 
   if (loading) return <div>載入中...</div>;
