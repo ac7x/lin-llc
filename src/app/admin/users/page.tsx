@@ -22,8 +22,12 @@ export default function AdminUsersPage() {
         try {
             await deleteUser(uid);
             setUsers(users => users.filter(u => u.uid !== uid));
-        } catch (e: any) {
-            alert('刪除失敗: ' + (e?.message || e));
+        } catch (err: unknown) {
+            let errorMsg = '發生錯誤';
+            if (err instanceof Error) {
+                errorMsg = err.message;
+            }
+            setError(errorMsg);
         }
     };
 

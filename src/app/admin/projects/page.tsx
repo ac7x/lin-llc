@@ -17,8 +17,12 @@ export default function AdminProjectsPage() {
             setMessage('專案建立成功');
             setName('');
             setDesc('');
-        } catch (err: any) {
-            setMessage('建立失敗: ' + (err.message || '未知錯誤'));
+        } catch (err: unknown) {
+            let errorMsg = '建立失敗: 未知錯誤';
+            if (err instanceof Error) {
+                errorMsg = '建立失敗: ' + err.message;
+            }
+            setMessage(errorMsg);
         }
     }
 

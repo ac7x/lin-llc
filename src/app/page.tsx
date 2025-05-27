@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
     try {
       await signInWithPopup(auth, provider);
       router.push('/user/profile');
-    } catch (err) {
+    } catch {
       alert('登入失敗，請重試');
     }
   };

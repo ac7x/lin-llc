@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { firebaseApp } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav';
+import Image from 'next/image';
 
 export default function UserProfilePage() {
     const [user, setUser] = useState<User | null>(null);
@@ -41,7 +42,13 @@ export default function UserProfilePage() {
                         <div><b>Email：</b>{user.email || '—'}</div>
                         <div><b>名稱：</b>{user.displayName || '—'}</div>
                         {user.photoURL && (
-                            <img src={user.photoURL} alt="avatar" className="w-20 h-20 rounded-full my-2" />
+                            <Image
+                                src={user.photoURL}
+                                alt="使用者頭像"
+                                width={128}
+                                height={128}
+                                className="rounded-full"
+                            />
                         )}
                         <button
                             onClick={handleLogout}
