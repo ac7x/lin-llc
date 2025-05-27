@@ -1,7 +1,30 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { fetchUsers, deleteUser, FirebaseAuthUser } from './actions';
+
+type FirebaseAuthUser = {
+  uid: string;
+  email?: string;
+  displayName?: string;
+  metadata?: {
+    creationTime?: string;
+    lastSignInTime?: string;
+  };
+  disabled?: boolean;
+};
+
+async function fetchUsers(): Promise<FirebaseAuthUser[]> {
+  // 僅供展示，實際應於 server 端實作
+  const res = await fetch('/api/admin/list-users');
+  if (!res.ok) throw new Error('無法取得用戶列表');
+  return res.json();
+}
+
+async function deleteUser(uid: string): Promise<void> {
+  // 僅供展示，實際應於 server 端實作
+  const res = await fetch(`/api/admin/delete-user?uid=${uid}`, { method: 'POST' });
+  if (!res.ok) throw new Error('刪除失敗');
+}
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<FirebaseAuthUser[]>([]);

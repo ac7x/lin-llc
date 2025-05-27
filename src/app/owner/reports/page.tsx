@@ -1,5 +1,3 @@
-import { OwnerBottomNav } from '@/modules/shared/interfaces/navigation/owner-bottom-nav';
-
 export default function ReportsPage() {
     return (
         <div>
