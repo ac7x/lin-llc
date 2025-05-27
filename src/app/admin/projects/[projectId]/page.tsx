@@ -144,9 +144,32 @@ export default function ProjectDetailPage() {
 
     return (
         <div className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-                <h1 className="text-2xl font-bold">專案詳細頁</h1>
-                <button onClick={handleDelete} className="text-sm bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200">刪除</button>
+            {/* 操作按鈕區塊 */}
+            <div className="flex gap-3 mb-6">
+                <button
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                    onClick={() => router.push(`/admin/projects/${projectId}/edit`)}
+                >
+                    編輯
+                </button>
+                <button
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                    onClick={() => router.push(`/admin/projects/${projectId}/tasks`)}
+                >
+                    查看任務
+                </button>
+                <button
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                    onClick={() => router.push(`/admin/projects/${projectId}/schedule`)}
+                >
+                    查看排程
+                </button>
+                <button
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                    onClick={handleDelete}
+                >
+                    刪除
+                </button>
             </div>
             <div className="mb-2 text-gray-700">專案 ID: {projectId}</div>
             {editing ? (
@@ -224,12 +247,6 @@ export default function ProjectDetailPage() {
                     <div className="mb-2"><span className="font-semibold">地址：</span>{form.address || '—'}</div>
                     <div className="mb-2"><span className="font-semibold">工作區：</span>{form.workspace || '—'}</div>
                     <div className="mb-2"><span className="font-semibold">描述：</span>{form.description || '—'}</div>
-                    <a
-                      href={`/admin/projects/${projectId}/edit`}
-                      className="mt-4 bg-yellow-500 text-white px-4 py-1 rounded inline-block hover:bg-yellow-600 transition"
-                    >
-                      編輯
-                    </a>
                     {msg && <div className="text-sm mt-1 text-green-700">{msg}</div>}
                 </div>
             )}

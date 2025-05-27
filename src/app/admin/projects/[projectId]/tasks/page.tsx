@@ -35,6 +35,11 @@ export default function ProjectTasksPage() {
   const [selectedWorkType, setSelectedWorkType] = useState('');
   const [copyMsg, setCopyMsg] = useState('');
 
+  // 新增任務表單狀態
+  const [taskName, setTaskName] = useState('');
+  const [taskDesc, setTaskDesc] = useState('');
+  const [taskWorkspace, setTaskWorkspace] = useState('');
+
   // 取得所有範本種類
   useEffect(() => {
     async function fetchWorkTypes() {
@@ -57,6 +62,20 @@ export default function ProjectTasksPage() {
     if (projectId) fetchWorkspaces();
   }, [projectId]);
 
+  // 新增任務
+  async function handleAddTask(e: React.FormEvent) {
+    e.preventDefault();
+    if (!taskName || !taskWorkspace) return;
+    await addDoc(collection(db, 'projects', projectId, 'tasks'), {
+      name: taskName,
+      description: taskDesc,
+      workspace: taskWorkspace
+    });
+    setTaskName('');
+    setTaskDesc('');
+    setTaskWorkspace('');
+  }
+
   // 複製範本任務到專案
   async function handleCopyTasks() {
     if (!selectedWorkType) return;
@@ -69,10 +88,12 @@ export default function ProjectTasksPage() {
       const flowIdMap: Record<string, string> = {};
       for (const flowDoc of flowsSnap.docs) {
         const data = flowDoc.data();
-        // 不複製 id，Firestore 會自動產生新 id
+        // 讓使用者選擇工作區域
+        const workspace = selectedWorkspace || '';
         const newFlowRef = await addDoc(collection(db, 'projects', projectId, 'flows'), {
           name: data.name || '',
-          order: data.order || 1
+          order: data.order || 1,
+          workspace // 新增 workspace 欄位
         });
         flowIdMap[flowDoc.id] = newFlowRef.id;
       }
@@ -85,16 +106,18 @@ export default function ProjectTasksPage() {
       }
       const batch = tasksSnap.docs.map(docSnap => {
         const data = docSnap.data();
-        // flowId 轉換
         let newFlowId = data.flowId;
         if (newFlowId && flowIdMap[newFlowId]) {
           newFlowId = flowIdMap[newFlowId];
         }
+        // 讓使用者選擇工作區域
+        const workspace = selectedWorkspace || '';
         return addDoc(collection(db, 'projects', projectId, 'tasks'), {
           name: data.name || '',
           description: data.description || '',
           flowId: newFlowId || '',
-          order: data.order || 1
+          order: data.order || 1,
+          workspace // 新增 workspace 欄位
         });
       });
       await Promise.all(batch);
@@ -121,6 +144,34 @@ export default function ProjectTasksPage() {
   return (
     <div>
       <h2 className="text-xl font-bold">任務列表</h2>
+      {/* 新增任務表單 */}
+      <form onSubmit={handleAddTask} className="mb-4 flex gap-2 flex-wrap items-end">
+        <input
+          className="border px-2 py-1"
+          value={taskName}
+          onChange={e => setTaskName(e.target.value)}
+          placeholder="任務名稱"
+          required
+        />
+        <input
+          className="border px-2 py-1"
+          value={taskDesc}
+          onChange={e => setTaskDesc(e.target.value)}
+          placeholder="描述"
+        />
+        <select
+          className="border px-2 py-1"
+          value={taskWorkspace}
+          onChange={e => setTaskWorkspace(e.target.value)}
+          required
+        >
+          <option value="">選擇工作區域</option>
+          {workspaces.map(ws => (
+            <option key={ws.id} value={ws.id}>{ws.name}</option>
+          ))}
+        </select>
+        <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded">新增任務</button>
+      </form>
       {/* 工作區域過濾選單 */}
       <div className="mb-4 flex items-center gap-2">
         <select
