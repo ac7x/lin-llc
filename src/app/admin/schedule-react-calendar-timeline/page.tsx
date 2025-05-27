@@ -1,18 +1,20 @@
 'use client'
 
 import '@/styles/react-calendar-timeline.scss'
-import { addDays, endOfDay, parseISO, startOfDay, subDays } from 'date-fns'
+import { addDays, endOfDay, parseISO, startOfDay, subDays, differenceInMilliseconds, isValid } from 'date-fns'
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import {
 	collection,
 	doc,
-	getDocs,
 	getFirestore,
-	updateDoc
+	updateDoc,
+	QueryDocumentSnapshot,
+	DocumentData
 } from 'firebase/firestore'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
-import { DndContext, useDraggable, useDroppable, DragEndEvent, DragOverlay } from '@dnd-kit/core'
+import { useCollection } from 'react-firebase-hooks/firestore'
+import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
@@ -27,244 +29,228 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 const firestore = getFirestore(app)
 
-type AreaGroup = {
-	id: string
-	title: string
-	projectId: string
-	areaId: string
-}
-type AreaTask = {
-	id: string
-	name: string
-	status?: string
-	order?: number
-	plannedStartTime?: string
-	plannedEndTime?: string
-	areaId: string
-	projectId: string
+// 型別宣告（移到檔案最上方，確保所有地方都能正確引用）
+export interface WorkLoadEntity {
+  loadId: string
+  title: string
+  executor: string[]
+  plannedStartTime: string
+  plannedEndTime: string
 }
 
-function DraggableUnplannedTask({ task }: { task: AreaTask }) {
-	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-		id: task.id,
-		data: { task }
-	})
-	return (
-		<div
-			ref={setNodeRef}
-			{...attributes}
-			{...listeners}
-			style={{
-				opacity: isDragging ? 0.5 : 1,
-				cursor: "grab",
-				border: "1px solid #ddd",
-				padding: 4,
-				marginBottom: 2,
-				background: "#fff",
-				borderRadius: 3,
-				fontSize: 14,
-				boxShadow: isDragging ? '0 2px 8px rgba(0,0,0,0.12)' : undefined,
-				transition: 'box-shadow 0.2s',
-			}}
-			title={`來自專案 ${task.projectId} 區域 ${task.areaId}`}
-		>
-			<div style={{ fontWeight: 500 }}>{task.name || '（無標題）'}</div>
-			<div className="text-xs text-gray-500" style={{ fontSize: 12 }}>
-				專案: {task.projectId} / 區域: {task.areaId}
-			</div>
-		</div>
-	)
+export interface WorkEpicEntity {
+  epicId: string
+  title: string
+  workLoads?: WorkLoadEntity[]
 }
 
-export default function SchedulePage() {
-	const [groups, setGroups] = useState<AreaGroup[]>([])
-	const [tasks, setTasks] = useState<AreaTask[]>([])
-	const [activeDragTaskId, setActiveDragTaskId] = useState<string | null>(null)
+export type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
+
+const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>): string =>
+	`${wl.title || '（無標題）'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : '（無執行者）'}`
+
+const WorkScheduleManagementPage: React.FC = () => {
+	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
+	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
+	const [epicSnapshot] = useCollection(collection(firestore, 'workEpic'))
 	const timelineRef = useRef<HTMLDivElement>(null)
 
-	// 載入所有專案的所有區域與任務
 	useEffect(() => {
-		async function fetchAll() {
-			const projectsSnap = await getDocs(collection(firestore, 'projects'))
-			const areaGroups: AreaGroup[] = []
-			const areaTasks: AreaTask[] = []
-			for (const projectDoc of projectsSnap.docs) {
-				const projectId = projectDoc.id
-				const projectName = projectDoc.data().name || projectId
-				const areasSnap = await getDocs(collection(firestore, 'projects', projectId, 'areas'))
-				for (const areaDoc of areasSnap.docs) {
-					const areaId = areaDoc.id
-					const areaName = areaDoc.data().name || areaId
-					areaGroups.push({
-						id: `${projectId}__${areaId}`,
-						title: `${projectName} - ${areaName}`,
-						projectId,
-						areaId,
-					})
-					const tasksSnap = await getDocs(collection(firestore, 'projects', projectId, 'areas', areaId, 'tasks'))
-					for (const taskDoc of tasksSnap.docs) {
-						const data = taskDoc.data()
-						areaTasks.push({
-							id: taskDoc.id,
-							name: data.name || '',
-							status: data.status,
-							order: data.order,
-							plannedStartTime: data.plannedStartTime,
-							plannedEndTime: data.plannedEndTime,
-							areaId,
-							projectId,
-						})
-					}
-				}
-			}
-			setGroups(areaGroups)
-			setTasks(areaTasks)
+		if (!epicSnapshot) { return }
+		const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs)
+		setEpics(epics)
+		setUnplanned(unplanned)
+	}, [epicSnapshot])
+
+	const groupCount = 5
+	const groups: TimelineGroupBase[] = useMemo(() => {
+		const filledEpics: WorkEpicEntity[] = [...epics]
+		while (filledEpics.length < groupCount) {
+			filledEpics.push({
+				epicId: `empty-${filledEpics.length}`,
+				title: ''
+			})
 		}
-		fetchAll()
-	}, [])
+		return filledEpics.map(e => ({
+			id: e.epicId,
+			title: e.title
+		}))
+	}, [epics])
+
+	const items: TimelineItemBase<Date>[] = useMemo(() =>
+		epics.flatMap(e =>
+			(e.workLoads || [])
+				.filter(l => l.plannedStartTime)
+				.map(l => {
+					const start = parseISO(l.plannedStartTime)
+					const end = l.plannedEndTime ? parseISO(l.plannedEndTime) : addDays(start, 1)
+					return {
+						id: l.loadId,
+						group: e.epicId,
+						title: getWorkloadContent(l),
+						start_time: start,
+						end_time: end
+					}
+				})
+		), [epics])
+
+	const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
+		const item = items.find(i => i.id === itemId)
+		if (!item) { return }
+		const oldEpic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		if (!oldEpic) { return }
+		const wlIdx = (oldEpic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		if (wlIdx === -1) { return }
+		const newEpic = epics[newGroupOrder]
+		if (!newEpic) { return }
+		const newStart = new Date(dragTime)
+		const duration = differenceInMilliseconds(item.end_time as Date, item.start_time as Date)
+		const newEnd = new Date(newStart.getTime() + duration)
+		if (oldEpic.epicId !== newEpic.epicId) {
+			const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
+			await updateDoc(doc(firestore, 'workEpic', oldEpic.epicId), { workLoads: updatedOldWorkLoads })
+			const oldWorkload = (oldEpic.workLoads || [])[wlIdx]
+			const newWorkLoad: WorkLoadEntity = {
+				...oldWorkload,
+				plannedStartTime: newStart.toISOString(),
+				plannedEndTime: newEnd.toISOString()
+			}
+			const updatedNewWorkLoads = [...(newEpic.workLoads || []), newWorkLoad]
+			await updateDoc(doc(firestore, 'workEpic', newEpic.epicId), { workLoads: updatedNewWorkLoads })
+		} else {
+			const newWorkLoads = [...(oldEpic.workLoads || [])]
+			newWorkLoads[wlIdx] = {
+				...newWorkLoads[wlIdx],
+				plannedStartTime: newStart.toISOString(),
+				plannedEndTime: newEnd.toISOString()
+			}
+			await updateDoc(doc(firestore, 'workEpic', oldEpic.epicId), { workLoads: newWorkLoads })
+		}
+	}
+
+	const handleItemResize = async (itemId: string, time: number, edge: 'left' | 'right'): Promise<void> => {
+		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		if (!epic) { return }
+		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		if (wlIdx === -1) { return }
+		const wl = (epic.workLoads || [])[wlIdx]
+		let newStart = parseISO(wl.plannedStartTime)
+		let newEnd = wl.plannedEndTime ? parseISO(wl.plannedEndTime) : undefined
+		if (edge === 'left') { newStart = new Date(time) }
+		if (edge === 'right') { newEnd = new Date(time) }
+		const newWorkLoads = [...(epic.workLoads || [])]
+		newWorkLoads[wlIdx] = {
+			...wl,
+			plannedStartTime: newStart.toISOString(),
+			plannedEndTime: newEnd && isValid(newEnd) ? newEnd.toISOString() : ''
+		}
+		await updateDoc(doc(firestore, 'workEpic', epic.epicId), { workLoads: newWorkLoads })
+	}
+
+	const handleItemRemove = async (itemId: string): Promise<void> => {
+		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		if (!epic) { return }
+		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		if (wlIdx === -1) { return }
+		const newWorkLoads = [...(epic.workLoads || [])]
+		const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: '', plannedEndTime: '' }
+		newWorkLoads[wlIdx] = updateWL
+		await updateDoc(doc(firestore, 'workEpic', epic.epicId), { workLoads: newWorkLoads })
+	}
+
+	const handleAssignToTimeline = async (
+		wlDragged: LooseWorkLoad,
+		targetGroupId: string,
+		startTime: Date,
+		endTime: Date
+	) => {
+		const originalEpicId = wlDragged.epicId
+		const workLoadId = wlDragged.loadId
+
+		const originalEpicState = epics.find(e => e.epicId === originalEpicId)
+		if (!originalEpicState || !originalEpicState.workLoads) {
+			console.error('Original epic or its workloads not found in state:', originalEpicId)
+			return
+		}
+
+		const workloadWithNewTimes: WorkLoadEntity = {
+			loadId: workLoadId,
+			title: wlDragged.title,
+			executor: wlDragged.executor,
+			plannedStartTime: startTime.toISOString(),
+			plannedEndTime: endTime.toISOString()
+		}
+
+		if (originalEpicId === targetGroupId) {
+			const newWorkLoads = originalEpicState.workLoads.map((wl: WorkLoadEntity) =>
+				wl.loadId === workLoadId ? workloadWithNewTimes : wl
+			)
+			await updateDoc(doc(firestore, 'workEpic', originalEpicId), { workLoads: newWorkLoads })
+		} else {
+			const targetEpicState = epics.find(e => e.epicId === targetGroupId)
+			if (!targetEpicState) {
+				console.warn(`Target epic ${targetGroupId} not found. Item will be scheduled in its original epic.`)
+				const newWorkLoads = originalEpicState.workLoads.map((wl: WorkLoadEntity) =>
+					wl.loadId === workLoadId ? workloadWithNewTimes : wl
+				)
+				await updateDoc(doc(firestore, 'workEpic', originalEpicId), { workLoads: newWorkLoads })
+				return
+			}
+
+			const updatedOriginalWorkLoads = originalEpicState.workLoads.filter(
+				(wl: WorkLoadEntity) => wl.loadId !== workLoadId
+			)
+
+			const newTargetWorkLoads = [...(targetEpicState.workLoads || []), workloadWithNewTimes]
+
+			await updateDoc(doc(firestore, 'workEpic', originalEpicId), { workLoads: updatedOriginalWorkLoads })
+			await updateDoc(doc(firestore, 'workEpic', targetGroupId), { workLoads: newTargetWorkLoads })
+		}
+	}
 
 	const now = new Date()
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
-	// Timeline groups
-	const timelineGroups: TimelineGroupBase[] = groups
-
-	// Timeline items
-	const timelineItems: TimelineItemBase<Date>[] = useMemo(
-		() =>
-			tasks
-				.filter(t => t.plannedStartTime)
-				.map(t => {
-					const start = parseISO(t.plannedStartTime!)
-					const end = t.plannedEndTime ? parseISO(t.plannedEndTime) : addDays(start, 1)
-					return {
-						id: t.id,
-						group: `${t.projectId}__${t.areaId}`,
-						title: t.name,
-						start_time: start,
-						end_time: end,
-					}
-				}),
-		[tasks]
-	)
-
-	// 尚未安排時程
-	const unplannedTasks = useMemo(
-		() => tasks.filter(t => !t.plannedStartTime),
-		[tasks]
-	)
-
-	// 讓 timeline 外層 div 成為 droppable 區域
-	const { setNodeRef: setTimelineDroppableRef } = useDroppable({ id: "timeline-droppable" });
-
-	// 拖曳到 timeline 時寫入 Firestore 並立即 setTasks
-	const handleTimelineDrop = async (event: DragEndEvent) => {
-		const task = unplannedTasks.find(t => t.id === event.active.id)
-		if (!task) return
-		const e = event.activatorEvent as DragEvent
-		const timelineElement = timelineRef.current?.querySelector('.react-calendar-timeline') as HTMLElement
-		if (!timelineElement || !e) return
-		const rect = timelineElement.getBoundingClientRect()
-		const y = e.clientY - rect.top
-		const groupHeight = rect.height / groups.length
-		const groupIndex = Math.floor(y / groupHeight)
-		const group = groups[groupIndex]
-		if (!group) return
-		const timelineWidth = rect.width
-		const x = e.clientX - rect.left
-		const percent = x / timelineWidth
-		const timeRange = defaultTimeEnd.getTime() - defaultTimeStart.getTime()
-		const dropTime = new Date(defaultTimeStart.getTime() + percent * timeRange)
-		const startTime = dropTime
-		const endTime = addDays(startTime, 1)
-		await updateDoc(
-			doc(
-				firestore,
-				"projects",
-				task.projectId,
-				"areas",
-				task.areaId,
-				"tasks",
-				task.id
-			),
-			{
-				plannedStartTime: startTime.toISOString(),
-				plannedEndTime: endTime.toISOString(),
-			}
-		)
-		// 立即刷新
-		setTasks(prev => prev.map(t => t.id === task.id ? { ...t, plannedStartTime: startTime.toISOString(), plannedEndTime: endTime.toISOString() } : t))
-	}
-
-	// 支援 timeline 內部拖曳（可選）
-	const handleAreaTaskMove = async (itemId: string, dragTime: number, newGroupOrder: number) => {
-		const item = timelineItems.find(i => i.id === itemId)
-		if (!item) return
-		const newGroup = groups[newGroupOrder]
-		if (!newGroup) return
-		const newStart = new Date(dragTime)
-		newStart.setHours(0, 0, 0, 0)
-		const newEnd = addDays(newStart, 1)
-		await updateDoc(
-			doc(
-				firestore,
-				"projects",
-				newGroup.projectId,
-				"areas",
-				newGroup.areaId,
-				"tasks",
-				itemId
-			),
-			{
-				plannedStartTime: newStart.toISOString(),
-				plannedEndTime: newEnd.toISOString(),
-			}
-		)
-	}
-
-	const handleAreaTaskResize = async (itemId: string, time: number, edge: 'left' | 'right') => {
-		const task = tasks.find(t => t.id === itemId)
-		if (!task) return
-		let newStart = task.plannedStartTime ? parseISO(task.plannedStartTime) : new Date()
-		let newEnd = task.plannedEndTime ? parseISO(task.plannedEndTime) : addDays(newStart, 1)
-		if (edge === 'left') newStart = new Date(time)
-		if (edge === 'right') newEnd = new Date(time)
-		await updateDoc(
-			doc(
-				firestore,
-				"projects",
-				task.projectId,
-				"areas",
-				task.areaId,
-				"tasks",
-				itemId
-			),
-			{
-				plannedStartTime: newStart.toISOString(),
-				plannedEndTime: newEnd.toISOString(),
-			}
-		)
-	}
-
 	return (
-		<DndContext
-			onDragEnd={handleTimelineDrop}
-			id="unplanned-dnd-context"
-			onDragStart={e => setActiveDragTaskId(e.active.id as string)}
-			onDragCancel={() => setActiveDragTaskId(null)}
-			onDragOver={() => {}}
-		>
+		<div>
 			<div>
 				<div
 					ref={timelineRef}
-					style={{ minHeight: 400 }}
+					onDragOver={e => {
+						e.preventDefault()
+					}}
+					onDrop={e => {
+						e.preventDefault()
+						try {
+							const jsonData = e.dataTransfer.getData('application/json')
+							if (!jsonData) { return }
+							const droppedWl = JSON.parse(jsonData) as LooseWorkLoad
+							const timelineElement = document.querySelector('.react-calendar-timeline')
+							if (!timelineElement) { return }
+							const rect = timelineElement.getBoundingClientRect()
+							const y = e.clientY - rect.top
+							const groupHeight = rect.height / groups.length
+							const groupIndex = Math.floor(y / groupHeight)
+							const group = groups[groupIndex]
+							if (!group) { return }
+							const timelineWidth = rect.width
+							const x = e.clientX - rect.left
+							const percent = x / timelineWidth
+							const timeRange = defaultTimeEnd.getTime() - defaultTimeStart.getTime()
+							const dropTime = new Date(defaultTimeStart.getTime() + percent * timeRange)
+							const startTime = dropTime
+							const endTime = addDays(startTime, 1)
+							handleAssignToTimeline(droppedWl, group.id as string, startTime, endTime)
+						} catch (error) {
+							console.error('Error processing dropped item:', error)
+						}
+					}}
 				>
-					{/* 讓 Timeline 成為 drop target */}
-					<div ref={setTimelineDroppableRef} style={{ height: '100%' }}>
+					<div>
 						<Timeline
-							groups={timelineGroups}
-							items={timelineItems}
+							groups={groups}
+							items={items}
 							defaultTimeStart={defaultTimeStart.getTime()}
 							defaultTimeEnd={defaultTimeEnd.getTime()}
 							canMove
@@ -283,8 +269,9 @@ export default function SchedulePage() {
 								month: 1,
 								year: 1
 							}}
-							onItemMove={handleAreaTaskMove}
-							onItemResize={handleAreaTaskResize}
+							onItemMove={handleItemMove}
+							onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+							onItemDoubleClick={handleItemRemove}
 							groupRenderer={({ group }) => (
 								<div>
 									{group.title}
@@ -306,28 +293,61 @@ export default function SchedulePage() {
 					</div>
 				</div>
 				<div>
-					<h2>尚未安排時程</h2>
-					{unplannedTasks.length === 0 ? (
-						<div>
-							<span>（無未排程工作）</span>
-						</div>
-					) : (
-						<div
-							tabIndex={0}
-							aria-label="unplanned-jobs"
-						>
-							{unplannedTasks.map(t => (
-								<DraggableUnplannedTask key={t.id} task={t} />
-							))}
-						</div>
-					)}
+					<div>
+						<h2>
+							未排程工作
+						</h2>
+						{unplanned.length === 0 ? (
+							<div>
+								<span>
+									（無未排程工作）
+								</span>
+							</div>
+						) : (
+							<div
+								tabIndex={0}
+								aria-label="unplanned-jobs"
+							>
+								{unplanned.map((wl: LooseWorkLoad) => (
+									<div
+										key={wl.loadId}
+										draggable={true}
+										onDragStart={e => {
+											e.dataTransfer.setData('application/json', JSON.stringify(wl))
+										}}
+										title={`來自 ${wl.epicTitle}`}
+									>
+										<div>
+											{wl.title || '（無標題）'}
+										</div>
+										<div>
+											{Array.isArray(wl.executor) && wl.executor.length > 0 ? wl.executor.join(', ') : '（無執行者）'}
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+					<AdminBottomNav />
 				</div>
 			</div>
-			<DragOverlay>
-				{activeDragTaskId ? (
-					<DraggableUnplannedTask task={unplannedTasks.find(t => t.id === activeDragTaskId)!} />
-				) : null}
-			</DragOverlay>
-		</DndContext>
+		</div>
 	)
+}
+
+export default WorkScheduleManagementPage
+
+// 修正 parseEpicSnapshot 參數型別與 firestore 回傳型別相容
+const parseEpicSnapshot = (
+  docs: QueryDocumentSnapshot<DocumentData, DocumentData>[]
+): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
+  const epics: WorkEpicEntity[] = docs.map(
+    doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity)
+  )
+  const unplanned: LooseWorkLoad[] = epics.flatMap((e: WorkEpicEntity) =>
+    (e.workLoads || [])
+      .filter((l: WorkLoadEntity) => !l.plannedStartTime)
+      .map((l: WorkLoadEntity) => ({ ...l, epicId: e.epicId, epicTitle: e.title } as LooseWorkLoad))
+  )
+  return { epics, unplanned }
 }

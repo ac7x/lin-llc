@@ -80,6 +80,8 @@ export default function ProjectDetailPage() {
   const [managerName, setManagerName] = useState("");
   const [supervisorNames, setSupervisorNames] = useState<string>("");
   const [safetyNames, setSafetyNames] = useState<string>("");
+  const [projectRegion, setProjectRegion] = useState(""); // 新增地區
+  const [projectAddress, setProjectAddress] = useState(""); // 新增地址
   const [users, setUsers] = useState<{ uid: string; displayName?: string; email?: string }[]>([]);
 
   React.useEffect(() => {
@@ -92,6 +94,8 @@ export default function ProjectDetailPage() {
       if (projectDoc.exists()) {
         setProjectName(projectDoc.data().name || "");
         setProjectDesc(projectDoc.data().description || "");
+        setProjectRegion(projectDoc.data().region || ""); // 取得地區
+        setProjectAddress(projectDoc.data().address || ""); // 取得地址
         const m = projectDoc.data().manager;
         const s = projectDoc.data().supervisor;
         const sa = projectDoc.data().safety;
@@ -161,6 +165,8 @@ export default function ProjectDetailPage() {
           <div>負責人：{managerName || '—'}</div>
           <div>現場監工：{supervisorNames}</div>
           <div>安全衛生人員：{safetyNames}</div>
+          <div>地區：{projectRegion || '—'}</div>
+          <div>地址：{projectAddress || '—'}</div>
         </div>
       </div>
       <h2 className="text-lg font-semibold mt-6 mb-2">任務清單</h2>
