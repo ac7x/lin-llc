@@ -117,8 +117,18 @@ export default function ProjectDetailPage() {
         : String(project.createdAt) || "未知"}
       </p>
       <p>負責人：{users[project.manager || ""] || "-"}</p>
-      <p>現場監工：{project.supervisors?.map(id => users[id]).join(", ") || "-"}</p>
-      <p>現場公共安全人員：{project.safetyStaff?.map(id => users[id]).join(", ") || "-"}</p>
+      <p>
+        現場監工：
+        {project.supervisors && project.supervisors.length > 0
+          ? project.supervisors.map(id => users[id] || id).join(", ")
+          : "-"}
+      </p>
+      <p>
+        現場公共安全人員：
+        {project.safetyStaff && project.safetyStaff.length > 0
+          ? project.safetyStaff.map(id => users[id] || id).join(", ")
+          : "-"}
+      </p>
       <p>地區：{project.region || "-"}</p>
       <p>地址：{project.address || "-"}</p>
       <p>起始日：{project.startDate || "-"}</p>

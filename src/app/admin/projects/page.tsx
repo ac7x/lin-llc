@@ -72,8 +72,18 @@ export default function ProjectsPage() {
               </Link>
               <div className="project-meta">
                 <div><span className="meta-label">負責人：</span>{users[project.manager || ""] || "-"}</div>
-                <div><span className="meta-label">監工：</span>{project.supervisors?.map(id => users[id]).join(", ") || "-"}</div>
-                <div><span className="meta-label">公共安全人員：</span>{project.safetyStaff?.map(id => users[id]).join(", ") || "-"}</div>
+                <div>
+                  <span className="meta-label">監工：</span>
+                  {project.supervisors && project.supervisors.length > 0
+                    ? project.supervisors.map(id => users[id] || id).join(", ")
+                    : "-"}
+                </div>
+                <div>
+                  <span className="meta-label">公共安全人員：</span>
+                  {project.safetyStaff && project.safetyStaff.length > 0
+                    ? project.safetyStaff.map(id => users[id] || id).join(", ")
+                    : "-"}
+                </div>
                 <div><span className="meta-label">地區：</span>{project.region || "-"}</div>
                 <div><span className="meta-label">地址：</span>{project.address || "-"}</div>
                 <div><span className="meta-label">起始日：</span>{project.startDate || "-"}</div>
