@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { getFirestore, collection, addDoc, Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function AdminProjectsPage() {
     const [name, setName] = useState('');
@@ -17,6 +17,7 @@ export default function AdminProjectsPage() {
     const db = getFirestore(app);
     const projectsRef = collection(db, 'projects');
     const [projectsSnap, loading, error] = useCollection(projectsRef);
+    const router = useRouter();
 
     // 新增專案
     async function createProject({ name, description }: { name: string; description: string }) {
@@ -139,23 +140,45 @@ export default function AdminProjectsPage() {
                         }
                         // 一般顯示模式
                         return (
-                            <li key={id} className="border p-2 rounded flex flex-col md:flex-row md:items-center md:justify-between">
+                            <li
+                                key={id}
+                                className="border p-2 rounded flex flex-col md:flex-row md:items-center md:justify-between cursor-pointer hover:bg-blue-50 transition group"
+                                onClick={e => {
+                                    // 避免點擊編輯/刪除按鈕時觸發跳轉
+                                    if ((e.target as HTMLElement).closest('button')) return;
+                                    router.push(`/admin/projects/${id}`);
+                                }}
+                                tabIndex={0}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        router.push(`/admin/projects/${id}`);
+                                    }
+                                }}
+                                role="button"
+                                aria-label={`前往專案 ${data.name} 詳細頁`}
+                            >
                                 <div>
-                                    <Link href={`/admin/projects/${id}`} className="font-semibold text-blue-700 hover:underline hover:text-blue-900 transition">
+                                    <span className="font-semibold text-blue-700 group-hover:underline group-hover:text-blue-900 transition">
                                         {data.name}
-                                    </Link>
+                                    </span>
                                     <div className="text-sm text-gray-600">{data.description}</div>
                                 </div>
                                 <div className="mt-2 md:mt-0 md:ml-4 flex space-x-2">
                                     <button
                                         className="bg-yellow-500 text-white px-3 py-1 rounded"
-                                        onClick={() => startEdit(id, data.name, data.description)}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            startEdit(id, data.name, data.description);
+                                        }}
                                     >
                                         編輯
                                     </button>
                                     <button
                                         className="bg-red-600 text-white px-3 py-1 rounded"
-                                        onClick={() => handleDelete(id)}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            handleDelete(id);
+                                        }}
                                     >
                                         刪除
                                     </button>
