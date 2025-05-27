@@ -78,8 +78,8 @@ export default function ProjectDetailPage() {
   const [projectName, setProjectName] = useState("");
   const [projectDesc, setProjectDesc] = useState("");
   const [managerName, setManagerName] = useState("");
-  const [supervisorName, setSupervisorName] = useState("");
-  const [safetyName, setSafetyName] = useState("");
+  const [supervisorNames, setSupervisorNames] = useState<string>("");
+  const [safetyNames, setSafetyNames] = useState<string>("");
   const [users, setUsers] = useState<{ uid: string; displayName?: string; email?: string }[]>([]);
 
   React.useEffect(() => {
@@ -96,8 +96,25 @@ export default function ProjectDetailPage() {
         const s = projectDoc.data().supervisor;
         const sa = projectDoc.data().safety;
         setManagerName(users.find(u => u.uid === m)?.displayName || users.find(u => u.uid === m)?.email || m || "");
-        setSupervisorName(users.find(u => u.uid === s)?.displayName || users.find(u => u.uid === s)?.email || s || "");
-        setSafetyName(users.find(u => u.uid === sa)?.displayName || users.find(u => u.uid === sa)?.email || sa || "");
+        // supervisor/safety 可能為陣列
+        const supervisorArr = Array.isArray(s) ? s : s ? [s] : [];
+        const safetyArr = Array.isArray(sa) ? sa : sa ? [sa] : [];
+        setSupervisorNames(
+          supervisorArr.length
+            ? supervisorArr.map(uid => {
+                const u = users.find(user => user.uid === uid);
+                return u?.displayName || u?.email || uid;
+              }).join(', ')
+            : "—"
+        );
+        setSafetyNames(
+          safetyArr.length
+            ? safetyArr.map(uid => {
+                const u = users.find(user => user.uid === uid);
+                return u?.displayName || u?.email || uid;
+              }).join(', ')
+            : "—"
+        );
       }
     }
     if (projectId && users.length) fetchProject();
@@ -142,8 +159,8 @@ export default function ProjectDetailPage() {
         <div className="text-gray-600">{projectDesc}</div>
         <div className="text-sm text-gray-700 mt-2">
           <div>負責人：{managerName || '—'}</div>
-          <div>現場監工：{supervisorName || '—'}</div>
-          <div>安全衛生人員：{safetyName || '—'}</div>
+          <div>現場監工：{supervisorNames}</div>
+          <div>安全衛生人員：{safetyNames}</div>
         </div>
       </div>
       <h2 className="text-lg font-semibold mt-6 mb-2">任務清單</h2>

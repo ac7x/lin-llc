@@ -17,8 +17,10 @@ export default function EditProjectPage() {
   const [editMsg, setEditMsg] = useState("");
   const [saving, setSaving] = useState(false);
   const [editManager, setEditManager] = useState("");
-  const [editSupervisor, setEditSupervisor] = useState("");
-  const [editSafety, setEditSafety] = useState("");
+  const [editSupervisor, setEditSupervisor] = useState<string[]>([]);
+  const [editSafety, setEditSafety] = useState<string[]>([]);
+  const [editRegion, setEditRegion] = useState("");
+  const [editAddress, setEditAddress] = useState("");
   const [users, setUsers] = useState<{ uid: string; displayName?: string; email?: string }[]>([]);
 
   useEffect(() => {
@@ -32,8 +34,10 @@ export default function EditProjectPage() {
         setEditName(projectDoc.data().name || "");
         setEditDesc(projectDoc.data().description || "");
         setEditManager(projectDoc.data().manager || "");
-        setEditSupervisor(projectDoc.data().supervisor || "");
-        setEditSafety(projectDoc.data().safety || "");
+        setEditSupervisor(Array.isArray(projectDoc.data().supervisor) ? projectDoc.data().supervisor : projectDoc.data().supervisor ? [projectDoc.data().supervisor] : []);
+        setEditSafety(Array.isArray(projectDoc.data().safety) ? projectDoc.data().safety : projectDoc.data().safety ? [projectDoc.data().safety] : []);
+        setEditRegion(projectDoc.data().region || "");
+        setEditAddress(projectDoc.data().address || "");
       }
     }
     if (projectId) fetchProject();
@@ -48,8 +52,10 @@ export default function EditProjectPage() {
         name: editName,
         description: editDesc,
         manager: editManager,
-        supervisor: editSupervisor,
-        safety: editSafety,
+        supervisor: editSupervisor, // 陣列
+        safety: editSafety,         // 陣列
+        region: editRegion,
+        address: editAddress,
       });
       setEditMsg("儲存成功");
       setTimeout(() => router.back(), 600);
@@ -94,21 +100,70 @@ export default function EditProjectPage() {
         </div>
         <div>
           <label className="block mb-1 font-medium">現場監工</label>
-          <select className="border px-2 py-1 w-full" value={editSupervisor} onChange={e => setEditSupervisor(e.target.value)} required disabled={saving}>
-            <option value="">請選擇</option>
+          <select
+            className="border px-2 py-1 w-full"
+            value={editSupervisor}
+            onChange={e => {
+              const options = Array.from(e.target.selectedOptions).map(o => o.value);
+              setEditSupervisor(options);
+            }}
+            multiple
+            required
+            disabled={saving}
+          >
             {users.map(u => (
-              <option key={u.uid} value={u.uid}>{u.displayName || u.email || u.uid}</option>
+              <option key={u.uid} value={u.uid}>
+                {u.displayName || u.email || u.uid}
+              </option>
             ))}
           </select>
         </div>
         <div>
           <label className="block mb-1 font-medium">安全衛生人員</label>
-          <select className="border px-2 py-1 w-full" value={editSafety} onChange={e => setEditSafety(e.target.value)} required disabled={saving}>
-            <option value="">請選擇</option>
+          <select
+            className="border px-2 py-1 w-full"
+            value={editSafety}
+            onChange={e => {
+              const options = Array.from(e.target.selectedOptions).map(o => o.value);
+              setEditSafety(options);
+            }}
+            multiple
+            required
+            disabled={saving}
+          >
             {users.map(u => (
-              <option key={u.uid} value={u.uid}>{u.displayName || u.email || u.uid}</option>
+              <option key={u.uid} value={u.uid}>
+                {u.displayName || u.email || u.uid}
+              </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">地區</label>
+          <select
+            className="border px-2 py-1 w-full"
+            value={editRegion}
+            onChange={e => setEditRegion(e.target.value)}
+            required
+            disabled={saving}
+          >
+            <option value="">請選擇</option>
+            <option value="北部">北部</option>
+            <option value="中部">中部</option>
+            <option value="南部">南部</option>
+            <option value="東部">東部</option>
+            <option value="離島">離島</option>
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">地址</label>
+          <input
+            className="border px-2 py-1 w-full"
+            value={editAddress}
+            onChange={e => setEditAddress(e.target.value)}
+            required
+            disabled={saving}
+          />
         </div>
         <div className="flex gap-2">
           <button

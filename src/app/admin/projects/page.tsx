@@ -20,9 +20,16 @@ export default function AdminProjectsPage() {
       if (!projectsSnap) return;
       const counts: { [id: string]: number } = {};
       for (const doc of projectsSnap.docs) {
-        const tasksRef = collection(db, "projects", doc.id, "tasks");
-        const tasksSnap = await getDocs(tasksRef);
-        counts[doc.id] = tasksSnap.size;
+        let total = 0;
+        // 取得所有區域
+        const areasRef = collection(db, "projects", doc.id, "areas");
+        const areasSnap = await getDocs(areasRef);
+        for (const areaDoc of areasSnap.docs) {
+          const areaTasksRef = collection(db, "projects", doc.id, "areas", areaDoc.id, "tasks");
+          const areaTasksSnap = await getDocs(areaTasksRef);
+          total += areaTasksSnap.size;
+        }
+        counts[doc.id] = total;
       }
       setTaskCounts(counts);
     }
@@ -56,8 +63,9 @@ export default function AdminProjectsPage() {
           {projectsSnap?.docs.map(docSnap => {
             const data = docSnap.data();
             const manager = users.find(u => u.uid === data.manager);
-            const supervisor = users.find(u => u.uid === data.supervisor);
-            const safety = users.find(u => u.uid === data.safety);
+            // supervisor/safety 可能為陣列
+            const supervisors = Array.isArray(data.supervisor) ? data.supervisor : data.supervisor ? [data.supervisor] : [];
+            const safeties = Array.isArray(data.safety) ? data.safety : data.safety ? [data.safety] : [];
             return (
               <li
                 key={docSnap.id}
@@ -79,8 +87,22 @@ export default function AdminProjectsPage() {
                 <div className="text-xs text-gray-500 mt-1">任務數量：{taskCounts[docSnap.id] ?? '...'}</div>
                 <div className="text-xs text-gray-700 mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   <span>負責人：{manager?.displayName || manager?.email || data.manager || '—'}</span>
-                  <span>現場監工：{supervisor?.displayName || supervisor?.email || data.supervisor || '—'}</span>
-                  <span>安全衛生人員：{safety?.displayName || safety?.email || data.safety || '—'}</span>
+                  <span>現場監工：{
+                    supervisors.length
+                      ? supervisors.map(uid => {
+                          const u = users.find(user => user.uid === uid);
+                          return u?.displayName || u?.email || uid;
+                        }).join(', ')
+                      : '—'
+                  }</span>
+                  <span>安全衛生人員：{
+                    safeties.length
+                      ? safeties.map(uid => {
+                          const u = users.find(user => user.uid === uid);
+                          return u?.displayName || u?.email || uid;
+                        }).join(', ')
+                      : '—'
+                  }</span>
                 </div>
                 <div className="text-xs text-gray-700 mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   <span>地區：{data.region || '—'}</span>

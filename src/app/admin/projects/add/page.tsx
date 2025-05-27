@@ -12,8 +12,8 @@ export default function AddProjectPage() {
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
   const [manager, setManager] = useState("");
-  const [supervisor, setSupervisor] = useState("");
-  const [safety, setSafety] = useState("");
+  const [supervisor, setSupervisor] = useState<string[]>([]);
+  const [safety, setSafety] = useState<string[]>([]);
   const [region, setRegion] = useState("");
   const [address, setAddress] = useState("");
   const [users, setUsers] = useState<{ uid: string; displayName?: string; email?: string }[]>([]);
@@ -36,8 +36,8 @@ export default function AddProjectPage() {
         name,
         description,
         manager,
-        supervisor,
-        safety,
+        supervisor, // 陣列
+        safety,     // 陣列
         region,
         address,
         createdAt: new Date(),
@@ -100,11 +100,14 @@ export default function AddProjectPage() {
           <select
             className="border px-2 py-1 w-full"
             value={supervisor}
-            onChange={e => setSupervisor(e.target.value)}
+            onChange={e => {
+              const options = Array.from(e.target.selectedOptions).map(o => o.value);
+              setSupervisor(options);
+            }}
+            multiple
             required
             disabled={saving}
           >
-            <option value="">請選擇</option>
             {users.map(u => (
               <option key={u.uid} value={u.uid}>
                 {u.displayName || u.email || u.uid}
@@ -117,11 +120,14 @@ export default function AddProjectPage() {
           <select
             className="border px-2 py-1 w-full"
             value={safety}
-            onChange={e => setSafety(e.target.value)}
+            onChange={e => {
+              const options = Array.from(e.target.selectedOptions).map(o => o.value);
+              setSafety(options);
+            }}
+            multiple
             required
             disabled={saving}
           >
-            <option value="">請選擇</option>
             {users.map(u => (
               <option key={u.uid} value={u.uid}>
                 {u.displayName || u.email || u.uid}
