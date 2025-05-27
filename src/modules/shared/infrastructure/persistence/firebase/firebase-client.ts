@@ -44,8 +44,8 @@ import {
   deleteObject
 } from 'firebase/storage';
 import { 
-  getAnalytics, 
-  Analytics,
+  getAnalytics,
+  isSupported,
   logEvent
 } from 'firebase/analytics';
 
@@ -59,7 +59,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
   authDomain: "lin-llc.firebaseapp.com",
   projectId: "lin-llc",
-  storageBucket: "lin-llc.firebasestorage.app",
+  storageBucket: "lin-llc.appspot.com", // 修正 typo
   messagingSenderId: "394023041902",
   appId: "1:394023041902:web:f9874be5d0d192557b1f7f",
   measurementId: "G-62JEHK00G8"
@@ -70,14 +70,22 @@ class FirebaseClient {
   private auth: Auth;
   private db: Firestore;
   private storage: ReturnType<typeof getStorage>;
-  private analytics: Analytics;
+  private analytics?: ReturnType<typeof getAnalytics>;
 
   constructor() {
     this.app = initializeApp(firebaseConfig);
     this.auth = getAuth(this.app);
     this.db = getFirestore(this.app);
     this.storage = getStorage(this.app);
-    this.analytics = getAnalytics(this.app);
+
+    // 只在 client 端 (window exists) 並且支援時初始化 Analytics
+    if (typeof window !== 'undefined') {
+      isSupported().then(supported => {
+        if (supported) {
+          this.analytics = getAnalytics(this.app);
+        }
+      });
+    }
   }
 
   // ==================== 認證功能 ====================
@@ -337,6 +345,10 @@ class FirebaseClient {
 
   logAnalyticsEvent(eventName: string, parameters?: { [key: string]: unknown }) {
     try {
+      if (typeof window === 'undefined' || !this.analytics) {
+        // SSR環境或analytics未初始化時不記錄
+        return { success: false, error: 'Analytics not supported in this environment.' };
+      }
       logEvent(this.analytics, eventName, parameters);
       return { success: true };
     } catch (error) {
