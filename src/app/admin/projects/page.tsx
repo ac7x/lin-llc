@@ -1,15 +1,31 @@
 "use client";
 
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { getFirestore, collection } from 'firebase/firestore';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function AdminProjectsPage() {
   const db = getFirestore(app);
   const projectsRef = collection(db, 'projects');
   const [projectsSnap, loading, error] = useCollection(projectsRef);
   const router = useRouter();
+  const [taskCounts, setTaskCounts] = useState<{ [id: string]: number }>({});
+
+  useEffect(() => {
+    async function fetchTaskCounts() {
+      if (!projectsSnap) return;
+      const counts: { [id: string]: number } = {};
+      for (const doc of projectsSnap.docs) {
+        const tasksRef = collection(db, "projects", doc.id, "tasks");
+        const tasksSnap = await getDocs(tasksRef);
+        counts[doc.id] = tasksSnap.size;
+      }
+      setTaskCounts(counts);
+    }
+    fetchTaskCounts();
+  }, [projectsSnap, db]);
 
   return (
     <div className="pb-20 max-w-2xl mx-auto">
@@ -51,6 +67,9 @@ export default function AdminProjectsPage() {
                   {data.name || docSnap.id}
                 </div>
                 <div className="text-sm text-gray-600 mt-1 line-clamp-2">{data.description || '—'}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  任務數量：{taskCounts[docSnap.id] ?? '...'}
+                </div>
               </li>
             );
           })}

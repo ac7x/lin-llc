@@ -2,18 +2,22 @@
 
 import { useState } from "react";
 import { app } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import { useCollection } from "react-firebase-hooks/firestore";
 
 export default function AddProjectPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
+  const [templateId, setTemplateId] = useState("");
   const router = useRouter();
 
   const db = getFirestore(app);
   const projectsRef = collection(db, "projects");
+  const templatesRef = collection(db, "templates");
+  const [templatesSnap] = useCollection(templatesRef);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,8 +27,23 @@ export default function AddProjectPage() {
       const docRef = await addDoc(projectsRef, {
         name,
         description,
+        templateId,
         createdAt: new Date(),
       });
+      // 複製 flows 為 tasks
+      if (templateId) {
+        const flowsRef = collection(db, "templates", templateId, "flows");
+        const flowsSnap = await getDocs(flowsRef);
+        const batchTasks = flowsSnap.docs.map(doc => ({
+          name: doc.data().name,
+          order: doc.data().order ?? 9999,
+          status: "pending",
+        }));
+        const tasksRef = collection(db, "projects", docRef.id, "tasks");
+        for (const task of batchTasks) {
+          await addDoc(tasksRef, task);
+        }
+      }
       setMsg("專案建立成功，將自動跳轉...");
       setTimeout(() => router.push(`/admin/projects/${docRef.id}`), 600);
     } catch {
@@ -57,6 +76,23 @@ export default function AddProjectPage() {
             rows={2}
             disabled={saving}
           />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">選擇範本</label>
+          <select
+            className="border px-2 py-1 w-full"
+            value={templateId}
+            onChange={e => setTemplateId(e.target.value)}
+            required
+            disabled={saving}
+          >
+            <option value="">請選擇</option>
+            {templatesSnap?.docs.map(doc => (
+              <option key={doc.id} value={doc.id}>
+                {doc.data().name || doc.id}
+              </option>
+            ))}
+          </select>
         </div>
         <button
           type="submit"
