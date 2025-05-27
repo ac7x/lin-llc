@@ -1,13 +1,14 @@
 "use client";
 
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, query, orderBy, getDocs } from 'firebase/firestore';
 import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import type { QuerySnapshot, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 
 type Flow = {
     id: string;
@@ -73,6 +74,15 @@ export default function WorkTypeDetailPage() {
     const [flowMsg, setFlowMsg] = useState('');
     const [editingFlowId, setEditingFlowId] = useState('');
     const [editingFlowName, setEditingFlowName] = useState('');
+
+    // 複製流程到專案區域
+    const projectsRef = collection(db, "projects");
+    const [projectsSnap] = useCollection(projectsRef);
+    const [selectedProjectId, setSelectedProjectId] = useState("");
+    const [areasSnap, setAreasSnap] = useState<QuerySnapshot<DocumentData> | null>(null);
+    const [selectedAreaId, setSelectedAreaId] = useState("");
+    const [copyMsg, setCopyMsg] = useState("");
+    const [copying, setCopying] = useState(false);
 
     // flowsSnap 變動時同步本地 flows 狀態
     React.useEffect(() => {
@@ -148,6 +158,41 @@ export default function WorkTypeDetailPage() {
         }
     };
 
+    // 當選擇專案時，載入該專案的區域
+    async function handleProjectChange(projectId: string) {
+        setSelectedProjectId(projectId);
+        setSelectedAreaId("");
+        setAreasSnap(null);
+        if (!projectId) return;
+        const areasRef = collection(db, "projects", projectId, "areas");
+        const snap = await getDocs(areasRef);
+        setAreasSnap(snap);
+    }
+
+    // 複製 flows 到指定專案區域
+    async function handleCopyFlowsToArea() {
+        if (!selectedProjectId || !selectedAreaId) return;
+        setCopyMsg("");
+        setCopying(true);
+        try {
+            const flowsRef = collection(db, "templates", TypeId, "flows");
+            const flowsSnap = await getDocs(flowsRef);
+            const tasksRef = collection(db, "projects", selectedProjectId, "areas", selectedAreaId, "tasks");
+            for (const flowDoc of flowsSnap.docs) {
+                const flow = flowDoc.data();
+                await addDoc(tasksRef, {
+                    name: flow.name,
+                    order: typeof flow.order === "number" ? flow.order : 9999,
+                    status: "pending",
+                });
+            }
+            setCopyMsg("流程已複製到專案區域！");
+        } catch {
+            setCopyMsg("複製失敗");
+        }
+        setCopying(false);
+    }
+
     return (
         <div className="pb-20 max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-4">{workTypeSnap?.data()?.name || '工作種類'}</h1>
@@ -177,6 +222,39 @@ export default function WorkTypeDetailPage() {
                     </ul>
                 </SortableContext>
             </DndContext>
+
+            {/* 複製流程到專案區域 */}
+            <div className="border p-4 my-8 rounded bg-gray-50">
+                <div className="font-bold mb-2">複製本範本流程到專案區域</div>
+                <div className="mb-2">
+                    <label>選擇專案：</label>
+                    <select value={selectedProjectId} onChange={e => handleProjectChange(e.target.value)} className="border px-2 py-1 rounded">
+                        <option value="">請選擇</option>
+                        {projectsSnap?.docs.map(doc => (
+                            <option key={doc.id} value={doc.id}>{doc.data().name || doc.id}</option>
+                        ))}
+                    </select>
+                </div>
+                {areasSnap && (
+                    <div className="mb-2">
+                        <label>選擇區域：</label>
+                        <select value={selectedAreaId} onChange={e => setSelectedAreaId(e.target.value)} className="border px-2 py-1 rounded">
+                            <option value="">請選擇</option>
+                            {areasSnap.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => (
+                                <option key={doc.id} value={doc.id}>{doc.data().name || doc.id}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+                <button
+                    className="bg-blue-600 text-white px-3 py-1 rounded"
+                    onClick={handleCopyFlowsToArea}
+                    disabled={!selectedProjectId || !selectedAreaId || copying}
+                >
+                    {copying ? "複製中..." : "複製流程"}
+                </button>
+                {copyMsg && <div className="mt-2 text-green-700">{copyMsg}</div>}
+            </div>
         </div>
     );
 }

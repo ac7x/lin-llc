@@ -30,6 +30,9 @@ export default function AddProjectPage() {
         templateId,
         createdAt: new Date(),
       });
+      // 建立 default 初始區域
+      const areasRef = collection(db, "projects", docRef.id, "areas");
+      await addDoc(areasRef, { name: "default", createdAt: new Date() });
       // 複製 flows 為 tasks
       if (templateId) {
         const flowsRef = collection(db, "templates", templateId, "flows");
