@@ -1,6 +1,5 @@
 "use client";
 
-import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { useState } from 'react';
 import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
@@ -64,7 +63,6 @@ export default function AdminProjectsPage() {
                 {message && <div className="mt-2 text-sm text-green-600">{message}</div>}
             </form>
             <p>這是專案管理頁面的內容。</p>
-            <AdminBottomNav />
         </div>
     );
 }

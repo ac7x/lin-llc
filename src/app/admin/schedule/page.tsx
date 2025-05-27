@@ -1,6 +1,5 @@
 'use client'
 
-import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 import '@/styles/react-calendar-timeline.scss'
 import { addDays, differenceInMilliseconds, endOfDay, isValid, parseISO, startOfDay, subDays } from 'date-fns'
 import { getApp, getApps, initializeApp } from 'firebase/app'
@@ -345,7 +344,6 @@ const WorkScheduleManagementPage: React.FC = () => {
 						)}
 					</div>
 				</div>
-				<AdminBottomNav />
 			</div>
 		</div>
 	)
