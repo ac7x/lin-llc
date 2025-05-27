@@ -11,7 +11,7 @@ import {
 	updateDoc
 } from 'firebase/firestore'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
+import Timeline, { TimelineGroupBase, TimelineItemBase, TimelineMarkers, TodayMarker } from 'react-calendar-timeline'
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
@@ -92,8 +92,8 @@ export default function SchedulePage() {
 	}, [])
 
 	const now = new Date()
-	const defaultTimeStart = subDays(startOfDay(now), 1)
-	const defaultTimeEnd = addDays(endOfDay(now), 7)
+	const defaultTimeStart = subDays(startOfDay(now), 7)
+	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	// Timeline groups
 	const timelineGroups: TimelineGroupBase[] = groups
@@ -273,24 +273,12 @@ export default function SchedulePage() {
 						}}
 						onItemMove={handleAreaTaskMove}
 						onItemResize={handleAreaTaskResize}
-						groupRenderer={({ group }) => (
-							<div>
-								{group.title}
-							</div>
-						)}
-						itemRenderer={({ item, getItemProps, getResizeProps }) => {
-							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-							return (
-								<div
-									{...getItemProps({})}
-								>
-									<div {...leftResizeProps} />
-									<span>{item.title}</span>
-									<div {...rightResizeProps} />
-								</div>
-							)
-						}}
-					/>
+					>
+						{/* 添加今天的紅線 */}
+						<TimelineMarkers>
+							<TodayMarker date={new Date()} />
+						</TimelineMarkers>
+					</Timeline>
 				</div>
 				<div>
 					<h2>尚未安排時程</h2>
