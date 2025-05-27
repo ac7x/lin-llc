@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { app } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
 export default function AdminProjectsPage() {
     const [name, setName] = useState('');
@@ -11,6 +9,9 @@ export default function AdminProjectsPage() {
 
     // 新增專案
     async function createProject({ name, description }: { name: string; description: string }) {
+        // 將 firebase-client 的 import 與初始化移到這裡
+        const { app } = await import('@/modules/shared/infrastructure/persistence/firebase/firebase-client');
+        const { getFirestore, collection, addDoc } = await import('firebase/firestore');
         const db = getFirestore(app);
         await addDoc(collection(db, 'projects'), {
             name,
