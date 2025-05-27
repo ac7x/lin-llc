@@ -67,7 +67,7 @@ $date-header-color: #fff !default;
         position: relative;
         box-sizing: border-box;
         border-right: $border-width solid $border-color;
-        width: 75px; // 原本約 150px，改為一半
+        width: 100px; 
 
         &.rct-sidebar-right {
             border-right: 0;
