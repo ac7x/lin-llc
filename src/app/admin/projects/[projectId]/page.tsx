@@ -65,8 +65,9 @@ export default function ProjectDetailPage() {
             });
             setMsg('儲存成功');
             setEditing(false);
-        } catch (err: any) {
-            setMsg('儲存失敗: ' + (err?.message || '未知錯誤'));
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : '未知錯誤';
+            setMsg('儲存失敗: ' + errorMsg);
         } finally {
             setSaving(false);
         }
