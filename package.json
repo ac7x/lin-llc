@@ -10,9 +10,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@genkit-ai/googleai": "^1.10.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.8.1",
     "firebase-admin": "^13.4.0",
+    "genkit": "^1.10.0",
     "memcached": "^2.2.2",
     "next": "15.3.2",
     "react": "^19.0.0",
