@@ -1,0 +1,39 @@
+# Settings for Cloud Run
+runConfig:
+  minInstances: 1
+  maxInstances: 5
+  concurrency: 100
+  cpu: 1
+  memoryMiB: 1024
+
+# Environment variables and secrets
+env:
+  - variable: NEXT_PUBLIC_BASE_URL
+    value: https://lin-llc--lin-llc.asia-east1.hosted.app
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: REDIS_URL
+    value: redis://default:h20z5kBlBF8l5CLskT0At2j1LGx3VOdv@redis-13077.c302.asia-northeast1-1.gce.redns.redis-cloud.com:13077
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: MEMCACHIER_SERVERS
+    value: mc4.c11.ap-southeast-1.ec2.memcachier.com:11211
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: MEMCACHIER_USERNAME
+    value: C4CA64
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: MEMCACHIER_PASSWORD
+    value: 0AE408F3E646052D2497B968D71E6BB8
+    availability:
+      - BUILD
+      - RUNTIME
