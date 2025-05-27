@@ -6,6 +6,7 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -69,10 +70,40 @@ export default function ProjectDetailPage() {
     }
   }
 
+  const router = useRouter();
+
+  // 取得專案資訊
+  const [projectName, setProjectName] = useState("");
+  const [projectDesc, setProjectDesc] = useState("");
+  React.useEffect(() => {
+    async function fetchProject() {
+      const projectDoc = await getDoc(doc(db, "projects", projectId));
+      if (projectDoc.exists()) {
+        setProjectName(projectDoc.data().name || "");
+        setProjectDesc(projectDoc.data().description || "");
+      }
+    }
+    if (projectId) fetchProject();
+  }, [db, projectId]);
+
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">專案詳細頁</h1>
       <div>專案 ID: {projectId}</div>
+      {/* 專案資訊區塊 */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-lg">{projectName}</span>
+          <button
+            className="text-blue-600 underline"
+            onClick={() => router.push(`/admin/projects/${projectId}/edit`)}
+            type="button"
+          >
+            編輯
+          </button>
+        </div>
+        <div className="text-gray-600">{projectDesc}</div>
+      </div>
       <h2 className="text-lg font-semibold mt-6 mb-2">任務清單</h2>
       <ul className="space-y-2">
         {tasksSnap?.docs.length === 0 && <li className="text-gray-500">尚無任務</li>}
