@@ -241,61 +241,61 @@ export default function SchedulePage() {
 
 	return (
 		<div>
-			<DndContext onDragEnd={handleTimelineDrop}>
-				<div>
-					<div
-						ref={timelineRef}
-						style={{ minHeight: 400 }}
-					>
-						<Timeline
-							groups={timelineGroups}
-							items={timelineItems}
-							defaultTimeStart={defaultTimeStart.getTime()}
-							defaultTimeEnd={defaultTimeEnd.getTime()}
-							canMove
-							canResize="both"
-							canChangeGroup
-							stackItems
-							minZoom={7 * 24 * 60 * 60 * 1000}
-							maxZoom={30 * 24 * 60 * 60 * 1000}
-							lineHeight={40}
-							sidebarWidth={75}
-							timeSteps={{
-								second: 1,
-								minute: 1,
-								hour: 1,
-								day: 1,
-								month: 1,
-								year: 1
-							}}
-							onItemMove={handleAreaTaskMove}
-							onItemResize={handleAreaTaskResize}
-							groupRenderer={({ group }) => (
-								<div>
-									{group.title}
-								</div>
-							)}
-							itemRenderer={({ item, getItemProps, getResizeProps }) => {
-								const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-								return (
-									<div
-										{...getItemProps({})}
-									>
-										<div {...leftResizeProps} />
-										<span>{item.title}</span>
-										<div {...rightResizeProps} />
-									</div>
-								)
-							}}
-						/>
-					</div>
-					<div>
-						<h2>尚未安排時程</h2>
-						{unplannedTasks.length === 0 ? (
+			<div>
+				<div
+					ref={timelineRef}
+					style={{ minHeight: 400 }}
+				>
+					<Timeline
+						groups={timelineGroups}
+						items={timelineItems}
+						defaultTimeStart={defaultTimeStart.getTime()}
+						defaultTimeEnd={defaultTimeEnd.getTime()}
+						canMove
+						canResize="both"
+						canChangeGroup
+						stackItems
+						minZoom={7 * 24 * 60 * 60 * 1000}
+						maxZoom={30 * 24 * 60 * 60 * 1000}
+						lineHeight={40}
+						sidebarWidth={75}
+						timeSteps={{
+							second: 1,
+							minute: 1,
+							hour: 1,
+							day: 1,
+							month: 1,
+							year: 1
+						}}
+						onItemMove={handleAreaTaskMove}
+						onItemResize={handleAreaTaskResize}
+						groupRenderer={({ group }) => (
 							<div>
-								<span>（無未排程工作）</span>
+								{group.title}
 							</div>
-						) : (
+						)}
+						itemRenderer={({ item, getItemProps, getResizeProps }) => {
+							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+							return (
+								<div
+									{...getItemProps({})}
+								>
+									<div {...leftResizeProps} />
+									<span>{item.title}</span>
+									<div {...rightResizeProps} />
+								</div>
+							)
+						}}
+					/>
+				</div>
+				<div>
+					<h2>尚未安排時程</h2>
+					{unplannedTasks.length === 0 ? (
+						<div>
+							<span>（無未排程工作）</span>
+						</div>
+					) : (
+						<DndContext onDragEnd={handleTimelineDrop} id="unplanned-dnd-context">
 							<div
 								tabIndex={0}
 								aria-label="unplanned-jobs"
@@ -304,10 +304,10 @@ export default function SchedulePage() {
 									<DraggableUnplannedTask key={t.id} task={t} />
 								))}
 							</div>
-						)}
-					</div>
+						</DndContext>
+					)}
 				</div>
-			</DndContext>
+			</div>
 		</div>
 	)
 }
