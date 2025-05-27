@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 export default function AdminWorkTemplatesPage() {
     const db = getFirestore(app);
-    const templatesRef = collection(db, 'work-templates');
+    const templatesRef = collection(db, 'templates');
     const [templatesSnap, loading, error] = useCollection(templatesRef);
     const router = useRouter();
 
@@ -18,7 +18,7 @@ export default function AdminWorkTemplatesPage() {
             <div className="mb-6">
                 <button
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                    onClick={() => router.push('/admin/work-templates/add')}
+                    onClick={() => router.push('/admin/templates/add')}
                 >
                     新增範本
                 </button>
@@ -38,11 +38,11 @@ export default function AdminWorkTemplatesPage() {
                             <li
                                 key={docSnap.id}
                                 className="border p-4 rounded cursor-pointer hover:bg-blue-50 transition group shadow-sm"
-                                onClick={() => router.push(`/admin/work-templates/${docSnap.id}`)}
+                                onClick={() => router.push(`/admin/templates/${docSnap.id}`)}
                                 tabIndex={0}
                                 onKeyDown={e => {
                                     if (e.key === 'Enter' || e.key === ' ') {
-                                        router.push(`/admin/work-templates/${docSnap.id}`);
+                                        router.push(`/admin/templates/${docSnap.id}`);
                                     }
                                 }}
                                 role="button"

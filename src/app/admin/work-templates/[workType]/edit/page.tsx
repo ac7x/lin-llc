@@ -10,7 +10,7 @@ export default function EditWorkTypePage() {
   const router = useRouter();
   const workTypeId = params?.workType as string;
   const db = getFirestore(app);
-  const workTypeRef = doc(db, "work-templates", workTypeId);
+  const workTypeRef = doc(db, "templates", workTypeId);
 
   const [form, setForm] = useState({ name: "", description: "" });
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function EditWorkTypePage() {
     try {
       await updateDoc(workTypeRef, { name: form.name, description: form.description });
       setMsg("儲存成功");
-      setTimeout(() => router.push(`/admin/work-templates/${workTypeId}`), 800);
+      setTimeout(() => router.push(`/admin/templates/${workTypeId}`), 800);
     } catch {
       setMsg("儲存失敗");
     } finally {

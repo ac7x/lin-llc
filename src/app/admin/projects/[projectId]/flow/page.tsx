@@ -27,7 +27,7 @@ export default function ProjectFlowPage() {
   useEffect(() => {
     async function fetchWorkTypes() {
       const db = getFirestore(app);
-      const snap = await getDocs(collection(db, 'work-templates'));
+      const snap = await getDocs(collection(db, 'templates'));
       setWorkTypes(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WorkType)));
     }
     fetchWorkTypes();
@@ -55,7 +55,7 @@ export default function ProjectFlowPage() {
     try {
       const db = getFirestore(app);
       // 取得流程範本
-      const flowsSnap = await getDocs(collection(db, 'work-templates', selectedWorkType, 'flows'));
+      const flowsSnap = await getDocs(collection(db, 'templates', selectedWorkType, 'flows'));
       if (flowsSnap.empty) {
         setImportMsg('該工作類型沒有流程可匯入');
         setImporting(false);

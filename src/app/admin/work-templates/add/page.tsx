@@ -13,7 +13,7 @@ export default function AddWorkTypePage() {
   const router = useRouter();
 
   const db = getFirestore(app);
-  const templatesRef = collection(db, "work-templates");
+  const templatesRef = collection(db, "templates");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +26,7 @@ export default function AddWorkTypePage() {
         createdAt: new Date(),
       });
       setMsg("範本建立成功，將自動跳轉...");
-      setTimeout(() => router.push(`/admin/work-templates/${docRef.id}`), 600);
+      setTimeout(() => router.push(`/admin/templates/${docRef.id}`), 600);
     } catch {
       setMsg("建立失敗");
     } finally {

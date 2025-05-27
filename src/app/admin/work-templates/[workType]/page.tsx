@@ -62,11 +62,11 @@ export default function WorkTypeDetailPage() {
     const params = useParams();
     const workTypeId = params?.workType as string;
     const db = getFirestore(app);
-    const workTypeRef = doc(db, 'work-templates', workTypeId);
+    const workTypeRef = doc(db, 'templates', workTypeId);
     const [workTypeSnap] = useDocument(workTypeRef);
 
     // 流程
-    const flowsRef = collection(db, 'work-templates', workTypeId, 'flows');
+    const flowsRef = collection(db, 'templates', workTypeId, 'flows');
     const [flowsSnap] = useCollection(query(flowsRef, orderBy('order', 'asc')));
     const [flows, setFlows] = useState<Flow[]>([]);
     const [flowName, setFlowName] = useState('');
@@ -101,13 +101,13 @@ export default function WorkTypeDetailPage() {
         setEditingFlowName(name);
     };
     const handleSaveEditFlow = async (id: string) => {
-        await updateDoc(doc(db, 'work-templates', workTypeId, 'flows', id), { name: editingFlowName });
+        await updateDoc(doc(db, 'templates', workTypeId, 'flows', id), { name: editingFlowName });
         setEditingFlowId('');
         setEditingFlowName('');
     };
     // 刪除流程
     const handleDeleteFlow = async (id: string) => {
-        await deleteDoc(doc(db, 'work-templates', workTypeId, 'flows', id));
+        await deleteDoc(doc(db, 'templates', workTypeId, 'flows', id));
     };
 
     // dnd-kit sensors
@@ -123,7 +123,7 @@ export default function WorkTypeDetailPage() {
         setFlows(newFlows);
         // 批次更新 Firestore
         for (const f of newFlows) {
-            await updateDoc(doc(db, 'work-templates', workTypeId, 'flows', f.id), { order: f.order });
+            await updateDoc(doc(db, 'templates', workTypeId, 'flows', f.id), { order: f.order });
         }
     };
 
