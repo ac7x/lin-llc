@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { updateUserRole } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 type FirebaseAuthUser = {
   uid: string;
@@ -11,6 +12,7 @@ type FirebaseAuthUser = {
     lastSignInTime?: string;
   };
   disabled?: boolean;
+  role?: string; // 新增 role 欄位
 };
 
 async function fetchUsers(): Promise<FirebaseAuthUser[]> {
@@ -53,6 +55,17 @@ export default function AdminUsersPage() {
         }
     };
 
+    const handleRoleChange = async (uid: string, newRole: string) => {
+        try {
+            await updateUserRole(uid, newRole);
+            setUsers(users => users.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+        } catch (err: unknown) {
+            let errorMsg = '角色更新失敗';
+            if (err instanceof Error) errorMsg = err.message;
+            setError(errorMsg);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
             <div className="max-w-3xl mx-auto px-2 py-8">
@@ -68,6 +81,7 @@ export default function AdminUsersPage() {
                             <th className="border px-2 py-1">建立時間</th>
                             <th className="border px-2 py-1">最後登入</th>
                             <th className="border px-2 py-1">狀態</th>
+                            <th className="border px-2 py-1">角色</th> {/* 新增角色欄位 */}
                             <th className="border px-2 py-1">操作</th>
                         </tr>
                     </thead>
@@ -80,6 +94,20 @@ export default function AdminUsersPage() {
                                 <td className="border px-2 py-1">{user.metadata?.creationTime?.slice(0, 10) || '—'}</td>
                                 <td className="border px-2 py-1">{user.metadata?.lastSignInTime?.slice(0, 10) || '—'}</td>
                                 <td className="border px-2 py-1">{user.disabled ? '停用' : '啟用'}</td>
+                                <td className="border px-2 py-1">
+                                    <select
+                                        value={user.role || ''}
+                                        onChange={e => handleRoleChange(user.uid, e.target.value)}
+                                        className="border rounded px-1 py-0.5 bg-white dark:bg-gray-800"
+                                    >
+                                        <option value="">—</option>
+                                        <option value="admin">admin</option>
+                                        <option value="finance">finance</option>
+                                        <option value="owner">owner</option>
+                                        <option value="user">user</option>
+                                        <option value="vendor">vendor</option>
+                                    </select>
+                                </td>
                                 <td className="border px-2 py-1">
                                     <button
                                         onClick={() => handleDelete(user.uid)}
