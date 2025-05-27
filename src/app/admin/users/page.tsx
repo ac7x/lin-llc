@@ -1,31 +1,30 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { updateUserRole } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { updateUserRole, getUsersList } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 type FirebaseAuthUser = {
   uid: string;
   email?: string;
   displayName?: string;
+  emailVerified?: boolean;
+  photoURL?: string;
+  updatedAt?: Date;
+  role?: string;
   metadata?: {
     creationTime?: string;
     lastSignInTime?: string;
   };
   disabled?: boolean;
-  role?: string; // 新增 role 欄位
 };
 
 async function fetchUsers(): Promise<FirebaseAuthUser[]> {
-  // 僅供展示，實際應於 server 端實作
-  const res = await fetch('/api/admin/list-users');
-  if (!res.ok) throw new Error('無法取得用戶列表');
-  return res.json();
+  return await getUsersList();
 }
 
 async function deleteUser(uid: string): Promise<void> {
-  // 僅供展示，實際應於 server 端實作
-  const res = await fetch(`/api/admin/delete-user?uid=${uid}`, { method: 'POST' });
-  if (!res.ok) throw new Error('刪除失敗');
+  // TODO: 實作刪除用戶功能
+  throw new Error('尚未實作刪除功能');
 }
 
 export default function AdminUsersPage() {
