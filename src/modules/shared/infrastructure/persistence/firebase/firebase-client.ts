@@ -72,3 +72,43 @@ export async function deleteUserFromFirestore(uid: string) {
     throw new Error('刪除用戶失敗');
   }
 }
+
+// 新增：建立虛擬用戶
+export async function createVirtualUser({
+    displayName,
+    role,
+}: {
+    displayName: string;
+    role: string;
+}) {
+    // 產生 28 字元隨機 UID
+    function generateUid(length = 28) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let uid = '';
+        for (let i = 0; i < length; i++) {
+            uid += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return uid;
+    }
+    const uid = generateUid();
+    const now = new Date();
+    const userData = {
+        uid,
+        displayName,
+        role,
+        email: undefined,
+        emailVerified: false,
+        photoURL: undefined,
+        updatedAt: now,
+        metadata: {
+            creationTime: now.toISOString(),
+            lastSignInTime: now.toISOString(),
+        },
+        disabled: false,
+    };
+
+    // 直接使用上方已初始化的 db
+    await setDoc(doc(db, 'users', uid), userData);
+
+    return userData;
+}

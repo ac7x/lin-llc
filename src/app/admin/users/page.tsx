@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { updateUserRole, getUsersList, deleteUserFromFirestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { updateUserRole, getUsersList, deleteUserFromFirestore, createVirtualUser } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 type FirebaseAuthUser = {
   uid: string;
@@ -68,30 +68,28 @@ export default function AdminUsersPage() {
     };
 
     // 虛擬用戶建立處理，只能建立 user 角色
-    const handleCreateVirtualUser = () => {
+    const handleCreateVirtualUser = async () => {
         if (!newDisplayName) {
             setError('請輸入名稱');
             return;
         }
-        const randomUid = 'virtual_' + Math.random().toString(36).slice(2, 12);
-        const now = new Date().toISOString();
-        const newUser: FirebaseAuthUser = {
-            uid: randomUid,
-            displayName: newDisplayName,
-            role: 'user',
-            email: undefined,
-            emailVerified: false,
-            photoURL: undefined,
-            updatedAt: new Date(),
-            metadata: {
-                creationTime: now,
-                lastSignInTime: now,
-            },
-            disabled: false,
-        };
-        setUsers(users => [newUser, ...users]);
-        setNewDisplayName('');
+        setLoading(true);
         setError(null);
+        try {
+            // 呼叫後端 API 建立虛擬用戶
+            const newUser = await createVirtualUser({
+                displayName: newDisplayName,
+                role: 'user',
+            });
+            setUsers(users => [newUser, ...users]);
+            setNewDisplayName('');
+        } catch (err: unknown) {
+            let errorMsg = '建立虛擬用戶失敗';
+            if (err instanceof Error) errorMsg = err.message;
+            setError(errorMsg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
