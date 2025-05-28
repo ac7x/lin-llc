@@ -17,7 +17,6 @@ import {
   updateDoc,
   deleteDoc,
   Timestamp,
-  setDoc,
 } from "firebase/firestore";
 import {
   Timeline,
@@ -38,7 +37,6 @@ type FlowItem = {
   projectId: string;
   userId?: string;
 };
-// 重點：content 只允許 string
 type TimelineStringItem = {
   id: string;
   group: string;
@@ -129,7 +127,7 @@ function useFlowCrud({
   setItems: Dispatch<SetStateAction<FlowItem[]>>;
   user: User | null;
 }) {
-  // 移動
+  // 移動流程
   const handleItemMove = useCallback(
     async (
       itemId: string,
@@ -144,21 +142,42 @@ function useFlowCrud({
       const oldProjectId = currentItem.projectId;
       try {
         if (oldProjectId === newGroupId) {
+          // 同 group 直接 update
           const flowRef = doc(db, "projects", newGroupId, "flows", itemId);
           await updateDoc(flowRef, {
             start: Timestamp.fromDate(newStart),
             end: Timestamp.fromDate(newEnd),
           });
         } else {
-          await deleteDoc(doc(db, "projects", oldProjectId, "flows", itemId));
-          await setDoc(doc(db, "projects", newGroupId, "flows", itemId), {
+          // 跨 group：先建立新流程（新 group 下），成功再刪除舊的
+          const oldFlowRef = doc(db, "projects", oldProjectId, "flows", itemId);
+          const newFlowsCol = collection(db, "projects", newGroupId, "flows");
+          // 建立新流程（複製內容，ID 不同）
+          const newFlowDoc = await addDoc(newFlowsCol, {
             name: currentItem.content,
             start: Timestamp.fromDate(newStart),
             end: Timestamp.fromDate(newEnd),
             projectId: newGroupId,
             userId: currentItem.userId,
           });
+          // 刪除舊的
+          await deleteDoc(oldFlowRef);
+          // 更新本地 state（用新 ID 替換）
+          setItems((prev) =>
+            prev
+              .filter((it) => it.id !== itemId) // 移除舊的
+              .concat({
+                ...currentItem,
+                id: newFlowDoc.id,
+                group: newGroupId,
+                projectId: newGroupId,
+                start: newStart,
+                end: newEnd,
+              })
+          );
+          return { ok: true };
         }
+        // 同 group 移動
         setItems((prev) =>
           prev.map((it) =>
             it.id === itemId
@@ -179,7 +198,8 @@ function useFlowCrud({
     },
     [items, setItems]
   );
-  // 新增
+
+  // 新增流程
   const handleItemAdd = useCallback(
     async (
       item: TimelineStringItem
@@ -235,7 +255,7 @@ function useFlowCrud({
     },
     [user, setItems]
   );
-  // 刪除
+  // 刪除流程
   const handleItemRemove = useCallback(
     async (
       item: TimelineStringItem
@@ -364,7 +384,6 @@ function TimelineView({
     if (!timelineRef.current || loading || error) return;
     if (!timelineInstance.current) {
       const container = timelineRef.current;
-      // 這裡：content 僅 string，型別自訂
       const groupsArr = groups;
       const itemsArr: TimelineStringItem[] = items.map((it) => ({
         id: it.id,
@@ -388,7 +407,6 @@ function TimelineView({
         orientation: { axis: "both", item: "top" },
       };
       try {
-        // 強制斷言型別解決 vis-timeline/vis-data 嚴格型別問題
         timelineInstance.current = new Timeline(
           container,
           itemsArr as any,
@@ -515,7 +533,6 @@ export default function ProjectsPage() {
 
   // vis-timeline 的 callback 型別正確，item 是 TimelineStringItem
   const timelineOnAdd: TimelineOptions["onAdd"] = async (item, cb) => {
-    // 保證 content 僅 string
     const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
     const res = await handleItemAdd(safeItem as TimelineStringItem);
     if (res.ok && res.newItem) {
@@ -533,7 +550,6 @@ export default function ProjectsPage() {
     }
   };
   const timelineOnRemove: TimelineOptions["onRemove"] = async (item, cb) => {
-    // 保證 content 僅 string
     const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
     const res = await handleItemRemove(safeItem as TimelineStringItem);
     if (res.ok) {
@@ -545,7 +561,6 @@ export default function ProjectsPage() {
     }
   };
   const timelineOnMove: TimelineOptions["onMove"] = async (item, cb) => {
-    // 保證 content 僅 string
     const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
     const start =
       safeItem.start instanceof Date
@@ -571,7 +586,12 @@ export default function ProjectsPage() {
     );
     if (res.ok) {
       setFeedback({ message: "移動流程成功", type: "success" });
-      cb(item);
+      cb({
+        ...item,
+        start,
+        end,
+        group: groupId,
+      });
     } else {
       setFeedback({ message: `移動流程失敗: ${res.error}`, type: "error" });
       cb(null);
