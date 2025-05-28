@@ -273,72 +273,10 @@ function useFlowCrud({
     [items, setItems]
   );
 
-  // 雙擊修改流程名稱 - 最高代碼品質做法
-  function useStableDoubleClickHandler(): MutableRefObject<((props: TimelineEventPropertiesResult | null) => void) | null> {
-    const doubleClickHandlerRef = useRef<((props: TimelineEventPropertiesResult | null) => void) | null>(null);
-    const isProcessingDoubleClick = useRef(false);
-
-    // 用 ref 保存最新 items/setItems
-    const latestItems = useRef(items);
-    const latestSetItems = useRef(setItems);
-
-    // 只追蹤 items/setItems reference
-    useEffect(() => {
-      latestItems.current = items;
-      latestSetItems.current = setItems;
-    }, [items, setItems]);
-
-    // handler 只設置一次，參考值透過 ref 拿
-    useEffect(() => {
-      doubleClickHandlerRef.current = async (props: TimelineEventPropertiesResult | null) => {
-        if (props?.event && typeof props.event.stopPropagation === "function") {
-          props.event.stopPropagation();
-        }
-        if (isProcessingDoubleClick.current) return;
-        isProcessingDoubleClick.current = true;
-        try {
-          if (!props || !props.item) return;
-          const itemId = props.item as string;
-          const currentItem = latestItems.current.find((i) => i.id === itemId);
-          if (!currentItem) return;
-          const newName = prompt("請輸入新的流程名稱：", currentItem.content);
-          if (newName && newName.trim() && newName !== currentItem.content) {
-            try {
-              await updateDoc(
-                doc(
-                  db,
-                  "projects",
-                  currentItem.projectId,
-                  "flows",
-                  itemId
-                ),
-                { name: newName }
-              );
-              latestSetItems.current((prev) =>
-                prev.map((it) =>
-                  it.id === itemId ? { ...it, content: newName } : it
-                )
-              );
-            } catch (error: unknown) {
-              const err = error as Error;
-              alert("更新流程名稱失敗: " + (err?.message || "未知錯誤"));
-            }
-          }
-        } finally {
-          isProcessingDoubleClick.current = false;
-        }
-      };
-      // 依賴陣列空，handler 只建立一次
-    }, []);
-
-    return doubleClickHandlerRef;
-  }
-
   return {
     handleItemMove,
     handleItemAdd,
     handleItemRemove,
-    useStableDoubleClickHandler,
   };
 }
 
@@ -428,7 +366,6 @@ function TimelineView({
   onAdd,
   onRemove,
   onMove,
-  doubleClickHandlerRef,
 }: {
   groups: Group[];
   items: FlowItem[];
@@ -437,9 +374,6 @@ function TimelineView({
   onAdd: TimelineOptions["onAdd"];
   onRemove: TimelineOptions["onRemove"];
   onMove: TimelineOptions["onMove"];
-  doubleClickHandlerRef: MutableRefObject<
-    ((props: TimelineEventPropertiesResult | null) => void) | null
-  >;
 }) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
@@ -485,23 +419,12 @@ function TimelineView({
       timelineInstance.current.setItems(items);
     }
 
-    // doubleClick handler 註冊，確保只註冊一次
-    const handler = doubleClickHandlerRef.current;
-    if (timelineInstance.current && handler) {
-      timelineInstance.current.off("doubleClick", handler);
-      timelineInstance.current.on("doubleClick", handler);
-    }
-
     return () => {
-      if (timelineInstance.current && handler) {
-        timelineInstance.current.off("doubleClick", handler);
-      }
       if (timelineInstance.current) {
         timelineInstance.current.destroy();
         timelineInstance.current = null;
       }
     };
-    // 依賴只放 doubleClickHandlerRef，確保 handler function 穩定
   }, [
     timelineRef,
     loading,
@@ -511,7 +434,6 @@ function TimelineView({
     onAdd,
     onRemove,
     onMove,
-    doubleClickHandlerRef,
   ]);
 
   if (loading) return <div>載入中...</div>;
@@ -577,9 +499,7 @@ export default function ProjectsPage() {
     handleItemMove,
     handleItemAdd,
     handleItemRemove,
-    useStableDoubleClickHandler,
   } = useFlowCrud({ items, setItems, user });
-  const doubleClickHandlerRef = useStableDoubleClickHandler();
 
   const {
     createLoading,
@@ -624,7 +544,6 @@ export default function ProjectsPage() {
           );
           cb(ok ? item : null);
         }}
-        doubleClickHandlerRef={doubleClickHandlerRef}
       />
     </main>
   );
