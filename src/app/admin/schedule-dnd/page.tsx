@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, doc, updateDoc, Timestamp, deleteDoc } from "firebase/firestore";
-import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions } from "vis-timeline/standalone";
+import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, TimelineEventPropertiesResult } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -46,6 +46,7 @@ export default function ProjectsPage() {
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
   const datasetRef = useRef<DataSet<ScheduleItem, 'id'>>(null); // Changed any to ScheduleItem
+  const isProcessingDoubleClick = useRef(false);
 
   const handleItemMove = useCallback(async (itemId: string, newStart: Date, newEnd: Date, newGroupId: string) => {
     const itemInState = items.find(i => i.id === itemId);
@@ -175,52 +176,57 @@ export default function ProjectsPage() {
     }
   }, [setItems]);
 
-  const handleItemDoubleClick = useCallback(async (properties: any) => { // properties can be any for vis-timeline events
-    if (!properties.item) return;
+  const handleItemDoubleClick = useCallback(async (properties: TimelineEventPropertiesResult | null) => { // properties can be any for vis-timeline events
+    if (properties && properties.event && typeof properties.event.stopPropagation === 'function') {
+      properties.event.stopPropagation();
+    }
 
-    const itemId = properties.item as string; // Assuming item ID is a string
-    const currentItem = items.find(i => i.id === itemId);
-
-    if (!currentItem) {
-      console.error("在 items 狀態中找不到項目:", itemId);
-      alert("找不到要修改的項目。");
+    if (isProcessingDoubleClick.current) {
       return;
     }
 
-    const newName = prompt("請輸入新的專案名稱：", currentItem.content);
+    isProcessingDoubleClick.current = true;
 
-    if (newName && newName.trim() !== "" && newName !== currentItem.content) {
-      setCreateLoading(true); // Indicate loading state
-      try {
-        // 1. Update the project name in Firestore
-        const projectRef = doc(db, "projects", currentItem.projectId);
-        await updateDoc(projectRef, { name: newName });
-
-        // 2. Update the item in the local state
-        setItems(prevItems =>
-          prevItems.map(it =>
-            it.id === itemId ? { ...it, content: newName } : it
-          )
-        );
-        
-        // 3. Update the item in the timeline's dataset directly
-        // This ensures the timeline UI updates immediately if setItems doesn't trigger a re-render that vis-timeline picks up fast enough.
-        if (datasetRef.current) {
-            const itemInDataSet = datasetRef.current.get(itemId);
-            if (itemInDataSet) {
-                datasetRef.current.update({ ...itemInDataSet, content: newName });
-            }
-        }
-
-        alert("專案名稱已更新！");
-      } catch (error: unknown) {
-        console.error("更新專案名稱失敗:", error);
-        alert("更新專案名稱失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
-      } finally {
-        setCreateLoading(false);
+    try {
+      if (!properties || !properties.item) {
+        return;
       }
+
+      const itemId = properties.item as string; // Assuming item ID is a string
+      const currentItem = items.find(i => i.id === itemId);
+
+      if (!currentItem) {
+        console.error("在 items 狀態中找不到項目:", itemId);
+        alert("找不到要修改的項目。");
+        return;
+      }
+
+      const newName = prompt("請輸入新的專案名稱：", currentItem.content);
+
+      if (newName && newName.trim() !== "" && newName !== currentItem.content) {
+        setCreateLoading(true); // Indicate loading state
+        try {
+          // 1. Update the project name in Firestore
+          const projectRef = doc(db, "projects", currentItem.projectId);
+          await updateDoc(projectRef, { name: newName });
+
+          // 2. Update the item in the local state
+          setItems(prevItems =>
+            prevItems.map(it =>
+              it.id === itemId ? { ...it, content: newName } : it
+            )
+          );
+        } catch (error: unknown) {
+          console.error("更新專案名稱失敗:", error);
+          alert("更新專案名稱失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
+        } finally {
+          setCreateLoading(false);
+        }
+      }
+    } finally {
+      isProcessingDoubleClick.current = false;
     }
-  }, [items, setItems]); // Removed datasetRef from dependencies as it's a ref and doesn't change
+  }, [items, setItems, setCreateLoading]); // Added setCreateLoading to dependencies
 
   useEffect(() => {
     (async () => {
