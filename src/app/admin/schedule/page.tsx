@@ -28,6 +28,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { User } from "firebase/auth";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
 
+// 型別
 type GroupType = { id: string; content: string };
 type FlowItemType = {
   id: string;
@@ -131,6 +132,7 @@ function useFlowItemCrud({
   setFlowItemList: Dispatch<SetStateAction<FlowItemType[]>>;
   user: User | null;
 }) {
+  // 移動流程
   const handleMoveFlowItem = useCallback(
     async (
       itemId: string,
@@ -145,14 +147,17 @@ function useFlowItemCrud({
       const oldProjectId = currentItem.projectId;
       try {
         if (oldProjectId === newGroupId) {
+          // 同 group 直接 update
           const flowRef = doc(db, "projects", newGroupId, "flows", itemId);
           await updateDoc(flowRef, {
             start: Timestamp.fromDate(newStart),
             end: Timestamp.fromDate(newEnd),
           });
         } else {
+          // 跨 group：先建立新流程（新 group 下），成功再刪除舊的
           const oldFlowRef = doc(db, "projects", oldProjectId, "flows", itemId);
           const newFlowsCol = collection(db, "projects", newGroupId, "flows");
+          // 建立新流程（複製內容，ID 不同）
           const newFlowDoc = await addDoc(newFlowsCol, {
             name: currentItem.content,
             start: Timestamp.fromDate(newStart),
@@ -160,10 +165,12 @@ function useFlowItemCrud({
             projectId: newGroupId,
             userId: currentItem.userId,
           });
+          // 刪除舊的
           await deleteDoc(oldFlowRef);
+          // 更新本地 state（用新 ID 替換）
           setFlowItemList((prev) =>
             prev
-              .filter((it) => it.id !== itemId)
+              .filter((it) => it.id !== itemId) // 移除舊的
               .concat({
                 ...currentItem,
                 id: newFlowDoc.id,
@@ -175,6 +182,7 @@ function useFlowItemCrud({
           );
           return { ok: true };
         }
+        // 同 group 移動
         setFlowItemList((prev) =>
           prev.map((it) =>
             it.id === itemId
@@ -196,6 +204,7 @@ function useFlowItemCrud({
     [flowItemList, setFlowItemList]
   );
 
+  // 新增流程
   const handleAddFlowItem = useCallback(
     async (
       item: TimelineItemType
@@ -251,7 +260,7 @@ function useFlowItemCrud({
     },
     [user, setFlowItemList]
   );
-
+  // 刪除流程
   const handleRemoveFlowItem = useCallback(
     async (
       item: TimelineItemType
@@ -353,7 +362,8 @@ function useProjectCreator({
   };
 }
 
-// TimelineView 修正版，從本質防止重複 new 與自動縮放
+// UI Components
+
 function TimelineView({
   groups,
   items,
@@ -376,7 +386,6 @@ function TimelineView({
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
 
-  // 只在 mount 時 new Timeline，之後只更新內容
   useEffect(() => {
     if (!timelineRef.current || loading || error) return;
     if (!timelineInstance.current) {
@@ -405,15 +414,15 @@ function TimelineView({
         onMoving: (item, cb) => cb(item),
         onMove,
         orientation: { axis: "both", item: "top" },
-        autoResize: false, // 防止自動 fit
-        height: "600px",
       };
-      timelineInstance.current = new Timeline(
-        container,
-        itemsArr,
-        groupsArr,
-        options
-      );
+      try {
+        timelineInstance.current = new Timeline(
+          container,
+          itemsArr,
+          groupsArr,
+          options
+        );
+      } catch {}
     }
     return () => {
       if (timelineInstance.current) {
@@ -422,9 +431,7 @@ function TimelineView({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timelineRef, loading, error]);
-
-  // 僅內容變動時 setItems / setGroups，不 new Timeline
+  }, [timelineRef, loading, error, groups, items, onAdd, onRemove, onMove]);
   useEffect(() => {
     if (timelineInstance.current) {
       const groupsArr: DataGroup[] = groups.map((g) => ({
@@ -440,7 +447,6 @@ function TimelineView({
       }));
       timelineInstance.current.setGroups(groupsArr);
       timelineInstance.current.setItems(itemsArr);
-      // 不呼叫 timelineInstance.current.fit()，避免自動縮放
     }
   }, [groups, items]);
 
@@ -497,6 +503,7 @@ function ProjectCreateBar({
   );
 }
 
+// 主頁面
 export default function ProjectsPage() {
   const [userRaw] = useAuthState(auth);
   const user: User | null = userRaw ?? null;
@@ -537,6 +544,7 @@ export default function ProjectsPage() {
   const handleProjectCreate = () =>
     handleCreateProject(newProjectName, () => setNewProjectName(""));
 
+  // vis-timeline 的 callback 型別正確，item 是 TimelineItemType
   const timelineOnAdd: TimelineOptions["onAdd"] = async (item, cb) => {
     const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
     const res = await handleAddFlowItem(safeItem as TimelineItemType);
