@@ -301,11 +301,6 @@ export default function ProjectsPage() {
         }
       },
       // onDoubleClick is NOT a standard option, will attach listener manually
-      snap: (date: Date) => {
-        const hour = date.getHours();
-        date.setHours(hour - (hour % 12), 0, 0, 0);
-        return date;
-      },
       orientation: {
         axis: "both",
         item: "top",
