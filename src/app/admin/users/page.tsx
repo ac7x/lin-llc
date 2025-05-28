@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { createVirtualUser, db } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { collection, getDocs, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { updateUserRole, getUsersList, deleteUserFromFirestore, createVirtualUser } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 type FirebaseAuthUser = {
   uid: string;
@@ -19,59 +18,12 @@ type FirebaseAuthUser = {
   disabled?: boolean;
 };
 
-// Modified fetchUsers to use Firestore direct SDK
 async function fetchUsers(): Promise<FirebaseAuthUser[]> {
-  if (!db) {
-    console.error("Firestore database is not initialized.");
-    return [];
-  }
-  const usersCollectionRef = collection(db, "users");
-  const usersSnap = await getDocs(usersCollectionRef);
-  return usersSnap.docs.map(docSnapshot => {
-    const data = docSnapshot.data();
-    
-    // Helper to convert Firestore Timestamp to ISO string or return string directly
-    const formatTimeString = (timeField: any): string | undefined => {
-      if (!timeField) return undefined;
-      if (typeof timeField.toDate === 'function') return timeField.toDate().toISOString();
-      if (typeof timeField === 'string') return timeField;
-      return String(timeField); // Fallback
-    };
-
-    // Helper to convert Firestore Timestamp to Date or return Date directly
-    const formatDate = (dateField: any): Date | undefined => {
-      if (!dateField) return undefined;
-      if (typeof dateField.toDate === 'function') return dateField.toDate();
-      if (dateField instanceof Date) return dateField;
-      // Attempt to parse if it's a string or number, though direct Date or Timestamp is expected
-      const parsedDate = new Date(dateField);
-      return !isNaN(parsedDate.getTime()) ? parsedDate : undefined;
-    };
-
-    return {
-      uid: docSnapshot.id,
-      email: data.email,
-      displayName: data.displayName,
-      emailVerified: data.emailVerified,
-      photoURL: data.photoURL,
-      updatedAt: formatDate(data.updatedAt),
-      role: data.role,
-      metadata: data.metadata ? {
-        creationTime: formatTimeString(data.metadata.creationTime),
-        lastSignInTime: formatTimeString(data.metadata.lastSignInTime),
-      } : undefined,
-      disabled: data.disabled,
-    } as FirebaseAuthUser;
-  });
+  return await getUsersList();
 }
 
-// Modified deleteUser to use Firestore direct SDK
 async function deleteUser(uid: string): Promise<void> {
-  if (!db) {
-    console.error("Firestore database is not initialized for delete operation.");
-    throw new Error("Database not initialized");
-  }
-  await deleteDoc(doc(db, "users", uid));
+  await deleteUserFromFirestore(uid);
 }
 
 export default function AdminUsersPage() {
@@ -93,7 +45,7 @@ export default function AdminUsersPage() {
     const handleDelete = async (uid: string) => {
         if (!window.confirm('確定要刪除此用戶？')) return;
         try {
-            await deleteUser(uid); // This now calls the modified deleteUser
+            await deleteUser(uid);
             setUsers(users => users.filter(u => u.uid !== uid));
         } catch (err: unknown) {
             let errorMsg = '發生錯誤';
@@ -106,12 +58,7 @@ export default function AdminUsersPage() {
 
     const handleRoleChange = async (uid: string, newRole: string) => {
         try {
-            // Modified to use Firestore direct SDK
-            if (!db) {
-              console.error("Firestore database is not initialized for role update.");
-              throw new Error("Database not initialized");
-            }
-            await updateDoc(doc(db, "users", uid), { role: newRole });
+            await updateUserRole(uid, newRole);
             setUsers(users => users.map(u => u.uid === uid ? { ...u, role: newRole } : u));
         } catch (err: unknown) {
             let errorMsg = '角色更新失敗';
