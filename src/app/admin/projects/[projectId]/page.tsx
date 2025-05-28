@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc, Timestamp, addDoc, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, Timestamp, getDocs, collection } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 // 定義 Project 型別
 type Project = {
@@ -28,16 +26,15 @@ type ProjectLog = {
   content: string;
   createdAt: Timestamp;
   createdBy: string;
+  photoUrl?: string;
 };
 
 export default function ProjectDetailPage() {
   const { projectId } = useParams() as { projectId: string };
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [newLog, setNewLog] = useState("");
   const [users, setUsers] = useState<{[key: string]: string}>({});
   const router = useRouter();
-  const [user] = useAuthState(auth);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -46,20 +43,7 @@ export default function ProjectDetailPage() {
       const snap = await getDoc(ref);
       if (snap.exists()) {
         const projectData = snap.data();
-        // 同時獲取日誌並確保型別正確
-        const logsSnap = await getDocs(collection(db, "projects", projectId, "logs"));
-        const logs = logsSnap.docs.map(doc => ({
-          id: doc.id,
-          content: doc.data().content,
-          createdAt: doc.data().createdAt,
-          createdBy: doc.data().createdBy
-        })) as ProjectLog[];
-        
-        setProject({ 
-          id: snap.id, 
-          ...projectData,
-          logs 
-        } as Project);
+        setProject({ id: snap.id, ...projectData } as Project);
       }
       setLoading(false);
     };
@@ -77,32 +61,6 @@ export default function ProjectDetailPage() {
     };
     fetchUsers();
   }, []);
-
-  const handleAddLog = async () => {
-    if (!newLog.trim() || !user) return;
-
-    try {
-      await addDoc(collection(db, "projects", projectId, "logs"), {
-        content: newLog.trim(),
-        createdAt: new Date(),
-        createdBy: user.uid
-      });
-
-      setNewLog("");
-      // 重新獲取日誌並確保型別正確
-      const logsSnap = await getDocs(collection(db, "projects", projectId, "logs"));
-      const logs = logsSnap.docs.map(doc => ({
-        id: doc.id,
-        content: doc.data().content,
-        createdAt: doc.data().createdAt,
-        createdBy: doc.data().createdBy
-      })) as ProjectLog[];
-      
-      setProject(prev => prev ? { ...prev, logs } : null);
-    } catch (error) {
-      console.error("Error adding log:", error);
-    }
-  };
 
   if (loading) return <main className="p-8">載入中...</main>;
   if (!project) return <main className="p-8">找不到專案</main>;
@@ -150,38 +108,12 @@ export default function ProjectDetailPage() {
         >
           前往工程流程
         </button>
-      </div>
-
-      <div className="logs-section mt-10 pt-8 border-t border-gray-200">
-        <h2 className="text-xl font-semibold mb-4">工程進度日誌</h2>
-        <div className="add-log mb-6">
-          <textarea
-            value={newLog}
-            onChange={(e) => setNewLog(e.target.value)}
-            placeholder="輸入新的進度記錄..."
-            rows={3}
-            className="w-full p-2 mb-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-          />
-          <button
-            onClick={handleAddLog}
-            disabled={!newLog.trim() || !user}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded px-5 py-2 font-semibold text-base transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            添加記錄
-          </button>
-        </div>
-
-        <div className="logs-list flex flex-col gap-3">
-          {project?.logs?.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds)
-            .map((log) => (
-            <div key={log.id} className="log-item p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg shadow">
-              <div className="log-content whitespace-pre-wrap">{log.content}</div>
-              <div className="log-meta mt-2 text-sm text-gray-500">
-                {log.createdAt.toDate().toLocaleString()}
-              </div>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => router.push(`/admin/projects/${projectId}/journal`)}
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded px-6 py-2 font-semibold text-base transition"
+        >
+          前往工程日誌
+        </button>
       </div>
     </main>
   );

@@ -81,7 +81,6 @@ export default function UserSchedulePage() {
     return () => {
       timelineInstance.current?.destroy();
     };
-    // eslint-disable-next-line
   }, [loading, error, items, groups]);
 
   return (
