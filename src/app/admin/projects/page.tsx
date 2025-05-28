@@ -6,6 +6,15 @@ import { collection, getDocs, Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+// 定義 Expense 型別
+type Expense = {
+  id: string;
+  name: string;
+  amount: number;
+  date: string;
+  note?: string;
+};
+
 // 定義 Project 型別
 type Project = {
   id: string;
@@ -19,6 +28,12 @@ type Project = {
   address?: string;
   startDate?: string | null;
   endDate?: string | null;
+  status?: "planning" | "inProgress" | "completed" | "onHold";
+  ownerName?: string;
+  budget?: number;
+  totalSpent?: number;
+  remainingBudget?: number;
+  expenses?: Expense[];
 };
 
 export default function ProjectsPage() {
@@ -121,6 +136,46 @@ export default function ProjectsPage() {
                 <div>
                   <span className="text-gray-500 font-medium">預估結束日：</span>
                   {project.endDate || "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">狀態：</span>
+                  {(() => {
+                    switch (project.status) {
+                      case "planning": return "規劃中";
+                      case "inProgress": return "進行中";
+                      case "completed": return "已完成";
+                      case "onHold": return "暫停中";
+                      default: return "-";
+                    }
+                  })()}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">業主：</span>
+                  {project.ownerName || "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">預算：</span>
+                  {typeof project.budget === "number" ? project.budget.toLocaleString() : "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">已支出：</span>
+                  {typeof project.totalSpent === "number" ? project.totalSpent.toLocaleString() : "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">剩餘預算：</span>
+                  {typeof project.remainingBudget === "number" ? project.remainingBudget.toLocaleString() : "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">支出明細：</span>
+                  {project.expenses && project.expenses.length > 0 ? (
+                    <ul className="list-disc ml-5">
+                      {project.expenses.map(e => (
+                        <li key={e.id}>
+                          {e.name} - {e.amount.toLocaleString()} 元 ({e.date}){e.note ? `，備註：${e.note}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : "-"}
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import { addDoc, collection, getDocs, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useRouter } from "next/navigation";
@@ -21,6 +21,9 @@ export default function ProjectAddPage() {
   const [address, setAddress] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [status, setStatus] = useState<"planning" | "inProgress" | "completed" | "onHold">("planning");
+  const [ownerName, setOwnerName] = useState("");
+  const [budget, setBudget] = useState("");
   // 從 users 集合取得人員名單
   const [peopleOptions, setPeopleOptions] = useState<{ id: string; name: string }[]>([]);
   const router = useRouter();
@@ -30,7 +33,7 @@ export default function ProjectAddPage() {
     const fetchUsers = async () => {
       const snap = await getDocs(collection(db, "users"));
       setPeopleOptions(
-        snap.docs.map(doc => {
+        snap.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
           const data = doc.data();
           return { id: doc.id, name: data.displayName || data.name || doc.id };
         })
@@ -40,6 +43,12 @@ export default function ProjectAddPage() {
   }, []);
 
   const regionOptions = ["北部", "中部", "南部", "東部", "離島"];
+  const statusOptions = [
+    { value: "planning", label: "規劃中" },
+    { value: "inProgress", label: "進行中" },
+    { value: "completed", label: "已完成" },
+    { value: "onHold", label: "暫停中" },
+  ];
 
   const handleCreateProject = async () => {
     if (!projectName.trim()) {
@@ -61,6 +70,9 @@ export default function ProjectAddPage() {
         address,
         startDate: startDate || null,
         endDate: endDate || null,
+        status,
+        ownerName: ownerName || null,
+        budget: budget ? Number(budget) : null,
       });
       setSuccess(true);
       setProjectName("");
@@ -71,6 +83,9 @@ export default function ProjectAddPage() {
       setAddress("");
       setStartDate("");
       setEndDate("");
+      setStatus("planning");
+      setOwnerName("");
+      setBudget("");
       setTimeout(() => {
         router.push("/admin/projects");
       }, 1000);
@@ -211,6 +226,48 @@ export default function ProjectAddPage() {
             onChange={e => setEndDate(e.target.value)}
             disabled={loading}
             className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+          />
+        </label>
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
+          狀態：
+          <select
+            value={status}
+            onChange={e => setStatus(e.target.value as "planning" | "inProgress" | "completed" | "onHold")}
+            disabled={loading}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+          >
+            {statusOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
+          業主：
+          <input
+            type="text"
+            value={ownerName}
+            onChange={e => setOwnerName(e.target.value)}
+            disabled={loading}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded w-72 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            placeholder="請輸入業主名稱"
+          />
+        </label>
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
+          預算：
+          <input
+            type="number"
+            value={budget}
+            onChange={e => setBudget(e.target.value)}
+            disabled={loading}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded w-40 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            placeholder="請輸入預算金額"
+            min="0"
           />
         </label>
       </div>

@@ -20,6 +20,11 @@ type Project = {
   startDate?: string | null;
   endDate?: string | null;
   logs?: ProjectLog[];
+  ownerName?: string;
+  budget?: number;
+  totalSpent?: number;
+  remainingBudget?: number;
+  expenses?: Expense[];
 };
 
 type ProjectLog = {
@@ -28,6 +33,14 @@ type ProjectLog = {
   createdAt: Timestamp;
   createdBy: string;
   photoUrl?: string;
+};
+
+type Expense = {
+  id: string;
+  name: string;
+  amount: number;
+  date: string;
+  note?: string;
 };
 
 // 動態載入流程與日誌元件
@@ -126,6 +139,19 @@ export default function ProjectDetailPage() {
           <div>地址：{project.address || "-"}</div>
           <div>起始日：{project.startDate || "-"}</div>
           <div>預估結束日：{project.endDate || "-"}</div>
+          <div>業主：{project.ownerName || "-"}</div>
+          <div>預算：{typeof project.budget === "number" ? project.budget.toLocaleString() : "-"}</div>
+          <div>已支出：{typeof project.totalSpent === "number" ? project.totalSpent.toLocaleString() : "-"}</div>
+          <div>剩餘預算：{typeof project.remainingBudget === "number" ? project.remainingBudget.toLocaleString() : "-"}</div>
+          <div>支出明細：{project.expenses && project.expenses.length > 0 ? (
+            <ul className="list-disc ml-5">
+              {project.expenses.map(e => (
+                <li key={e.id}>
+                  {e.name} - {e.amount.toLocaleString()} 元 ({e.date}){e.note ? `，備註：${e.note}` : ""}
+                </li>
+              ))}
+            </ul>
+          ) : "-"}</div>
         </div>
       )}
       {tab === "flow" && <ProjectFlowPage />}
