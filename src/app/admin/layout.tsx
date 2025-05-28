@@ -1,5 +1,3 @@
-"use client";
-
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 
 export default function AdminLayout({
