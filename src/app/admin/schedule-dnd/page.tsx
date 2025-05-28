@@ -175,6 +175,52 @@ export default function ProjectsPage() {
     }
   }, [setItems]);
 
+  const handleItemDoubleClick = useCallback(async (properties: any) => { // properties can be any for vis-timeline events
+    if (!properties.item) return;
+
+    const itemId = properties.item as string; // Assuming item ID is a string
+    const currentItem = items.find(i => i.id === itemId);
+
+    if (!currentItem) {
+      console.error("在 items 狀態中找不到項目:", itemId);
+      alert("找不到要修改的項目。");
+      return;
+    }
+
+    const newName = prompt("請輸入新的專案名稱：", currentItem.content);
+
+    if (newName && newName.trim() !== "" && newName !== currentItem.content) {
+      setCreateLoading(true); // Indicate loading state
+      try {
+        // 1. Update the project name in Firestore
+        const projectRef = doc(db, "projects", currentItem.projectId);
+        await updateDoc(projectRef, { name: newName });
+
+        // 2. Update the item in the local state
+        setItems(prevItems =>
+          prevItems.map(it =>
+            it.id === itemId ? { ...it, content: newName } : it
+          )
+        );
+        
+        // 3. Update the item in the timeline's dataset directly
+        // This ensures the timeline UI updates immediately if setItems doesn't trigger a re-render that vis-timeline picks up fast enough.
+        if (datasetRef.current) {
+            const itemInDataSet = datasetRef.current.get(itemId);
+            if (itemInDataSet) {
+                datasetRef.current.update({ ...itemInDataSet, content: newName });
+            }
+        }
+
+        alert("專案名稱已更新！");
+      } catch (error: unknown) {
+        console.error("更新專案名稱失敗:", error);
+        alert("更新專案名稱失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
+      } finally {
+        setCreateLoading(false);
+      }
+    }
+  }, [items, setItems]); // Removed datasetRef from dependencies as it's a ref and doesn't change
 
   useEffect(() => {
     (async () => {
@@ -248,6 +294,7 @@ export default function ProjectsPage() {
           callback(null); // Revert changes in the timeline
         }
       },
+      // onDoubleClick is NOT a standard option, will attach listener manually
       snap: (date: Date) => {
         const hour = date.getHours();
         date.setHours(hour - (hour % 12), 0, 0, 0);
@@ -262,16 +309,24 @@ export default function ProjectsPage() {
     try {
       timelineInstance.current = new Timeline(container, datasetRef.current, groupsDataSet, options);
       console.log('Timeline 已初始化');
+
+      // Manually attach the doubleClick event listener
+      if (timelineInstance.current) {
+        timelineInstance.current.on('doubleClick', handleItemDoubleClick);
+      }
+
     } catch (err) {
       console.error("Timeline 初始化失敗:", err);
     }
 
     return () => {
       if (timelineInstance.current) {
+        // Manually remove the doubleClick event listener
+        timelineInstance.current.off('doubleClick', handleItemDoubleClick);
         timelineInstance.current.destroy();
       }
     };
-  }, [loading, error, items, groups, handleItemMove, handleItemAdd, handleItemRemove]);
+  }, [loading, error, items, groups, handleItemMove, handleItemAdd, handleItemRemove, handleItemDoubleClick]); // Added handleItemDoubleClick to dependencies
 
   const handleCreateProject = async () => {
     setCreateLoading(true);
