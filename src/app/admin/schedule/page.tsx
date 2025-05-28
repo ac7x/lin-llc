@@ -450,63 +450,71 @@ function TimelineView({
   useEffect(() => {
     if (!timelineRef.current || loading || error) return;
 
-    if (timelineInstance.current) {
+    // 若 instance 未建立，建立一次
+    if (!timelineInstance.current) {
+      const container = timelineRef.current;
+      const groupsDataSet = new DataSet<Group, "id">(groups);
+      const itemsDataSet = new DataSet<FlowItem, "id">(items);
+
+      const options: TimelineOptions = {
+        editable: {
+          add: true,
+          remove: true,
+          updateTime: true,
+          updateGroup: true,
+          overrideItems: true,
+        },
+        onAdd,
+        onRemove,
+        onMoving: (item: TimelineItem, cb: (item: TimelineItem | null) => void) =>
+          cb(item),
+        onMove,
+        orientation: { axis: "both", item: "top" },
+      };
+
+      try {
+        timelineInstance.current = new Timeline(
+          container,
+          itemsDataSet,
+          groupsDataSet,
+          options
+        );
+      } catch {
+        // Ignore timeline create errors
+      }
+    } else {
+      // 若已建立，直接更新 data
       timelineInstance.current.setGroups(groups);
       timelineInstance.current.setItems(items);
-      return;
     }
 
-    const container = timelineRef.current;
-    const groupsDataSet = new DataSet<Group, "id">(groups);
-    const itemsDataSet = new DataSet<FlowItem, "id">(items);
-
-    const options: TimelineOptions = {
-      editable: {
-        add: true,
-        remove: true,
-        updateTime: true,
-        updateGroup: true,
-        overrideItems: true,
-      },
-      onAdd,
-      onRemove,
-      onMoving: (item: TimelineItem, cb: (item: TimelineItem | null) => void) =>
-        cb(item),
-      onMove,
-      orientation: { axis: "both", item: "top" },
-    };
-
-    try {
-      timelineInstance.current = new Timeline(
-        container,
-        itemsDataSet,
-        groupsDataSet,
-        options
-      );
-      if (doubleClickHandlerRef.current) {
-        timelineInstance.current.on(
-          "doubleClick",
-          doubleClickHandlerRef.current
-        );
-      }
-    } catch {
-      // Ignore timeline create errors
+    // 先 off 再 on，確保 handler 只註冊一次
+    if (timelineInstance.current && doubleClickHandlerRef.current) {
+      timelineInstance.current.off("doubleClick", doubleClickHandlerRef.current);
+      timelineInstance.current.on("doubleClick", doubleClickHandlerRef.current);
     }
 
     return () => {
+      // 清除 doubleClick 事件與 timeline instance
       if (timelineInstance.current && doubleClickHandlerRef.current) {
         timelineInstance.current.off("doubleClick", doubleClickHandlerRef.current);
+      }
+      if (timelineInstance.current) {
         timelineInstance.current.destroy();
         timelineInstance.current = null;
       }
     };
-    // 只依賴 ref，不依賴 items、groups、onAdd、onRemove、onMove
-    // eslint-disable-next-line
+    // 依賴加上 handlerRef.current
   }, [
     timelineRef,
     loading,
     error,
-    doubleClickHandlerRef,
+    groups,
+    items,
+    onAdd,
+    onRemove,
+    onMove,
+    doubleClickHandlerRef.current,
   ]);
 
   if (loading) return <div>載入中...</div>;
