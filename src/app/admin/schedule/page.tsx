@@ -21,15 +21,13 @@ import {
 } from "firebase/firestore";
 import {
   Timeline,
-  DataSet,
-  TimelineItem,
   TimelineOptions,
 } from "vis-timeline/standalone";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { User } from "firebase/auth";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
 
-/** 型別區 */
+// 型別
 type Group = { id: string; content: string };
 type FlowItem = {
   id: string;
@@ -40,16 +38,15 @@ type FlowItem = {
   projectId: string;
   userId?: string;
 };
-interface TimelineEventItem {
-  id?: string | number;
-  content?: string | HTMLElement;
-  start?: Date;
-  end?: Date;
-  group?: string | number;
-}
-type TimelineEventCallback = (item: TimelineEventItem | FlowItem | null) => void;
+// 重點：content 只允許 string
+type TimelineStringItem = {
+  id: string;
+  group: string;
+  content: string;
+  start: Date;
+  end: Date;
+};
 
-/** hooks: 取得專案群組 */
 function useProjectGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +74,6 @@ function useProjectGroups() {
   return { groups, setGroups, error, loading };
 }
 
-/** hooks: 取得所有流程項目 */
 function useFlowItems(groups: Group[]) {
   const [items, setItems] = useState<FlowItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +120,6 @@ function useFlowItems(groups: Group[]) {
   return { items, setItems, error, loading };
 }
 
-/** hooks: 處理流程 CRUD */
 function useFlowCrud({
   items,
   setItems,
@@ -141,14 +136,12 @@ function useFlowCrud({
       newStart: Date,
       newEnd: Date,
       newGroupId: string
-    ): Promise<boolean> => {
+    ): Promise<{ ok: boolean; error?: string }> => {
       const currentItem = items.find((it) => it.id === itemId);
       if (!currentItem) {
-        alert("找不到要移動的流程項目。");
-        return false;
+        return { ok: false, error: "找不到要移動的流程項目。" };
       }
       const oldProjectId = currentItem.projectId;
-
       try {
         if (oldProjectId === newGroupId) {
           const flowRef = doc(db, "projects", newGroupId, "flows", itemId);
@@ -166,7 +159,6 @@ function useFlowCrud({
             userId: currentItem.userId,
           });
         }
-
         setItems((prev) =>
           prev.map((it) =>
             it.id === itemId
@@ -180,36 +172,40 @@ function useFlowCrud({
               : it
           )
         );
-        return true;
+        return { ok: true };
       } catch (error: unknown) {
-        alert("更新流程失敗: " + ((error as Error)?.message || "未知錯誤"));
-        return false;
+        return { ok: false, error: (error as Error)?.message || "未知錯誤" };
       }
     },
     [items, setItems]
   );
-
   // 新增
   const handleItemAdd = useCallback(
-    async (item: TimelineEventItem, cb: TimelineEventCallback) => {
-      if (!user) return cb(null);
+    async (
+      item: TimelineStringItem
+    ): Promise<{ ok: boolean; newItem?: FlowItem; error?: string }> => {
+      if (!user) return { ok: false, error: "未登入" };
       const flowName =
         typeof item.content === "string"
           ? item.content
-          : item.content instanceof HTMLElement
-          ? item.content.innerText
           : "新流程";
-      const startDate = item.start instanceof Date ? item.start : new Date();
+      const startDate =
+        item.start instanceof Date
+          ? item.start
+          : item.start
+          ? new Date(item.start)
+          : new Date();
       const endDate =
         item.end instanceof Date
           ? item.end
+          : item.end
+          ? new Date(item.end)
           : new Date(startDate.getTime() + 3600000);
       const groupId =
         typeof item.group === "string" || typeof item.group === "number"
           ? String(item.group)
           : null;
-      if (!groupId) return cb(null);
-
+      if (!groupId) return { ok: false, error: "缺少群組" };
       try {
         const newFlowData = {
           projectId: groupId,
@@ -232,43 +228,39 @@ function useFlowCrud({
           userId: user.uid,
         };
         setItems((prev) => [...prev, newItem]);
-        cb(newItem);
+        return { ok: true, newItem };
       } catch (error: unknown) {
-        alert("新增流程失敗: " + ((error as Error)?.message || "未知錯誤"));
-        cb(null);
+        return { ok: false, error: (error as Error)?.message || "未知錯誤" };
       }
     },
     [user, setItems]
   );
-
   // 刪除
   const handleItemRemove = useCallback(
-    async (item: TimelineEventItem, cb: TimelineEventCallback) => {
+    async (
+      item: TimelineStringItem
+    ): Promise<{ ok: boolean; error?: string }> => {
       const itemId = item.id as string;
-      if (!itemId) return cb(null);
+      if (!itemId) return { ok: false, error: "缺少 ID" };
       const currentItem = items.find((it) => it.id === itemId);
       if (!currentItem) {
-        alert("找不到要刪除的流程項目。請嘗試刷新頁面。");
-        return cb(null);
+        return { ok: false, error: "找不到要刪除的流程項目。" };
       }
       try {
         await deleteDoc(
           doc(db, "projects", currentItem.projectId, "flows", itemId)
         );
         setItems((prev) => prev.filter((it) => it.id !== itemId));
-        cb(item);
+        return { ok: true };
       } catch (error: unknown) {
-        alert("刪除流程失敗: " + ((error as Error)?.message || "未知錯誤"));
-        cb(null);
+        return { ok: false, error: (error as Error)?.message || "未知錯誤" };
       }
     },
     [items, setItems]
   );
-
   return { handleItemMove, handleItemAdd, handleItemRemove };
 }
 
-/** hooks: 專案建立 */
 function useCreateProject({
   user,
   setGroups,
@@ -344,7 +336,8 @@ function useCreateProject({
   };
 }
 
-/** UI: Timeline */
+// UI Components
+
 function TimelineView({
   groups,
   items,
@@ -353,6 +346,7 @@ function TimelineView({
   onAdd,
   onRemove,
   onMove,
+  feedback,
 }: {
   groups: Group[];
   items: FlowItem[];
@@ -361,38 +355,24 @@ function TimelineView({
   onAdd: TimelineOptions["onAdd"];
   onRemove: TimelineOptions["onRemove"];
   onMove: TimelineOptions["onMove"];
+  feedback?: { message?: string; type?: "error" | "success" };
 }) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
 
-  // 取得 items 範圍，設定預設 start/end
-  const getTimelineRange = () => {
-    if (!items || items.length === 0) {
-      const now = new Date();
-      return {
-        start: new Date(now.getTime() - 24 * 60 * 60 * 1000),
-        end: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-      };
-    }
-    const minStart = Math.min(...items.map((i) => i.start.getTime()));
-    const maxEnd = Math.max(...items.map((i) => i.end.getTime()));
-    return {
-      start: new Date(minStart - 24 * 60 * 60 * 1000),
-      end: new Date(maxEnd + 24 * 60 * 60 * 1000),
-    };
-  };
-
-  // 只在 mount/unmount 建立/銷毀 Timeline
   useEffect(() => {
     if (!timelineRef.current || loading || error) return;
-
     if (!timelineInstance.current) {
       const container = timelineRef.current;
-      const groupsDataSet = new DataSet<Group, "id">(groups);
-      const itemsDataSet = new DataSet<FlowItem, "id">(items);
-
-      const range = getTimelineRange();
-
+      // 這裡：content 僅 string，型別自訂
+      const groupsArr = groups;
+      const itemsArr: TimelineStringItem[] = items.map((it) => ({
+        id: it.id,
+        group: it.group,
+        content: it.content,
+        start: it.start,
+        end: it.end,
+      }));
       const options: TimelineOptions = {
         editable: {
           add: true,
@@ -406,51 +386,58 @@ function TimelineView({
         onMoving: (item, cb) => cb(item),
         onMove,
         orientation: { axis: "both", item: "top" },
-        start: range.start,
-        end: range.end,
-        zoomMin: 1000 * 60 * 60, // 1小時
-        zoomMax: 1000 * 60 * 60 * 24 * 365, // 1年
       };
-
       try {
+        // 強制斷言型別解決 vis-timeline/vis-data 嚴格型別問題
         timelineInstance.current = new Timeline(
           container,
-          itemsDataSet,
-          groupsDataSet,
+          itemsArr as any,
+          groupsArr as any,
           options
         );
-      } catch {
-        // 忽略 timeline 建立錯誤
-      }
+      } catch {}
     }
-
-    // Unmount 時才 destroy
     return () => {
       if (timelineInstance.current) {
         timelineInstance.current.destroy();
         timelineInstance.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timelineRef, loading, error]);
-
-  // groups/items 變動時只做 setGroups/setItems 並自動 fit
   useEffect(() => {
     if (timelineInstance.current) {
-      timelineInstance.current.setGroups(groups);
-      timelineInstance.current.setItems(items);
-      if (typeof timelineInstance.current.fit === "function") {
-        timelineInstance.current.fit();
-      }
+      timelineInstance.current.setGroups(groups as any);
+      timelineInstance.current.setItems(
+        items.map((it) => ({
+          id: it.id,
+          group: it.group,
+          content: it.content,
+          start: it.start,
+          end: it.end,
+        })) as any
+      );
     }
   }, [groups, items]);
 
   if (loading) return <div>載入中...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
-  return <div ref={timelineRef} style={{ height: "600px" }} />;
+  return (
+    <div>
+      {feedback?.message && (
+        <div
+          style={{
+            color: feedback.type === "error" ? "red" : "green",
+            marginBottom: 8,
+          }}
+        >
+          {feedback.message}
+        </div>
+      )}
+      <div ref={timelineRef} style={{ height: "600px" }} />
+    </div>
+  );
 }
 
-/** UI: 專案建立欄 */
 function ProjectCreateBar({
   newProjectName,
   setNewProjectName,
@@ -476,10 +463,7 @@ function ProjectCreateBar({
         disabled={loading}
         style={{ marginRight: 8 }}
       />
-      <button
-        onClick={onCreate}
-        disabled={loading || !newProjectName.trim()}
-      >
+      <button onClick={onCreate} disabled={loading || !newProjectName.trim()}>
         {loading ? "建立中..." : "建立專案"}
       </button>
       {error && <div style={{ color: "red" }}>{error}</div>}
@@ -488,7 +472,7 @@ function ProjectCreateBar({
   );
 }
 
-/** 主頁面 */
+// 主頁面
 export default function ProjectsPage() {
   const [userRaw] = useAuthState(auth);
   const user: User | null = userRaw ?? null;
@@ -524,8 +508,75 @@ export default function ProjectsPage() {
     setItems,
   });
 
+  const [feedback, setFeedback] = useState<{ message?: string; type?: "error" | "success" }>({});
+
   const handleProjectCreate = () =>
     handleCreateProject(newProjectName, () => setNewProjectName(""));
+
+  // vis-timeline 的 callback 型別正確，item 是 TimelineStringItem
+  const timelineOnAdd: TimelineOptions["onAdd"] = async (item, cb) => {
+    // 保證 content 僅 string
+    const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
+    const res = await handleItemAdd(safeItem as TimelineStringItem);
+    if (res.ok && res.newItem) {
+      setFeedback({ message: "新增流程成功", type: "success" });
+      cb({
+        id: res.newItem.id,
+        group: res.newItem.group,
+        content: res.newItem.content,
+        start: res.newItem.start,
+        end: res.newItem.end,
+      });
+    } else {
+      setFeedback({ message: `新增流程失敗: ${res.error}`, type: "error" });
+      cb(null);
+    }
+  };
+  const timelineOnRemove: TimelineOptions["onRemove"] = async (item, cb) => {
+    // 保證 content 僅 string
+    const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
+    const res = await handleItemRemove(safeItem as TimelineStringItem);
+    if (res.ok) {
+      setFeedback({ message: "刪除流程成功", type: "success" });
+      cb(item);
+    } else {
+      setFeedback({ message: `刪除流程失敗: ${res.error}`, type: "error" });
+      cb(null);
+    }
+  };
+  const timelineOnMove: TimelineOptions["onMove"] = async (item, cb) => {
+    // 保證 content 僅 string
+    const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
+    const start =
+      safeItem.start instanceof Date
+        ? safeItem.start
+        : safeItem.start
+        ? new Date(safeItem.start)
+        : new Date();
+    const end =
+      safeItem.end instanceof Date
+        ? safeItem.end
+        : safeItem.end
+        ? new Date(safeItem.end)
+        : new Date(start.getTime() + 3600000);
+    const groupId =
+      typeof safeItem.group === "string" || typeof safeItem.group === "number"
+        ? String(safeItem.group)
+        : "";
+    const res = await handleItemMove(
+      safeItem.id as string,
+      start,
+      end,
+      groupId
+    );
+    if (res.ok) {
+      setFeedback({ message: "移動流程成功", type: "success" });
+      cb(item);
+    } else {
+      setFeedback({ message: `移動流程失敗: ${res.error}`, type: "error" });
+      cb(null);
+    }
+  };
 
   return (
     <main>
@@ -542,20 +593,10 @@ export default function ProjectsPage() {
         items={items}
         loading={groupLoading || itemsLoading}
         error={groupError || itemError}
-        onAdd={handleItemAdd as TimelineOptions["onAdd"]}
-        onRemove={handleItemRemove as TimelineOptions["onRemove"]}
-        onMove={async (
-          item: TimelineItem,
-          cb: (item: TimelineItem | null) => void
-        ) => {
-          const ok = await handleItemMove(
-            item.id as string,
-            item.start as Date,
-            item.end as Date,
-            item.group as string
-          );
-          cb(ok ? item : null);
-        }}
+        onAdd={timelineOnAdd}
+        onRemove={timelineOnRemove}
+        onMove={timelineOnMove}
+        feedback={feedback}
       />
     </main>
   );
