@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
 import Timeline from "react-calendar-timeline";
@@ -35,7 +35,6 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
-  // 只寫這樣，不要指定 RefObject
   const timelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -191,6 +190,7 @@ export default function ProjectsPage() {
     }
   };
 
+  // 這裡不變
   const [{ isOver }, drop] = useDrop<Project, void, { isOver: boolean }>({
     accept: "PROJECT",
     drop: (item: Project, monitor) => {
@@ -233,6 +233,12 @@ export default function ProjectsPage() {
     })
   });
 
+  // 這是 callback ref，能安全同時給 drop 跟 timelineRef
+  const dropTimelineRef = useCallback((node: HTMLDivElement | null) => {
+    drop(node);
+    timelineRef.current = node;
+  }, [drop]);
+
   const now = new Date();
   const defaultTimeStart = subDays(startOfDay(now), 2);
   const defaultTimeEnd = addDays(endOfDay(now), 5);
@@ -264,29 +270,31 @@ export default function ProjectsPage() {
             <div style={{ minWidth: 180 }}>
               <ProjectList projects={projects} />
             </div>
-            <div ref={drop} style={{ flex: 1, border: isOver ? "2px solid #1e90ff" : "1px solid #eee", borderRadius: 4 }}>
-              <div ref={timelineRef}>
-                <Timeline
-                  groups={groups}
-                  items={items}
-                  defaultTimeStart={defaultTimeStart.getTime()}
-                  defaultTimeEnd={defaultTimeEnd.getTime()}
-                  canMove
-                  canResize="both"
-                  onItemMove={handleItemMove}
-                  onItemResize={handleItemResize}
-                  lineHeight={50}
-                  timeSteps={{
-                    second: 0,
-                    minute: 0,
-                    hour: 12,
-                    day: 1,
-                    month: 1,
-                    year: 1
-                  }}
-                  dragSnap={43200000}
-                />
-              </div>
+            <div
+              // 這裡改成 callback ref
+              ref={dropTimelineRef}
+              style={{ flex: 1, border: isOver ? "2px solid #1e90ff" : "1px solid #eee", borderRadius: 4 }}
+            >
+              <Timeline
+                groups={groups}
+                items={items}
+                defaultTimeStart={defaultTimeStart.getTime()}
+                defaultTimeEnd={defaultTimeEnd.getTime()}
+                canMove
+                canResize="both"
+                onItemMove={handleItemMove}
+                onItemResize={handleItemResize}
+                lineHeight={50}
+                timeSteps={{
+                  second: 0,
+                  minute: 0,
+                  hour: 12,
+                  day: 1,
+                  month: 1,
+                  year: 1
+                }}
+                dragSnap={43200000}
+              />
             </div>
           </div>
         )}
