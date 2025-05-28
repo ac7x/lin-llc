@@ -10,7 +10,6 @@ import { auth } from "@/modules/shared/infrastructure/persistence/firebase/fireb
 import { useAuthState } from "react-firebase-hooks/auth";
 
 type Group = { id: string; title: string; };
-type Project = { id: string; name: string; };
 type ScheduleItem = {
   id: string;
   group: string;
@@ -23,7 +22,6 @@ type ScheduleItem = {
 
 export default function ProjectsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [items, setItems] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,12 +41,13 @@ export default function ProjectsPage() {
           title: doc.data().displayName || doc.data().name || doc.id,
         }));
         setGroups(g);
+
         const projectsSnap = await getDocs(collection(db, "projects"));
         const p = projectsSnap.docs.map(doc => ({
           id: doc.id,
           name: doc.data().name || "未命名專案",
         }));
-        setProjects(p);
+
         const schedulesSnap = await getDocs(collection(db, "schedules"));
         setItems(schedulesSnap.docs.map(doc => {
           const d = doc.data();
@@ -91,7 +90,6 @@ export default function ProjectsPage() {
         start,
         end,
       });
-      setProjects(prev => [...prev, { id: projectRef.id, name: newProjectName }]);
       setItems(prev => [
         ...prev,
         {
@@ -110,29 +108,6 @@ export default function ProjectsPage() {
       setCreateError((err as Error).message || "建立專案失敗");
     } finally {
       setCreateLoading(false);
-    }
-  };
-
-  const handleAssignSchedule = async (projectId: string, userId: string) => {
-    try {
-      const start = Timestamp.now();
-      const end = Timestamp.fromMillis(start.toMillis() + 86400000);
-      const scheduleRef = await addDoc(collection(db, "schedules"), { projectId, userId, start, end });
-      const project = projects.find(p => p.id === projectId);
-      setItems(prev => [
-        ...prev,
-        {
-          id: scheduleRef.id,
-          group: userId,
-          title: project ? project.name : "未知專案",
-          start_time: start.toMillis(),
-          end_time: end.toMillis(),
-          projectId,
-          userId,
-        }
-      ]);
-    } catch {
-      alert("指派失敗");
     }
   };
 
@@ -229,23 +204,6 @@ export default function ProjectsPage() {
             }}
             dragSnap={43200000}
           />
-          <h2>快速指派專案給用戶（建立新日程）</h2>
-          <ul>
-            {projects.map(project => (
-              <li key={project.id}>
-                {project.name}{" "}
-                {groups.map(g => (
-                  <button
-                    key={g.id}
-                    style={{ marginRight: 8 }}
-                    onClick={() => handleAssignSchedule(project.id, g.id)}
-                  >
-                    指派給 {g.title}
-                  </button>
-                ))}
-              </li>
-            ))}
-          </ul>
         </>
       )}
     </main>
