@@ -106,6 +106,14 @@ export default function ProjectsPage() {
               </Link>
               <div className="text-gray-700 text-sm flex flex-col gap-1 mt-2">
                 <div>
+                  <span className="text-gray-500 font-medium">地區：</span>
+                  {project.region || "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">地址：</span>
+                  {project.address || "-"}
+                </div>
+                <div>
                   <span className="text-gray-500 font-medium">協調者：</span>
                   {project.coord && users[project.coord] ? users[project.coord] : "-"}
                 </div>
@@ -120,14 +128,6 @@ export default function ProjectsPage() {
                   {project.safety && project.safety.length > 0
                     ? project.safety.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}
-                </div>
-                <div>
-                  <span className="text-gray-500 font-medium">地區：</span>
-                  {project.region || "-"}
-                </div>
-                <div>
-                  <span className="text-gray-500 font-medium">地址：</span>
-                  {project.address || "-"}
                 </div>
                 <div>
                   <span className="text-gray-500 font-medium">起始日：</span>
@@ -152,30 +152,6 @@ export default function ProjectsPage() {
                 <div>
                   <span className="text-gray-500 font-medium">業主：</span>
                   {project.ownerName || "-"}
-                </div>
-                <div>
-                  <span className="text-gray-500 font-medium">預算：</span>
-                  {typeof project.budget === "number" ? project.budget.toLocaleString() : "-"}
-                </div>
-                <div>
-                  <span className="text-gray-500 font-medium">已支出：</span>
-                  {typeof project.totalSpent === "number" ? project.totalSpent.toLocaleString() : "-"}
-                </div>
-                <div>
-                  <span className="text-gray-500 font-medium">剩餘預算：</span>
-                  {typeof project.remainingBudget === "number" ? project.remainingBudget.toLocaleString() : "-"}
-                </div>
-                <div>
-                  <span className="text-gray-500 font-medium">支出明細：</span>
-                  {project.expenses && project.expenses.length > 0 ? (
-                    <ul className="list-disc ml-5">
-                      {project.expenses.map(e => (
-                        <li key={e.id}>
-                          {e.name} - {e.amount.toLocaleString()} 元 ({e.date}){e.note ? `，備註：${e.note}` : ""}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : "-"}
                 </div>
               </div>
             </div>

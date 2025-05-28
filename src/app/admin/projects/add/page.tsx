@@ -157,6 +157,45 @@ export default function ProjectAddPage() {
       </div>
       <div className="mb-4">
         <label className="block font-medium mb-1">
+          起始日：
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+            disabled={loading}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+          />
+        </label>
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
+          預估結束日：
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+            disabled={loading}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+          />
+        </label>
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
+          狀態：
+          <select
+            value={status}
+            onChange={e => setStatus(e.target.value as "planning" | "inProgress" | "completed" | "onHold")}
+            disabled={loading}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+          >
+            {statusOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
           協調者（單選）：
           <select
             value={coord}
@@ -204,45 +243,6 @@ export default function ProjectAddPage() {
             </label>
           ))}
         </div>
-      </div>
-      <div className="mb-4">
-        <label className="block font-medium mb-1">
-          起始日：
-          <input
-            type="date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            disabled={loading}
-            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-          />
-        </label>
-      </div>
-      <div className="mb-4">
-        <label className="block font-medium mb-1">
-          預估結束日：
-          <input
-            type="date"
-            value={endDate}
-            onChange={e => setEndDate(e.target.value)}
-            disabled={loading}
-            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-          />
-        </label>
-      </div>
-      <div className="mb-4">
-        <label className="block font-medium mb-1">
-          狀態：
-          <select
-            value={status}
-            onChange={e => setStatus(e.target.value as "planning" | "inProgress" | "completed" | "onHold")}
-            disabled={loading}
-            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            {statusOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </label>
       </div>
       <div className="mb-4">
         <label className="block font-medium mb-1">

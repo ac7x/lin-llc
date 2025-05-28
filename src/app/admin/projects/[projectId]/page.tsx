@@ -115,13 +115,6 @@ export default function ProjectDetailPage() {
       </div>
       {tab === "detail" && (
         <div className="mb-4 text-gray-600">
-          <div>建立者：{users[project.createdBy || ""] || "未知"}</div>
-          <div>
-            建立時間：
-            {project.createdAt && typeof project.createdAt === "object" && "toDate" in project.createdAt
-              ? (project.createdAt as Timestamp).toDate().toLocaleString()
-              : String(project.createdAt) || "未知"}
-          </div>
           <div>協調者：{users[project.coord || ""] || "-"}</div>
           <div>
             監工：
