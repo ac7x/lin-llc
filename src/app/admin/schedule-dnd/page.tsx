@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { collection, getDocs, addDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, updateDoc, Timestamp, deleteDoc } from "firebase/firestore";
 import { Timeline, DataSet } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
 import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
@@ -75,6 +75,86 @@ export default function ProjectsPage() {
     }
   }, [items]);
 
+  const handleItemAdd = useCallback(async (itemDataFromTimeline: any, callback: (item: ScheduleItem | null) => void) => {
+    if (!user) {
+      alert("你需要登入才能新增項目。");
+      callback(null);
+      return;
+    }
+
+    const newProjectName = itemDataFromTimeline.content || "新排程 (自動建立)";
+
+    setCreateLoading(true);
+    setCreateError(null);
+    setCreateSuccess(false);
+
+    try {
+      // 1. Create a new project
+      const projectRef = await addDoc(collection(db, "projects"), {
+        name: newProjectName,
+        createdAt: Timestamp.now(),
+        // Consider adding ownerId: user.uid if your projects have owners
+      });
+
+      // 2. Create the schedule item linked to this new project
+      const newScheduleData = {
+        projectId: projectRef.id,
+        userId: itemDataFromTimeline.group, // User ID from the timeline group
+        start: Timestamp.fromDate(itemDataFromTimeline.start),
+        end: Timestamp.fromDate(itemDataFromTimeline.end),
+      };
+      const scheduleRef = await addDoc(collection(db, "schedules"), newScheduleData);
+
+      const newItemForState: ScheduleItem = {
+        id: scheduleRef.id,
+        group: itemDataFromTimeline.group,
+        content: newProjectName, // Project name
+        start: itemDataFromTimeline.start,
+        end: itemDataFromTimeline.end,
+        projectId: projectRef.id,
+        userId: itemDataFromTimeline.group,
+      };
+
+      setItems(prev => [...prev, newItemForState]);
+      // The timeline will update due to items dependency in its useEffect
+      callback(newItemForState);
+      setCreateSuccess(true);
+    } catch (err: unknown) {
+      console.error("新增專案與排程失敗:", err);
+      alert("新增失敗: " + (err instanceof Error ? err.message : "未知錯誤"));
+      callback(null);
+      setCreateError((err as Error).message || "新增失敗");
+    } finally {
+      setCreateLoading(false);
+    }
+  }, [user, setItems]);
+
+  const handleItemRemove = useCallback(async (itemDataFromTimeline: any, callback: (item: any | null) => void) => {
+    const itemId = itemDataFromTimeline.id;
+    if (!itemId) {
+      callback(null);
+      return;
+    }
+
+    // Optional: Add a confirmation dialog
+    // if (!confirm("確定要刪除此項目嗎？")) {
+    //   callback(null);
+    //   return;
+    // }
+
+    try {
+      await deleteDoc(doc(db, "schedules", itemId));
+      setItems(prev => prev.filter(it => it.id !== itemId));
+      // The timeline will update due to items dependency in its useEffect
+      callback(itemDataFromTimeline); // Confirm deletion to timeline
+    } catch (error: unknown) {
+      console.error("刪除排程失敗:", error);
+      alert("刪除排程失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
+      callback(null);
+    }
+  }, [setItems]);
+
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -132,6 +212,8 @@ export default function ProjectsPage() {
         overrideItems: true, 
         resize: true, 
       },
+      onAdd: handleItemAdd, // Added onAdd handler
+      onRemove: handleItemRemove, // Added onRemove handler
       onMoving: function(item: any, callback: Function) {
         callback(item);
       },
@@ -169,7 +251,7 @@ export default function ProjectsPage() {
         timelineInstance.current.destroy();
       }
     };
-  }, [loading, error, items, groups, handleItemMove]);
+  }, [loading, error, items, groups, handleItemMove, handleItemAdd, handleItemRemove]);
 
   const handleCreateProject = async () => {
     setCreateLoading(true);
