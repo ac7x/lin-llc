@@ -160,7 +160,8 @@ export default function ProjectsPage() {
       // Find the item to get its projectId for the path
       const currentItem = items.find(it => it.id === itemId);
       if (!currentItem) {
-        alert("找不到要刪除的流程項目。");
+        alert("找不到要刪除的流程項目。請嘗試刷新頁面。"); // 更新提示訊息
+        console.error("handleItemRemove: Item not found in local state", { itemId, items }); // 增加日誌
         return cb(null);
       }
 
@@ -175,7 +176,7 @@ export default function ProjectsPage() {
         cb(null);
       }
     },
-    []
+    [items] // 將 items 加入依賴項陣列
   );
 
   // --- Double Click Edit Handler ---
