@@ -23,6 +23,7 @@ import {
   TimelineOptions,
   DataGroup,
   DataItem,
+  TimelineItem as VisTimelineItem, // Import TimelineItem and alias it
 } from "vis-timeline/standalone";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { User } from "firebase/auth";
@@ -399,22 +400,23 @@ function TimelineView({
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
 
+  // Effect for INITIALIZATION and DESTRUCTION
   useEffect(() => {
-    if (!timelineRef.current || loading || error) return;
-    if (!timelineInstance.current) {
+    if (timelineRef.current && !loading && !error && !timelineInstance.current) {
       const container = timelineRef.current;
-      const groupsArr: DataGroup[] = groups.map((g) => ({
+      const initialGroups = groups.map((g) => ({
         id: g.id,
         content: g.content,
       }));
-      const itemsArr: DataItem[] = items.map((it) => ({
+      const initialItems = items.map((it) => ({
         id: it.id,
         group: it.group,
         content: it.content,
         start: it.start,
         end: it.end,
       }));
-      const options: TimelineOptions = {
+
+      const currentOptions: TimelineOptions = {
         editable: {
           add: true,
           remove: true,
@@ -428,29 +430,41 @@ function TimelineView({
         onMove,
         orientation: { axis: "both", item: "top" },
       };
+
       try {
         timelineInstance.current = new Timeline(
           container,
-          itemsArr,
-          groupsArr,
-          options
+          initialItems,
+          initialGroups,
+          currentOptions
         );
-      } catch {}
+      } catch (e) {
+        console.error("Timeline initialization error:", e);
+      }
     }
+
     return () => {
       if (timelineInstance.current) {
         timelineInstance.current.destroy();
         timelineInstance.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timelineRef, loading, error, groups, items, onAdd, onRemove, onMove]);
+  }, [loading, error]); // Minimal dependencies for init/destroy logic
+
+  // Effect to update GROUPS
   useEffect(() => {
-    if (timelineInstance.current) {
+    if (timelineInstance.current && !loading && !error) {
       const groupsArr: DataGroup[] = groups.map((g) => ({
         id: g.id,
         content: g.content,
       }));
+      timelineInstance.current.setGroups(groupsArr);
+    }
+  }, [groups, loading, error]);
+
+  // Effect to update ITEMS
+  useEffect(() => {
+    if (timelineInstance.current && !loading && !error) {
       const itemsArr: DataItem[] = items.map((it) => ({
         id: it.id,
         group: it.group,
@@ -458,10 +472,22 @@ function TimelineView({
         start: it.start,
         end: it.end,
       }));
-      timelineInstance.current.setGroups(groupsArr);
       timelineInstance.current.setItems(itemsArr);
     }
-  }, [groups, items]);
+  }, [items, loading, error]);
+
+  // Effect to update OPTIONS (event handlers)
+  useEffect(() => {
+    if (timelineInstance.current && !loading && !error) {
+      const newOptions: Partial<TimelineOptions> = {
+        onAdd,
+        onRemove,
+        onMove,
+      };
+      timelineInstance.current.setOptions(newOptions);
+    }
+  }, [onAdd, onRemove, onMove, loading, error]);
+
 
   if (loading) return <div>載入中...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
@@ -557,72 +583,89 @@ export default function ProjectsPage() {
   const handleProjectCreate = () =>
     handleCreateProject(newProjectName, () => setNewProjectName(""));
 
-  // vis-timeline 的 callback 型別正確，item 是 TimelineItemType
-  const timelineOnAdd: TimelineOptions["onAdd"] = async (item, cb) => {
-    const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
-    const res = await handleAddFlowItem(safeItem as TimelineItemType);
+  const timelineOnAdd: TimelineOptions["onAdd"] = useCallback(async (visItem: VisTimelineItem, cb: (item: VisTimelineItem | null) => void) => {
+    // Prepare item for handleAddFlowItem (expects local TimelineItemType)
+    const itemToAdd: TimelineItemType = {
+      id: String(visItem.id), // vis-timeline might provide a temp id
+      group: String(visItem.group), // group where item is being added
+      content: typeof visItem.content === 'string' ? visItem.content : (visItem.content instanceof HTMLElement && visItem.content.textContent ? visItem.content.textContent.trim() : "新流程"),
+      start: visItem.start instanceof Date ? visItem.start : new Date(visItem.start),
+      end: visItem.end ? (visItem.end instanceof Date ? visItem.end : new Date(visItem.end)) : new Date((visItem.start instanceof Date ? visItem.start : new Date(visItem.start)).getTime() + 3600000), // Default end
+    };
+
+    const res = await handleAddFlowItem(itemToAdd);
     if (res.ok && res.newItem) {
       setFeedback({ message: "新增流程成功", type: "success" });
+      // res.newItem is FlowItemType, which is compatible with VisTimelineItem's structure for content, start, end.
       cb({
         id: res.newItem.id,
         group: res.newItem.group,
         content: res.newItem.content,
         start: res.newItem.start,
         end: res.newItem.end,
-      });
+      } as VisTimelineItem); // Cast the resulting object to VisTimelineItem for the callback
     } else {
       setFeedback({ message: `新增流程失敗: ${res.error}`, type: "error" });
       cb(null);
     }
-  };
-  const timelineOnRemove: TimelineOptions["onRemove"] = async (item, cb) => {
-    const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
-    const res = await handleRemoveFlowItem(safeItem as TimelineItemType);
+  }, [handleAddFlowItem, setFeedback]);
+
+  const timelineOnRemove: TimelineOptions["onRemove"] = useCallback(async (visItem: VisTimelineItem, cb: (item: VisTimelineItem | null) => void) => {
+    // Prepare item for handleRemoveFlowItem (expects local TimelineItemType)
+    const itemToRemove: TimelineItemType = {
+      id: String(visItem.id),
+      group: String(visItem.group), // Ensure group is a string
+      content: typeof visItem.content === 'string' ? visItem.content : (visItem.content instanceof HTMLElement && visItem.content.textContent ? visItem.content.textContent : ''),
+      start: visItem.start instanceof Date ? visItem.start : new Date(visItem.start),
+      end: visItem.end ? (visItem.end instanceof Date ? visItem.end : new Date(visItem.end)) : new Date(new Date(visItem.start).getTime() + 3600000),
+    };
+    const res = await handleRemoveFlowItem(itemToRemove);
     if (res.ok) {
       setFeedback({ message: "刪除流程成功", type: "success" });
-      cb(item);
+      cb(visItem); // Pass the original visItem to the callback
     } else {
       setFeedback({ message: `刪除流程失敗: ${res.error}`, type: "error" });
       cb(null);
     }
-  };
-  const timelineOnMove: TimelineOptions["onMove"] = async (item, cb) => {
-    const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
-    const start =
-      safeItem.start instanceof Date
-        ? safeItem.start
-        : safeItem.start
-        ? new Date(safeItem.start)
-        : new Date();
-    const end =
-      safeItem.end instanceof Date
-        ? safeItem.end
-        : safeItem.end
-        ? new Date(safeItem.end)
-        : new Date(start.getTime() + 3600000);
-    const groupId =
-      typeof safeItem.group === "string" || typeof safeItem.group === "number"
-        ? String(safeItem.group)
-        : "";
+  }, [handleRemoveFlowItem, setFeedback]);
+
+  const timelineOnMove: TimelineOptions["onMove"] = useCallback(async (movedVisItem: VisTimelineItem, cb: (item: VisTimelineItem | null) => void) => {
+    const itemId = String(movedVisItem.id);
+    // movedVisItem.group is the new group's ID (string | number)
+    const newGroupId = String(movedVisItem.group);
+    // movedVisItem.start is the new start time (Date | number | string)
+    const newStart = movedVisItem.start instanceof Date ? movedVisItem.start : new Date(movedVisItem.start);
+    // movedVisItem.end is the new end time (Date | number | string), can be undefined
+    const newEnd = movedVisItem.end ? (movedVisItem.end instanceof Date ? movedVisItem.end : new Date(movedVisItem.end)) : new Date(newStart.getTime() + 3600000); // Default if undefined
+    
+    if (!itemId) {
+        setFeedback({ message: "移動失敗: 項目 ID 遺失", type: "error" });
+        cb(null);
+        return;
+    }
+    // newGroupId could be 'undefined' if item is dragged out of all groups. Handle as needed by your logic.
+    // For now, assuming a valid group ID string is expected by handleMoveFlowItem.
+    if (!newGroupId || newGroupId === "undefined") { 
+        setFeedback({ message: "移動失敗: 群組 ID 遺失或無效", type: "error" });
+        cb(null);
+        return;
+    }
+
     const res = await handleMoveFlowItem(
-      safeItem.id as string,
-      start,
-      end,
-      groupId
+      itemId,
+      newStart,
+      newEnd,
+      newGroupId
     );
     if (res.ok) {
       setFeedback({ message: "移動流程成功", type: "success" });
-      cb({
-        ...item,
-        start,
-        end,
-        group: groupId,
-      });
+      // Pass the movedVisItem (which already has new start/end/group) to the callback
+      cb(movedVisItem); 
     } else {
       setFeedback({ message: `移動流程失敗: ${res.error}`, type: "error" });
-      cb(null);
+      cb(null); // Revert the move in the timeline
     }
-  };
+  }, [handleMoveFlowItem, setFeedback]);
 
   return (
     <main>
