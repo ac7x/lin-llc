@@ -406,8 +406,6 @@ function TimelineView({
         onMoving: (item, cb) => cb(item),
         onMove,
         orientation: { axis: "both", item: "top" },
-
-        // 新增這幾個，確保初始化縮放正常
         start: range.start,
         end: range.end,
         zoomMin: 1000 * 60 * 60, // 1小時
@@ -433,7 +431,7 @@ function TimelineView({
         timelineInstance.current = null;
       }
     };
-    // eslint-disable-next-line
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timelineRef, loading, error]);
 
   // groups/items 變動時只做 setGroups/setItems 並自動 fit
@@ -441,8 +439,9 @@ function TimelineView({
     if (timelineInstance.current) {
       timelineInstance.current.setGroups(groups);
       timelineInstance.current.setItems(items);
-      // 自動 fit 到內容範圍
-      timelineInstance.current.fit && timelineInstance.current.fit();
+      if (typeof timelineInstance.current.fit === "function") {
+        timelineInstance.current.fit();
+      }
     }
   }, [groups, items]);
 
