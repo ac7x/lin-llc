@@ -409,8 +409,6 @@ function TimelineView({
           updateGroup: true,
           overrideItems: true,
         },
-        moveable: false, // 禁止整個時間軸拖曳
-        zoomable: false, // 禁止縮放
         onAdd,
         onRemove,
         onMoving: (item, cb) => cb(item),
