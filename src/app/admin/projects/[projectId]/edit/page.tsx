@@ -23,7 +23,7 @@ type Project = {
 export default function ProjectEditPage() {
   const { projectId } = useParams() as { projectId: string };
   const [project, setProject] = useState<Project | null>(null);
-  const [name, setName] = useState("");
+  const [projectName, setProjectName] = useState("");
   const [coord, setCoord] = useState("");
   const [foreman, setForeman] = useState<string[]>([]);
   const [safety, setSafety] = useState<string[]>([]);
@@ -71,7 +71,7 @@ export default function ProjectEditPage() {
       if (snap.exists()) {
         const data = snap.data();
         setProject({ id: snap.id, ...data });
-        setName(data.name || "");
+        setProjectName(data.name || "");
         setCoord(data.coord || "");
         setForeman(data.foreman || []);
         setSafety(data.safety || []);
@@ -101,7 +101,7 @@ export default function ProjectEditPage() {
   };
 
   const handleSave = async () => {
-    if (!name.trim()) {
+    if (!projectName.trim()) {
       setError("名稱不能為空");
       return;
     }
@@ -110,7 +110,7 @@ export default function ProjectEditPage() {
     setSuccess(false);
     try {
       await updateDoc(doc(db, "projects", projectId), {
-        name,
+        name: projectName,
         coord,
         foreman,
         safety,
@@ -142,11 +142,11 @@ export default function ProjectEditPage() {
     <main className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-4">
         <label className="block font-medium mb-1">
-          名稱：
+          專案名稱：
           <input
             type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
+            value={projectName}
+            onChange={e => setProjectName(e.target.value)}
             disabled={saving}
             className="ml-2 px-3 py-2 border border-gray-300 rounded w-72 focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
@@ -299,7 +299,7 @@ export default function ProjectEditPage() {
       </div>
       <button
         onClick={handleSave}
-        disabled={saving || !name.trim()}
+        disabled={saving || !projectName.trim()}
         className="bg-blue-700 hover:bg-blue-800 text-white rounded px-6 py-2 font-semibold text-base transition mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {saving ? "儲存中..." : "儲存"}
