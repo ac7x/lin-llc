@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
 import Timeline from "react-calendar-timeline";
@@ -8,9 +8,11 @@ import "@/styles/react-calendar-timeline.scss";
 import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { ProjectList } from "./ProjectList";
+import { ProjectList, Project } from "./ProjectList";
+import { DndProvider, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
-type Group = { id: string; title: string; };
+type Group = { id: string; title: string };
 type ScheduleItem = {
   id: string;
   group: string;
@@ -32,6 +34,9 @@ export default function ProjectsPage() {
   const [createSuccess, setCreateSuccess] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+
+  // 只寫這樣，不要指定 RefObject
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -65,8 +70,8 @@ export default function ProjectsPage() {
             userId: d.userId,
           };
         }));
-      } catch (err: unknown) {
-        setError((err as Error).message || "載入失敗");
+      } catch (e: unknown) {
+        setError((e as Error).message || "載入失敗");
       } finally {
         setLoading(false);
       }
@@ -108,8 +113,8 @@ export default function ProjectsPage() {
       ]);
       setCreateSuccess(true);
       setNewProjectName("");
-    } catch (err: unknown) {
-      setCreateError((err as Error).message || "建立專案失敗");
+    } catch (e: unknown) {
+      setCreateError((e as Error).message || "建立專案失敗");
     } finally {
       setCreateLoading(false);
     }
@@ -161,56 +166,131 @@ export default function ProjectsPage() {
     }
   };
 
+  const handleCreateScheduleItemFromProject = async (project: Project, groupId: string, start: number, end: number) => {
+    try {
+      const scheduleRef = await addDoc(collection(db, "schedules"), {
+        projectId: project.id,
+        userId: groupId,
+        start: Timestamp.fromMillis(start),
+        end: Timestamp.fromMillis(end),
+      });
+      setItems(prev => [
+        ...prev,
+        {
+          id: scheduleRef.id,
+          group: groupId,
+          title: project.name,
+          start_time: start,
+          end_time: end,
+          projectId: project.id,
+          userId: groupId,
+        }
+      ]);
+    } catch {
+      alert("新增排程失敗！");
+    }
+  };
+
+  const [{ isOver }, drop] = useDrop<Project, void, { isOver: boolean }>({
+    accept: "PROJECT",
+    drop: (item: Project, monitor) => {
+      const clientOffset = monitor.getClientOffset();
+      if (!clientOffset || !timelineRef.current) return;
+
+      const timelineRect = timelineRef.current.getBoundingClientRect();
+
+      const x = clientOffset.x - timelineRect.left;
+      const y = clientOffset.y - timelineRect.top;
+
+      let groupIndex = 0;
+      if (groups.length > 0) {
+        const rowHeight = 50;
+        groupIndex = Math.floor(y / rowHeight);
+        if (groupIndex < 0) groupIndex = 0;
+        if (groupIndex >= groups.length) groupIndex = groups.length - 1;
+      }
+      const groupId = groups[groupIndex]?.id || (groups[0]?.id ?? "");
+
+      const timeline = timelineRef.current;
+      const width = timeline.clientWidth;
+
+      const now = new Date();
+      const defaultTimeStart = subDays(startOfDay(now), 2).getTime();
+      const defaultTimeEnd = addDays(endOfDay(now), 5).getTime();
+      const timeRange = defaultTimeEnd - defaultTimeStart;
+
+      const percent = x / width;
+      let start = Math.round(defaultTimeStart + timeRange * percent);
+      if (start < defaultTimeStart) start = defaultTimeStart;
+      if (start > defaultTimeEnd - 86400000) start = defaultTimeEnd - 86400000;
+
+      const end = start + 86400000;
+
+      handleCreateScheduleItemFromProject(item, groupId, start, end);
+    },
+    collect: monitor => ({
+      isOver: monitor.isOver()
+    })
+  });
+
   const now = new Date();
   const defaultTimeStart = subDays(startOfDay(now), 2);
   const defaultTimeEnd = addDays(endOfDay(now), 5);
 
   return (
-    <main>
-      <h1>專案時程表</h1>
-      <p>以時間軸方式檢視所有專案日程。</p>
-      <div style={{ marginBottom: 8 }}>
-        <input
-          type="text"
-          placeholder="請輸入專案名稱"
-          value={newProjectName}
-          onChange={e => setNewProjectName(e.target.value)}
-          disabled={createLoading}
-          style={{ marginRight: 8 }}
-        />
-        <button onClick={handleCreateProject} disabled={createLoading || !user || !newProjectName.trim()}>
-          {createLoading ? "建立中..." : "建立專案"}
-        </button>
-      </div>
-      {createError && <div style={{ color: "red" }}>{createError}</div>}
-      {createSuccess && <div style={{ color: "green" }}>專案已建立！</div>}
-      {loading && <div>載入中...</div>}
-      {error && <div style={{ color: "red" }}>{error}</div>}
-      {!loading && !error && (
-        <>
-          <ProjectList projects={projects} />
-          <Timeline
-            groups={groups}
-            items={items}
-            defaultTimeStart={defaultTimeStart.getTime()}
-            defaultTimeEnd={defaultTimeEnd.getTime()}
-            canMove
-            canResize="both"
-            onItemMove={handleItemMove}
-            onItemResize={handleItemResize}
-            lineHeight={50}
-            timeSteps={{
-              second: 0,
-              minute: 0,
-              hour: 12,
-              day: 1,
-              month: 1,
-              year: 1
-            }}
-            dragSnap={43200000}
+    <DndProvider backend={HTML5Backend}>
+      <main>
+        <h1>專案時程表</h1>
+        <p>以時間軸方式檢視所有專案日程。可將左側專案拖曳到時間軸。</p>
+        <div style={{ marginBottom: 8 }}>
+          <input
+            type="text"
+            placeholder="請輸入專案名稱"
+            value={newProjectName}
+            onChange={e => setNewProjectName(e.target.value)}
+            disabled={createLoading}
+            style={{ marginRight: 8 }}
           />
-        </>
-      )}
-    </main>
+          <button onClick={handleCreateProject} disabled={createLoading || !user || !newProjectName.trim()}>
+            {createLoading ? "建立中..." : "建立專案"}
+          </button>
+        </div>
+        {createError && <div style={{ color: "red" }}>{createError}</div>}
+        {createSuccess && <div style={{ color: "green" }}>專案已建立！</div>}
+        {loading && <div>載入中...</div>}
+        {error && <div style={{ color: "red" }}>{error}</div>}
+        {!loading && !error && (
+          <div style={{ display: "flex", gap: 16 }}>
+            <div style={{ minWidth: 180 }}>
+              <ProjectList projects={projects} />
+            </div>
+            <div ref={drop} style={{ flex: 1, border: isOver ? "2px solid #1e90ff" : "1px solid #eee", borderRadius: 4 }}>
+              <div ref={timelineRef}>
+                <Timeline
+                  groups={groups}
+                  items={items}
+                  defaultTimeStart={defaultTimeStart.getTime()}
+                  defaultTimeEnd={defaultTimeEnd.getTime()}
+                  canMove
+                  canResize="both"
+                  onItemMove={handleItemMove}
+                  onItemResize={handleItemResize}
+                  lineHeight={50}
+                  timeSteps={{
+                    second: 0,
+                    minute: 0,
+                    hour: 12,
+                    day: 1,
+                    month: 1,
+                    year: 1
+                  }}
+                  dragSnap={43200000}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </DndProvider>
   );
 }

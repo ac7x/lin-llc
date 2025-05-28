@@ -1,4 +1,4 @@
-// ProjectList.tsx
+// src/app/admin/schedule-dnd/ProjectList.tsx
 import React from "react";
 import { useDrag, DragSourceMonitor } from "react-dnd";
 
