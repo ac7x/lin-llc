@@ -21,6 +21,8 @@ import {
 import {
   Timeline,
   TimelineOptions,
+  DataGroup,
+  DataItem,
 } from "vis-timeline/standalone";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { User } from "firebase/auth";
@@ -384,8 +386,11 @@ function TimelineView({
     if (!timelineRef.current || loading || error) return;
     if (!timelineInstance.current) {
       const container = timelineRef.current;
-      const groupsArr = groups;
-      const itemsArr: TimelineStringItem[] = items.map((it) => ({
+      const groupsArr: DataGroup[] = groups.map((g) => ({
+        id: g.id,
+        content: g.content,
+      }));
+      const itemsArr: DataItem[] = items.map((it) => ({
         id: it.id,
         group: it.group,
         content: it.content,
@@ -409,8 +414,8 @@ function TimelineView({
       try {
         timelineInstance.current = new Timeline(
           container,
-          itemsArr as any,
-          groupsArr as any,
+          itemsArr,
+          groupsArr,
           options
         );
       } catch {}
@@ -421,19 +426,23 @@ function TimelineView({
         timelineInstance.current = null;
       }
     };
-  }, [timelineRef, loading, error]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timelineRef, loading, error, groups, items, onAdd, onRemove, onMove]);
   useEffect(() => {
     if (timelineInstance.current) {
-      timelineInstance.current.setGroups(groups as any);
-      timelineInstance.current.setItems(
-        items.map((it) => ({
-          id: it.id,
-          group: it.group,
-          content: it.content,
-          start: it.start,
-          end: it.end,
-        })) as any
-      );
+      const groupsArr: DataGroup[] = groups.map((g) => ({
+        id: g.id,
+        content: g.content,
+      }));
+      const itemsArr: DataItem[] = items.map((it) => ({
+        id: it.id,
+        group: it.group,
+        content: it.content,
+        start: it.start,
+        end: it.end,
+      }));
+      timelineInstance.current.setGroups(groupsArr);
+      timelineInstance.current.setItems(itemsArr);
     }
   }, [groups, items]);
 
