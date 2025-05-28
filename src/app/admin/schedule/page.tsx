@@ -386,12 +386,6 @@ function TimelineView({
         onMoving: (item, cb) => cb(item),
         onMove,
         orientation: { axis: "both", item: "top" },
-        selectable: true, // 是否允許選取，可空
-        multiselect: true,// 是否允許多選，可空
-        zoomable: true,   // 是否允許縮放，可空
-        moveable: true,   // 是否允許平移，可空
-        stack: true,      // 是否堆疊 items，可空
-        snap: undefined,          // 可自訂時間對齊規則，可空
       };
 
       try {
@@ -401,19 +395,6 @@ function TimelineView({
           groupsDataSet,
           options
         );
-        // 加入事件監聽器
-        timelineInstance.current.on('select', (properties) => {
-          console.log('選取項目:', properties.items);
-        });
-        timelineInstance.current.on('rangechange', (properties) => {
-          console.log('時間範圍變動:', properties.start, properties.end);
-        });
-        timelineInstance.current.on('itemover', (props) => {
-          console.log('滑鼠移入:', props.item);
-        });
-        timelineInstance.current.on('doubleClick', (props) => {
-          console.log('雙擊事件:', props);
-        });
       } catch {
         // 忽略 timeline 建立錯誤
       }
