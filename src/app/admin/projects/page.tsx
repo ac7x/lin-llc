@@ -95,13 +95,13 @@ export default function ProjectsPage() {
                   {project.coord && users[project.coord] ? users[project.coord] : "-"}
                 </div>
                 <div>
-                  <span className="text-gray-500 font-medium">監工 foreman：</span>
+                  <span className="text-gray-500 font-medium">監工：</span>
                   {project.foreman && project.foreman.length > 0
                     ? project.foreman.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}
                 </div>
                 <div>
-                  <span className="text-gray-500 font-medium">安全人員 safety：</span>
+                  <span className="text-gray-500 font-medium">安全人員：</span>
                   {project.safety && project.safety.length > 0
                     ? project.safety.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}

@@ -176,7 +176,7 @@ export default function ProjectEditPage() {
         </label>
       </div>
       <div className="mb-4">
-        <label className="block font-medium mb-1">監工 foreman（可複選）：</label>
+        <label className="block font-medium mb-1">監工（可複選）：</label>
         <div className="flex flex-wrap gap-4">
           {peopleOptions.map(p => (
             <label key={p.id} className="flex items-center gap-1">
@@ -193,7 +193,7 @@ export default function ProjectEditPage() {
         </div>
       </div>
       <div className="mb-4">
-        <label className="block font-medium mb-1">安全人員 safety（可複選）：</label>
+        <label className="block font-medium mb-1">安全人員（可複選）：</label>
         <div className="flex flex-wrap gap-4">
           {peopleOptions.map(p => (
             <label key={p.id} className="flex items-center gap-1">

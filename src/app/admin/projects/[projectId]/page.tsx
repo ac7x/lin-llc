@@ -111,13 +111,13 @@ export default function ProjectDetailPage() {
           </div>
           <div>協調者：{users[project.coord || ""] || "-"}</div>
           <div>
-            監工 foreman：
+            監工：
             {project.foreman && project.foreman.length > 0
               ? project.foreman.map(id => users[id] || id).join(", ")
               : "-"}
           </div>
           <div>
-            安全人員 safety：
+            安全人員：
             {project.safety && project.safety.length > 0
               ? project.safety.map(id => users[id] || id).join(", ")
               : "-"}
