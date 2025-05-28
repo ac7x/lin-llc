@@ -125,9 +125,11 @@ export default function ProjectsPage() {
     const options = {
       editable: {
         add: false,
+        remove: false,
         updateTime: true,
         updateGroup: true,
-        remove: false
+        overrideItems: true, 
+        resize: true, 
       },
       onMoving: function(item: any, callback: Function) {
         callback(item);
