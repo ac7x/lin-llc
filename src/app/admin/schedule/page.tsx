@@ -427,7 +427,6 @@ function TimelineView({
         onMoving: (item, cb) => cb(item),
         onMove,
         orientation: { axis: "both", item: "top" },
-        zoomKey: 'ctrlKey', // 新增此行：按住 Ctrl 鍵才能縮放
       };
       try {
         timelineInstance.current = new Timeline(
