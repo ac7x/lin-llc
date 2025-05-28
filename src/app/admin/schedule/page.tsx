@@ -108,13 +108,12 @@ export default function ProjectsPage() {
       // 建立 schedule (自己，now~now+1天)
       const start = Timestamp.now();
       const end = Timestamp.fromMillis(start.toMillis() + 24*60*60*1000);
-      const scheduleData = {
+      const scheduleRef = await addDoc(collection(db, "schedules"), {
         projectId: projectRef.id,
         userId: user.uid,
         start,
         end,
-      };
-      const scheduleRef = await addDoc(collection(db, "schedules"), scheduleData);
+      });
 
       // 更新本地 state
       setProjects(prev => [...prev, { id: projectRef.id, name: newProjectName }]);
@@ -146,8 +145,12 @@ export default function ProjectsPage() {
       // 預設時間 today~today+1天
       const start = Timestamp.now();
       const end = Timestamp.fromMillis(start.toMillis() + 24*60*60*1000);
-      const scheduleData = { projectId, userId, start, end };
-      const scheduleRef = await addDoc(collection(db, "schedules"), scheduleData);
+      const scheduleRef = await addDoc(collection(db, "schedules"), {
+        projectId,
+        userId,
+        start,
+        end,
+      });
       const project = projects.find(p => p.id === projectId);
       setItems(prev => [
         ...prev,
