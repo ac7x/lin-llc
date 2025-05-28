@@ -12,9 +12,9 @@ type Project = {
   name?: string;
   createdBy?: string | null;
   createdAt?: Timestamp | Date | string | null;
-  manager?: string;
-  supervisors?: string[];
-  safetyStaff?: string[];
+  coord?: string; // 協調者
+  foreman?: string[]; // 監工
+  safety?: string[]; // 安全人員
   region?: string;
   address?: string;
   startDate?: string | null;
@@ -91,19 +91,19 @@ export default function ProjectsPage() {
               </Link>
               <div className="text-gray-700 text-sm flex flex-col gap-1 mt-2">
                 <div>
-                  <span className="text-gray-500 font-medium">負責人：</span>
-                  {project.manager && users[project.manager] ? users[project.manager] : "-"}
+                  <span className="text-gray-500 font-medium">協調者：</span>
+                  {project.coord && users[project.coord] ? users[project.coord] : "-"}
                 </div>
                 <div>
-                  <span className="text-gray-500 font-medium">監工：</span>
-                  {project.supervisors && project.supervisors.length > 0
-                    ? project.supervisors.map(id => users[id]).filter(Boolean).join(", ") || "-"
+                  <span className="text-gray-500 font-medium">監工 foreman：</span>
+                  {project.foreman && project.foreman.length > 0
+                    ? project.foreman.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}
                 </div>
                 <div>
-                  <span className="text-gray-500 font-medium">公共安全人員：</span>
-                  {project.safetyStaff && project.safetyStaff.length > 0
-                    ? project.safetyStaff.map(id => users[id]).filter(Boolean).join(", ") || "-"
+                  <span className="text-gray-500 font-medium">安全人員 safety：</span>
+                  {project.safety && project.safety.length > 0
+                    ? project.safety.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}
                 </div>
                 <div>

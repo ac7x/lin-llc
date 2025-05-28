@@ -129,6 +129,9 @@ export default function AdminUsersPage() {
                     <option value="finance">finance</option>
                     <option value="user">user</option>
                     <option value="vendor">vendor</option>
+                    <option value="foreman">foreman</option>
+                    <option value="safety">safety</option>
+                    <option value="coord">coord</option>
                   </select>
                 </td>
                 <td className="border px-2 py-1">

@@ -5,11 +5,13 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { db } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { collection } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
 export default function OwnerDashboardPage() {
   // 取得 users 和 projects 集合的 snapshot
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
+  const [flowsSnapshot, flowsLoading, flowsError] = useCollection(collection(db, 'flows'));
 
   // 統計各角色人數
   const roleCounts: Record<string, number> = {
@@ -18,6 +20,9 @@ export default function OwnerDashboardPage() {
     owner: 0,
     user: 0,
     vendor: 0,
+    foreman: 0,
+    safety: 0,
+    coord: 0,
   };
   if (usersSnapshot && !usersLoading && !usersError) {
     usersSnapshot.docs.forEach(doc => {
@@ -30,12 +35,38 @@ export default function OwnerDashboardPage() {
 
   // 將 roleCounts 轉為陣列格式供圖表使用
   const roleData = Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count }));
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#2a8f4d', '#8f6b2a'];
+
+  // S曲線資料處理
+  let sCurveData: { date: string; value: number }[] = [];
+  if (flowsSnapshot && !flowsLoading && !flowsError) {
+    // 取得所有完成日期（date 或 end）
+    const dateCounts: Record<string, number> = {};
+    flowsSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      let dateStr = '';
+      if (data.date) {
+        dateStr = data.date; // yyyy-mm-dd
+      } else if (data.end && typeof data.end === 'object' && 'toDate' in data.end) {
+        dateStr = data.end.toDate().toISOString().slice(0, 10);
+      }
+      if (dateStr) {
+        dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
+      }
+    });
+    // 依日期排序並累加
+    const sortedDates = Object.keys(dateCounts).sort();
+    let cumulative = 0;
+    sCurveData = sortedDates.map(date => {
+      cumulative += dateCounts[date];
+      return { date, value: cumulative };
+    });
+  }
 
   return (
     <main style={{ background: '#f5f6fa', minHeight: '100vh', padding: '32px 0' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px #0001' }}>
-        <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 32, letterSpacing: 2, color: '#222' }}>業主管理儀表板</h2>
+        {/* <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 32, letterSpacing: 2, color: '#222' }}>業主管理儀表板</h2> */}
         <div style={{ display: 'flex', gap: 40 }}>
           {/* 人員統計區塊 */}
           <section style={{ flex: 1, minWidth: 320, background: '#f0f4ff', borderRadius: 12, padding: 24, boxShadow: '0 1px 6px #0001' }}>
@@ -69,6 +100,26 @@ export default function OwnerDashboardPage() {
             <div style={{ fontSize: 18, color: '#8f6b2a' }}>專案總數</div>
           </section>
         </div>
+        {/* S曲線區塊 */}
+        <section style={{ marginTop: 48, background: '#f6f8fa', borderRadius: 12, padding: 24, boxShadow: '0 1px 6px #0001' }}>
+          <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#2a8f4d' }}>流程累積進度（S曲線）</h3>
+          {flowsLoading ? (
+            <div>載入中...</div>
+          ) : flowsError ? (
+            <div>錯誤</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={sCurveData} margin={{ top: 16, right: 32, left: 0, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 14 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="value" name="累積完成數" stroke="#2a8f4d" strokeWidth={3} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </section>
       </div>
     </main>
   );

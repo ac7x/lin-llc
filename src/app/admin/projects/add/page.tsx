@@ -14,9 +14,9 @@ export default function ProjectAddPage() {
   const [success, setSuccess] = useState(false);
   const [projectName, setProjectName] = useState("");
   // 新增欄位狀態
-  const [manager, setManager] = useState("");
-  const [supervisors, setSupervisors] = useState<string[]>([]);
-  const [safetyStaff, setSafetyStaff] = useState<string[]>([]);
+  const [coord, setCoord] = useState("");
+  const [foreman, setForeman] = useState<string[]>([]);
+  const [safety, setSafety] = useState<string[]>([]);
   const [region, setRegion] = useState("");
   const [address, setAddress] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -46,7 +46,6 @@ export default function ProjectAddPage() {
       setError("請輸入專案名稱");
       return;
     }
-    // 可選欄位驗證（可依需求加強）
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -55,9 +54,9 @@ export default function ProjectAddPage() {
         name: projectName,
         createdAt: new Date(),
         createdBy: user?.uid || null,
-        manager,
-        supervisors,
-        safetyStaff,
+        coord,
+        foreman,
+        safety,
         region,
         address,
         startDate: startDate || null,
@@ -65,9 +64,9 @@ export default function ProjectAddPage() {
       });
       setSuccess(true);
       setProjectName("");
-      setManager("");
-      setSupervisors([]);
-      setSafetyStaff([]);
+      setCoord("");
+      setForeman([]);
+      setSafety([]);
       setRegion("");
       setAddress("");
       setStartDate("");
@@ -143,10 +142,10 @@ export default function ProjectAddPage() {
       </div>
       <div className="mb-4">
         <label className="block font-medium mb-1">
-          負責人（單選）：
+          協調者（單選）：
           <select
-            value={manager}
-            onChange={e => setManager(e.target.value)}
+            value={coord}
+            onChange={e => setCoord(e.target.value)}
             disabled={loading}
             className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
           >
@@ -158,14 +157,14 @@ export default function ProjectAddPage() {
         </label>
       </div>
       <div className="mb-4">
-        <label className="block font-medium mb-1">現場監工（可複選）：</label>
+        <label className="block font-medium mb-1">監工 foreman（可複選）：</label>
         <div className="flex flex-wrap gap-4">
           {peopleOptions.map(p => (
             <label key={p.id} className="flex items-center gap-1">
               <input
                 type="checkbox"
-                checked={supervisors.includes(p.id)}
-                onChange={() => handleMultiSelect(p.id, supervisors, setSupervisors)}
+                checked={foreman.includes(p.id)}
+                onChange={() => handleMultiSelect(p.id, foreman, setForeman)}
                 disabled={loading}
                 className="accent-blue-600"
               />
@@ -175,14 +174,14 @@ export default function ProjectAddPage() {
         </div>
       </div>
       <div className="mb-4">
-        <label className="block font-medium mb-1">現場公共安全人員（可複選）：</label>
+        <label className="block font-medium mb-1">安全人員 safety（可複選）：</label>
         <div className="flex flex-wrap gap-4">
           {peopleOptions.map(p => (
             <label key={p.id} className="flex items-center gap-1">
               <input
                 type="checkbox"
-                checked={safetyStaff.includes(p.id)}
-                onChange={() => handleMultiSelect(p.id, safetyStaff, setSafetyStaff)}
+                checked={safety.includes(p.id)}
+                onChange={() => handleMultiSelect(p.id, safety, setSafety)}
                 disabled={loading}
                 className="accent-blue-600"
               />

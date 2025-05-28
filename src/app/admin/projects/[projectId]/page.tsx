@@ -12,9 +12,9 @@ type Project = {
   name?: string;
   createdBy?: string | null;
   createdAt?: Timestamp | Date | string | null;
-  manager?: string;
-  supervisors?: string[];
-  safetyStaff?: string[];
+  coord?: string; // 協調者
+  foreman?: string[]; // 監工
+  safety?: string[]; // 安全人員
   region?: string;
   address?: string;
   startDate?: string | null;
@@ -109,17 +109,17 @@ export default function ProjectDetailPage() {
               ? (project.createdAt as Timestamp).toDate().toLocaleString()
               : String(project.createdAt) || "未知"}
           </div>
-          <div>負責人：{users[project.manager || ""] || "-"}</div>
+          <div>協調者：{users[project.coord || ""] || "-"}</div>
           <div>
-            現場監工：
-            {project.supervisors && project.supervisors.length > 0
-              ? project.supervisors.map(id => users[id] || id).join(", ")
+            監工 foreman：
+            {project.foreman && project.foreman.length > 0
+              ? project.foreman.map(id => users[id] || id).join(", ")
               : "-"}
           </div>
           <div>
-            現場公共安全人員：
-            {project.safetyStaff && project.safetyStaff.length > 0
-              ? project.safetyStaff.map(id => users[id] || id).join(", ")
+            安全人員 safety：
+            {project.safety && project.safety.length > 0
+              ? project.safety.map(id => users[id] || id).join(", ")
               : "-"}
           </div>
           <div>地區：{project.region || "-"}</div>
