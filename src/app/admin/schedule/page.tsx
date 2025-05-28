@@ -273,27 +273,24 @@ function useFlowCrud({
     [items, setItems]
   );
 
-  // 雙擊修改流程名稱
-  const useDoubleClickHandler = () => {
-    // handler function 只建立一次，並且 reference 保持不變
-    const doubleClickHandlerRef: MutableRefObject<
-      ((props: TimelineEventPropertiesResult | null) => void) | null
-    > = useRef(null);
+  // 雙擊修改流程名稱 - 最高代碼品質做法
+  function useStableDoubleClickHandler(): MutableRefObject<((props: TimelineEventPropertiesResult | null) => void) | null> {
+    const doubleClickHandlerRef = useRef<((props: TimelineEventPropertiesResult | null) => void) | null>(null);
     const isProcessingDoubleClick = useRef(false);
 
     // 用 ref 保存最新 items/setItems
     const latestItems = useRef(items);
     const latestSetItems = useRef(setItems);
 
+    // 只追蹤 items/setItems reference
     useEffect(() => {
       latestItems.current = items;
       latestSetItems.current = setItems;
     }, [items, setItems]);
 
+    // handler 只設置一次，參考值透過 ref 拿
     useEffect(() => {
-      doubleClickHandlerRef.current = async (
-        props: TimelineEventPropertiesResult | null
-      ) => {
+      doubleClickHandlerRef.current = async (props: TimelineEventPropertiesResult | null) => {
         if (props?.event && typeof props.event.stopPropagation === "function") {
           props.event.stopPropagation();
         }
@@ -331,17 +328,17 @@ function useFlowCrud({
           isProcessingDoubleClick.current = false;
         }
       };
-      // 空依賴陣列 => handler 只建立一次
+      // 依賴陣列空，handler 只建立一次
     }, []);
 
     return doubleClickHandlerRef;
-  };
+  }
 
   return {
     handleItemMove,
     handleItemAdd,
     handleItemRemove,
-    useDoubleClickHandler,
+    useStableDoubleClickHandler,
   };
 }
 
@@ -450,7 +447,7 @@ function TimelineView({
   useEffect(() => {
     if (!timelineRef.current || loading || error) return;
 
-    // 若 instance 未建立，建立一次
+    // 建立 timeline instance
     if (!timelineInstance.current) {
       const container = timelineRef.current;
       const groupsDataSet = new DataSet<Group, "id">(groups);
@@ -483,28 +480,28 @@ function TimelineView({
         // Ignore timeline create errors
       }
     } else {
-      // 若已建立，直接更新 data
+      // 更新資料
       timelineInstance.current.setGroups(groups);
       timelineInstance.current.setItems(items);
     }
 
-    // 先 off 再 on，確保 handler 只註冊一次
-    if (timelineInstance.current && doubleClickHandlerRef.current) {
-      timelineInstance.current.off("doubleClick", doubleClickHandlerRef.current);
-      timelineInstance.current.on("doubleClick", doubleClickHandlerRef.current);
+    // doubleClick handler 註冊，確保只註冊一次
+    const handler = doubleClickHandlerRef.current;
+    if (timelineInstance.current && handler) {
+      timelineInstance.current.off("doubleClick", handler);
+      timelineInstance.current.on("doubleClick", handler);
     }
 
     return () => {
-      // 清除 doubleClick 事件與 timeline instance
-      if (timelineInstance.current && doubleClickHandlerRef.current) {
-        timelineInstance.current.off("doubleClick", doubleClickHandlerRef.current);
+      if (timelineInstance.current && handler) {
+        timelineInstance.current.off("doubleClick", handler);
       }
       if (timelineInstance.current) {
         timelineInstance.current.destroy();
         timelineInstance.current = null;
       }
     };
-    // 依賴加上 handlerRef.current
+    // 依賴只放 doubleClickHandlerRef，確保 handler function 穩定
   }, [
     timelineRef,
     loading,
@@ -514,7 +511,7 @@ function TimelineView({
     onAdd,
     onRemove,
     onMove,
-    doubleClickHandlerRef.current,
+    doubleClickHandlerRef,
   ]);
 
   if (loading) return <div>載入中...</div>;
@@ -580,9 +577,9 @@ export default function ProjectsPage() {
     handleItemMove,
     handleItemAdd,
     handleItemRemove,
-    useDoubleClickHandler,
+    useStableDoubleClickHandler,
   } = useFlowCrud({ items, setItems, user });
-  const doubleClickHandlerRef = useDoubleClickHandler();
+  const doubleClickHandlerRef = useStableDoubleClickHandler();
 
   const {
     createLoading,
