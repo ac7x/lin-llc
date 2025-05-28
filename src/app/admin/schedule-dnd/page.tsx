@@ -233,30 +233,34 @@ export default function ProjectsPage() {
       setLoading(true);
       setError(null);
       try {
-        // 1. 取得所有專案作為 groups
+        const usersSnap = await getDocs(collection(db, "users"));
+        const g = usersSnap.docs.map(doc => ({
+          id: doc.id,
+          content: doc.data().displayName || doc.data().name || doc.id,
+        }));
+        setGroups(g);
+
         const projectsSnap = await getDocs(collection(db, "projects"));
-        const projects = projectsSnap.docs.map(doc => ({
+        const p = projectsSnap.docs.map(doc => ({
           id: doc.id,
           name: doc.data().name || "未命名專案",
         }));
-        setGroups(projects.map(p => ({ id: p.id, content: p.name })));
 
-        // 2. 取得 flows 作為 items，並對應 projectId 取得專案名稱
-        const flowsSnap = await getDocs(collection(db, "flows"));
-        const flowItems = flowsSnap.docs.map(doc => {
+        const schedulesSnap = await getDocs(collection(db, "schedules"));
+        const scheduleItems = schedulesSnap.docs.map(doc => {
           const d = doc.data();
-          const pj = projects.find(pj => pj.id === d.projectId);
+          const pj = p.find(pj => pj.id === d.projectId);
           return {
             id: doc.id,
-            group: d.projectId, // group 對應 projectId
+            group: d.userId,
             content: pj ? pj.name : "未知專案",
             start: d.start ? d.start.toDate() : new Date(),
             end: d.end ? d.end.toDate() : new Date(Date.now() + 86400000),
             projectId: d.projectId,
-            userId: d.userId, // 若 flows 有 userId
+            userId: d.userId,
           };
         });
-        setItems(flowItems);
+        setItems(scheduleItems);
       } catch (err: unknown) {
         setError((err as Error).message || "載入失敗");
       } finally {
