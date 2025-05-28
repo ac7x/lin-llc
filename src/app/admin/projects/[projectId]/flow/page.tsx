@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, where, query } from "firebase/firestore";
 import { db, storage } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -53,12 +53,10 @@ export default function ProjectFlowPage() {
   useEffect(() => {
     const fetchFlows = async () => {
       if (!projectId) return;
-      const snap = await getDocs(collection(db, "projects", projectId, "flows"));
+      const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
+      const snap: QuerySnapshot<DocumentData> = await getDocs(flowsQuery);
       setFlows(
-        snap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Flow[]
+        snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
       );
     };
     fetchFlows();
@@ -98,23 +96,22 @@ export default function ProjectFlowPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await addDoc(collection(db, "projects", projectId, "flows"), {
+      await addDoc(collection(db, "flows"), {
         name: flowName.trim(),
         date,
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
+        projectId,
       });
       setFlowName("");
       setDate("");
       setDescription("");
       // 直接在這裡 fetch flows
-      const snap = await getDocs(collection(db, "projects", projectId, "flows"));
+      const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
+      const snap: QuerySnapshot<DocumentData> = await getDocs(flowsQuery);
       setFlows(
-        snap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Flow[]
+        snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
       );
     } catch {
       setError("建立流程失敗");
@@ -128,15 +125,15 @@ export default function ProjectFlowPage() {
     setUploadingFlowId(flowId);
     setUploadError(null);
     try {
-      const storageRef = ref(storage, `projects/${projectId}/flows/${flowId}_${Date.now()}_${file.name}`);
+      const storageRef = ref(storage, `flows/${flowId}_${Date.now()}_${file.name}`);
       await uploadBytes(storageRef, file);
       const photoUrl = await getDownloadURL(storageRef);
-      await updateDoc(doc(db, "projects", projectId, "flows", flowId), { photoUrl });
+      await updateDoc(doc(db, "flows", flowId), { photoUrl });
       // 更新 flows 狀態
       setFlows(flows =>
         flows.map(f => f.id === flowId ? { ...f, photoUrl } : f)
       );
-    } catch (e) {
+    } catch {
       setUploadError("照片上傳失敗");
     } finally {
       setUploadingFlowId(null);
