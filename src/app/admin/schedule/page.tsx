@@ -275,10 +275,20 @@ function useFlowCrud({
 
   // 雙擊修改流程名稱
   const useDoubleClickHandler = () => {
+    // handler function 只建立一次，並且 reference 保持不變
     const doubleClickHandlerRef: MutableRefObject<
       ((props: TimelineEventPropertiesResult | null) => void) | null
     > = useRef(null);
     const isProcessingDoubleClick = useRef(false);
+
+    // 用 ref 保存最新 items/setItems
+    const latestItems = useRef(items);
+    const latestSetItems = useRef(setItems);
+
+    useEffect(() => {
+      latestItems.current = items;
+      latestSetItems.current = setItems;
+    }, [items, setItems]);
 
     useEffect(() => {
       doubleClickHandlerRef.current = async (
@@ -292,7 +302,7 @@ function useFlowCrud({
         try {
           if (!props || !props.item) return;
           const itemId = props.item as string;
-          const currentItem = items.find((i) => i.id === itemId);
+          const currentItem = latestItems.current.find((i) => i.id === itemId);
           if (!currentItem) return;
           const newName = prompt("請輸入新的流程名稱：", currentItem.content);
           if (newName && newName.trim() && newName !== currentItem.content) {
@@ -307,7 +317,7 @@ function useFlowCrud({
                 ),
                 { name: newName }
               );
-              setItems((prev) =>
+              latestSetItems.current((prev) =>
                 prev.map((it) =>
                   it.id === itemId ? { ...it, content: newName } : it
                 )
@@ -321,7 +331,8 @@ function useFlowCrud({
           isProcessingDoubleClick.current = false;
         }
       };
-    }, [items, setItems]);
+      // 空依賴陣列 => handler 只建立一次
+    }, []);
 
     return doubleClickHandlerRef;
   };
@@ -489,16 +500,12 @@ function TimelineView({
         timelineInstance.current = null;
       }
     };
+    // 只依賴 ref，不依賴 items、groups、onAdd、onRemove、onMove
     // eslint-disable-next-line
   }, [
     timelineRef,
     loading,
     error,
-    groups,
-    items,
-    onAdd,
-    onRemove,
-    onMove,
     doubleClickHandlerRef,
   ]);
 
