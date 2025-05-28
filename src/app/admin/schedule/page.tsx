@@ -365,6 +365,23 @@ function TimelineView({
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
 
+  // 取得 items 範圍，設定預設 start/end
+  const getTimelineRange = () => {
+    if (!items || items.length === 0) {
+      const now = new Date();
+      return {
+        start: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+        end: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+      };
+    }
+    const minStart = Math.min(...items.map((i) => i.start.getTime()));
+    const maxEnd = Math.max(...items.map((i) => i.end.getTime()));
+    return {
+      start: new Date(minStart - 24 * 60 * 60 * 1000),
+      end: new Date(maxEnd + 24 * 60 * 60 * 1000),
+    };
+  };
+
   // 只在 mount/unmount 建立/銷毀 Timeline
   useEffect(() => {
     if (!timelineRef.current || loading || error) return;
@@ -373,6 +390,8 @@ function TimelineView({
       const container = timelineRef.current;
       const groupsDataSet = new DataSet<Group, "id">(groups);
       const itemsDataSet = new DataSet<FlowItem, "id">(items);
+
+      const range = getTimelineRange();
 
       const options: TimelineOptions = {
         editable: {
@@ -387,6 +406,12 @@ function TimelineView({
         onMoving: (item, cb) => cb(item),
         onMove,
         orientation: { axis: "both", item: "top" },
+
+        // 新增這幾個，確保初始化縮放正常
+        start: range.start,
+        end: range.end,
+        zoomMin: 1000 * 60 * 60, // 1小時
+        zoomMax: 1000 * 60 * 60 * 24 * 365, // 1年
       };
 
       try {
@@ -408,13 +433,16 @@ function TimelineView({
         timelineInstance.current = null;
       }
     };
-  }, [timelineRef, loading, error]); // 不要依賴 groups, items, onAdd, onRemove, onMove
+    // eslint-disable-next-line
+  }, [timelineRef, loading, error]);
 
-  // groups/items 變動時只做 setGroups/setItems
+  // groups/items 變動時只做 setGroups/setItems 並自動 fit
   useEffect(() => {
     if (timelineInstance.current) {
       timelineInstance.current.setGroups(groups);
       timelineInstance.current.setItems(items);
+      // 自動 fit 到內容範圍
+      timelineInstance.current.fit && timelineInstance.current.fit();
     }
   }, [groups, items]);
 
