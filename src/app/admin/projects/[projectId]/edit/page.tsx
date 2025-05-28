@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { doc, getDoc, updateDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
@@ -19,7 +19,6 @@ type Project = {
 
 export default function ProjectEditPage() {
   const { projectId } = useParams() as { projectId: string };
-  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [name, setName] = useState("");
   const [manager, setManager] = useState("");
@@ -119,7 +118,6 @@ export default function ProjectEditPage() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">編輯專案</h1>
       <div className="mb-4">
         <label className="block font-medium mb-1">
           名稱：
@@ -244,14 +242,6 @@ export default function ProjectEditPage() {
       </button>
       {error && <div className="text-red-600 mt-2">{error}</div>}
       {success && <div className="text-green-600 mt-2">儲存成功！</div>}
-      <div className="mt-6">
-        <button
-          onClick={() => router.push(`/admin/projects/${projectId}`)}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded px-6 py-2 font-semibold text-base transition"
-        >
-          返回專案詳情
-        </button>
-      </div>
     </main>
   );
 }

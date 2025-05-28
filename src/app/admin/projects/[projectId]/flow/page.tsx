@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, where, query } from "firebase/firestore";
 import { db, storage } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
@@ -21,8 +21,6 @@ interface Flow {
 
 export default function ProjectFlowPage() {
   const { projectId } = useParams() as { projectId: string };
-  const router = useRouter();
-  const [projectName, setProjectName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [flows, setFlows] = useState<Flow[]>([]);
   const [date, setDate] = useState("");
@@ -42,7 +40,7 @@ export default function ProjectFlowPage() {
       const ref = doc(db, "projects", projectId);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        setProjectName(snap.data().name || "(未命名專案)");
+        // setProjectName(snap.data().name || "(未命名專案)");
       }
       setLoading(false);
     };
@@ -144,8 +142,6 @@ export default function ProjectFlowPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-2">工程流程 - {projectName}</h1>
-      <p className="text-gray-500 mb-6">請填寫工程流程相關資訊</p>
       <div className="bg-blue-50 dark:bg-neutral-800 rounded-xl p-6 mb-8 max-w-lg mx-auto shadow">
         <div className="mb-4">
           <label className="block font-medium mb-1">
@@ -162,7 +158,7 @@ export default function ProjectFlowPage() {
         </div>
         <div className="mb-4">
           <label className="block font-medium mb-1">
-            預定施工日期：
+            預定日期：
             <input
               type="date"
               value={date}
@@ -174,7 +170,7 @@ export default function ProjectFlowPage() {
         </div>
         <div className="mb-4">
           <label className="block font-medium mb-1">
-            說明：
+            簡要說明：
             <input
               type="text"
               value={description}
@@ -245,12 +241,12 @@ export default function ProjectFlowPage() {
           </ul>
         )}
       </div>
-      <button
+      {/* <button
         onClick={() => router.push(`/admin/projects/${projectId}`)}
         className="bg-blue-400 hover:bg-blue-500 text-white rounded px-6 py-2 font-semibold text-base transition mt-8"
       >
         返回專案詳情
-      </button>
+      </button> */}
     </main>
   );
 }
