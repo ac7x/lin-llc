@@ -14,9 +14,9 @@ $thick-border-width: 2px;
 $sidebar-color: #ffffff !default;
 $sidebar-background-color: #33c520 !default;
 $list-item-padding: 0 4px;
-$weekend: rgba(250, 246, 225, 0.5) !default;
+$weekend: rgb(255, 0, 0) !default;
 
-$date-header-background: rgb(240, 240, 240) !default;
+$date-header-background: rgb(0, 0, 0) !default;
 $date-header-color: #fff !default;
 
 .react-calendar-timeline {
