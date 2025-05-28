@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
-import Timeline from "react-calendar-timeline";
-import "@/styles/react-calendar-timeline.scss";
+import { Timeline, DataSet } from "vis-timeline/standalone";
+import "vis-timeline/styles/vis-timeline-graph2d.css";
 import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useAuthState } from "react-firebase-hooks/auth";
 
-type Group = { id: string; title: string; };
+type Group = { id: string; content: string; };
 type ScheduleItem = {
   id: string;
   group: string;
-  title: string;
-  start_time: number;
-  end_time: number;
+  content: string;
+  start: Date;
+  end: Date;
   projectId: string;
   userId: string;
 };
@@ -30,18 +30,18 @@ export default function ProjectsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
-  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
-  // 新增拖曳狀態
-  const [dragProjectId, setDragProjectId] = useState<string | null>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const timelineInstance = useRef<Timeline | null>(null);
 
   useEffect(() => {
     (async () => {
-      setLoading(true); setError(null);
+      setLoading(true);
+      setError(null);
       try {
         const usersSnap = await getDocs(collection(db, "users"));
         const g = usersSnap.docs.map(doc => ({
           id: doc.id,
-          title: doc.data().displayName || doc.data().name || doc.id,
+          content: doc.data().displayName || doc.data().name || doc.id,
         }));
         setGroups(g);
 
@@ -50,22 +50,22 @@ export default function ProjectsPage() {
           id: doc.id,
           name: doc.data().name || "未命名專案",
         }));
-        setProjects(p);
 
         const schedulesSnap = await getDocs(collection(db, "schedules"));
-        setItems(schedulesSnap.docs.map(doc => {
+        const scheduleItems = schedulesSnap.docs.map(doc => {
           const d = doc.data();
           const pj = p.find(pj => pj.id === d.projectId);
           return {
             id: doc.id,
             group: d.userId,
-            title: pj ? pj.name : "未知專案",
-            start_time: d.start ? d.start.toMillis() : Date.now(),
-            end_time: d.end ? d.end.toMillis() : Date.now() + 86400000,
+            content: pj ? pj.name : "未知專案",
+            start: d.start ? d.start.toDate() : new Date(),
+            end: d.end ? d.end.toDate() : new Date(Date.now() + 86400000),
             projectId: d.projectId,
             userId: d.userId,
           };
-        }));
+        });
+        setItems(scheduleItems);
       } catch (err: unknown) {
         setError((err as Error).message || "載入失敗");
       } finally {
@@ -74,8 +74,46 @@ export default function ProjectsPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!timelineRef.current || loading || error) return;
+
+    const container = timelineRef.current;
+    const groupsDataSet = new DataSet(groups);
+    const itemsDataSet = new DataSet(items);
+
+    const options = {
+      editable: {
+        updateTime: true,
+        updateGroup: true,
+      },
+      snap: (date: Date) => {
+        const hour = date.getHours();
+        date.setHours(hour - (hour % 12), 0, 0, 0);
+        return date;
+      },
+      orientation: {
+        axis: "both",
+        item: "top",
+      },
+    };
+
+    timelineInstance.current = new Timeline(container, itemsDataSet, groupsDataSet, options);
+
+    timelineInstance.current.on("move", function(item: any) {
+      handleItemMove(item.id, item.start.getTime(), item.group);
+    });
+
+    return () => {
+      if (timelineInstance.current) {
+        timelineInstance.current.destroy();
+      }
+    };
+  }, [loading, error, items, groups]);
+
   const handleCreateProject = async () => {
-    setCreateLoading(true); setCreateError(null); setCreateSuccess(false);
+    setCreateLoading(true);
+    setCreateError(null);
+    setCreateSuccess(false);
     if (!user || !newProjectName.trim()) {
       setCreateError("專案名稱不能為空且需要登入。");
       setCreateLoading(false);
@@ -94,18 +132,16 @@ export default function ProjectsPage() {
         start,
         end,
       });
-      setItems(prev => [
-        ...prev,
-        {
-          id: scheduleRef.id,
-          group: user.uid,
-          title: newProjectName,
-          start_time: start.toMillis(),
-          end_time: end.toMillis(),
-          projectId: projectRef.id,
-          userId: user.uid,
-        }
-      ]);
+      const newItem = {
+        id: scheduleRef.id,
+        group: user.uid,
+        content: newProjectName,
+        start: start.toDate(),
+        end: end.toDate(),
+        projectId: projectRef.id,
+        userId: user.uid,
+      };
+      setItems(prev => [...prev, newItem]);
       setCreateSuccess(true);
       setNewProjectName("");
     } catch (err: unknown) {
@@ -115,22 +151,26 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number) => {
+  const handleItemMove = async (itemId: string, dragTime: number, newGroupId: string) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
-    const newUserId = groups[newGroupOrder]?.id;
-    if (!newUserId) return;
-    const duration = item.end_time - item.start_time;
+    const duration = item.end.getTime() - item.start.getTime();
     try {
       await updateDoc(doc(db, "schedules", itemId), {
-        userId: newUserId,
+        userId: newGroupId,
         start: Timestamp.fromMillis(dragTime),
         end: Timestamp.fromMillis(dragTime + duration),
       });
       setItems(prev =>
         prev.map(it =>
           it.id === itemId
-            ? { ...it, group: newUserId, userId: newUserId, start_time: dragTime, end_time: dragTime + duration }
+            ? {
+                ...it,
+                group: newGroupId,
+                userId: newGroupId,
+                start: new Date(dragTime),
+                end: new Date(dragTime + duration)
+              }
             : it
         )
       );
@@ -138,111 +178,6 @@ export default function ProjectsPage() {
       alert("更新日程失敗");
     }
   };
-
-  const handleItemResize = async (itemId: string, time: number, edge: "left" | "right") => {
-    const item = items.find(i => i.id === itemId);
-    if (!item) return;
-    let newStart = item.start_time, newEnd = item.end_time;
-    if (edge === "left") newStart = time; else newEnd = time;
-    try {
-      await updateDoc(doc(db, "schedules", itemId), {
-        start: Timestamp.fromMillis(newStart),
-        end: Timestamp.fromMillis(newEnd),
-      });
-      setItems(prev =>
-        prev.map(it =>
-          it.id === itemId
-            ? { ...it, start_time: newStart, end_time: newEnd }
-            : it
-        )
-      );
-    } catch {
-      alert("更新時間失敗");
-    }
-  };
-
-  // 拖曳開始
-  const handleDragStart = (projectId: string) => {
-    setDragProjectId(projectId);
-  };
-  // 拖曳結束
-  const handleDragEnd = () => {
-    setDragProjectId(null);
-  };
-
-  // 處理 Timeline Drop
-  const handleTimelineDrop = async (
-    e: React.DragEvent<HTMLDivElement>
-  ) => {
-    e.preventDefault();
-    if (!dragProjectId) return;
-    // 取得 timeline 元素與滑鼠座標
-    const timeline = document.querySelector(".rct-scroll") as HTMLElement | null;
-    if (!timeline) return;
-    const timelineRect = timeline.getBoundingClientRect();
-    const x = e.clientX - timelineRect.left;
-    let y = e.clientY - timelineRect.top;
-
-    // 取得時間範圍
-    const { defaultTimeStart, defaultTimeEnd } = getTimelineTimeRange();
-    const totalMs = defaultTimeEnd.getTime() - defaultTimeStart.getTime();
-    const timelineWidth = timeline.offsetWidth;
-    const percent = x / timelineWidth;
-    const time = defaultTimeStart.getTime() + totalMs * percent;
-
-    // 取得群組
-    const groupHeight = 50; // 與 lineHeight 相同
-    let groupIdx = y < 0 ? 0 : Math.floor(y / groupHeight);
-    if (groupIdx < 0) groupIdx = 0;
-    if (groupIdx >= groups.length) return;
-    const group = groups[groupIdx];
-    if (!group) return;
-
-    // 建 schedule
-    const project = projects.find(p => p.id === dragProjectId);
-    if (!project) return;
-    const start = Timestamp.fromMillis(time);
-    const end = Timestamp.fromMillis(time + 86400000); // 1天
-    try {
-      const scheduleRef = await addDoc(collection(db, "schedules"), {
-        projectId: project.id,
-        userId: group.id,
-        start,
-        end,
-      });
-      setItems(prev => [
-        ...prev,
-        {
-          id: scheduleRef.id,
-          group: group.id,
-          title: project.name,
-          start_time: start.toMillis(),
-          end_time: end.toMillis(),
-          projectId: project.id,
-          userId: group.id,
-        }
-      ]);
-    } catch {
-      alert("建立日程失敗");
-    }
-    setDragProjectId(null);
-  };
-
-  // 允許 drop
-  const handleAllowDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    if (dragProjectId) e.preventDefault();
-  };
-
-  // 取得 timeline 時間範圍
-  const getTimelineTimeRange = () => {
-    const now = new Date();
-    return {
-      defaultTimeStart: subDays(startOfDay(now), 2),
-      defaultTimeEnd: addDays(endOfDay(now), 5),
-    };
-  };
-
-  const { defaultTimeStart, defaultTimeEnd } = getTimelineTimeRange();
 
   return (
     <main>
@@ -266,64 +201,7 @@ export default function ProjectsPage() {
       {loading && <div>載入中...</div>}
       {error && <div style={{ color: "red" }}>{error}</div>}
       {!loading && !error && (
-        <div style={{ display: "flex", alignItems: "flex-start" }}>
-          {/* 專案列表側邊欄 */}
-          <div style={{
-            minWidth: 180,
-            borderRight: "1px solid #ddd",
-            padding: "8px 12px"
-          }}>
-            <div style={{ fontWeight: "bold", marginBottom: 8 }}>專案列表</div>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {projects.map(pj => (
-                <li
-                  key={pj.id}
-                  style={{
-                    marginBottom: 6,
-                    fontSize: 15,
-                    cursor: "grab",
-                    background: dragProjectId === pj.id ? "#e6f7ff" : undefined,
-                    borderRadius: 4,
-                    padding: "2px 4px"
-                  }}
-                  draggable
-                  onDragStart={() => handleDragStart(pj.id)}
-                  onDragEnd={handleDragEnd}
-                >
-                  {pj.name}
-                </li>
-              ))}
-            </ul>
-          </div>
-          {/* Timeline 主體，外層加 drop zone */}
-          <div
-            style={{ flex: 1, minWidth: 0, paddingLeft: 16, position: "relative" }}
-            onDrop={handleTimelineDrop}
-            onDragOver={handleAllowDrop}
-          >
-            <Timeline
-              groups={groups}
-              items={items}
-              defaultTimeStart={defaultTimeStart.getTime()}
-              defaultTimeEnd={defaultTimeEnd.getTime()}
-              canMove
-              canResize="both"
-              onItemMove={handleItemMove}
-              onItemResize={handleItemResize}
-              lineHeight={50}
-              timeSteps={{
-                second: 0,
-                minute: 0,
-                hour: 12,
-                day: 1,
-                month: 1,
-                year: 1
-              }}
-              dragSnap={43200000}
-            />
-            {/* 可視化拖曳提示可自行加強 */}
-          </div>
-        </div>
+        <div ref={timelineRef} style={{ height: "600px" }} />
       )}
     </main>
   );
