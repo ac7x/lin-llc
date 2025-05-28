@@ -208,17 +208,6 @@ export default function ProjectFlowPage() {
                 <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.name || '-'}</div>
                 <div className="mb-1"><span className="font-medium">日期：</span>{flow.date}</div>
                 <div className="mb-1"><span className="font-medium">內容：</span>{flow.description}</div>
-                {flow.photoUrl && (
-                  <div className="mb-1">
-                    <span className="font-medium">照片：</span>
-                    <a href={flow.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
-                      查看照片
-                    </a>
-                    <div className="mt-2">
-                      <img src={flow.photoUrl} alt="流程照片" className="max-h-40 rounded border" />
-                    </div>
-                  </div>
-                )}
                 <div className="mb-1">
                   <span className="font-medium">上傳/更換照片：</span>
                   <input
@@ -226,10 +215,10 @@ export default function ProjectFlowPage() {
                     accept="image/*"
                     style={{ display: "inline-block" }}
                     disabled={uploadingFlowId === flow.id || !user}
-                    onChange={e => {
-                      const file = e.target.files?.[0];
+                    onChange={event => {
+                      const file = event.target.files?.[0];
                       if (file) handleUploadPhoto(flow.id, file);
-                      e.target.value = "";
+                      event.target.value = "";
                     }}
                   />
                   {uploadingFlowId === flow.id && (
@@ -239,6 +228,18 @@ export default function ProjectFlowPage() {
                     <span className="ml-2 text-red-600">{uploadError}</span>
                   )}
                 </div>
+                {flow.photoUrl && (
+                  <div className="mb-1">
+                    <span className="font-medium">照片：</span>
+                    <a href={flow.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                      查看照片
+                    </a>
+                    <div className="mt-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={flow.photoUrl} alt="流程照片" className="max-h-40 rounded border" />
+                    </div>
+                  </div>
+                )}
                 <div className="text-gray-500 text-sm mt-2">
                   建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? flow.createdAt.toDate().toLocaleString() : String(flow.createdAt)}
                 </div>
