@@ -1,6 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  Dispatch,
+  SetStateAction,
+  MutableRefObject,
+} from "react";
 import { db, auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import {
   collection,
@@ -10,14 +18,14 @@ import {
   updateDoc,
   deleteDoc,
   Timestamp,
-  setDoc
+  setDoc,
 } from "firebase/firestore";
 import {
   Timeline,
   DataSet,
   TimelineItem,
   TimelineOptions,
-  TimelineEventPropertiesResult
+  TimelineEventPropertiesResult,
 } from "vis-timeline/standalone";
 import { useAuthState } from "react-firebase-hooks/auth";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
@@ -33,7 +41,6 @@ type FlowItem = {
   projectId: string;
   userId?: string;
 };
-
 interface TimelineEventItem {
   id?: string | number;
   content?: string | HTMLElement;
@@ -47,7 +54,7 @@ type TimelineEventCallback = (item: TimelineEventItem | FlowItem | null) => void
 function useProjectGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     (async () => {
@@ -55,14 +62,14 @@ function useProjectGroups() {
       setError(null);
       try {
         const projectsSnap = await getDocs(collection(db, "projects"));
-        const projectGroups: Group[] = projectsSnap.docs.map(d => ({
+        const projectGroups: Group[] = projectsSnap.docs.map((d) => ({
           id: d.id,
-          content: d.data().name || `專案 ${d.id}`
+          content: d.data().name || `專案 ${d.id}`,
         }));
         setGroups(projectGroups);
-      } catch (err: unknown) {
-        const e = err as Error;
-        setError(e?.message || "載入專案失敗");
+      } catch (error: unknown) {
+        const err = error as Error;
+        setError(err?.message || "載入專案失敗");
       } finally {
         setLoading(false);
       }
@@ -76,7 +83,7 @@ function useProjectGroups() {
 function useFlowItems(groups: Group[]) {
   const [items, setItems] = useState<FlowItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (groups.length === 0) {
@@ -93,26 +100,24 @@ function useFlowItems(groups: Group[]) {
           const projectFlowsSnap = await getDocs(
             collection(db, "projects", group.id, "flows")
           );
-          const projectFlowItems: FlowItem[] = projectFlowsSnap.docs.map(d => {
+          const projectFlowItems: FlowItem[] = projectFlowsSnap.docs.map((d) => {
             const data = d.data();
             return {
               id: d.id,
               group: group.id,
               content: data.name || `流程 (${group.content})`,
               start: data.start ? data.start.toDate() : new Date(),
-              end: data.end
-                ? data.end.toDate()
-                : new Date(Date.now() + 86400000),
+              end: data.end ? data.end.toDate() : new Date(Date.now() + 86400000),
               projectId: group.id,
-              userId: data.userId
+              userId: data.userId,
             };
           });
           allFlowItems.push(...projectFlowItems);
         }
         setItems(allFlowItems);
-      } catch (err: unknown) {
-        const e = err as Error;
-        setError(e?.message || "載入流程失敗");
+      } catch (error: unknown) {
+        const err = error as Error;
+        setError(err?.message || "載入流程失敗");
       } finally {
         setLoading(false);
       }
@@ -123,7 +128,15 @@ function useFlowItems(groups: Group[]) {
 }
 
 // 處理流程 CRUD
-function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: React.Dispatch<React.SetStateAction<FlowItem[]>>; user: any }) {
+function useFlowCrud({
+  items,
+  setItems,
+  user,
+}: {
+  items: FlowItem[];
+  setItems: Dispatch<SetStateAction<FlowItem[]>>;
+  user: any;
+}) {
   // 移動流程
   const handleItemMove = useCallback(
     async (
@@ -132,7 +145,7 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
       newEnd: Date,
       newGroupId: string
     ): Promise<boolean> => {
-      const currentItem = items.find(it => it.id === itemId);
+      const currentItem = items.find((it) => it.id === itemId);
       if (!currentItem) {
         alert("找不到要移動的流程項目。");
         return false;
@@ -144,7 +157,7 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
           const flowRef = doc(db, "projects", newGroupId, "flows", itemId);
           await updateDoc(flowRef, {
             start: Timestamp.fromDate(newStart),
-            end: Timestamp.fromDate(newEnd)
+            end: Timestamp.fromDate(newEnd),
           });
         } else {
           const oldFlowRef = doc(db, "projects", oldProjectId, "flows", itemId);
@@ -155,27 +168,27 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
             start: Timestamp.fromDate(newStart),
             end: Timestamp.fromDate(newEnd),
             projectId: newGroupId,
-            userId: currentItem.userId
+            userId: currentItem.userId,
           });
         }
 
-        setItems(prev =>
-          prev.map(it =>
+        setItems((prev) =>
+          prev.map((it) =>
             it.id === itemId
               ? {
                   ...it,
                   group: newGroupId,
                   projectId: newGroupId,
                   start: newStart,
-                  end: newEnd
+                  end: newEnd,
                 }
               : it
           )
         );
         return true;
       } catch (error: unknown) {
-        const e = error as Error;
-        alert("更新流程失敗: " + (e?.message || "未知錯誤"));
+        const err = error as Error;
+        alert("更新流程失敗: " + (err?.message || "未知錯誤"));
         return false;
       }
     },
@@ -209,7 +222,7 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
           name: flowName,
           start: Timestamp.fromDate(startDate),
           end: Timestamp.fromDate(endDate),
-          userId: user.uid
+          userId: user.uid,
         };
         const flowRef = await addDoc(
           collection(db, "projects", groupId, "flows"),
@@ -222,13 +235,13 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
           start: startDate,
           end: endDate,
           projectId: groupId,
-          userId: user.uid
+          userId: user.uid,
         };
-        setItems(prev => [...prev, newItem]);
+        setItems((prev) => [...prev, newItem]);
         cb(newItem);
-      } catch (err: unknown) {
-        const e = err as Error;
-        alert("新增流程失敗: " + (e?.message || "未知錯誤"));
+      } catch (error: unknown) {
+        const err = error as Error;
+        alert("新增流程失敗: " + (err?.message || "未知錯誤"));
         cb(null);
       }
     },
@@ -240,7 +253,7 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
     async (item: TimelineEventItem, cb: TimelineEventCallback) => {
       const itemId = item.id as string;
       if (!itemId) return cb(null);
-      const currentItem = items.find(it => it.id === itemId);
+      const currentItem = items.find((it) => it.id === itemId);
       if (!currentItem) {
         alert("找不到要刪除的流程項目。請嘗試刷新頁面。");
         return cb(null);
@@ -249,11 +262,11 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
         await deleteDoc(
           doc(db, "projects", currentItem.projectId, "flows", itemId)
         );
-        setItems(prev => prev.filter(it => it.id !== itemId));
+        setItems((prev) => prev.filter((it) => it.id !== itemId));
         cb(item);
       } catch (error: unknown) {
-        const e = error as Error;
-        alert("刪除流程失敗: " + (e?.message || "未知錯誤"));
+        const err = error as Error;
+        alert("刪除流程失敗: " + (err?.message || "未知錯誤"));
         cb(null);
       }
     },
@@ -262,7 +275,9 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
 
   // 雙擊修改流程名稱
   const useDoubleClickHandler = () => {
-    const doubleClickHandlerRef = useRef<((props: TimelineEventPropertiesResult | null) => void) | null>(null);
+    const doubleClickHandlerRef: MutableRefObject<
+      ((props: TimelineEventPropertiesResult | null) => void) | null
+    > = useRef(null);
     const isProcessingDoubleClick = useRef(false);
 
     useEffect(() => {
@@ -277,7 +292,7 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
         try {
           if (!props || !props.item) return;
           const itemId = props.item as string;
-          const currentItem = items.find(i => i.id === itemId);
+          const currentItem = items.find((i) => i.id === itemId);
           if (!currentItem) return;
           const newName = prompt("請輸入新的流程名稱：", currentItem.content);
           if (newName && newName.trim() && newName !== currentItem.content) {
@@ -292,14 +307,14 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
                 ),
                 { name: newName }
               );
-              setItems(prev =>
-                prev.map(it =>
+              setItems((prev) =>
+                prev.map((it) =>
                   it.id === itemId ? { ...it, content: newName } : it
                 )
               );
             } catch (error: unknown) {
-              const e = error as Error;
-              alert("更新流程名稱失敗: " + (e?.message || "未知錯誤"));
+              const err = error as Error;
+              alert("更新流程名稱失敗: " + (err?.message || "未知錯誤"));
             }
           }
         } finally {
@@ -315,17 +330,28 @@ function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: R
     handleItemMove,
     handleItemAdd,
     handleItemRemove,
-    useDoubleClickHandler
+    useDoubleClickHandler,
   };
 }
 
 // 專案建立
-function useCreateProject({ user, setGroups, setItems }: { user: any; setGroups: React.Dispatch<React.SetStateAction<Group[]>>; setItems: React.Dispatch<React.SetStateAction<FlowItem[]>>; }) {
-  const [createLoading, setCreateLoading] = useState(false);
+function useCreateProject({
+  user,
+  setGroups,
+  setItems,
+}: {
+  user: any;
+  setGroups: Dispatch<SetStateAction<Group[]>>;
+  setItems: Dispatch<SetStateAction<FlowItem[]>>;
+}) {
+  const [createLoading, setCreateLoading] = useState<boolean>(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [createSuccess, setCreateSuccess] = useState(false);
+  const [createSuccess, setCreateSuccess] = useState<boolean>(false);
 
-  const handleCreateProject = async (newProjectName: string, resetProjectName: () => void) => {
+  const handleCreateProject = async (
+    newProjectName: string,
+    resetProjectName: () => void
+  ) => {
     setCreateLoading(true);
     setCreateError(null);
     setCreateSuccess(false);
@@ -338,10 +364,10 @@ function useCreateProject({ user, setGroups, setItems }: { user: any; setGroups:
       const projectRef = await addDoc(collection(db, "projects"), {
         name: newProjectName,
         createdAt: Timestamp.now(),
-        ownerId: user.uid
+        ownerId: user.uid,
       });
       const newProjectGroup = { id: projectRef.id, content: newProjectName };
-      setGroups(prev => [...prev, newProjectGroup]);
+      setGroups((prev) => [...prev, newProjectGroup]);
       const start = Timestamp.now();
       const end = Timestamp.fromMillis(start.toMillis() + 3600000);
       const initialFlowName = `${newProjectName} - 初始流程`;
@@ -352,10 +378,10 @@ function useCreateProject({ user, setGroups, setItems }: { user: any; setGroups:
           name: initialFlowName,
           start,
           end,
-          userId: user.uid
+          userId: user.uid,
         }
       );
-      setItems(prev => [
+      setItems((prev) => [
         ...prev,
         {
           id: flowRef.id,
@@ -364,14 +390,14 @@ function useCreateProject({ user, setGroups, setItems }: { user: any; setGroups:
           start: start.toDate(),
           end: end.toDate(),
           projectId: projectRef.id,
-          userId: user.uid
-        }
+          userId: user.uid,
+        },
       ]);
       setCreateSuccess(true);
       resetProjectName();
-    } catch (err: unknown) {
-      const e = err as Error;
-      setCreateError(e?.message || "建立專案或初始流程失敗");
+    } catch (error: unknown) {
+      const err = error as Error;
+      setCreateError(err?.message || "建立專案或初始流程失敗");
     } finally {
       setCreateLoading(false);
     }
@@ -381,7 +407,7 @@ function useCreateProject({ user, setGroups, setItems }: { user: any; setGroups:
     createLoading,
     createError,
     createSuccess,
-    handleCreateProject
+    handleCreateProject,
   };
 }
 
@@ -394,7 +420,7 @@ function TimelineView({
   onAdd,
   onRemove,
   onMove,
-  doubleClickHandlerRef
+  doubleClickHandlerRef,
 }: {
   groups: Group[];
   items: FlowItem[];
@@ -403,7 +429,9 @@ function TimelineView({
   onAdd: TimelineOptions["onAdd"];
   onRemove: TimelineOptions["onRemove"];
   onMove: TimelineOptions["onMove"];
-  doubleClickHandlerRef: React.MutableRefObject<((props: TimelineEventPropertiesResult | null) => void) | null>;
+  doubleClickHandlerRef: MutableRefObject<
+    ((props: TimelineEventPropertiesResult | null) => void) | null
+  >;
 }) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
@@ -427,14 +455,14 @@ function TimelineView({
         remove: true,
         updateTime: true,
         updateGroup: true,
-        overrideItems: true
+        overrideItems: true,
       },
       onAdd,
       onRemove,
       onMoving: (item: TimelineItem, cb: (item: TimelineItem | null) => void) =>
         cb(item),
       onMove,
-      orientation: { axis: "both", item: "top" }
+      orientation: { axis: "both", item: "top" },
     };
 
     try {
@@ -445,7 +473,10 @@ function TimelineView({
         options
       );
       if (doubleClickHandlerRef.current) {
-        timelineInstance.current.on("doubleClick", doubleClickHandlerRef.current);
+        timelineInstance.current.on(
+          "doubleClick",
+          doubleClickHandlerRef.current
+        );
       }
     } catch {
       // Ignore timeline create errors
@@ -468,7 +499,7 @@ function TimelineView({
     onAdd,
     onRemove,
     onMove,
-    doubleClickHandlerRef
+    doubleClickHandlerRef,
   ]);
 
   if (loading) return <div>載入中...</div>;
@@ -483,10 +514,10 @@ function ProjectCreateBar({
   onCreate,
   loading,
   error,
-  success
+  success,
 }: {
   newProjectName: string;
-  setNewProjectName: React.Dispatch<React.SetStateAction<string>>;
+  setNewProjectName: Dispatch<SetStateAction<string>>;
   onCreate: () => void;
   loading: boolean;
   error: string | null;
@@ -498,7 +529,7 @@ function ProjectCreateBar({
         type="text"
         placeholder="請輸入專案名稱"
         value={newProjectName}
-        onChange={e => setNewProjectName(e.target.value)}
+        onChange={(e) => setNewProjectName(e.target.value)}
         disabled={loading}
         style={{ marginRight: 8 }}
       />
@@ -516,20 +547,41 @@ function ProjectCreateBar({
 
 export default function ProjectsPage() {
   const [user] = useAuthState(auth);
-  const { groups, setGroups, error: groupError, loading: groupLoading } = useProjectGroups();
-  const { items, setItems, error: itemError, loading: itemsLoading } = useFlowItems(groups);
+  const {
+    groups,
+    setGroups,
+    error: groupError,
+    loading: groupLoading,
+  } = useProjectGroups();
+  const {
+    items,
+    setItems,
+    error: itemError,
+    loading: itemsLoading,
+  } = useFlowItems(groups);
 
-  const [newProjectName, setNewProjectName] = useState("");
-  const { handleItemMove, handleItemAdd, handleItemRemove, useDoubleClickHandler } = useFlowCrud({ items, setItems, user });
+  const [newProjectName, setNewProjectName] = useState<string>("");
+  const {
+    handleItemMove,
+    handleItemAdd,
+    handleItemRemove,
+    useDoubleClickHandler,
+  } = useFlowCrud({ items, setItems, user });
   const doubleClickHandlerRef = useDoubleClickHandler();
 
-  const { createLoading, createError, createSuccess, handleCreateProject } = useCreateProject({
+  const {
+    createLoading,
+    createError,
+    createSuccess,
+    handleCreateProject,
+  } = useCreateProject({
     user,
     setGroups,
-    setItems
+    setItems,
   });
 
-  const handleProjectCreate = () => handleCreateProject(newProjectName, () => setNewProjectName(""));
+  const handleProjectCreate = () =>
+    handleCreateProject(newProjectName, () => setNewProjectName(""));
 
   return (
     <main>
