@@ -46,17 +46,19 @@ export default function ProjectFlowPage() {
   }, [projectId]);
 
   // 取得 flows 列表
-  const fetchFlows = async () => {
-    if (!projectId) return;
-    const snap = await getDocs(collection(db, "projects", projectId, "flows"));
-    setFlows(
-      snap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Flow[]
-    );
-  };
-  useEffect(() => { fetchFlows(); }, [projectId]);
+  useEffect(() => {
+    const fetchFlows = async () => {
+      if (!projectId) return;
+      const snap = await getDocs(collection(db, "projects", projectId, "flows"));
+      setFlows(
+        snap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Flow[]
+      );
+    };
+    fetchFlows();
+  }, [projectId]);
 
   // 取得 user 名稱對照表
   useEffect(() => {
@@ -102,8 +104,15 @@ export default function ProjectFlowPage() {
       setFlowName("");
       setDate("");
       setDescription("");
-      await fetchFlows();
-    } catch (e) {
+      // 直接在這裡 fetch flows
+      const snap = await getDocs(collection(db, "projects", projectId, "flows"));
+      setFlows(
+        snap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Flow[]
+      );
+    } catch {
       setError("建立流程失敗");
     } finally {
       setSubmitting(false);
@@ -115,7 +124,7 @@ export default function ProjectFlowPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-2">工程流程 - {projectName}</h1>
-      <p className="text-gray-500 mb-6">請填寫預定施工日期與說明，通知人力管理。</p>
+      <p className="text-gray-500 mb-6">請填寫工程流程相關資訊</p>
       <div className="bg-blue-50 dark:bg-neutral-800 rounded-xl p-6 mb-8 max-w-lg mx-auto shadow">
         <div className="mb-4">
           <label className="block font-medium mb-1">
@@ -126,7 +135,7 @@ export default function ProjectFlowPage() {
               onChange={e => setFlowName(e.target.value)}
               disabled={submitting}
               className="ml-2 w-56 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-              placeholder="如：模板安裝、澆置混凝土..."
+              placeholder="請輸入流程名稱"
             />
           </label>
         </div>
@@ -151,7 +160,7 @@ export default function ProjectFlowPage() {
               onChange={e => setDescription(e.target.value)}
               disabled={submitting}
               className="ml-2 w-72 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-              placeholder="請輸入詳細說明..."
+              placeholder="請輸入流程說明"
             />
           </label>
         </div>

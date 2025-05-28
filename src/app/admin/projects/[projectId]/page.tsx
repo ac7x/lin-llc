@@ -137,12 +137,18 @@ export default function ProjectDetailPage() {
         <div>起始日：{project.startDate || "-"}</div>
         <div>預估結束日：{project.endDate || "-"}</div>
       </div>
-      <div className="mt-6">
+      <div className="mt-6 flex gap-4">
         <button
           onClick={() => router.push(`/admin/projects/${projectId}/edit`)}
           className="bg-blue-700 hover:bg-blue-800 text-white rounded px-6 py-2 font-semibold text-base transition"
         >
           編輯
+        </button>
+        <button
+          onClick={() => router.push(`/admin/projects/${projectId}/flow`)}
+          className="bg-blue-400 hover:bg-blue-500 text-white rounded px-6 py-2 font-semibold text-base transition"
+        >
+          前往工程流程
         </button>
       </div>
 
