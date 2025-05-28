@@ -365,6 +365,7 @@ function TimelineView({
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
 
+  // 只在 mount/unmount 建立/銷毀 Timeline
   useEffect(() => {
     if (!timelineRef.current || loading || error) return;
 
@@ -398,18 +399,24 @@ function TimelineView({
       } catch {
         // 忽略 timeline 建立錯誤
       }
-    } else {
-      timelineInstance.current.setGroups(groups);
-      timelineInstance.current.setItems(items);
     }
 
+    // Unmount 時才 destroy
     return () => {
       if (timelineInstance.current) {
         timelineInstance.current.destroy();
         timelineInstance.current = null;
       }
     };
-  }, [timelineRef, loading, error, groups, items, onAdd, onRemove, onMove]);
+  }, [timelineRef, loading, error]); // 不要依賴 groups, items, onAdd, onRemove, onMove
+
+  // groups/items 變動時只做 setGroups/setItems
+  useEffect(() => {
+    if (timelineInstance.current) {
+      timelineInstance.current.setGroups(groups);
+      timelineInstance.current.setItems(items);
+    }
+  }, [groups, items]);
 
   if (loading) return <div>載入中...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
@@ -457,7 +464,6 @@ function ProjectCreateBar({
 /** 主頁面 */
 export default function ProjectsPage() {
   const [userRaw] = useAuthState(auth);
-  // 修正：這裡保證 user 只會是 User 或 null
   const user: User | null = userRaw ?? null;
 
   const {
