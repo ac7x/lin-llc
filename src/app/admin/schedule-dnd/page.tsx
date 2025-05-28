@@ -124,8 +124,8 @@ export default function ProjectsPage() {
 
     const options = {
       editable: {
-        add: false,
-        remove: false,
+        add: true,
+        remove: true,
         updateTime: true,
         updateGroup: true,
         overrideItems: true, 
