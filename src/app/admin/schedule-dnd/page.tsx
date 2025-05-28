@@ -177,13 +177,11 @@ export default function ProjectsPage() {
     e.preventDefault();
     if (!dragProjectId) return;
     // 取得 timeline 元素與滑鼠座標
-    const timelineRect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - timelineRect.left;
-    const y = e.clientY - timelineRect.top;
-
-    // 取得時間軸元件
     const timeline = document.querySelector(".rct-scroll") as HTMLElement | null;
     if (!timeline) return;
+    const timelineRect = timeline.getBoundingClientRect();
+    const x = e.clientX - timelineRect.left;
+    let y = e.clientY - timelineRect.top;
 
     // 取得時間範圍
     const { defaultTimeStart, defaultTimeEnd } = getTimelineTimeRange();
@@ -194,7 +192,9 @@ export default function ProjectsPage() {
 
     // 取得群組
     const groupHeight = 50; // 與 lineHeight 相同
-    const groupIdx = Math.floor(y / groupHeight);
+    let groupIdx = y < 0 ? 0 : Math.floor(y / groupHeight);
+    if (groupIdx < 0) groupIdx = 0;
+    if (groupIdx >= groups.length) return;
     const group = groups[groupIdx];
     if (!group) return;
 
@@ -271,8 +271,7 @@ export default function ProjectsPage() {
           <div style={{
             minWidth: 180,
             borderRight: "1px solid #ddd",
-            padding: "8px 12px",
-            background: "#fafbfc"
+            padding: "8px 12px"
           }}>
             <div style={{ fontWeight: "bold", marginBottom: 8 }}>專案列表</div>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
