@@ -157,14 +157,27 @@ function useFlowItemCrud({
           // 跨 group：先建立新流程（新 group 下），成功再刪除舊的
           const oldFlowRef = doc(db, "projects", oldProjectId, "flows", itemId);
           const newFlowsCol = collection(db, "projects", newGroupId, "flows");
-          // 建立新流程（複製內容，ID 不同）
-          const newFlowDoc = await addDoc(newFlowsCol, {
+          
+          // 準備新流程的資料，確保 userId 不是 undefined
+          const newFlowData: {
+            name: string;
+            start: Timestamp;
+            end: Timestamp;
+            projectId: string;
+            userId?: string; // userId 是可選的
+          } = {
             name: currentItem.content,
             start: Timestamp.fromDate(newStart),
             end: Timestamp.fromDate(newEnd),
             projectId: newGroupId,
-            userId: currentItem.userId,
-          });
+          };
+
+          if (currentItem.userId !== undefined) {
+            newFlowData.userId = currentItem.userId;
+          }
+
+          // 建立新流程（複製內容，ID 不同）
+          const newFlowDoc = await addDoc(newFlowsCol, newFlowData);
           // 刪除舊的
           await deleteDoc(oldFlowRef);
           // 更新本地 state（用新 ID 替換）
