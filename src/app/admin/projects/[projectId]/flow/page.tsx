@@ -17,6 +17,7 @@ interface Flow {
   createdAt: Timestamp | Date;
   createdBy: string;
   photoUrl?: string;
+  start?: Timestamp | Date; // 新增
 }
 
 export default function ProjectFlowPage() {
@@ -195,10 +196,20 @@ export default function ProjectFlowPage() {
           <div className="text-gray-400">尚無流程</div>
         ) : (
           <ul className="p-0 list-none">
-            {flows.sort((a, b) => a.date.localeCompare(b.date)).map(flow => (
+            {flows.sort((a, b) => {
+  const getDate = (f: Flow) =>
+    f.date || (f.start && typeof f.start === 'object' && 'toDate' in f.start ? f.start.toDate().toISOString().slice(0, 10) : '');
+  return getDate(a).localeCompare(getDate(b));
+}).map(flow => (
               <li key={flow.id} className="bg-white dark:bg-neutral-900 rounded-lg shadow mb-4 p-5">
                 <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.name || '-'}</div>
-                <div className="mb-1"><span className="font-medium">日期：</span>{flow.date}</div>
+                <div className="mb-1"><span className="font-medium">日期：</span>{
+      flow.date
+        ? flow.date
+        : flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
+          ? flow.start.toDate().toISOString().slice(0, 10)
+          : '-'
+    }</div>
                 <div className="mb-1"><span className="font-medium">內容：</span>{flow.description}</div>
                 <div className="mb-1">
                   <span className="font-medium">上傳/更換照片：</span>
