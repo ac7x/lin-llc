@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, where, query, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, onSnapshot } from "firebase/firestore";
 import { db, storage } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -51,7 +51,7 @@ export default function ProjectFlowPage() {
   // 取得 flows 列表（即時監聽，最省資源且無 eslint 問題）
   useEffect(() => {
     if (!projectId) return;
-    const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
+    const flowsQuery = collection(db, "projects", projectId, "flows");
     const unsubscribe = onSnapshot(flowsQuery, (snap: QuerySnapshot<DocumentData>) => {
       setFlows(
         snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
@@ -94,23 +94,18 @@ export default function ProjectFlowPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await addDoc(collection(db, "flows"), {
+      await addDoc(collection(db, "projects", projectId, "flows"), {
         name: flowName.trim(),
         date,
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
-        projectId,
       });
       setFlowName("");
       setDate("");
       setDescription("");
       // 直接在這裡 fetch flows
-      const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
-      const snap: QuerySnapshot<DocumentData> = await getDocs(flowsQuery);
-      setFlows(
-        snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
-      );
+      // flows 會自動即時更新，無需手動 fetch
     } catch {
       setError("建立流程失敗");
     } finally {
@@ -126,7 +121,7 @@ export default function ProjectFlowPage() {
       const storageRef = ref(storage, `flows/${flowId}_${Date.now()}_${file.name}`);
       await uploadBytes(storageRef, file);
       const photoUrl = await getDownloadURL(storageRef);
-      await updateDoc(doc(db, "flows", flowId), { photoUrl });
+      await updateDoc(doc(db, "projects", projectId, "flows", flowId), { photoUrl });
       // 更新 flows 狀態
       setFlows(flows =>
         flows.map(f => f.id === flowId ? { ...f, photoUrl } : f)

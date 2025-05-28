@@ -32,7 +32,7 @@ export default function ProjectAttendancePage() {
   useEffect(() => {
     if (!projectId) return;
     setLoading(true);
-    getDocs(collection(db, "projects", projectId, "attendance"))
+    getDocs(collection(db, "projects", projectId, "attendances"))
       .then(snap => {
         setAttendances(
           snap.docs.map(doc => ({ ...doc.data() })) as Attendance[]
@@ -61,7 +61,7 @@ export default function ProjectAttendancePage() {
     setSaving(true);
     setError(null);
     try {
-      await setDoc(doc(db, "projects", projectId, "attendance", today), {
+      await setDoc(doc(db, "projects", projectId, "attendances", today), {
         date: today,
         totalWorkers,
         details,

@@ -31,41 +31,42 @@ export default function UserSchedulePage() {
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      getDocs(collection(db, "projects")),
-      getDocs(collection(db, "flows"))
-    ]).then(([projectsSnap, flowsSnap]) => {
-      const groupList = projectsSnap.docs.map(doc => ({
-        id: doc.id,
-        content: doc.data().name || `專案 ${doc.id}`,
-      }));
-      setGroups(groupList);
-
-      const projectsData = projectsSnap.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name || "未命名專案",
-      }));
-
-      const itemList = flowsSnap.docs.map(doc => {
-        const d = doc.data();
-        const projectForFlow = projectsData.find(p => p.id === d.projectId);
-        return {
+    // 先取得所有 projects，再取得每個 project 的 flows 子集合
+    getDocs(collection(db, "projects"))
+      .then(async (projectsSnap) => {
+        const groupList = projectsSnap.docs.map(doc => ({
           id: doc.id,
-          group: d.projectId,
-          content: d.name || (projectForFlow ? `流程 (${projectForFlow.name})` : "未命名流程"),
-          start: d.start ? d.start.toDate() : new Date(),
-          end: d.end ? d.end.toDate() : new Date(Date.now() + 86400000),
-          projectId: d.projectId,
-          userId: d.userId,
-        };
-      });
-      setItems(itemList);
+          content: doc.data().name || `專案 ${doc.id}`,
+        }));
+        setGroups(groupList);
 
-    }).catch((err: unknown) => {
-      setError((err as Error).message || "載入資料失敗");
-    }).finally(() => {
-      setLoading(false);
-    });
+        // 取得所有 flows 子集合
+        const allFlows: FlowItem[] = [];
+        await Promise.all(
+          projectsSnap.docs.map(async (projectDoc) => {
+            const flowsSnap = await getDocs(collection(db, "projects", projectDoc.id, "flows"));
+            flowsSnap.docs.forEach(doc => {
+              const d = doc.data();
+              allFlows.push({
+                id: doc.id,
+                group: projectDoc.id,
+                content: d.name || (projectDoc.data().name ? `流程 (${projectDoc.data().name})` : "未命名流程"),
+                start: d.start ? (typeof d.start.toDate === 'function' ? d.start.toDate() : new Date(d.start)) : new Date(),
+                end: d.end ? (typeof d.end.toDate === 'function' ? d.end.toDate() : new Date(d.end)) : new Date(Date.now() + 86400000),
+                projectId: projectDoc.id,
+                userId: d.userId,
+              });
+            });
+          })
+        );
+        setItems(allFlows);
+      })
+      .catch((err: unknown) => {
+        setError((err as Error).message || "載入資料失敗");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { db } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { collection } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
@@ -11,7 +11,47 @@ export default function OwnerDashboardPage() {
   // 取得 users 和 projects 集合的 snapshot
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
-  const [flowsSnapshot, flowsLoading, flowsError] = useCollection(collection(db, 'flows'));
+  // flowsSnapshot 型別修正
+  interface FlowDoc {
+    id: string;
+    projectId: string;
+    name?: string;
+    date?: string;
+    end?: unknown;
+    [key: string]: unknown;
+  }
+  const [flowsSnapshot, setFlowsSnapshot] = React.useState<FlowDoc[]>([]);
+  const [flowsLoading, setFlowsLoading] = React.useState(true);
+  const [flowsError, setFlowsError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setFlowsLoading(true);
+    setFlowsError(null);
+    // 取得所有 projects，再取得每個 project 的 flows 子集合
+    getDocs(collection(db, 'projects'))
+      .then(async (projectsSnap) => {
+        const allFlows: FlowDoc[] = [];
+        await Promise.all(
+          projectsSnap.docs.map(async (projectDoc) => {
+            const flowsSnap = await getDocs(collection(db, 'projects', projectDoc.id, 'flows'));
+            flowsSnap.docs.forEach(doc => {
+              allFlows.push({
+                ...doc.data(),
+                id: doc.id,
+                projectId: projectDoc.id,
+              });
+            });
+          })
+        );
+        setFlowsSnapshot(allFlows);
+      })
+      .catch((err: unknown) => {
+        setFlowsError((err as Error).message || '載入資料失敗');
+      })
+      .finally(() => {
+        setFlowsLoading(false);
+      });
+  }, []);
 
   // 統計各角色人數
   const roleCounts: Record<string, number> = {
@@ -42,13 +82,18 @@ export default function OwnerDashboardPage() {
   if (flowsSnapshot && !flowsLoading && !flowsError) {
     // 取得所有完成日期（date 或 end）
     const dateCounts: Record<string, number> = {};
-    flowsSnapshot.docs.forEach(doc => {
-      const data = doc.data();
+    flowsSnapshot.forEach(data => {
       let dateStr = '';
       if (data.date) {
         dateStr = data.date; // yyyy-mm-dd
-      } else if (data.end && typeof data.end === 'object' && 'toDate' in data.end) {
-        dateStr = data.end.toDate().toISOString().slice(0, 10);
+      } else if (
+        data.end &&
+        typeof data.end === 'object' &&
+        data.end !== null &&
+        'toDate' in data.end &&
+        typeof (data.end as { toDate?: unknown }).toDate === 'function'
+      ) {
+        dateStr = (data.end as { toDate: () => Date }).toDate().toISOString().slice(0, 10);
       }
       if (dateStr) {
         dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;

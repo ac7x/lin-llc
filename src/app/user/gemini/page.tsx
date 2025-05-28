@@ -1,12 +1,21 @@
 "use client";
+
 import { useState, useRef } from "react";
 import { app as firebaseApp } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+
+// 初始化 Firebase App Check（只執行一次）
+if (typeof window !== "undefined") {
+  initializeAppCheck(firebaseApp, {
+    provider: new ReCaptchaV3Provider("6LeBT00arAAAIIM4kuuhicdMpGBOE-ovt-8WXjN"),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
 
 const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
-// 定義聊天訊息型別
 interface ChatMessage {
   role: "user" | "model";
   text: string;
@@ -19,7 +28,6 @@ export default function GeminiPage() {
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const chatRef = useRef<ReturnType<typeof model.startChat> | null>(null);
 
-  // 初始化 chat session
   async function getChat() {
     if (!chatRef.current) {
       chatRef.current = model.startChat({
