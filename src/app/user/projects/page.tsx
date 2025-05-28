@@ -6,9 +6,9 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import React from 'react';
 
 export default function ProjectsPage() {
-  const db = getFirestore(app);
-  const projectsRef = collection(db, 'projects');
-  const [projectsSnap, loading, error] = useCollection(projectsRef);
+  const [projectsSnap, loading, error] = useCollection(
+    collection(getFirestore(app), 'projects')
+  );
 
   return (
     <div className="pb-20 max-w-2xl mx-auto">
@@ -26,7 +26,9 @@ export default function ProjectsPage() {
             const data = docSnap.data();
             return (
               <li key={docSnap.id} className="border p-4 rounded shadow-sm">
-                <div className="font-bold text-lg text-blue-700">{data.name || docSnap.id}</div>
+                <div className="font-bold text-lg text-blue-700">
+                  {data.name || docSnap.id}
+                </div>
                 <div className="text-xs text-gray-700 mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   <span>地區：{data.region || '—'}</span>
                   <span>
