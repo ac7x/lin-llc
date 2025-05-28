@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, where, query } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, where, query, onSnapshot } from "firebase/firestore";
 import { db, storage } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -47,17 +47,16 @@ export default function ProjectFlowPage() {
     fetchProject();
   }, [projectId]);
 
-  // 取得 flows 列表
+  // 取得 flows 列表（即時監聽，最省資源且無 eslint 問題）
   useEffect(() => {
-    const fetchFlows = async () => {
-      if (!projectId) return;
-      const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
-      const snap: QuerySnapshot<DocumentData> = await getDocs(flowsQuery);
+    if (!projectId) return;
+    const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
+    const unsubscribe = onSnapshot(flowsQuery, (snap: QuerySnapshot<DocumentData>) => {
       setFlows(
         snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
       );
-    };
-    fetchFlows();
+    });
+    return () => unsubscribe();
   }, [projectId]);
 
   // 取得 user 名稱對照表
