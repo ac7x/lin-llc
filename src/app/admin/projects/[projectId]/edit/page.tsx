@@ -114,32 +114,32 @@ export default function ProjectEditPage() {
     }
   };
 
-  if (loading) return <main>載入中...</main>;
-  if (!project) return <main>找不到專案</main>;
+  if (loading) return <main className="p-8">載入中...</main>;
+  if (!project) return <main className="p-8">找不到專案</main>;
 
   return (
-    <main>
-      <h1>編輯專案</h1>
-      <div>
-        <label>
+    <main className="max-w-2xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">編輯專案</h1>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
           名稱：
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             disabled={saving}
-            style={{ marginLeft: 8 }}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded w-72 focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
         </label>
       </div>
-      <div style={{ margin: "12px 0" }}>
-        <label>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
           地區：
           <select
             value={region}
             onChange={e => setRegion(e.target.value)}
             disabled={saving}
-            style={{ marginLeft: 8 }}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
           >
             <option value="">請選擇</option>
             {regionOptions.map(opt => (
@@ -148,27 +148,27 @@ export default function ProjectEditPage() {
           </select>
         </label>
       </div>
-      <div style={{ margin: "12px 0" }}>
-        <label>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
           地址：
           <input
             type="text"
             value={address}
             onChange={e => setAddress(e.target.value)}
             disabled={saving}
-            style={{ marginLeft: 8, width: 300 }}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded w-80 focus:outline-none focus:ring-2 focus:ring-blue-300"
             placeholder="請輸入地址"
           />
         </label>
       </div>
-      <div style={{ margin: "12px 0" }}>
-        <label>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
           負責人（單選）：
           <select
             value={manager}
             onChange={e => setManager(e.target.value)}
             disabled={saving}
-            style={{ marginLeft: 8 }}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
           >
             <option value="">請選擇</option>
             {peopleOptions.map(p => (
@@ -177,69 +177,80 @@ export default function ProjectEditPage() {
           </select>
         </label>
       </div>
-      <div style={{ margin: "12px 0" }}>
-        <label>現場監工（可複選）：</label>
-        <div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">現場監工（可複選）：</label>
+        <div className="flex flex-wrap gap-4">
           {peopleOptions.map(p => (
-            <label key={p.id} style={{ marginRight: 12 }}>
+            <label key={p.id} className="flex items-center gap-1">
               <input
                 type="checkbox"
                 checked={supervisors.includes(p.id)}
                 onChange={() => handleMultiSelect(p.id, supervisors, setSupervisors)}
                 disabled={saving}
+                className="accent-blue-600"
               />
               {p.name}
             </label>
           ))}
         </div>
       </div>
-      <div style={{ margin: "12px 0" }}>
-        <label>現場公共安全人員（可複選）：</label>
-        <div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">現場公共安全人員（可複選）：</label>
+        <div className="flex flex-wrap gap-4">
           {peopleOptions.map(p => (
-            <label key={p.id} style={{ marginRight: 12 }}>
+            <label key={p.id} className="flex items-center gap-1">
               <input
                 type="checkbox"
                 checked={safetyStaff.includes(p.id)}
                 onChange={() => handleMultiSelect(p.id, safetyStaff, setSafetyStaff)}
                 disabled={saving}
+                className="accent-blue-600"
               />
               {p.name}
             </label>
           ))}
         </div>
       </div>
-      <div style={{ margin: "12px 0" }}>
-        <label>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
           起始日：
           <input
             type="date"
             value={startDate}
             onChange={e => setStartDate(e.target.value)}
             disabled={saving}
-            style={{ marginLeft: 8 }}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
         </label>
       </div>
-      <div style={{ margin: "12px 0" }}>
-        <label>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
           預估結束日：
           <input
             type="date"
             value={endDate}
             onChange={e => setEndDate(e.target.value)}
             disabled={saving}
-            style={{ marginLeft: 8 }}
+            className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
         </label>
       </div>
-      <button onClick={handleSave} disabled={saving || !name.trim()} style={{ marginTop: 12 }}>
+      <button
+        onClick={handleSave}
+        disabled={saving || !name.trim()}
+        className="bg-blue-700 hover:bg-blue-800 text-white rounded px-6 py-2 font-semibold text-base transition mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
         {saving ? "儲存中..." : "儲存"}
       </button>
-      {error && <div style={{ color: "red" }}>{error}</div>}
-      {success && <div style={{ color: "green" }}>儲存成功！</div>}
-      <div style={{ marginTop: 16 }}>
-        <button onClick={() => router.push(`/admin/projects/${projectId}`)}>返回專案詳情</button>
+      {error && <div className="text-red-600 mt-2">{error}</div>}
+      {success && <div className="text-green-600 mt-2">儲存成功！</div>}
+      <div className="mt-6">
+        <button
+          onClick={() => router.push(`/admin/projects/${projectId}`)}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded px-6 py-2 font-semibold text-base transition"
+        >
+          返回專案詳情
+        </button>
       </div>
     </main>
   );

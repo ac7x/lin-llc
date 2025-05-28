@@ -104,116 +104,79 @@ export default function ProjectDetailPage() {
     }
   };
 
-  if (loading) return <main>載入中...</main>;
-  if (!project) return <main>找不到專案</main>;
+  if (loading) return <main className="p-8">載入中...</main>;
+  if (!project) return <main className="p-8">找不到專案</main>;
 
   return (
-    <main>
-      <h1>專案：{project.name || "(未命名專案)"}</h1>
-      <p>專案 ID：{project.id}</p>
-      <p>建立者：{users[project.createdBy || ""] || "未知"}</p>
-      <p>建立時間：{project.createdAt && typeof project.createdAt === "object" && "toDate" in project.createdAt
-        ? (project.createdAt as Timestamp).toDate().toLocaleString()
-        : String(project.createdAt) || "未知"}
-      </p>
-      <p>負責人：{users[project.manager || ""] || "-"}</p>
-      <p>
-        現場監工：
-        {project.supervisors && project.supervisors.length > 0
-          ? project.supervisors.map(id => users[id] || id).join(", ")
-          : "-"}
-      </p>
-      <p>
-        現場公共安全人員：
-        {project.safetyStaff && project.safetyStaff.length > 0
-          ? project.safetyStaff.map(id => users[id] || id).join(", ")
-          : "-"}
-      </p>
-      <p>地區：{project.region || "-"}</p>
-      <p>地址：{project.address || "-"}</p>
-      <p>起始日：{project.startDate || "-"}</p>
-      <p>預估結束日：{project.endDate || "-"}</p>
-      {/* 若要顯示名稱，需額外查詢 users 集合並建立 id→name 對照表 */}
-      <div style={{ marginTop: 24 }}>
+    <main className="max-w-3xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-2">專案：{project.name || "(未命名專案)"}</h1>
+      <div className="mb-4 text-gray-600">
+        <div>專案 ID：{project.id}</div>
+        <div>建立者：{users[project.createdBy || ""] || "未知"}</div>
+        <div>
+          建立時間：
+          {project.createdAt && typeof project.createdAt === "object" && "toDate" in project.createdAt
+            ? (project.createdAt as Timestamp).toDate().toLocaleString()
+            : String(project.createdAt) || "未知"}
+        </div>
+        <div>負責人：{users[project.manager || ""] || "-"}</div>
+        <div>
+          現場監工：
+          {project.supervisors && project.supervisors.length > 0
+            ? project.supervisors.map(id => users[id] || id).join(", ")
+            : "-"}
+        </div>
+        <div>
+          現場公共安全人員：
+          {project.safetyStaff && project.safetyStaff.length > 0
+            ? project.safetyStaff.map(id => users[id] || id).join(", ")
+            : "-"}
+        </div>
+        <div>地區：{project.region || "-"}</div>
+        <div>地址：{project.address || "-"}</div>
+        <div>起始日：{project.startDate || "-"}</div>
+        <div>預估結束日：{project.endDate || "-"}</div>
+      </div>
+      <div className="mt-6">
         <button
           onClick={() => router.push(`/admin/projects/${projectId}/edit`)}
-          style={{
-            background: "#2355d6",
-            color: "#fff",
-            border: "none",
-            borderRadius: 6,
-            padding: "8px 20px",
-            fontWeight: 600,
-            fontSize: "1rem",
-            cursor: "pointer"
-          }}
+          className="bg-blue-700 hover:bg-blue-800 text-white rounded px-6 py-2 font-semibold text-base transition"
         >
           編輯
         </button>
       </div>
 
-      <div className="logs-section">
-        <h2>工程進度日誌</h2>
-        <div className="add-log">
+      <div className="logs-section mt-10 pt-8 border-t border-gray-200">
+        <h2 className="text-xl font-semibold mb-4">工程進度日誌</h2>
+        <div className="add-log mb-6">
           <textarea
             value={newLog}
             onChange={(e) => setNewLog(e.target.value)}
             placeholder="輸入新的進度記錄..."
             rows={3}
+            className="w-full p-2 mb-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
-          <button onClick={handleAddLog} disabled={!newLog.trim() || !user}>
+          <button
+            onClick={handleAddLog}
+            disabled={!newLog.trim() || !user}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded px-5 py-2 font-semibold text-base transition disabled:opacity-60 disabled:cursor-not-allowed"
+          >
             添加記錄
           </button>
         </div>
 
-        <div className="logs-list">
+        <div className="logs-list flex flex-col gap-3">
           {project?.logs?.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds)
             .map((log) => (
-            <div key={log.id} className="log-item">
-              <div className="log-content">{log.content}</div>
-              <div className="log-meta">
+            <div key={log.id} className="log-item p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg shadow">
+              <div className="log-content whitespace-pre-wrap">{log.content}</div>
+              <div className="log-meta mt-2 text-sm text-gray-500">
                 {log.createdAt.toDate().toLocaleString()}
               </div>
             </div>
           ))}
         </div>
       </div>
-
-      <style jsx>{`
-        .logs-section {
-          margin-top: 32px;
-          padding-top: 24px;
-          border-top: 1px solid #eee;
-        }
-        .add-log {
-          margin: 16px 0;
-        }
-        .add-log textarea {
-          width: 100%;
-          padding: 8px;
-          margin-bottom: 8px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-        }
-        .logs-list {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .log-item {
-          padding: 12px;
-          background: #f8f8f8;
-          border-radius: 6px;
-        }
-        .log-content {
-          white-space: pre-wrap;
-        }
-        .log-meta {
-          margin-top: 8px;
-          font-size: 0.9em;
-          color: #666;
-        }
-      `}</style>
     </main>
   );
 }

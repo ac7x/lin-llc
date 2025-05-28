@@ -55,21 +55,23 @@ export default function ProjectsPage() {
   }, []);
 
   return (
-    <main>
-      <h1 style={{ fontWeight: 700, fontSize: "2rem", marginBottom: 8 }}>專案管理</h1>
-      <p style={{ color: "#666", marginBottom: 24 }}>這裡是管理所有專案的頁面。</p>
+    <main className="max-w-6xl mx-auto px-4 py-8">
+      <h1 className="font-bold text-2xl mb-2">專案管理</h1>
+      <p className="text-gray-500 mb-6">這裡是管理所有專案的頁面。</p>
       <Link href="/admin/projects/add">
-        <button className="modern-btn">新增專案</button>
+        <button className="bg-gradient-to-r from-blue-400 to-blue-700 text-white rounded px-6 py-2 font-semibold text-base shadow transition hover:from-blue-700 hover:to-blue-400 mb-4">
+          新增專案
+        </button>
       </Link>
-      <hr style={{ margin: "32px 0 24px 0", border: "none", borderTop: "1px solid #eee" }} />
-      <h2 style={{ fontWeight: 600, fontSize: "1.3rem", marginBottom: 16 }}>專案列表</h2>
+      <hr className="my-8 border-t border-gray-200" />
+      <h2 className="font-semibold text-lg mb-4">專案列表</h2>
       {loading ? (
         <div>載入中...</div>
       ) : (
-        <div className="project-list">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
             <div
-              className="project-card clickable"
+              className="bg-white dark:bg-neutral-900 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col gap-2 cursor-pointer"
               key={project.id}
               onClick={() => router.push(`/admin/projects/${project.id}`)}
               tabIndex={0}
@@ -80,106 +82,51 @@ export default function ProjectsPage() {
                 }
               }}
             >
-              <Link href={`/admin/projects/${project.id}`} className="project-title-link" onClick={e => e.stopPropagation()}>
-                <span className="project-title">{project.name || "(未命名專案)"}</span>
+              <Link
+                href={`/admin/projects/${project.id}`}
+                className="no-underline"
+                onClick={e => e.stopPropagation()}
+              >
+                <span className="text-blue-700 font-bold text-lg hover:underline">{project.name || "(未命名專案)"}</span>
               </Link>
-              <div className="project-meta">
-                <div><span className="meta-label">負責人：</span>{project.manager && users[project.manager] ? users[project.manager] : "-"}</div>
+              <div className="text-gray-700 text-sm flex flex-col gap-1 mt-2">
                 <div>
-                  <span className="meta-label">監工：</span>
+                  <span className="text-gray-500 font-medium">負責人：</span>
+                  {project.manager && users[project.manager] ? users[project.manager] : "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">監工：</span>
                   {project.supervisors && project.supervisors.length > 0
                     ? project.supervisors.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}
                 </div>
                 <div>
-                  <span className="meta-label">公共安全人員：</span>
+                  <span className="text-gray-500 font-medium">公共安全人員：</span>
                   {project.safetyStaff && project.safetyStaff.length > 0
                     ? project.safetyStaff.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}
                 </div>
-                <div><span className="meta-label">地區：</span>{project.region || "-"}</div>
-                <div><span className="meta-label">地址：</span>{project.address || "-"}</div>
-                <div><span className="meta-label">起始日：</span>{project.startDate || "-"}</div>
-                <div><span className="meta-label">預估結束日：</span>{project.endDate || "-"}</div>
+                <div>
+                  <span className="text-gray-500 font-medium">地區：</span>
+                  {project.region || "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">地址：</span>
+                  {project.address || "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">起始日：</span>
+                  {project.startDate || "-"}
+                </div>
+                <div>
+                  <span className="text-gray-500 font-medium">預估結束日：</span>
+                  {project.endDate || "-"}
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
-      {/* 若要顯示名稱，需額外查詢 users 集合並建立 id→name 對照表 */}
-      <style jsx>{`
-        .modern-btn {
-          background: linear-gradient(90deg, #4f8cff 0%, #2355d6 100%);
-          color: #fff;
-          border: none;
-          border-radius: 6px;
-          padding: 10px 24px;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          box-shadow: 0 2px 8px rgba(79,140,255,0.08);
-          transition: background 0.2s, box-shadow 0.2s;
-        }
-        .modern-btn:hover {
-          background: linear-gradient(90deg, #2355d6 0%, #4f8cff 100%);
-          box-shadow: 0 4px 16px rgba(79,140,255,0.15);
-        }
-        .project-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-          gap: 24px;
-        }
-        .project-card {
-          background: #fff;
-          border-radius: 14px;
-          box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-          padding: 24px 20px 18px 20px;
-          transition: box-shadow 0.18s, transform 0.18s;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        .project-card:hover {
-          box-shadow: 0 6px 32px rgba(79,140,255,0.13);
-          transform: translateY(-2px) scale(1.015);
-        }
-        .project-card.clickable {
-          cursor: pointer;
-        }
-        .project-title-link {
-          text-decoration: none;
-        }
-        .project-title {
-          font-size: 1.18rem;
-          font-weight: 700;
-          color: #2355d6;
-          margin-bottom: 8px;
-          display: inline-block;
-        }
-        .project-title-link:hover .project-title {
-          text-decoration: underline;
-          color: #4f8cff;
-        }
-        .project-meta {
-          font-size: 0.98em;
-          color: #444;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .meta-label {
-          color: #888;
-          font-weight: 500;
-        }
-        @media (max-width: 600px) {
-          .project-list {
-            grid-template-columns: 1fr;
-          }
-          .project-card {
-            padding: 16px 10px 12px 10px;
-          }
-        }
-      `}</style>
     </main>
   );
 }
