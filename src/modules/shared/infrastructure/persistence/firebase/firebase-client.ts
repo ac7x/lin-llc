@@ -2,6 +2,7 @@
 import { getApps, initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -18,6 +19,7 @@ export const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfi
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 // Google 登入
 export const signInWithGooglePopup = () => signInWithPopup(auth, googleProvider);

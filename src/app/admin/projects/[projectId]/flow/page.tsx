@@ -2,10 +2,11 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs, addDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { db, storage } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 // Flow 型別
 interface Flow {
@@ -15,6 +16,7 @@ interface Flow {
   description: string;
   createdAt: Timestamp | Date;
   createdBy: string;
+  photoUrl?: string;
 }
 
 export default function ProjectFlowPage() {
@@ -30,6 +32,8 @@ export default function ProjectFlowPage() {
   const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
   const [users, setUsers] = useState<{[key: string]: string}>({});
+  const [uploadingFlowId, setUploadingFlowId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // 取得專案名稱
   useEffect(() => {
@@ -73,7 +77,7 @@ export default function ProjectFlowPage() {
     fetchUsers();
   }, []);
 
-  // 新增流程
+  // 新增流程（移除照片相關）
   const handleAddFlow = async () => {
     if (!flowName.trim()) {
       setError("請輸入流程名稱");
@@ -99,7 +103,7 @@ export default function ProjectFlowPage() {
         date,
         description: description.trim(),
         createdAt: new Date(),
-        createdBy: user.uid
+        createdBy: user.uid,
       });
       setFlowName("");
       setDate("");
@@ -116,6 +120,26 @@ export default function ProjectFlowPage() {
       setError("建立流程失敗");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // 單一流程照片上傳
+  const handleUploadPhoto = async (flowId: string, file: File) => {
+    setUploadingFlowId(flowId);
+    setUploadError(null);
+    try {
+      const storageRef = ref(storage, `projects/${projectId}/flows/${flowId}_${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const photoUrl = await getDownloadURL(storageRef);
+      await updateDoc(doc(db, "projects", projectId, "flows", flowId), { photoUrl });
+      // 更新 flows 狀態
+      setFlows(flows =>
+        flows.map(f => f.id === flowId ? { ...f, photoUrl } : f)
+      );
+    } catch (e) {
+      setUploadError("照片上傳失敗");
+    } finally {
+      setUploadingFlowId(null);
     }
   };
 
@@ -184,6 +208,37 @@ export default function ProjectFlowPage() {
                 <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.name || '-'}</div>
                 <div className="mb-1"><span className="font-medium">日期：</span>{flow.date}</div>
                 <div className="mb-1"><span className="font-medium">內容：</span>{flow.description}</div>
+                {flow.photoUrl && (
+                  <div className="mb-1">
+                    <span className="font-medium">照片：</span>
+                    <a href={flow.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                      查看照片
+                    </a>
+                    <div className="mt-2">
+                      <img src={flow.photoUrl} alt="流程照片" className="max-h-40 rounded border" />
+                    </div>
+                  </div>
+                )}
+                <div className="mb-1">
+                  <span className="font-medium">上傳/更換照片：</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "inline-block" }}
+                    disabled={uploadingFlowId === flow.id || !user}
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUploadPhoto(flow.id, file);
+                      e.target.value = "";
+                    }}
+                  />
+                  {uploadingFlowId === flow.id && (
+                    <span className="ml-2 text-blue-600">上傳中...</span>
+                  )}
+                  {uploadError && uploadingFlowId === flow.id && (
+                    <span className="ml-2 text-red-600">{uploadError}</span>
+                  )}
+                </div>
                 <div className="text-gray-500 text-sm mt-2">
                   建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? flow.createdAt.toDate().toLocaleString() : String(flow.createdAt)}
                 </div>
