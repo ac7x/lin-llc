@@ -26,6 +26,7 @@ import {
   TimelineOptions,
 } from "vis-timeline/standalone";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { User } from "firebase/auth";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
 
 /** 型別區 */
@@ -131,7 +132,7 @@ function useFlowCrud({
 }: {
   items: FlowItem[];
   setItems: Dispatch<SetStateAction<FlowItem[]>>;
-  user: any;
+  user: User | null;
 }) {
   // 移動
   const handleItemMove = useCallback(
@@ -273,7 +274,7 @@ function useCreateProject({
   setGroups,
   setItems,
 }: {
-  user: any;
+  user: User | null;
   setGroups: Dispatch<SetStateAction<Group[]>>;
   setItems: Dispatch<SetStateAction<FlowItem[]>>;
 }) {
@@ -455,7 +456,10 @@ function ProjectCreateBar({
 
 /** 主頁面 */
 export default function ProjectsPage() {
-  const [user] = useAuthState(auth);
+  const [userRaw] = useAuthState(auth);
+  // 修正：這裡保證 user 只會是 User 或 null
+  const user: User | null = userRaw ?? null;
+
   const {
     groups,
     setGroups,
