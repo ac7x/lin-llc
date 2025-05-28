@@ -8,6 +8,7 @@ import "@/styles/react-calendar-timeline.scss";
 import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { ProjectList } from "./ProjectList";
 
 type Group = { id: string; title: string; };
 type ScheduleItem = {
@@ -30,6 +31,7 @@ export default function ProjectsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -47,6 +49,7 @@ export default function ProjectsPage() {
           id: doc.id,
           name: doc.data().name || "未命名專案",
         }));
+        setProjects(p);
 
         const schedulesSnap = await getDocs(collection(db, "schedules"));
         setItems(schedulesSnap.docs.map(doc => {
@@ -82,6 +85,7 @@ export default function ProjectsPage() {
         name: newProjectName,
         createdAt: Timestamp.now(),
       });
+      setProjects(prev => [...prev, { id: projectRef.id, name: newProjectName }]);
       const start = Timestamp.now();
       const end = Timestamp.fromMillis(start.toMillis() + 86400000);
       const scheduleRef = await addDoc(collection(db, "schedules"), {
@@ -184,6 +188,7 @@ export default function ProjectsPage() {
       {error && <div style={{ color: "red" }}>{error}</div>}
       {!loading && !error && (
         <>
+          <ProjectList projects={projects} />
           <Timeline
             groups={groups}
             items={items}
