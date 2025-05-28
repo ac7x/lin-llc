@@ -21,14 +21,16 @@ import {
 import {
   Timeline,
   TimelineOptions,
+  DataGroup,
+  DataItem,
 } from "vis-timeline/standalone";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { User } from "firebase/auth";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
 
 // 型別
-type Group = { id: string; content: string };
-type FlowItem = {
+type GroupType = { id: string; content: string };
+type FlowItemType = {
   id: string;
   group: string;
   content: string;
@@ -37,7 +39,7 @@ type FlowItem = {
   projectId: string;
   userId?: string;
 };
-type TimelineStringItem = {
+type TimelineItemType = {
   id: string;
   group: string;
   content: string;
@@ -45,54 +47,56 @@ type TimelineStringItem = {
   end: Date;
 };
 
-function useProjectGroups() {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+// 取得所有專案 group
+function useProjectGroupList() {
+  const [groupList, setGroupList] = useState<GroupType[]>([]);
+  const [groupError, setGroupError] = useState<string | null>(null);
+  const [groupLoading, setGroupLoading] = useState<boolean>(true);
 
   useEffect(() => {
     (async () => {
-      setLoading(true);
-      setError(null);
+      setGroupLoading(true);
+      setGroupError(null);
       try {
         const projectsSnap = await getDocs(collection(db, "projects"));
-        const projectGroups: Group[] = projectsSnap.docs.map((d) => ({
+        const projectGroups: GroupType[] = projectsSnap.docs.map((d) => ({
           id: d.id,
           content: d.data().name || `專案 ${d.id}`,
         }));
-        setGroups(projectGroups);
+        setGroupList(projectGroups);
       } catch (error: unknown) {
-        setError((error as Error)?.message || "載入專案失敗");
+        setGroupError((error as Error)?.message || "載入專案失敗");
       } finally {
-        setLoading(false);
+        setGroupLoading(false);
       }
     })();
   }, []);
 
-  return { groups, setGroups, error, loading };
+  return { groupList, setGroupList, groupError, groupLoading };
 }
 
-function useFlowItems(groups: Group[]) {
-  const [items, setItems] = useState<FlowItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+// 取得所有流程 items
+function useFlowItemList(groups: GroupType[]) {
+  const [flowItemList, setFlowItemList] = useState<FlowItemType[]>([]);
+  const [flowError, setFlowError] = useState<string | null>(null);
+  const [flowLoading, setFlowLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (groups.length === 0) {
-      setItems([]);
-      setLoading(false);
+      setFlowItemList([]);
+      setFlowLoading(false);
       return;
     }
     (async () => {
-      setLoading(true);
-      setError(null);
+      setFlowLoading(true);
+      setFlowError(null);
       try {
-        const allFlowItems: FlowItem[] = [];
+        const allFlowItems: FlowItemType[] = [];
         for (const group of groups) {
           const projectFlowsSnap = await getDocs(
             collection(db, "projects", group.id, "flows")
           );
-          const projectFlowItems: FlowItem[] = projectFlowsSnap.docs.map((d) => {
+          const projectFlowItems: FlowItemType[] = projectFlowsSnap.docs.map((d) => {
             const data = d.data();
             return {
               id: d.id,
@@ -106,36 +110,37 @@ function useFlowItems(groups: Group[]) {
           });
           allFlowItems.push(...projectFlowItems);
         }
-        setItems(allFlowItems);
+        setFlowItemList(allFlowItems);
       } catch (error: unknown) {
-        setError((error as Error)?.message || "載入流程失敗");
+        setFlowError((error as Error)?.message || "載入流程失敗");
       } finally {
-        setLoading(false);
+        setFlowLoading(false);
       }
     })();
   }, [groups]);
 
-  return { items, setItems, error, loading };
+  return { flowItemList, setFlowItemList, flowError, flowLoading };
 }
 
-function useFlowCrud({
-  items,
-  setItems,
+// 封裝流程 CRUD
+function useFlowItemCrud({
+  flowItemList,
+  setFlowItemList,
   user,
 }: {
-  items: FlowItem[];
-  setItems: Dispatch<SetStateAction<FlowItem[]>>;
+  flowItemList: FlowItemType[];
+  setFlowItemList: Dispatch<SetStateAction<FlowItemType[]>>;
   user: User | null;
 }) {
   // 移動流程
-  const handleItemMove = useCallback(
+  const handleMoveFlowItem = useCallback(
     async (
       itemId: string,
       newStart: Date,
       newEnd: Date,
       newGroupId: string
     ): Promise<{ ok: boolean; error?: string }> => {
-      const currentItem = items.find((it) => it.id === itemId);
+      const currentItem = flowItemList.find((it) => it.id === itemId);
       if (!currentItem) {
         return { ok: false, error: "找不到要移動的流程項目。" };
       }
@@ -163,7 +168,7 @@ function useFlowCrud({
           // 刪除舊的
           await deleteDoc(oldFlowRef);
           // 更新本地 state（用新 ID 替換）
-          setItems((prev) =>
+          setFlowItemList((prev) =>
             prev
               .filter((it) => it.id !== itemId) // 移除舊的
               .concat({
@@ -178,7 +183,7 @@ function useFlowCrud({
           return { ok: true };
         }
         // 同 group 移動
-        setItems((prev) =>
+        setFlowItemList((prev) =>
           prev.map((it) =>
             it.id === itemId
               ? {
@@ -196,14 +201,14 @@ function useFlowCrud({
         return { ok: false, error: (error as Error)?.message || "未知錯誤" };
       }
     },
-    [items, setItems]
+    [flowItemList, setFlowItemList]
   );
 
   // 新增流程
-  const handleItemAdd = useCallback(
+  const handleAddFlowItem = useCallback(
     async (
-      item: TimelineStringItem
-    ): Promise<{ ok: boolean; newItem?: FlowItem; error?: string }> => {
+      item: TimelineItemType
+    ): Promise<{ ok: boolean; newItem?: FlowItemType; error?: string }> => {
       if (!user) return { ok: false, error: "未登入" };
       const flowName =
         typeof item.content === "string"
@@ -238,7 +243,7 @@ function useFlowCrud({
           collection(db, "projects", groupId, "flows"),
           newFlowData
         );
-        const newItem: FlowItem = {
+        const newItem: FlowItemType = {
           id: flowRef.id,
           group: groupId,
           content: flowName,
@@ -247,22 +252,22 @@ function useFlowCrud({
           projectId: groupId,
           userId: user.uid,
         };
-        setItems((prev) => [...prev, newItem]);
+        setFlowItemList((prev) => [...prev, newItem]);
         return { ok: true, newItem };
       } catch (error: unknown) {
         return { ok: false, error: (error as Error)?.message || "未知錯誤" };
       }
     },
-    [user, setItems]
+    [user, setFlowItemList]
   );
   // 刪除流程
-  const handleItemRemove = useCallback(
+  const handleRemoveFlowItem = useCallback(
     async (
-      item: TimelineStringItem
+      item: TimelineItemType
     ): Promise<{ ok: boolean; error?: string }> => {
       const itemId = item.id as string;
       if (!itemId) return { ok: false, error: "缺少 ID" };
-      const currentItem = items.find((it) => it.id === itemId);
+      const currentItem = flowItemList.find((it) => it.id === itemId);
       if (!currentItem) {
         return { ok: false, error: "找不到要刪除的流程項目。" };
       }
@@ -270,40 +275,41 @@ function useFlowCrud({
         await deleteDoc(
           doc(db, "projects", currentItem.projectId, "flows", itemId)
         );
-        setItems((prev) => prev.filter((it) => it.id !== itemId));
+        setFlowItemList((prev) => prev.filter((it) => it.id !== itemId));
         return { ok: true };
       } catch (error: unknown) {
         return { ok: false, error: (error as Error)?.message || "未知錯誤" };
       }
     },
-    [items, setItems]
+    [flowItemList, setFlowItemList]
   );
-  return { handleItemMove, handleItemAdd, handleItemRemove };
+  return { handleMoveFlowItem, handleAddFlowItem, handleRemoveFlowItem };
 }
 
-function useCreateProject({
+// 建立專案與初始流程
+function useProjectCreator({
   user,
-  setGroups,
-  setItems,
+  setGroupList,
+  setFlowItemList,
 }: {
   user: User | null;
-  setGroups: Dispatch<SetStateAction<Group[]>>;
-  setItems: Dispatch<SetStateAction<FlowItem[]>>;
+  setGroupList: Dispatch<SetStateAction<GroupType[]>>;
+  setFlowItemList: Dispatch<SetStateAction<FlowItemType[]>>;
 }) {
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [createSuccess, setCreateSuccess] = useState(false);
+  const [projectCreating, setProjectCreating] = useState(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [projectSuccess, setProjectSuccess] = useState(false);
 
   const handleCreateProject = async (
     newProjectName: string,
     resetProjectName: () => void
   ) => {
-    setCreateLoading(true);
-    setCreateError(null);
-    setCreateSuccess(false);
+    setProjectCreating(true);
+    setProjectError(null);
+    setProjectSuccess(false);
     if (!user || !newProjectName.trim()) {
-      setCreateError("專案名稱不能為空且需要登入。");
-      setCreateLoading(false);
+      setProjectError("專案名稱不能為空且需要登入。");
+      setProjectCreating(false);
       return;
     }
     try {
@@ -313,7 +319,7 @@ function useCreateProject({
         ownerId: user.uid,
       });
       const newProjectGroup = { id: projectRef.id, content: newProjectName };
-      setGroups((prev) => [...prev, newProjectGroup]);
+      setGroupList((prev) => [...prev, newProjectGroup]);
       const start = Timestamp.now();
       const end = Timestamp.fromMillis(start.toMillis() + 3600000);
       const initialFlowName = `${newProjectName} - 初始流程`;
@@ -327,7 +333,7 @@ function useCreateProject({
           userId: user.uid,
         }
       );
-      setItems((prev) => [
+      setFlowItemList((prev) => [
         ...prev,
         {
           id: flowRef.id,
@@ -339,19 +345,19 @@ function useCreateProject({
           userId: user.uid,
         },
       ]);
-      setCreateSuccess(true);
+      setProjectSuccess(true);
       resetProjectName();
     } catch (error: unknown) {
-      setCreateError((error as Error)?.message || "建立專案或初始流程失敗");
+      setProjectError((error as Error)?.message || "建立專案或初始流程失敗");
     } finally {
-      setCreateLoading(false);
+      setProjectCreating(false);
     }
   };
 
   return {
-    createLoading,
-    createError,
-    createSuccess,
+    projectCreating,
+    projectError,
+    projectSuccess,
     handleCreateProject,
   };
 }
@@ -368,8 +374,8 @@ function TimelineView({
   onMove,
   feedback,
 }: {
-  groups: Group[];
-  items: FlowItem[];
+  groups: GroupType[];
+  items: FlowItemType[];
   loading: boolean;
   error: string | null;
   onAdd: TimelineOptions["onAdd"];
@@ -384,8 +390,11 @@ function TimelineView({
     if (!timelineRef.current || loading || error) return;
     if (!timelineInstance.current) {
       const container = timelineRef.current;
-      const groupsArr = groups;
-      const itemsArr: TimelineStringItem[] = items.map((it) => ({
+      const groupsArr: DataGroup[] = groups.map((g) => ({
+        id: g.id,
+        content: g.content,
+      }));
+      const itemsArr: DataItem[] = items.map((it) => ({
         id: it.id,
         group: it.group,
         content: it.content,
@@ -409,8 +418,8 @@ function TimelineView({
       try {
         timelineInstance.current = new Timeline(
           container,
-          itemsArr as any,
-          groupsArr as any,
+          itemsArr,
+          groupsArr,
           options
         );
       } catch {}
@@ -421,19 +430,23 @@ function TimelineView({
         timelineInstance.current = null;
       }
     };
-  }, [timelineRef, loading, error]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timelineRef, loading, error, groups, items, onAdd, onRemove, onMove]);
   useEffect(() => {
     if (timelineInstance.current) {
-      timelineInstance.current.setGroups(groups as any);
-      timelineInstance.current.setItems(
-        items.map((it) => ({
-          id: it.id,
-          group: it.group,
-          content: it.content,
-          start: it.start,
-          end: it.end,
-        })) as any
-      );
+      const groupsArr: DataGroup[] = groups.map((g) => ({
+        id: g.id,
+        content: g.content,
+      }));
+      const itemsArr: DataItem[] = items.map((it) => ({
+        id: it.id,
+        group: it.group,
+        content: it.content,
+        start: it.start,
+        end: it.end,
+      }));
+      timelineInstance.current.setGroups(groupsArr);
+      timelineInstance.current.setItems(itemsArr);
     }
   }, [groups, items]);
 
@@ -496,34 +509,34 @@ export default function ProjectsPage() {
   const user: User | null = userRaw ?? null;
 
   const {
-    groups,
-    setGroups,
-    error: groupError,
-    loading: groupLoading,
-  } = useProjectGroups();
+    groupList,
+    setGroupList,
+    groupError,
+    groupLoading,
+  } = useProjectGroupList();
   const {
-    items,
-    setItems,
-    error: itemError,
-    loading: itemsLoading,
-  } = useFlowItems(groups);
+    flowItemList,
+    setFlowItemList,
+    flowError,
+    flowLoading,
+  } = useFlowItemList(groupList);
 
   const [newProjectName, setNewProjectName] = useState<string>("");
   const {
-    handleItemMove,
-    handleItemAdd,
-    handleItemRemove,
-  } = useFlowCrud({ items, setItems, user });
+    handleMoveFlowItem,
+    handleAddFlowItem,
+    handleRemoveFlowItem,
+  } = useFlowItemCrud({ flowItemList, setFlowItemList, user });
 
   const {
-    createLoading,
-    createError,
-    createSuccess,
+    projectCreating,
+    projectError,
+    projectSuccess,
     handleCreateProject,
-  } = useCreateProject({
+  } = useProjectCreator({
     user,
-    setGroups,
-    setItems,
+    setGroupList,
+    setFlowItemList,
   });
 
   const [feedback, setFeedback] = useState<{ message?: string; type?: "error" | "success" }>({});
@@ -531,10 +544,10 @@ export default function ProjectsPage() {
   const handleProjectCreate = () =>
     handleCreateProject(newProjectName, () => setNewProjectName(""));
 
-  // vis-timeline 的 callback 型別正確，item 是 TimelineStringItem
+  // vis-timeline 的 callback 型別正確，item 是 TimelineItemType
   const timelineOnAdd: TimelineOptions["onAdd"] = async (item, cb) => {
     const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
-    const res = await handleItemAdd(safeItem as TimelineStringItem);
+    const res = await handleAddFlowItem(safeItem as TimelineItemType);
     if (res.ok && res.newItem) {
       setFeedback({ message: "新增流程成功", type: "success" });
       cb({
@@ -551,7 +564,7 @@ export default function ProjectsPage() {
   };
   const timelineOnRemove: TimelineOptions["onRemove"] = async (item, cb) => {
     const safeItem = { ...item, content: typeof item.content === "string" ? item.content : "" };
-    const res = await handleItemRemove(safeItem as TimelineStringItem);
+    const res = await handleRemoveFlowItem(safeItem as TimelineItemType);
     if (res.ok) {
       setFeedback({ message: "刪除流程成功", type: "success" });
       cb(item);
@@ -578,7 +591,7 @@ export default function ProjectsPage() {
       typeof safeItem.group === "string" || typeof safeItem.group === "number"
         ? String(safeItem.group)
         : "";
-    const res = await handleItemMove(
+    const res = await handleMoveFlowItem(
       safeItem.id as string,
       start,
       end,
@@ -604,15 +617,15 @@ export default function ProjectsPage() {
         newProjectName={newProjectName}
         setNewProjectName={setNewProjectName}
         onCreate={handleProjectCreate}
-        loading={createLoading}
-        error={createError}
-        success={createSuccess}
+        loading={projectCreating}
+        error={projectError}
+        success={projectSuccess}
       />
       <TimelineView
-        groups={groups}
-        items={items}
-        loading={groupLoading || itemsLoading}
-        error={groupError || itemError}
+        groups={groupList}
+        items={flowItemList}
+        loading={groupLoading || flowLoading}
+        error={groupError || flowError}
         onAdd={timelineOnAdd}
         onRemove={timelineOnRemove}
         onMove={timelineOnMove}
