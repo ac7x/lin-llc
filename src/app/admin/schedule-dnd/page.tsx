@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
 import { Timeline, DataSet } from "vis-timeline/standalone";
@@ -32,6 +32,47 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
+  const datasetRef = useRef<DataSet<any, 'id'>>(null);
+
+  const handleItemMove = useCallback(async (itemId: string, dragTime: number, newGroupId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) {
+      throw new Error("找不到項目");
+    }
+    
+    const duration = item.end.getTime() - item.start.getTime();
+    const scheduleRef = doc(db, "schedules", itemId);
+    
+    try {
+      console.log("正在更新數據庫...", {itemId, dragTime, newGroupId});
+      await updateDoc(scheduleRef, {
+        userId: newGroupId,
+        start: Timestamp.fromMillis(dragTime),
+        end: Timestamp.fromMillis(dragTime + duration),
+      });
+      
+      setItems(prev =>
+        prev.map(it =>
+          it.id === itemId
+            ? {
+                ...it,
+                group: newGroupId,
+                userId: newGroupId,
+                start: new Date(dragTime),
+                end: new Date(dragTime + duration)
+              }
+            : it
+        )
+      );
+      
+      console.log("數據庫更新成功");
+      return true;
+    } catch (error: unknown) {
+      console.error("更新數據庫失敗:", error);
+      alert("更新日程失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
+      return false;
+    }
+  }, [items]);
 
   useEffect(() => {
     (async () => {
@@ -78,13 +119,26 @@ export default function ProjectsPage() {
     if (!timelineRef.current || loading || error) return;
 
     const container = timelineRef.current;
-    const groupsDataSet = new DataSet(groups);
-    const itemsDataSet = new DataSet(items);
+    const groupsDataSet = new DataSet<any, 'id'>(groups);
+    datasetRef.current = new DataSet<any, 'id'>(items);
 
     const options = {
       editable: {
+        add: false,
         updateTime: true,
         updateGroup: true,
+        remove: false
+      },
+      onMoving: function(item: any, callback: Function) {
+        callback(item);
+      },
+      onMove: async function(item: any, callback: Function) {
+        const success = await handleItemMove(item.id, item.start.getTime(), item.group);
+        if (success) {
+          callback(item);
+        } else {
+          callback(null);
+        }
       },
       snap: (date: Date) => {
         const hour = date.getHours();
@@ -94,21 +148,22 @@ export default function ProjectsPage() {
       orientation: {
         axis: "both",
         item: "top",
-      },
+      }
     };
 
-    timelineInstance.current = new Timeline(container, itemsDataSet, groupsDataSet, options);
-
-    timelineInstance.current.on("move", function(item: any) {
-      handleItemMove(item.id, item.start.getTime(), item.group);
-    });
+    try {
+      timelineInstance.current = new Timeline(container, datasetRef.current, groupsDataSet, options);
+      console.log('Timeline 已初始化');
+    } catch (err) {
+      console.error("Timeline 初始化失敗:", err);
+    }
 
     return () => {
       if (timelineInstance.current) {
         timelineInstance.current.destroy();
       }
     };
-  }, [loading, error, items, groups]);
+  }, [loading, error, items, groups, handleItemMove]);
 
   const handleCreateProject = async () => {
     setCreateLoading(true);
@@ -148,34 +203,6 @@ export default function ProjectsPage() {
       setCreateError((err as Error).message || "建立專案失敗");
     } finally {
       setCreateLoading(false);
-    }
-  };
-
-  const handleItemMove = async (itemId: string, dragTime: number, newGroupId: string) => {
-    const item = items.find(i => i.id === itemId);
-    if (!item) return;
-    const duration = item.end.getTime() - item.start.getTime();
-    try {
-      await updateDoc(doc(db, "schedules", itemId), {
-        userId: newGroupId,
-        start: Timestamp.fromMillis(dragTime),
-        end: Timestamp.fromMillis(dragTime + duration),
-      });
-      setItems(prev =>
-        prev.map(it =>
-          it.id === itemId
-            ? {
-                ...it,
-                group: newGroupId,
-                userId: newGroupId,
-                start: new Date(dragTime),
-                end: new Date(dragTime + duration)
-              }
-            : it
-        )
-      );
-    } catch {
-      alert("更新日程失敗");
     }
   };
 
