@@ -34,32 +34,33 @@ export default function ProjectsPage() {
   const timelineInstance = useRef<Timeline | null>(null);
   const datasetRef = useRef<DataSet<any, 'id'>>(null);
 
-  const handleItemMove = useCallback(async (itemId: string, dragTime: number, newGroupId: string) => {
-    const item = items.find(i => i.id === itemId);
-    if (!item) {
-      throw new Error("找不到項目");
+  const handleItemMove = useCallback(async (itemId: string, newStart: Date, newEnd: Date, newGroupId: string) => {
+    const itemInState = items.find(i => i.id === itemId);
+    if (!itemInState) {
+      console.error("在 items 狀態中找不到項目:", itemId);
+      alert("更新日程失敗: 找不到項目。");
+      return false;
     }
     
-    const duration = item.end.getTime() - item.start.getTime();
     const scheduleRef = doc(db, "schedules", itemId);
     
     try {
-      console.log("正在更新數據庫...", {itemId, dragTime, newGroupId});
+      console.log("正在更新數據庫...", { itemId, newStart, newEnd, newGroupId });
       await updateDoc(scheduleRef, {
-        userId: newGroupId,
-        start: Timestamp.fromMillis(dragTime),
-        end: Timestamp.fromMillis(dragTime + duration),
+        userId: newGroupId, // group ID 对应 userId
+        start: Timestamp.fromDate(newStart),
+        end: Timestamp.fromDate(newEnd),
       });
       
-      setItems(prev =>
-        prev.map(it =>
+      setItems(prevItems =>
+        prevItems.map(it =>
           it.id === itemId
             ? {
                 ...it,
                 group: newGroupId,
                 userId: newGroupId,
-                start: new Date(dragTime),
-                end: new Date(dragTime + duration)
+                start: newStart,
+                end: newEnd
               }
             : it
         )
@@ -135,11 +136,14 @@ export default function ProjectsPage() {
         callback(item);
       },
       onMove: async function(item: any, callback: Function) {
-        const success = await handleItemMove(item.id, item.start.getTime(), item.group);
+        // item.start 和 item.end 是由 vis-timeline 提供的 Date 物件
+        // item.group 是新的 group id
+        console.log("onMove - item 接收到:", { id: item.id, start: item.start, end: item.end, group: item.group });
+        const success = await handleItemMove(item.id, item.start, item.end, item.group);
         if (success) {
-          callback(item);
+          callback(item); // 確認時間軸中的更改
         } else {
-          callback(null);
+          callback(null); // 撤銷時間軸中的更改
         }
       },
       snap: (date: Date) => {
