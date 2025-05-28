@@ -30,6 +30,7 @@ export default function ProjectsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -47,6 +48,7 @@ export default function ProjectsPage() {
           id: doc.id,
           name: doc.data().name || "未命名專案",
         }));
+        setProjects(p); // 新增：儲存所有專案
 
         const schedulesSnap = await getDocs(collection(db, "schedules"));
         setItems(schedulesSnap.docs.map(doc => {
@@ -180,6 +182,43 @@ export default function ProjectsPage() {
       </div>
       {createError && <div style={{ color: "red" }}>{createError}</div>}
       {createSuccess && <div style={{ color: "green" }}>專案已建立！</div>}
+      {/* 新增：專案卡片列表 */}
+      {projects.length > 0 && (
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '16px',
+          margin: '16px 0',
+        }}>
+          {projects.map((p, idx) => (
+            <div
+              key={p.id}
+              style={{
+                minWidth: 50, 
+                maxWidth: 100,
+                flex: '1 1 110px',
+                background: idx % 2 === 0 ? '#f7fafd' : '#e9f0f7',
+                border: '1px solid #e0e0e0',
+                borderRadius: 8,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                padding: '8px',
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                height: 25, // 高度砍一半
+                fontSize: '1.1em',
+                fontWeight: 500,
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                transition: 'background 0.2s',
+              }}
+            >
+              {p.name}
+            </div>
+          ))}
+        </div>
+      )}
       {loading && <div>載入中...</div>}
       {error && <div style={{ color: "red" }}>{error}</div>}
       {!loading && !error && (
