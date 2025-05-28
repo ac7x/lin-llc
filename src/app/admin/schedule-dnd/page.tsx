@@ -8,15 +8,16 @@ import "vis-timeline/styles/vis-timeline-graph2d.css";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useAuthState } from "react-firebase-hooks/auth";
 
-type Group = { id: string; content: string; };
-type ScheduleItem = {
+type Group = { id: string; content: string; }; // Remains the same, content will be project name
+// Renamed ScheduleItem to FlowItem and updated fields
+type FlowItem = {
   id: string;
-  group: string; // Corresponds to Group['id']
-  content: string;
+  group: string; // Corresponds to Project['id'] (this is projectId)
+  content: string; // Name of the flow
   start: Date;
   end: Date;
-  projectId: string;
-  userId: string; // This is your application's user ID, often same as group if groups are users
+  projectId: string; // Explicitly keep projectId
+  userId?: string; // Optional: if flows have a user associated with them (e.g., creator/assignee)
 };
 
 // Interface for items passed by vis-timeline events like onAdd, onRemove
@@ -25,17 +26,19 @@ interface TimelineEventItem {
   content?: string | HTMLElement; // Adjusted to include HTMLElement
   start?: Date;
   end?: Date;
-  group?: string | number;
+  group?: string | number; // This will be projectId when adding/moving
   // Add any other properties that vis-timeline might pass and you might use
 }
 
 // Type for the callback function in vis-timeline events
-type TimelineEventCallback = (item: TimelineEventItem | ScheduleItem | null) => void;
+// Updated to use FlowItem
+type TimelineEventCallback = (item: TimelineEventItem | FlowItem | null) => void;
 
 
 export default function ProjectsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
-  const [items, setItems] = useState<ScheduleItem[]>([]);
+  // Updated to use FlowItem
+  const [items, setItems] = useState<FlowItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
@@ -45,23 +48,26 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
-  const datasetRef = useRef<DataSet<ScheduleItem, 'id'>>(null); // Changed any to ScheduleItem
+  // Updated to use FlowItem
+  const datasetRef = useRef<DataSet<FlowItem, 'id'>>(null);
   const isProcessingDoubleClick = useRef(false);
 
   const handleItemMove = useCallback(async (itemId: string, newStart: Date, newEnd: Date, newGroupId: string) => {
     const itemInState = items.find(i => i.id === itemId);
     if (!itemInState) {
       console.error("在 items 狀態中找不到項目:", itemId);
-      alert("更新日程失敗: 找不到項目。");
+      alert("更新流程失敗: 找不到項目。");
       return false;
     }
     
-    const scheduleRef = doc(db, "schedules", itemId);
+    // Changed "schedules" to "flows"
+    const flowRef = doc(db, "flows", itemId);
     
     try {
-      console.log("正在更新數據庫...", { itemId, newStart, newEnd, newGroupId });
-      await updateDoc(scheduleRef, {
-        userId: newGroupId, // group ID 对应 userId
+      console.log("正在更新數據庫 (flow)...", { itemId, newStart, newEnd, newGroupId });
+      // Changed field from userId to projectId to reflect new grouping
+      await updateDoc(flowRef, {
+        projectId: newGroupId, // newGroupId is the new projectId
         start: Timestamp.fromDate(newStart),
         end: Timestamp.fromDate(newEnd),
       });
@@ -71,23 +77,24 @@ export default function ProjectsPage() {
           it.id === itemId
             ? {
                 ...it,
-                group: newGroupId,
-                userId: newGroupId,
+                group: newGroupId, // newGroupId is projectId
+                projectId: newGroupId, // Ensure projectId field is also updated
                 start: newStart,
                 end: newEnd
+                // userId field of FlowItem is not changed here, assuming it's independent of projectId
               }
             : it
         )
       );
       
-      console.log("數據庫更新成功");
+      console.log("數據庫更新成功 (flow)");
       return true;
     } catch (error: unknown) {
-      console.error("更新數據庫失敗:", error);
-      alert("更新日程失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
+      console.error("更新數據庫失敗 (flow):", error);
+      alert("更新流程失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
       return false;
     }
-  }, [items]);
+  }, [items]); // Removed setItems from dependencies as it's a setter from useState
 
   const handleItemAdd = useCallback(async (itemDataFromTimeline: TimelineEventItem, callback: TimelineEventCallback) => {
     if (!user) {
@@ -96,87 +103,86 @@ export default function ProjectsPage() {
       return;
     }
 
-    // Provide default values or checks for potentially undefined properties
-    const contentString = typeof itemDataFromTimeline.content === 'string' ? itemDataFromTimeline.content : 
-                          itemDataFromTimeline.content instanceof HTMLElement ? itemDataFromTimeline.content.innerText : "新排程 (自動建立)";
-    const newProjectName = contentString || "新排程 (自動建立)";
+    const flowName = typeof itemDataFromTimeline.content === 'string' ? itemDataFromTimeline.content : 
+                          itemDataFromTimeline.content instanceof HTMLElement ? itemDataFromTimeline.content.innerText : "新流程";
     
     const startDate = itemDataFromTimeline.start instanceof Date ? itemDataFromTimeline.start : new Date();
-    const endDate = itemDataFromTimeline.end instanceof Date ? itemDataFromTimeline.end : new Date(startDate.getTime() + 86400000); // Default to 1 day duration
-    const groupId = typeof itemDataFromTimeline.group === 'string' || typeof itemDataFromTimeline.group === 'number' ? String(itemDataFromTimeline.group) : user.uid; // Default to current user if group is undefined
+    const endDate = itemDataFromTimeline.end instanceof Date ? itemDataFromTimeline.end : new Date(startDate.getTime() + 3600000); // Default to 1 hour duration for a flow
+    const targetProjectId = typeof itemDataFromTimeline.group === 'string' || typeof itemDataFromTimeline.group === 'number' ? String(itemDataFromTimeline.group) : null;
 
+    if (!targetProjectId) {
+        alert("無法確定專案以新增流程。請在專案列上新增。");
+        callback(null);
+        return;
+    }
 
     setCreateLoading(true);
     setCreateError(null);
     setCreateSuccess(false);
 
     try {
-      // 1. Create a new project
-      const projectRef = await addDoc(collection(db, "projects"), {
-        name: newProjectName,
-        createdAt: Timestamp.now(),
-        // Consider adding ownerId: user.uid if your projects have owners
-      });
-
-      // 2. Create the schedule item linked to this new project
-      const newScheduleData = {
-        projectId: projectRef.id,
-        userId: groupId, // Use checked groupId
-        start: Timestamp.fromDate(startDate), // Use checked startDate
-        end: Timestamp.fromDate(endDate), // Use checked endDate
+      // Adding a flow, not a project. Project (group) already exists.
+      const newFlowData = {
+        projectId: targetProjectId,
+        name: flowName,
+        start: Timestamp.fromDate(startDate),
+        end: Timestamp.fromDate(endDate),
+        userId: user.uid, // Assuming the current user creates/owns the flow
       };
-      const scheduleRef = await addDoc(collection(db, "schedules"), newScheduleData);
+      // Changed "schedules" to "flows"
+      const flowRef = await addDoc(collection(db, "flows"), newFlowData);
 
-      const newItemForState: ScheduleItem = {
-        id: scheduleRef.id,
-        group: groupId, // Use checked groupId
-        content: newProjectName, 
-        start: startDate, // Use checked startDate
-        end: endDate, // Use checked endDate
-        projectId: projectRef.id,
-        userId: groupId, // Use checked groupId
+      const newItemForState: FlowItem = {
+        id: flowRef.id,
+        group: targetProjectId, // group is projectId
+        content: flowName, 
+        start: startDate,
+        end: endDate,
+        projectId: targetProjectId,
+        userId: user.uid, // Match data sent to Firestore
       };
 
       setItems(prev => [...prev, newItemForState]);
-      // The timeline will update due to items dependency in its useEffect
       callback(newItemForState);
       setCreateSuccess(true);
+      console.log("流程已成功新增到專案:", targetProjectId);
     } catch (err: unknown) {
-      console.error("新增專案與排程失敗:", err);
-      alert("新增失敗: " + (err instanceof Error ? err.message : "未知錯誤"));
+      console.error("新增流程失敗:", err);
+      alert("新增流程失敗: " + (err instanceof Error ? err.message : "未知錯誤"));
       callback(null);
-      setCreateError((err as Error).message || "新增失敗");
+      setCreateError((err as Error).message || "新增流程失敗");
     } finally {
       setCreateLoading(false);
     }
-  }, [user, setItems]);
+  }, [user]); // Removed setItems, setCreateLoading, setCreateError, setCreateSuccess from dependencies
 
   const handleItemRemove = useCallback(async (itemDataFromTimeline: TimelineEventItem, callback: TimelineEventCallback) => {
-    const itemId = itemDataFromTimeline.id as string; // Assuming id will be a string for existing items
+    const itemId = itemDataFromTimeline.id as string;
     if (!itemId) {
       callback(null);
       return;
     }
 
     // Optional: Add a confirmation dialog
-    // if (!confirm("確定要刪除此項目嗎？")) {
+    // if (!confirm("確定要刪除此流程嗎？")) {
     //   callback(null);
     //   return;
     // }
 
     try {
-      await deleteDoc(doc(db, "schedules", itemId));
+      // Changed "schedules" to "flows"
+      await deleteDoc(doc(db, "flows", itemId));
       setItems(prev => prev.filter(it => it.id !== itemId));
-      // The timeline will update due to items dependency in its useEffect
-      callback(itemDataFromTimeline); // Confirm deletion to timeline
+      callback(itemDataFromTimeline); 
+      console.log("流程已成功刪除:", itemId);
     } catch (error: unknown) {
-      console.error("刪除排程失敗:", error);
-      alert("刪除排程失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
+      console.error("刪除流程失敗:", error);
+      alert("刪除流程失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
       callback(null);
     }
-  }, [setItems]);
+  }, []); // Removed setItems from dependencies
 
-  const handleItemDoubleClick = useCallback(async (properties: TimelineEventPropertiesResult | null) => { // properties can be any for vis-timeline events
+  const handleItemDoubleClick = useCallback(async (properties: TimelineEventPropertiesResult | null) => {
     if (properties && properties.event && typeof properties.event.stopPropagation === 'function') {
       properties.event.stopPropagation();
     }
@@ -184,7 +190,6 @@ export default function ProjectsPage() {
     if (isProcessingDoubleClick.current) {
       return;
     }
-
     isProcessingDoubleClick.current = true;
 
     try {
@@ -192,33 +197,34 @@ export default function ProjectsPage() {
         return;
       }
 
-      const itemId = properties.item as string; // Assuming item ID is a string
+      const itemId = properties.item as string;
       const currentItem = items.find(i => i.id === itemId);
 
       if (!currentItem) {
-        console.error("在 items 狀態中找不到項目:", itemId);
-        alert("找不到要修改的項目。");
+        console.error("在 items 狀態中找不到流程:", itemId);
+        alert("找不到要修改的流程。");
         return;
       }
 
-      const newName = prompt("請輸入新的專案名稱：", currentItem.content);
+      // Prompt for the new flow name
+      const newName = prompt("請輸入新的流程名稱：", currentItem.content);
 
       if (newName && newName.trim() !== "" && newName !== currentItem.content) {
-        setCreateLoading(true); // Indicate loading state
+        setCreateLoading(true); 
         try {
-          // 1. Update the project name in Firestore
-          const projectRef = doc(db, "projects", currentItem.projectId);
-          await updateDoc(projectRef, { name: newName });
+          // Update the flow name in Firestore
+          const flowRef = doc(db, "flows", itemId);
+          await updateDoc(flowRef, { name: newName });
 
-          // 2. Update the item in the local state
           setItems(prevItems =>
             prevItems.map(it =>
               it.id === itemId ? { ...it, content: newName } : it
             )
           );
+          console.log("流程名稱已更新:", itemId);
         } catch (error: unknown) {
-          console.error("更新專案名稱失敗:", error);
-          alert("更新專案名稱失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
+          console.error("更新流程名稱失敗:", error);
+          alert("更新流程名稱失敗: " + (error instanceof Error ? error.message : "未知錯誤"));
         } finally {
           setCreateLoading(false);
         }
@@ -226,73 +232,76 @@ export default function ProjectsPage() {
     } finally {
       isProcessingDoubleClick.current = false;
     }
-  }, [items, setItems, setCreateLoading]); // Added setCreateLoading to dependencies
+  }, [items]); // Removed setItems, setCreateLoading from dependencies
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const usersSnap = await getDocs(collection(db, "users"));
-        const g = usersSnap.docs.map(doc => ({
-          id: doc.id,
-          content: doc.data().displayName || doc.data().name || doc.id,
-        }));
-        setGroups(g);
-
+        // 1. Fetch Projects for Groups
         const projectsSnap = await getDocs(collection(db, "projects"));
-        const p = projectsSnap.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name || "未命名專案",
+        const projectGroups: Group[] = projectsSnap.docs.map(docSnapshot => ({ // Renamed doc to docSnapshot to avoid conflict
+          id: docSnapshot.id,
+          content: docSnapshot.data().name || `專案 ${docSnapshot.id}`,
+        }));
+        setGroups(projectGroups);
+
+        // Store projects data for easy lookup of names for flows
+        const projectsData = projectsSnap.docs.map(docSnapshot => ({
+          id: docSnapshot.id,
+          name: docSnapshot.data().name || "未命名專案",
         }));
 
-        const schedulesSnap = await getDocs(collection(db, "schedules"));
-        const scheduleItems = schedulesSnap.docs.map(doc => {
-          const d = doc.data();
-          const pj = p.find(pj => pj.id === d.projectId);
+        // 2. Fetch Flows for Items
+        // Changed "schedules" to "flows"
+        const flowsSnap = await getDocs(collection(db, "flows"));
+        const flowItems: FlowItem[] = flowsSnap.docs.map(docSnapshot => { // Renamed doc to docSnapshot
+          const d = docSnapshot.data();
+          const projectForFlow = projectsData.find(p => p.id === d.projectId);
           return {
-            id: doc.id,
-            group: d.userId,
-            content: pj ? pj.name : "未知專案",
+            id: docSnapshot.id,
+            group: d.projectId, // group is the projectId
+            content: d.name || (projectForFlow ? `流程 (${projectForFlow.name})` : "未命名流程"), // Flow's own name or derived
             start: d.start ? d.start.toDate() : new Date(),
             end: d.end ? d.end.toDate() : new Date(Date.now() + 86400000),
             projectId: d.projectId,
-            userId: d.userId,
+            userId: d.userId, // userId from flow data, if exists
           };
         });
-        setItems(scheduleItems);
+        setItems(flowItems);
       } catch (err: unknown) {
-        setError((err as Error).message || "載入失敗");
+        setError((err as Error).message || "載入資料失敗");
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, []); // Dependencies are correct (empty for initial load)
 
   useEffect(() => {
     if (!timelineRef.current || loading || error) return;
 
     const container = timelineRef.current;
     const groupsDataSet = new DataSet<TimelineGroup, 'id'>(groups);
-    datasetRef.current = new DataSet<ScheduleItem, 'id'>(items);
+    datasetRef.current = new DataSet<FlowItem, 'id'>(items);
 
     const options: TimelineOptions = {
       editable: {
         add: true,
         remove: true,
         updateTime: true,
-        updateGroup: true,
+        updateGroup: true, // Allows dragging items between groups (projects)
         overrideItems: true,
       },
+      // Cast to expected vis-timeline types, ensuring our FlowItem is compatible or handled
       onAdd: handleItemAdd as (item: TimelineItem, callback: (item: TimelineItem | null) => void) => void, 
       onRemove: handleItemRemove as (item: TimelineItem, callback: (item: TimelineItem | null) => void) => void,
       onMoving: function(item: TimelineItem, callback: (item: TimelineItem | null) => void) { // Typed item and callback
         callback(item);
       },
-      onMove: async function(item: TimelineItem, callback: (item: TimelineItem | null) => void) { // Changed VisTimelineMoveCallback to (item: TimelineItem | null) => void
-        // item.start and item.end are Date objects from vis-timeline
-        // item.group is the new group id (string)
+      onMove: async function(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
         console.log("onMove - item 接收到:", { id: item.id, start: item.start, end: item.end, group: item.group });
+        // item.group is the new projectId
         const success = await handleItemMove(item.id as string, item.start as Date, item.end as Date, item.group as string);
         if (success) {
           callback(item); // Confirm changes in the timeline
@@ -339,32 +348,46 @@ export default function ProjectsPage() {
       return;
     }
     try {
+      // 1. Create the new project
       const projectRef = await addDoc(collection(db, "projects"), {
         name: newProjectName,
         createdAt: Timestamp.now(),
+        ownerId: user.uid, // Optionally add owner
       });
+      const newProjectGroup = { id: projectRef.id, content: newProjectName };
+      setGroups(prev => [...prev, newProjectGroup]);
+
+      // 2. Create an initial flow for this new project
       const start = Timestamp.now();
-      const end = Timestamp.fromMillis(start.toMillis() + 86400000);
-      const scheduleRef = await addDoc(collection(db, "schedules"), {
+      const end = Timestamp.fromMillis(start.toMillis() + 3600000); // 1 hour default for initial flow
+      const initialFlowName = `${newProjectName} - 初始流程`;
+      
+      // Changed "schedules" to "flows"
+      const flowRef = await addDoc(collection(db, "flows"), {
         projectId: projectRef.id,
-        userId: user.uid,
+        name: initialFlowName,
         start,
         end,
+        userId: user.uid, // User who created the project/initial flow
       });
-      const newItem = {
-        id: scheduleRef.id,
-        group: user.uid,
-        content: newProjectName,
+
+      const newFlowItem: FlowItem = {
+        id: flowRef.id,
+        group: projectRef.id, // Group is the new project's ID
+        content: initialFlowName, // Content is the flow's name
         start: start.toDate(),
         end: end.toDate(),
         projectId: projectRef.id,
         userId: user.uid,
       };
-      setItems(prev => [...prev, newItem]);
+      setItems(prev => [...prev, newFlowItem]);
+      
       setCreateSuccess(true);
       setNewProjectName("");
+      console.log("新專案及其初始流程已建立:", projectRef.id);
     } catch (err: unknown) {
-      setCreateError((err as Error).message || "建立專案失敗");
+      setCreateError((err as Error).message || "建立專案或初始流程失敗");
+      console.error("建立專案或初始流程失敗:", err);
     } finally {
       setCreateLoading(false);
     }
