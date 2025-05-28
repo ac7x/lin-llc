@@ -398,98 +398,55 @@ function TimelineView({
 }) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
-  const lastKnownWindow = useRef<{ start: Date; end: Date } | null>(null); // 新增 ref 來保存視窗狀態
 
   useEffect(() => {
-    if (!timelineRef.current || loading || error) {
-      // 如果無法建立時間軸 (例如正在載入或發生錯誤)，
-      // 並且存在舊的實例，則銷毀它。
-      if (timelineInstance.current) {
-        try {
-          lastKnownWindow.current = timelineInstance.current.getWindow();
-        } catch (e) { /* 忽略錯誤 */ }
-        timelineInstance.current.destroy();
-        timelineInstance.current = null;
-      }
-      return;
-    }
-
-    // 如果依賴項變更導致此 effect 重新執行，
-    // 並且已存在一個時間軸實例，則在銷毀前保存其視窗狀態。
-    if (timelineInstance.current) {
+    if (!timelineRef.current || loading || error) return;
+    if (!timelineInstance.current) {
+      const container = timelineRef.current;
+      const groupsArr: DataGroup[] = groups.map((g) => ({
+        id: g.id,
+        content: g.content,
+      }));
+      const itemsArr: DataItem[] = items.map((it) => ({
+        id: it.id,
+        group: it.group,
+        content: it.content,
+        start: it.start,
+        end: it.end,
+      }));
+      const options: TimelineOptions = {
+        editable: {
+          add: true,
+          remove: true,
+          updateTime: true,
+          updateGroup: true,
+          overrideItems: true,
+        },
+        onAdd,
+        onRemove,
+        onMoving: (item, cb) => cb(item),
+        onMove,
+        orientation: { axis: "both", item: "top" },
+      };
       try {
-        lastKnownWindow.current = timelineInstance.current.getWindow();
-      } catch (e) { /* 忽略錯誤 */ }
-      timelineInstance.current.destroy();
-      timelineInstance.current = null; // 確保在建立新實例前為 null
+        timelineInstance.current = new Timeline(
+          container,
+          itemsArr,
+          groupsArr,
+          options
+        );
+      } catch {}
     }
-
-    // 建立新的時間軸實例
-    const container = timelineRef.current;
-    const groupsArr: DataGroup[] = groups.map((g) => ({
-      id: g.id,
-      content: g.content,
-    }));
-    const itemsArr: DataItem[] = items.map((it) => ({
-      id: it.id,
-      group: it.group,
-      content: it.content,
-      start: it.start,
-      end: it.end,
-    }));
-
-    // 使用最後已知的視窗或預設值
-    const initialStart = lastKnownWindow.current?.start || new Date(Date.now() - 3 * 24 * 60 * 60 * 1000); // 預設：3 天前
-    const initialEnd = lastKnownWindow.current?.end || new Date(Date.now() + 4 * 24 * 60 * 60 * 1000);   // 預設：4 天後
-
-    const options: TimelineOptions = {
-      editable: {
-        add: true,
-        remove: true,
-        updateTime: true,
-        updateGroup: true,
-        overrideItems: true,
-      },
-      onAdd,
-      onRemove,
-      onMoving: (item, cb) => cb(item),
-      onMove,
-      orientation: { axis: "both", item: "top" },
-      zoomKey: 'ctrlKey', // 保留先前的修復
-      start: initialStart, // 設定開始時間
-      end: initialEnd,     // 設定結束時間
-    };
-
-    try {
-      timelineInstance.current = new Timeline(
-        container,
-        itemsArr,
-        groupsArr,
-        options
-      );
-    } catch (err) {
-      // 在實際應用中，這裡可以加入更完善的錯誤處理
-      console.error("建立時間軸失敗:", err);
-    }
-    
     return () => {
       if (timelineInstance.current) {
-        // 在銷毀前保存視窗狀態，供下次重新建立時使用
-        try {
-          lastKnownWindow.current = timelineInstance.current.getWindow();
-        } catch (e) { /* 忽略錯誤 */ }
         timelineInstance.current.destroy();
         timelineInstance.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timelineRef, loading, error, groups, items, onAdd, onRemove, onMove]); // 依賴項保持不變
-
+  }, [timelineRef, loading, error, groups, items, onAdd, onRemove, onMove]);
   useEffect(() => {
     if (timelineInstance.current) {
-      // 當 groups 或 items 更新時，調用 setGroups 和 setItems。
-      // 由於時間軸初始化時已設定 start/end，這裡的 setItems 不應觸發自動縮放。
-      // 如果仍然有問題，可以在此處也加入 getWindow/setWindow 的邏輯作為保險。
       const groupsArr: DataGroup[] = groups.map((g) => ({
         id: g.id,
         content: g.content,
