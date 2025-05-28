@@ -30,6 +30,9 @@ export default function ProjectsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  // 新增拖曳狀態
+  const [dragProjectId, setDragProjectId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -47,6 +50,7 @@ export default function ProjectsPage() {
           id: doc.id,
           name: doc.data().name || "未命名專案",
         }));
+        setProjects(p);
 
         const schedulesSnap = await getDocs(collection(db, "schedules"));
         setItems(schedulesSnap.docs.map(doc => {
@@ -157,9 +161,88 @@ export default function ProjectsPage() {
     }
   };
 
-  const now = new Date();
-  const defaultTimeStart = subDays(startOfDay(now), 2);
-  const defaultTimeEnd = addDays(endOfDay(now), 5);
+  // 拖曳開始
+  const handleDragStart = (projectId: string) => {
+    setDragProjectId(projectId);
+  };
+  // 拖曳結束
+  const handleDragEnd = () => {
+    setDragProjectId(null);
+  };
+
+  // 處理 Timeline Drop
+  const handleTimelineDrop = async (
+    e: React.DragEvent<HTMLDivElement>
+  ) => {
+    e.preventDefault();
+    if (!dragProjectId) return;
+    // 取得 timeline 元素與滑鼠座標
+    const timelineRect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - timelineRect.left;
+    const y = e.clientY - timelineRect.top;
+
+    // 取得時間軸元件
+    const timeline = document.querySelector(".rct-scroll") as HTMLElement | null;
+    if (!timeline) return;
+
+    // 取得時間範圍
+    const { defaultTimeStart, defaultTimeEnd } = getTimelineTimeRange();
+    const totalMs = defaultTimeEnd.getTime() - defaultTimeStart.getTime();
+    const timelineWidth = timeline.offsetWidth;
+    const percent = x / timelineWidth;
+    const time = defaultTimeStart.getTime() + totalMs * percent;
+
+    // 取得群組
+    const groupHeight = 50; // 與 lineHeight 相同
+    const groupIdx = Math.floor(y / groupHeight);
+    const group = groups[groupIdx];
+    if (!group) return;
+
+    // 建 schedule
+    const project = projects.find(p => p.id === dragProjectId);
+    if (!project) return;
+    const start = Timestamp.fromMillis(time);
+    const end = Timestamp.fromMillis(time + 86400000); // 1天
+    try {
+      const scheduleRef = await addDoc(collection(db, "schedules"), {
+        projectId: project.id,
+        userId: group.id,
+        start,
+        end,
+      });
+      setItems(prev => [
+        ...prev,
+        {
+          id: scheduleRef.id,
+          group: group.id,
+          title: project.name,
+          start_time: start.toMillis(),
+          end_time: end.toMillis(),
+          projectId: project.id,
+          userId: group.id,
+        }
+      ]);
+    } catch {
+      alert("建立日程失敗");
+    }
+    setDragProjectId(null);
+  };
+
+  // 允許 drop
+  const handleAllowDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (dragProjectId) e.preventDefault();
+  };
+
+  // 取得 timeline 時間範圍
+  const getTimelineTimeRange = () => {
+    const now = new Date();
+    return {
+      defaultTimeStart: subDays(startOfDay(now), 2),
+      defaultTimeEnd: addDays(endOfDay(now), 5),
+    };
+  };
+
+  const { defaultTimeStart, defaultTimeEnd } = getTimelineTimeRange();
 
   return (
     <main>
@@ -183,28 +266,65 @@ export default function ProjectsPage() {
       {loading && <div>載入中...</div>}
       {error && <div style={{ color: "red" }}>{error}</div>}
       {!loading && !error && (
-        <>
-          <Timeline
-            groups={groups}
-            items={items}
-            defaultTimeStart={defaultTimeStart.getTime()}
-            defaultTimeEnd={defaultTimeEnd.getTime()}
-            canMove
-            canResize="both"
-            onItemMove={handleItemMove}
-            onItemResize={handleItemResize}
-            lineHeight={50}
-            timeSteps={{
-              second: 0,
-              minute: 0,
-              hour: 12,
-              day: 1,
-              month: 1,
-              year: 1
-            }}
-            dragSnap={43200000}
-          />
-        </>
+        <div style={{ display: "flex", alignItems: "flex-start" }}>
+          {/* 專案列表側邊欄 */}
+          <div style={{
+            minWidth: 180,
+            borderRight: "1px solid #ddd",
+            padding: "8px 12px",
+            background: "#fafbfc"
+          }}>
+            <div style={{ fontWeight: "bold", marginBottom: 8 }}>專案列表</div>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {projects.map(pj => (
+                <li
+                  key={pj.id}
+                  style={{
+                    marginBottom: 6,
+                    fontSize: 15,
+                    cursor: "grab",
+                    background: dragProjectId === pj.id ? "#e6f7ff" : undefined,
+                    borderRadius: 4,
+                    padding: "2px 4px"
+                  }}
+                  draggable
+                  onDragStart={() => handleDragStart(pj.id)}
+                  onDragEnd={handleDragEnd}
+                >
+                  {pj.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* Timeline 主體，外層加 drop zone */}
+          <div
+            style={{ flex: 1, minWidth: 0, paddingLeft: 16, position: "relative" }}
+            onDrop={handleTimelineDrop}
+            onDragOver={handleAllowDrop}
+          >
+            <Timeline
+              groups={groups}
+              items={items}
+              defaultTimeStart={defaultTimeStart.getTime()}
+              defaultTimeEnd={defaultTimeEnd.getTime()}
+              canMove
+              canResize="both"
+              onItemMove={handleItemMove}
+              onItemResize={handleItemResize}
+              lineHeight={50}
+              timeSteps={{
+                second: 0,
+                minute: 0,
+                hour: 12,
+                day: 1,
+                month: 1,
+                year: 1
+              }}
+              dragSnap={43200000}
+            />
+            {/* 可視化拖曳提示可自行加強 */}
+          </div>
+        </div>
       )}
     </main>
   );
