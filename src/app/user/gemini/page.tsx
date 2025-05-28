@@ -8,7 +8,7 @@ import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 // 初始化 Firebase App Check（只執行一次）
 if (typeof window !== "undefined") {
   initializeAppCheck(firebaseApp, {
-    provider: new ReCaptchaV3Provider("6LeBT00arAAAIIM4kuuhicdMpGBOE-ovt-8WXjN"),
+    provider: new ReCaptchaV3Provider("6LeBT00rAAAAACACABHOrZffdfHLxBlbnSruCbt95Z"),
     isTokenAutoRefreshEnabled: true,
   });
 }
