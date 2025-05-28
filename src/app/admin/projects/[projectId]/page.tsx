@@ -71,8 +71,8 @@ export default function ProjectDetailPage() {
       const snapshot = await getDocs(collection(db, "users"));
       const usersData = snapshot.docs.reduce((acc, doc) => ({
         ...acc,
-        [doc.id]: doc.data().name || doc.id
-      }), {});
+        [doc.id]: doc.data().displayName || doc.data().name || undefined
+      }), {} as {[key: string]: string | undefined});
       setUsers(usersData);
     };
     fetchUsers();

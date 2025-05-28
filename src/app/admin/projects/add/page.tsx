@@ -32,7 +32,7 @@ export default function ProjectAddPage() {
       setPeopleOptions(
         snap.docs.map(doc => {
           const data = doc.data();
-          return { id: doc.id, name: data.name || doc.id };
+          return { id: doc.id, name: data.displayName || data.name || doc.id };
         })
       );
     };

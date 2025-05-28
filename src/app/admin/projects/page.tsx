@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // 定義 Project 型別
 type Project = {
@@ -24,6 +25,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<{[key: string]: string}>({});
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -45,8 +47,8 @@ export default function ProjectsPage() {
       const snapshot = await getDocs(collection(db, "users"));
       const usersData = snapshot.docs.reduce((acc, doc) => ({
         ...acc,
-        [doc.id]: doc.data().name || doc.id
-      }), {});
+        [doc.id]: doc.data().displayName || doc.data().name || undefined
+      }), {} as {[key: string]: string | undefined});
       setUsers(usersData);
     };
     fetchUsers();
@@ -66,22 +68,33 @@ export default function ProjectsPage() {
       ) : (
         <div className="project-list">
           {projects.map((project) => (
-            <div className="project-card" key={project.id}>
-              <Link href={`/admin/projects/${project.id}`} className="project-title-link">
+            <div
+              className="project-card clickable"
+              key={project.id}
+              onClick={() => router.push(`/admin/projects/${project.id}`)}
+              tabIndex={0}
+              role="button"
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  router.push(`/admin/projects/${project.id}`);
+                }
+              }}
+            >
+              <Link href={`/admin/projects/${project.id}`} className="project-title-link" onClick={e => e.stopPropagation()}>
                 <span className="project-title">{project.name || "(未命名專案)"}</span>
               </Link>
               <div className="project-meta">
-                <div><span className="meta-label">負責人：</span>{users[project.manager || ""] || "-"}</div>
+                <div><span className="meta-label">負責人：</span>{project.manager && users[project.manager] ? users[project.manager] : "-"}</div>
                 <div>
                   <span className="meta-label">監工：</span>
                   {project.supervisors && project.supervisors.length > 0
-                    ? project.supervisors.map(id => users[id] || id).join(", ")
+                    ? project.supervisors.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}
                 </div>
                 <div>
                   <span className="meta-label">公共安全人員：</span>
                   {project.safetyStaff && project.safetyStaff.length > 0
-                    ? project.safetyStaff.map(id => users[id] || id).join(", ")
+                    ? project.safetyStaff.map(id => users[id]).filter(Boolean).join(", ") || "-"
                     : "-"}
                 </div>
                 <div><span className="meta-label">地區：</span>{project.region || "-"}</div>
@@ -129,6 +142,9 @@ export default function ProjectsPage() {
         .project-card:hover {
           box-shadow: 0 6px 32px rgba(79,140,255,0.13);
           transform: translateY(-2px) scale(1.015);
+        }
+        .project-card.clickable {
+          cursor: pointer;
         }
         .project-title-link {
           text-decoration: none;
