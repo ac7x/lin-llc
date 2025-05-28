@@ -22,6 +22,7 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
 
+// 型別宣告
 type Group = { id: string; content: string };
 type FlowItem = {
   id: string;
@@ -42,22 +43,88 @@ interface TimelineEventItem {
 }
 type TimelineEventCallback = (item: TimelineEventItem | FlowItem | null) => void;
 
-export default function ProjectsPage() {
+// 取得專案群組
+function useProjectGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
-  const [items, setItems] = useState<FlowItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [user] = useAuthState(auth);
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [createSuccess, setCreateSuccess] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const timelineInstance = useRef<Timeline | null>(null);
-  const isProcessingDoubleClick = useRef(false);
+  const [loading, setLoading] = useState(true);
 
-  // --- Item CRUD Handlers ---
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const projectsSnap = await getDocs(collection(db, "projects"));
+        const projectGroups: Group[] = projectsSnap.docs.map(d => ({
+          id: d.id,
+          content: d.data().name || `專案 ${d.id}`
+        }));
+        setGroups(projectGroups);
+      } catch (err: unknown) {
+        const e = err as Error;
+        setError(e?.message || "載入專案失敗");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
+  return { groups, setGroups, error, loading };
+}
+
+// 取得所有流程項目
+function useFlowItems(groups: Group[]) {
+  const [items, setItems] = useState<FlowItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (groups.length === 0) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const allFlowItems: FlowItem[] = [];
+        for (const group of groups) {
+          const projectFlowsSnap = await getDocs(
+            collection(db, "projects", group.id, "flows")
+          );
+          const projectFlowItems: FlowItem[] = projectFlowsSnap.docs.map(d => {
+            const data = d.data();
+            return {
+              id: d.id,
+              group: group.id,
+              content: data.name || `流程 (${group.content})`,
+              start: data.start ? data.start.toDate() : new Date(),
+              end: data.end
+                ? data.end.toDate()
+                : new Date(Date.now() + 86400000),
+              projectId: group.id,
+              userId: data.userId
+            };
+          });
+          allFlowItems.push(...projectFlowItems);
+        }
+        setItems(allFlowItems);
+      } catch (err: unknown) {
+        const e = err as Error;
+        setError(e?.message || "載入流程失敗");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [groups]);
+
+  return { items, setItems, error, loading };
+}
+
+// 處理流程 CRUD
+function useFlowCrud({ items, setItems, user }: { items: FlowItem[]; setItems: React.Dispatch<React.SetStateAction<FlowItem[]>>; user: any }) {
+  // 移動流程
   const handleItemMove = useCallback(
     async (
       itemId: string,
@@ -108,23 +175,14 @@ export default function ProjectsPage() {
         return true;
       } catch (error: unknown) {
         const e = error as Error;
-        console.error(
-          "更新流程失敗 (handleItemMove):",
-          e,
-          "Item ID:",
-          itemId,
-          "Old Project:",
-          oldProjectId,
-          "New Project:",
-          newGroupId
-        );
         alert("更新流程失敗: " + (e?.message || "未知錯誤"));
         return false;
       }
     },
-    [items]
+    [items, setItems]
   );
 
+  // 新增流程
   const handleItemAdd = useCallback(
     async (item: TimelineEventItem, cb: TimelineEventCallback) => {
       if (!user) return cb(null);
@@ -145,9 +203,6 @@ export default function ProjectsPage() {
           : null;
       if (!groupId) return cb(null);
 
-      setCreateLoading(true);
-      setCreateError(null);
-      setCreateSuccess(false);
       try {
         const newFlowData = {
           projectId: groupId,
@@ -171,19 +226,16 @@ export default function ProjectsPage() {
         };
         setItems(prev => [...prev, newItem]);
         cb(newItem);
-        setCreateSuccess(true);
       } catch (err: unknown) {
         const e = err as Error;
         alert("新增流程失敗: " + (e?.message || "未知錯誤"));
         cb(null);
-        setCreateError(e?.message || "新增流程失敗");
-      } finally {
-        setCreateLoading(false);
       }
     },
-    [user]
+    [user, setItems]
   );
 
+  // 刪除流程
   const handleItemRemove = useCallback(
     async (item: TimelineEventItem, cb: TimelineEventCallback) => {
       const itemId = item.id as string;
@@ -191,13 +243,8 @@ export default function ProjectsPage() {
       const currentItem = items.find(it => it.id === itemId);
       if (!currentItem) {
         alert("找不到要刪除的流程項目。請嘗試刷新頁面。");
-        console.error("handleItemRemove: Item not found in local state", {
-          itemId,
-          items
-        });
         return cb(null);
       }
-
       try {
         await deleteDoc(
           doc(db, "projects", currentItem.projectId, "flows", itemId)
@@ -210,197 +257,75 @@ export default function ProjectsPage() {
         cb(null);
       }
     },
-    [items]
+    [items, setItems]
   );
 
-  // 用 useRef 保存 doubleClick handler
-  const doubleClickHandlerRef = useRef<
-    ((props: TimelineEventPropertiesResult | null) => void) | null
-  >(null);
+  // 雙擊修改流程名稱
+  const useDoubleClickHandler = () => {
+    const doubleClickHandlerRef = useRef<((props: TimelineEventPropertiesResult | null) => void) | null>(null);
+    const isProcessingDoubleClick = useRef(false);
 
-  useEffect(() => {
-    doubleClickHandlerRef.current = async (
-      props: TimelineEventPropertiesResult | null
-    ) => {
-      if (props?.event && typeof props.event.stopPropagation === "function") {
-        props.event.stopPropagation();
-      }
-      if (isProcessingDoubleClick.current) return;
-      isProcessingDoubleClick.current = true;
-      try {
-        if (!props || !props.item) return;
-        const itemId = props.item as string;
-        const currentItem = items.find(i => i.id === itemId);
-        if (!currentItem) return;
-        const newName = prompt("請輸入新的流程名稱：", currentItem.content);
-        if (newName && newName.trim() && newName !== currentItem.content) {
-          setCreateLoading(true);
-          try {
-            await updateDoc(
-              doc(
-                db,
-                "projects",
-                currentItem.projectId,
-                "flows",
-                itemId
-              ),
-              { name: newName }
-            );
-            setItems(prev =>
-              prev.map(it =>
-                it.id === itemId ? { ...it, content: newName } : it
-              )
-            );
-          } catch (error: unknown) {
-            const e = error as Error;
-            alert("更新流程名稱失敗: " + (e?.message || "未知錯誤"));
-          } finally {
-            setCreateLoading(false);
-          }
-        }
-      } finally {
-        isProcessingDoubleClick.current = false;
-      }
-    };
-  }, [items]);
-
-  // --- Data Fetch (Projects & Flows) ---
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const projectsSnap = await getDocs(collection(db, "projects"));
-        const projectGroups: Group[] = projectsSnap.docs.map(d => ({
-          id: d.id,
-          content: d.data().name || `專案 ${d.id}`
-        }));
-        setGroups(projectGroups);
-        const projectsData = projectsSnap.docs.map(d => ({
-          id: d.id,
-          name: d.data().name || "未命名專案"
-        }));
-
-        const allFlowItems: FlowItem[] = [];
-        for (const project of projectsData) {
-          const projectFlowsSnap = await getDocs(
-            collection(db, "projects", project.id, "flows")
-          );
-          const projectFlowItems: FlowItem[] = projectFlowsSnap.docs.map(d => {
-            const data = d.data();
-            return {
-              id: d.id,
-              group: project.id,
-              content: data.name || `流程 (${project.name})`,
-              start: data.start ? data.start.toDate() : new Date(),
-              end: data.end
-                ? data.end.toDate()
-                : new Date(Date.now() + 86400000),
-              projectId: project.id,
-              userId: data.userId
-            };
-          });
-          allFlowItems.push(...projectFlowItems);
-        }
-        setItems(allFlowItems);
-      } catch (err: unknown) {
-        const e = err as Error;
-        setError(e?.message || "載入資料失敗");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  // --- Timeline Instance (vis-timeline) ---
-
-  useEffect(() => {
-    if (!timelineRef.current || loading || error) return;
-
-    if (timelineInstance.current) {
-      // 只用 setGroups/setItems 直接更新資料
-      timelineInstance.current.setGroups(groups);
-      timelineInstance.current.setItems(items);
-      return;
-    }
-
-    const container = timelineRef.current;
-    const groupsDataSet = new DataSet<Group, "id">(groups);
-    const itemsDataSet = new DataSet<FlowItem, "id">(items);
-
-    const options: TimelineOptions = {
-      editable: {
-        add: true,
-        remove: true,
-        updateTime: true,
-        updateGroup: true,
-        overrideItems: true
-      },
-      onAdd: handleItemAdd as (
-        item: TimelineItem,
-        callback: (item: TimelineItem | null) => void
-      ) => void,
-      onRemove: handleItemRemove as (
-        item: TimelineItem,
-        callback: (item: TimelineItem | null) => void
-      ) => void,
-      onMoving: (item: TimelineItem, cb: (item: TimelineItem | null) => void) =>
-        cb(item),
-      onMove: async (
-        item: TimelineItem,
-        cb: (item: TimelineItem | null) => void
+    useEffect(() => {
+      doubleClickHandlerRef.current = async (
+        props: TimelineEventPropertiesResult | null
       ) => {
-        const ok = await handleItemMove(
-          item.id as string,
-          item.start as Date,
-          item.end as Date,
-          item.group as string
-        );
-        cb(ok ? item : null);
-      },
-      orientation: { axis: "both", item: "top" }
-    };
+        if (props?.event && typeof props.event.stopPropagation === "function") {
+          props.event.stopPropagation();
+        }
+        if (isProcessingDoubleClick.current) return;
+        isProcessingDoubleClick.current = true;
+        try {
+          if (!props || !props.item) return;
+          const itemId = props.item as string;
+          const currentItem = items.find(i => i.id === itemId);
+          if (!currentItem) return;
+          const newName = prompt("請輸入新的流程名稱：", currentItem.content);
+          if (newName && newName.trim() && newName !== currentItem.content) {
+            try {
+              await updateDoc(
+                doc(
+                  db,
+                  "projects",
+                  currentItem.projectId,
+                  "flows",
+                  itemId
+                ),
+                { name: newName }
+              );
+              setItems(prev =>
+                prev.map(it =>
+                  it.id === itemId ? { ...it, content: newName } : it
+                )
+              );
+            } catch (error: unknown) {
+              const e = error as Error;
+              alert("更新流程名稱失敗: " + (e?.message || "未知錯誤"));
+            }
+          }
+        } finally {
+          isProcessingDoubleClick.current = false;
+        }
+      };
+    }, [items, setItems]);
 
-    try {
-      timelineInstance.current = new Timeline(
-        container,
-        itemsDataSet,
-        groupsDataSet,
-        options
-      );
-      if (doubleClickHandlerRef.current) {
-        timelineInstance.current.on("doubleClick", doubleClickHandlerRef.current);
-      }
-    } catch {
-      // Ignore timeline create errors
-    }
+    return doubleClickHandlerRef;
+  };
 
-    return () => {
-      if (timelineInstance.current && doubleClickHandlerRef.current) {
-        timelineInstance.current.off(
-          "doubleClick",
-          doubleClickHandlerRef.current
-        );
-        timelineInstance.current.destroy();
-        timelineInstance.current = null;
-      }
-    };
-    // eslint-disable-next-line
-  }, [
-    timelineRef,
-    loading,
-    error,
-    groups,
-    items,
+  return {
+    handleItemMove,
     handleItemAdd,
     handleItemRemove,
-    handleItemMove
-  ]);
+    useDoubleClickHandler
+  };
+}
 
-  // --- Project Creation ---
+// 專案建立
+function useCreateProject({ user, setGroups, setItems }: { user: any; setGroups: React.Dispatch<React.SetStateAction<Group[]>>; setItems: React.Dispatch<React.SetStateAction<FlowItem[]>>; }) {
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createSuccess, setCreateSuccess] = useState(false);
 
-  const handleCreateProject = async () => {
+  const handleCreateProject = async (newProjectName: string, resetProjectName: () => void) => {
     setCreateLoading(true);
     setCreateError(null);
     setCreateSuccess(false);
@@ -443,7 +368,7 @@ export default function ProjectsPage() {
         }
       ]);
       setCreateSuccess(true);
-      setNewProjectName("");
+      resetProjectName();
     } catch (err: unknown) {
       const e = err as Error;
       setCreateError(e?.message || "建立專案或初始流程失敗");
@@ -452,33 +377,191 @@ export default function ProjectsPage() {
     }
   };
 
-  // --- UI ---
+  return {
+    createLoading,
+    createError,
+    createSuccess,
+    handleCreateProject
+  };
+}
+
+// Timeline UI 元件
+function TimelineView({
+  groups,
+  items,
+  loading,
+  error,
+  onAdd,
+  onRemove,
+  onMove,
+  doubleClickHandlerRef
+}: {
+  groups: Group[];
+  items: FlowItem[];
+  loading: boolean;
+  error: string | null;
+  onAdd: TimelineOptions["onAdd"];
+  onRemove: TimelineOptions["onRemove"];
+  onMove: TimelineOptions["onMove"];
+  doubleClickHandlerRef: React.MutableRefObject<((props: TimelineEventPropertiesResult | null) => void) | null>;
+}) {
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const timelineInstance = useRef<Timeline | null>(null);
+
+  useEffect(() => {
+    if (!timelineRef.current || loading || error) return;
+
+    if (timelineInstance.current) {
+      timelineInstance.current.setGroups(groups);
+      timelineInstance.current.setItems(items);
+      return;
+    }
+
+    const container = timelineRef.current;
+    const groupsDataSet = new DataSet<Group, "id">(groups);
+    const itemsDataSet = new DataSet<FlowItem, "id">(items);
+
+    const options: TimelineOptions = {
+      editable: {
+        add: true,
+        remove: true,
+        updateTime: true,
+        updateGroup: true,
+        overrideItems: true
+      },
+      onAdd,
+      onRemove,
+      onMoving: (item: TimelineItem, cb: (item: TimelineItem | null) => void) =>
+        cb(item),
+      onMove,
+      orientation: { axis: "both", item: "top" }
+    };
+
+    try {
+      timelineInstance.current = new Timeline(
+        container,
+        itemsDataSet,
+        groupsDataSet,
+        options
+      );
+      if (doubleClickHandlerRef.current) {
+        timelineInstance.current.on("doubleClick", doubleClickHandlerRef.current);
+      }
+    } catch {
+      // Ignore timeline create errors
+    }
+
+    return () => {
+      if (timelineInstance.current && doubleClickHandlerRef.current) {
+        timelineInstance.current.off("doubleClick", doubleClickHandlerRef.current);
+        timelineInstance.current.destroy();
+        timelineInstance.current = null;
+      }
+    };
+    // eslint-disable-next-line
+  }, [
+    timelineRef,
+    loading,
+    error,
+    groups,
+    items,
+    onAdd,
+    onRemove,
+    onMove,
+    doubleClickHandlerRef
+  ]);
+
+  if (loading) return <div>載入中...</div>;
+  if (error) return <div style={{ color: "red" }}>{error}</div>;
+  return <div ref={timelineRef} style={{ height: "600px" }} />;
+}
+
+// 專案建立 UI
+function ProjectCreateBar({
+  newProjectName,
+  setNewProjectName,
+  onCreate,
+  loading,
+  error,
+  success
+}: {
+  newProjectName: string;
+  setNewProjectName: React.Dispatch<React.SetStateAction<string>>;
+  onCreate: () => void;
+  loading: boolean;
+  error: string | null;
+  success: boolean;
+}) {
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <input
+        type="text"
+        placeholder="請輸入專案名稱"
+        value={newProjectName}
+        onChange={e => setNewProjectName(e.target.value)}
+        disabled={loading}
+        style={{ marginRight: 8 }}
+      />
+      <button
+        onClick={onCreate}
+        disabled={loading || !newProjectName.trim()}
+      >
+        {loading ? "建立中..." : "建立專案"}
+      </button>
+      {error && <div style={{ color: "red" }}>{error}</div>}
+      {success && <div style={{ color: "green" }}>專案已建立！</div>}
+    </div>
+  );
+}
+
+export default function ProjectsPage() {
+  const [user] = useAuthState(auth);
+  const { groups, setGroups, error: groupError, loading: groupLoading } = useProjectGroups();
+  const { items, setItems, error: itemError, loading: itemsLoading } = useFlowItems(groups);
+
+  const [newProjectName, setNewProjectName] = useState("");
+  const { handleItemMove, handleItemAdd, handleItemRemove, useDoubleClickHandler } = useFlowCrud({ items, setItems, user });
+  const doubleClickHandlerRef = useDoubleClickHandler();
+
+  const { createLoading, createError, createSuccess, handleCreateProject } = useCreateProject({
+    user,
+    setGroups,
+    setItems
+  });
+
+  const handleProjectCreate = () => handleCreateProject(newProjectName, () => setNewProjectName(""));
 
   return (
     <main>
-      <div style={{ marginBottom: 8 }}>
-        <input
-          type="text"
-          placeholder="請輸入專案名稱"
-          value={newProjectName}
-          onChange={e => setNewProjectName(e.target.value)}
-          disabled={createLoading}
-          style={{ marginRight: 8 }}
-        />
-        <button
-          onClick={handleCreateProject}
-          disabled={createLoading || !user || !newProjectName.trim()}
-        >
-          {createLoading ? "建立中..." : "建立專案"}
-        </button>
-      </div>
-      {createError && <div style={{ color: "red" }}>{createError}</div>}
-      {createSuccess && <div style={{ color: "green" }}>專案已建立！</div>}
-      {loading && <div>載入中...</div>}
-      {error && <div style={{ color: "red" }}>{error}</div>}
-      {!loading && !error && (
-        <div ref={timelineRef} style={{ height: "600px" }} />
-      )}
+      <ProjectCreateBar
+        newProjectName={newProjectName}
+        setNewProjectName={setNewProjectName}
+        onCreate={handleProjectCreate}
+        loading={createLoading}
+        error={createError}
+        success={createSuccess}
+      />
+      <TimelineView
+        groups={groups}
+        items={items}
+        loading={groupLoading || itemsLoading}
+        error={groupError || itemError}
+        onAdd={handleItemAdd as TimelineOptions["onAdd"]}
+        onRemove={handleItemRemove as TimelineOptions["onRemove"]}
+        onMove={async (
+          item: TimelineItem,
+          cb: (item: TimelineItem | null) => void
+        ) => {
+          const ok = await handleItemMove(
+            item.id as string,
+            item.start as Date,
+            item.end as Date,
+            item.group as string
+          );
+          cb(ok ? item : null);
+        }}
+        doubleClickHandlerRef={doubleClickHandlerRef}
+      />
     </main>
   );
 }
