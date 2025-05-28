@@ -30,29 +30,31 @@ export default function ProfilePage() {
   if (!user) return <div className="p-6 text-center">重定向中...</div>;
 
   return (
-    <div className="p-6 max-w-lg mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">個人資料</h1>
-      
-      <div className="bg-gray-100 p-4 rounded">
-        <p><strong>姓名:</strong> {user.displayName}</p>
-        <p><strong>電子郵件:</strong> {user.email}</p>
+    <div className="bg-gray-50 dark:bg-black min-h-screen flex items-center justify-center">
+      <div className="p-8 max-w-md w-full mx-auto bg-white dark:bg-neutral-900 shadow-xl rounded-xl flex flex-col items-center space-y-6">
+        <h1 className="text-3xl font-extrabold text-center mb-2 tracking-tight">個人資料</h1>
         {user.photoURL && (
-          <Image 
-            src={user.photoURL} 
-            alt="頭像" 
-            width={64}
-            height={64}
-            className="rounded-full mt-2"
-          />
+          <div className="flex justify-center w-full">
+            <Image
+              src={user.photoURL}
+              alt="頭像"
+              width={96}
+              height={96}
+              className="rounded-full border-4 border-white dark:border-neutral-800 shadow-lg"
+            />
+          </div>
         )}
+        <div className="w-full flex flex-col items-center space-y-2 border-t border-b border-gray-200 dark:border-neutral-700 py-4">
+          <div className="text-lg font-semibold">{user.displayName || '—'}</div>
+          <div className="text-gray-500 dark:text-gray-400 text-sm">{user.email || '—'}</div>
+        </div>
+        <button
+          className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold text-lg mt-2"
+          onClick={handleLogout}
+        >
+          登出
+        </button>
       </div>
-
-      <button
-        className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
-        onClick={handleLogout}
-      >
-        登出
-      </button>
     </div>
   );
 }
