@@ -47,13 +47,14 @@ type Expense = {
 const ProjectFlowPage = dynamic(() => import("./flow/page"), { ssr: false });
 const ProjectJournalPage = dynamic(() => import("./journal/page"), { ssr: false });
 const ProjectEditPage = dynamic(() => import("./edit/page"), { ssr: false });
+const ProjectAttendancePage = dynamic(() => import("./attendance/page"), { ssr: false });
 
 export default function ProjectDetailPage() {
   const { projectId } = useParams() as { projectId: string };
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<{[key: string]: string}>({});
-  const [tab, setTab] = useState<"detail" | "flow" | "journal" | "edit">("detail");
+  const [tab, setTab] = useState<"detail" | "flow" | "journal" | "edit" | "attendance">("detail");
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -107,6 +108,12 @@ export default function ProjectDetailPage() {
           工程日誌
         </button>
         <button
+          className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "attendance" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
+          onClick={() => setTab("attendance")}
+        >
+          出工人數
+        </button>
+        <button
           className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "edit" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
           onClick={() => setTab("edit")}
         >
@@ -149,6 +156,7 @@ export default function ProjectDetailPage() {
       )}
       {tab === "flow" && <ProjectFlowPage />}
       {tab === "journal" && <ProjectJournalPage />}
+      {tab === "attendance" && <ProjectAttendancePage />}
       {tab === "edit" && <ProjectEditPage />}
     </main>
   );

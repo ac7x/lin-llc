@@ -316,8 +316,6 @@ export default function ProjectsPage() {
 
   return (
     <main>
-      <h1>專案時程表</h1>
-      <p>以時間軸方式檢視所有專案日程。</p>
       <div style={{ marginBottom: 8 }}>
         <input
           type="text"
