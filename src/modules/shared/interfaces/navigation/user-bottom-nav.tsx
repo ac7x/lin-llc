@@ -18,6 +18,7 @@ interface UserBottomNavProps {
 const defaultNavItems: NavItem[] = [
   { href: '/user/schedule', icon: '📅', label: '排程', active: false },
   { href: '/user/projects', icon: '📖', label: '專案', active: false },
+  { href: '/user/gemini', icon: '💡', label: 'Gemini', active: false },
   { href: '/user/profile', icon: '🧑‍💼', label: '用戶', active: false },
 ];
 
