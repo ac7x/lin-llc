@@ -3,22 +3,35 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, doc, updateDoc, Timestamp, deleteDoc } from "firebase/firestore";
-import { Timeline, DataSet } from "vis-timeline/standalone";
+import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
-import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useAuthState } from "react-firebase-hooks/auth";
 
 type Group = { id: string; content: string; };
 type ScheduleItem = {
   id: string;
-  group: string;
+  group: string; // Corresponds to Group['id']
   content: string;
   start: Date;
   end: Date;
   projectId: string;
-  userId: string;
+  userId: string; // This is your application's user ID, often same as group if groups are users
 };
+
+// Interface for items passed by vis-timeline events like onAdd, onRemove
+interface TimelineEventItem {
+  id?: string | number; // id might be a number or string, and not present for new items
+  content?: string | HTMLElement; // Adjusted to include HTMLElement
+  start?: Date;
+  end?: Date;
+  group?: string | number;
+  // Add any other properties that vis-timeline might pass and you might use
+}
+
+// Type for the callback function in vis-timeline events
+type TimelineEventCallback = (item: TimelineEventItem | ScheduleItem | null) => void;
+
 
 export default function ProjectsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -32,7 +45,7 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
-  const datasetRef = useRef<DataSet<any, 'id'>>(null);
+  const datasetRef = useRef<DataSet<ScheduleItem, 'id'>>(null); // Changed any to ScheduleItem
 
   const handleItemMove = useCallback(async (itemId: string, newStart: Date, newEnd: Date, newGroupId: string) => {
     const itemInState = items.find(i => i.id === itemId);
@@ -75,14 +88,22 @@ export default function ProjectsPage() {
     }
   }, [items]);
 
-  const handleItemAdd = useCallback(async (itemDataFromTimeline: any, callback: (item: ScheduleItem | null) => void) => {
+  const handleItemAdd = useCallback(async (itemDataFromTimeline: TimelineEventItem, callback: TimelineEventCallback) => {
     if (!user) {
       alert("你需要登入才能新增項目。");
       callback(null);
       return;
     }
 
-    const newProjectName = itemDataFromTimeline.content || "新排程 (自動建立)";
+    // Provide default values or checks for potentially undefined properties
+    const contentString = typeof itemDataFromTimeline.content === 'string' ? itemDataFromTimeline.content : 
+                          itemDataFromTimeline.content instanceof HTMLElement ? itemDataFromTimeline.content.innerText : "新排程 (自動建立)";
+    const newProjectName = contentString || "新排程 (自動建立)";
+    
+    const startDate = itemDataFromTimeline.start instanceof Date ? itemDataFromTimeline.start : new Date();
+    const endDate = itemDataFromTimeline.end instanceof Date ? itemDataFromTimeline.end : new Date(startDate.getTime() + 86400000); // Default to 1 day duration
+    const groupId = typeof itemDataFromTimeline.group === 'string' || typeof itemDataFromTimeline.group === 'number' ? String(itemDataFromTimeline.group) : user.uid; // Default to current user if group is undefined
+
 
     setCreateLoading(true);
     setCreateError(null);
@@ -99,20 +120,20 @@ export default function ProjectsPage() {
       // 2. Create the schedule item linked to this new project
       const newScheduleData = {
         projectId: projectRef.id,
-        userId: itemDataFromTimeline.group, // User ID from the timeline group
-        start: Timestamp.fromDate(itemDataFromTimeline.start),
-        end: Timestamp.fromDate(itemDataFromTimeline.end),
+        userId: groupId, // Use checked groupId
+        start: Timestamp.fromDate(startDate), // Use checked startDate
+        end: Timestamp.fromDate(endDate), // Use checked endDate
       };
       const scheduleRef = await addDoc(collection(db, "schedules"), newScheduleData);
 
       const newItemForState: ScheduleItem = {
         id: scheduleRef.id,
-        group: itemDataFromTimeline.group,
-        content: newProjectName, // Project name
-        start: itemDataFromTimeline.start,
-        end: itemDataFromTimeline.end,
+        group: groupId, // Use checked groupId
+        content: newProjectName, 
+        start: startDate, // Use checked startDate
+        end: endDate, // Use checked endDate
         projectId: projectRef.id,
-        userId: itemDataFromTimeline.group,
+        userId: groupId, // Use checked groupId
       };
 
       setItems(prev => [...prev, newItemForState]);
@@ -129,8 +150,8 @@ export default function ProjectsPage() {
     }
   }, [user, setItems]);
 
-  const handleItemRemove = useCallback(async (itemDataFromTimeline: any, callback: (item: any | null) => void) => {
-    const itemId = itemDataFromTimeline.id;
+  const handleItemRemove = useCallback(async (itemDataFromTimeline: TimelineEventItem, callback: TimelineEventCallback) => {
+    const itemId = itemDataFromTimeline.id as string; // Assuming id will be a string for existing items
     if (!itemId) {
       callback(null);
       return;
@@ -200,32 +221,31 @@ export default function ProjectsPage() {
     if (!timelineRef.current || loading || error) return;
 
     const container = timelineRef.current;
-    const groupsDataSet = new DataSet<any, 'id'>(groups);
-    datasetRef.current = new DataSet<any, 'id'>(items);
+    const groupsDataSet = new DataSet<TimelineGroup, 'id'>(groups);
+    datasetRef.current = new DataSet<ScheduleItem, 'id'>(items);
 
-    const options = {
+    const options: TimelineOptions = {
       editable: {
         add: true,
         remove: true,
         updateTime: true,
         updateGroup: true,
-        overrideItems: true, 
-        resize: true, 
+        overrideItems: true,
       },
-      onAdd: handleItemAdd, // Added onAdd handler
-      onRemove: handleItemRemove, // Added onRemove handler
-      onMoving: function(item: any, callback: Function) {
+      onAdd: handleItemAdd as (item: TimelineItem, callback: (item: TimelineItem | null) => void) => void, 
+      onRemove: handleItemRemove as (item: TimelineItem, callback: (item: TimelineItem | null) => void) => void,
+      onMoving: function(item: TimelineItem, callback: (item: TimelineItem | null) => void) { // Typed item and callback
         callback(item);
       },
-      onMove: async function(item: any, callback: Function) {
-        // item.start 和 item.end 是由 vis-timeline 提供的 Date 物件
-        // item.group 是新的 group id
+      onMove: async function(item: TimelineItem, callback: (item: TimelineItem | null) => void) { // Changed VisTimelineMoveCallback to (item: TimelineItem | null) => void
+        // item.start and item.end are Date objects from vis-timeline
+        // item.group is the new group id (string)
         console.log("onMove - item 接收到:", { id: item.id, start: item.start, end: item.end, group: item.group });
-        const success = await handleItemMove(item.id, item.start, item.end, item.group);
+        const success = await handleItemMove(item.id as string, item.start as Date, item.end as Date, item.group as string);
         if (success) {
-          callback(item); // 確認時間軸中的更改
+          callback(item); // Confirm changes in the timeline
         } else {
-          callback(null); // 撤銷時間軸中的更改
+          callback(null); // Revert changes in the timeline
         }
       },
       snap: (date: Date) => {
