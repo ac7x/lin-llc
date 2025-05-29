@@ -124,7 +124,7 @@ export default function AdminUsersPage() {
         <table className="w-full border-collapse mb-8 text-left">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-700">
-              <th className="border px-2 py-1">UID</th>
+              {/* <th className="border px-2 py-1">UID</th> */}
               <th className="border px-2 py-1">Email</th>
               <th className="border px-2 py-1">名稱</th>
               <th className="border px-2 py-1">建立時間</th>
@@ -137,7 +137,7 @@ export default function AdminUsersPage() {
           <tbody>
             {users.map(user => (
               <tr key={user.uid} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800">
-                <td className="border px-2 py-1">{user.uid}</td>
+                {/* <td className="border px-2 py-1">{user.uid}</td> */}
                 <td className="border px-2 py-1">{user.email || '—'}</td>
                 <td className="border px-2 py-1">{user.displayName || '—'}</td>
                 <td className="border px-2 py-1">{user.metadata?.creationTime?.slice(0, 10) || '—'}</td>

@@ -36,7 +36,7 @@ export default function UserSchedulePage() {
       .then(async (projectsSnap) => {
         const groupList = projectsSnap.docs.map(doc => ({
           id: doc.id,
-          content: doc.data().name || doc.id, // group 名稱顯示 project name
+          content: doc.data().projectName || doc.id, // group 名稱顯示 projectName
         }));
         setGroups(groupList);
 
@@ -44,14 +44,13 @@ export default function UserSchedulePage() {
         const allFlows: FlowItem[] = [];
         await Promise.all(
           projectsSnap.docs.map(async (projectDoc) => {
-            const projectName = projectDoc.data().name || projectDoc.id;
             const flowsSnap = await getDocs(collection(db, "projects", projectDoc.id, "flows"));
             flowsSnap.docs.forEach(doc => {
               const d = doc.data();
               allFlows.push({
                 id: doc.id,
                 group: projectDoc.id, // group 設為 project id
-                content: d.name || (projectDoc.data().name ? `流程 (${projectDoc.data().name})` : "未命名流程"),
+                content: d.name || (projectDoc.data().projectName ? `流程 (${projectDoc.data().projectName})` : "未命名流程"),
                 start: d.start ? (typeof d.start.toDate === 'function' ? d.start.toDate() : new Date(d.start)) : new Date(),
                 end: d.end ? (typeof d.end.toDate === 'function' ? d.end.toDate() : new Date(d.end)) : new Date(Date.now() + 86400000),
                 projectId: projectDoc.id,

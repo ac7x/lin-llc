@@ -98,7 +98,7 @@ export default function AdminUsersPage() {
         <table className="w-full border-collapse mb-8 text-left">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-700">
-              <th className="border px-2 py-1">UID</th>
+              {/* <th className="border px-2 py-1">UID</th> */}
               <th className="border px-2 py-1">Email</th>
               <th className="border px-2 py-1">名稱</th>
               <th className="border px-2 py-1">建立時間</th>
@@ -109,44 +109,46 @@ export default function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
-              <tr key={user.uid} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800">
-                <td className="border px-2 py-1">{user.uid}</td>
-                <td className="border px-2 py-1">{user.email || '—'}</td>
-                <td className="border px-2 py-1">{user.displayName || '—'}</td>
-                <td className="border px-2 py-1">{user.metadata?.creationTime?.slice(0, 10) || '—'}</td>
-                <td className="border px-2 py-1">{user.metadata?.lastSignInTime?.slice(0, 10) || '—'}</td>
-                <td className="border px-2 py-1">{user.disabled ? '停用' : '啟用'}</td>
-                <td className="border px-2 py-1">
-                  <select
-                    value={user.role || ''}
-                    onChange={e => handleRoleChange(user.uid, e.target.value)}
-                    className="border rounded px-1 py-0.5 bg-white dark:bg-gray-800"
-                    disabled={user.role === 'owner'}
-                  >
-                    <option value="">—</option>
-                    <option value="admin">admin</option>
-                    <option value="finance">finance</option>
-                    <option value="user">user</option>
-                    <option value="vendor">vendor</option>
-                    <option value="foreman">foreman</option>
-                    <option value="safety">safety</option>
-                    <option value="coord">coord</option>
-                    <option value="helper">helper</option>
-                    <option value="temporary">temporary</option>
-                  </select>
-                </td>
-                <td className="border px-2 py-1">
-                  <button
-                    onClick={() => handleDelete(user.uid)}
-                    className="text-red-600 hover:underline"
-                    type="button"
-                  >
-                    刪除
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {users
+              .filter(user => user.role !== 'owner')
+              .map(user => (
+                <tr key={user.uid} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800">
+                  {/* <td className="border px-2 py-1">{user.uid}</td> */}
+                  <td className="border px-2 py-1">{user.email || '—'}</td>
+                  <td className="border px-2 py-1">{user.displayName || '—'}</td>
+                  <td className="border px-2 py-1">{user.metadata?.creationTime?.slice(0, 10) || '—'}</td>
+                  <td className="border px-2 py-1">{user.metadata?.lastSignInTime?.slice(0, 10) || '—'}</td>
+                  <td className="border px-2 py-1">{user.disabled ? '停用' : '啟用'}</td>
+                  <td className="border px-2 py-1">
+                    <select
+                      value={user.role || ''}
+                      onChange={e => handleRoleChange(user.uid, e.target.value)}
+                      className="border rounded px-1 py-0.5 bg-white dark:bg-gray-800"
+                      disabled={user.role === 'owner'}
+                    >
+                      <option value="">—</option>
+                      <option value="admin">admin</option>
+                      <option value="finance">finance</option>
+                      <option value="user">user</option>
+                      <option value="vendor">vendor</option>
+                      <option value="foreman">foreman</option>
+                      <option value="safety">safety</option>
+                      <option value="coord">coord</option>
+                      <option value="helper">helper</option>
+                      <option value="temporary">temporary</option>
+                    </select>
+                  </td>
+                  <td className="border px-2 py-1">
+                    <button
+                      onClick={() => handleDelete(user.uid)}
+                      className="text-red-600 hover:underline"
+                      type="button"
+                    >
+                      刪除
+                    </button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
