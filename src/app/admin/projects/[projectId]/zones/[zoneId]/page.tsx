@@ -15,10 +15,10 @@ type Zone = {
 type WorkItem = {
     id: string;
     itemName: string;
-    desc?: string;
     createdAt?: Timestamp | Date;
-    start?: string; // 新增 start 屬性 (ISO string)
-    end?: string;   // 新增 end 屬性 (ISO string)
+    start?: string;
+    end?: string;
+    quantity?: number;
 };
 
 export default function ZoneDetailPage(props: { params?: { projectId?: string; zoneId?: string } }) {
@@ -35,13 +35,14 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
     const [workItemsLoading, setWorkItemsLoading] = useState(true);
     const [showWorkForm, setShowWorkForm] = useState(false);
     const [workName, setWorkName] = useState("");
-    const [workDesc, setWorkDesc] = useState("");
-    const [workStart, setWorkStart] = useState(""); // 新增
-    const [workEnd, setWorkEnd] = useState("");     // 新增
+    const [workStart, setWorkStart] = useState("");
+    const [workEnd, setWorkEnd] = useState("");
+    const [workQuantity, setWorkQuantity] = useState<number | "">(""); // 新增
     const [creatingWork, setCreatingWork] = useState(false);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
     const [editingStart, setEditingStart] = useState<string>("");
     const [editingEnd, setEditingEnd] = useState<string>("");
+    const [editingQuantity, setEditingQuantity] = useState<number | "">(""); // 新增
 
     // 取得分區資料（含工項陣列）
     useEffect(() => {
@@ -61,7 +62,8 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                 setWorkItems(Array.isArray(data.workItems)
                     ? data.workItems.map((wi: any) => ({
                         ...wi,
-                        itemName: wi.itemName ?? wi.name // 兼容舊資料
+                        itemName: wi.itemName ?? wi.name
+                        // 不帶入 desc
                     }))
                     : []);
             } else {
@@ -91,24 +93,24 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
         const oldItems: WorkItem[] = Array.isArray(data.workItems)
             ? data.workItems.map((wi: any) => ({
                 ...wi,
-                itemName: wi.itemName ?? wi.name // 兼容舊資料
+                itemName: wi.itemName ?? wi.name
             }))
             : [];
         const newItem: WorkItem = {
             id: crypto.randomUUID(),
             itemName: workName,
-            desc: workDesc,
             createdAt: Timestamp.now(),
-            start: workStart || undefined, // 新增
-            end: workEnd || undefined,     // 新增
+            start: workStart || undefined,
+            end: workEnd || undefined,
+            quantity: workQuantity === "" ? undefined : Number(workQuantity),
         };
         const newItems = [...oldItems, newItem];
         await updateDoc(ref, { workItems: newItems });
 
         setWorkName("");
-        setWorkDesc("");
-        setWorkStart(""); // 清空
-        setWorkEnd("");   // 清空
+        setWorkStart("");
+        setWorkEnd("");
+        setWorkQuantity("");
         setShowWorkForm(false);
         setCreatingWork(false);
         // 觸發刷新
@@ -119,12 +121,14 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
         setEditingItemId(item.id);
         setEditingStart(item.start || "");
         setEditingEnd(item.end || "");
+        setEditingQuantity(item.quantity ?? ""); // 新增
     };
 
     const handleEditCancel = () => {
         setEditingItemId(null);
         setEditingStart("");
         setEditingEnd("");
+        setEditingQuantity(""); // 新增
     };
 
     const handleEditSave = async (item: WorkItem) => {
@@ -141,15 +145,20 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
             : [];
         const newItems = oldItems.map(wi =>
             wi.id === item.id
-                ? { ...wi, start: editingStart || undefined, end: editingEnd || undefined }
+                ? {
+                    ...wi,
+                    start: editingStart || undefined,
+                    end: editingEnd || undefined,
+                    quantity: editingQuantity === "" ? undefined : Number(editingQuantity), // 新增
+                }
                 : wi
         );
         await updateDoc(ref, { workItems: newItems });
         setEditingItemId(null);
         setEditingStart("");
         setEditingEnd("");
-        // 觸發刷新
-        setCreatingWork(v => !v); // 利用 creatingWork 觸發 useEffect
+        setEditingQuantity(""); // 新增
+        setCreatingWork(v => !v);
     };
 
     if (!projectId || !zoneId) {
@@ -193,22 +202,26 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                 </div>
                 {showWorkForm && (
                     <form onSubmit={handleAddWorkItem} className="mb-4 bg-gray-50 p-3 rounded border">
-                        <div className="mb-2">
-                            <label className="block mb-1 text-sm">工項名稱</label>
-                            <input
-                                className="border px-2 py-1 w-full"
-                                value={workName}
-                                onChange={e => setWorkName(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="mb-2">
-                            <label className="block mb-1 text-sm">描述</label>
-                            <textarea
-                                className="border px-2 py-1 w-full"
-                                value={workDesc}
-                                onChange={e => setWorkDesc(e.target.value)}
-                            />
+                        <div className="mb-2 flex gap-2">
+                            <div className="flex-1">
+                                <label className="block mb-1 text-sm">工項名稱</label>
+                                <input
+                                    className="border px-2 py-1 w-full"
+                                    value={workName}
+                                    onChange={e => setWorkName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="w-32">
+                                <label className="block mb-1 text-sm">數量</label>
+                                <input
+                                    type="number"
+                                    className="border px-2 py-1 w-full"
+                                    value={workQuantity}
+                                    min={0}
+                                    onChange={e => setWorkQuantity(e.target.value === "" ? "" : Number(e.target.value))}
+                                />
+                            </div>
                         </div>
                         <div className="mb-2 flex gap-2">
                             <div className="flex-1">
@@ -248,7 +261,11 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                         {workItems.map(item => (
                             <li key={item.id} className="border rounded p-3 bg-white">
                                 <div className="font-medium">{item.itemName}</div>
-                                {item.desc && <div className="text-gray-600 text-sm">{item.desc}</div>}
+                                {/* 移除描述顯示 */}
+                                {/* {item.desc && <div className="text-gray-600 text-sm">{item.desc}</div>} */}
+                                {typeof item.quantity === "number" && (
+                                    <div className="text-gray-700 text-sm">數量：{item.quantity}</div>
+                                )}
                                 {editingItemId === item.id ? (
                                     <div className="flex items-center gap-2 mt-2">
                                         <div>
@@ -267,6 +284,16 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                                                 className="border px-2 py-1 text-xs"
                                                 value={editingEnd}
                                                 onChange={e => setEditingEnd(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs mr-1">數量</label>
+                                            <input
+                                                type="number"
+                                                className="border px-2 py-1 text-xs"
+                                                value={editingQuantity}
+                                                min={0}
+                                                onChange={e => setEditingQuantity(e.target.value === "" ? "" : Number(e.target.value))}
                                             />
                                         </div>
                                         <button
