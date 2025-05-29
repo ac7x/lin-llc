@@ -43,6 +43,24 @@ type Expense = {
   note?: string;
 };
 
+// 分區型別與工項型別統一定義
+export type WorkItem = {
+  id: string;
+  itemName: string;
+  createdAt?: Timestamp | Date;
+  start?: string;
+  end?: string;
+  quantity?: number;
+};
+
+export type Zone = {
+  id: string;
+  zoneName: string;
+  desc?: string;
+  createdAt?: Timestamp | Date;
+  workItems?: WorkItem[];
+};
+
 // 動態載入流程與日誌元件
 const ProjectFlowPage = dynamic(() => import("./flow/page"), { ssr: false });
 const ProjectJournalPage = dynamic(() => import("./journal/page"), { ssr: false });

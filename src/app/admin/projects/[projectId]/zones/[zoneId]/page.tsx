@@ -1,6 +1,8 @@
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { collection, getDocs, addDoc, Timestamp, doc, getDoc, updateDoc } from "firebase/firestore";
+import type { Zone, WorkItem } from "../page";
 
 // Infer props type using useParams
 // 增加 params 類型
@@ -10,22 +12,6 @@ interface Props {
 
 export default function ZoneDetailPage({ params }: Props) {
     const { projectId, zoneId } = params;
-
-    type Zone = {
-        id: string;
-        zoneName: string;
-        desc?: string;
-        createdAt?: Timestamp | Date;
-    };
-
-    type WorkItem = {
-        id: string;
-        itemName: string;
-        createdAt?: Timestamp | Date;
-        start?: string;
-        end?: string;
-        quantity?: number;
-    };
 
     // hooks 必須在最上方
     const [zone, setZone] = useState<Zone | null>(null);

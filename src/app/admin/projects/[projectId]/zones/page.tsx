@@ -6,12 +6,22 @@ import dynamic from "next/dynamic";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, Timestamp, doc, getDoc } from "firebase/firestore";
 
-// 分區型別
-type Zone = {
+// 統一型別定義
+export type WorkItem = {
+    id: string;
+    itemName: string;
+    createdAt?: Timestamp | Date;
+    start?: string;
+    end?: string;
+    quantity?: number;
+};
+
+export type Zone = {
     id: string;
     zoneName: string;
     desc?: string;
     createdAt?: Timestamp | Date;
+    workItems?: WorkItem[];
 };
 
 // 動態載入分區詳情頁
