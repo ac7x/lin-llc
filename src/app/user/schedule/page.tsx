@@ -44,12 +44,13 @@ export default function UserSchedulePage() {
         const allFlows: FlowItem[] = [];
         await Promise.all(
           projectsSnap.docs.map(async (projectDoc) => {
+            const projectName = projectDoc.data().name || `專案 ${projectDoc.id}`;
             const flowsSnap = await getDocs(collection(db, "projects", projectDoc.id, "flows"));
             flowsSnap.docs.forEach(doc => {
               const d = doc.data();
               allFlows.push({
                 id: doc.id,
-                group: projectDoc.id,
+                group: projectName, // 這裡改為 project name
                 content: d.name || (projectDoc.data().name ? `流程 (${projectDoc.data().name})` : "未命名流程"),
                 start: d.start ? (typeof d.start.toDate === 'function' ? d.start.toDate() : new Date(d.start)) : new Date(),
                 end: d.end ? (typeof d.end.toDate === 'function' ? d.end.toDate() : new Date(d.end)) : new Date(Date.now() + 86400000),
