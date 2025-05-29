@@ -52,7 +52,9 @@ export default function ProjectFlowPage() {
   // 取得 flows 列表（即時監聽）
   useEffect(() => {
     if (!projectId) return;
-    const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
+    // flows 子集合
+    const flowsColRef = collection(db, "projects", projectId, "flows");
+    const flowsQuery = query(flowsColRef);
     const unsubscribe = onSnapshot(flowsQuery, (snap: QuerySnapshot<DocumentData>) => {
       setFlows(
         snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
@@ -116,13 +118,14 @@ export default function ProjectFlowPage() {
     try {
       const { start, end } = getStartAndEndTimestamp(date);
 
-      await addDoc(collection(db, "flows"), {
+      // flows 子集合
+      await addDoc(collection(db, "projects", projectId, "flows"), {
         name: flowName.trim(),
         date,
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
-        projectId,
+        // projectId, // 不需要 projectId 欄位
         start,
         end,
       });
@@ -130,7 +133,7 @@ export default function ProjectFlowPage() {
       setDate("");
       setDescription("");
       // 直接在這裡 fetch flows
-      const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
+      const flowsQuery = query(collection(db, "projects", projectId, "flows"));
       const snap: QuerySnapshot<DocumentData> = await getDocs(flowsQuery);
       setFlows(
         snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
@@ -150,7 +153,8 @@ export default function ProjectFlowPage() {
       const storageRef = ref(storage, `flows/${flowId}_${Date.now()}_${file.name}`);
       await uploadBytes(storageRef, file);
       const photoUrl = await getDownloadURL(storageRef);
-      await updateDoc(doc(db, "flows", flowId), { photoUrl });
+      // flows 子集合
+      await updateDoc(doc(db, "projects", projectId, "flows", flowId), { photoUrl });
       setFlows(flows =>
         flows.map(f => f.id === flowId ? { ...f, photoUrl } : f)
       );
