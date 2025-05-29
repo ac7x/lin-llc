@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
+import { doc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { useDocument } from "react-firebase-hooks/firestore";
 
 // 最小型別定義
 type WorkItem = {
     id: string;
     itemName: string;
-    createdAt: Timestamp | Date | string;
+    createdAt: Date | string;
     start?: string;
     end?: string;
     quantity?: number;
@@ -19,111 +20,65 @@ type Zone = {
     id: string;
     zoneName: string;
     desc?: string;
-    createdAt: Timestamp | Date | string;
+    createdAt: Date | string;
     workItems?: WorkItem[];
 };
 
 export default function ZoneDetailPage() {
     const { projectId, zoneId } = useParams() as { projectId: string; zoneId: string };
-    const [zone, setZone] = useState<Zone | null>(null);
-    const [loading, setLoading] = useState(true);
+    // 用 react-firebase-hooks 取得 zone 文件
+    const zoneRef = projectId && zoneId ? doc(db, "projects", projectId, "zones", zoneId) : undefined;
+    const [snapshot, loading, error] = useDocument(zoneRef as any, { snapshotListenOptions: { includeMetadataChanges: true } });
 
     // 工項
-    const [workItems, setWorkItems] = useState<WorkItem[]>([]);
     const [workName, setWorkName] = useState("");
     const [creatingWork, setCreatingWork] = useState(false);
     const [workQuantity, setWorkQuantity] = useState<number | "">("");
     const [workStart, setWorkStart] = useState("");
     const [workEnd, setWorkEnd] = useState("");
 
-    // 取得分區資料
-    useEffect(() => {
-        if (!projectId || !zoneId) {
-            setLoading(false);
-            setZone(null);
-            setWorkItems([]);
-            return;
-        }
-        const fetchZone = async () => {
-            const ref = doc(db, "projects", projectId, "zones", zoneId);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                const data = snap.data() as Record<string, unknown>;
-                setZone({ id: snap.id, ...data } as Zone);
-                setWorkItems(
-                    Array.isArray(data.workItems)
-                        ? data.workItems.map((wi: Record<string, unknown>) => ({
-                            id: String(wi.id),
-                            itemName: String(wi.itemName ?? wi.name ?? ""),
-                            createdAt:
-                                typeof wi.createdAt === "string" ||
-                                    wi.createdAt instanceof Timestamp ||
-                                    wi.createdAt instanceof Date
-                                    ? wi.createdAt
-                                    : "",
-                            start: typeof wi.start === "string" ? wi.start : undefined,
-                            end: typeof wi.end === "string" ? wi.end : undefined,
-                            quantity: typeof wi.quantity === "number" ? wi.quantity : undefined,
-                        }))
-                        : []
-                );
-            } else {
-                setZone(null);
-                setWorkItems([]);
-            }
-            setLoading(false);
-        };
-        fetchZone();
-        // 若有新增工項時刷新
-    }, [projectId, zoneId, creatingWork]);
+    if (loading) return <main className="p-8">載入中...</main>;
+    if (error) return <main className="p-8 text-red-500">讀取分區時發生錯誤</main>;
+    if (!snapshot || !snapshot.exists()) return <main className="p-8">找不到分區資料</main>;
+
+    // 取得 zone 資料
+    const data = snapshot.data() as Record<string, any>;
+    const zone = { id: snapshot.id, ...data } as Zone;
+    if (!zone.zoneName) return <main className="p-8">找不到分區資料</main>;
+    const workItems = Array.isArray(zone.workItems)
+        ? zone.workItems.map((wi: Record<string, any>) => ({
+            id: String(wi.id),
+            itemName: String(wi.itemName ?? wi.name ?? ""),
+            createdAt: wi.createdAt,
+            start: typeof wi.start === "string" ? wi.start : undefined,
+            end: typeof wi.end === "string" ? wi.end : undefined,
+            quantity: typeof wi.quantity === "number" ? wi.quantity : undefined,
+        }))
+        : [];
 
     // 新增工項
     const handleAddWorkItem = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!workName || !projectId || !zoneId) return;
         setCreatingWork(true);
-        const ref = doc(db, "projects", projectId, "zones", zoneId);
-        const snap = await getDoc(ref);
-        if (!snap.exists()) {
-            setCreatingWork(false);
-            return;
-        }
-        const data = snap.data() as Record<string, unknown>;
-        const oldItems: WorkItem[] = Array.isArray(data.workItems)
-            ? data.workItems.map((wi: Record<string, unknown>) => ({
-                id: String(wi.id),
-                itemName: String(wi.itemName ?? wi.name ?? ""),
-                createdAt:
-                    typeof wi.createdAt === "string" ||
-                        wi.createdAt instanceof Timestamp ||
-                        wi.createdAt instanceof Date
-                        ? wi.createdAt
-                        : "",
-                start: typeof wi.start === "string" ? wi.start : undefined,
-                end: typeof wi.end === "string" ? wi.end : undefined,
-                quantity: typeof wi.quantity === "number" ? wi.quantity : undefined,
-            }))
-            : [];
-        const newItem: WorkItem = {
+        const oldItems = workItems;
+        const newItem = {
             id: crypto.randomUUID(),
             itemName: workName,
-            createdAt: Timestamp.now(),
+            createdAt: new Date(),
             start: workStart || undefined,
             end: workEnd || undefined,
             quantity: workQuantity === "" ? undefined : Number(workQuantity),
         };
-        const newItems = [...oldItems, newItem];
-        await updateDoc(ref, { workItems: newItems });
-
+        await import("firebase/firestore").then(({ updateDoc }) =>
+            updateDoc(doc(db, "projects", projectId, "zones", zoneId), { workItems: [...oldItems, newItem] })
+        );
         setWorkName("");
         setWorkStart("");
         setWorkEnd("");
         setWorkQuantity("");
         setCreatingWork(false);
     };
-
-    if (loading) return <main className="p-8">載入中...</main>;
-    if (!zone) return <main className="p-8">找不到分區資料</main>;
 
     return (
         <main className="max-w-xl mx-auto px-4 py-8">
