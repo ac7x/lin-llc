@@ -10,6 +10,8 @@ export const RoleList = {
   SAFETY: 'safety',     // 安全人員
   MANAGER: 'manager',   // 專案經理
   COORD: 'coord',       // 協調人員 (短字版本)
+  HELPER: 'helper',     // 助手
+  TEMPORARY: 'temporary', // 臨時
 } as const;
 
 export type Role = (typeof RoleList)[keyof typeof RoleList];
@@ -25,4 +27,6 @@ export const RoleLabelMap: Record<Role, string> = {
   safety: '安全人員',
   manager: '專案經理',
   coord: '協調人員',
+  helper: '助手',
+  temporary: '臨時',
 };

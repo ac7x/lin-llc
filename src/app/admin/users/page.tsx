@@ -132,6 +132,8 @@ export default function AdminUsersPage() {
                     <option value="foreman">foreman</option>
                     <option value="safety">safety</option>
                     <option value="coord">coord</option>
+                    <option value="helper">helper</option>
+                    <option value="temporary">temporary</option>
                   </select>
                 </td>
                 <td className="border px-2 py-1">

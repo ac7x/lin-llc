@@ -13,7 +13,7 @@ interface Attendance {
   createdAt: Timestamp | Date;
 }
 
-const defaultRoles = ["coord", "foreman", "safety", "user", "vendor"];
+const defaultRoles = ["coord", "foreman", "safety", "user", "vendor", "helper", "temporary"];
 
 export default function ProjectAttendancePage() {
   const { projectId } = useParams() as { projectId: string };
