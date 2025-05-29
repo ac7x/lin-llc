@@ -64,6 +64,10 @@ export default function ZonesPage() {
     const [workPackages, setWorkPackages] = useState<{ [phaseId: string]: WorkPackage[] }>({});
     const [workPackagesLoading, setWorkPackagesLoading] = useState<{ [phaseId: string]: boolean }>({});
 
+    // 新增：目前選中的工作包
+    const [selectedWorkPackage, setSelectedWorkPackage] = useState<WorkPackage | null>(null);
+    const [workPackageDetailLoading, setWorkPackageDetailLoading] = useState(false);
+
     const router = useRouter();
 
     useEffect(() => {
@@ -191,80 +195,100 @@ export default function ZonesPage() {
         setWorkPackageCreating(false);
     };
 
+    // 取得單一工作包詳細
+    const fetchWorkPackageDetail = async (phaseId: string, workPackageId: string) => {
+        setWorkPackageDetailLoading(true);
+        const ref = doc(db, "projects", projectId, "zones", selectedZoneId!, "phases", phaseId, "workpackages", workPackageId);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+            setSelectedWorkPackage({ id: snap.id, ...snap.data() } as WorkPackage);
+        } else {
+            setSelectedWorkPackage(null);
+        }
+        setWorkPackageDetailLoading(false);
+    };
+
     return (
         <main className="max-w-4xl mx-auto p-8">
             <div className="flex gap-8">
                 {/* 左側：分區列表與新增 */}
-                <div className="w-1/2 min-w-[220px]">
-                    <div className="flex justify-between items-center mb-4">
-                        <span className="font-semibold">分區列表</span>
-                    </div>
-                    {loading ? (
-                        <div>載入中...</div>
-                    ) : (
-                        <ul className="space-y-2">
-                            {zones.length === 0 && <li>尚無分區</li>}
-                            {zones.map(zone => (
-                                <li key={zone.id}>
+                <div className="w-1/2 min-w-[140px] max-w-[160px]">
+                    <div className="flex flex-col items-center">
+                        <div className="w-full">
+                            <span className="font-semibold block mb-2">分區列表</span>
+                            <div className="bg-white rounded-lg shadow border max-w-[140px] mx-auto pb-3 pt-2 px-2 flex flex-col items-center">
+                                <ul className="space-y-2 max-h-[260px] overflow-auto w-full">
+                                    {loading ? (
+                                        <li>載入中...</li>
+                                    ) : zones.length === 0 ? (
+                                        <li>尚無分區</li>
+                                    ) : (
+                                        zones.map(zone => (
+                                            <li key={zone.id}>
+                                                <button
+                                                    className={`w-full text-left border p-2 text-sm rounded-md transition-all duration-100 ${selectedZoneId === zone.id ? "bg-blue-50 border-blue-400" : "bg-white border-gray-200"} hover:bg-blue-100`}
+                                                    style={{ minWidth: 0 }}
+                                                    onClick={() => setSelectedZoneId(zone.id)}
+                                                >
+                                                    <span className="font-semibold text-blue-700">{zone.zoneName}</span>
+                                                    {zone.desc && <div className="text-gray-600 text-xs">{zone.desc}</div>}
+                                                </button>
+                                            </li>
+                                        ))
+                                    )}
+                                </ul>
+                                {/* 新增區域表單（點擊按鈕才顯示） */}
+                                {showForm && (
+                                    <form onSubmit={handleSubmit} className="space-y-4 mt-4 bg-gray-50 p-3 rounded border w-full">
+                                        <div>
+                                            <label className="block mb-1">區域名稱</label>
+                                            <input
+                                                className="border px-3 py-2 w-full"
+                                                value={zoneName}
+                                                onChange={e => setZoneName(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block mb-1">描述</label>
+                                            <textarea
+                                                className="border px-3 py-2 w-full"
+                                                value={desc}
+                                                onChange={e => setDesc(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="submit"
+                                                className="bg-blue-600 text-white px-4 py-2 rounded"
+                                                disabled={creating}
+                                            >
+                                                {creating ? "建立中..." : "建立區域"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                                onClick={() => setShowForm(false)}
+                                                disabled={creating}
+                                            >
+                                                取消
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+                                {/* 新增區域按鈕緊貼在卡片下方 */}
+                                {!showForm && (
                                     <button
-                                        className={`w-full text-left border p-3 rounded ${selectedZoneId === zone.id ? "bg-blue-50 border-blue-400" : ""} hover:bg-blue-100`}
-                                        onClick={() => setSelectedZoneId(zone.id)}
+                                        onClick={() => setShowForm(true)}
+                                        className="bg-blue-600 text-white px-3 py-1.5 text-sm rounded w-full mt-3"
+                                        style={{ minWidth: 0 }}
+                                        disabled={showForm}
                                     >
-                                        <span className="font-semibold text-blue-700">{zone.zoneName}</span>
-                                        {zone.desc && <div className="text-gray-600 text-sm">{zone.desc}</div>}
+                                        新增區域
                                     </button>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                    {/* 新增區域表單（點擊按鈕才顯示） */}
-                    {showForm && (
-                        <form onSubmit={handleSubmit} className="space-y-4 mb-4 mt-6 bg-gray-50 p-4 rounded border">
-                            <div>
-                                <label className="block mb-1">區域名稱</label>
-                                <input
-                                    className="border px-3 py-2 w-full"
-                                    value={zoneName}
-                                    onChange={e => setZoneName(e.target.value)}
-                                    required
-                                />
+                                )}
                             </div>
-                            <div>
-                                <label className="block mb-1">描述</label>
-                                <textarea
-                                    className="border px-3 py-2 w-full"
-                                    value={desc}
-                                    onChange={e => setDesc(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    type="submit"
-                                    className="bg-blue-600 text-white px-4 py-2 rounded"
-                                    disabled={creating}
-                                >
-                                    {creating ? "建立中..." : "建立區域"}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
-                                    onClick={() => setShowForm(false)}
-                                    disabled={creating}
-                                >
-                                    取消
-                                </button>
-                            </div>
-                        </form>
-                    )}
-                    {/* 新增區域按鈕永遠顯示在最下方 */}
-                    <div className="mt-6">
-                        <button
-                            onClick={() => setShowForm(true)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-                            disabled={showForm}
-                        >
-                            新增區域
-                        </button>
+                        </div>
                     </div>
                 </div>
                 {/* 右側：分區詳情 */}
@@ -356,153 +380,190 @@ export default function ZonesPage() {
                     )}
                     {tab === "workpackages" && (
                         <div className="border rounded p-4 bg-gray-50">
-                            <div className="font-semibold mb-2">工作包列表（依階段分組）</div>
-                            {phasesLoading ? (
-                                <div>載入中...</div>
-                            ) : phases.length === 0 ? (
-                                <div className="text-gray-400">尚無階段</div>
-                            ) : (
-                                <ul className="space-y-4">
-                                    {phases.map(phase => (
-                                        <li key={phase.id} className="border-b pb-2">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <span className="font-semibold text-blue-700">{phase.phaseName}</span>
-                                                    {phase.createdAt && (
-                                                        <span className="ml-2 text-gray-500 text-xs">
-                                                            {phase.createdAt instanceof Timestamp
-                                                                ? phase.createdAt.toDate().toLocaleString()
-                                                                : phase.createdAt instanceof Date
-                                                                    ? phase.createdAt.toLocaleString()
-                                                                    : String(phase.createdAt)}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <button
-                                                    className="text-green-600 underline px-2"
-                                                    onClick={() => setShowWorkPackageForm(prev => ({ ...prev, [phase.id]: !prev[phase.id] }))}
-                                                >
-                                                    {showWorkPackageForm[phase.id] ? "取消" : "新增工作包"}
-                                                </button>
-                                            </div>
-                                            {/* 新增工作包表單 */}
-                                            {showWorkPackageForm[phase.id] && (
-                                                <form onSubmit={e => handleCreateWorkPackage(e, phase.id)} className="space-y-2 mt-2 bg-gray-50 p-3 rounded border">
-                                                    <div>
-                                                        <label className="block mb-1">工作包名稱</label>
-                                                        <input
-                                                            className="border px-3 py-2 w-full"
-                                                            value={workPackageName}
-                                                            onChange={e => setWorkPackageName(e.target.value)}
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block mb-1">描述</label>
-                                                        <textarea
-                                                            className="border px-3 py-2 w-full"
-                                                            value={workPackageDesc}
-                                                            onChange={e => setWorkPackageDesc(e.target.value)}
-                                                        />
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            type="submit"
-                                                            className="bg-green-600 text-white px-4 py-2 rounded"
-                                                            disabled={workPackageCreating}
-                                                        >
-                                                            {workPackageCreating ? "建立中..." : "建立工作包"}
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
-                                                            onClick={() => setShowWorkPackageForm(prev => ({ ...prev, [phase.id]: false }))}
-                                                            disabled={workPackageCreating}
-                                                        >
-                                                            取消
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            )}
-                                            {/* 工作包列表 */}
-                                            <div className="mt-2 ml-4">
-                                                {workPackagesLoading[phase.id] ? (
-                                                    <div className="text-gray-400">載入中...</div>
-                                                ) : (workPackages[phase.id]?.length ?? 0) === 0 ? (
-                                                    <div className="text-gray-400">尚無工作包</div>
-                                                ) : (
-                                                    <ul className="list-disc ml-5">
-                                                        {workPackages[phase.id].map(wp => (
-                                                            <li key={wp.id} className="flex items-center justify-between">
-                                                                <span>
-                                                                    <span className="font-medium">{wp.name}</span>
-                                                                    {wp.desc && <span className="ml-2 text-gray-500 text-xs">{wp.desc}</span>}
-                                                                    {wp.createdAt && (
-                                                                        <span className="ml-2 text-gray-400 text-xs">
-                                                                            {wp.createdAt instanceof Timestamp
-                                                                                ? wp.createdAt.toDate().toLocaleString()
-                                                                                : wp.createdAt instanceof Date
-                                                                                    ? wp.createdAt.toLocaleString()
-                                                                                    : String(wp.createdAt)}
-                                                                        </span>
-                                                                    )}
-                                                                </span>
-                                                                <button
-                                                                    className="text-blue-600 underline px-2"
-                                                                    onClick={() => router.push(`/admin/projects/${projectId}/zones/${selectedZoneId}/phases/${phase.id}/workpackages/${wp.id}`)}
-                                                                >
-                                                                    {/* 加上 emoji 讓按鈕更明顯 */}
-                                                                    查看🔍
-                                                                </button>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                            {/* 新增階段按鈕與表單（可選擇是否顯示） */}
-                            <div className="mt-4">
-                                {!showPhaseForm ? (
+                            {/* 新增：如果有選擇工作包，顯示詳細內容 */}
+                            {selectedWorkPackage ? (
+                                <div>
                                     <button
-                                        onClick={() => setShowPhaseForm(true)}
-                                        className="bg-green-600 text-white px-4 py-2 rounded"
+                                        className="mb-4 text-blue-600 underline"
+                                        onClick={() => setSelectedWorkPackage(null)}
                                     >
-                                        新增階段
+                                        ← 返回工作包列表
                                     </button>
-                                ) : (
-                                    <form onSubmit={handleCreatePhase} className="space-y-2 mt-2 bg-gray-50 p-3 rounded border">
+                                    {workPackageDetailLoading ? (
+                                        <div>載入中...</div>
+                                    ) : selectedWorkPackage ? (
                                         <div>
-                                            <label className="block mb-1">階段名稱</label>
-                                            <input
-                                                className="border px-3 py-2 w-full"
-                                                value={phaseName}
-                                                onChange={e => setPhaseName(e.target.value)}
-                                                required
-                                            />
+                                            <h2 className="text-xl font-bold mb-2">工作包：{selectedWorkPackage.name}</h2>
+                                            <div className="mb-2">
+                                                <span className="font-medium">描述：</span>
+                                                {selectedWorkPackage.desc || <span className="text-gray-400">（無描述）</span>}
+                                            </div>
+                                            {selectedWorkPackage.createdAt && (
+                                                <div className="text-gray-500 text-sm">
+                                                    建立時間：
+                                                    {selectedWorkPackage.createdAt instanceof Timestamp
+                                                        ? selectedWorkPackage.createdAt.toDate().toLocaleString()
+                                                        : selectedWorkPackage.createdAt instanceof Date
+                                                            ? selectedWorkPackage.createdAt.toLocaleString()
+                                                            : String(selectedWorkPackage.createdAt)}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex gap-2">
+                                    ) : (
+                                        <div>找不到工作包資料</div>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="font-semibold mb-2">工作包列表（依階段分組）</div>
+                                    {phasesLoading ? (
+                                        <div>載入中...</div>
+                                    ) : phases.length === 0 ? (
+                                        <div className="text-gray-400">尚無階段</div>
+                                    ) : (
+                                        <ul className="space-y-4">
+                                            {phases.map(phase => (
+                                                <li key={phase.id} className="border-b pb-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <span className="font-semibold text-blue-700">{phase.phaseName}</span>
+                                                            {phase.createdAt && (
+                                                                <span className="ml-2 text-gray-500 text-xs">
+                                                                    {phase.createdAt instanceof Timestamp
+                                                                        ? phase.createdAt.toDate().toLocaleString()
+                                                                        : phase.createdAt instanceof Date
+                                                                            ? phase.createdAt.toLocaleString()
+                                                                            : String(phase.createdAt)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            className="text-green-600 underline px-2"
+                                                            onClick={() => setShowWorkPackageForm(prev => ({ ...prev, [phase.id]: !prev[phase.id] }))}
+                                                        >
+                                                            {showWorkPackageForm[phase.id] ? "取消" : "新增工作包"}
+                                                        </button>
+                                                    </div>
+                                                    {/* 新增工作包表單 */}
+                                                    {showWorkPackageForm[phase.id] && (
+                                                        <form onSubmit={e => handleCreateWorkPackage(e, phase.id)} className="space-y-2 mt-2 bg-gray-50 p-3 rounded border">
+                                                            <div>
+                                                                <label className="block mb-1">工作包名稱</label>
+                                                                <input
+                                                                    className="border px-3 py-2 w-full"
+                                                                    value={workPackageName}
+                                                                    onChange={e => setWorkPackageName(e.target.value)}
+                                                                    required
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block mb-1">描述</label>
+                                                                <textarea
+                                                                    className="border px-3 py-2 w-full"
+                                                                    value={workPackageDesc}
+                                                                    onChange={e => setWorkPackageDesc(e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    type="submit"
+                                                                    className="bg-green-600 text-white px-4 py-2 rounded"
+                                                                    disabled={workPackageCreating}
+                                                                >
+                                                                    {workPackageCreating ? "建立中..." : "建立工作包"}
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                                                    onClick={() => setShowWorkPackageForm(prev => ({ ...prev, [phase.id]: false }))}
+                                                                    disabled={workPackageCreating}
+                                                                >
+                                                                    取消
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    )}
+                                                    {/* 工作包列表 */}
+                                                    <div className="mt-2 ml-4">
+                                                        {workPackagesLoading[phase.id] ? (
+                                                            <div className="text-gray-400">載入中...</div>
+                                                        ) : (workPackages[phase.id]?.length ?? 0) === 0 ? (
+                                                            <div className="text-gray-400">尚無工作包</div>
+                                                        ) : (
+                                                            <ul className="list-disc ml-5">
+                                                                {workPackages[phase.id].map(wp => (
+                                                                    <li key={wp.id} className="flex items-center justify-between">
+                                                                        <span>
+                                                                            <span className="font-medium">{wp.name}</span>
+                                                                            {wp.desc && <span className="ml-2 text-gray-500 text-xs">{wp.desc}</span>}
+                                                                            {wp.createdAt && (
+                                                                                <span className="ml-2 text-gray-400 text-xs">
+                                                                                    {wp.createdAt instanceof Timestamp
+                                                                                        ? wp.createdAt.toDate().toLocaleString()
+                                                                                        : wp.createdAt instanceof Date
+                                                                                            ? wp.createdAt.toLocaleString()
+                                                                                            : String(wp.createdAt)}
+                                                                                </span>
+                                                                            )}
+                                                                        </span>
+                                                                        <button
+                                                                            className="text-blue-600 underline px-2"
+                                                                            // 修改：不跳轉，直接顯示詳細
+                                                                            onClick={() => fetchWorkPackageDetail(phase.id, wp.id)}
+                                                                        >
+                                                                            查看🔍
+                                                                        </button>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                    {/* 新增階段按鈕與表單（可選擇是否顯示） */}
+                                    <div className="mt-4">
+                                        {!showPhaseForm ? (
                                             <button
-                                                type="submit"
+                                                onClick={() => setShowPhaseForm(true)}
                                                 className="bg-green-600 text-white px-4 py-2 rounded"
-                                                disabled={phaseCreating}
                                             >
-                                                {phaseCreating ? "建立中..." : "建立階段"}
+                                                新增階段
                                             </button>
-                                            <button
-                                                type="button"
-                                                className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
-                                                onClick={() => setShowPhaseForm(false)}
-                                                disabled={phaseCreating}
-                                            >
-                                                取消
-                                            </button>
-                                        </div>
-                                    </form>
-                                )}
-                            </div>
+                                        ) : (
+                                            <form onSubmit={handleCreatePhase} className="space-y-2 mt-2 bg-gray-50 p-3 rounded border">
+                                                <div>
+                                                    <label className="block mb-1">階段名稱</label>
+                                                    <input
+                                                        className="border px-3 py-2 w-full"
+                                                        value={phaseName}
+                                                        onChange={e => setPhaseName(e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="submit"
+                                                        className="bg-green-600 text-white px-4 py-2 rounded"
+                                                        disabled={phaseCreating}
+                                                    >
+                                                        {phaseCreating ? "建立中..." : "建立階段"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                                        onClick={() => setShowPhaseForm(false)}
+                                                        disabled={phaseCreating}
+                                                    >
+                                                        取消
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
