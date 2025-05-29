@@ -29,6 +29,9 @@ export default function ZonesPage() {
     const [zoneDetail, setZoneDetail] = useState<Zone | null>(null);
     const [zoneDetailLoading, setZoneDetailLoading] = useState(false);
 
+    // 新增區域 tab 狀態
+    const [tab, setTab] = useState<"zone" | "add">("zone");
+
     useEffect(() => {
         const fetchZones = async () => {
             const snap = await getDocs(collection(db, "projects", projectId, "zones"));
@@ -64,6 +67,12 @@ export default function ZonesPage() {
         fetchZoneDetail();
     }, [projectId, selectedZoneId]);
 
+    // 當選擇分區時自動切換到 zone tab
+    useEffect(() => {
+        if (selectedZoneId && tab !== "zone") setTab("zone");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedZoneId]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!zoneName) return;
@@ -92,25 +101,38 @@ export default function ZonesPage() {
                     zones.map(zone => (
                         <button
                             key={zone.id}
-                            className={`px-4 py-2 font-semibold border-b-2 transition whitespace-nowrap ${selectedZoneId === zone.id ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
-                            onClick={() => setSelectedZoneId(zone.id)}
+                            className={`px-4 py-2 font-semibold border-b-2 transition whitespace-nowrap ${tab === "zone" && selectedZoneId === zone.id
+                                    ? "border-blue-600 text-blue-700"
+                                    : "border-transparent text-gray-600 hover:text-blue-700"
+                                }`}
+                            onClick={() => {
+                                setSelectedZoneId(zone.id);
+                                setTab("zone");
+                            }}
                         >
                             {zone.zoneName}
                         </button>
                     ))
                 )}
-                {/* 新增分區按鈕 */}
+                {/* 新增分區 tab（+） */}
                 <button
-                    onClick={() => setShowForm(true)}
-                    className="ml-2 px-3 py-1.5 text-sm rounded bg-blue-600 text-white font-semibold"
-                    style={{ minWidth: 0, height: "36px" }}
-                    disabled={showForm}
+                    onClick={() => {
+                        setTab("add");
+                        setShowForm(true);
+                        setSelectedZoneId(null);
+                    }}
+                    className={`ml-2 px-4 py-2 font-semibold border-b-2 transition text-xl flex items-center justify-center ${tab === "add"
+                            ? "border-blue-600 text-blue-700 bg-blue-50"
+                            : "border-transparent text-gray-600 hover:text-blue-700"
+                        }`}
+                    style={{ minWidth: 0, height: "40px" }}
+                    aria-label="新增區域"
                 >
-                    新增區域
+                    +
                 </button>
             </div>
-            {/* 新增區域表單（橫向tab下方） */}
-            {showForm && (
+            {/* 新增區域表單（tab內容） */}
+            {tab === "add" && showForm && (
                 <form onSubmit={handleSubmit} className="space-y-4 mb-6 bg-gray-50 p-4 rounded border max-w-md">
                     <div>
                         <label className="block mb-1">區域名稱</label>
@@ -140,7 +162,12 @@ export default function ZonesPage() {
                         <button
                             type="button"
                             className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
-                            onClick={() => setShowForm(false)}
+                            onClick={() => {
+                                setShowForm(false);
+                                setTab("zone");
+                                // 若有分區則預設選第一個
+                                if (zones.length > 0) setSelectedZoneId(zones[0].id);
+                            }}
                             disabled={creating}
                         >
                             取消
@@ -149,33 +176,35 @@ export default function ZonesPage() {
                 </form>
             )}
             {/* 分區詳情 */}
-            <div className="w-full">
-                {zoneDetailLoading ? (
-                    <div>載入中...</div>
-                ) : !selectedZoneId ? (
-                    <div className="text-gray-400">請選擇分區</div>
-                ) : !zoneDetail ? (
-                    <div>找不到分區資料</div>
-                ) : (
-                    <div className="border rounded p-4 bg-gray-50 max-w-xl">
-                        <h2 className="text-lg font-bold mb-2">{zoneDetail.zoneName}</h2>
-                        <div className="mb-2">
-                            <span className="font-medium">描述：</span>
-                            {zoneDetail.desc || <span className="text-gray-400">（無描述）</span>}
-                        </div>
-                        {zoneDetail.createdAt && (
-                            <div className="text-gray-500 text-sm">
-                                建立時間：
-                                {zoneDetail.createdAt instanceof Timestamp
-                                    ? zoneDetail.createdAt.toDate().toLocaleString()
-                                    : zoneDetail.createdAt instanceof Date
-                                        ? zoneDetail.createdAt.toLocaleString()
-                                        : String(zoneDetail.createdAt)}
+            {tab === "zone" && (
+                <div className="w-full">
+                    {zoneDetailLoading ? (
+                        <div>載入中...</div>
+                    ) : !selectedZoneId ? (
+                        <div className="text-gray-400">請選擇分區</div>
+                    ) : !zoneDetail ? (
+                        <div>找不到分區資料</div>
+                    ) : (
+                        <div className="border rounded p-4 bg-gray-50 max-w-xl">
+                            <h2 className="text-lg font-bold mb-2">{zoneDetail.zoneName}</h2>
+                            <div className="mb-2">
+                                <span className="font-medium">描述：</span>
+                                {zoneDetail.desc || <span className="text-gray-400">（無描述）</span>}
                             </div>
-                        )}
-                    </div>
-                )}
-            </div>
+                            {zoneDetail.createdAt && (
+                                <div className="text-gray-500 text-sm">
+                                    建立時間：
+                                    {zoneDetail.createdAt instanceof Timestamp
+                                        ? zoneDetail.createdAt.toDate().toLocaleString()
+                                        : zoneDetail.createdAt instanceof Date
+                                            ? zoneDetail.createdAt.toLocaleString()
+                                            : String(zoneDetail.createdAt)}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
