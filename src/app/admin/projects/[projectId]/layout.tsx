@@ -1,4 +1,4 @@
-// src/app/admin/projects-dev/[projectId]/layout.tsx
+// src/app/admin/projects/[projectId]/layout.tsx
 
 "use client";
 
@@ -47,7 +47,7 @@ export default function ProjectLayout({
                     {tabs.map((tab) => (
                         <Link
                             key={tab.key}
-                            href={`/admin/projects-dev/${projectId}/${tab.key}`}
+                            href={`/admin/projects/${projectId}/${tab.key}`}
                             className={`text-left px-3 py-2 rounded hover:bg-blue-50 font-medium transition ${currentTab === tab.key ? "bg-blue-100 text-blue-800" : "text-gray-700"
                                 }`}
                         >
