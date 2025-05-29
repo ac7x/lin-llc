@@ -7,7 +7,7 @@ import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebas
 
 type Zone = {
     id: string;
-    name: string;
+    zoneName: string;
     desc?: string;
     createdAt?: Timestamp | Date;
 };
@@ -23,7 +23,8 @@ export default function ZoneDetailPage() {
             const ref = doc(db, "projects", projectId, "zones", zoneId);
             const snap = await getDoc(ref);
             if (snap.exists()) {
-                setZone({ id: snap.id, ...snap.data() } as Zone);
+                const data = snap.data();
+                setZone({ id: snap.id, ...data, zoneName: data.zoneName } as Zone);
             } else {
                 setZone(null);
             }
@@ -42,7 +43,7 @@ export default function ZoneDetailPage() {
 
     return (
         <main className="max-w-xl mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold mb-4">分區：{zone.name}</h1>
+            <h1 className="text-2xl font-bold mb-4">分區：{zone.zoneName}</h1>
             <div className="mb-2">
                 <span className="font-medium">描述：</span>
                 {zone.desc || <span className="text-gray-400">（無描述）</span>}

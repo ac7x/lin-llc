@@ -42,48 +42,86 @@ export default function ProjectsPage() {
     const startDate = toDate(newStart);
     const endDate = toDate(newEnd);
 
-    if (item.projectId !== newGroupIdString) {
+    // 找到新 group (zone) 所屬的 projectId
+    let newProjectId = "";
+    for (const g of groups) {
+      if (g.id === newGroupIdString) {
+        const projects = await getDocs(collection(db, "projects"));
+        for (const p of projects.docs) {
+          const zones = await getDocs(collection(db, "projects", p.id, "zones"));
+          if (zones.docs.some(z => z.id === newGroupIdString)) {
+            newProjectId = p.id;
+            break;
+          }
+        }
+        break;
+      }
+    }
+    if (!newProjectId) return false;
+
+    if (item.projectId !== newProjectId) {
       await deleteDoc(doc(db, "projects", item.projectId, "flows", itemIdString));
-      const ref = await addDoc(collection(db, "projects", newGroupIdString, "flows"), {
+      const ref = await addDoc(collection(db, "projects", newProjectId, "flows"), {
         name: item.content,
         start: startDate,
         end: endDate,
         userId: item.userId,
+        zoneId: newGroupIdString,
       });
-      setItems(prev => prev.map(i => i.id === itemIdString ? { ...i, id: ref.id, group: newGroupIdString, projectId: newGroupIdString, start: startDate, end: endDate } : i));
+      setItems(prev => prev.map(i => i.id === itemIdString ? { ...i, id: ref.id, group: newGroupIdString, projectId: newProjectId, start: startDate, end: endDate } : i));
     } else {
-      await updateDoc(doc(db, "projects", newGroupIdString, "flows", itemIdString), { start: startDate, end: endDate });
-      setItems(prev => prev.map(i => i.id === itemIdString ? { ...i, start: startDate, end: endDate } : i));
+      await updateDoc(doc(db, "projects", newProjectId, "flows", itemIdString), { start: startDate, end: endDate, zoneId: newGroupIdString });
+      setItems(prev => prev.map(i => i.id === itemIdString ? { ...i, start: startDate, end: endDate, group: newGroupIdString } : i));
     }
     return true;
-  }, [items]);
+  }, [items, groups]);
 
   const handleItemAdd = useCallback(async (itemData: TimelineItem, cb: (item: Item | null) => void) => {
     if (!user) return cb(null);
-    const groupString = String(itemData.group);
-    const contentString = String(itemData.content || "新流程"); // Ensure content is a string
+    const zoneId = String(itemData.group);
+    const contentString = String(itemData.content || "新流程");
     const startDate = itemData.start ? toDate(itemData.start) : new Date();
     const endDate = itemData.end ? toDate(itemData.end) : new Date(Date.now() + 3600000);
+
+    // 需找到 zone 所屬的 projectId
+    let projectId = "";
+    for (const g of groups) {
+      if (g.id === zoneId) {
+        // 反查 projectId
+        // 這裡假設 zone id 唯一且不跨 project
+        const projects = await getDocs(collection(db, "projects"));
+        for (const p of projects.docs) {
+          const zones = await getDocs(collection(db, "projects", p.id, "zones"));
+          if (zones.docs.some(z => z.id === zoneId)) {
+            projectId = p.id;
+            break;
+          }
+        }
+        break;
+      }
+    }
+    if (!projectId) return cb(null);
 
     const dataToSave = {
       name: contentString,
       start: startDate,
       end: endDate,
       userId: user.uid,
+      zoneId,
     };
-    const ref = await addDoc(collection(db, "projects", groupString, "flows"), dataToSave);
+    const ref = await addDoc(collection(db, "projects", projectId, "flows"), dataToSave);
     const newItem: Item = {
       id: ref.id,
-      group: groupString,
+      group: zoneId,
       content: contentString,
       start: startDate,
       end: endDate,
-      projectId: groupString,
+      projectId,
       userId: user.uid,
     };
     setItems(prev => [...prev, newItem]);
     cb(newItem);
-  }, [user]);
+  }, [user, groups]);
 
   const handleItemRemove = useCallback(async (itemData: TimelineItem, cb: (item: TimelineItem | null) => void) => {
     const id = String(itemData.id);
@@ -97,26 +135,41 @@ export default function ProjectsPage() {
   // Fetch Data
   useEffect(() => {
     (async () => {
+      // 取得所有專案
       const projects = await getDocs(collection(db, "projects"));
-      // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 修改這一行 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-      const groupList: Group[] = projects.docs.map(d => ({ id: d.id, content: d.data().projectName || d.id }));
-      // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+      // 取得所有 zone 作為 groups
+      const groupList: Group[] = [];
+      for (const project of projects.docs) {
+        const zones = await getDocs(collection(db, "projects", project.id, "zones"));
+        zones.forEach(z => {
+          const zd = z.data();
+          groupList.push({
+            id: z.id,
+            content: zd.zoneName || z.id,
+          });
+        });
+      }
       setGroups(groupList);
+
+      // 取得所有 flows，group 設為 zone id
       const allItems: Item[] = [];
       for (const project of projects.docs) {
         const flows = await getDocs(collection(db, "projects", project.id, "flows"));
-        allItems.push(...flows.docs.map(f => {
+        flows.forEach(f => {
           const d = f.data();
-          return {
-            id: f.id,
-            group: project.id,
-            content: d.name,
-            start: d.start?.toDate?.() || new Date(),
-            end: d.end?.toDate?.() || new Date(Date.now() + 3600000),
-            projectId: project.id,
-            userId: d.userId,
-          } as Item; // Ensure the object conforms to the Item interface
-        }));
+          // 若 flow 有 zoneId 欄位，則 group 設為 zoneId
+          if (d.zoneId) {
+            allItems.push({
+              id: f.id,
+              group: d.zoneId,
+              content: d.name,
+              start: d.start?.toDate?.() || new Date(),
+              end: d.end?.toDate?.() || new Date(Date.now() + 3600000),
+              projectId: project.id,
+              userId: d.userId,
+            });
+          }
+        });
       }
       setItems(allItems);
     })();
@@ -145,14 +198,11 @@ export default function ProjectsPage() {
     return () => timeline.destroy();
   }, [groups, items, handleItemAdd, handleItemMove, handleItemRemove]);
 
-  // Create Project
-  const [n, setN] = useState(""); const addProject = async () => {
+  // 建立專案時不再自動建立 group，需另外建立 zone
+  const [n, setN] = useState("");
+  const addProject = async () => {
     if (!user || !n.trim()) return;
-    const ref = await addDoc(collection(db, "projects"), { projectName: n, createdAt: Timestamp.now(), ownerId: user.uid }); // 改成 projectName
-    setGroups(g => [...g, { id: ref.id, content: n }]);
-    const start = Timestamp.now(), end = Timestamp.fromMillis(start.toMillis() + 3600000);
-    const flow = await addDoc(collection(db, "projects", ref.id, "flows"), { name: n + " - 初始流程", start, end, userId: user.uid });
-    setItems(i => [...i, { id: flow.id, group: ref.id, content: n + " - 初始流程", start: start.toDate(), end: end.toDate(), projectId: ref.id, userId: user.uid }]);
+    const ref = await addDoc(collection(db, "projects"), { projectName: n, createdAt: Timestamp.now(), ownerId: user.uid });
     setN("");
   };
 

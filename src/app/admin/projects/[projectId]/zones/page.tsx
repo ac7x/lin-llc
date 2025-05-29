@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, Timestamp, doc, getDoc } from "firebase/fi
 // 分區型別
 type Zone = {
     id: string;
-    name: string;
+    zoneName: string;
     desc?: string;
     createdAt?: Timestamp | Date;
 };
@@ -20,7 +20,7 @@ export default function ZonesPage() {
 
     // 新增區域表單狀態
     const [showForm, setShowForm] = useState(false);
-    const [name, setName] = useState("");
+    const [zoneName, setZoneName] = useState("");
     const [desc, setDesc] = useState("");
     const [creating, setCreating] = useState(false);
 
@@ -66,14 +66,14 @@ export default function ZonesPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name) return;
+        if (!zoneName) return;
         setCreating(true);
         await addDoc(collection(db, "projects", projectId, "zones"), {
-            name,
+            zoneName,
             desc,
             createdAt: Timestamp.now(),
         });
-        setName("");
+        setZoneName("");
         setDesc("");
         setShowForm(false);
         setCreating(false);
@@ -99,7 +99,7 @@ export default function ZonesPage() {
                                         className={`w-full text-left border p-3 rounded ${selectedZoneId === zone.id ? "bg-blue-50 border-blue-400" : ""} hover:bg-blue-100`}
                                         onClick={() => setSelectedZoneId(zone.id)}
                                     >
-                                        <span className="font-semibold text-blue-700">{zone.name}</span>
+                                        <span className="font-semibold text-blue-700">{zone.zoneName}</span>
                                         {zone.desc && <div className="text-gray-600 text-sm">{zone.desc}</div>}
                                     </button>
                                 </li>
@@ -113,8 +113,8 @@ export default function ZonesPage() {
                                 <label className="block mb-1">區域名稱</label>
                                 <input
                                     className="border px-3 py-2 w-full"
-                                    value={name}
-                                    onChange={e => setName(e.target.value)}
+                                    value={zoneName}
+                                    onChange={e => setZoneName(e.target.value)}
                                     required
                                 />
                             </div>
@@ -167,7 +167,7 @@ export default function ZonesPage() {
                         <div>找不到分區資料</div>
                     ) : (
                         <div className="border rounded p-4 bg-gray-50">
-                            <h2 className="text-lg font-bold mb-2">{zoneDetail.name}</h2>
+                            <h2 className="text-lg font-bold mb-2">{zoneDetail.zoneName}</h2>
                             <div className="mb-2">
                                 <span className="font-medium">描述：</span>
                                 {zoneDetail.desc || <span className="text-gray-400">（無描述）</span>}
