@@ -3,11 +3,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs } from "firebase/firestore";
-import { Timeline, DataSet, TimelineOptions } from "vis-timeline/standalone";
+import { Timeline, DataSet } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
 
-// Group = Project
-// FlowItem = 流程
 type Group = { id: string; content: string };
 type FlowItem = {
   id: string;
@@ -20,78 +18,99 @@ type FlowItem = {
 };
 
 export default function UserSchedulePage() {
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const timelineInstance = useRef<Timeline | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [items, setItems] = useState<FlowItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const timelineInstance = useRef<Timeline | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-
-    // 先取得所有 projects，再取得每個 project 的 flows 子集合
-    getDocs(collection(db, "projects"))
-      .then(async (projectsSnap) => {
-        const groupList = projectsSnap.docs.map(doc => ({
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const projectsSnap = await getDocs(collection(db, "projects"));
+        const loadedGroups = projectsSnap.docs.map((doc) => ({
           id: doc.id,
-          content: doc.data().projectName || doc.id, // group 名稱顯示 projectName
+          content: doc.data().projectName || doc.id, // 取 projectName 欄位
         }));
-        setGroups(groupList);
+        setGroups(loadedGroups);
 
-        // 取得所有 flows 子集合
-        const allFlows: FlowItem[] = [];
+        const loadedItems: FlowItem[] = [];
         await Promise.all(
           projectsSnap.docs.map(async (projectDoc) => {
-            const flowsSnap = await getDocs(collection(db, "projects", projectDoc.id, "flows"));
-            flowsSnap.docs.forEach(doc => {
+            const projectName = projectDoc.data().name || projectDoc.id;
+            const flowsSnap = await getDocs(
+              collection(db, "projects", projectDoc.id, "flows")
+            );
+            flowsSnap.docs.forEach((doc) => {
               const d = doc.data();
-              allFlows.push({
+              loadedItems.push({
                 id: doc.id,
-                group: projectDoc.id, // group 設為 project id
-                content: d.name || (projectDoc.data().projectName ? `流程 (${projectDoc.data().projectName})` : "未命名流程"),
-                start: d.start ? (typeof d.start.toDate === 'function' ? d.start.toDate() : new Date(d.start)) : new Date(),
-                end: d.end ? (typeof d.end.toDate === 'function' ? d.end.toDate() : new Date(d.end)) : new Date(Date.now() + 86400000),
+                group: projectName,
+                content: d.name || `流程 (${projectName})`,
+                start:
+                  d.start?.toDate?.() ?? new Date(d.start ?? Date.now()),
+                end:
+                  d.end?.toDate?.() ??
+                  new Date(d.end ?? Date.now() + 86400000),
                 projectId: projectDoc.id,
                 userId: d.userId,
               });
             });
           })
         );
-        setItems(allFlows);
-      })
-      .catch((err: unknown) => {
-        setError((err as Error).message || "載入資料失敗");
-      })
-      .finally(() => {
+        setItems(loadedItems);
+      } catch (e) {
+        setError((e as Error).message || "載入資料失敗");
+      } finally {
         setLoading(false);
-      });
+      }
+    })();
   }, []);
 
   useEffect(() => {
-    if (!timelineRef.current || loading || error) return;
+    if (
+      !timelineRef.current ||
+      loading ||
+      error ||
+      !groups.length ||
+      !items.length
+    )
+      return;
+    timelineInstance.current?.destroy();
     const container = timelineRef.current;
     const groupsDataSet = new DataSet(groups);
     const itemsDataSet = new DataSet(items);
-    const options: TimelineOptions = {
-      editable: false,
-      orientation: { axis: "both", item: "top" }
-    };
-    timelineInstance.current = new Timeline(container, itemsDataSet, groupsDataSet, options);
+    timelineInstance.current = new Timeline(
+      container,
+      itemsDataSet,
+      groupsDataSet,
+      {
+        editable: false,
+        orientation: { axis: "both", item: "top" },
+      }
+    );
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - 3);
+    const end = new Date(today);
+    end.setDate(today.getDate() + 4);
+    timelineInstance.current.setWindow(start, end);
+    timelineInstance.current.moveTo(today, { animation: false });
     return () => {
       timelineInstance.current?.destroy();
+      timelineInstance.current = null;
     };
-  }, [loading, error, items, groups]);
+  }, [items, groups, loading, error]);
 
   return (
     <main>
       <h1>時程表</h1>
-      {loading && <div>載入中...</div>}
-      {error && <div style={{ color: "red" }}>{error}</div>}
-      {!loading && !error && (
-        <div ref={timelineRef} style={{ height: "600px" }} />
-      )}
+      {loading && <p>載入中...</p>}
+      {error && <p style={{ color: "red" }}>錯誤：{error}</p>}
+      {!loading && !error && <div ref={timelineRef} style={{ height: 600 }} />}
     </main>
   );
 }
