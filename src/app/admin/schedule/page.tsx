@@ -6,6 +6,7 @@ import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, Timestamp } fro
 import { Timeline, DataSet, TimelineItem, TimelineOptions, TimelineEventPropertiesResult } from "vis-timeline/standalone";
 import { useAuthState } from "react-firebase-hooks/auth";
 import "vis-timeline/styles/vis-timeline-graph2d.css";
+import { toZonedTime } from 'date-fns-tz';
 
 type Group = { id: string; content: string; };
 type FlowItem = {
@@ -235,15 +236,16 @@ export default function ProjectsPage() {
           const flows = flowsSnap.docs.map(d => {
             const data = d.data();
             // 統一優先用 start/end Timestamp，沒有時才 fallback
+            const timeZone = 'Asia/Taipei';
             const start = data.start
-              ? data.start.toDate()
+              ? toZonedTime(data.start.toDate(), timeZone)
               : data.startDate
-                ? new Date(data.startDate)
+                ? toZonedTime(new Date(data.startDate), timeZone)
                 : new Date();
             const end = data.end
-              ? data.end.toDate()
+              ? toZonedTime(data.end.toDate(), timeZone)
               : data.endDate
-                ? new Date(data.endDate)
+                ? toZonedTime(new Date(data.endDate), timeZone)
                 : new Date(start.getTime() + 86400000);
             return {
               id: d.id,

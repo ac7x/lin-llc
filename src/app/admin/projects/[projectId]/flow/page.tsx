@@ -7,6 +7,8 @@ import { db, storage } from "@/modules/shared/infrastructure/persistence/firebas
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { format, parseISO } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 // Flow 型別
 interface Flow {
@@ -76,9 +78,10 @@ export default function ProjectFlowPage() {
 
   // 新增：將日期字串與小時合併
   function getDateWithHour(dateStr: string, hour: number): Date {
-    const d = new Date(dateStr);
-    d.setHours(hour, 0, 0, 0);
-    return d;
+    const timeZone = 'Asia/Taipei';
+    const zonedDate = toZonedTime(parseISO(dateStr), timeZone);
+    zonedDate.setHours(hour, 0, 0, 0);
+    return zonedDate;
   }
 
   // 新增流程（移除照片相關）
@@ -277,7 +280,7 @@ export default function ProjectFlowPage() {
                   </div>
                 )}
                 <div className="text-gray-500 text-sm mt-2">
-                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? flow.createdAt.toDate().toLocaleString() : String(flow.createdAt)}
+                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? format(toZonedTime(flow.createdAt.toDate(), 'Asia/Taipei'), 'yyyy-MM-dd HH:mm:ss') : String(flow.createdAt)}
                 </div>
               </li>
             ))}
