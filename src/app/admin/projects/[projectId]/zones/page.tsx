@@ -21,6 +21,13 @@ type Phase = {
     createdAt?: Timestamp | Date;
 };
 
+type WorkPackage = {
+    id: string;
+    name: string;
+    desc?: string;
+    createdAt?: Timestamp | Date;
+};
+
 export default function ZonesPage() {
     const { projectId } = useParams() as { projectId: string };
     const [zones, setZones] = useState<Zone[]>([]);
@@ -43,9 +50,19 @@ export default function ZonesPage() {
     const [phaseCreating, setPhaseCreating] = useState(false);
 
     // 分頁 tab 狀態
-    const [tab, setTab] = useState<"detail" | "phases">("detail");
+    const [tab, setTab] = useState<"detail" | "workpackages">("detail");
     const [phases, setPhases] = useState<Phase[]>([]);
     const [phasesLoading, setPhasesLoading] = useState(false);
+
+    // 新增工作包表單狀態
+    const [showWorkPackageForm, setShowWorkPackageForm] = useState<{ [phaseId: string]: boolean }>({});
+    const [workPackageName, setWorkPackageName] = useState("");
+    const [workPackageDesc, setWorkPackageDesc] = useState("");
+    const [workPackageCreating, setWorkPackageCreating] = useState(false);
+
+    // 每個 phase 的工作包
+    const [workPackages, setWorkPackages] = useState<{ [phaseId: string]: WorkPackage[] }>({});
+    const [workPackagesLoading, setWorkPackagesLoading] = useState<{ [phaseId: string]: boolean }>({});
 
     const router = useRouter();
 
@@ -90,7 +107,7 @@ export default function ZonesPage() {
             setPhases([]);
             return;
         }
-        if (tab !== "phases") return;
+        if (tab !== "workpackages") return;
         setPhasesLoading(true);
         getDocs(collection(db, "projects", projectId, "zones", selectedZoneId, "phases"))
             .then(snap => {
@@ -98,6 +115,27 @@ export default function ZonesPage() {
             })
             .finally(() => setPhasesLoading(false));
     }, [projectId, selectedZoneId, tab, showPhaseForm]);
+
+    // 取得每個 phase 的工作包
+    useEffect(() => {
+        if (!selectedZoneId || tab !== "workpackages") return;
+        const fetchAllWorkPackages = async () => {
+            const newWorkPackages: { [phaseId: string]: WorkPackage[] } = {};
+            setWorkPackagesLoading({});
+            await Promise.all(
+                phases.map(async phase => {
+                    setWorkPackagesLoading(prev => ({ ...prev, [phase.id]: true }));
+                    const snap = await getDocs(collection(db, "projects", projectId, "zones", selectedZoneId, "phases", phase.id, "workpackages"));
+                    newWorkPackages[phase.id] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WorkPackage));
+                    setWorkPackagesLoading(prev => ({ ...prev, [phase.id]: false }));
+                })
+            );
+            setWorkPackages(newWorkPackages);
+        };
+        if (phases.length > 0) fetchAllWorkPackages();
+        else setWorkPackages({});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [phases, selectedZoneId, tab, workPackageCreating]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -132,6 +170,25 @@ export default function ZonesPage() {
         setPhaseCreating(false);
         // 導向新 phase 詳細頁
         router.push(`/admin/projects/${projectId}/zones/${selectedZoneId}/phases/${docRef.id}`);
+    };
+
+    // 建立工作包
+    const handleCreateWorkPackage = async (e: React.FormEvent, phaseId: string) => {
+        e.preventDefault();
+        if (!selectedZoneId || !phaseId || !workPackageName) return;
+        setWorkPackageCreating(true);
+        await addDoc(
+            collection(db, "projects", projectId, "zones", selectedZoneId, "phases", phaseId, "workpackages"),
+            {
+                name: workPackageName,
+                desc: workPackageDesc,
+                createdAt: Timestamp.now(),
+            }
+        );
+        setWorkPackageName("");
+        setWorkPackageDesc("");
+        setShowWorkPackageForm(prev => ({ ...prev, [phaseId]: false }));
+        setWorkPackageCreating(false);
     };
 
     return (
@@ -221,10 +278,10 @@ export default function ZonesPage() {
                             分區詳情
                         </button>
                         <button
-                            className={`px-3 py-1 font-semibold border-b-2 ${tab === "phases" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
-                            onClick={() => setTab("phases")}
+                            className={`px-3 py-1 font-semibold border-b-2 ${tab === "workpackages" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
+                            onClick={() => setTab("workpackages")}
                         >
-                            階段列表
+                            工作包列表
                         </button>
                     </div>
                     {/* tab 內容 */}
@@ -297,35 +354,110 @@ export default function ZonesPage() {
                             )}
                         </>
                     )}
-                    {tab === "phases" && (
+                    {tab === "workpackages" && (
                         <div className="border rounded p-4 bg-gray-50">
-                            <div className="font-semibold mb-2">階段列表</div>
+                            <div className="font-semibold mb-2">工作包列表（依階段分組）</div>
                             {phasesLoading ? (
                                 <div>載入中...</div>
                             ) : phases.length === 0 ? (
                                 <div className="text-gray-400">尚無階段</div>
                             ) : (
-                                <ul className="space-y-2">
+                                <ul className="space-y-4">
                                     {phases.map(phase => (
-                                        <li key={phase.id} className="flex items-center justify-between border-b py-2">
-                                            <div>
-                                                <span className="font-semibold text-blue-700">{phase.phaseName}</span>
-                                                {phase.createdAt && (
-                                                    <span className="ml-2 text-gray-500 text-xs">
-                                                        {phase.createdAt instanceof Timestamp
-                                                            ? phase.createdAt.toDate().toLocaleString()
-                                                            : phase.createdAt instanceof Date
-                                                                ? phase.createdAt.toLocaleString()
-                                                                : String(phase.createdAt)}
-                                                    </span>
+                                        <li key={phase.id} className="border-b pb-2">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <span className="font-semibold text-blue-700">{phase.phaseName}</span>
+                                                    {phase.createdAt && (
+                                                        <span className="ml-2 text-gray-500 text-xs">
+                                                            {phase.createdAt instanceof Timestamp
+                                                                ? phase.createdAt.toDate().toLocaleString()
+                                                                : phase.createdAt instanceof Date
+                                                                    ? phase.createdAt.toLocaleString()
+                                                                    : String(phase.createdAt)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    className="text-green-600 underline px-2"
+                                                    onClick={() => setShowWorkPackageForm(prev => ({ ...prev, [phase.id]: !prev[phase.id] }))}
+                                                >
+                                                    {showWorkPackageForm[phase.id] ? "取消" : "新增工作包"}
+                                                </button>
+                                            </div>
+                                            {/* 新增工作包表單 */}
+                                            {showWorkPackageForm[phase.id] && (
+                                                <form onSubmit={e => handleCreateWorkPackage(e, phase.id)} className="space-y-2 mt-2 bg-gray-50 p-3 rounded border">
+                                                    <div>
+                                                        <label className="block mb-1">工作包名稱</label>
+                                                        <input
+                                                            className="border px-3 py-2 w-full"
+                                                            value={workPackageName}
+                                                            onChange={e => setWorkPackageName(e.target.value)}
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block mb-1">描述</label>
+                                                        <textarea
+                                                            className="border px-3 py-2 w-full"
+                                                            value={workPackageDesc}
+                                                            onChange={e => setWorkPackageDesc(e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="submit"
+                                                            className="bg-green-600 text-white px-4 py-2 rounded"
+                                                            disabled={workPackageCreating}
+                                                        >
+                                                            {workPackageCreating ? "建立中..." : "建立工作包"}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                                            onClick={() => setShowWorkPackageForm(prev => ({ ...prev, [phase.id]: false }))}
+                                                            disabled={workPackageCreating}
+                                                        >
+                                                            取消
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            )}
+                                            {/* 工作包列表 */}
+                                            <div className="mt-2 ml-4">
+                                                {workPackagesLoading[phase.id] ? (
+                                                    <div className="text-gray-400">載入中...</div>
+                                                ) : (workPackages[phase.id]?.length ?? 0) === 0 ? (
+                                                    <div className="text-gray-400">尚無工作包</div>
+                                                ) : (
+                                                    <ul className="list-disc ml-5">
+                                                        {workPackages[phase.id].map(wp => (
+                                                            <li key={wp.id} className="flex items-center justify-between">
+                                                                <span>
+                                                                    <span className="font-medium">{wp.name}</span>
+                                                                    {wp.desc && <span className="ml-2 text-gray-500 text-xs">{wp.desc}</span>}
+                                                                    {wp.createdAt && (
+                                                                        <span className="ml-2 text-gray-400 text-xs">
+                                                                            {wp.createdAt instanceof Timestamp
+                                                                                ? wp.createdAt.toDate().toLocaleString()
+                                                                                : wp.createdAt instanceof Date
+                                                                                    ? wp.createdAt.toLocaleString()
+                                                                                    : String(wp.createdAt)}
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                                <button
+                                                                    className="text-blue-600 underline px-2"
+                                                                    onClick={() => router.push(`/admin/projects/${projectId}/zones/${selectedZoneId}/phases/${phase.id}/workpackages/${wp.id}`)}
+                                                                >
+                                                                    查看
+                                                                </button>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
                                                 )}
                                             </div>
-                                            <button
-                                                className="text-blue-600 underline px-2"
-                                                onClick={() => router.push(`/admin/projects/${projectId}/zones/${selectedZoneId}/phases/${phase.id}`)}
-                                            >
-                                                查看
-                                            </button>
                                         </li>
                                     ))}
                                 </ul>
