@@ -2,18 +2,17 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, where, query, onSnapshot } from "firebase/firestore";
 import { db, storage } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { format, parseISO } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 
 // Flow 型別
 interface Flow {
   id: string;
-  content?: string;
+  name?: string;
+  date: string; // yyyy-mm-dd
   description: string;
   createdAt: Timestamp | Date;
   createdBy: string;
@@ -26,8 +25,7 @@ export default function ProjectFlowPage() {
   const { projectId } = useParams() as { projectId: string };
   const [loading, setLoading] = useState(true);
   const [flows, setFlows] = useState<Flow[]>([]);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
   const [flowName, setFlowName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -51,10 +49,10 @@ export default function ProjectFlowPage() {
     fetchProject();
   }, [projectId]);
 
-  // 取得 flows 列表（即時監聽，最省資源且無 eslint 問題）
+  // 取得 flows 列表（即時監聽）
   useEffect(() => {
     if (!projectId) return;
-    const flowsQuery = collection(db, "projects", projectId, "flows");
+    const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
     const unsubscribe = onSnapshot(flowsQuery, (snap: QuerySnapshot<DocumentData>) => {
       setFlows(
         snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
@@ -76,22 +74,33 @@ export default function ProjectFlowPage() {
     fetchUsers();
   }, []);
 
-  // 新增：將日期字串與小時合併
-  function getDateWithHour(dateStr: string, hour: number): Date {
-    const timeZone = 'Asia/Taipei';
-    const zonedDate = toZonedTime(parseISO(dateStr), timeZone);
-    zonedDate.setHours(hour, 0, 0, 0);
-    return zonedDate;
+  // 建立 start/end 時間
+  function getStartAndEndTimestamp(selectedDate: string) {
+    // selectedDate 例如 "2024-06-01"
+    // start: 2024-06-01 07:30
+    // end:   2024-06-01 19:30
+    if (!selectedDate) {
+      return { start: null, end: null };
+    }
+    // 建立 JS Date 物件
+    const [year, month, day] = selectedDate.split("-").map(Number);
+    const startDate = new Date(year, month - 1, day, 7, 30, 0, 0); // 早上 07:30
+    const endDate = new Date(startDate.getTime() + 12 * 60 * 60 * 1000); // +12 小時
+    // Firestore 用 Timestamp 儲存
+    return {
+      start: Timestamp.fromDate(startDate),
+      end: Timestamp.fromDate(endDate)
+    };
   }
 
-  // 新增流程（移除照片相關）
+  // 新增流程
   const handleAddFlow = async () => {
     if (!flowName.trim()) {
       setError("請輸入流程名稱");
       return;
     }
-    if (!startDate) {
-      setError("請選擇預定開始日期");
+    if (!date) {
+      setError("請選擇預定施工日期");
       return;
     }
     if (!description.trim()) {
@@ -105,30 +114,27 @@ export default function ProjectFlowPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const start = getDateWithHour(startDate, 7.5);
-      let end: Date | null = null;
+      const { start, end } = getStartAndEndTimestamp(date);
 
-      if (!endDate && startDate) {
-        const d = new Date(startDate);
-        d.setDate(d.getDate() + 1);
-        end = new Date(d);
-      } else if (endDate) {
-        end = getDateWithHour(endDate, 18);
-      }
-
-      await addDoc(collection(db, "projects", projectId, "flows"), {
-        content: flowName.trim(),
+      await addDoc(collection(db, "flows"), {
+        name: flowName.trim(),
+        date,
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
-        start: start,
-        end: end || new Date(new Date(startDate).setHours(18, 0, 0, 0)),
+        projectId,
+        start,
+        end,
       });
       setFlowName("");
-      setStartDate("");
-      setEndDate("");
+      setDate("");
       setDescription("");
-      // flows 會自動即時更新，無需手動 fetch
+      // 直接在這裡 fetch flows
+      const flowsQuery = query(collection(db, "flows"), where("projectId", "==", projectId));
+      const snap: QuerySnapshot<DocumentData> = await getDocs(flowsQuery);
+      setFlows(
+        snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flow[]
+      );
     } catch {
       setError("建立流程失敗");
     } finally {
@@ -144,8 +150,7 @@ export default function ProjectFlowPage() {
       const storageRef = ref(storage, `flows/${flowId}_${Date.now()}_${file.name}`);
       await uploadBytes(storageRef, file);
       const photoUrl = await getDownloadURL(storageRef);
-      await updateDoc(doc(db, "projects", projectId, "flows", flowId), { photoUrl });
-      // 更新 flows 狀態
+      await updateDoc(doc(db, "flows", flowId), { photoUrl });
       setFlows(flows =>
         flows.map(f => f.id === flowId ? { ...f, photoUrl } : f)
       );
@@ -156,19 +161,31 @@ export default function ProjectFlowPage() {
     }
   };
 
-  // 當 startDate 變動時，自動推算 endDate（隔天）
-  useEffect(() => {
-    if (startDate) {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + 1);
-      const nextDay = d.toISOString().slice(0, 10);
-      setEndDate(nextDay);
-    } else {
-      setEndDate("");
-    }
-  }, [startDate]);
-
   if (loading) return <main className="p-8">載入中...</main>;
+
+  // 顯示時間（Timestamp 轉字串）
+  function formatDateTime(ts?: Timestamp | Date) {
+    if (!ts) return "-";
+    let date: Date;
+    if (ts instanceof Timestamp) {
+      date = ts.toDate();
+    } else if (ts instanceof Date) {
+      date = ts;
+    } else if (typeof ts === "object" && "toDate" in ts) {
+      date = (ts as any).toDate();
+    } else {
+      return "-";
+    }
+    // yyyy-MM-dd HH:mm
+    return date.toLocaleString("zh-TW", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).replace(/\//g, "-");
+  }
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
@@ -188,14 +205,19 @@ export default function ProjectFlowPage() {
         </div>
         <div className="mb-4">
           <label className="block font-medium mb-1">
-            預定開始日：
+            預定日期：
             <input
               type="date"
-              value={startDate}
-              onChange={e => setStartDate(e.target.value)}
+              value={date}
+              onChange={e => setDate(e.target.value)}
               disabled={submitting}
               className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
+            {date && (
+              <span className="ml-4 text-sm text-gray-600">
+                開始：{date} 07:30，結束：{date} 19:30
+              </span>
+            )}
           </label>
         </div>
         <div className="mb-4">
@@ -227,25 +249,21 @@ export default function ProjectFlowPage() {
         ) : (
           <ul className="p-0 list-none">
             {flows.sort((a, b) => {
-              // 以 start 排序
-              const getStart = (f: Flow) =>
-                f.start && typeof f.start === 'object' && 'toDate' in f.start ? f.start.toDate().toISOString().slice(0, 10) : '';
-              return getStart(a).localeCompare(getStart(b));
+              const getDate = (f: Flow) =>
+                f.date || (f.start && typeof f.start === 'object' && 'toDate' in f.start ? f.start.toDate().toISOString().slice(0, 10) : '');
+              return getDate(a).localeCompare(getDate(b));
             }).map(flow => (
               <li key={flow.id} className="bg-white dark:bg-neutral-900 rounded-lg shadow mb-4 p-5">
-                <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.content || '-'}</div>
-                <div className="mb-1">
-                  <span className="font-medium">預定開始日：</span>
-                  {flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
-                    ? flow.start.toDate().toISOString().slice(0, 10)
-                    : '-'}
-                </div>
-                <div className="mb-1">
-                  <span className="font-medium">預定結束日：</span>
-                  {flow.end && typeof flow.end === 'object' && 'toDate' in flow.end
-                    ? flow.end.toDate().toISOString().slice(0, 10)
-                    : '-'}
-                </div>
+                <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.name || '-'}</div>
+                <div className="mb-1"><span className="font-medium">日期：</span>{
+                  flow.date
+                    ? flow.date
+                    : flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
+                      ? flow.start.toDate().toISOString().slice(0, 10)
+                      : '-'
+                }</div>
+                <div className="mb-1"><span className="font-medium">開始：</span>{formatDateTime(flow.start)}</div>
+                <div className="mb-1"><span className="font-medium">結束：</span>{formatDateTime(flow.end)}</div>
                 <div className="mb-1"><span className="font-medium">內容：</span>{flow.description}</div>
                 <div className="mb-1">
                   <span className="font-medium">上傳/更換照片：</span>
@@ -280,7 +298,7 @@ export default function ProjectFlowPage() {
                   </div>
                 )}
                 <div className="text-gray-500 text-sm mt-2">
-                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? format(toZonedTime(flow.createdAt.toDate(), 'Asia/Taipei'), 'yyyy-MM-dd HH:mm:ss') : String(flow.createdAt)}
+                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? formatDateTime(flow.createdAt) : '-'}
                 </div>
               </li>
             ))}
