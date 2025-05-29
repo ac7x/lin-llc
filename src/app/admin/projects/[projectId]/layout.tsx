@@ -2,7 +2,7 @@
 
 import { useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 export default function ProjectLayout({
     flow,
@@ -34,7 +34,17 @@ export default function ProjectLayout({
         { label: "編輯專案", key: "edit", content: edit },
     ];
 
-    const currentTab = tabs.find(tab => searchParams.has(tab.key))?.key || "overview";
+    const [currentTab, setCurrentTab] = useState("overview");
+
+    useEffect(() => {
+        for (const tab of tabs) {
+            if (searchParams.has(tab.key)) {
+                setCurrentTab(tab.key);
+                return;
+            }
+        }
+        setCurrentTab("overview");
+    }, [searchParams.toString()]); // 依 query 變化更新
 
     return (
         <div className="flex max-w-6xl mx-auto px-12 py-8 gap-6">
