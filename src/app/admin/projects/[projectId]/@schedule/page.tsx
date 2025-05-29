@@ -33,6 +33,8 @@ export default function ProjectsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [user] = useAuthState(auth);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // CRUD Handlers
   const handleItemMove = useCallback(async (itemIdString: string, newStart: DateType, newEnd: DateType, newGroupIdString: string) => {
@@ -135,43 +137,49 @@ export default function ProjectsPage() {
   // Fetch Data
   useEffect(() => {
     (async () => {
-      // 取得所有專案
-      const projects = await getDocs(collection(db, "projects"));
-      // 取得所有 zone 作為 groups
-      const groupList: Group[] = [];
-      for (const project of projects.docs) {
-        const zones = await getDocs(collection(db, "projects", project.id, "zones"));
-        zones.forEach(z => {
-          const zd = z.data();
-          groupList.push({
-            id: z.id,
-            content: zd.zoneName || z.id,
-          });
-        });
-      }
-      setGroups(groupList);
-
-      // 取得所有 flows，group 設為 zone id
-      const allItems: Item[] = [];
-      for (const project of projects.docs) {
-        const flows = await getDocs(collection(db, "projects", project.id, "flows"));
-        flows.forEach(f => {
-          const d = f.data();
-          // 若 flow 有 zoneId 欄位，則 group 設為 zoneId
-          if (d.zoneId) {
-            allItems.push({
-              id: f.id,
-              group: d.zoneId,
-              content: d.name,
-              start: d.start?.toDate?.() || new Date(),
-              end: d.end?.toDate?.() || new Date(Date.now() + 3600000),
-              projectId: project.id,
-              userId: d.userId,
+      try {
+        // 取得所有專案
+        const projects = await getDocs(collection(db, "projects"));
+        // 取得所有 zone 作為 groups
+        const groupList: Group[] = [];
+        for (const project of projects.docs) {
+          const zones = await getDocs(collection(db, "projects", project.id, "zones"));
+          zones.forEach(z => {
+            const zd = z.data();
+            groupList.push({
+              id: z.id,
+              content: zd.zoneName || z.id,
             });
-          }
-        });
+          });
+        }
+        setGroups(groupList);
+
+        // 取得所有 flows，group 設為 zone id
+        const allItems: Item[] = [];
+        for (const project of projects.docs) {
+          const flows = await getDocs(collection(db, "projects", project.id, "flows"));
+          flows.forEach(f => {
+            const d = f.data();
+            // 若 flow 有 zoneId 欄位，則 group 設為 zoneId
+            if (d.zoneId) {
+              allItems.push({
+                id: f.id,
+                group: d.zoneId,
+                content: d.name,
+                start: d.start?.toDate?.() || new Date(),
+                end: d.end?.toDate?.() || new Date(Date.now() + 3600000),
+                projectId: project.id,
+                userId: d.userId,
+              });
+            }
+          });
+        }
+        setItems(allItems);
+        setLoading(false);
+      } catch (e) {
+        setError("資料載入失敗");
+        setLoading(false);
       }
-      setItems(allItems);
     })();
   }, []);
 
@@ -210,7 +218,15 @@ export default function ProjectsPage() {
     <main>
       <input value={n} onChange={e => setN(e.target.value)} placeholder="專案名稱" />
       <button onClick={addProject} disabled={!user || !n.trim()}>建立</button>
-      <div ref={timelineRef} style={{ height: 600 }} />
+      {loading ? (
+        <div className="p-8 text-gray-500">載入中...</div>
+      ) : error ? (
+        <div className="p-8 text-red-600">{error}</div>
+      ) : groups.length === 0 ? (
+        <div className="p-8 text-gray-400">尚無分區（zone），請先建立 zone。</div>
+      ) : (
+        <div ref={timelineRef} style={{ height: 600 }} />
+      )}
     </main>
   );
 }
