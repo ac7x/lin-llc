@@ -103,15 +103,21 @@ export default function ProjectFlowPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const startTimestamp = Timestamp.fromDate(getDateWithHour(startDate, 7));
-      const endTimestamp = endDate
-        ? Timestamp.fromDate(getDateWithHour(endDate, 19))
-        : Timestamp.fromDate(getDateWithHour(startDate, 19));
+      const startTimestamp = Timestamp.fromDate(getDateWithHour(startDate, 7.5)); 
+      let finalEndDate = endDate;
+      if (!finalEndDate && startDate) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + 1);
+        finalEndDate = d.toISOString().slice(0, 10);
+      }
+      const endTimestamp = finalEndDate
+        ? Timestamp.fromDate(getDateWithHour(finalEndDate, 18)) 
+        : Timestamp.fromDate(getDateWithHour(startDate, 18));
 
       await addDoc(collection(db, "projects", projectId, "flows"), {
         name: flowName.trim(),
         startDate,
-        endDate: endDate || null,
+        endDate: finalEndDate || null,
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
@@ -150,6 +156,18 @@ export default function ProjectFlowPage() {
     }
   };
 
+  // 當 startDate 變動時，自動推算 endDate（隔天）
+  useEffect(() => {
+    if (startDate) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + 1);
+      const nextDay = d.toISOString().slice(0, 10);
+      setEndDate(nextDay);
+    } else {
+      setEndDate("");
+    }
+  }, [startDate]);
+
   if (loading) return <main className="p-8">載入中...</main>;
 
   return (
@@ -177,14 +195,6 @@ export default function ProjectFlowPage() {
               onChange={e => setStartDate(e.target.value)}
               disabled={submitting}
               className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-            />
-            <span className="mx-2">至</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={e => setEndDate(e.target.value)}
-              disabled={submitting}
-              className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </label>
         </div>
