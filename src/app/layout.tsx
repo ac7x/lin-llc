@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "../styles/globals.css";
 
 const geistSans = Geist({
@@ -27,6 +28,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* 載入 reCAPTCHA v3 */}
+        <Script
+          src="https://www.google.com/recaptcha/api.js?render=6LeBT00arAAAIIM4kuuhicdMpGBOE-ovt-8WXjN"
+          strategy="afterInteractive"
+        />
         {children}
       </body>
     </html>
