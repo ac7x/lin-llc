@@ -26,12 +26,12 @@ export default function ProjectLayout({
 
     const tabs = [
         { label: "專案總覽", key: "overview", content: overview },
-        { label: "進度日誌", key: "journal", content: journal },
+        { label: "編輯專案", key: "edit", content: edit },
         { label: "流程管理", key: "flow", content: flow },
         { label: "分區管理", key: "zones", content: zones },
         { label: "排程視覺化", key: "schedule", content: schedule },
+        { label: "進度日誌", key: "journal", content: journal },
         { label: "出工紀錄", key: "attendance", content: attendance },
-        { label: "編輯專案", key: "edit", content: edit },
     ];
 
     const [currentTab, setCurrentTab] = useState("overview");
