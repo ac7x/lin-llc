@@ -2,7 +2,7 @@
 
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import Link from "next/link";
 import React from "react";
 
@@ -23,9 +23,10 @@ export default function ProjectLayout({
     edit: React.ReactNode;
     overview: React.ReactNode;
 }) {
+    // 改用 useParams 取得 projectId
+    const { projectId } = useParams() as { projectId: string };
     const pathname = usePathname();
     const segments = pathname.split("/");
-    const projectId = segments[4]; // /admin/projects-dev/[projectId]
     const currentTab = segments[5] || "";
 
     const tabs = [
