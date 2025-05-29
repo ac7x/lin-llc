@@ -96,6 +96,12 @@ export default function ProjectFlowPage() {
     setSubmitting(true);
     setError(null);
     try {
+      // 新增：將 startDate/endDate 轉為 Timestamp
+      const startTimestamp = Timestamp.fromDate(new Date(startDate));
+      const endTimestamp = endDate
+        ? Timestamp.fromDate(new Date(endDate))
+        : Timestamp.fromDate(new Date(new Date(startDate).getTime() + 3600000)); // 預設+1小時
+
       await addDoc(collection(db, "projects", projectId, "flows"), {
         name: flowName.trim(),
         startDate,
@@ -103,6 +109,8 @@ export default function ProjectFlowPage() {
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
+        start: startTimestamp,
+        end: endTimestamp,
       });
       setFlowName("");
       setStartDate("");
@@ -212,11 +220,9 @@ export default function ProjectFlowPage() {
                 <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.name || '-'}</div>
                 <div className="mb-1">
                   <span className="font-medium">預定開始日：</span>
-                  {flow.startDate
-                    ? flow.startDate
-                    : flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
-                      ? flow.start.toDate().toISOString().slice(0, 10)
-                      : '-'}
+                  {flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
+                    ? flow.start.toDate().toISOString().slice(0, 10)
+                    : '-'}
                 </div>
                 <div className="mb-1">
                   <span className="font-medium">預定結束日：</span>

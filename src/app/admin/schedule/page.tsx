@@ -234,12 +234,23 @@ export default function ProjectsPage() {
           const flowsSnap = await getDocs(collection(db, "projects", project.id, "flows"));
           const flows = flowsSnap.docs.map(d => {
             const data = d.data();
+            // 統一優先用 start/end Timestamp，沒有時才 fallback
+            const start = data.start
+              ? data.start.toDate()
+              : data.startDate
+                ? new Date(data.startDate)
+                : new Date();
+            const end = data.end
+              ? data.end.toDate()
+              : data.endDate
+                ? new Date(data.endDate)
+                : new Date(start.getTime() + 86400000);
             return {
               id: d.id,
               group: project.id,
               content: data.name || `${project.name} - 流程`,
-              start: data.start ? data.start.toDate() : new Date(),
-              end: data.end ? data.end.toDate() : new Date(Date.now() + 86400000),
+              start,
+              end,
               projectId: project.id,
               userId: data.userId,
             };
