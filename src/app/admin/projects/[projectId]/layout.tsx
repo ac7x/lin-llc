@@ -3,6 +3,7 @@
 import { useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { delay } from "@/utils/delay";
 
 export default function ProjectLayout({
     flow,
@@ -35,6 +36,11 @@ export default function ProjectLayout({
     ];
 
     const [currentTab, setCurrentTab] = useState("overview");
+    const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+        delay(1000).then(() => setReady(true));
+    }, []);
 
     useEffect(() => {
         for (const tab of tabs) {
@@ -45,6 +51,10 @@ export default function ProjectLayout({
         }
         setCurrentTab("overview");
     }, [searchParams, tabs]); // 修正依賴
+
+    if (!ready) {
+        return <div className="p-8 text-gray-500">載入中...</div>;
+    }
 
     return (
         <div className="flex max-w-6xl mx-auto px-12 py-8 gap-6">
