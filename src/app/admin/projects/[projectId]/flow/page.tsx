@@ -183,7 +183,6 @@ export default function ProjectFlowPage() {
     } else if (ts instanceof Date) {
       date = ts;
     } else if (typeof ts === "object" && "toDate" in ts) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       date = (ts as { toDate: () => Date }).toDate();
     } else {
       return "-";
@@ -333,7 +332,7 @@ export default function ProjectFlowPage() {
                   </div>
                 )}
                 <div className="text-gray-500 text-sm mt-2">
-                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? formatDateTime(flow.createdAt as Timestamp | Date) : "-"}
+                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? formatDateTime(flow.createdAt) : "-"}
                 </div>
               </li>
             ))}
