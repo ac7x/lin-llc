@@ -29,6 +29,10 @@ try {
   console.error("Error initializing Firebase App:", error);
 }
 
+// Define an interface to extend FirebaseApp for the internal flag
+interface FirebaseAppWithAppCheckFlag extends FirebaseApp {
+  _isinitializeAppCheckCalled?: boolean;
+}
 
 interface ChatMessage {
   role: "user" | "model";
@@ -57,15 +61,16 @@ export default function GeminiPage() {
           return;
         }
 
-        if (!((firebaseAppInstance as any)._isinitializeAppCheckCalled)) {
-          initializeAppCheck(firebaseAppInstance, {
+        // Use the extended interface to avoid `any`
+        const app = firebaseAppInstance as FirebaseAppWithAppCheckFlag;
+        if (!app._isinitializeAppCheckCalled) {
+          initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
             isTokenAutoRefreshEnabled: true
           });
-          (firebaseAppInstance as any)._isinitializeAppCheckCalled = true;
+          app._isinitializeAppCheckCalled = true;
           console.log("Firebase App Check initialized.");
         }
-
 
         const ai = getAI(firebaseAppInstance, { backend: new GoogleAIBackend() });
         modelRef.current = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
@@ -82,10 +87,14 @@ export default function GeminiPage() {
         setIsInitialized(true);
         setError(""); // Clear any initialization errors
 
-
-      } catch (err: any) {
-        console.error("Error initializing AI Model:", err);
-        setError(`AI 模型或 App Check 初始化失敗: ${err.message}`);
+      } catch (err: unknown) { // Changed from any to unknown
+        console.error("Error initializing AI Model or App Check:", err);
+        // Perform type check before accessing error properties
+        if (err instanceof Error) {
+          setError(`AI 模型或 App Check 初始化失敗: ${err.message}`);
+        } else {
+          setError("AI 模型或 App Check 初始化失敗: 未知錯誤");
+        }
       }
     };
 
@@ -113,7 +122,6 @@ export default function GeminiPage() {
     setHistory(prev => [...prev, userMsg]);
     setPrompt("");
 
-
     if (!chatRef.current) {
       setError("聊天 Session 未準備好。請稍後再試。");
       setLoading(false);
@@ -127,9 +135,15 @@ export default function GeminiPage() {
 
       setHistory(h => [...h, { role: "model", text }]);
 
-    } catch (err: any) {
+    } catch (err: unknown) { // Changed from any to unknown
       console.error("Error sending message:", err);
-      setError(`訊息傳送失敗: ${err.message}`);
+      // Perform type check before accessing error properties
+      if (err instanceof Error) {
+        setError(`訊息傳送失敗: ${err.message}`);
+      } else {
+        setError("訊息傳送失敗: 未知錯誤");
+      }
+
     } finally {
       setLoading(false);
     }

@@ -98,7 +98,9 @@ export default function ProjectsPage() {
   useEffect(() => {
     (async () => {
       const projects = await getDocs(collection(db, "projects"));
-      const groupList: Group[] = projects.docs.map(d => ({ id: d.id, content: d.data().name || d.id }));
+      // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 修改這一行 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+      const groupList: Group[] = projects.docs.map(d => ({ id: d.id, content: d.data().projectName || d.id }));
+      // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
       setGroups(groupList);
       const allItems: Item[] = [];
       for (const project of projects.docs) {
@@ -146,7 +148,7 @@ export default function ProjectsPage() {
   // Create Project
   const [n, setN] = useState(""); const addProject = async () => {
     if (!user || !n.trim()) return;
-    const ref = await addDoc(collection(db, "projects"), { name: n, createdAt: Timestamp.now(), ownerId: user.uid });
+    const ref = await addDoc(collection(db, "projects"), { projectName: n, createdAt: Timestamp.now(), ownerId: user.uid }); // 改成 projectName
     setGroups(g => [...g, { id: ref.id, content: n }]);
     const start = Timestamp.now(), end = Timestamp.fromMillis(start.toMillis() + 3600000);
     const flow = await addDoc(collection(db, "projects", ref.id, "flows"), { name: n + " - 初始流程", start, end, userId: user.uid });
