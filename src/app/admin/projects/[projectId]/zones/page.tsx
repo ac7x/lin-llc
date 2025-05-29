@@ -10,7 +10,7 @@ type Zone = {
     id: string;
     name: string;
     desc?: string;
-    createdAt?: any;
+    createdAt?: Timestamp | Date;
 };
 
 export default function ZonesPage() {
@@ -174,7 +174,12 @@ export default function ZonesPage() {
                             </div>
                             {zoneDetail.createdAt && (
                                 <div className="text-gray-500 text-sm">
-                                    建立時間：{zoneDetail.createdAt.toDate ? zoneDetail.createdAt.toDate().toLocaleString() : String(zoneDetail.createdAt)}
+                                    建立時間：
+                                    {zoneDetail.createdAt instanceof Timestamp
+                                        ? zoneDetail.createdAt.toDate().toLocaleString()
+                                        : zoneDetail.createdAt instanceof Date
+                                            ? zoneDetail.createdAt.toLocaleString()
+                                            : String(zoneDetail.createdAt)}
                                 </div>
                             )}
                         </div>

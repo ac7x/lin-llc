@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 type Zone = {
     id: string;
     name: string;
     desc?: string;
-    createdAt?: any;
+    createdAt?: Timestamp | Date;
 };
 
 export default function ZoneDetailPage() {
@@ -49,7 +49,12 @@ export default function ZoneDetailPage() {
             </div>
             {zone.createdAt && (
                 <div className="text-gray-500 text-sm">
-                    建立時間：{zone.createdAt.toDate ? zone.createdAt.toDate().toLocaleString() : String(zone.createdAt)}
+                    建立時間：
+                    {zone.createdAt instanceof Timestamp
+                        ? zone.createdAt.toDate().toLocaleString()
+                        : zone.createdAt instanceof Date
+                            ? zone.createdAt.toLocaleString()
+                            : String(zone.createdAt)}
                 </div>
             )}
         </main>
