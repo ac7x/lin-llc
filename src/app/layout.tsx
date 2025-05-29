@@ -28,20 +28,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* 載入 reCAPTCHA v3 */}
-        <Script
-          src="https://www.google.com/recaptcha/api.js?render=6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"
-          strategy="beforeInteractive"
-        />
         {children}
       </body>
     </html>
   );
 }
-
-/*
-Script 的 strategy 屬性選項：
-- "beforeInteractive"：在頁面互動前載入（通常用於必要的 polyfill 或初始化腳本）
-- "afterInteractive"：在頁面互動後載入（預設值，適合大多數第三方腳本）
-- "lazyOnload"：在頁面載入完成後閒置時載入（適合非關鍵腳本）
-*/
