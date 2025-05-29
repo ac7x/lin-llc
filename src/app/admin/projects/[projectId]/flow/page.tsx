@@ -11,14 +11,13 @@ import { useAuthState } from "react-firebase-hooks/auth";
 // Flow 型別
 interface Flow {
   id: string;
-  name?: string;
-  startDate: string; // 預定開始日期 yyyy-mm-dd
-  endDate?: string;  // 預定結束日期 yyyy-mm-dd
+  content?: string;
   description: string;
   createdAt: Timestamp | Date;
   createdBy: string;
   photoUrl?: string;
-  start?: Timestamp | Date; // 保留舊欄位
+  start?: Timestamp | Date;
+  end?: Timestamp | Date;
 }
 
 export default function ProjectFlowPage() {
@@ -103,26 +102,24 @@ export default function ProjectFlowPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const startTimestamp = Timestamp.fromDate(getDateWithHour(startDate, 7.5)); 
-      let finalEndDate = endDate;
-      if (!finalEndDate && startDate) {
+      const start = getDateWithHour(startDate, 7.5);
+      let end: Date | null = null;
+
+      if (!endDate && startDate) {
         const d = new Date(startDate);
         d.setDate(d.getDate() + 1);
-        finalEndDate = d.toISOString().slice(0, 10);
+        end = new Date(d);
+      } else if (endDate) {
+        end = getDateWithHour(endDate, 18);
       }
-      const endTimestamp = finalEndDate
-        ? Timestamp.fromDate(getDateWithHour(finalEndDate, 18)) 
-        : Timestamp.fromDate(getDateWithHour(startDate, 18));
 
       await addDoc(collection(db, "projects", projectId, "flows"), {
-        name: flowName.trim(),
-        startDate,
-        endDate: finalEndDate || null,
+        content: flowName.trim(),
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
-        start: startTimestamp,
-        end: endTimestamp,
+        start: start,
+        end: end || new Date(new Date(startDate).setHours(18, 0, 0, 0)),
       });
       setFlowName("");
       setStartDate("");
@@ -227,13 +224,13 @@ export default function ProjectFlowPage() {
         ) : (
           <ul className="p-0 list-none">
             {flows.sort((a, b) => {
-              // 以 startDate 排序
+              // 以 start 排序
               const getStart = (f: Flow) =>
-                f.startDate || (f.start && typeof f.start === 'object' && 'toDate' in f.start ? f.start.toDate().toISOString().slice(0, 10) : '');
+                f.start && typeof f.start === 'object' && 'toDate' in f.start ? f.start.toDate().toISOString().slice(0, 10) : '';
               return getStart(a).localeCompare(getStart(b));
             }).map(flow => (
               <li key={flow.id} className="bg-white dark:bg-neutral-900 rounded-lg shadow mb-4 p-5">
-                <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.name || '-'}</div>
+                <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.content || '-'}</div>
                 <div className="mb-1">
                   <span className="font-medium">預定開始日：</span>
                   {flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
@@ -242,7 +239,9 @@ export default function ProjectFlowPage() {
                 </div>
                 <div className="mb-1">
                   <span className="font-medium">預定結束日：</span>
-                  {flow.endDate || "-"}
+                  {flow.end && typeof flow.end === 'object' && 'toDate' in flow.end
+                    ? flow.end.toDate().toISOString().slice(0, 10)
+                    : '-'}
                 </div>
                 <div className="mb-1"><span className="font-medium">內容：</span>{flow.description}</div>
                 <div className="mb-1">

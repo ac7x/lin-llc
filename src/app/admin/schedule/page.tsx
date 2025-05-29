@@ -57,8 +57,8 @@ export default function ProjectsPage() {
           // 2. 在新 project flows 建立新文件
           const newFlowRef = await addDoc(collection(db, "projects", newGroupId, "flows"), {
             name: oldItem.content,
-            start: Timestamp.fromDate(newStart),
-            end: Timestamp.fromDate(newEnd),
+            start: newStart,
+            end: newEnd,
             userId: oldItem.userId,
           });
           setItems(prev =>
@@ -78,8 +78,8 @@ export default function ProjectsPage() {
         // 僅在同 project flows 文件內更新
         try {
           await updateDoc(doc(db, "projects", newGroupId, "flows", itemId), {
-            start: Timestamp.fromDate(newStart),
-            end: Timestamp.fromDate(newEnd),
+            start: newStart,
+            end: newEnd,
           });
           setItems(prev =>
             prev.map(it =>
@@ -124,8 +124,8 @@ export default function ProjectsPage() {
       try {
         const newFlowData = {
           name: flowName,
-          start: Timestamp.fromDate(startDate),
-          end: Timestamp.fromDate(endDate),
+          start: startDate,
+          end: endDate,
           userId: user.uid,
         };
         const flowRef = await addDoc(collection(db, "projects", groupId, "flows"), newFlowData);
