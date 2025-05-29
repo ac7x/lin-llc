@@ -5,6 +5,7 @@ import { useState } from "react";
 import { doc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
+import type { DocumentReference, DocumentData } from "firebase/firestore";
 
 // 最小型別定義
 type WorkItem = {
@@ -26,9 +27,9 @@ type Zone = {
 
 export default function ZoneDetailPage() {
     const { projectId, zoneId } = useParams() as { projectId: string; zoneId: string };
-    // 用 react-firebase-hooks 取得 zone 文件
-    const zoneRef = projectId && zoneId ? doc(db, "projects", projectId, "zones", zoneId) : undefined;
-    const [snapshot, loading, error] = useDocument(zoneRef as any, { snapshotListenOptions: { includeMetadataChanges: true } });
+    // 用 react-firebase-hooks 取得 zone 文件，型別明確
+    const zoneRef: DocumentReference<DocumentData> | undefined = projectId && zoneId ? doc(db, "projects", projectId, "zones", zoneId) : undefined;
+    const [snapshot, loading, error] = useDocument(zoneRef, { snapshotListenOptions: { includeMetadataChanges: true } });
 
     // 工項
     const [workName, setWorkName] = useState("");
@@ -42,18 +43,28 @@ export default function ZoneDetailPage() {
     if (!snapshot || !snapshot.exists()) return <main className="p-8">找不到分區資料</main>;
 
     // 取得 zone 資料
-    const data = snapshot.data() as Record<string, any>;
-    const zone = { id: snapshot.id, ...data } as Zone;
+    const data = snapshot.data() as Zone;
+    // 直接省略 id，不用 _ignore
+    const { id, ...rest } = data;
+    const zone: Zone = { id: snapshot.id, ...rest };
     if (!zone.zoneName) return <main className="p-8">找不到分區資料</main>;
-    const workItems = Array.isArray(zone.workItems)
-        ? zone.workItems.map((wi: Record<string, any>) => ({
-            id: String(wi.id),
-            itemName: String(wi.itemName ?? wi.name ?? ""),
-            createdAt: wi.createdAt,
-            start: typeof wi.start === "string" ? wi.start : undefined,
-            end: typeof wi.end === "string" ? wi.end : undefined,
-            quantity: typeof wi.quantity === "number" ? wi.quantity : undefined,
-        }))
+    const workItems: WorkItem[] = Array.isArray(zone.workItems)
+        ? zone.workItems.map((wi) => {
+            let itemName = "";
+            if (typeof wi.itemName === "string") {
+                itemName = wi.itemName;
+            } else if ("name" in wi && typeof wi.name === "string") {
+                itemName = wi.name;
+            }
+            return {
+                id: String(wi.id),
+                itemName,
+                createdAt: wi.createdAt,
+                start: typeof wi.start === "string" ? wi.start : undefined,
+                end: typeof wi.end === "string" ? wi.end : undefined,
+                quantity: typeof wi.quantity === "number" ? wi.quantity : undefined,
+            };
+        })
         : [];
 
     // 新增工項
