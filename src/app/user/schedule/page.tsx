@@ -5,6 +5,15 @@ import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebas
 import { collection, onSnapshot } from "firebase/firestore";
 import { Timeline, DataSet } from "vis-timeline/standalone";
 
+type TimelineGroup = { id: string; content: string };
+type TimelineItem = {
+  id: string;
+  group: string;
+  content: string;
+  start: Date;
+  end: Date;
+};
+
 export default function UserSchedulePage() {
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineInstance = useRef<Timeline | null>(null);
@@ -12,8 +21,8 @@ export default function UserSchedulePage() {
   useEffect(() => {
     let unsubProjects: (() => void) | null = null;
     let unsubFlows: (() => void)[] = [];
-    let groups: any[] = [];
-    let items: any[] = [];
+    let groups: TimelineGroup[] = [];
+    let items: TimelineItem[] = [];
 
     if (!timelineRef.current) return;
 
@@ -21,8 +30,8 @@ export default function UserSchedulePage() {
       timelineInstance.current?.destroy();
       timelineInstance.current = new Timeline(
         timelineRef.current!,
-        new DataSet(items),
-        new DataSet(groups),
+        new DataSet<TimelineItem>(items),
+        new DataSet<TimelineGroup>(groups),
         { editable: false }
       );
     };
