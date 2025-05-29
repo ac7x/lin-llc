@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 
@@ -22,12 +23,8 @@ type Zone = {
     workItems?: WorkItem[];
 };
 
-interface Props {
-    params: { projectId: string; zoneId: string };
-}
-
-export default function ZoneDetailPage({ params }: Props) {
-    const { projectId, zoneId } = params;
+export default function ZoneDetailPage() {
+    const { projectId, zoneId } = useParams() as { projectId: string; zoneId: string };
     const [zone, setZone] = useState<Zone | null>(null);
     const [loading, setLoading] = useState(true);
 

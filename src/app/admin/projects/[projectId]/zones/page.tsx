@@ -196,10 +196,8 @@ export default function ZonesPage() {
                     ) : !selectedZoneId ? (
                         <div className="text-gray-400">請選擇分區</div>
                     ) : (
-                        // 直接渲染 ZoneDetailPage，並傳遞必要參數
-                        <ZoneDetailPage
-                            params={{ projectId: projectId, zoneId: selectedZoneId }}
-                        />
+                        // 直接渲染 ZoneDetailPage，不傳任何 props
+                        <ZoneDetailPage />
                     )}
                 </div>
             )}
