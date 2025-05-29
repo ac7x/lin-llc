@@ -451,7 +451,8 @@ export default function ZonesPage() {
                                                                     className="text-blue-600 underline px-2"
                                                                     onClick={() => router.push(`/admin/projects/${projectId}/zones/${selectedZoneId}/phases/${phase.id}/workpackages/${wp.id}`)}
                                                                 >
-                                                                    查看
+                                                                    {/* 加上 emoji 讓按鈕更明顯 */}
+                                                                    查看🔍
                                                                 </button>
                                                             </li>
                                                         ))}
