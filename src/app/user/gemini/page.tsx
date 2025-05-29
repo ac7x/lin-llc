@@ -15,7 +15,7 @@ const firebaseConfig = {
   measurementId: "G-62JEHK00G8"
 };
 
-const RECAPTCHA_SITE_KEY = "6LeBT00arAAAIIM4kuuhicdMpGBOE-ovt-8WXjN";
+const RECAPTCHA_SITE_KEY = "6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE";
 
 let firebaseAppInstance: FirebaseApp;
 

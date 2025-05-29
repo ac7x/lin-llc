@@ -30,7 +30,7 @@ export default function RootLayout({
       >
         {/* 載入 reCAPTCHA v3 */}
         <Script
-          src="https://www.google.com/recaptcha/api.js?render=6LeBT00arAAAIIM4kuuhicdMpGBOE-ovt-8WXjN"
+          src="https://www.google.com/recaptcha/api.js?render=6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"
           strategy="afterInteractive"
         />
         {children}
