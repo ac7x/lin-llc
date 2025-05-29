@@ -14,9 +14,11 @@ type Zone = {
 
 type WorkItem = {
     id: string;
-    name: string;
+    itemName: string;
     desc?: string;
     createdAt?: Timestamp | Date;
+    start?: string; // 新增 start 屬性 (ISO string)
+    end?: string;   // 新增 end 屬性 (ISO string)
 };
 
 export default function ZoneDetailPage(props: { params?: { projectId?: string; zoneId?: string } }) {
@@ -34,7 +36,12 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
     const [showWorkForm, setShowWorkForm] = useState(false);
     const [workName, setWorkName] = useState("");
     const [workDesc, setWorkDesc] = useState("");
+    const [workStart, setWorkStart] = useState(""); // 新增
+    const [workEnd, setWorkEnd] = useState("");     // 新增
     const [creatingWork, setCreatingWork] = useState(false);
+    const [editingItemId, setEditingItemId] = useState<string | null>(null);
+    const [editingStart, setEditingStart] = useState<string>("");
+    const [editingEnd, setEditingEnd] = useState<string>("");
 
     // 取得分區資料（含工項陣列）
     useEffect(() => {
@@ -51,7 +58,12 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
             if (snap.exists()) {
                 const data = snap.data();
                 setZone({ id: snap.id, ...data, zoneName: data.zoneName } as Zone);
-                setWorkItems(Array.isArray(data.workItems) ? data.workItems : []);
+                setWorkItems(Array.isArray(data.workItems)
+                    ? data.workItems.map((wi: any) => ({
+                        ...wi,
+                        itemName: wi.itemName ?? wi.name // 兼容舊資料
+                    }))
+                    : []);
             } else {
                 setZone(null);
                 setWorkItems([]);
@@ -76,21 +88,68 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
             return;
         }
         const data = snap.data();
-        const oldItems: WorkItem[] = Array.isArray(data.workItems) ? data.workItems : [];
+        const oldItems: WorkItem[] = Array.isArray(data.workItems)
+            ? data.workItems.map((wi: any) => ({
+                ...wi,
+                itemName: wi.itemName ?? wi.name // 兼容舊資料
+            }))
+            : [];
         const newItem: WorkItem = {
             id: crypto.randomUUID(),
-            name: workName,
+            itemName: workName,
             desc: workDesc,
             createdAt: Timestamp.now(),
+            start: workStart || undefined, // 新增
+            end: workEnd || undefined,     // 新增
         };
         const newItems = [...oldItems, newItem];
         await updateDoc(ref, { workItems: newItems });
 
         setWorkName("");
         setWorkDesc("");
+        setWorkStart(""); // 清空
+        setWorkEnd("");   // 清空
         setShowWorkForm(false);
         setCreatingWork(false);
         // 觸發刷新
+    };
+
+    // 編輯工項起訖日
+    const handleEditClick = (item: WorkItem) => {
+        setEditingItemId(item.id);
+        setEditingStart(item.start || "");
+        setEditingEnd(item.end || "");
+    };
+
+    const handleEditCancel = () => {
+        setEditingItemId(null);
+        setEditingStart("");
+        setEditingEnd("");
+    };
+
+    const handleEditSave = async (item: WorkItem) => {
+        if (!projectId || !zoneId) return;
+        const ref = doc(db, "projects", projectId, "zones", zoneId);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const oldItems: WorkItem[] = Array.isArray(data.workItems)
+            ? data.workItems.map((wi: any) => ({
+                ...wi,
+                itemName: wi.itemName ?? wi.name
+            }))
+            : [];
+        const newItems = oldItems.map(wi =>
+            wi.id === item.id
+                ? { ...wi, start: editingStart || undefined, end: editingEnd || undefined }
+                : wi
+        );
+        await updateDoc(ref, { workItems: newItems });
+        setEditingItemId(null);
+        setEditingStart("");
+        setEditingEnd("");
+        // 觸發刷新
+        setCreatingWork(v => !v); // 利用 creatingWork 觸發 useEffect
     };
 
     if (!projectId || !zoneId) {
@@ -151,6 +210,26 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                                 onChange={e => setWorkDesc(e.target.value)}
                             />
                         </div>
+                        <div className="mb-2 flex gap-2">
+                            <div className="flex-1">
+                                <label className="block mb-1 text-sm">起始日</label>
+                                <input
+                                    type="date"
+                                    className="border px-2 py-1 w-full"
+                                    value={workStart}
+                                    onChange={e => setWorkStart(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block mb-1 text-sm">結束日</label>
+                                <input
+                                    type="date"
+                                    className="border px-2 py-1 w-full"
+                                    value={workEnd}
+                                    onChange={e => setWorkEnd(e.target.value)}
+                                />
+                            </div>
+                        </div>
                         <button
                             type="submit"
                             className="bg-blue-600 text-white px-4 py-1 rounded"
@@ -168,8 +247,58 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                     <ul className="space-y-2">
                         {workItems.map(item => (
                             <li key={item.id} className="border rounded p-3 bg-white">
-                                <div className="font-medium">{item.name}</div>
+                                <div className="font-medium">{item.itemName}</div>
                                 {item.desc && <div className="text-gray-600 text-sm">{item.desc}</div>}
+                                {editingItemId === item.id ? (
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <div>
+                                            <label className="text-xs mr-1">起始日</label>
+                                            <input
+                                                type="date"
+                                                className="border px-2 py-1 text-xs"
+                                                value={editingStart}
+                                                onChange={e => setEditingStart(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs mr-1">結束日</label>
+                                            <input
+                                                type="date"
+                                                className="border px-2 py-1 text-xs"
+                                                value={editingEnd}
+                                                onChange={e => setEditingEnd(e.target.value)}
+                                            />
+                                        </div>
+                                        <button
+                                            className="ml-2 bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                                            onClick={() => handleEditSave(item)}
+                                            type="button"
+                                        >
+                                            儲存
+                                        </button>
+                                        <button
+                                            className="ml-1 bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs"
+                                            onClick={handleEditCancel}
+                                            type="button"
+                                        >
+                                            取消
+                                        </button>
+                                    </div>
+                                ) : (
+                                    (item.start || item.end) && (
+                                        <div className="text-gray-500 text-xs mt-2">
+                                            {item.start && <>起始日：{item.start} </>}
+                                            {item.end && <>結束日：{item.end}</>}
+                                            <button
+                                                className="ml-2 text-blue-600 underline text-xs"
+                                                onClick={() => handleEditClick(item)}
+                                                type="button"
+                                            >
+                                                編輯
+                                            </button>
+                                        </div>
+                                    )
+                                )}
                                 {item.createdAt && (
                                     <div className="text-gray-400 text-xs">
                                         建立時間：{item.createdAt instanceof Timestamp

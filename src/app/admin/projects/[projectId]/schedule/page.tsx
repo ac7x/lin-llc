@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { db, auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, Timestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, DateType } from "vis-timeline/standalone";
 import { useAuthState } from "react-firebase-hooks/auth";
 
@@ -13,18 +13,28 @@ interface Group extends TimelineGroup {
 interface Item extends TimelineItem {
   id: string;
   group: string;
-  content: string; // Ensure content is string for our internal Item model
+  content: string;
   start: Date;
   end: Date;
   projectId: string;
   userId: string;
+  itemName: string;
+  desc?: string;
 }
+
+type WorkItem = {
+  id: string;
+  itemName: string;
+  desc?: string;
+  createdAt?: any;
+  start?: string;
+  end?: string;
+  userId?: string;
+};
 
 // Helper function to convert DateType to Date
 function toDate(dateInput: DateType): Date {
-  if (dateInput instanceof Date) {
-    return dateInput;
-  }
+  if (dateInput instanceof Date) return dateInput;
   return new Date(dateInput);
 }
 
@@ -35,6 +45,7 @@ export default function ProjectsPage() {
   const timelineRef = useRef<HTMLDivElement>(null);
 
   // CRUD Handlers
+  // 移動 item 時，更新 zone 的 workItems 陣列
   const handleItemMove = useCallback(async (itemIdString: string, newStart: DateType, newEnd: DateType, newGroupIdString: string) => {
     const item = items.find(i => i.id === itemIdString);
     if (!item) return false;
@@ -42,40 +53,74 @@ export default function ProjectsPage() {
     const startDate = toDate(newStart);
     const endDate = toDate(newEnd);
 
-    // 找到新 group (zone) 所屬的 projectId
-    let newProjectId = "";
-    for (const g of groups) {
-      if (g.id === newGroupIdString) {
-        const projects = await getDocs(collection(db, "projects"));
-        for (const p of projects.docs) {
-          const zones = await getDocs(collection(db, "projects", p.id, "zones"));
-          if (zones.docs.some(z => z.id === newGroupIdString)) {
-            newProjectId = p.id;
-            break;
-          }
-        }
-        break;
-      }
-    }
-    if (!newProjectId) return false;
+    // 找到原 zone
+    const oldZoneId = item.group;
+    const oldZoneRef = doc(db, "projects", item.projectId, "zones", oldZoneId);
+    const oldZoneSnap = await getDoc(oldZoneRef);
+    if (!oldZoneSnap.exists()) return false;
+    const oldZoneData = oldZoneSnap.data();
+    const oldWorkItems: WorkItem[] = Array.isArray(oldZoneData.workItems) ? oldZoneData.workItems : [];
 
-    if (item.projectId !== newProjectId) {
-      await deleteDoc(doc(db, "projects", item.projectId, "flows", itemIdString));
-      const ref = await addDoc(collection(db, "projects", newProjectId, "flows"), {
-        name: item.content,
-        start: startDate,
-        end: endDate,
-        userId: item.userId,
-        zoneId: newGroupIdString,
-      });
-      setItems(prev => prev.map(i => i.id === itemIdString ? { ...i, id: ref.id, group: newGroupIdString, projectId: newProjectId, start: startDate, end: endDate } : i));
-    } else {
-      await updateDoc(doc(db, "projects", newProjectId, "flows", itemIdString), { start: startDate, end: endDate, zoneId: newGroupIdString });
-      setItems(prev => prev.map(i => i.id === itemIdString ? { ...i, start: startDate, end: endDate, group: newGroupIdString } : i));
+    // 找到新 zone
+    let newProjectId = item.projectId;
+    let newZoneRef = doc(db, "projects", item.projectId, "zones", newGroupIdString);
+    let newZoneSnap = await getDoc(newZoneRef);
+    if (!newZoneSnap.exists()) {
+      // 跨 project 的 zone（理論上 zoneId 唯一，不會跨 project）
+      // 但保留原本的查找方式
+      const projects = await getDocs(collection(db, "projects"));
+      for (const p of projects.docs) {
+        const zones = await getDocs(collection(db, "projects", p.id, "zones"));
+        if (zones.docs.some(z => z.id === newGroupIdString)) {
+          newProjectId = p.id;
+          newZoneRef = doc(db, "projects", newProjectId, "zones", newGroupIdString);
+          newZoneSnap = await getDoc(newZoneRef);
+          break;
+        }
+      }
+      if (!newZoneSnap.exists()) return false;
     }
+    const newZoneData = newZoneSnap.data();
+    const newWorkItems: WorkItem[] = Array.isArray(newZoneData.workItems) ? newZoneData.workItems : [];
+
+    // 從舊 zone 移除
+    const movedItem = oldWorkItems.find(wi => wi.id === itemIdString);
+    if (!movedItem) return false;
+    const updatedOldWorkItems = oldWorkItems.filter(wi => wi.id !== itemIdString);
+
+    // 新 item
+    const newItem: WorkItem = {
+      ...movedItem,
+      start: startDate.toISOString().slice(0, 10),
+      end: endDate.toISOString().slice(0, 10),
+    };
+
+    // 新 zone 加入
+    const updatedNewWorkItems = [...newWorkItems, newItem];
+
+    // 更新兩個 zone
+    await updateDoc(oldZoneRef, { workItems: updatedOldWorkItems });
+    await updateDoc(newZoneRef, { workItems: updatedNewWorkItems });
+
+    setItems(prev =>
+      prev.map(i =>
+        i.id === itemIdString
+          ? {
+            ...i,
+            group: newGroupIdString,
+            projectId: newProjectId,
+            start: startDate,
+            end: endDate,
+            content: movedItem.itemName,
+            itemName: movedItem.itemName,
+          }
+          : i
+      )
+    );
     return true;
   }, [items, groups]);
 
+  // 新增 item 時，直接加到 zone 的 workItems
   const handleItemAdd = useCallback(async (itemData: TimelineItem, cb: (item: Item | null) => void) => {
     if (!user) return cb(null);
     const zoneId = String(itemData.group);
@@ -83,12 +128,10 @@ export default function ProjectsPage() {
     const startDate = itemData.start ? toDate(itemData.start) : new Date();
     const endDate = itemData.end ? toDate(itemData.end) : new Date(Date.now() + 3600000);
 
-    // 需找到 zone 所屬的 projectId
+    // 找到 zone 所屬的 projectId
     let projectId = "";
     for (const g of groups) {
       if (g.id === zoneId) {
-        // 反查 projectId
-        // 這裡假設 zone id 唯一且不跨 project
         const projects = await getDocs(collection(db, "projects"));
         for (const p of projects.docs) {
           const zones = await getDocs(collection(db, "projects", p.id, "zones"));
@@ -102,32 +145,50 @@ export default function ProjectsPage() {
     }
     if (!projectId) return cb(null);
 
-    const dataToSave = {
-      name: contentString,
-      start: startDate,
-      end: endDate,
+    // 取得 zone 文件
+    const zoneRef = doc(db, "projects", projectId, "zones", zoneId);
+    const zoneSnap = await getDoc(zoneRef);
+    if (!zoneSnap.exists()) return cb(null);
+    const zoneData = zoneSnap.data();
+    const oldWorkItems: WorkItem[] = Array.isArray(zoneData.workItems) ? zoneData.workItems : [];
+    const newWorkItem: WorkItem = {
+      id: crypto.randomUUID(),
+      itemName: contentString,
       userId: user.uid,
-      zoneId,
+      start: startDate.toISOString().slice(0, 10),
+      end: endDate.toISOString().slice(0, 10),
     };
-    const ref = await addDoc(collection(db, "projects", projectId, "flows"), dataToSave);
+    const newWorkItems = [...oldWorkItems, newWorkItem];
+    await updateDoc(zoneRef, { workItems: newWorkItems });
+
     const newItem: Item = {
-      id: ref.id,
+      id: newWorkItem.id,
       group: zoneId,
       content: contentString,
       start: startDate,
       end: endDate,
       projectId,
       userId: user.uid,
+      itemName: contentString,
     };
     setItems(prev => [...prev, newItem]);
     cb(newItem);
   }, [user, groups]);
 
+  // 刪除 item 時，從 zone 的 workItems 移除
   const handleItemRemove = useCallback(async (itemData: TimelineItem, cb: (item: TimelineItem | null) => void) => {
     const id = String(itemData.id);
     const target = items.find(i => i.id === id);
     if (!target) return cb(null);
-    await deleteDoc(doc(db, "projects", target.projectId, "flows", id));
+
+    const zoneRef = doc(db, "projects", target.projectId, "zones", target.group);
+    const zoneSnap = await getDoc(zoneRef);
+    if (!zoneSnap.exists()) return cb(null);
+    const zoneData = zoneSnap.data();
+    const oldWorkItems: WorkItem[] = Array.isArray(zoneData.workItems) ? zoneData.workItems : [];
+    const newWorkItems = oldWorkItems.filter(wi => wi.id !== id);
+    await updateDoc(zoneRef, { workItems: newWorkItems });
+
     setItems(prev => prev.filter(i => i.id !== id));
     cb(itemData);
   }, [items]);
@@ -139,6 +200,7 @@ export default function ProjectsPage() {
       const projects = await getDocs(collection(db, "projects"));
       // 取得所有 zone 作為 groups
       const groupList: Group[] = [];
+      const allItems: Item[] = [];
       for (const project of projects.docs) {
         const zones = await getDocs(collection(db, "projects", project.id, "zones"));
         zones.forEach(z => {
@@ -147,37 +209,32 @@ export default function ProjectsPage() {
             id: z.id,
             content: zd.zoneName || z.id,
           });
-        });
-      }
-      setGroups(groupList);
-
-      // 取得所有 flows，group 設為 zone id
-      const allItems: Item[] = [];
-      for (const project of projects.docs) {
-        const flows = await getDocs(collection(db, "projects", project.id, "flows"));
-        flows.forEach(f => {
-          const d = f.data();
-          // 若 flow 有 zoneId 欄位，則 group 設為 zoneId
-          if (d.zoneId) {
-            allItems.push({
-              id: f.id,
-              group: d.zoneId,
-              content: d.name,
-              start: d.start?.toDate?.() || new Date(),
-              end: d.end?.toDate?.() || new Date(Date.now() + 3600000),
-              projectId: project.id,
-              userId: d.userId,
+          // 取得 workItems
+          if (Array.isArray(zd.workItems)) {
+            zd.workItems.forEach((wi: WorkItem) => {
+              allItems.push({
+                id: wi.id,
+                group: z.id,
+                content: wi.itemName,
+                start: wi.start ? new Date(wi.start) : new Date(),
+                end: wi.end ? new Date(wi.end) : new Date(Date.now() + 3600000),
+                projectId: project.id,
+                userId: wi.userId || "",
+                itemName: wi.itemName,
+                desc: wi.desc,
+              });
             });
           }
         });
       }
+      setGroups(groupList);
       setItems(allItems);
     })();
   }, []);
 
   // vis-timeline
   useEffect(() => {
-    if (!timelineRef.current || groups.length === 0) return; // Wait for groups to load
+    if (!timelineRef.current || groups.length === 0) return;
 
     const groupsDataSet = new DataSet<Group>(groups);
     const itemsDataSet = new DataSet<Item>(items);
@@ -188,8 +245,6 @@ export default function ProjectsPage() {
       onRemove: handleItemRemove,
       onMoving: (item: TimelineItem, callback: (item: TimelineItem | null) => void) => callback(item),
       onMove: async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-        // item.id, item.start, item.end, item.group are all DateType or IdType from vis-timeline
-        // Assert item.start and item.end are not undefined as they should be present in onMove
         const success = await handleItemMove(String(item.id), item.start!, item.end!, String(item.group));
         callback(success ? item : null);
       },
@@ -202,7 +257,7 @@ export default function ProjectsPage() {
   const [n, setN] = useState("");
   const addProject = async () => {
     if (!user || !n.trim()) return;
-    await addDoc(collection(db, "projects"), { projectName: n, createdAt: Timestamp.now(), ownerId: user.uid });
+    await addDoc(collection(db, "projects"), { projectName: n, createdAt: new Date(), ownerId: user.uid });
     setN("");
   };
 
