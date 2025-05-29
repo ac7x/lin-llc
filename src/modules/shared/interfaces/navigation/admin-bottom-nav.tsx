@@ -18,7 +18,6 @@ interface AdminBottomNavProps {
 const defaultAdminNavItems: NavItem[] = [
     { href: '/admin/schedule', icon: '📅', label: '排程管理', active: false },
     { href: '/admin/projects', icon: '📁', label: '專案管理', active: false },
-    { href: '/admin/projects', icon: '📁', label: '專案開發', active: false },
     { href: '/admin/templates', icon: '📋', label: '範本管理', active: false },
     { href: '/admin/users', icon: '👤', label: '用戶管理', active: false },
 ];

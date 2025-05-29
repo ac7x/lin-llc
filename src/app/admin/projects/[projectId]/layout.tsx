@@ -30,7 +30,7 @@ export default function ProjectLayout({
     const currentTab = segments[5] || "";
 
     const tabs = [
-        { label: "專案總覽", key: "", content: overview },
+        { label: "專案總覽", key: "overview", content: overview },
         { label: "進度日誌", key: "journal", content: journal },
         { label: "流程管理", key: "flow", content: flow },
         { label: "分區管理", key: "zones", content: zones },
