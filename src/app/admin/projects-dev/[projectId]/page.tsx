@@ -44,12 +44,12 @@ type Expense = {
 };
 
 // 動態載入流程與日誌元件
-const ProjectFlowPage = dynamic(() => import("./flow/page"), { ssr: false });
-const ProjectJournalPage = dynamic(() => import("./journal/page"), { ssr: false });
-const ProjectEditPage = dynamic(() => import("./edit/page"), { ssr: false });
-const ProjectAttendancePage = dynamic(() => import("./attendance/page"), { ssr: false });
-const ProjectZonesPage = dynamic(() => import("./zones/page"), { ssr: false }); // 新增分區頁面動態載入
-const ProjectSchedulePage = dynamic(() => import("./schedule/page"), { ssr: false }); // 新增進度排程頁面動態載入
+const ProjectFlowPage = dynamic(() => import("./@flow/page"), { ssr: false });
+const ProjectJournalPage = dynamic(() => import("./@journal/page"), { ssr: false });
+const ProjectEditPage = dynamic(() => import("./@edit/page"), { ssr: false });
+const ProjectAttendancePage = dynamic(() => import("./@attendance/page"), { ssr: false });
+const ProjectZonesPage = dynamic(() => import("./@zones/page"), { ssr: false }); // 新增分區頁面動態載入
+const ProjectSchedulePage = dynamic(() => import("./@schedule/page"), { ssr: false }); // 新增進度排程頁面動態載入
 
 export default function ProjectDetailPage() {
   const { projectId } = useParams() as { projectId: string };
