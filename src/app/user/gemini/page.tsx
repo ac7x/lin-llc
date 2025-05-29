@@ -1,32 +1,34 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-// Import app from your existing firebase-client
-import { app as firebaseAppInstance } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel, ChatSession } from "firebase/ai";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// Add type declaration for grecaptcha
-declare global {
-  interface Window {
-    grecaptcha?: {
-      ready: (callback: () => void) => void;
-      execute: (siteKey: string, options: { action: string }) => Promise<string>;
-    };
-  }
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
+  authDomain: "lin-llc.firebaseapp.com",
+  projectId: "lin-llc",
+  storageBucket: "lin-llc.firebasestorage.app",
+  messagingSenderId: "394023041902",
+  appId: "1:394023041902:web:f9874be5d0d192557b1f7f",
+  measurementId: "G-62JEHK00G8"
+};
 
-// firebaseConfig is no longer needed here as it's in firebase-client.ts
-// RECAPTCHA_SITE_KEY remains as it's specific to this page/feature
 const RECAPTCHA_SITE_KEY = "6LeBT00arAAAIIM4kuuhicdMpGBOE-ovt-8WXjN";
 
-// firebaseAppInstance is now imported
+let firebaseAppInstance: FirebaseApp;
 
-// This interface might still be useful if you extend the imported app instance locally,
-// but for now, we'll manage the app check status separately.
-// interface FirebaseAppWithAppCheck extends FirebaseApp {
-//   _isinitializeAppCheckCalled?: boolean;
-// }
+try {
+  if (!getApps().length) {
+    firebaseAppInstance = initializeApp(firebaseConfig);
+  } else {
+    firebaseAppInstance = getApp();
+  }
+} catch (error) {
+  console.error("Error initializing Firebase App:", error);
+}
+
 
 interface ChatMessage {
   role: "user" | "model";
@@ -39,7 +41,6 @@ export default function GeminiPage() {
   const [error, setError] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const appCheckInitializedRef = useRef(false); // Ref to track App Check initialization
 
   const modelRef = useRef<GenerativeModel | null>(null);
   const chatRef = useRef<ChatSession | null>(null);
@@ -47,84 +48,49 @@ export default function GeminiPage() {
 
   useEffect(() => {
     const initializeAI = async () => {
-      // firebaseAppInstance is now directly imported and should exist
       if (isInitialized || !firebaseAppInstance || typeof window === 'undefined') return;
 
       try {
-        if (typeof window.grecaptcha === 'undefined' || typeof window.grecaptcha.ready === 'undefined') {
-          console.warn("reCAPTCHA v3 script not loaded or not ready. App Check may not function correctly.");
-          setError("reCAPTCHA v3 script 載入失敗或尚未就緒，請檢查你的網站金鑰或網路連線。");
+        if (typeof grecaptcha === 'undefined') {
+          console.warn("reCAPTCHA v3 script not loaded. App Check may not function correctly.");
+          setError("reCAPTCHA v3 script 載入失敗，請檢查你的網站金鑰或網路連線。");
           return;
         }
 
-        window.grecaptcha.ready(async () => {
-          try {
-            // Check if App Check has been initialized for this instance
-            if (!appCheckInitializedRef.current) {
-              try {
-                initializeAppCheck(firebaseAppInstance, {
-                  provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
-                  isTokenAutoRefreshEnabled: true
-                });
-                appCheckInitializedRef.current = true;
-                console.log("Firebase App Check initialized for GeminiPage.");
-              } catch (appCheckError) {
-                // It's possible App Check was already initialized for this app instance elsewhere.
-                // Firebase throws an error if initializeAppCheck is called multiple times on the same app instance.
-                // We can check the error message or code if a more specific handling is needed.
-                console.warn("App Check initialization failed or already initialized:", appCheckError);
-                // Assuming if it fails here, it might be due to prior initialization.
-                // Depending on the exact error, you might want to set appCheckInitializedRef.current = true or handle differently.
-                // For now, we'll log and proceed, as getAI doesn't strictly depend on a new AppCheck init if one exists.
-                if (appCheckError instanceof Error && appCheckError.message.includes("already-initialized")) {
-                  appCheckInitializedRef.current = true; // Mark as initialized if that was the error
-                  console.log("App Check was already initialized for this Firebase app instance.");
-                } else {
-                  throw appCheckError; // Re-throw if it's a different error
-                }
-              }
-            }
-
-            const ai = getAI(firebaseAppInstance, { backend: new GoogleAIBackend() });
-            modelRef.current = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
-            console.log("Gemini model initialized.");
-
-            if (!chatRef.current && modelRef.current) { // Ensure modelRef.current is not null
-              chatRef.current = modelRef.current.startChat({
-                history: [],
-                generationConfig: { maxOutputTokens: 500 },
-              });
-              console.log("New chat session started.");
-            } else if (!modelRef.current) {
-              console.error("Failed to initialize GenerativeModel.");
-              setError("無法初始化 AI 模型。");
-              return;
-            }
-
-
-            setIsInitialized(true);
-            setError("");
-          } catch (err) {
-            console.error("Error during AI/AppCheck initialization after reCAPTCHA ready:", err);
-            if (err instanceof Error) {
-              setError(`AI 模型或 App Check 初始化失敗 (reCAPTCHA ready): ${err.message}`);
-            } else {
-              setError("AI 模型或 App Check 初始化失敗 (reCAPTCHA ready): 未知的錯誤");
-            }
-          }
-        });
-      } catch (err) {
-        console.error("Error preparing AI Model or App Check:", err);
-        if (err instanceof Error) {
-          setError(`準備 AI 模型或 App Check 失敗: ${err.message}`);
-        } else {
-          setError("準備 AI 模型或 App Check 失敗: 未知的錯誤");
+        if (!((firebaseAppInstance as any)._isinitializeAppCheckCalled)) {
+          initializeAppCheck(firebaseAppInstance, {
+            provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+            isTokenAutoRefreshEnabled: true
+          });
+          (firebaseAppInstance as any)._isinitializeAppCheckCalled = true;
+          console.log("Firebase App Check initialized.");
         }
+
+
+        const ai = getAI(firebaseAppInstance, { backend: new GoogleAIBackend() });
+        modelRef.current = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+        console.log("Gemini model initialized.");
+
+        if (!chatRef.current) {
+          chatRef.current = modelRef.current.startChat({
+            history: [],
+            generationConfig: { maxOutputTokens: 500 },
+          });
+          console.log("New chat session started.");
+        }
+
+        setIsInitialized(true);
+        setError(""); // Clear any initialization errors
+
+
+      } catch (err: any) {
+        console.error("Error initializing AI Model:", err);
+        setError(`AI 模型或 App Check 初始化失敗: ${err.message}`);
       }
     };
 
     initializeAI();
-  }, [isInitialized]); // firebaseAppInstance is stable, so not needed in deps if imported
+  }, [isInitialized]);
 
 
   useEffect(() => {
@@ -161,13 +127,9 @@ export default function GeminiPage() {
 
       setHistory(h => [...h, { role: "model", text }]);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error sending message:", err);
-      if (err instanceof Error) {
-        setError(`訊息傳送失敗: ${err.message}`);
-      } else {
-        setError("訊息傳送失敗: 未知的錯誤");
-      }
+      setError(`訊息傳送失敗: ${err.message}`);
     } finally {
       setLoading(false);
     }
