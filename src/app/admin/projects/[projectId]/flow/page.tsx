@@ -26,6 +26,8 @@ export default function ProjectFlowPage() {
   const [loading, setLoading] = useState(true);
   const [flows, setFlows] = useState<Flow[]>([]);
   const [date, setDate] = useState("");
+  const [time, setTime] = useState("07:30");
+  const [durationHours, setDurationHours] = useState(12); // 新增工期小時欄位
   const [description, setDescription] = useState("");
   const [flowName, setFlowName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -77,18 +79,14 @@ export default function ProjectFlowPage() {
   }, []);
 
   // 建立 start/end 時間
-  function getStartAndEndTimestamp(selectedDate: string) {
-    // selectedDate 例如 "2024-06-01"
-    // start: 2024-06-01 07:30
-    // end:   2024-06-01 19:30
-    if (!selectedDate) {
+  function getStartAndEndTimestamp(selectedDate: string, selectedTime: string, hours: number) {
+    if (!selectedDate || !selectedTime || !hours) {
       return { start: null, end: null };
     }
-    // 建立 JS Date 物件
     const [year, month, day] = selectedDate.split("-").map(Number);
-    const startDate = new Date(year, month - 1, day, 7, 30, 0, 0); // 早上 07:30
-    const endDate = new Date(startDate.getTime() + 12 * 60 * 60 * 1000); // +12 小時
-    // Firestore 用 Timestamp 儲存
+    const [hour, minute] = selectedTime.split(":").map(Number);
+    const startDate = new Date(year, month - 1, day, hour, minute, 0, 0);
+    const endDate = new Date(startDate.getTime() + hours * 60 * 60 * 1000);
     return {
       start: Timestamp.fromDate(startDate),
       end: Timestamp.fromDate(endDate)
@@ -105,6 +103,14 @@ export default function ProjectFlowPage() {
       setError("請選擇預定施工日期");
       return;
     }
+    if (!time) {
+      setError("請選擇預定時間");
+      return;
+    }
+    if (!durationHours || isNaN(durationHours) || durationHours <= 0) {
+      setError("請輸入有效的工期小時數");
+      return;
+    }
     if (!description.trim()) {
       setError("請輸入流程內容");
       return;
@@ -116,23 +122,24 @@ export default function ProjectFlowPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const { start, end } = getStartAndEndTimestamp(date);
+      const { start, end } = getStartAndEndTimestamp(date, time, durationHours);
 
-      // flows 子集合
       await addDoc(collection(db, "projects", projectId, "flows"), {
         name: flowName.trim(),
         date,
+        time,
+        durationHours, // 儲存工期
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
-        // projectId, // 不需要 projectId 欄位
         start,
         end,
       });
       setFlowName("");
       setDate("");
+      setTime("07:30");
+      setDurationHours(12);
       setDescription("");
-      // 直接在這裡 fetch flows
       const flowsQuery = query(collection(db, "projects", projectId, "flows"));
       const snap: QuerySnapshot<DocumentData> = await getDocs(flowsQuery);
       setFlows(
@@ -217,9 +224,33 @@ export default function ProjectFlowPage() {
               disabled={submitting}
               className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
-            {date && (
+            <input
+              type="time"
+              value={time}
+              onChange={e => setTime(e.target.value)}
+              disabled={submitting}
+              className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+              step="60"
+            />
+            <input
+              type="number"
+              min={1}
+              value={durationHours}
+              onChange={e => setDurationHours(Number(e.target.value))}
+              disabled={submitting}
+              className="ml-2 w-20 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+              placeholder="工期(小時)"
+            />
+            <span className="ml-1">小時</span>
+            {date && time && durationHours > 0 && (
               <span className="ml-4 text-sm text-gray-600">
-                開始：{date} 07:30，結束：{date} 19:30
+                開始：{date} {time}，預計結束：{(() => {
+                  if (!date || !time || !durationHours) return "";
+                  const [hour, minute] = time.split(":").map(Number);
+                  const start = new Date(date + "T" + time);
+                  const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+                  return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")} ${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
+                })()}
               </span>
             )}
           </label>
@@ -267,7 +298,7 @@ export default function ProjectFlowPage() {
                       : '-'
                 }</div>
                 <div className="mb-1"><span className="font-medium">開始：</span>{formatDateTime(flow.start)}</div>
-                <div className="mb-1"><span className="font-medium">結束：</span>{formatDateTime(flow.end)}</div>
+                {/* 保留開始，不顯示預計結束 */}
                 <div className="mb-1"><span className="font-medium">內容：</span>{flow.description}</div>
                 <div className="mb-1">
                   <span className="font-medium">上傳/更換照片：</span>
