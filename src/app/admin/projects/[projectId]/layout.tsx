@@ -2,7 +2,7 @@
 
 import { useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { delay } from "@/utils/delay";
 
 export default function ProjectLayout({
@@ -25,15 +25,18 @@ export default function ProjectLayout({
     const { projectId } = useParams() as { projectId: string };
     const searchParams = useSearchParams();
 
-    const tabs = [
-        { label: "專案總覽", key: "overview", content: overview },
-        { label: "編輯專案", key: "edit", content: edit },
-        { label: "流程管理", key: "flow", content: flow },
-        { label: "分區管理", key: "zones", content: zones },
-        { label: "排程視覺化", key: "schedule", content: schedule },
-        { label: "進度日誌", key: "journal", content: journal },
-        { label: "出工紀錄", key: "attendance", content: attendance },
-    ];
+    const tabs = useMemo(
+        () => [
+            { label: "專案總覽", key: "overview", content: overview },
+            { label: "編輯專案", key: "edit", content: edit },
+            { label: "流程管理", key: "flow", content: flow },
+            { label: "分區管理", key: "zones", content: zones },
+            { label: "排程視覺化", key: "schedule", content: schedule },
+            { label: "進度日誌", key: "journal", content: journal },
+            { label: "出工紀錄", key: "attendance", content: attendance },
+        ],
+        [overview, edit, flow, zones, schedule, journal, attendance]
+    );
 
     const [currentTab, setCurrentTab] = useState("overview");
     const [ready, setReady] = useState(false);
