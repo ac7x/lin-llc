@@ -97,6 +97,12 @@ export default function ProjectDetailPage() {
           專案詳情
         </button>
         <button
+          className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "zones" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
+          onClick={() => setTab("zones")}
+        >
+          分區列表
+        </button>
+        <button
           className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "flow" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
           onClick={() => setTab("flow")}
         >
@@ -113,12 +119,6 @@ export default function ProjectDetailPage() {
           onClick={() => setTab("attendance")}
         >
           出工人數
-        </button>
-        <button
-          className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "zones" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
-          onClick={() => setTab("zones")}
-        >
-          分區
         </button>
         <button
           className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "edit" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
@@ -161,10 +161,10 @@ export default function ProjectDetailPage() {
           ) : "-"}</div>
         </div>
       )}
+      {tab === "zones" && <ProjectZonesPage />}
       {tab === "flow" && <ProjectFlowPage />}
       {tab === "journal" && <ProjectJournalPage />}
       {tab === "attendance" && <ProjectAttendancePage />}
-      {tab === "zones" && <ProjectZonesPage />} {/* 新增分區頁面渲染 */}
       {tab === "edit" && <ProjectEditPage />}
     </main>
   );

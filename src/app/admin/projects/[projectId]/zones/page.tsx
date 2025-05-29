@@ -87,41 +87,7 @@ export default function ZonesPage() {
                 <div className="w-1/2 min-w-[220px]">
                     <div className="flex justify-between items-center mb-4">
                         <span className="font-semibold">分區列表</span>
-                        <button
-                            onClick={() => setShowForm(v => !v)}
-                            className="bg-blue-600 text-white px-3 py-1 rounded"
-                        >
-                            {showForm ? "取消" : "新增區域"}
-                        </button>
                     </div>
-                    {showForm && (
-                        <form onSubmit={handleSubmit} className="space-y-4 mb-6 bg-gray-50 p-4 rounded border">
-                            <div>
-                                <label className="block mb-1">區域名稱</label>
-                                <input
-                                    className="border px-3 py-2 w-full"
-                                    value={name}
-                                    onChange={e => setName(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block mb-1">描述</label>
-                                <textarea
-                                    className="border px-3 py-2 w-full"
-                                    value={desc}
-                                    onChange={e => setDesc(e.target.value)}
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                className="bg-blue-600 text-white px-4 py-2 rounded"
-                                disabled={creating}
-                            >
-                                {creating ? "建立中..." : "建立區域"}
-                            </button>
-                        </form>
-                    )}
                     {loading ? (
                         <div>載入中...</div>
                     ) : (
@@ -140,6 +106,55 @@ export default function ZonesPage() {
                             ))}
                         </ul>
                     )}
+                    {/* 新增區域表單（點擊按鈕才顯示） */}
+                    {showForm && (
+                        <form onSubmit={handleSubmit} className="space-y-4 mb-4 mt-6 bg-gray-50 p-4 rounded border">
+                            <div>
+                                <label className="block mb-1">區域名稱</label>
+                                <input
+                                    className="border px-3 py-2 w-full"
+                                    value={name}
+                                    onChange={e => setName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block mb-1">描述</label>
+                                <textarea
+                                    className="border px-3 py-2 w-full"
+                                    value={desc}
+                                    onChange={e => setDesc(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    type="submit"
+                                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                                    disabled={creating}
+                                >
+                                    {creating ? "建立中..." : "建立區域"}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                    onClick={() => setShowForm(false)}
+                                    disabled={creating}
+                                >
+                                    取消
+                                </button>
+                            </div>
+                        </form>
+                    )}
+                    {/* 新增區域按鈕永遠顯示在最下方 */}
+                    <div className="mt-6">
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+                            disabled={showForm}
+                        >
+                            新增區域
+                        </button>
+                    </div>
                 </div>
                 {/* 右側：分區詳情 */}
                 <div className="w-1/2 min-w-[220px]">
