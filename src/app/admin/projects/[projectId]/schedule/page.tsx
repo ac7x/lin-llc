@@ -202,7 +202,7 @@ export default function ProjectsPage() {
   const [n, setN] = useState("");
   const addProject = async () => {
     if (!user || !n.trim()) return;
-    const ref = await addDoc(collection(db, "projects"), { projectName: n, createdAt: Timestamp.now(), ownerId: user.uid });
+    await addDoc(collection(db, "projects"), { projectName: n, createdAt: Timestamp.now(), ownerId: user.uid });
     setN("");
   };
 

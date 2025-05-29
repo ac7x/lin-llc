@@ -50,12 +50,10 @@ export default function ZoneDetailPage() {
             </div>
             {zone.createdAt && (
                 <div className="text-gray-500 text-sm">
-                    建立時間：
-                    {zone.createdAt instanceof Timestamp
-                        ? zone.createdAt.toDate().toLocaleString()
-                        : zone.createdAt instanceof Date
-                            ? zone.createdAt.toLocaleString()
-                            : String(zone.createdAt)}
+                    建立時間：{(() => {
+                        const d = zone.createdAt instanceof Timestamp ? zone.createdAt.toDate() : zone.createdAt;
+                        return d instanceof Date ? d.toLocaleString() : String(d);
+                    })()}
                 </div>
             )}
         </main>
