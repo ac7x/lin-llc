@@ -48,13 +48,14 @@ const ProjectFlowPage = dynamic(() => import("./flow/page"), { ssr: false });
 const ProjectJournalPage = dynamic(() => import("./journal/page"), { ssr: false });
 const ProjectEditPage = dynamic(() => import("./edit/page"), { ssr: false });
 const ProjectAttendancePage = dynamic(() => import("./attendance/page"), { ssr: false });
+const ProjectZonesPage = dynamic(() => import("./zones/page"), { ssr: false }); // 新增分區頁面動態載入
 
 export default function ProjectDetailPage() {
   const { projectId } = useParams() as { projectId: string };
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<{[key: string]: string}>({});
-  const [tab, setTab] = useState<"detail" | "flow" | "journal" | "edit" | "attendance">("detail");
+  const [users, setUsers] = useState<{ [key: string]: string }>({});
+  const [tab, setTab] = useState<"detail" | "flow" | "journal" | "edit" | "attendance" | "zones">("detail"); // tab 狀態加入 zones
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -76,7 +77,7 @@ export default function ProjectDetailPage() {
       const usersData = snapshot.docs.reduce((acc, doc) => ({
         ...acc,
         [doc.id]: doc.data().displayName || doc.data().name || undefined
-      }), {} as {[key: string]: string | undefined});
+      }), {} as { [key: string]: string | undefined });
       setUsers(usersData);
     };
     fetchUsers();
@@ -112,6 +113,12 @@ export default function ProjectDetailPage() {
           onClick={() => setTab("attendance")}
         >
           出工人數
+        </button>
+        <button
+          className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "zones" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
+          onClick={() => setTab("zones")}
+        >
+          分區
         </button>
         <button
           className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "edit" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
@@ -157,6 +164,7 @@ export default function ProjectDetailPage() {
       {tab === "flow" && <ProjectFlowPage />}
       {tab === "journal" && <ProjectJournalPage />}
       {tab === "attendance" && <ProjectAttendancePage />}
+      {tab === "zones" && <ProjectZonesPage />} {/* 新增分區頁面渲染 */}
       {tab === "edit" && <ProjectEditPage />}
     </main>
   );
