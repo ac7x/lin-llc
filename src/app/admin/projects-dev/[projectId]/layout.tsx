@@ -7,7 +7,6 @@ import Link from "next/link";
 import React from "react";
 
 export default function ProjectLayout({
-    children,
     flow,
     journal,
     zones,
@@ -16,7 +15,6 @@ export default function ProjectLayout({
     edit,
     overview,
 }: {
-    children: React.ReactNode;
     flow: React.ReactNode;
     journal: React.ReactNode;
     zones: React.ReactNode;
@@ -26,7 +24,9 @@ export default function ProjectLayout({
     overview: React.ReactNode;
 }) {
     const pathname = usePathname();
-    const projectId = pathname.split("/")[4]; // /admin/projects-dev/[projectId]
+    const segments = pathname.split("/");
+    const projectId = segments[4]; // /admin/projects-dev/[projectId]
+    const currentTab = segments[5] || "";
 
     const tabs = [
         { label: "專案總覽", key: "", content: overview },
@@ -38,8 +38,6 @@ export default function ProjectLayout({
         { label: "編輯專案", key: "edit", content: edit },
     ];
 
-    const currentTabKey = pathname.split("/")[5] || "";
-
     return (
         <div className="flex max-w-6xl mx-auto px-4 py-8 gap-6">
             {/* 左側側邊欄 */}
@@ -49,7 +47,7 @@ export default function ProjectLayout({
                         <Link
                             key={tab.key}
                             href={`/admin/projects-dev/${projectId}/${tab.key}`}
-                            className={`text-left px-3 py-2 rounded hover:bg-blue-50 font-medium transition ${currentTabKey === tab.key ? "bg-blue-100 text-blue-800" : "text-gray-700"
+                            className={`text-left px-3 py-2 rounded hover:bg-blue-50 font-medium transition ${currentTab === tab.key ? "bg-blue-100 text-blue-800" : "text-gray-700"
                                 }`}
                         >
                             {tab.label}
@@ -58,11 +56,10 @@ export default function ProjectLayout({
                 </nav>
             </aside>
 
-            {/* 右側顯示內容（各 slot 注入） */}
+            {/* 右側 slot 注入 */}
             <main className="flex-1 min-w-0">
                 {
-                    // 動態 render slot
-                    tabs.find((tab) => tab.key === currentTabKey)?.content || overview
+                    tabs.find((tab) => tab.key === currentTab)?.content || overview
                 }
             </main>
         </div>
