@@ -36,7 +36,7 @@ export default function UserSchedulePage() {
       .then(async (projectsSnap) => {
         const groupList = projectsSnap.docs.map(doc => ({
           id: doc.id,
-          content: doc.data().name || doc.id,
+          content: doc.data().name || doc.id, // group 名稱顯示 project name
         }));
         setGroups(groupList);
 
@@ -50,7 +50,7 @@ export default function UserSchedulePage() {
               const d = doc.data();
               allFlows.push({
                 id: doc.id,
-                group: projectName, // 這裡改為 project name（已無前綴）
+                group: projectDoc.id, // group 設為 project id
                 content: d.name || (projectDoc.data().name ? `流程 (${projectDoc.data().name})` : "未命名流程"),
                 start: d.start ? (typeof d.start.toDate === 'function' ? d.start.toDate() : new Date(d.start)) : new Date(),
                 end: d.end ? (typeof d.end.toDate === 'function' ? d.end.toDate() : new Date(d.end)) : new Date(Date.now() + 86400000),

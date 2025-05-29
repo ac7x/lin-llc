@@ -24,10 +24,11 @@ export default function ProjectsPage() {
           )}
           {projectsSnap?.docs.map(docSnap => {
             const data = docSnap.data();
+            const projectName = data.name || docSnap.id;
             return (
               <li key={docSnap.id} className="border p-4 rounded shadow-sm">
                 <div className="font-bold text-lg text-blue-700">
-                  {data.name || docSnap.id}
+                  {projectName}
                 </div>
                 <div className="text-xs text-gray-700 mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   <span>地區：{data.region || '—'}</span>
