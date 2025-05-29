@@ -39,7 +39,7 @@ type Project = {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<{[key: string]: string}>({});
+  const [users, setUsers] = useState<{ [key: string]: string }>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function ProjectsPage() {
       const usersData = snapshot.docs.reduce((acc, doc) => ({
         ...acc,
         [doc.id]: doc.data().displayName || doc.data().name || undefined
-      }), {} as {[key: string]: string | undefined});
+      }), {} as { [key: string]: string | undefined });
       setUsers(usersData);
     };
     fetchUsers();
@@ -73,7 +73,7 @@ export default function ProjectsPage() {
     <main className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="font-bold text-2xl mb-2">專案管理</h1>
       <p className="text-gray-500 mb-6">這裡是管理所有專案的頁面。</p>
-      <Link href="/admin/projects/add">
+      <Link href="/admin/projects-dev/add">
         <button className="bg-gradient-to-r from-blue-400 to-blue-700 text-white rounded px-6 py-2 font-semibold text-base shadow transition hover:from-blue-700 hover:to-blue-400 mb-4">
           新增專案
         </button>
@@ -88,17 +88,17 @@ export default function ProjectsPage() {
             <div
               className="bg-white dark:bg-neutral-900 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col gap-2 cursor-pointer"
               key={project.id}
-              onClick={() => router.push(`/admin/projects/${project.id}`)}
+              onClick={() => router.push(`/admin/projects-dev/${project.id}`)}
               tabIndex={0}
               role="button"
               onKeyDown={e => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  router.push(`/admin/projects/${project.id}`);
+                  router.push(`/admin/projects-dev/${project.id}`);
                 }
               }}
             >
               <Link
-                href={`/admin/projects/${project.id}`}
+                href={`/admin/projects-dev/${project.id}`}
                 className="no-underline"
                 onClick={e => e.stopPropagation()}
               >
