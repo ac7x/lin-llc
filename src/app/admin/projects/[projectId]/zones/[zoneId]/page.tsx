@@ -8,7 +8,7 @@ import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 type WorkItem = {
     id: string;
     itemName: string;
-    createdAt: any;
+    createdAt: Timestamp | Date | string;
     start?: string;
     end?: string;
     quantity?: number;
@@ -18,7 +18,7 @@ type Zone = {
     id: string;
     zoneName: string;
     desc?: string;
-    createdAt: any;
+    createdAt: Timestamp | Date | string;
     workItems?: WorkItem[];
 };
 
@@ -51,13 +51,22 @@ export default function ZoneDetailPage({ params }: Props) {
             const ref = doc(db, "projects", projectId, "zones", zoneId);
             const snap = await getDoc(ref);
             if (snap.exists()) {
-                const data = snap.data();
+                const data = snap.data() as Record<string, unknown>;
                 setZone({ id: snap.id, ...data } as Zone);
                 setWorkItems(
                     Array.isArray(data.workItems)
-                        ? data.workItems.map((wi: any) => ({
-                            ...wi,
-                            itemName: wi.itemName ?? wi.name,
+                        ? data.workItems.map((wi: Record<string, unknown>) => ({
+                            id: String(wi.id),
+                            itemName: String(wi.itemName ?? wi.name ?? ""),
+                            createdAt:
+                                typeof wi.createdAt === "string" ||
+                                    wi.createdAt instanceof Timestamp ||
+                                    wi.createdAt instanceof Date
+                                    ? wi.createdAt
+                                    : "",
+                            start: typeof wi.start === "string" ? wi.start : undefined,
+                            end: typeof wi.end === "string" ? wi.end : undefined,
+                            quantity: typeof wi.quantity === "number" ? wi.quantity : undefined,
                         }))
                         : []
                 );
@@ -82,11 +91,20 @@ export default function ZoneDetailPage({ params }: Props) {
             setCreatingWork(false);
             return;
         }
-        const data = snap.data();
+        const data = snap.data() as Record<string, unknown>;
         const oldItems: WorkItem[] = Array.isArray(data.workItems)
-            ? data.workItems.map((wi: any) => ({
-                ...wi,
-                itemName: wi.itemName ?? wi.name,
+            ? data.workItems.map((wi: Record<string, unknown>) => ({
+                id: String(wi.id),
+                itemName: String(wi.itemName ?? wi.name ?? ""),
+                createdAt:
+                    typeof wi.createdAt === "string" ||
+                        wi.createdAt instanceof Timestamp ||
+                        wi.createdAt instanceof Date
+                        ? wi.createdAt
+                        : "",
+                start: typeof wi.start === "string" ? wi.start : undefined,
+                end: typeof wi.end === "string" ? wi.end : undefined,
+                quantity: typeof wi.quantity === "number" ? wi.quantity : undefined,
             }))
             : [];
         const newItem: WorkItem = {
