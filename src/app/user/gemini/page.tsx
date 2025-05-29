@@ -1,20 +1,32 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { app as firebaseApp } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
+import { useState, useRef, useEffect } from "react";
+// Import app from your existing firebase-client
+import { app as firebaseAppInstance } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel, ChatSession } from "firebase/ai";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// 初始化 Firebase App Check（只執行一次）
-if (typeof window !== "undefined") {
-  initializeAppCheck(firebaseApp, {
-    provider: new ReCaptchaV3Provider("6LeBT00rAAAAACACABHOrZffdfHLxBlbnSruCbt95Z"),
-    isTokenAutoRefreshEnabled: true,
-  });
+// Add type declaration for grecaptcha
+declare global {
+  interface Window {
+    grecaptcha?: {
+      ready: (callback: () => void) => void;
+      execute: (siteKey: string, options: { action: string }) => Promise<string>;
+    };
+  }
 }
 
-const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
-const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+// firebaseConfig is no longer needed here as it's in firebase-client.ts
+// RECAPTCHA_SITE_KEY remains as it's specific to this page/feature
+const RECAPTCHA_SITE_KEY = "6LeBT00arAAAIIM4kuuhicdMpGBOE-ovt-8WXjN";
+
+// firebaseAppInstance is now imported
+
+// This interface might still be useful if you extend the imported app instance locally,
+// but for now, we'll manage the app check status separately.
+// interface FirebaseAppWithAppCheck extends FirebaseApp {
+//   _isinitializeAppCheckCalled?: boolean;
+// }
 
 interface ChatMessage {
   role: "user" | "model";
@@ -26,40 +38,135 @@ export default function GeminiPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
-  const chatRef = useRef<ReturnType<typeof model.startChat> | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const appCheckInitializedRef = useRef(false); // Ref to track App Check initialization
 
-  async function getChat() {
-    if (!chatRef.current) {
-      chatRef.current = model.startChat({
-        history: history.map(msg => ({
-          role: msg.role,
-          parts: [{ text: msg.text }],
-        })),
-        generationConfig: { maxOutputTokens: 200 },
-      });
+  const modelRef = useRef<GenerativeModel | null>(null);
+  const chatRef = useRef<ChatSession | null>(null);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const initializeAI = async () => {
+      // firebaseAppInstance is now directly imported and should exist
+      if (isInitialized || !firebaseAppInstance || typeof window === 'undefined') return;
+
+      try {
+        if (typeof window.grecaptcha === 'undefined' || typeof window.grecaptcha.ready === 'undefined') {
+          console.warn("reCAPTCHA v3 script not loaded or not ready. App Check may not function correctly.");
+          setError("reCAPTCHA v3 script 載入失敗或尚未就緒，請檢查你的網站金鑰或網路連線。");
+          return;
+        }
+
+        window.grecaptcha.ready(async () => {
+          try {
+            // Check if App Check has been initialized for this instance
+            if (!appCheckInitializedRef.current) {
+              try {
+                initializeAppCheck(firebaseAppInstance, {
+                  provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+                  isTokenAutoRefreshEnabled: true
+                });
+                appCheckInitializedRef.current = true;
+                console.log("Firebase App Check initialized for GeminiPage.");
+              } catch (appCheckError) {
+                // It's possible App Check was already initialized for this app instance elsewhere.
+                // Firebase throws an error if initializeAppCheck is called multiple times on the same app instance.
+                // We can check the error message or code if a more specific handling is needed.
+                console.warn("App Check initialization failed or already initialized:", appCheckError);
+                // Assuming if it fails here, it might be due to prior initialization.
+                // Depending on the exact error, you might want to set appCheckInitializedRef.current = true or handle differently.
+                // For now, we'll log and proceed, as getAI doesn't strictly depend on a new AppCheck init if one exists.
+                if (appCheckError instanceof Error && appCheckError.message.includes("already-initialized")) {
+                  appCheckInitializedRef.current = true; // Mark as initialized if that was the error
+                  console.log("App Check was already initialized for this Firebase app instance.");
+                } else {
+                  throw appCheckError; // Re-throw if it's a different error
+                }
+              }
+            }
+
+            const ai = getAI(firebaseAppInstance, { backend: new GoogleAIBackend() });
+            modelRef.current = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+            console.log("Gemini model initialized.");
+
+            if (!chatRef.current && modelRef.current) { // Ensure modelRef.current is not null
+              chatRef.current = modelRef.current.startChat({
+                history: [],
+                generationConfig: { maxOutputTokens: 500 },
+              });
+              console.log("New chat session started.");
+            } else if (!modelRef.current) {
+              console.error("Failed to initialize GenerativeModel.");
+              setError("無法初始化 AI 模型。");
+              return;
+            }
+
+
+            setIsInitialized(true);
+            setError("");
+          } catch (err) {
+            console.error("Error during AI/AppCheck initialization after reCAPTCHA ready:", err);
+            if (err instanceof Error) {
+              setError(`AI 模型或 App Check 初始化失敗 (reCAPTCHA ready): ${err.message}`);
+            } else {
+              setError("AI 模型或 App Check 初始化失敗 (reCAPTCHA ready): 未知的錯誤");
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Error preparing AI Model or App Check:", err);
+        if (err instanceof Error) {
+          setError(`準備 AI 模型或 App Check 失敗: ${err.message}`);
+        } else {
+          setError("準備 AI 模型或 App Check 失敗: 未知的錯誤");
+        }
+      }
+    };
+
+    initializeAI();
+  }, [isInitialized]); // firebaseAppInstance is stable, so not needed in deps if imported
+
+
+  useEffect(() => {
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
     }
-    return chatRef.current;
-  }
+  }, [history]);
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const currentPrompt = prompt.trim();
+    if (!currentPrompt || loading || !isInitialized) return;
+
     setLoading(true);
     setError("");
-    const userMsg: ChatMessage = { role: "user", text: prompt };
+
+    const userMsg: ChatMessage = { role: "user", text: currentPrompt };
+    setHistory(prev => [...prev, userMsg]);
     setPrompt("");
+
+
+    if (!chatRef.current) {
+      setError("聊天 Session 未準備好。請稍後再試。");
+      setLoading(false);
+      return;
+    }
+
     try {
-      setHistory(prev => [...prev, userMsg]);
-      const chat = await getChat();
-      if (!chat) throw new Error("Chat session 初始化失敗");
-      const result = await chat.sendMessage(prompt);
+      const result = await chatRef.current.sendMessage(currentPrompt);
       const response = await result.response;
       const text = response.text();
+
       setHistory(h => [...h, { role: "model", text }]);
+
     } catch (err) {
+      console.error("Error sending message:", err);
       if (err instanceof Error) {
-        setError(err.message);
+        setError(`訊息傳送失敗: ${err.message}`);
       } else {
-        setError("發生錯誤");
+        setError("訊息傳送失敗: 未知的錯誤");
       }
     } finally {
       setLoading(false);
@@ -67,33 +174,45 @@ export default function GeminiPage() {
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: "40px auto", padding: 24 }}>
-      <h2>Gemini 即時聊天</h2>
-      <div style={{ minHeight: 200, background: "#f5f5f5", padding: 16, borderRadius: 8, marginBottom: 16 }}>
-        {history.length === 0 && <div style={{ color: '#888' }}>尚無對話，請開始聊天！</div>}
+    <div style={{ maxWidth: 600, margin: "40px auto", padding: 24, backgroundColor: "#fff", borderRadius: 8, boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)" }}>
+      <h2 style={{ textAlign: "center", color: "#333", marginBottom: 20 }}>與 Gemini 聊天</h2>
+
+      <div ref={chatWindowRef} style={{ minHeight: 200, maxHeight: 400, overflowY: "auto", background: "#e9e9eb", padding: 16, borderRadius: 8, marginBottom: 16, display: "flex", flexDirection: "column" }}>
+        {history.length === 0 && !loading && !error && !isInitialized && (
+          <div style={{ color: '#888', textAlign: 'center' }}>正在初始化，請稍候...</div>
+        )}
+        {history.length === 0 && isInitialized && !loading && !error && (
+          <div style={{ color: '#888', textAlign: 'center' }}>尚無對話，請開始聊天！</div>
+        )}
         {history.map((msg, idx) => (
-          <div key={idx} style={{ marginBottom: 8, textAlign: msg.role === "user" ? "right" : "left" }}>
-            <span style={{ fontWeight: "bold", color: msg.role === "user" ? "#1976d2" : "#388e3c" }}>
+          <div key={idx} style={{ marginBottom: 12, padding: "8px 12px", borderRadius: 6, maxWidth: "80%", wordWrap: "break-word", overflowWrap: "break-word", alignSelf: msg.role === "user" ? "flex-end" : "flex-start", backgroundColor: msg.role === "user" ? "#1976d2" : "#e0e0e0", color: msg.role === "user" ? "white" : "#333", textAlign: msg.role === "user" ? "right" : "left" }}>
+            <span style={{ fontWeight: "bold", color: msg.role === "user" ? "inherit" : "#388e3c" }}>
               {msg.role === "user" ? "你" : "Gemini"}
             </span>
             ：{msg.text}
           </div>
         ))}
+        {loading && (
+          <div style={{ color: '#555', textAlign: 'center', marginTop: 10 }}>Gemini 正在思考中...</div>
+        )}
       </div>
+
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
         <textarea
+          id="prompt-input"
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           rows={2}
-          style={{ flex: 1, resize: "vertical" }}
-          placeholder="請輸入你的訊息..."
-          disabled={loading}
+          style={{ flex: 1, resize: "vertical", padding: 8, border: "1px solid #ccc", borderRadius: 4, fontSize: "1rem" }}
+          placeholder={isInitialized ? "請輸入你的訊息..." : "初始化中..."}
+          disabled={loading || !isInitialized}
         />
-        <button type="submit" disabled={loading || !prompt} style={{ minWidth: 80 }}>
+        <button type="submit" id="send-button" disabled={loading || !prompt.trim() || !isInitialized} style={{ padding: "8px 16px", backgroundColor: "#1976d2", color: "white", border: "none", borderRadius: 4, cursor: "pointer", fontSize: "1rem", transition: "background-color 0.3s ease" }}>
           {loading ? "傳送中..." : "傳送"}
         </button>
       </form>
-      {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
+
+      {error && <div style={{ color: "red", marginTop: 8, fontSize: "0.9rem" }}>{error}</div>}
     </div>
   );
 }
