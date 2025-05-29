@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, Timestamp, doc, getDoc } from "firebase/firestore";
 
@@ -12,6 +13,9 @@ type Zone = {
     desc?: string;
     createdAt?: Timestamp | Date;
 };
+
+// 動態載入分區詳情頁
+const ZoneDetailPage = dynamic(() => import("./[zoneId]/page"), { ssr: false });
 
 export default function ZonesPage() {
     const { projectId } = useParams() as { projectId: string };
@@ -102,8 +106,8 @@ export default function ZonesPage() {
                         <button
                             key={zone.id}
                             className={`px-4 py-2 font-semibold border-b-2 transition whitespace-nowrap ${tab === "zone" && selectedZoneId === zone.id
-                                    ? "border-blue-600 text-blue-700"
-                                    : "border-transparent text-gray-600 hover:text-blue-700"
+                                ? "border-blue-600 text-blue-700"
+                                : "border-transparent text-gray-600 hover:text-blue-700"
                                 }`}
                             onClick={() => {
                                 setSelectedZoneId(zone.id);
@@ -122,8 +126,8 @@ export default function ZonesPage() {
                         setSelectedZoneId(null);
                     }}
                     className={`ml-2 px-4 py-2 font-semibold border-b-2 transition text-xl flex items-center justify-center ${tab === "add"
-                            ? "border-blue-600 text-blue-700 bg-blue-50"
-                            : "border-transparent text-gray-600 hover:text-blue-700"
+                        ? "border-blue-600 text-blue-700 bg-blue-50"
+                        : "border-transparent text-gray-600 hover:text-blue-700"
                         }`}
                     style={{ minWidth: 0, height: "40px" }}
                     aria-label="新增區域"
@@ -182,26 +186,12 @@ export default function ZonesPage() {
                         <div>載入中...</div>
                     ) : !selectedZoneId ? (
                         <div className="text-gray-400">請選擇分區</div>
-                    ) : !zoneDetail ? (
-                        <div>找不到分區資料</div>
                     ) : (
-                        <div className="border rounded p-4 bg-gray-50 max-w-xl">
-                            <h2 className="text-lg font-bold mb-2">{zoneDetail.zoneName}</h2>
-                            <div className="mb-2">
-                                <span className="font-medium">描述：</span>
-                                {zoneDetail.desc || <span className="text-gray-400">（無描述）</span>}
-                            </div>
-                            {zoneDetail.createdAt && (
-                                <div className="text-gray-500 text-sm">
-                                    建立時間：
-                                    {zoneDetail.createdAt instanceof Timestamp
-                                        ? zoneDetail.createdAt.toDate().toLocaleString()
-                                        : zoneDetail.createdAt instanceof Date
-                                            ? zoneDetail.createdAt.toLocaleString()
-                                            : String(zoneDetail.createdAt)}
-                                </div>
-                            )}
-                        </div>
+                        // 直接渲染 ZoneDetailPage，並傳遞必要參數
+                        <ZoneDetailPage
+                            // @ts-ignore
+                            params={{ projectId, zoneId: selectedZoneId }}
+                        />
                     )}
                 </div>
             )}

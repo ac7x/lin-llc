@@ -160,9 +160,9 @@ export default function ProjectDetailPage() {
               ))}
             </ul>
           ) : "-"}</div>
-          {/* 分區列表嵌入在支出明細下方 */}
+          {/* 區域列表嵌入在支出明細下方 */}
           <div className="mt-8">
-            <h2 className="text-lg font-bold mb-2">分區列表</h2>
+            <h2 className="text-lg font-bold mb-2">區域列表</h2>
             <ProjectZonesPage />
           </div>
         </div>
