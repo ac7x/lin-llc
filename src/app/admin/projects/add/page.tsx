@@ -60,7 +60,7 @@ export default function ProjectAddPage() {
     setSuccess(false);
     try {
       await addDoc(collection(db, "projects"), {
-        name: projectName,
+        projectName, // 將 name 改為 projectName
         createdAt: new Date(),
         createdBy: user?.uid || null,
         coord,

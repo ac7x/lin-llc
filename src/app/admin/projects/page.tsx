@@ -18,7 +18,7 @@ type Expense = {
 // 定義 Project 型別
 type Project = {
   id: string;
-  name?: string;
+  projectName?: string; // 將 name 改為 projectName
   createdBy?: string | null;
   createdAt?: Timestamp | Date | string | null;
   coord?: string; // 協調者
@@ -102,7 +102,7 @@ export default function ProjectsPage() {
                 className="no-underline"
                 onClick={e => e.stopPropagation()}
               >
-                <span className="text-blue-700 font-bold text-lg hover:underline">{project.name || "(未命名專案)"}</span>
+                <span className="text-blue-700 font-bold text-lg hover:underline">{project.projectName || "(未命名專案)"}</span>
               </Link>
               <div className="text-gray-700 text-sm flex flex-col gap-1 mt-2">
                 <div>

@@ -7,7 +7,7 @@ import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebas
 
 type Project = {
   id: string;
-  name?: string;
+  projectName?: string; // 將 name 改為 projectName
   coord?: string; // 協調者
   foreman?: string[]; // 監工
   safety?: string[]; // 安全人員
@@ -71,7 +71,7 @@ export default function ProjectEditPage() {
       if (snap.exists()) {
         const data = snap.data();
         setProject({ id: snap.id, ...data });
-        setProjectName(data.name || "");
+        setProjectName(data.projectName || ""); // 取 projectName
         setCoord(data.coord || "");
         setForeman(data.foreman || []);
         setSafety(data.safety || []);
@@ -110,7 +110,7 @@ export default function ProjectEditPage() {
     setSuccess(false);
     try {
       await updateDoc(doc(db, "projects", projectId), {
-        name: projectName,
+        projectName, // 將 name 改為 projectName
         coord,
         foreman,
         safety,

@@ -9,7 +9,7 @@ import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebas
 // 定義 Project 型別
 type Project = {
   id: string;
-  name?: string;
+  projectName?: string; // 將 name 改為 projectName
   createdBy?: string | null;
   createdAt?: Timestamp | Date | string | null;
   coord?: string; // 協調者
@@ -87,7 +87,7 @@ export default function ProjectDetailPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-2">專案：{project.name || "(未命名專案)"}</h1>
+      <h1 className="text-2xl font-bold mb-2">專案：{project.projectName || "(未命名專案)"}</h1>
       <div className="mb-6 flex gap-2 border-b border-gray-200 dark:border-neutral-700">
         <button
           className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "detail" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
