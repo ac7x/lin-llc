@@ -39,9 +39,9 @@ export default function ProjectLayout({
     ];
 
     return (
-        <div className="flex max-w-6xl mx-auto px-4 py-8 gap-6">
+        <div className="flex max-w-6xl mx-auto px-12 py-8 gap-6">
             {/* 左側側邊欄 */}
-            <aside className="w-44 shrink-0 border-r pr-4">
+            <aside className="w-44 shrink-0 border-r pr-4 ml-20">
                 <nav className="flex flex-col gap-2">
                     {tabs.map((tab) => (
                         <Link
