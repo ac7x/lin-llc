@@ -56,4 +56,4 @@ export default function ZoneDetailPage() {
     );
 }
 
-// 此檔案內容已整合進 zones/page.tsx 的 tab 介面。
+// 此檔案內容已整合進 zones/page.tsx，請直接於分區頁面操作。

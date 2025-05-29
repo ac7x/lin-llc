@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
@@ -25,8 +24,7 @@ export default function ZonesPage() {
     const [desc, setDesc] = useState("");
     const [creating, setCreating] = useState(false);
 
-    // tab 狀態: "list" | "detail"
-    const [tab, setTab] = useState<"list" | "detail">("list");
+    // 選取分區
     const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
     const [zoneDetail, setZoneDetail] = useState<Zone | null>(null);
     const [zoneDetailLoading, setZoneDetailLoading] = useState(false);
@@ -34,38 +32,37 @@ export default function ZonesPage() {
     useEffect(() => {
         const fetchZones = async () => {
             const snap = await getDocs(collection(db, "projects", projectId, "zones"));
-            setZones(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Zone)));
+            const zoneList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Zone));
+            setZones(zoneList);
             setLoading(false);
+            // 預設選第一個
+            if (zoneList.length > 0 && !selectedZoneId) {
+                setSelectedZoneId(zoneList[0].id);
+            }
         };
         fetchZones();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [projectId, creating]);
 
     // 取得分區詳細
-    const fetchZoneDetail = async (zoneId: string) => {
-        setZoneDetailLoading(true);
-        const ref = doc(db, "projects", projectId, "zones", zoneId);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-            setZoneDetail({ id: snap.id, ...snap.data() } as Zone);
-        } else {
+    useEffect(() => {
+        if (!selectedZoneId) {
             setZoneDetail(null);
+            return;
         }
-        setZoneDetailLoading(false);
-    };
-
-    // 點擊分區名稱時
-    const handleZoneClick = (zoneId: string) => {
-        setSelectedZoneId(zoneId);
-        setTab("detail");
-        fetchZoneDetail(zoneId);
-    };
-
-    // 返回列表
-    const handleBackToList = () => {
-        setTab("list");
-        setSelectedZoneId(null);
-        setZoneDetail(null);
-    };
+        setZoneDetailLoading(true);
+        const fetchZoneDetail = async () => {
+            const ref = doc(db, "projects", projectId, "zones", selectedZoneId);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                setZoneDetail({ id: snap.id, ...snap.data() } as Zone);
+            } else {
+                setZoneDetail(null);
+            }
+            setZoneDetailLoading(false);
+        };
+        fetchZoneDetail();
+    }, [projectId, selectedZoneId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,27 +81,12 @@ export default function ZonesPage() {
     };
 
     return (
-        <main className="max-w-2xl mx-auto p-8">
-            <div className="flex gap-2 mb-4 border-b">
-                <button
-                    className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "list" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
-                    onClick={handleBackToList}
-                >
-                    分區列表
-                </button>
-                {tab === "detail" && (
-                    <button
-                        className="px-4 py-2 font-semibold border-b-2 border-blue-600 text-blue-700"
-                        disabled
-                    >
-                        分區詳情
-                    </button>
-                )}
-            </div>
-            {tab === "list" && (
-                <>
+        <main className="max-w-4xl mx-auto p-8">
+            <div className="flex gap-8">
+                {/* 左側：分區列表與新增 */}
+                <div className="w-1/2 min-w-[220px]">
                     <div className="flex justify-between items-center mb-4">
-                        <h1 className="text-xl font-bold">分區列表</h1>
+                        <span className="font-semibold">分區列表</span>
                         <button
                             onClick={() => setShowForm(v => !v)}
                             className="bg-blue-600 text-white px-3 py-1 rounded"
@@ -146,35 +128,31 @@ export default function ZonesPage() {
                         <ul className="space-y-2">
                             {zones.length === 0 && <li>尚無分區</li>}
                             {zones.map(zone => (
-                                <li key={zone.id} className="border p-3 rounded">
+                                <li key={zone.id}>
                                     <button
-                                        className="font-semibold text-blue-700 hover:underline"
-                                        onClick={() => handleZoneClick(zone.id)}
+                                        className={`w-full text-left border p-3 rounded ${selectedZoneId === zone.id ? "bg-blue-50 border-blue-400" : ""} hover:bg-blue-100`}
+                                        onClick={() => setSelectedZoneId(zone.id)}
                                     >
-                                        {zone.name}
+                                        <span className="font-semibold text-blue-700">{zone.name}</span>
+                                        {zone.desc && <div className="text-gray-600 text-sm">{zone.desc}</div>}
                                     </button>
-                                    {zone.desc && <div className="text-gray-600 text-sm">{zone.desc}</div>}
                                 </li>
                             ))}
                         </ul>
                     )}
-                </>
-            )}
-            {tab === "detail" && (
-                <div>
-                    <button
-                        className="mb-4 text-blue-600 hover:underline"
-                        onClick={handleBackToList}
-                    >
-                        ← 返回分區列表
-                    </button>
+                </div>
+                {/* 右側：分區詳情 */}
+                <div className="w-1/2 min-w-[220px]">
+                    <div className="font-semibold mb-2">分區詳情</div>
                     {zoneDetailLoading ? (
                         <div>載入中...</div>
+                    ) : !selectedZoneId ? (
+                        <div className="text-gray-400">請選擇分區</div>
                     ) : !zoneDetail ? (
                         <div>找不到分區資料</div>
                     ) : (
-                        <div>
-                            <h1 className="text-2xl font-bold mb-4">分區：{zoneDetail.name}</h1>
+                        <div className="border rounded p-4 bg-gray-50">
+                            <h2 className="text-lg font-bold mb-2">{zoneDetail.name}</h2>
                             <div className="mb-2">
                                 <span className="font-medium">描述：</span>
                                 {zoneDetail.desc || <span className="text-gray-400">（無描述）</span>}
@@ -187,7 +165,7 @@ export default function ZonesPage() {
                         </div>
                     )}
                 </div>
-            )}
+            </div>
         </main>
     );
 }
