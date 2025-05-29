@@ -43,32 +43,63 @@ export default function ProjectsPage() {
 
   // --- Item CRUD Handlers ---
 
+  // 移動流程（更新 flows 子集合文件）
   const handleItemMove = useCallback(
     async (itemId: string, newStart: Date, newEnd: Date, newGroupId: string): Promise<boolean> => {
-      const flowRef = doc(db, "flows", itemId);
-      try {
-        await updateDoc(flowRef, {
-          projectId: newGroupId,
-          start: Timestamp.fromDate(newStart),
-          end: Timestamp.fromDate(newEnd),
-        });
-        setItems(prev =>
-          prev.map(it =>
-            it.id === itemId
-              ? { ...it, group: newGroupId, projectId: newGroupId, start: newStart, end: newEnd }
-              : it
-          )
-        );
-        return true;
-      } catch (error: unknown) {
-        const e = error as Error;
-        alert("更新流程失敗: " + (e?.message || "未知錯誤"));
-        return false;
+      // 先找出此 flow 屬於哪一個 project
+      const oldItem = items.find(it => it.id === itemId);
+      if (!oldItem) return false;
+      // 若 group 變動，需從原 project flows subcollection 移除並新增到新 project
+      if (oldItem.projectId !== newGroupId) {
+        try {
+          // 1. 刪除原本 flows 文件
+          await deleteDoc(doc(db, "projects", oldItem.projectId, "flows", itemId));
+          // 2. 在新 project flows 建立新文件
+          const newFlowRef = await addDoc(collection(db, "projects", newGroupId, "flows"), {
+            name: oldItem.content,
+            start: Timestamp.fromDate(newStart),
+            end: Timestamp.fromDate(newEnd),
+            userId: oldItem.userId,
+          });
+          setItems(prev =>
+            prev.map(it =>
+              it.id === itemId
+                ? { ...it, id: newFlowRef.id, group: newGroupId, projectId: newGroupId, start: newStart, end: newEnd }
+                : it
+            )
+          );
+          return true;
+        } catch (error: unknown) {
+          const e = error as Error;
+          alert("跨專案移動流程失敗: " + (e?.message || "未知錯誤"));
+          return false;
+        }
+      } else {
+        // 僅在同 project flows 文件內更新
+        try {
+          await updateDoc(doc(db, "projects", newGroupId, "flows", itemId), {
+            start: Timestamp.fromDate(newStart),
+            end: Timestamp.fromDate(newEnd),
+          });
+          setItems(prev =>
+            prev.map(it =>
+              it.id === itemId
+                ? { ...it, start: newStart, end: newEnd }
+                : it
+            )
+          );
+          return true;
+        } catch (error: unknown) {
+          const e = error as Error;
+          alert("更新流程失敗: " + (e?.message || "未知錯誤"));
+          return false;
+        }
       }
     },
-    []
+    [items]
   );
 
+  // 新增流程到指定 project 的 flows 子集合
   const handleItemAdd = useCallback(
     async (item: TimelineEventItem, cb: TimelineEventCallback) => {
       if (!user) return cb(null);
@@ -76,8 +107,8 @@ export default function ProjectsPage() {
         typeof item.content === "string"
           ? item.content
           : item.content instanceof HTMLElement
-          ? item.content.innerText
-          : "新流程";
+            ? item.content.innerText
+            : "新流程";
       const startDate = item.start instanceof Date ? item.start : new Date();
       const endDate =
         item.end instanceof Date ? item.end : new Date(startDate.getTime() + 3600000);
@@ -92,13 +123,12 @@ export default function ProjectsPage() {
       setCreateSuccess(false);
       try {
         const newFlowData = {
-          projectId: groupId,
           name: flowName,
           start: Timestamp.fromDate(startDate),
           end: Timestamp.fromDate(endDate),
           userId: user.uid,
         };
-        const flowRef = await addDoc(collection(db, "flows"), newFlowData);
+        const flowRef = await addDoc(collection(db, "projects", groupId, "flows"), newFlowData);
         const newItem: FlowItem = {
           id: flowRef.id,
           group: groupId,
@@ -123,12 +153,15 @@ export default function ProjectsPage() {
     [user]
   );
 
+  // 刪除 flows 子集合的流程
   const handleItemRemove = useCallback(
     async (item: TimelineEventItem, cb: TimelineEventCallback) => {
       const itemId = item.id as string;
       if (!itemId) return cb(null);
+      const targetItem = items.find(it => it.id === itemId);
+      if (!targetItem) return cb(null);
       try {
-        await deleteDoc(doc(db, "flows", itemId));
+        await deleteDoc(doc(db, "projects", targetItem.projectId, "flows", itemId));
         setItems(prev => prev.filter(it => it.id !== itemId));
         cb(item);
       } catch (error: unknown) {
@@ -137,7 +170,7 @@ export default function ProjectsPage() {
         cb(null);
       }
     },
-    []
+    [items]
   );
 
   // --- Double Click Edit Handler ---
@@ -158,7 +191,7 @@ export default function ProjectsPage() {
         if (newName && newName.trim() && newName !== currentItem.content) {
           setCreateLoading(true);
           try {
-            await updateDoc(doc(db, "flows", itemId), { name: newName });
+            await updateDoc(doc(db, "projects", currentItem.projectId, "flows", itemId), { name: newName });
             setItems(prev =>
               prev.map(it => (it.id === itemId ? { ...it, content: newName } : it))
             );
@@ -176,13 +209,14 @@ export default function ProjectsPage() {
     [items]
   );
 
-  // --- Data Fetch (Projects & Flows) ---
+  // --- Data Fetch (Projects & Flows 子集合) ---
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       setError(null);
       try {
+        // 1. 取得所有專案
         const projectsSnap = await getDocs(collection(db, "projects"));
         const projectGroups: Group[] = projectsSnap.docs.map(d => ({
           id: d.id,
@@ -193,21 +227,26 @@ export default function ProjectsPage() {
           id: d.id,
           name: d.data().name || "未命名專案",
         }));
-        const flowsSnap = await getDocs(collection(db, "flows"));
-        const flowItems: FlowItem[] = flowsSnap.docs.map(d => {
-          const data = d.data();
-          const projectForFlow = projectsData.find(p => p.id === data.projectId);
-          return {
-            id: d.id,
-            group: data.projectId,
-            content: data.name || (projectForFlow ? `流程 (${projectForFlow.name})` : "未命名流程"),
-            start: data.start ? data.start.toDate() : new Date(),
-            end: data.end ? data.end.toDate() : new Date(Date.now() + 86400000),
-            projectId: data.projectId,
-            userId: data.userId,
-          };
-        });
-        setItems(flowItems);
+
+        // 2. 取得每個專案的 flows 子集合
+        const allFlowItems: FlowItem[] = [];
+        for (const project of projectsData) {
+          const flowsSnap = await getDocs(collection(db, "projects", project.id, "flows"));
+          const flows = flowsSnap.docs.map(d => {
+            const data = d.data();
+            return {
+              id: d.id,
+              group: project.id,
+              content: data.name || `${project.name} - 流程`,
+              start: data.start ? data.start.toDate() : new Date(),
+              end: data.end ? data.end.toDate() : new Date(Date.now() + 86400000),
+              projectId: project.id,
+              userId: data.userId,
+            };
+          });
+          allFlowItems.push(...flows);
+        }
+        setItems(allFlowItems);
       } catch (err: unknown) {
         const e = err as Error;
         setError(e?.message || "載入資料失敗");
@@ -273,6 +312,7 @@ export default function ProjectsPage() {
       return;
     }
     try {
+      // 建立新專案
       const projectRef = await addDoc(collection(db, "projects"), {
         name: newProjectName,
         createdAt: Timestamp.now(),
@@ -280,11 +320,11 @@ export default function ProjectsPage() {
       });
       const newProjectGroup = { id: projectRef.id, content: newProjectName };
       setGroups(prev => [...prev, newProjectGroup]);
+      // 在該 project flows 子集合建立初始流程
       const start = Timestamp.now();
       const end = Timestamp.fromMillis(start.toMillis() + 3600000);
       const initialFlowName = `${newProjectName} - 初始流程`;
-      const flowRef = await addDoc(collection(db, "flows"), {
-        projectId: projectRef.id,
+      const flowRef = await addDoc(collection(db, "projects", projectRef.id, "flows"), {
         name: initialFlowName,
         start,
         end,
