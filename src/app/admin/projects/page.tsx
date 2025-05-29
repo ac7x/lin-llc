@@ -6,6 +6,7 @@ import { collection, getDocs, addDoc, Timestamp, QueryDocumentSnapshot, Document
 import { useAuthState } from "react-firebase-hooks/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { delay } from "@/utils/delay";
 
 // 定義 Expense 型別
 type Expense = {
@@ -135,6 +136,7 @@ export default function ProjectsPage() {
       setStatus("planning");
       setOwnerName("");
       setBudget("");
+      await delay(300); // 新增延遲，讓 UI 有時間渲染
       await fetchProjects();
       setTimeout(() => setSuccess(false), 1500);
     } catch (err: unknown) {

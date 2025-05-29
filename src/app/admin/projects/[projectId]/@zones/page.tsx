@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { delay } from "@/utils/delay";
 
 type Zone = {
     id: string;
@@ -45,6 +46,7 @@ export default function ZonesPage() {
                 zoneName: zoneName.trim(),
             });
             setZoneName("");
+            await delay(300); // 新增延遲
         } catch {
             setError("建立分區失敗");
         } finally {

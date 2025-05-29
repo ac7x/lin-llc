@@ -7,9 +7,10 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { delay } from "@/utils/delay";
 
 // 型別定義
- type ProjectLog = {
+type ProjectLog = {
   id: string;
   content: string;
   createdAt: Timestamp;
@@ -22,7 +23,7 @@ export default function ProjectJournalPage() {
   const [logs, setLogs] = useState<ProjectLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [newLog, setNewLog] = useState("");
-  const [users, setUsers] = useState<{[key: string]: string}>({});
+  const [users, setUsers] = useState<{ [key: string]: string }>({});
   const [uploadingLogId, setUploadingLogId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
@@ -50,7 +51,7 @@ export default function ProjectJournalPage() {
       const usersData = snapshot.docs.reduce((acc, doc) => ({
         ...acc,
         [doc.id]: doc.data().displayName || doc.data().name || undefined
-      }), {} as {[key: string]: string | undefined});
+      }), {} as { [key: string]: string | undefined });
       setUsers(usersData);
     };
     fetchUsers();
@@ -65,6 +66,7 @@ export default function ProjectJournalPage() {
         createdBy: user.uid
       });
       setNewLog("");
+      await delay(300); // 新增延遲
       // 重新獲取日誌
       const logsSnap = await getDocs(collection(db, "projects", projectId, "logs"));
       const logs = logsSnap.docs.map(doc => ({
@@ -88,6 +90,7 @@ export default function ProjectJournalPage() {
       await uploadBytes(storageRef, file);
       const photoUrl = await getDownloadURL(storageRef);
       await updateDoc(doc(db, "projects", projectId, "logs", logId), { photoUrl });
+      await delay(300); // 新增延遲
       // 重新取得 logs
       const logsSnap = await getDocs(collection(db, "projects", projectId, "logs"));
       const logs = logsSnap.docs.map(doc => ({
@@ -128,45 +131,45 @@ export default function ProjectJournalPage() {
       <div className="logs-list flex flex-col gap-3">
         {logs.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds)
           .map((log) => (
-          <div key={log.id} className="log-item p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg shadow">
-            <div className="log-content whitespace-pre-wrap">{log.content}</div>
-            <div className="log-meta mt-2 text-sm text-gray-500">
-              {log.createdAt.toDate().toLocaleString()} 由 {users[log.createdBy] || log.createdBy}
-            </div>
-            <div className="mt-2">
-              <span className="font-medium">上傳/更換照片：</span>
-              <input
-                type="file"
-                accept="image/*"
-                style={{ display: "inline-block" }}
-                disabled={uploadingLogId === log.id || !user}
-                onChange={event => {
-                  const file = event.target.files?.[0];
-                  if (file) handleUploadLogPhoto(log.id, file);
-                  event.target.value = "";
-                }}
-              />
-              {uploadingLogId === log.id && (
-                <span className="ml-2 text-blue-600">上傳中...</span>
-              )}
-              {uploadError && uploadingLogId === log.id && (
-                <span className="ml-2 text-red-600">{uploadError}</span>
-              )}
-            </div>
-            {log.photoUrl && (
-              <div className="mb-1 mt-2">
-                <span className="font-medium">照片：</span>
-                <a href={log.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
-                  查看照片
-                </a>
-                <div className="mt-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={log.photoUrl} alt="日誌照片" className="max-h-40 rounded border" />
-                </div>
+            <div key={log.id} className="log-item p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg shadow">
+              <div className="log-content whitespace-pre-wrap">{log.content}</div>
+              <div className="log-meta mt-2 text-sm text-gray-500">
+                {log.createdAt.toDate().toLocaleString()} 由 {users[log.createdBy] || log.createdBy}
               </div>
-            )}
-          </div>
-        ))}
+              <div className="mt-2">
+                <span className="font-medium">上傳/更換照片：</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "inline-block" }}
+                  disabled={uploadingLogId === log.id || !user}
+                  onChange={event => {
+                    const file = event.target.files?.[0];
+                    if (file) handleUploadLogPhoto(log.id, file);
+                    event.target.value = "";
+                  }}
+                />
+                {uploadingLogId === log.id && (
+                  <span className="ml-2 text-blue-600">上傳中...</span>
+                )}
+                {uploadError && uploadingLogId === log.id && (
+                  <span className="ml-2 text-red-600">{uploadError}</span>
+                )}
+              </div>
+              {log.photoUrl && (
+                <div className="mb-1 mt-2">
+                  <span className="font-medium">照片：</span>
+                  <a href={log.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                    查看照片
+                  </a>
+                  <div className="mt-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={log.photoUrl} alt="日誌照片" className="max-h-40 rounded border" />
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
       </div>
     </main>
   );
