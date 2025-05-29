@@ -36,7 +36,7 @@ export default function UserSchedulePage() {
       .then(async (projectsSnap) => {
         const groupList = projectsSnap.docs.map(doc => ({
           id: doc.id,
-          content: doc.data().name || `專案 ${doc.id}`,
+          content: doc.data().name || doc.id,
         }));
         setGroups(groupList);
 
@@ -44,13 +44,13 @@ export default function UserSchedulePage() {
         const allFlows: FlowItem[] = [];
         await Promise.all(
           projectsSnap.docs.map(async (projectDoc) => {
-            const projectName = projectDoc.data().name || `專案 ${projectDoc.id}`;
+            const projectName = projectDoc.data().name || projectDoc.id;
             const flowsSnap = await getDocs(collection(db, "projects", projectDoc.id, "flows"));
             flowsSnap.docs.forEach(doc => {
               const d = doc.data();
               allFlows.push({
                 id: doc.id,
-                group: projectName, // 這裡改為 project name
+                group: projectName, // 這裡改為 project name（已無前綴）
                 content: d.name || (projectDoc.data().name ? `流程 (${projectDoc.data().name})` : "未命名流程"),
                 start: d.start ? (typeof d.start.toDate === 'function' ? d.start.toDate() : new Date(d.start)) : new Date(),
                 end: d.end ? (typeof d.end.toDate === 'function' ? d.end.toDate() : new Date(d.end)) : new Date(Date.now() + 86400000),
@@ -87,7 +87,7 @@ export default function UserSchedulePage() {
 
   return (
     <main>
-      <h1>專案時程表</h1>
+      <h1>時程表</h1>
       {loading && <div>載入中...</div>}
       {error && <div style={{ color: "red" }}>{error}</div>}
       {!loading && !error && (
