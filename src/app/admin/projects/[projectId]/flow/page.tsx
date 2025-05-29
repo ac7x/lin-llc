@@ -7,7 +7,6 @@ import { db, storage } from "@/modules/shared/infrastructure/persistence/firebas
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { delay } from "@/utils/delay";
 
 // Flow 型別
 interface Flow {
@@ -141,7 +140,6 @@ export default function ProjectFlowPage() {
       setTime("07:30");
       setDurationHours(12);
       setDescription("");
-      await delay(300); // 新增延遲
       const flowsQuery = query(collection(db, "projects", projectId, "flows"));
       const snap: QuerySnapshot<DocumentData> = await getDocs(flowsQuery);
       setFlows(
@@ -164,7 +162,6 @@ export default function ProjectFlowPage() {
       const photoUrl = await getDownloadURL(storageRef);
       // flows 子集合
       await updateDoc(doc(db, "projects", projectId, "flows", flowId), { photoUrl });
-      await delay(300); // 新增延遲
       setFlows(flows =>
         flows.map(f => f.id === flowId ? { ...f, photoUrl } : f)
       );

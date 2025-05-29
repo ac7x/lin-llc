@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, doc, setDoc, getDocs, Timestamp } from "firebase/firestore";
-import { delay } from "@/utils/delay";
 
 // 出工人數型別
 interface Attendance {
@@ -68,7 +67,6 @@ export default function ProjectAttendancePage() {
         details,
         createdAt: new Date(),
       });
-      await delay(300); // 新增延遲
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1200);
     } catch {

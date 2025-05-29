@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { doc, getDoc, updateDoc, collection, getDocs, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { delay } from "@/utils/delay";
 
 type Project = {
   id: string;
@@ -123,7 +122,6 @@ export default function ProjectEditPage() {
         ownerName: ownerName || null,
         budget: budget ? Number(budget) : null,
       });
-      await delay(300); // 新增延遲
       setSuccess(true);
       // router.push(`/admin/projects/${projectId}`);
     } catch (err: unknown) {
