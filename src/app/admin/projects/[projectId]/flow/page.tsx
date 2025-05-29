@@ -12,19 +12,21 @@ import { useAuthState } from "react-firebase-hooks/auth";
 interface Flow {
   id: string;
   name?: string;
-  date: string; // yyyy-mm-dd
+  startDate: string; // 預定開始日期 yyyy-mm-dd
+  endDate?: string;  // 預定結束日期 yyyy-mm-dd
   description: string;
   createdAt: Timestamp | Date;
   createdBy: string;
   photoUrl?: string;
-  start?: Timestamp | Date; // 新增
+  start?: Timestamp | Date; // 保留舊欄位
 }
 
 export default function ProjectFlowPage() {
   const { projectId } = useParams() as { projectId: string };
   const [loading, setLoading] = useState(true);
   const [flows, setFlows] = useState<Flow[]>([]);
-  const [date, setDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
   const [flowName, setFlowName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -79,8 +81,8 @@ export default function ProjectFlowPage() {
       setError("請輸入流程名稱");
       return;
     }
-    if (!date) {
-      setError("請選擇預定施工日期");
+    if (!startDate) {
+      setError("請選擇預定開始日期");
       return;
     }
     if (!description.trim()) {
@@ -96,15 +98,16 @@ export default function ProjectFlowPage() {
     try {
       await addDoc(collection(db, "projects", projectId, "flows"), {
         name: flowName.trim(),
-        date,
+        startDate,
+        endDate: endDate || null,
         description: description.trim(),
         createdAt: new Date(),
         createdBy: user.uid,
       });
       setFlowName("");
-      setDate("");
+      setStartDate("");
+      setEndDate("");
       setDescription("");
-      // 直接在這裡 fetch flows
       // flows 會自動即時更新，無需手動 fetch
     } catch {
       setError("建立流程失敗");
@@ -153,13 +156,21 @@ export default function ProjectFlowPage() {
         </div>
         <div className="mb-4">
           <label className="block font-medium mb-1">
-            預定日期：
+            預定開始日：
             <input
               type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
               disabled={submitting}
               className="ml-2 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+            />
+            <span className="mx-2">至</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+              disabled={submitting}
+              className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </label>
         </div>
@@ -192,19 +203,25 @@ export default function ProjectFlowPage() {
         ) : (
           <ul className="p-0 list-none">
             {flows.sort((a, b) => {
-  const getDate = (f: Flow) =>
-    f.date || (f.start && typeof f.start === 'object' && 'toDate' in f.start ? f.start.toDate().toISOString().slice(0, 10) : '');
-  return getDate(a).localeCompare(getDate(b));
-}).map(flow => (
+              // 以 startDate 排序
+              const getStart = (f: Flow) =>
+                f.startDate || (f.start && typeof f.start === 'object' && 'toDate' in f.start ? f.start.toDate().toISOString().slice(0, 10) : '');
+              return getStart(a).localeCompare(getStart(b));
+            }).map(flow => (
               <li key={flow.id} className="bg-white dark:bg-neutral-900 rounded-lg shadow mb-4 p-5">
                 <div className="mb-1"><span className="font-medium">流程名稱：</span>{flow.name || '-'}</div>
-                <div className="mb-1"><span className="font-medium">日期：</span>{
-      flow.date
-        ? flow.date
-        : flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
-          ? flow.start.toDate().toISOString().slice(0, 10)
-          : '-'
-    }</div>
+                <div className="mb-1">
+                  <span className="font-medium">預定開始日：</span>
+                  {flow.startDate
+                    ? flow.startDate
+                    : flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
+                      ? flow.start.toDate().toISOString().slice(0, 10)
+                      : '-'}
+                </div>
+                <div className="mb-1">
+                  <span className="font-medium">預定結束日：</span>
+                  {flow.endDate || "-"}
+                </div>
                 <div className="mb-1"><span className="font-medium">內容：</span>{flow.description}</div>
                 <div className="mb-1">
                   <span className="font-medium">上傳/更換照片：</span>
