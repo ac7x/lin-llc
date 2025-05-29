@@ -1,8 +1,10 @@
+// src/app/admin/projects-dev/[projectId]/layout.tsx
+
 "use client";
 
-import React from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useSelectedLayoutSegments } from "next/navigation";
+import React from "react";
 
 export default function ProjectLayout({
     children,
@@ -12,6 +14,7 @@ export default function ProjectLayout({
     schedule,
     attendance,
     edit,
+    overview,
 }: {
     children: React.ReactNode;
     flow: React.ReactNode;
@@ -20,41 +23,48 @@ export default function ProjectLayout({
     schedule: React.ReactNode;
     attendance: React.ReactNode;
     edit: React.ReactNode;
+    overview: React.ReactNode;
 }) {
-    const segments = useSelectedLayoutSegments();
-    const currentTab = segments[0] || "default";
+    const pathname = usePathname();
+    const projectId = pathname.split("/")[4]; // /admin/projects-dev/[projectId]
+
+    const tabs = [
+        { label: "專案總覽", key: "", content: overview },
+        { label: "進度日誌", key: "journal", content: journal },
+        { label: "流程管理", key: "flow", content: flow },
+        { label: "分區管理", key: "zones", content: zones },
+        { label: "排程視覺化", key: "schedule", content: schedule },
+        { label: "出工紀錄", key: "attendance", content: attendance },
+        { label: "編輯專案", key: "edit", content: edit },
+    ];
+
+    const currentTabKey = pathname.split("/")[5] || "";
 
     return (
-        <main className="max-w-3xl mx-auto px-4 py-8">
-            <nav className="mb-6 flex gap-2 border-b border-gray-200 dark:border-neutral-700">
-                {[
-                    { href: ".", label: "專案詳情", id: "default" },
-                    { href: "zones", label: "分區列表", id: "zones" },
-                    { href: "schedule", label: "進度排程", id: "schedule" },
-                    { href: "flow", label: "工程流程", id: "flow" },
-                    { href: "journal", label: "工程日誌", id: "journal" },
-                    { href: "attendance", label: "出工人數", id: "attendance" },
-                    { href: "edit", label: "編輯", id: "edit" },
-                ].map(({ href, label, id }) => (
-                    <Link
-                        key={id}
-                        href={href}
-                        className={`px-4 py-2 font-semibold border-b-2 transition hover:text-blue-700
-                            ${currentTab === id
-                                ? "border-blue-600 text-blue-700"
-                                : "border-transparent text-gray-600"}`}
-                    >
-                        {label}
-                    </Link>
-                ))}
-            </nav>
-            {children}
-            {flow}
-            {journal}
-            {zones}
-            {schedule}
-            {attendance}
-            {edit}
-        </main>
+        <div className="flex max-w-6xl mx-auto px-4 py-8 gap-6">
+            {/* 左側側邊欄 */}
+            <aside className="w-44 shrink-0 border-r pr-4">
+                <nav className="flex flex-col gap-2">
+                    {tabs.map((tab) => (
+                        <Link
+                            key={tab.key}
+                            href={`/admin/projects-dev/${projectId}/${tab.key}`}
+                            className={`text-left px-3 py-2 rounded hover:bg-blue-50 font-medium transition ${currentTabKey === tab.key ? "bg-blue-100 text-blue-800" : "text-gray-700"
+                                }`}
+                        >
+                            {tab.label}
+                        </Link>
+                    ))}
+                </nav>
+            </aside>
+
+            {/* 右側顯示內容（各 slot 注入） */}
+            <main className="flex-1 min-w-0">
+                {
+                    // 動態 render slot
+                    tabs.find((tab) => tab.key === currentTabKey)?.content || overview
+                }
+            </main>
+        </div>
     );
 }
