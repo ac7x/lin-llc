@@ -1,8 +1,6 @@
-// src/app/admin/projects/[projectId]/layout.tsx
-
 "use client";
 
-import { usePathname, useParams } from "next/navigation";
+import { useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import React from "react";
 
@@ -23,14 +21,11 @@ export default function ProjectLayout({
     edit: React.ReactNode;
     overview: React.ReactNode;
 }) {
-    // 改用 useParams 取得 projectId
     const { projectId } = useParams() as { projectId: string };
-    const pathname = usePathname();
-    const segments = pathname.split("/");
-    const currentTab = segments[5] || "";
+    const searchParams = useSearchParams();
 
     const tabs = [
-        { label: "專案總覽", key: "", content: overview },
+        { label: "專案總覽", key: "overview", content: overview },
         { label: "進度日誌", key: "journal", content: journal },
         { label: "流程管理", key: "flow", content: flow },
         { label: "分區管理", key: "zones", content: zones },
@@ -38,6 +33,8 @@ export default function ProjectLayout({
         { label: "出工紀錄", key: "attendance", content: attendance },
         { label: "編輯專案", key: "edit", content: edit },
     ];
+
+    const currentTab = tabs.find(tab => searchParams.has(tab.key))?.key || "overview";
 
     return (
         <div className="flex max-w-6xl mx-auto px-12 py-8 gap-6">
@@ -47,8 +44,10 @@ export default function ProjectLayout({
                     {tabs.map((tab) => (
                         <Link
                             key={tab.key}
-                            href={`/admin/projects/${projectId}/${tab.key}`}
-                            className={`text-left px-3 py-2 rounded hover:bg-blue-50 font-medium transition ${currentTab === tab.key ? "bg-blue-100 text-blue-800" : "text-gray-700"
+                            href={`/admin/projects/${projectId}?${tab.key}=active`}
+                            className={`text-left px-3 py-2 rounded hover:bg-blue-50 font-medium transition ${currentTab === tab.key
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "text-gray-700"
                                 }`}
                         >
                             {tab.label}
@@ -59,9 +58,7 @@ export default function ProjectLayout({
 
             {/* 右側 slot 注入 */}
             <main className="flex-1 min-w-0">
-                {
-                    tabs.find((tab) => tab.key === currentTab)?.content || overview
-                }
+                {tabs.find((tab) => tab.key === currentTab)?.content}
             </main>
         </div>
     );
