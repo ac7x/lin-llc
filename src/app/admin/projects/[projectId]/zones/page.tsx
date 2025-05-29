@@ -14,6 +14,13 @@ type Zone = {
     createdAt?: Timestamp | Date;
 };
 
+// Phase 型別
+type Phase = {
+    id: string;
+    phaseName: string;
+    createdAt?: Timestamp | Date;
+};
+
 export default function ZonesPage() {
     const { projectId } = useParams() as { projectId: string };
     const [zones, setZones] = useState<Zone[]>([]);
@@ -34,6 +41,11 @@ export default function ZonesPage() {
     const [showPhaseForm, setShowPhaseForm] = useState(false);
     const [phaseName, setPhaseName] = useState("");
     const [phaseCreating, setPhaseCreating] = useState(false);
+
+    // 分頁 tab 狀態
+    const [tab, setTab] = useState<"detail" | "phases">("detail");
+    const [phases, setPhases] = useState<Phase[]>([]);
+    const [phasesLoading, setPhasesLoading] = useState(false);
 
     const router = useRouter();
 
@@ -71,6 +83,21 @@ export default function ZonesPage() {
         };
         fetchZoneDetail();
     }, [projectId, selectedZoneId]);
+
+    // 取得分區 phases
+    useEffect(() => {
+        if (!selectedZoneId) {
+            setPhases([]);
+            return;
+        }
+        if (tab !== "phases") return;
+        setPhasesLoading(true);
+        getDocs(collection(db, "projects", projectId, "zones", selectedZoneId, "phases"))
+            .then(snap => {
+                setPhases(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Phase)));
+            })
+            .finally(() => setPhasesLoading(false));
+    }, [projectId, selectedZoneId, tab, showPhaseForm]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -185,32 +212,126 @@ export default function ZonesPage() {
                 </div>
                 {/* 右側：分區詳情 */}
                 <div className="w-1/2 min-w-[220px]">
-                    <div className="font-semibold mb-2">分區詳情</div>
-                    {zoneDetailLoading ? (
-                        <div>載入中...</div>
-                    ) : !selectedZoneId ? (
-                        <div className="text-gray-400">請選擇分區</div>
-                    ) : !zoneDetail ? (
-                        <div>找不到分區資料</div>
-                    ) : (
-                        <div className="border rounded p-4 bg-gray-50">
-                            <h2 className="text-lg font-bold mb-2">{zoneDetail.zoneName}</h2>
-                            <div className="mb-2">
-                                <span className="font-medium">描述：</span>
-                                {zoneDetail.desc || <span className="text-gray-400">（無描述）</span>}
-                            </div>
-                            {zoneDetail.createdAt && (
-                                <div className="text-gray-500 text-sm">
-                                    建立時間：
-                                    {zoneDetail.createdAt instanceof Timestamp
-                                        ? zoneDetail.createdAt.toDate().toLocaleString()
-                                        : zoneDetail.createdAt instanceof Date
-                                            ? zoneDetail.createdAt.toLocaleString()
-                                            : String(zoneDetail.createdAt)}
+                    {/* phases tab 切換 */}
+                    <div className="flex gap-2 mb-2">
+                        <button
+                            className={`px-3 py-1 font-semibold border-b-2 ${tab === "detail" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
+                            onClick={() => setTab("detail")}
+                        >
+                            分區詳情
+                        </button>
+                        <button
+                            className={`px-3 py-1 font-semibold border-b-2 ${tab === "phases" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
+                            onClick={() => setTab("phases")}
+                        >
+                            階段列表
+                        </button>
+                    </div>
+                    {/* tab 內容 */}
+                    {tab === "detail" && (
+                        <>
+                            {zoneDetailLoading ? (
+                                <div>載入中...</div>
+                            ) : !selectedZoneId ? (
+                                <div className="text-gray-400">請選擇分區</div>
+                            ) : !zoneDetail ? (
+                                <div>找不到分區資料</div>
+                            ) : (
+                                <div className="border rounded p-4 bg-gray-50">
+                                    <h2 className="text-lg font-bold mb-2">{zoneDetail.zoneName}</h2>
+                                    <div className="mb-2">
+                                        <span className="font-medium">描述：</span>
+                                        {zoneDetail.desc || <span className="text-gray-400">（無描述）</span>}
+                                    </div>
+                                    {zoneDetail.createdAt && (
+                                        <div className="text-gray-500 text-sm">
+                                            建立時間：
+                                            {zoneDetail.createdAt instanceof Timestamp
+                                                ? zoneDetail.createdAt.toDate().toLocaleString()
+                                                : zoneDetail.createdAt instanceof Date
+                                                    ? zoneDetail.createdAt.toLocaleString()
+                                                    : String(zoneDetail.createdAt)}
+                                        </div>
+                                    )}
+                                    {/* 新增階段按鈕與表單 */}
+                                    <div className="mt-6">
+                                        {!showPhaseForm ? (
+                                            <button
+                                                onClick={() => setShowPhaseForm(true)}
+                                                className="bg-green-600 text-white px-4 py-2 rounded"
+                                            >
+                                                新增階段
+                                            </button>
+                                        ) : (
+                                            <form onSubmit={handleCreatePhase} className="space-y-2 mt-2 bg-gray-50 p-3 rounded border">
+                                                <div>
+                                                    <label className="block mb-1">階段名稱</label>
+                                                    <input
+                                                        className="border px-3 py-2 w-full"
+                                                        value={phaseName}
+                                                        onChange={e => setPhaseName(e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="submit"
+                                                        className="bg-green-600 text-white px-4 py-2 rounded"
+                                                        disabled={phaseCreating}
+                                                    >
+                                                        {phaseCreating ? "建立中..." : "建立階段"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                                        onClick={() => setShowPhaseForm(false)}
+                                                        disabled={phaseCreating}
+                                                    >
+                                                        取消
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
+                                    </div>
                                 </div>
                             )}
-                            {/* 新增階段按鈕與表單 */}
-                            <div className="mt-6">
+                        </>
+                    )}
+                    {tab === "phases" && (
+                        <div className="border rounded p-4 bg-gray-50">
+                            <div className="font-semibold mb-2">階段列表</div>
+                            {phasesLoading ? (
+                                <div>載入中...</div>
+                            ) : phases.length === 0 ? (
+                                <div className="text-gray-400">尚無階段</div>
+                            ) : (
+                                <ul className="space-y-2">
+                                    {phases.map(phase => (
+                                        <li key={phase.id} className="flex items-center justify-between border-b py-2">
+                                            <div>
+                                                <span className="font-semibold text-blue-700">{phase.phaseName}</span>
+                                                {phase.createdAt && (
+                                                    <span className="ml-2 text-gray-500 text-xs">
+                                                        {phase.createdAt instanceof Timestamp
+                                                            ? phase.createdAt.toDate().toLocaleString()
+                                                            : phase.createdAt instanceof Date
+                                                                ? phase.createdAt.toLocaleString()
+                                                                : String(phase.createdAt)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <button
+                                                className="text-blue-600 underline px-2"
+                                                onClick={() => router.push(`/admin/projects/${projectId}/zones/${selectedZoneId}/phases/${phase.id}`)}
+                                            >
+                                                查看
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                            {/* 新增階段按鈕與表單（可選擇是否顯示） */}
+                            <div className="mt-4">
                                 {!showPhaseForm ? (
                                     <button
                                         onClick={() => setShowPhaseForm(true)}
