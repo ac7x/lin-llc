@@ -1,4 +1,4 @@
-import { delay } from '@/lib/utils'
+import { delay } from '@/utils/utils'
 
 export default async function Home() {
   await delay(1000)
