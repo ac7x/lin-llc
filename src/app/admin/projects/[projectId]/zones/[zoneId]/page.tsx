@@ -44,9 +44,7 @@ export default function ZoneDetailPage() {
 
     // 取得 zone 資料
     const data = snapshot.data() as Zone;
-    // 直接省略 id，不用 _ignore
-    const { id, ...rest } = data;
-    const zone: Zone = { id: snapshot.id, ...rest };
+    const zone: Zone = { ...data, id: snapshot.id };
     if (!zone.zoneName) return <main className="p-8">找不到分區資料</main>;
     const workItems: WorkItem[] = Array.isArray(zone.workItems)
         ? zone.workItems.map((wi) => {
