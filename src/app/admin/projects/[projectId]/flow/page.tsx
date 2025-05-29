@@ -75,6 +75,13 @@ export default function ProjectFlowPage() {
     fetchUsers();
   }, []);
 
+  // 新增：將日期字串與小時合併
+  function getDateWithHour(dateStr: string, hour: number): Date {
+    const d = new Date(dateStr);
+    d.setHours(hour, 0, 0, 0);
+    return d;
+  }
+
   // 新增流程（移除照片相關）
   const handleAddFlow = async () => {
     if (!flowName.trim()) {
@@ -96,11 +103,10 @@ export default function ProjectFlowPage() {
     setSubmitting(true);
     setError(null);
     try {
-      // 新增：將 startDate/endDate 轉為 Timestamp
-      const startTimestamp = Timestamp.fromDate(new Date(startDate));
+      const startTimestamp = Timestamp.fromDate(getDateWithHour(startDate, 7));
       const endTimestamp = endDate
-        ? Timestamp.fromDate(new Date(endDate))
-        : Timestamp.fromDate(new Date(new Date(startDate).getTime() + 3600000)); // 預設+1小時
+        ? Timestamp.fromDate(getDateWithHour(endDate, 19))
+        : Timestamp.fromDate(getDateWithHour(startDate, 19));
 
       await addDoc(collection(db, "projects", projectId, "flows"), {
         name: flowName.trim(),
