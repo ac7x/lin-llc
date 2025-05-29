@@ -26,7 +26,7 @@ type WorkItem = {
   id: string;
   itemName: string;
   desc?: string;
-  createdAt?: any;
+  createdAt?: Date | string;
   start?: string;
   end?: string;
   userId?: string;
@@ -118,7 +118,7 @@ export default function ProjectsPage() {
       )
     );
     return true;
-  }, [items, groups]);
+  }, [items]); // 移除 groups 依賴
 
   // 新增 item 時，直接加到 zone 的 workItems
   const handleItemAdd = useCallback(async (itemData: TimelineItem, cb: (item: Item | null) => void) => {

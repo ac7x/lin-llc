@@ -30,7 +30,6 @@ export default function ZonesPage() {
 
     // 選取分區
     const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
-    const [zoneDetail, setZoneDetail] = useState<Zone | null>(null);
     const [zoneDetailLoading, setZoneDetailLoading] = useState(false);
 
     // 新增區域 tab 狀態
@@ -54,7 +53,7 @@ export default function ZonesPage() {
     // 取得分區詳細
     useEffect(() => {
         if (!selectedZoneId) {
-            setZoneDetail(null);
+            setZoneDetailLoading(false);
             return;
         }
         setZoneDetailLoading(true);
@@ -62,9 +61,9 @@ export default function ZonesPage() {
             const ref = doc(db, "projects", projectId, "zones", selectedZoneId);
             const snap = await getDoc(ref);
             if (snap.exists()) {
-                setZoneDetail({ id: snap.id, ...snap.data() } as Zone);
+                // setZoneDetail({ id: snap.id, ...snap.data() } as Zone);
             } else {
-                setZoneDetail(null);
+                // setZoneDetail(null);
             }
             setZoneDetailLoading(false);
         };
@@ -189,8 +188,7 @@ export default function ZonesPage() {
                     ) : (
                         // 直接渲染 ZoneDetailPage，並傳遞必要參數
                         <ZoneDetailPage
-                            // @ts-ignore
-                            params={{ projectId, zoneId: selectedZoneId }}
+                            params={{ projectId: projectId, zoneId: selectedZoneId }}
                         />
                     )}
                 </div>

@@ -1,32 +1,33 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import { doc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
-type Zone = {
-    id: string;
-    zoneName: string;
-    desc?: string;
-    createdAt?: Timestamp | Date;
-};
+// Infer props type using useParams
+// 增加 params 類型
+interface Props {
+    params: { projectId: string; zoneId: string };
+}
 
-type WorkItem = {
-    id: string;
-    itemName: string;
-    createdAt?: Timestamp | Date;
-    start?: string;
-    end?: string;
-    quantity?: number;
-};
+export default function ZoneDetailPage({ params }: Props) {
+    const { projectId, zoneId } = params;
 
-export default function ZoneDetailPage(props: { params?: { projectId?: string; zoneId?: string } }) {
-    // 支援從 props 傳入 params
-    const urlParams = useParams() as { projectId?: string; zoneId?: string };
-    const projectId = props.params?.projectId ?? urlParams.projectId;
-    const zoneId = props.params?.zoneId ?? urlParams.zoneId;
+    type Zone = {
+        id: string;
+        zoneName: string;
+        desc?: string;
+        createdAt?: Timestamp | Date;
+    };
 
+    type WorkItem = {
+        id: string;
+        itemName: string;
+        createdAt?: Timestamp | Date;
+        start?: string;
+        end?: string;
+        quantity?: number;
+    };
+
+    // hooks 必須在最上方
     const [zone, setZone] = useState<Zone | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -37,12 +38,12 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
     const [workName, setWorkName] = useState("");
     const [workStart, setWorkStart] = useState("");
     const [workEnd, setWorkEnd] = useState("");
-    const [workQuantity, setWorkQuantity] = useState<number | "">(""); // 新增
+    const [workQuantity, setWorkQuantity] = useState<number | "">("");
     const [creatingWork, setCreatingWork] = useState(false);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
     const [editingStart, setEditingStart] = useState<string>("");
     const [editingEnd, setEditingEnd] = useState<string>("");
-    const [editingQuantity, setEditingQuantity] = useState<number | "">(""); // 新增
+    const [editingQuantity, setEditingQuantity] = useState<number | "">("");
 
     // 取得分區資料（含工項陣列）
     useEffect(() => {
@@ -60,11 +61,10 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                 const data = snap.data();
                 setZone({ id: snap.id, ...data, zoneName: data.zoneName } as Zone);
                 setWorkItems(Array.isArray(data.workItems)
-                    ? data.workItems.map((wi: any) => ({
+                    ? data.workItems.map((wi: Record<string, unknown>) => ({
                         ...wi,
-                        itemName: wi.itemName ?? wi.name
-                        // 不帶入 desc
-                    }))
+                        itemName: (wi as { itemName?: string; name?: string }).itemName ?? (wi as { name?: string }).name
+                    })) as WorkItem[]
                     : []);
             } else {
                 setZone(null);
@@ -91,10 +91,10 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
         }
         const data = snap.data();
         const oldItems: WorkItem[] = Array.isArray(data.workItems)
-            ? data.workItems.map((wi: any) => ({
+            ? data.workItems.map((wi: Record<string, unknown>) => ({
                 ...wi,
-                itemName: wi.itemName ?? wi.name
-            }))
+                itemName: (wi as { itemName?: string; name?: string }).itemName ?? (wi as { name?: string }).name
+            })) as WorkItem[]
             : [];
         const newItem: WorkItem = {
             id: crypto.randomUUID(),
@@ -138,10 +138,10 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
         if (!snap.exists()) return;
         const data = snap.data();
         const oldItems: WorkItem[] = Array.isArray(data.workItems)
-            ? data.workItems.map((wi: any) => ({
+            ? data.workItems.map((wi: Record<string, unknown>) => ({
                 ...wi,
-                itemName: wi.itemName ?? wi.name
-            }))
+                itemName: (wi as { itemName?: string; name?: string }).itemName ?? (wi as { name?: string }).name
+            })) as WorkItem[]
             : [];
         const newItems = oldItems.map(wi =>
             wi.id === item.id
@@ -161,16 +161,17 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
         setCreatingWork(v => !v);
     };
 
-    if (!projectId || !zoneId) {
-        return <main className="p-8 text-gray-400">請選擇分區</main>;
-    }
-
     if (loading) {
         return <main className="p-8">載入中...</main>;
     }
 
     if (!zone) {
         return <main className="p-8">找不到分區資料</main>;
+    }
+
+    // early return 放在 hooks 之後
+    if (!projectId || !zoneId) {
+        return <main className="p-8 text-gray-400">請選擇分區</main>;
     }
 
     return (
@@ -180,10 +181,15 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                 <span className="font-medium">描述：</span>
                 {zone.desc || <span className="text-gray-400">（無描述）</span>}
             </div>
-            {zone.createdAt && (
+            {zone && zone.createdAt && (
                 <div className="text-gray-500 text-sm">
                     建立時間：{(() => {
-                        const d = zone.createdAt instanceof Timestamp ? zone.createdAt.toDate() : zone.createdAt;
+                        const d = zone.createdAt;
+                        // 型別保護：判斷 d 是否為 Timestamp
+                        if (d && typeof d === "object" && "toDate" in d && typeof (d as Timestamp).toDate === "function") {
+                            const dateObj = (d as Timestamp).toDate();
+                            return dateObj instanceof Date ? dateObj.toLocaleString() : String(dateObj);
+                        }
                         return d instanceof Date ? d.toLocaleString() : String(d);
                     })()}
                 </div>
@@ -328,11 +334,14 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
                                 )}
                                 {item.createdAt && (
                                     <div className="text-gray-400 text-xs">
-                                        建立時間：{item.createdAt instanceof Timestamp
-                                            ? item.createdAt.toDate().toLocaleString()
-                                            : item.createdAt instanceof Date
-                                                ? item.createdAt.toLocaleString()
-                                                : String(item.createdAt)}
+                                        建立時間：{(() => {
+                                            const d = item.createdAt;
+                                            if (d && typeof d === "object" && "toDate" in d && typeof (d as Timestamp).toDate === "function") {
+                                                const dateObj = (d as Timestamp).toDate();
+                                                return dateObj instanceof Date ? dateObj.toLocaleString() : String(dateObj);
+                                            }
+                                            return d instanceof Date ? d.toLocaleString() : String(d);
+                                        })()}
                                     </div>
                                 )}
                             </li>
@@ -343,5 +352,3 @@ export default function ZoneDetailPage(props: { params?: { projectId?: string; z
         </main>
     );
 }
-
-// 此檔案內容已整合進 zones/page.tsx，請直接於分區頁面操作。
