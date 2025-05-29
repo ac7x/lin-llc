@@ -163,8 +163,8 @@ export default function ProjectFlowPage() {
 
   if (loading) return <main className="p-8">載入中...</main>;
 
-  // 顯示時間（Timestamp 轉字串）
-  function formatDateTime(ts?: Timestamp | Date) {
+  // 顯示日期（只顯示 yyyy-MM-dd，不顯示時分）
+  function formatDateOnly(ts?: Timestamp | Date) {
     if (!ts) return "-";
     let date: Date;
     if (ts instanceof Timestamp) {
@@ -176,15 +176,8 @@ export default function ProjectFlowPage() {
     } else {
       return "-";
     }
-    // yyyy-MM-dd HH:mm
-    return date.toLocaleString("zh-TW", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).replace(/\//g, "-");
+    // yyyy-MM-dd
+    return date.toISOString().slice(0, 10);
   }
 
   return (
@@ -215,7 +208,7 @@ export default function ProjectFlowPage() {
             />
             {date && (
               <span className="ml-4 text-sm text-gray-600">
-                開始：{date} 07:30，結束：{date} 19:30
+                開始：{date}，結束：{date}
               </span>
             )}
           </label>
@@ -262,8 +255,8 @@ export default function ProjectFlowPage() {
                       ? flow.start.toDate().toISOString().slice(0, 10)
                       : '-'
                 }</div>
-                <div className="mb-1"><span className="font-medium">開始：</span>{formatDateTime(flow.start)}</div>
-                <div className="mb-1"><span className="font-medium">結束：</span>{formatDateTime(flow.end)}</div>
+                <div className="mb-1"><span className="font-medium">開始：</span>{formatDateOnly(flow.start)}</div>
+                <div className="mb-1"><span className="font-medium">結束：</span>{formatDateOnly(flow.end)}</div>
                 <div className="mb-1"><span className="font-medium">內容：</span>{flow.description}</div>
                 <div className="mb-1">
                   <span className="font-medium">上傳/更換照片：</span>
@@ -298,7 +291,7 @@ export default function ProjectFlowPage() {
                   </div>
                 )}
                 <div className="text-gray-500 text-sm mt-2">
-                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? formatDateTime(flow.createdAt) : '-'}
+                  建立人：{users[flow.createdBy] || flow.createdBy}，建立日期：{formatDateOnly(flow.createdAt)}
                 </div>
               </li>
             ))}
