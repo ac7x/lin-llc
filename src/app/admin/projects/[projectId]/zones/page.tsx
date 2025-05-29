@@ -81,90 +81,75 @@ export default function ZonesPage() {
     };
 
     return (
-        <div className="flex gap-8 w-full">
-            {/* 左側：分區列表與新增 */}
-            <div className="w-1/2 min-w-[140px] max-w-[160px]">
-                <div className="flex flex-col items-center">
-                    <div className="w-full">
-                        <span className="font-semibold block mb-2">分區列表</span>
-                        <div className="bg-white rounded-lg shadow border max-w-[140px] mx-auto pb-3 pt-2 px-2 flex flex-col items-center">
-                            <ul className="space-y-2 max-h-[260px] overflow-auto w-full">
-                                {loading ? (
-                                    <li>載入中...</li>
-                                ) : zones.length === 0 ? (
-                                    <li>尚無分區</li>
-                                ) : (
-                                    zones.map(zone => (
-                                        <li key={zone.id}>
-                                            <button
-                                                className={`w-full text-left border p-2 text-sm rounded-md transition-all duration-100 ${selectedZoneId === zone.id ? "bg-blue-50 border-blue-400" : "bg-white border-gray-200"} hover:bg-blue-100`}
-                                                style={{ minWidth: 0 }}
-                                                onClick={() => setSelectedZoneId(zone.id)}
-                                            >
-                                                <span className="font-semibold text-blue-700">{zone.zoneName}</span>
-                                                {zone.desc && <div className="text-gray-600 text-xs">{zone.desc}</div>}
-                                            </button>
-                                        </li>
-                                    ))
-                                )}
-                            </ul>
-                            {/* 新增區域表單（點擊按鈕才顯示） */}
-                            {showForm && (
-                                <form onSubmit={handleSubmit} className="space-y-4 mt-4 bg-gray-50 p-3 rounded border w-full">
-                                    <div>
-                                        <label className="block mb-1">區域名稱</label>
-                                        <input
-                                            className="border px-3 py-2 w-full"
-                                            value={zoneName}
-                                            onChange={e => setZoneName(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block mb-1">描述</label>
-                                        <textarea
-                                            className="border px-3 py-2 w-full"
-                                            value={desc}
-                                            onChange={e => setDesc(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="submit"
-                                            className="bg-blue-600 text-white px-4 py-2 rounded"
-                                            disabled={creating}
-                                        >
-                                            {creating ? "建立中..." : "建立區域"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
-                                            onClick={() => setShowForm(false)}
-                                            disabled={creating}
-                                        >
-                                            取消
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                            {/* 新增區域按鈕緊貼在卡片下方 */}
-                            {!showForm && (
-                                <button
-                                    onClick={() => setShowForm(true)}
-                                    className="bg-blue-600 text-white px-3 py-1.5 text-sm rounded w-full mt-3"
-                                    style={{ minWidth: 0 }}
-                                    disabled={showForm}
-                                >
-                                    新增區域
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
+        <div className="w-full">
+            {/* 分區 tab 樣式 */}
+            <div className="flex gap-2 border-b border-gray-200 dark:border-neutral-700 mb-4">
+                {loading ? (
+                    <span className="px-4 py-2 text-gray-500">載入中...</span>
+                ) : zones.length === 0 ? (
+                    <span className="px-4 py-2 text-gray-400">尚無分區</span>
+                ) : (
+                    zones.map(zone => (
+                        <button
+                            key={zone.id}
+                            className={`px-4 py-2 font-semibold border-b-2 transition whitespace-nowrap ${selectedZoneId === zone.id ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
+                            onClick={() => setSelectedZoneId(zone.id)}
+                        >
+                            {zone.zoneName}
+                        </button>
+                    ))
+                )}
+                {/* 新增分區按鈕 */}
+                <button
+                    onClick={() => setShowForm(true)}
+                    className="ml-2 px-3 py-1.5 text-sm rounded bg-blue-600 text-white font-semibold"
+                    style={{ minWidth: 0, height: "36px" }}
+                    disabled={showForm}
+                >
+                    新增區域
+                </button>
             </div>
-            {/* 右側：分區詳情 */}
-            <div className="w-1/2 min-w-[220px]">
-                {/* 只顯示分區詳情 */}
+            {/* 新增區域表單（橫向tab下方） */}
+            {showForm && (
+                <form onSubmit={handleSubmit} className="space-y-4 mb-6 bg-gray-50 p-4 rounded border max-w-md">
+                    <div>
+                        <label className="block mb-1">區域名稱</label>
+                        <input
+                            className="border px-3 py-2 w-full"
+                            value={zoneName}
+                            onChange={e => setZoneName(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block mb-1">描述</label>
+                        <textarea
+                            className="border px-3 py-2 w-full"
+                            value={desc}
+                            onChange={e => setDesc(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            type="submit"
+                            className="bg-blue-600 text-white px-4 py-2 rounded"
+                            disabled={creating}
+                        >
+                            {creating ? "建立中..." : "建立區域"}
+                        </button>
+                        <button
+                            type="button"
+                            className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                            onClick={() => setShowForm(false)}
+                            disabled={creating}
+                        >
+                            取消
+                        </button>
+                    </div>
+                </form>
+            )}
+            {/* 分區詳情 */}
+            <div className="w-full">
                 {zoneDetailLoading ? (
                     <div>載入中...</div>
                 ) : !selectedZoneId ? (
@@ -172,7 +157,7 @@ export default function ZonesPage() {
                 ) : !zoneDetail ? (
                     <div>找不到分區資料</div>
                 ) : (
-                    <div className="border rounded p-4 bg-gray-50">
+                    <div className="border rounded p-4 bg-gray-50 max-w-xl">
                         <h2 className="text-lg font-bold mb-2">{zoneDetail.zoneName}</h2>
                         <div className="mb-2">
                             <span className="font-medium">描述：</span>
