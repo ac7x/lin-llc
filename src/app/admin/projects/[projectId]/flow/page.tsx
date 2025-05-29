@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, where, query, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, Timestamp, QuerySnapshot, DocumentData, query, onSnapshot } from "firebase/firestore";
 import { db, storage } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -33,7 +33,7 @@ export default function ProjectFlowPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
-  const [users, setUsers] = useState<{[key: string]: string}>({});
+  const [users, setUsers] = useState<{ [key: string]: string }>({});
   const [uploadingFlowId, setUploadingFlowId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -72,7 +72,7 @@ export default function ProjectFlowPage() {
       const usersData = snapshot.docs.reduce((acc, doc) => ({
         ...acc,
         [doc.id]: doc.data().displayName || doc.data().name || undefined
-      }), {} as {[key: string]: string | undefined});
+      }), {} as { [key: string]: string | undefined });
       setUsers(usersData);
     };
     fetchUsers();
@@ -183,7 +183,8 @@ export default function ProjectFlowPage() {
     } else if (ts instanceof Date) {
       date = ts;
     } else if (typeof ts === "object" && "toDate" in ts) {
-      date = (ts as any).toDate();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      date = (ts as { toDate: () => Date }).toDate();
     } else {
       return "-";
     }
@@ -246,7 +247,6 @@ export default function ProjectFlowPage() {
               <span className="ml-4 text-sm text-gray-600">
                 開始：{date} {time}，預計結束：{(() => {
                   if (!date || !time || !durationHours) return "";
-                  const [hour, minute] = time.split(":").map(Number);
                   const start = new Date(date + "T" + time);
                   const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
                   return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")} ${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
@@ -285,7 +285,7 @@ export default function ProjectFlowPage() {
           <ul className="p-0 list-none">
             {flows.sort((a, b) => {
               const getDate = (f: Flow) =>
-                f.date || (f.start && typeof f.start === 'object' && 'toDate' in f.start ? f.start.toDate().toISOString().slice(0, 10) : '');
+                f.date || (f.start && typeof f.start === 'object' && 'toDate' in f.start ? (f.start as Timestamp).toDate().toISOString().slice(0, 10) : '');
               return getDate(a).localeCompare(getDate(b));
             }).map(flow => (
               <li key={flow.id} className="bg-white dark:bg-neutral-900 rounded-lg shadow mb-4 p-5">
@@ -294,7 +294,7 @@ export default function ProjectFlowPage() {
                   flow.date
                     ? flow.date
                     : flow.start && typeof flow.start === 'object' && 'toDate' in flow.start
-                      ? flow.start.toDate().toISOString().slice(0, 10)
+                      ? (flow.start as Timestamp).toDate().toISOString().slice(0, 10)
                       : '-'
                 }</div>
                 <div className="mb-1"><span className="font-medium">開始：</span>{formatDateTime(flow.start)}</div>
@@ -333,7 +333,7 @@ export default function ProjectFlowPage() {
                   </div>
                 )}
                 <div className="text-gray-500 text-sm mt-2">
-                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? formatDateTime(flow.createdAt) : '-'}
+                  建立人：{users[flow.createdBy] || flow.createdBy}，建立時間：{flow.createdAt && typeof flow.createdAt === 'object' && 'toDate' in flow.createdAt ? formatDateTime(flow.createdAt as Timestamp | Date) : "-"}
                 </div>
               </li>
             ))}
