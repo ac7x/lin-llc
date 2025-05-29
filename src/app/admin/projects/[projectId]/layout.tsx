@@ -44,7 +44,7 @@ export default function ProjectLayout({
             }
         }
         setCurrentTab("overview");
-    }, [searchParams.toString()]); // 依 query 變化更新
+    }, [searchParams, tabs]); // 修正依賴
 
     return (
         <div className="flex max-w-6xl mx-auto px-12 py-8 gap-6">

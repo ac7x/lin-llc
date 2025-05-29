@@ -176,7 +176,7 @@ export default function ProjectsPage() {
         }
         setItems(allItems);
         setLoading(false);
-      } catch (e) {
+      } catch {
         setError("資料載入失敗");
         setLoading(false);
       }
