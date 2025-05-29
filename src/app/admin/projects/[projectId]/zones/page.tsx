@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, getDocs, addDoc, Timestamp, doc, getDoc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 
 // 分區型別
 type Zone = {
@@ -28,6 +29,13 @@ export default function ZonesPage() {
     const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
     const [zoneDetail, setZoneDetail] = useState<Zone | null>(null);
     const [zoneDetailLoading, setZoneDetailLoading] = useState(false);
+
+    // 新增階段表單狀態
+    const [showPhaseForm, setShowPhaseForm] = useState(false);
+    const [phaseName, setPhaseName] = useState("");
+    const [phaseCreating, setPhaseCreating] = useState(false);
+
+    const router = useRouter();
 
     useEffect(() => {
         const fetchZones = async () => {
@@ -78,6 +86,25 @@ export default function ZonesPage() {
         setShowForm(false);
         setCreating(false);
         // 會自動刷新列表
+    };
+
+    // 建立階段
+    const handleCreatePhase = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedZoneId || !phaseName) return;
+        setPhaseCreating(true);
+        const docRef = await addDoc(
+            collection(db, "projects", projectId, "zones", selectedZoneId, "phases"),
+            {
+                phaseName,
+                createdAt: Timestamp.now(),
+            }
+        );
+        setPhaseName("");
+        setShowPhaseForm(false);
+        setPhaseCreating(false);
+        // 導向新 phase 詳細頁
+        router.push(`/admin/projects/${projectId}/zones/${selectedZoneId}/phases/${docRef.id}`);
     };
 
     return (
@@ -182,6 +209,46 @@ export default function ZonesPage() {
                                             : String(zoneDetail.createdAt)}
                                 </div>
                             )}
+                            {/* 新增階段按鈕與表單 */}
+                            <div className="mt-6">
+                                {!showPhaseForm ? (
+                                    <button
+                                        onClick={() => setShowPhaseForm(true)}
+                                        className="bg-green-600 text-white px-4 py-2 rounded"
+                                    >
+                                        新增階段
+                                    </button>
+                                ) : (
+                                    <form onSubmit={handleCreatePhase} className="space-y-2 mt-2 bg-gray-50 p-3 rounded border">
+                                        <div>
+                                            <label className="block mb-1">階段名稱</label>
+                                            <input
+                                                className="border px-3 py-2 w-full"
+                                                value={phaseName}
+                                                onChange={e => setPhaseName(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="submit"
+                                                className="bg-green-600 text-white px-4 py-2 rounded"
+                                                disabled={phaseCreating}
+                                            >
+                                                {phaseCreating ? "建立中..." : "建立階段"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                                onClick={() => setShowPhaseForm(false)}
+                                                disabled={phaseCreating}
+                                            >
+                                                取消
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
