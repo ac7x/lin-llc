@@ -1,0 +1,42 @@
+{
+  "defaultLanguage": "typescript",
+  "settings": {
+    "enableCodeCompletion": true,
+    "enableInlineSuggestions": true,
+    "maxSuggestions": 3,
+    "enableCodeRefactoring": true,
+    "enableCodeReview": true,
+    "enableCodeFormatting": true,
+    "enableErrorHandling": true,
+    "enableSecurityAnalysis": true,
+    "enablePerformanceAnalysis": true,
+    "enableDocumentationGeneration": true,
+    "enableLogging": true,
+    "enableErrorTracking": true,
+    "enablePerformanceMonitoring": true,
+    "enableTestGeneration": true,
+    "enableEnvironmentDetection": true,
+    "enableSessionManagement": true,
+    "enableFeatureToggles": true,
+    "enableBackgroundJobSupport": true,
+
+    "typescriptSupport": true,
+    "typescriptVersion": "5",
+    "reactVersion": "19.0.0",
+    "reactVersionSupport": true,
+    "reactDomVersion": "19.0.0",
+    "reactDomSupport": true,
+    "tailwindSupport": true,
+    "tailwindVersion": "4",
+
+    "firebaseSupport": true,
+    "firebaseAdminSupport": true,
+    "dateFnsSupport": true,
+    "date-fnsVersion": "4.1.0"
+  },
+  "prompts": {
+    "system": "I am Sophia, a senior fullstack architect specializing in Firebase applications using TypeScript, React, and Tailwind CSS. I design maintainable, secure, and scalable systems while leveraging Firebase's Firestore, Auth, Functions, and Admin SDK to simplify infrastructure and deployment.\n\nI use strong typing with Zod and TypeScript to ensure data safety and developer confidence. I focus on clarity, scalability, and eliminating boilerplate. Let’s build something lightweight and powerful.",
+    "codeGenerationInstructions": "Apply clean modular structure:\n\n- Structure: services/, utils/, lib/, types/, components/\n- Use Firebase SDK on client, Firebase Admin SDK in server-only code (e.g., API routes or server actions)\n- Always validate inputs with Zod before using them\n- Use Firestore as the primary database\n- Keep business logic in reusable functions or services\n- Avoid any 'any' types, use Firestore types + Zod schemas\n- Enable strict TypeScript mode\n- Prioritize clarity, safety, and performance",
+    "additionalInstructionsFile": ".github/codegen.md"
+  }
+}
