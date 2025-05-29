@@ -48,7 +48,7 @@ const ProjectFlowPage = dynamic(() => import("./flow/page"), { ssr: false });
 const ProjectJournalPage = dynamic(() => import("./journal/page"), { ssr: false });
 const ProjectEditPage = dynamic(() => import("./edit/page"), { ssr: false });
 const ProjectAttendancePage = dynamic(() => import("./attendance/page"), { ssr: false });
-const ProjectZonesPage = dynamic(() => import("./zones/page"), { ssr: false }); // 新增分區頁面動態載入
+const ProjectZonesPage = dynamic(() => import("./zones/page"), { ssr: false }); // 保留動態載入
 const ProjectSchedulePage = dynamic(() => import("./schedule/page"), { ssr: false }); // 新增進度排程頁面動態載入
 
 export default function ProjectDetailPage() {
@@ -56,7 +56,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<{ [key: string]: string }>({});
-  const [tab, setTab] = useState<"detail" | "flow" | "journal" | "edit" | "attendance" | "zones" | "schedule">("detail"); // tab 狀態加入 schedule
+  const [tab, setTab] = useState<"detail" | "flow" | "journal" | "edit" | "attendance" | "schedule">("detail"); // 移除 zones
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -96,12 +96,6 @@ export default function ProjectDetailPage() {
           onClick={() => setTab("detail")}
         >
           專案詳情
-        </button>
-        <button
-          className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "zones" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
-          onClick={() => setTab("zones")}
-        >
-          分區列表
         </button>
         <button
           className={`px-4 py-2 font-semibold border-b-2 transition ${tab === "schedule" ? "border-blue-600 text-blue-700" : "border-transparent text-gray-600 hover:text-blue-700"}`}
@@ -166,9 +160,13 @@ export default function ProjectDetailPage() {
               ))}
             </ul>
           ) : "-"}</div>
+          {/* 分區列表嵌入在支出明細下方 */}
+          <div className="mt-8">
+            <h2 className="text-lg font-bold mb-2">分區列表</h2>
+            <ProjectZonesPage />
+          </div>
         </div>
       )}
-      {tab === "zones" && <ProjectZonesPage />}
       {tab === "schedule" && <ProjectSchedulePage />}
       {tab === "flow" && <ProjectFlowPage />}
       {tab === "journal" && <ProjectJournalPage />}
