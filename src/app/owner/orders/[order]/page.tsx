@@ -36,7 +36,7 @@ export default function OrderDetailPage() {
     const [editClientEmail, setEditClientEmail] = useState("");
 
     // Firestore hooks 實現同步數據
-    const [orderDoc, loadingDoc, errorDoc] = useDocument(orderId ? doc(db, "orders", orderId) : null);
+    const [orderDoc] = useDocument(orderId ? doc(db, "orders", orderId) : null);
 
     useEffect(() => {
         if (!orderId) return;
@@ -66,11 +66,9 @@ export default function OrderDetailPage() {
         }
     }, [orderId, orderDoc]);
 
-    // 計算訂單項目總數量
-    const totalOrderItemQuantity = orderItems.reduce((sum, item) => sum + (item.orderItemQuantity || 0), 0);
-    // 權重與百分比
-    const getWeight = (q: number) => (totalOrderItemQuantity ? q / totalOrderItemQuantity : 0);
-    const getPercent = (q: number) => (totalOrderItemQuantity ? ((q / totalOrderItemQuantity) * 100).toFixed(2) : "0.00");
+    // 權重與百分比（以金額為基礎）
+    const getWeight = (price: number) => (orderPrice ? price / orderPrice : 0);
+    const getPercent = (price: number) => (orderPrice ? ((price / orderPrice) * 100).toFixed(2) : "0.00");
 
     // 編輯用操作
     const handleEditItemChange = (idx: number, key: keyof OrderItem, value: string | number) => {
@@ -192,6 +190,7 @@ export default function OrderDetailPage() {
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目數量</th>
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目單價</th>
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">佔比</th>
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                                 </tr>
                             </thead>
@@ -240,7 +239,10 @@ export default function OrderDetailPage() {
                                                 {item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}
                                             </td>
                                             <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
-                                                {totalOrderItemQuantity ? (item.orderItemQuantity / totalOrderItemQuantity).toFixed(2) : "0.00"}
+                                                {getWeight(item.orderItemPrice).toFixed(2)}
+                                            </td>
+                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                                {getPercent(item.orderItemPrice)}%
                                             </td>
                                             <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
                                                 {editOrderItems.length > 1 && (
@@ -328,6 +330,7 @@ export default function OrderDetailPage() {
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目數量</th>
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目單價</th>
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">佔比</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -346,7 +349,8 @@ export default function OrderDetailPage() {
                                             <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">{item.orderItemPrice}</td>
                                             <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemQuantity}</td>
                                             <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}</td>
-                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{totalOrderItemQuantity ? (item.orderItemQuantity / totalOrderItemQuantity).toFixed(2) : "0.00"}</td>
+                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.orderItemPrice).toFixed(2)}</td>
+                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.orderItemPrice)}%</td>
                                         </tr>
                                     ))}
                             </tbody>

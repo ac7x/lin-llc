@@ -25,14 +25,12 @@ export default function OrderAddPage() {
         { orderItemId: "", orderItemPrice: 0, orderItemQuantity: 1 },
     ]);
 
-    // 計算總數量
-    const totalOrderItemQuantity = orderItems.reduce((sum, item) => sum + (item.orderItemQuantity || 0), 0);
     // 項目總價
     const totalOrderItemPrice = orderItems.reduce((sum, item) => sum + (item.orderItemPrice || 0), 0);
 
-    // 權重與百分比
-    const getWeight = (q: number) => (totalOrderItemQuantity ? q / totalOrderItemQuantity : 0);
-    const getPercent = (q: number) => (totalOrderItemQuantity ? ((q / totalOrderItemQuantity) * 100).toFixed(2) : "0.00");
+    // 權重與百分比（以金額為基礎）
+    const getWeight = (price: number) => (orderPrice ? price / orderPrice : 0);
+    const getPercent = (price: number) => (orderPrice ? ((price / orderPrice) * 100).toFixed(2) : "0.00");
     // 單價自動計算
     const getUnitPrice = (item: OrderItem) => (item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00");
 
@@ -191,8 +189,8 @@ export default function OrderAddPage() {
                                         />
                                     </td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getUnitPrice(item)}</td>
-                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.orderItemQuantity).toFixed(2)}</td>
-                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.orderItemQuantity)}%</td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.orderItemPrice).toFixed(2)}</td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.orderItemPrice)}%</td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
                                         {orderItems.length > 1 && (
                                             <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeItem(idx)}>刪除</button>
