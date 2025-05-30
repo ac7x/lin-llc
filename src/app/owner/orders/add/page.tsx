@@ -2,57 +2,61 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, setDoc, doc } from "firebase/firestore";
 import { nanoid } from "nanoid";
 
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 // 項目型別
 interface OrderItem {
-    name: string;
-    price: number; // 項目價格
-    quantity: number;
+    orderItemId: string;
+    orderItemPrice: number; // 項目金額
+    orderItemQuantity: number;
 }
 
 export default function OrderAddPage() {
     const router = useRouter();
-    const [price, setPrice] = useState(0);
-    const [name, setName] = useState("");
-    const [items, setItems] = useState<OrderItem[]>([
-        { name: "", price: 0, quantity: 1 },
+    const [orderPrice, setOrderPrice] = useState(0);
+    const [orderName, setOrderName] = useState("");
+    const [orderItems, setOrderItems] = useState<OrderItem[]>([
+        { orderItemId: "", orderItemPrice: 0, orderItemQuantity: 1 },
     ]);
 
     // 計算總數量
-    const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const totalOrderItemQuantity = orderItems.reduce((sum, item) => sum + (item.orderItemQuantity || 0), 0);
     // 項目總價
-    const totalItemPrice = items.reduce((sum, item) => sum + (item.price || 0), 0);
+    const totalOrderItemPrice = orderItems.reduce((sum, item) => sum + (item.orderItemPrice || 0), 0);
 
     // 權重與百分比
-    const getWeight = (q: number) => (totalQuantity ? q / totalQuantity : 0);
-    const getPercent = (q: number) => (totalQuantity ? ((q / totalQuantity) * 100).toFixed(2) : "0.00");
+    const getWeight = (q: number) => (totalOrderItemQuantity ? q / totalOrderItemQuantity : 0);
+    const getPercent = (q: number) => (totalOrderItemQuantity ? ((q / totalOrderItemQuantity) * 100).toFixed(2) : "0.00");
     // 單價自動計算
-    const getUnitPrice = (item: OrderItem) => (item.quantity ? (item.price / item.quantity).toFixed(2) : "0.00");
+    const getUnitPrice = (item: OrderItem) => (item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00");
 
     // 項目操作
     const handleItemChange = (idx: number, key: keyof OrderItem, value: string | number) => {
-        setItems(items => items.map((item, i) => i === idx ? { ...item, [key]: value } : item));
+        setOrderItems(items => items.map((item, i) => i === idx ? { ...item, [key]: value } : item));
     };
-    const addItem = () => setItems([...items, { name: "", price: 0, quantity: 1 }]);
-    const removeItem = (idx: number) => setItems(items => items.filter((_, i) => i !== idx));
+    const addItem = () => setOrderItems([...orderItems, { orderItemId: "", orderItemPrice: 0, orderItemQuantity: 1 }]);
+    const removeItem = (idx: number) => setOrderItems(items => items.filter((_, i) => i !== idx));
 
     // 處理送出
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // 產生5位數、僅0-9a-z的nanoid序號
             const orderId = nanoid(5);
-            await addDoc(collection(db, "orders"), {
-                id: orderId,
-                name,
-                price,
-                items,
-                totalItemPrice,
-                createdAt: new Date(),
+            const now = new Date();
+            await setDoc(doc(db, "orders", orderId), {
+                orderId,
+                orderName,
+                orderPrice,
+                orderItems: orderItems.map((item, idx) => ({
+                    ...item,
+                    orderItemId: item.orderItemId || String(idx + 1), // 若未填則用序號
+                })),
+                totalOrderItemPrice,
+                createdAt: now,
+                updatedAt: now,
             });
             router.push("/owner/orders");
         } catch (err) {
@@ -68,20 +72,20 @@ export default function OrderAddPage() {
                     <label className="block font-medium mb-1">訂單名稱：</label>
                     <input
                         type="text"
-                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
+                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                        value={orderName}
+                        onChange={e => setOrderName(e.target.value)}
                         required
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block font-medium mb-1">訂單價格：</label>
+                    <label className="block font-medium mb-1">訂單金額：</label>
                     <input
                         type="number"
-                        className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                        value={price}
+                        className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                        value={orderPrice}
                         min={0}
-                        onChange={e => setPrice(Number(e.target.value))}
+                        onChange={e => setOrderPrice(Number(e.target.value))}
                         required
                     />
                 </div>
@@ -91,62 +95,59 @@ export default function OrderAddPage() {
                         <thead>
                             <tr className="bg-gray-100 dark:bg-gray-800">
                                 <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目名稱</th>
-                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目計價</th>
+                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目金額</th>
                                 <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目數量</th>
                                 <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目單價</th>
                                 <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目權重</th>
                                 <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目佔比</th>
-                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目加總</th>
                                 <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {items.map((item, idx) => (
+                            {orderItems.map((item, idx) => (
                                 <tr key={idx}>
                                     <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
                                         <input
                                             type="text"
-                                            className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                                            value={item.name}
-                                            onChange={e => handleItemChange(idx, "name", e.target.value)}
+                                            className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                                            value={item.orderItemId}
+                                            onChange={e => handleItemChange(idx, "orderItemId", e.target.value)}
                                             required
                                         />
                                     </td>
                                     <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">
                                         <input
                                             type="number"
-                                            className="border px-2 py-1 rounded w-24 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 text-right"
+                                            className="border px-2 py-1 rounded w-24 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 text-right focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
                                             min={0}
-                                            value={item.price}
-                                            onChange={e => handleItemChange(idx, "price", Number(e.target.value))}
+                                            value={item.orderItemPrice}
+                                            onChange={e => handleItemChange(idx, "orderItemPrice", Number(e.target.value))}
                                             required
                                         />
                                     </td>
                                     <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
                                         <input
                                             type="number"
-                                            className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                            className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
                                             min={0}
-                                            value={item.quantity}
-                                            onChange={e => handleItemChange(idx, "quantity", Number(e.target.value))}
+                                            value={item.orderItemQuantity}
+                                            onChange={e => handleItemChange(idx, "orderItemQuantity", Number(e.target.value))}
                                             required
                                         />
                                     </td>
-                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">
                                         <input
                                             type="number"
-                                            className="border px-2 py-1 rounded w-20 bg-gray-100 dark:bg-gray-700 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                            className="border px-2 py-1 rounded w-20 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-700 cursor-not-allowed"
                                             value={getUnitPrice(item)}
                                             disabled
+                                            tabIndex={-1}
                                         />
                                     </td>
-                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.quantity).toFixed(2)}</td>
-                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.quantity)}%</td>
-                                    <td className="border px-2 py-1 text-right border-gray-300 dark:border-gray-700">
-                                        {item.price}
-                                    </td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.orderItemQuantity).toFixed(2)}</td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.orderItemQuantity)}%</td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
-                                        {items.length > 1 && (
+                                        {orderItems.length > 1 && (
                                             <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeItem(idx)}>刪除</button>
                                         )}
                                     </td>
@@ -155,8 +156,8 @@ export default function OrderAddPage() {
                         </tbody>
                     </table>
                     <div className="flex justify-end text-sm text-gray-700 dark:text-gray-200 mt-2">
-                        <span>項目總價：<span className="font-bold">{totalItemPrice}</span></span>
-                        <span className="ml-6">訂單價格：<span className="font-bold">{price}</span></span>
+                        <span>項目總價：<span className="font-bold">{totalOrderItemPrice}</span></span>
+                        <span className="ml-6">訂單金額：<span className="font-bold">{orderPrice}</span></span>
                     </div>
                     <button type="button" className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded mt-2" onClick={addItem}>新增項目</button>
                 </div>

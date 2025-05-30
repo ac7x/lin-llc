@@ -1,101 +1,344 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 // 項目型別
 interface OrderItem {
-    name: string;
-    quantity: number;
+    orderItemId: string;
+    orderItemPrice: number;
+    orderItemQuantity: number;
 }
 
 export default function OrderDetailPage() {
     const router = useRouter();
-    const [price, setPrice] = useState(0);
-    const [items, setItems] = useState<OrderItem[]>([
-        { name: "", quantity: 1 },
-    ]);
+    const params = useParams();
+    const orderId = params?.order as string;
+    const [orderName, setOrderName] = useState("");
+    const [orderPrice, setOrderPrice] = useState(0);
+    const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+    const [clientName, setClientName] = useState("");
+    const [clientContact, setClientContact] = useState("");
+    const [clientPhone, setClientPhone] = useState("");
+    const [clientEmail, setClientEmail] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [editing, setEditing] = useState(false);
+    const [editOrderName, setEditOrderName] = useState("");
+    const [editOrderPrice, setEditOrderPrice] = useState(0);
+    const [editOrderItems, setEditOrderItems] = useState<OrderItem[]>([]);
+    const [editClientName, setEditClientName] = useState("");
+    const [editClientContact, setEditClientContact] = useState("");
+    const [editClientPhone, setEditClientPhone] = useState("");
+    const [editClientEmail, setEditClientEmail] = useState("");
 
-    // 計算總數量
-    const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    useEffect(() => {
+        if (!orderId) return;
+        setLoading(true);
+        getDoc(doc(db, "orders", orderId))
+            .then(snap => {
+                if (!snap.exists()) {
+                    setError("找不到訂單");
+                    setLoading(false);
+                    return;
+                }
+                const data = snap.data();
+                setOrderName(data.orderName || "");
+                setOrderPrice(data.orderPrice || 0);
+                setOrderItems(Array.isArray(data.orderItems) ? data.orderItems : []);
+                setClientName(data.clientName || "");
+                setClientContact(data.clientContact || "");
+                setClientPhone(data.clientPhone || "");
+                setClientEmail(data.clientEmail || "");
+                // 編輯狀態初始化
+                setEditOrderName(data.orderName || "");
+                setEditOrderPrice(data.orderPrice || 0);
+                setEditOrderItems(Array.isArray(data.orderItems) ? data.orderItems : []);
+                setEditClientName(data.clientName || "");
+                setEditClientContact(data.clientContact || "");
+                setEditClientPhone(data.clientPhone || "");
+                setEditClientEmail(data.clientEmail || "");
+                setLoading(false);
+            })
+            .catch(err => {
+                setError("讀取失敗: " + (err instanceof Error ? err.message : String(err)));
+                setLoading(false);
+            });
+    }, [orderId]);
 
+    // 計算訂單項目總數量
+    const totalOrderItemQuantity = orderItems.reduce((sum, item) => sum + (item.orderItemQuantity || 0), 0);
     // 權重與百分比
-    const getWeight = (q: number) => (totalQuantity ? q / totalQuantity : 0);
-    const getPercent = (q: number) => (totalQuantity ? ((q / totalQuantity) * 100).toFixed(2) : "0.00");
+    const getWeight = (q: number) => (totalOrderItemQuantity ? q / totalOrderItemQuantity : 0);
+    const getPercent = (q: number) => (totalOrderItemQuantity ? ((q / totalOrderItemQuantity) * 100).toFixed(2) : "0.00");
 
-    // 項目操作
-    const handleItemChange = (idx: number, key: keyof OrderItem, value: string | number) => {
-        setItems(items => items.map((item, i) => i === idx ? { ...item, [key]: value } : item));
+    // 編輯用操作
+    const handleEditItemChange = (idx: number, key: keyof OrderItem, value: string | number) => {
+        setEditOrderItems(items => items.map((item, i) => i === idx ? { ...item, [key]: value } : item));
     };
-    const addItem = () => setItems([...items, { name: "", quantity: 1 }]);
-    const removeItem = (idx: number) => setItems(items => items.filter((_, i) => i !== idx));
+    const addEditItem = () => setEditOrderItems([...editOrderItems, { orderItemId: "", orderItemPrice: 0, orderItemQuantity: 1 }]);
+    const removeEditItem = (idx: number) => setEditOrderItems(items => items.filter((_, i) => i !== idx));
+
+    // 儲存編輯
+    const handleSaveEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await import("firebase/firestore").then(({ updateDoc, doc }) =>
+                updateDoc(doc(db, "orders", orderId), {
+                    orderName: editOrderName,
+                    orderPrice: editOrderPrice,
+                    orderItems: editOrderItems.map((item, idx) => ({
+                        ...item,
+                        orderItemId: item.orderItemId || String(idx + 1),
+                    })),
+                    clientName: editClientName,
+                    clientContact: editClientContact,
+                    clientPhone: editClientPhone,
+                    clientEmail: editClientEmail,
+                    updatedAt: new Date(),
+                })
+            );
+            setOrderName(editOrderName);
+            setOrderPrice(editOrderPrice);
+            setOrderItems(editOrderItems);
+            setClientName(editClientName);
+            setClientContact(editClientContact);
+            setClientPhone(editClientPhone);
+            setClientEmail(editClientEmail);
+            setEditing(false);
+        } catch (err) {
+            alert("儲存失敗: " + (err instanceof Error ? err.message : String(err)));
+        }
+    };
 
     return (
         <main className="max-w-xl mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold mb-4">訂單詳情</h1>
-            <form>
-                <div className="mb-4">
-                    <label className="block font-medium mb-1">訂單價格：</label>
-                    <input
-                        type="number"
-                        className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                        value={price}
-                        min={0}
-                        onChange={e => setPrice(Number(e.target.value))}
-                        required
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block font-medium mb-1">訂單項目：</label>
-                    <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
-                        <thead>
-                            <tr className="bg-gray-100 dark:bg-gray-800">
-                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">名稱</th>
-                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">數量</th>
-                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
-                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">百分比</th>
-                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((item, idx) => (
-                                <tr key={idx}>
-                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
-                                        <input
-                                            type="text"
-                                            className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                                            value={item.name}
-                                            onChange={e => handleItemChange(idx, "name", e.target.value)}
-                                            required
-                                        />
-                                    </td>
-                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
-                                        <input
-                                            type="number"
-                                            className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                                            min={0}
-                                            value={item.quantity}
-                                            onChange={e => handleItemChange(idx, "quantity", Number(e.target.value))}
-                                            required
-                                        />
-                                    </td>
-                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.quantity).toFixed(2)}</td>
-                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.quantity)}%</td>
-                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
-                                        {items.length > 1 && (
-                                            <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeItem(idx)}>刪除</button>
-                                        )}
-                                    </td>
+            {loading ? (
+                <div className="text-gray-400">載入中...</div>
+            ) : error ? (
+                <div className="text-red-500">{error}</div>
+            ) : editing ? (
+                <form onSubmit={handleSaveEdit}>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">訂單名稱：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={editOrderName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderName(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">訂單金額：</label>
+                        <input
+                            type="number"
+                            className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={editOrderPrice}
+                            min={0}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderPrice(Number(e.target.value))}
+                            required
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">訂單項目：</label>
+                        <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
+                            <thead>
+                                <tr className="bg-gray-100 dark:bg-gray-800">
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目ID</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目金額</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目數量</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目單價</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <button type="button" className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded" onClick={addItem}>新增項目</button>
-                </div>
-                <div className="mt-6 flex gap-2">
-                    <button type="button" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded" onClick={() => router.push("/owner/orders")}>返回列表</button>
-                </div>
-            </form>
+                            </thead>
+                            <tbody>
+                                {editOrderItems.length === 0 ? (
+                                    <tr><td colSpan={6} className="text-center text-gray-400">無項目</td></tr>
+                                ) : editOrderItems.map((item, idx) => (
+                                    <tr key={item.orderItemId + idx}>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
+                                            <input
+                                                type="text"
+                                                className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                                value={item.orderItemId}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemId", e.target.value)}
+                                                required
+                                            />
+                                        </td>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">
+                                            <input
+                                                type="number"
+                                                className="border px-2 py-1 rounded w-24 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 text-right"
+                                                min={0}
+                                                value={item.orderItemPrice}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemPrice", Number(e.target.value))}
+                                                required
+                                            />
+                                        </td>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
+                                            <input
+                                                type="number"
+                                                className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                                min={0}
+                                                value={item.orderItemQuantity}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemQuantity", Number(e.target.value))}
+                                                required
+                                            />
+                                        </td>
+                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                            {/* 單價顯示，樣式簡單化 */}
+                                            {item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}
+                                        </td>
+                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                            {/* 權重顯示，保留兩位小數 */}
+                                            {totalOrderItemQuantity ? (item.orderItemQuantity / totalOrderItemQuantity).toFixed(2) : "0.00"}
+                                        </td>
+                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                            {editOrderItems.length > 1 && (
+                                                <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeEditItem(idx)}>刪除</button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button type="button" className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded mt-2" onClick={addEditItem}>新增項目</button>
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">客戶名稱：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={editClientName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientName(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">客戶聯絡人：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={editClientContact}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientContact(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">聯絡電話：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={editClientPhone}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientPhone(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">郵箱：</label>
+                        <input
+                            type="email"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={editClientEmail}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientEmail(e.target.value)}
+                        />
+                    </div>
+                    <div className="mt-6 flex gap-2">
+                        <button type="submit" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded">儲存</button>
+                        <button type="button" className="bg-gray-300 dark:bg-gray-800 text-black dark:text-gray-100 px-6 py-2 rounded" onClick={() => setEditing(false)}>取消</button>
+                    </div>
+                </form>
+            ) : (
+                <form>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">訂單名稱：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={orderName}
+                            readOnly
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">訂單金額：</label>
+                        <input
+                            type="number"
+                            className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={orderPrice}
+                            readOnly
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">訂單項目：</label>
+                        <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
+                            <thead>
+                                <tr className="bg-gray-100 dark:bg-gray-800">
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目ID</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目金額</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目數量</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目單價</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orderItems.length === 0 ? (
+                                    <tr><td colSpan={5} className="text-center text-gray-400">無項目</td></tr>
+                                ) : orderItems.map((item, idx) => (
+                                    <tr key={item.orderItemId + idx}>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemId}</td>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">{item.orderItemPrice}</td>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemQuantity}</td>
+                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}</td>
+                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{totalOrderItemQuantity ? (item.orderItemQuantity / totalOrderItemQuantity).toFixed(2) : "0.00"}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">客戶名稱：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={clientName}
+                            readOnly
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">客戶聯絡人：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={clientContact}
+                            readOnly
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">聯絡電話：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={clientPhone}
+                            readOnly
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">郵箱：</label>
+                        <input
+                            type="email"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={clientEmail}
+                            readOnly
+                        />
+                    </div>
+                    <div className="mt-6 flex gap-2">
+                        <button type="button" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded" onClick={() => router.push("/owner/orders")}>返回列表</button>
+                        <button type="button" className="bg-yellow-500 dark:bg-yellow-800 text-white dark:text-yellow-200 px-6 py-2 rounded" onClick={() => setEditing(true)}>編輯</button>
+                    </div>
+                </form>
+            )}
         </main>
     );
 }
