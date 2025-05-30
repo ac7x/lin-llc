@@ -5,6 +5,8 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { collection } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useState, useMemo } from "react";
+import { QuotePdfDocument } from '@/modules/shared/interfaces/pdf/QuotePdfDocument';
+import { exportPdfToBlob } from '@/modules/shared/interfaces/pdf/pdfExport';
 
 export default function QuotesPage() {
     const [quotesSnapshot, loading, error] = useCollection(collection(db, "quotes"));
@@ -70,6 +72,14 @@ export default function QuotesPage() {
         }
     };
 
+    // 匯出 PDF
+    const handleExportPdf = (row: Record<string, unknown>) => {
+        exportPdfToBlob(
+            <QuotePdfDocument quote={row} />,
+            `${row.quoteName || row.quoteId || '估價單'}.pdf`
+        );
+    };
+
     return (
         <main className="max-w-2xl mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
@@ -131,6 +141,12 @@ export default function QuotesPage() {
                                     <td className="border px-2 py-1 text-center">{row.daysAgo}</td>
                                     <td className="border px-2 py-1">
                                         <Link href={`/owner/quotes/${row.quoteId}`} className="text-blue-600 hover:underline dark:text-green-400 dark:hover:text-green-300">查看</Link>
+                                        <button
+                                            className="ml-2 text-indigo-600 hover:underline dark:text-yellow-400 dark:hover:text-yellow-300"
+                                            onClick={() => handleExportPdf(row)}
+                                        >
+                                            匯出PDF
+                                        </button>
                                     </td>
                                 </tr>
                             );

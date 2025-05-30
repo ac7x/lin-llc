@@ -5,6 +5,8 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { collection } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useState, useMemo } from "react";
+import { OrderPdfDocument } from '@/modules/shared/interfaces/pdf/OrderPdfDocument';
+import { exportPdfToBlob } from '@/modules/shared/interfaces/pdf/pdfExport';
 
 export default function OrdersPage() {
     const [ordersSnapshot, loading, error] = useCollection(collection(db, "orders"));
@@ -70,6 +72,14 @@ export default function OrdersPage() {
         }
     };
 
+    // 匯出 PDF
+    const handleExportPdf = (row: Record<string, unknown>) => {
+        exportPdfToBlob(
+            <OrderPdfDocument order={row} />,
+            `${row.orderName || row.orderId || '訂單'}.pdf`
+        );
+    };
+
     return (
         <main className="max-w-2xl mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
@@ -131,6 +141,12 @@ export default function OrdersPage() {
                                     <td className="border px-2 py-1 text-center">{row.daysAgo}</td>
                                     <td className="border px-2 py-1">
                                         <Link href={`/owner/orders/${row.orderId}`} className="text-blue-600 hover:underline dark:text-green-400 dark:hover:text-green-300">查看</Link>
+                                        <button
+                                            className="ml-2 text-indigo-600 hover:underline dark:text-yellow-400 dark:hover:text-yellow-300"
+                                            onClick={() => handleExportPdf(row)}
+                                        >
+                                            匯出PDF
+                                        </button>
                                     </td>
                                 </tr>
                             );
