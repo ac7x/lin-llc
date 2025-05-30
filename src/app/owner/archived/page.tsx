@@ -1,7 +1,6 @@
 // src/app/owner/archived/page.tsx
 
 import { Metadata } from 'next'
-import ArchivedNav from '@/modules/shared/interfaces/navigation/side/archived-nav'
 
 export const metadata: Metadata = {
     title: '封存訂單',

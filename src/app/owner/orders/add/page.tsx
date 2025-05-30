@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addDoc, collection, setDoc, doc } from "firebase/firestore";
+import { setDoc, doc } from "firebase/firestore";
 import { nanoid } from "nanoid";
-
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 // 項目型別
@@ -76,65 +75,72 @@ export default function OrderAddPage() {
         <main className="max-w-xl mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold mb-4">新增訂單</h1>
             <form onSubmit={handleSubmit}>
-                {/* 客戶資訊 */}
-                <div className="mb-4">
-                    <label className="block font-medium mb-1">客戶名稱：</label>
-                    <input
-                        type="text"
-                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
-                        value={clientName}
-                        onChange={e => setClientName(e.target.value)}
-                    />
+                {/* 訂單名稱、訂單金額、客戶名稱同一行 */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label className="block font-medium mb-1">訂單名稱：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                            value={orderName}
+                            onChange={e => setOrderName(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block font-medium mb-1">訂單金額：</label>
+                        <input
+                            type="number"
+                            className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                            value={orderPrice}
+                            min={0}
+                            onChange={e => setOrderPrice(Number(e.target.value))}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block font-medium mb-1">客戶名稱：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                            value={clientName}
+                            onChange={e => setClientName(e.target.value)}
+                            required
+                        />
+                    </div>
                 </div>
-                <div className="mb-4">
-                    <label className="block font-medium mb-1">客戶聯絡人：</label>
-                    <input
-                        type="text"
-                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
-                        value={clientContact}
-                        onChange={e => setClientContact(e.target.value)}
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block font-medium mb-1">聯絡電話：</label>
-                    <input
-                        type="text"
-                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
-                        value={clientPhone}
-                        onChange={e => setClientPhone(e.target.value)}
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block font-medium mb-1">郵箱：</label>
-                    <input
-                        type="email"
-                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
-                        value={clientEmail}
-                        onChange={e => setClientEmail(e.target.value)}
-                    />
-                </div>
-
-                {/* 訂單基本資訊 */}
-                <div className="mb-4">
-                    <label className="block font-medium mb-1">訂單名稱：</label>
-                    <input
-                        type="text"
-                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
-                        value={orderName}
-                        onChange={e => setOrderName(e.target.value)}
-                        required
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block font-medium mb-1">訂單金額：</label>
-                    <input
-                        type="number"
-                        className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
-                        value={orderPrice}
-                        min={0}
-                        onChange={e => setOrderPrice(Number(e.target.value))}
-                        required
-                    />
+                {/* 客戶聯絡人、聯絡電話、郵箱同一行 */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label className="block font-medium mb-1">客戶聯絡人：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                            value={clientContact}
+                            onChange={e => setClientContact(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block font-medium mb-1">聯絡電話：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                            value={clientPhone}
+                            onChange={e => setClientPhone(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block font-medium mb-1">郵箱：</label>
+                        <input
+                            type="email"
+                            className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                            value={clientEmail}
+                            onChange={e => setClientEmail(e.target.value)}
+                            required
+                        />
+                    </div>
                 </div>
 
                 {/* 訂單項目 */}

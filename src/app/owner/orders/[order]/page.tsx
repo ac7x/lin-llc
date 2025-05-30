@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { useDocument } from "react-firebase-hooks/firestore";
 
 // 項目型別
 interface OrderItem {
@@ -34,39 +35,36 @@ export default function OrderDetailPage() {
     const [editClientPhone, setEditClientPhone] = useState("");
     const [editClientEmail, setEditClientEmail] = useState("");
 
+    // Firestore hooks 實現同步數據
+    const [orderDoc, loadingDoc, errorDoc] = useDocument(orderId ? doc(db, "orders", orderId) : null);
+
     useEffect(() => {
         if (!orderId) return;
-        setLoading(true);
-        getDoc(doc(db, "orders", orderId))
-            .then(snap => {
-                if (!snap.exists()) {
-                    setError("找不到訂單");
-                    setLoading(false);
-                    return;
-                }
-                const data = snap.data();
-                setOrderName(data.orderName || "");
-                setOrderPrice(data.orderPrice || 0);
-                setOrderItems(Array.isArray(data.orderItems) ? data.orderItems : []);
-                setClientName(data.clientName || "");
-                setClientContact(data.clientContact || "");
-                setClientPhone(data.clientPhone || "");
-                setClientEmail(data.clientEmail || "");
-                // 編輯狀態初始化
-                setEditOrderName(data.orderName || "");
-                setEditOrderPrice(data.orderPrice || 0);
-                setEditOrderItems(Array.isArray(data.orderItems) ? data.orderItems : []);
-                setEditClientName(data.clientName || "");
-                setEditClientContact(data.clientContact || "");
-                setEditClientPhone(data.clientPhone || "");
-                setEditClientEmail(data.clientEmail || "");
+        if (orderDoc) {
+            if (!orderDoc.exists()) {
+                setError("找不到訂單");
                 setLoading(false);
-            })
-            .catch(err => {
-                setError("讀取失敗: " + (err instanceof Error ? err.message : String(err)));
-                setLoading(false);
-            });
-    }, [orderId]);
+                return;
+            }
+            const data = orderDoc.data();
+            setOrderName(data.orderName || "");
+            setOrderPrice(data.orderPrice || 0);
+            setOrderItems(Array.isArray(data.orderItems) ? data.orderItems : []);
+            setClientName(data.clientName || "");
+            setClientContact(data.clientContact || "");
+            setClientPhone(data.clientPhone || "");
+            setClientEmail(data.clientEmail || "");
+            // 編輯狀態初始化
+            setEditOrderName(data.orderName || "");
+            setEditOrderPrice(data.orderPrice || 0);
+            setEditOrderItems(Array.isArray(data.orderItems) ? data.orderItems : []);
+            setEditClientName(data.clientName || "");
+            setEditClientContact(data.clientContact || "");
+            setEditClientPhone(data.clientPhone || "");
+            setEditClientEmail(data.clientEmail || "");
+            setLoading(false);
+        }
+    }, [orderId, orderDoc]);
 
     // 計算訂單項目總數量
     const totalOrderItemQuantity = orderItems.reduce((sum, item) => sum + (item.orderItemQuantity || 0), 0);
@@ -122,56 +120,66 @@ export default function OrderDetailPage() {
                 <div className="text-red-500">{error}</div>
             ) : editing ? (
                 <form onSubmit={handleSaveEdit}>
-                    {/* 客戶資訊 */}
-                    <div className="mb-4">
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={editClientName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientName(e.target.value)}
-                        />
+                    {/* 訂單基本資訊 + 客戶名稱同一行 */}
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label className="block font-medium mb-1">訂單名稱：</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={editOrderName}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderName(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">訂單金額：</label>
+                            <input
+                                type="number"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={editOrderPrice}
+                                min={0}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderPrice(Number(e.target.value))}
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">客戶名稱：</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={editClientName}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientName(e.target.value)}
+                            />
+                        </div>
                     </div>
-                    <div className="mb-4">
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={editClientContact}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientContact(e.target.value)}
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={editClientPhone}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientPhone(e.target.value)}
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <input
-                            type="email"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={editClientEmail}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientEmail(e.target.value)}
-                        />
-                    </div>
-
-                    {/* 訂單基本資訊 */}
-                    <div className="mb-4">
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={editOrderName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderName(e.target.value)}
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <input
-                            type="number"
-                            className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={editOrderPrice}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderPrice(Number(e.target.value))}
-                        />
+                    {/* 客戶聯絡人、電話、郵箱同一行 */}
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label className="block font-medium mb-1">客戶聯絡人：</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={editClientContact}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientContact(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">聯絡電話：</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={editClientPhone}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientPhone(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">郵箱：</label>
+                            <input
+                                type="email"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={editClientEmail}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientEmail(e.target.value)}
+                            />
+                        </div>
                     </div>
 
                     {/* 訂單項目 */}
@@ -251,53 +259,65 @@ export default function OrderDetailPage() {
                 </form>
             ) : (
                 <form>
-                    {/* 客戶欄位 */}
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">客戶名稱：</label>
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={clientName}
-                            readOnly
-                        />
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label className="block font-medium mb-1">訂單名稱：</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={orderName}
+                                readOnly
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">訂單金額：</label>
+                            <input
+                                type="number"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={orderPrice}
+                                readOnly
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">客戶名稱：</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={clientName}
+                                readOnly
+                            />
+                        </div>
                     </div>
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">客戶聯絡人：</label>
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={clientContact}
-                            readOnly
-                        />
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label className="block font-medium mb-1">客戶聯絡人：</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={clientContact}
+                                readOnly
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">聯絡電話：</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={clientPhone}
+                                readOnly
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium mb-1">郵箱：</label>
+                            <input
+                                type="email"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                value={clientEmail}
+                                readOnly
+                            />
+                        </div>
                     </div>
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">聯絡電話：</label>
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={clientPhone}
-                            readOnly
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">郵箱：</label>
-                        <input
-                            type="email"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={clientEmail}
-                            readOnly
-                        />
-                    </div>
-                    {/* 訂單金額與項目移到下方 */}
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">訂單金額：</label>
-                        <input
-                            type="number"
-                            className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={orderPrice}
-                            readOnly
-                        />
-                    </div>
+                    {/* 訂單項目移到下方 */}
                     <div className="mb-4">
                         <label className="block font-medium mb-1">訂單項目：</label>
                         <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">

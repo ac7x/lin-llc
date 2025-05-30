@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 export default function OrdersPage() {
-    const router = useRouter();
     const [ordersSnapshot, loading, error] = useCollection(collection(db, "orders"));
 
     return (
@@ -46,7 +44,7 @@ export default function OrdersPage() {
                                 <tr key={data.orderId || order.id}>
                                     <td className="border px-2 py-1 text-center">{idx + 1}</td>
                                     <td className="border px-2 py-1">{data.orderName || data.orderId || order.id}</td>
-                                    <td className="border px-2 py-1">{data.price ?? '-'}</td>
+                                    <td className="border px-2 py-1">{data.orderPrice ?? '-'}</td>
                                     <td className="border px-2 py-1">{format(createdAt)}</td>
                                     <td className="border px-2 py-1">{format(updatedAt)}</td>
                                     <td className="border px-2 py-1 text-center">{daysAgo}</td>
