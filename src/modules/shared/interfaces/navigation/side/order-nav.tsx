@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection } from "firebase/firestore";
+import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 export function OrderSideNav() {
@@ -36,13 +36,28 @@ export function OrderSideNav() {
                         const data = order.data();
                         const orderHref = `/owner/orders/${data.orderId || order.id}`;
                         return (
-                            <li key={data.orderId || order.id}>
+                            <li key={data.orderId || order.id} className="flex items-center group">
                                 <Link
                                     href={orderHref}
-                                    className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === orderHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                    className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === orderHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
                                 >
                                     {data.orderName || data.orderId || order.id}
                                 </Link>
+                                <button
+                                    title="封存訂單"
+                                    className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        if (!window.confirm('確定要封存此訂單？')) return;
+                                        const orderData = { ...data, archivedAt: new Date() };
+                                        // 封存到 archived/{userId}/orders/{orderId}
+                                        const userId = data.ownerId || "default";
+                                        await setDoc(doc(db, "archived", userId, "orders", data.orderId || order.id), orderData);
+                                        await deleteDoc(doc(db, "orders", data.orderId || order.id));
+                                    }}
+                                >
+                                    🗑️
+                                </button>
                             </li>
                         );
                     })

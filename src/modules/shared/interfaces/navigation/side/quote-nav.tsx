@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection } from "firebase/firestore";
+import { collection, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 export function QuoteSideNav() {
@@ -36,13 +36,28 @@ export function QuoteSideNav() {
                         const data = quote.data();
                         const quoteHref = `/owner/quotes/${data.quoteId || quote.id}`;
                         return (
-                            <li key={data.quoteId || quote.id}>
+                            <li key={data.quoteId || quote.id} className="flex items-center group">
                                 <Link
                                     href={quoteHref}
-                                    className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === quoteHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                    className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === quoteHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
                                 >
                                     {data.quoteName || data.quoteId || quote.id}
                                 </Link>
+                                <button
+                                    title="封存估價單"
+                                    className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        if (!window.confirm('確定要封存此估價單？')) return;
+                                        const quoteData = { ...data, archivedAt: new Date() };
+                                        // 封存到 archived/{userId}/quotes/{quoteId}
+                                        const userId = data.ownerId || "default";
+                                        await setDoc(doc(db, "archived", userId, "quotes", data.quoteId || quote.id), quoteData);
+                                        await deleteDoc(doc(db, "quotes", data.quoteId || quote.id));
+                                    }}
+                                >
+                                    🗑️
+                                </button>
                             </li>
                         );
                     })
