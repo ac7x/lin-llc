@@ -1,31 +1,19 @@
-import { initializeAppCheck, ReCaptchaEnterpriseProvider, CustomProvider } from "firebase/app-check";
-import { FirebaseApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
+import type { FirebaseApp } from "firebase/app";
 
-let isAppCheckInitialized = false;
-
-export function initAppCheck(app: FirebaseApp, siteKey: string) {
-    if (typeof window === "undefined") return; // 僅在瀏覽器端執行
-    if (isAppCheckInitialized) return;
+// siteKey 可選，預設自動從環境變數取得
+export function initializeAppCheckIfNeeded(app: FirebaseApp, siteKey?: string) {
+    const key = siteKey || process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!key) throw new Error("reCAPTCHA site key 未設定，請檢查環境變數 NEXT_PUBLIC_RECAPTCHA_SITE_KEY");
+    // 只初始化一次
+    const anyApp = app as FirebaseApp & { _isinitializeAppCheckCalled?: boolean };
+    if (anyApp._isinitializeAppCheckCalled) return;
     initializeAppCheck(app, {
-        provider: new ReCaptchaEnterpriseProvider(siteKey),
+        provider: new ReCaptchaEnterpriseProvider(key),
         isTokenAutoRefreshEnabled: true,
     });
-    isAppCheckInitialized = true;
-}
-
-// Custom Provider 版本
-export function initCustomAppCheck(app: FirebaseApp, getTokenFromServer: () => Promise<{ token: string, expireTimeMillis: number }>) {
-    if (typeof window === "undefined") return;
-    if (isAppCheckInitialized) return;
-    const appCheckCustomProvider = new CustomProvider({
-        getToken: async () => {
-            const { token, expireTimeMillis } = await getTokenFromServer();
-            return { token, expireTimeMillis };
-        }
-    });
-    initializeAppCheck(app, {
-        provider: appCheckCustomProvider,
-        isTokenAutoRefreshEnabled: true,
-    });
-    isAppCheckInitialized = true;
+    anyApp._isinitializeAppCheckCalled = true;
+    if (typeof window !== "undefined") {
+        console.log("Firebase App Check initialized.");
+    }
 }

@@ -51,7 +51,11 @@ env:
     availability:
       - BUILD
       - RUNTIME
-
+  - variable: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+    value: "6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"
+    availability:
+      - BUILD
+      - RUNTIME
   # Grant access to secrets in Cloud Secret Manager.
   # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
   # - variable: MY_SECRET

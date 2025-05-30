@@ -21,7 +21,7 @@ export function ContractPdfDocument({ contract, qrCodeDataUrl }: { contract: Rec
                             alignItems: 'center',
                         }}
                     >
-                        <Image src={qrCodeDataUrl} style={{ width: 64, height: 64 }} />
+                        <Image src={qrCodeDataUrl} style={{ width: 64, height: 64 }} alt="QRCode" />
                         <Text style={{ fontSize: 8, marginTop: 2 }}>掃描查看合約</Text>
                     </View>
                 )}

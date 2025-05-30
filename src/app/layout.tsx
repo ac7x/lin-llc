@@ -24,12 +24,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 讀取環境變數中的 reCAPTCHA site key
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Script src="https://www.google.com/recaptcha/api.js?render=6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE" />
+        {/* 動態載入 reCAPTCHA script，site key 來自 .env 環境變數 */}
+        {siteKey && (
+          <Script src={`https://www.google.com/recaptcha/api.js?render=${siteKey}`} />
+        )}
         {children}
       </body>
     </html>
