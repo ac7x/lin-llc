@@ -1,15 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getArchiveRetentionDays } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection } from "firebase/firestore";
+import { collection, doc, getDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 export default function ArchivedQuotesPage() {
     const [archiveRetentionDays, setArchiveRetentionDays] = useState<number>(3650);
     useEffect(() => {
-        getArchiveRetentionDays().then(setArchiveRetentionDays);
+        async function fetchRetentionDays() {
+            const docRef = doc(db, 'settings', 'archive');
+            const snapshot = await getDoc(docRef);
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                setArchiveRetentionDays(typeof data.retentionDays === 'number' ? data.retentionDays : 3650);
+            }
+        }
+        fetchRetentionDays();
     }, []);
 
     // 取得封存估價單
