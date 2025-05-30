@@ -9,7 +9,7 @@ export default function ContractNav() {
     const pathname = usePathname();
     const navs = [
         { label: "合約總表", href: "/owner/contracts" },
-        { label: "建立合約", href: "/owner/contracts/add" },
+        { label: "匯入合約", href: "/owner/contracts/import" },
     ];
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
