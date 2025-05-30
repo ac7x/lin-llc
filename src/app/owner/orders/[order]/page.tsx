@@ -33,64 +33,69 @@ export default function OrderDetailPage() {
     return (
         <main className="max-w-xl mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold mb-4">訂單詳情</h1>
-            <div className="mb-4">
-                <label className="block font-medium mb-1">訂單價格：</label>
-                <input
-                    type="number"
-                    className="border px-2 py-1 rounded w-40"
-                    value={price}
-                    min={0}
-                    onChange={e => setPrice(Number(e.target.value))}
-                />
-            </div>
-            <div className="mb-4">
-                <label className="block font-medium mb-1">訂單項目：</label>
-                <table className="w-full border text-sm mb-2">
-                    <thead>
-                        <tr className="bg-gray-100">
-                            <th className="border px-2 py-1">名稱</th>
-                            <th className="border px-2 py-1">數量</th>
-                            <th className="border px-2 py-1">權重</th>
-                            <th className="border px-2 py-1">百分比</th>
-                            <th className="border px-2 py-1">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items.map((item, idx) => (
-                            <tr key={idx}>
-                                <td className="border px-2 py-1">
-                                    <input
-                                        type="text"
-                                        className="border px-2 py-1 rounded w-32"
-                                        value={item.name}
-                                        onChange={e => handleItemChange(idx, "name", e.target.value)}
-                                    />
-                                </td>
-                                <td className="border px-2 py-1">
-                                    <input
-                                        type="number"
-                                        className="border px-2 py-1 rounded w-20"
-                                        min={0}
-                                        value={item.quantity}
-                                        onChange={e => handleItemChange(idx, "quantity", Number(e.target.value))}
-                                    />
-                                </td>
-                                <td className="border px-2 py-1 text-center">{getWeight(item.quantity).toFixed(2)}</td>
-                                <td className="border px-2 py-1 text-center">{getPercent(item.quantity)}%</td>
-                                <td className="border px-2 py-1 text-center">
-                                    {items.length > 1 && (
-                                        <button className="text-red-500" onClick={() => removeItem(idx)}>刪除</button>
-                                    )}
-                                </td>
+            <form>
+                <div className="mb-4">
+                    <label className="block font-medium mb-1">訂單價格：</label>
+                    <input
+                        type="number"
+                        className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                        value={price}
+                        min={0}
+                        onChange={e => setPrice(Number(e.target.value))}
+                        required
+                    />
+                </div>
+                <div className="mb-4">
+                    <label className="block font-medium mb-1">訂單項目：</label>
+                    <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
+                        <thead>
+                            <tr className="bg-gray-100 dark:bg-gray-800">
+                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">名稱</th>
+                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">數量</th>
+                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
+                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">百分比</th>
+                                <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <button className="bg-gray-200 px-3 py-1 rounded" onClick={addItem}>新增項目</button>
-            </div>
-            <div className="mt-6">
-                <button className="bg-blue-600 text-white px-6 py-2 rounded" onClick={() => router.push("/owner/orders")}>返回列表</button>
-            </div>
+                        </thead>
+                        <tbody>
+                            {items.map((item, idx) => (
+                                <tr key={idx}>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
+                                        <input
+                                            type="text"
+                                            className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                            value={item.name}
+                                            onChange={e => handleItemChange(idx, "name", e.target.value)}
+                                            required
+                                        />
+                                    </td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
+                                        <input
+                                            type="number"
+                                            className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                            min={0}
+                                            value={item.quantity}
+                                            onChange={e => handleItemChange(idx, "quantity", Number(e.target.value))}
+                                            required
+                                        />
+                                    </td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.quantity).toFixed(2)}</td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.quantity)}%</td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                        {items.length > 1 && (
+                                            <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeItem(idx)}>刪除</button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <button type="button" className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded" onClick={addItem}>新增項目</button>
+                </div>
+                <div className="mt-6 flex gap-2">
+                    <button type="button" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded" onClick={() => router.push("/owner/orders")}>返回列表</button>
+                </div>
+            </form>
         </main>
     );
 }
