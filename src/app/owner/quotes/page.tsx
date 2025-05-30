@@ -13,19 +13,18 @@ export default function QuotesPage() {
     const [sortKey, setSortKey] = useState<null | string>(null);
     const [sortAsc, setSortAsc] = useState(true);
 
-    // 排序函數
-    const sortFns: Record<string, (a: Record<string, unknown>, b: Record<string, unknown>) => number> = {
-        idx: (a, b) => (a.idx as number) - (b.idx as number),
-        quoteName: (a, b) => (a.quoteName as string || "").localeCompare(b.quoteName as string || ""),
-        clientName: (a, b) => (a.clientName as string || "").localeCompare(b.clientName as string || ""),
-        quotePrice: (a, b) => (Number(a.quotePrice) || 0) - (Number(b.quotePrice) || 0),
-        createdAt: (a, b) => ((a.createdAt as Date)?.getTime?.() || 0) - ((b.createdAt as Date)?.getTime?.() || 0),
-        updatedAt: (a, b) => ((a.updatedAt as Date)?.getTime?.() || 0) - ((b.updatedAt as Date)?.getTime?.() || 0),
-        daysAgo: (a, b) => (a.daysAgo as number || 0) - (b.daysAgo as number || 0),
-    };
-
     // 處理後的資料
     const rows = useMemo(() => {
+        // 排序函數移到 useMemo 內部
+        const sortFns: Record<string, (a: Record<string, unknown>, b: Record<string, unknown>) => number> = {
+            idx: (a, b) => (a.idx as number) - (b.idx as number),
+            quoteName: (a, b) => (a.quoteName as string || "").localeCompare(b.quoteName as string || ""),
+            clientName: (a, b) => (a.clientName as string || "").localeCompare(b.clientName as string || ""),
+            quotePrice: (a, b) => (Number(a.quotePrice) || 0) - (Number(b.quotePrice) || 0),
+            createdAt: (a, b) => ((a.createdAt as Date)?.getTime?.() || 0) - ((b.createdAt as Date)?.getTime?.() || 0),
+            updatedAt: (a, b) => ((a.updatedAt as Date)?.getTime?.() || 0) - ((b.updatedAt as Date)?.getTime?.() || 0),
+            daysAgo: (a, b) => (a.daysAgo as number || 0) - (b.daysAgo as number || 0),
+        };
         if (!quotesSnapshot) return [];
         let arr = quotesSnapshot.docs.map((quote, idx) => {
             const data = quote.data();
@@ -60,7 +59,7 @@ export default function QuotesPage() {
             if (!sortAsc) arr.reverse();
         }
         return arr;
-    }, [quotesSnapshot, search, sortKey, sortAsc, sortFns]);
+    }, [quotesSnapshot, search, sortKey, sortAsc]);
 
     // 排序點擊
     const handleSort = (key: string) => {
