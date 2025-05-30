@@ -51,16 +51,39 @@ export default function GeminiPage() {
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // 動態載入 reCAPTCHA v3 script
+    if (typeof window === 'undefined') return;
+    if (document.getElementById('recaptcha-v3-script')) return;
+    const script = document.createElement('script');
+    script.id = 'recaptcha-v3-script';
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${RECAPTCHA_SITE_KEY}`;
+    script.async = true;
+    script.onload = () => {
+      console.log('reCAPTCHA v3 script loaded.');
+    };
+    script.onerror = () => {
+      setError('reCAPTCHA v3 script 載入失敗，請檢查你的網站金鑰或網路連線。');
+    };
+    document.body.appendChild(script);
+  }, []);
+
+  useEffect(() => {
     const initializeAI = async () => {
       if (isInitialized || !firebaseAppInstance || typeof window === 'undefined') return;
 
-      try {
-        if (typeof grecaptcha === 'undefined') {
-          console.warn("reCAPTCHA v3 script not loaded. App Check may not function correctly.");
-          setError("reCAPTCHA v3 script 載入失敗，請檢查你的網站金鑰或網路連線。");
+      // 等待 grecaptcha 載入
+      if (typeof grecaptcha === 'undefined') {
+        // 檢查 script 是否還在載入
+        const script = document.getElementById('recaptcha-v3-script');
+        if (script) {
+          script.addEventListener('load', initializeAI, { once: true });
           return;
         }
+        setError('reCAPTCHA v3 script 載入失敗，請檢查你的網站金鑰或網路連線。');
+        return;
+      }
 
+      try {
         // Use the extended interface to avoid `any`
         const app = firebaseAppInstance as FirebaseAppWithAppCheckFlag;
         if (!app._isinitializeAppCheckCalled) {
