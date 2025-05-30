@@ -14,7 +14,7 @@ export default function ContractNav() {
         { label: "合約總表", href: "/owner/contracts" },
         { label: "匯入合約", href: "/owner/contracts/import" },
     ];
-    const [contractsSnapshot, loading, error] = useCollection(collection(db, "contracts"));
+    const [contractsSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "contracts"));
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
             <h2 className="text-lg font-bold mb-4 text-center">合約管理</h2>

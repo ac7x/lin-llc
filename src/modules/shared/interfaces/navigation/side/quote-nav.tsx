@@ -12,7 +12,7 @@ export function QuoteSideNav() {
         { label: "估價單列表", href: "/owner/quotes" },
         { label: "新增估價單", href: "/owner/quotes/add" },
     ];
-    const [quotesSnapshot, loading, error] = useCollection(collection(db, "quotes"));
+    const [quotesSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "quotes"));
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
             <h2 className="text-lg font-bold mb-4 text-center">估價單管理</h2>

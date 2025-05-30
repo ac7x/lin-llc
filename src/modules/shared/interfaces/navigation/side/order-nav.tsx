@@ -12,7 +12,7 @@ export function OrderSideNav() {
         { label: "訂單列表", href: "/owner/orders" },
         { label: "新增訂單", href: "/owner/orders/add" },
     ];
-    const [ordersSnapshot, loading, error] = useCollection(collection(db, "orders"));
+    const [ordersSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "orders"));
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
             <h2 className="text-lg font-bold mb-4 text-center">訂單管理</h2>
