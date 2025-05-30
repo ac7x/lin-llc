@@ -51,6 +51,7 @@ export default function HomePage() {
   };
 
   if (loading) return <div className="p-6 text-center">載入中...</div>;
+
   if (user) return <div className="p-6 text-center">重定向中...</div>;
 
   return (
