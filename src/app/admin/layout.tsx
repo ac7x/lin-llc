@@ -1,4 +1,4 @@
-import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
+import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/bottom/admin-nav';
 
 export default function AdminLayout({
     children,

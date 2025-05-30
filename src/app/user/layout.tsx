@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav';
+import { UserBottomNav } from '@/modules/shared/interfaces/navigation/bottom/user-nav';
 
 export default function UserLayout({ children }: { children: ReactNode }) {
   return (

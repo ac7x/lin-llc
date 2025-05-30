@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { FinanceBottomNav } from '@/modules/shared/interfaces/navigation/finance-bottom-nav';
+import { FinanceBottomNav } from '@/modules/shared/interfaces/navigation/bottom/finance-nav';
 
 export default function FinanceLayout({ children }: { children: ReactNode }) {
   return (
