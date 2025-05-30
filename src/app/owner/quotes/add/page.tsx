@@ -106,17 +106,19 @@ export default function QuoteAddPage() {
                         />
                     </div>
                     <div>
-                        <label className="block font-medium mb-1">估價金額：</label>
-                        <div className="flex gap-2 items-center">
-                            <input
-                                type="checkbox"
-                                id="autoSum"
-                                checked={autoSum}
-                                onChange={e => setAutoSum(e.target.checked)}
-                                className="mr-1"
-                            />
-                            <label htmlFor="autoSum" className="text-sm select-none cursor-pointer">由項目自動加總</label>
-                        </div>
+                        <label className="block font-medium mb-1">
+                            估價金額：
+                            <span className="ml-2 align-middle">
+                                <input
+                                    type="checkbox"
+                                    id="autoSum"
+                                    checked={autoSum}
+                                    onChange={e => setAutoSum(e.target.checked)}
+                                    className="mr-1 align-middle"
+                                />
+                                <label htmlFor="autoSum" className="text-sm select-none cursor-pointer align-middle">自動</label>
+                            </span>
+                        </label>
                         <input
                             type="number"
                             className="border px-2 py-1 rounded w-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
