@@ -131,6 +131,18 @@ export default function GeminiPage() {
     }
   }
 
+  // 新增：處理 Enter 送出
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (!loading && prompt.trim() && isInitialized) {
+        // 觸發送出
+        // 用 Form 的 submit 方法
+        (e.target as HTMLTextAreaElement).form?.requestSubmit?.();
+      }
+    }
+  }
+
   return (
     <div style={{ maxWidth: 600, margin: "40px auto", padding: 24, backgroundColor: "#fff", borderRadius: 8, boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)" }}>
       <h2 style={{ textAlign: "center", color: "#333", marginBottom: 20 }}>與 Gemini 聊天</h2>
@@ -164,6 +176,7 @@ export default function GeminiPage() {
           style={{ flex: 1, resize: "vertical", padding: 8, border: "1px solid #ccc", borderRadius: 4, fontSize: "1rem" }}
           placeholder={isInitialized ? "請輸入你的訊息..." : "初始化中..."}
           disabled={loading || !isInitialized}
+          onKeyDown={handleKeyDown} // 新增這行
         />
         <button type="submit" id="send-button" disabled={loading || !prompt.trim() || !isInitialized} style={{ padding: "8px 16px", backgroundColor: "#1976d2", color: "white", border: "none", borderRadius: 4, cursor: "pointer", fontSize: "1rem", transition: "background-color 0.3s ease" }}>
           {loading ? "傳送中..." : "傳送"}
