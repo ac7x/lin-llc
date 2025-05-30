@@ -11,6 +11,7 @@ interface QuoteItem {
     quoteItemId: string;
     quoteItemPrice: number;
     quoteItemQuantity: number;
+    quoteItemWeight?: number; // 權重 (0~1)
 }
 
 export default function QuoteDetailPage() {
@@ -66,9 +67,8 @@ export default function QuoteDetailPage() {
         }
     }, [quoteId, quoteDoc]);
 
-    // 權重與百分比（以金額為基礎）
+    // 權重與單價
     const getWeight = (price: number) => (quotePrice ? price / quotePrice : 0);
-    const getPercent = (price: number) => (quotePrice ? ((price / quotePrice) * 100).toFixed(2) : "0.00");
     const getUnitPrice = (item: QuoteItem) => (item.quoteItemQuantity ? (item.quoteItemPrice / item.quoteItemQuantity).toFixed(2) : "0.00");
 
     // 編輯用操作
@@ -188,10 +188,10 @@ export default function QuoteDetailPage() {
                                 <tr className="bg-gray-100 dark:bg-gray-800">
                                     <th className="border px-2 py-1">項目名稱</th>
                                     <th className="border px-2 py-1">金額</th>
-                                    <th className="border px-2 py-1">數量</th>
+                                    <th className="border px-1 py-1">數量</th>
+                                    <th className="border px-2 py-1 min-w-[90px]">權重</th>
                                     <th className="border px-2 py-1">單價</th>
-                                    <th className="border px-2 py-1">百分比</th>
-                                    <th className="border px-2 py-1">操作</th>
+                                    <th className="border px-1 py-1"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -216,29 +216,63 @@ export default function QuoteDetailPage() {
                                                 required
                                             />
                                         </td>
-                                        <td className="border px-2 py-1">
+                                        <td className="border px-1 py-1">
                                             <input
                                                 type="number"
-                                                className="border px-2 py-1 rounded w-full"
+                                                className="border px-1 py-1 rounded w-full"
                                                 value={item.quoteItemQuantity}
                                                 min={1}
                                                 onChange={e => handleEditItemChange(idx, "quoteItemQuantity", Number(e.target.value))}
                                                 required
                                             />
                                         </td>
+                                        <td className="border px-2 py-1">
+                                            <input
+                                                type="number"
+                                                className="border px-2 py-1 rounded w-full"
+                                                value={item.quoteItemWeight ?? getWeight(item.quoteItemPrice)}
+                                                min={0}
+                                                max={1}
+                                                step={0.01}
+                                                onChange={e => handleEditItemChange(idx, "quoteItemWeight", Number(e.target.value))}
+                                            />
+                                        </td>
                                         <td className="border px-2 py-1 text-center">{getUnitPrice(item)}</td>
-                                        <td className="border px-2 py-1 text-center">{getPercent(item.quoteItemPrice)}%</td>
-                                        <td className="border px-2 py-1 text-center">
-                                            <button type="button" className="text-red-500" onClick={() => removeEditItem(idx)} disabled={editQuoteItems.length === 1}>刪除</button>
+                                        <td className="border px-1 py-1 text-center">
+                                            <button
+                                                type="button"
+                                                title="刪除"
+                                                className="text-red-500 p-0 m-0 leading-none text-lg"
+                                                onClick={() => removeEditItem(idx)}
+                                                disabled={editQuoteItems.length === 1}
+                                                style={{ lineHeight: 1 }}
+                                            >
+                                                🗑️
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        <button type="button" className="px-3 py-1 bg-blue-500 text-white rounded" onClick={addEditItem}>新增項目</button>
-                    </div>
-                    <div className="mb-4 text-right">
-                        <span className="font-bold">項目總金額：</span> {editQuoteItems.reduce((sum, item) => sum + (item.quoteItemPrice || 0), 0)}
+                        {/* 權重總和與總金額同一行，貼齊表格右側 */}
+                        <div className="mt-2 flex justify-end gap-4 text-sm">
+                            <span>
+                                <span className="font-bold">權重總和：</span>
+                                <span
+                                    style={{
+                                        color: Math.abs(
+                                            editQuoteItems.reduce((sum, item) => sum + (item.quoteItemWeight ?? getWeight(item.quoteItemPrice)), 0) - 1
+                                        ) > 0.001 ? "red" : undefined
+                                    }}
+                                >
+                                    {editQuoteItems.reduce((sum, item) => sum + (item.quoteItemWeight ?? getWeight(item.quoteItemPrice)), 0).toFixed(2)}
+                                </span>
+                            </span>
+                            <span>
+                                <span className="font-bold">項目總金額：</span> {editQuoteItems.reduce((sum, item) => sum + (item.quoteItemPrice || 0), 0)}
+                            </span>
+                        </div>
+                        <button type="button" className="px-3 py-1 bg-blue-500 text-white rounded mt-2" onClick={addEditItem}>新增項目</button>
                     </div>
                     <div className="mt-6 flex gap-2">
                         <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">儲存</button>
@@ -276,9 +310,9 @@ export default function QuoteDetailPage() {
                                 <tr className="bg-gray-100 dark:bg-gray-800">
                                     <th className="border px-2 py-1">項目名稱</th>
                                     <th className="border px-2 py-1">金額</th>
-                                    <th className="border px-2 py-1">數量</th>
+                                    <th className="border px-1 py-1">數量</th>
+                                    <th className="border px-2 py-1 min-w-[90px]">權重</th>
                                     <th className="border px-2 py-1">單價</th>
-                                    <th className="border px-2 py-1">百分比</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -286,15 +320,30 @@ export default function QuoteDetailPage() {
                                     <tr key={idx}>
                                         <td className="border px-2 py-1">{item.quoteItemId}</td>
                                         <td className="border px-2 py-1">{item.quoteItemPrice}</td>
-                                        <td className="border px-2 py-1">{item.quoteItemQuantity}</td>
+                                        <td className="border px-1 py-1">{item.quoteItemQuantity}</td>
+                                        <td className="border px-2 py-1">{(item.quoteItemWeight ?? getWeight(item.quoteItemPrice)).toFixed(2)}</td>
                                         <td className="border px-2 py-1 text-center">{getUnitPrice(item)}</td>
-                                        <td className="border px-2 py-1 text-center">{getPercent(item.quoteItemPrice)}%</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        <div className="text-right">
-                            <span className="font-bold">項目總金額：</span> {quoteItems.reduce((sum, item) => sum + (item.quoteItemPrice || 0), 0)}
+                        {/* 權重總和與總金額同一行，貼齊表格右側 */}
+                        <div className="mt-2 flex justify-end gap-4 text-sm">
+                            <span>
+                                <span className="font-bold">權重總和：</span>
+                                <span
+                                    style={{
+                                        color: Math.abs(
+                                            quoteItems.reduce((sum, item) => sum + (item.quoteItemWeight ?? getWeight(item.quoteItemPrice)), 0) - 1
+                                        ) > 0.001 ? "red" : undefined
+                                    }}
+                                >
+                                    {quoteItems.reduce((sum, item) => sum + (item.quoteItemWeight ?? getWeight(item.quoteItemPrice)), 0).toFixed(2)}
+                                </span>
+                            </span>
+                            <span>
+                                <span className="font-bold">項目總金額：</span> {quoteItems.reduce((sum, item) => sum + (item.quoteItemPrice || 0), 0)}
+                            </span>
                         </div>
                     </div>
                     <div className="mt-6 flex gap-2">

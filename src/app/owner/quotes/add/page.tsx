@@ -33,9 +33,6 @@ export default function QuoteAddPage() {
     // quotePrice 實際顯示值
     const displayQuotePrice = autoSum ? totalQuoteItemPrice : quotePrice;
 
-    // 權重與百分比（以金額為基礎）
-    const getWeight = (price: number) => (quotePrice ? price / quotePrice : 0);
-    const getPercent = (price: number) => (quotePrice ? ((price / quotePrice) * 100).toFixed(2) : "0.00");
     // 單價自動計算
     const getUnitPrice = (item: QuoteItem) => (item.quoteItemQuantity ? (item.quoteItemPrice / item.quoteItemQuantity).toFixed(2) : "0.00");
 
@@ -43,7 +40,7 @@ export default function QuoteAddPage() {
     const handleItemChange = (idx: number, key: keyof QuoteItem, value: string | number) => {
         setQuoteItems(items => items.map((item, i) => {
             if (i !== idx) return item;
-            let newItem = { ...item, [key]: value };
+            const newItem = { ...item, [key]: value };
             // 權重變動時自動算金額
             if (key === "quoteItemWeight" && typeof value === "number" && quotePrice > 0) {
                 newItem.quoteItemPrice = Number((value as number) * quotePrice);
@@ -178,10 +175,10 @@ export default function QuoteAddPage() {
                             <tr className="bg-gray-100 dark:bg-gray-800">
                                 <th className="border px-2 py-1">項目名稱</th>
                                 <th className="border px-2 py-1">金額</th>
-                                <th className="border px-2 py-1">數量</th>
-                                <th className="border px-2 py-1">權重</th>
+                                <th className="border px-1 py-1">數量</th>
+                                <th className="border px-2 py-1 min-w-[90px]">權重</th>
                                 <th className="border px-2 py-1">單價</th>
-                                <th className="border px-2 py-1">操作</th>
+                                <th className="border px-1 py-1"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -206,10 +203,10 @@ export default function QuoteAddPage() {
                                             required
                                         />
                                     </td>
-                                    <td className="border px-2 py-1">
+                                    <td className="border px-1 py-1">
                                         <input
                                             type="number"
-                                            className="border px-2 py-1 rounded w-full"
+                                            className="border px-1 py-1 rounded w-full"
                                             value={item.quoteItemQuantity}
                                             min={1}
                                             onChange={e => handleItemChange(idx, "quoteItemQuantity", Number(e.target.value))}
@@ -228,31 +225,41 @@ export default function QuoteAddPage() {
                                         />
                                     </td>
                                     <td className="border px-2 py-1 text-center">{getUnitPrice(item)}</td>
-                                    <td className="border px-2 py-1 text-center">
-                                        <button type="button" className="text-red-500" onClick={() => removeItem(idx)} disabled={quoteItems.length === 1}>刪除</button>
+                                    <td className="border px-1 py-1 text-center">
+                                        <button
+                                            type="button"
+                                            title="刪除"
+                                            className="text-red-500 p-0 m-0 leading-none text-lg"
+                                            onClick={() => removeItem(idx)}
+                                            disabled={quoteItems.length === 1}
+                                            style={{ lineHeight: 1 }}
+                                        >
+                                            🗑️
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    <button type="button" className="px-3 py-1 bg-blue-500 text-white rounded" onClick={addItem}>新增項目</button>
-                    {/* 權重總和顯示 */}
-                    <div className="mt-2 text-right">
-                        <span className="font-bold">權重總和：</span>
-                        <span
-                            style={{
-                                color: Math.abs(
-                                    quoteItems.reduce((sum, item) => sum + (item.quoteItemWeight ?? 0), 0) - 1
-                                ) > 0.001 ? "red" : undefined
-                            }}
-                        >
-                            {quoteItems.reduce((sum, item) => sum + (item.quoteItemWeight ?? 0), 0).toFixed(2)}
+                    {/* 權重總和與總金額同一行，貼齊表格右側 */}
+                    <div className="mt-2 flex justify-end gap-4 text-sm">
+                        <span>
+                            <span className="font-bold">權重總和：</span>
+                            <span
+                                style={{
+                                    color: Math.abs(
+                                        quoteItems.reduce((sum, item) => sum + (item.quoteItemWeight ?? 0), 0) - 1
+                                    ) > 0.001 ? "red" : undefined
+                                }}
+                            >
+                                {quoteItems.reduce((sum, item) => sum + (item.quoteItemWeight ?? 0), 0).toFixed(2)}
+                            </span>
+                        </span>
+                        <span>
+                            <span className="font-bold">項目總金額：</span> {totalQuoteItemPrice}
                         </span>
                     </div>
-                </div>
-                {/* 總金額顯示 */}
-                <div className="mb-4 text-right">
-                    <span className="font-bold">項目總金額：</span> {totalQuoteItemPrice}
+                    <button type="button" className="px-3 py-1 bg-blue-500 text-white rounded mt-2" onClick={addItem}>新增項目</button>
                 </div>
                 <div className="mt-6 flex gap-2">
                     <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">送出</button>
