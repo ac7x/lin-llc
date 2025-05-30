@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 
 
 Font.register({
@@ -6,11 +6,25 @@ Font.register({
     src: '/fonts/NotoSerifTC-Regular.ttf',
 });
 
-export function ContractPdfDocument({ contract }: { contract: Record<string, unknown> }) {
+export function ContractPdfDocument({ contract, qrCodeDataUrl }: { contract: Record<string, unknown>; qrCodeDataUrl?: string }) {
     const contractItems = Array.isArray(contract.contractItems) ? contract.contractItems : [];
     return (
         <Document>
             <Page size="A4" style={styles.page}>
+                {/* 左上角 QRCode 圖片 */}
+                {qrCodeDataUrl && (
+                    <View
+                        style={{
+                            position: 'absolute',
+                            left: 30,
+                            top: 30,
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Image src={qrCodeDataUrl} style={{ width: 64, height: 64 }} />
+                        <Text style={{ fontSize: 8, marginTop: 2 }}>掃描查看合約</Text>
+                    </View>
+                )}
                 <View style={styles.section}>
                     <Text style={styles.title}>合約明細</Text>
                     <Text>合約名稱: {String(contract.contractName ?? '')}</Text>
@@ -47,7 +61,7 @@ export function ContractPdfDocument({ contract }: { contract: Record<string, unk
 }
 
 const styles = StyleSheet.create({
-    page: { padding: 30, fontFamily: 'NotoSerifTC' },
+    page: { padding: 30, fontFamily: 'NotoSerifTC', position: 'relative' },
     section: { margin: 10, padding: 10 },
     title: { fontSize: 18, marginBottom: 10, fontWeight: 'bold' },
 });

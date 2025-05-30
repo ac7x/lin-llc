@@ -7,6 +7,7 @@ import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebas
 import { useMemo, useState } from "react";
 import { ContractPdfDocument } from '@/modules/shared/interfaces/pdf/ContractPdfDocument';
 import { exportPdfToBlob } from '@/modules/shared/interfaces/pdf/pdfExport';
+import QRCode from "qrcode";
 
 export default function ContractsPage() {
     const [contractsSnapshot, loading, error] = useCollection(collection(db, "contracts"));
@@ -48,8 +49,15 @@ export default function ContractsPage() {
         const data = docSnap.data();
         data.createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt;
         data.updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt;
+
+        // 產生合約詳情頁網址
+        const contractId = String(data.contractId || row.contractId || docRef.id);
+        const detailUrl = `${window.location.origin}/owner/contracts/${contractId}`;
+        // 產生 QRCode DataURL
+        const qrCodeDataUrl = await QRCode.toDataURL(detailUrl, { margin: 1, width: 128 });
+
         exportPdfToBlob(
-            <ContractPdfDocument contract={data} />,
+            <ContractPdfDocument contract={data} qrCodeDataUrl={qrCodeDataUrl} />, // 傳入 QRCode 圖片
             `${data.contractName || data.contractId || '合約'}.pdf`
         );
     };
