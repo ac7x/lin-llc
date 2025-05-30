@@ -1,4 +1,10 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+
+
+Font.register({
+    family: 'NotoSerifTC',
+    src: '/fonts/NotoSerifTC-Regular.ttf',
+});
 
 export function OrderPdfDocument({ order }: { order: Record<string, unknown> }) {
     return (
@@ -18,7 +24,7 @@ export function OrderPdfDocument({ order }: { order: Record<string, unknown> }) 
 }
 
 const styles = StyleSheet.create({
-    page: { padding: 30 },
+    page: { padding: 30, fontFamily: 'NotoSerifTC' },
     section: { margin: 10, padding: 10 },
     title: { fontSize: 18, marginBottom: 10, fontWeight: 'bold' },
 });
