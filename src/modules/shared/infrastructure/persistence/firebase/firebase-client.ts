@@ -77,40 +77,56 @@ export async function deleteUserFromFirestore(uid: string) {
 
 // 新增：建立虛擬用戶
 export async function createVirtualUser({
+  displayName,
+  role,
+}: {
+  displayName: string;
+  role: string;
+}) {
+  // 產生 28 字元隨機 UID
+  function generateUid(length = 28) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let uid = '';
+    for (let i = 0; i < length; i++) {
+      uid += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return uid;
+  }
+  const uid = generateUid();
+  const now = new Date();
+  const userData = {
+    uid,
     displayName,
     role,
-}: {
-    displayName: string;
-    role: string;
-}) {
-    // 產生 28 字元隨機 UID
-    function generateUid(length = 28) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let uid = '';
-        for (let i = 0; i < length; i++) {
-            uid += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return uid;
-    }
-    const uid = generateUid();
-    const now = new Date();
-    const userData = {
-        uid,
-        displayName,
-        role,
-        email: '', // 修正: 不存 undefined
-        emailVerified: false,
-        photoURL: '', // 修正: 不存 undefined
-        updatedAt: now,
-        metadata: {
-            creationTime: now.toISOString(),
-            lastSignInTime: now.toISOString(),
-        },
-        disabled: false,
-    };
+    email: '', // 修正: 不存 undefined
+    emailVerified: false,
+    photoURL: '', // 修正: 不存 undefined
+    updatedAt: now,
+    metadata: {
+      creationTime: now.toISOString(),
+      lastSignInTime: now.toISOString(),
+    },
+    disabled: false,
+  };
 
-    // 直接使用上方已初始化的 db
-    await setDoc(doc(db, 'users', uid), userData);
+  // 直接使用上方已初始化的 db
+  await setDoc(doc(db, 'users', uid), userData);
 
-    return userData;
+  return userData;
+}
+
+// 儲存封存自動刪除天數（全域設定，可依需求調整 collection/doc 結構）
+export async function setArchiveRetentionDays(days: number) {
+  await setDoc(doc(db, 'settings', 'archive'), { retentionDays: days }, { merge: true });
+}
+
+// 取得封存自動刪除天數
+export async function getArchiveRetentionDays(): Promise<number> {
+  const docRef = doc(db, 'settings', 'archive');
+  const snapshot = await import('firebase/firestore').then(m => m.getDoc(docRef));
+  if (snapshot.exists()) {
+    const data = snapshot.data();
+    return typeof data.retentionDays === 'number' ? data.retentionDays : 3650;
+  }
+  return 3650;
 }

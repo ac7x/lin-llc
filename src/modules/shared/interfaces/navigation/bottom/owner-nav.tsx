@@ -21,6 +21,7 @@ const defaultOwnerNavItems: NavItem[] = [
     { href: '/owner/quotes', icon: '📄', label: '估價單', active: false },
     { href: '/owner/archived', icon: '🗄️', label: '封存訂單', active: false },
     { href: '/owner/users', icon: '👤', label: '用戶管理', active: false },
+    { href: '/owner/settings', icon: '⚙️', label: '設定', active: false }, // 新增設定
 ];
 
 export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavProps) {

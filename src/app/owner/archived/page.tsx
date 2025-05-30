@@ -1,13 +1,15 @@
-// src/app/owner/archived/page.tsx
+"use client";
 
-import { Metadata } from 'next'
-
-export const metadata: Metadata = {
-    title: '封存訂單',
-    description: '在此檢視已完成與封存的訂單。',
-}
+import { useEffect, useState } from "react";
+import { getArchiveRetentionDays } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 export default function ArchivedPage() {
+    const [archiveRetentionDays, setArchiveRetentionDays] = useState<number>(3650);
+
+    useEffect(() => {
+        getArchiveRetentionDays().then(setArchiveRetentionDays);
+    }, []);
+
     // 模擬封存訂單資料
     const archivedOrders = [
         { id: 'ORD-1001', title: 'Order A', completedAt: '2025-05-20' },
@@ -16,6 +18,11 @@ export default function ArchivedPage() {
 
     return (
         <main className="max-w-2xl mx-auto px-4 py-8">
+            {/* 封存自動刪除提示 */}
+            <div className="mb-4 p-3 rounded bg-yellow-100 text-yellow-800 border border-yellow-300 text-sm">
+                封存文件將於 {archiveRetentionDays} 天（約{' '}
+                {Math.round(archiveRetentionDays / 365)} 年）後自動刪除。
+            </div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">封存訂單</h1>
             </div>
