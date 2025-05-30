@@ -17,16 +17,15 @@ export function OrderSideNav() {
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
             <h2 className="text-lg font-bold mb-4">訂單管理</h2>
             <ul className="space-y-2">
-                {navs.map((nav, idx) => (
-                    <li key={nav.href}>
-                        <Link
-                            href={nav.href}
-                            className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === nav.href ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                        >
-                            {nav.label}
-                        </Link>
-                    </li>
-                ))}
+                {/* 列表按鈕 */}
+                <li key={navs[0].href}>
+                    <Link
+                        href={navs[0].href}
+                        className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === navs[0].href ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                    >
+                        {navs[0].label}
+                    </Link>
+                </li>
                 {/* 動態訂單詳情按鈕 */}
                 {loading ? (
                     <li className="text-gray-400 px-3 py-2">載入中...</li>
@@ -48,6 +47,15 @@ export function OrderSideNav() {
                         );
                     })
                 ) : null}
+                {/* 新增按鈕 */}
+                <li key={navs[1].href}>
+                    <Link
+                        href={navs[1].href}
+                        className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === navs[1].href ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                    >
+                        {navs[1].label}
+                    </Link>
+                </li>
             </ul>
         </nav>
     );

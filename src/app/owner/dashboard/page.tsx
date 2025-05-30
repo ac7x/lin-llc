@@ -7,7 +7,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
-export default function OwnerDashboardPage() {
+export default function DashboardPage() {
   // 取得 users 和 projects 集合的 snapshot
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
@@ -109,13 +109,13 @@ export default function OwnerDashboardPage() {
   }
 
   return (
-    <main style={{ background: '#f5f6fa', minHeight: '100vh', padding: '32px 0' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px #0001' }}>
+    <main className="min-h-screen py-8 bg-white dark:bg-gray-900">
+      <div className="max-w-4xl mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-lg">
         {/* <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 32, letterSpacing: 2, color: '#222' }}>業主管理儀表板</h2> */}
-        <div style={{ display: 'flex', gap: 40 }}>
+        <div className="flex gap-10 flex-col md:flex-row">
           {/* 人員統計區塊 */}
-          <section style={{ flex: 1, minWidth: 320, background: '#f0f4ff', borderRadius: 12, padding: 24, boxShadow: '0 1px 6px #0001' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#2a4d8f' }}>人員分布</h3>
+          <section className="flex-1 min-w-[320px] bg-blue-50 dark:bg-blue-950 rounded-xl p-6 shadow-md mb-6 md:mb-0">
+            <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-blue-200">人員分布</h3>
             {usersLoading ? (
               <div>載入中...</div>
             ) : usersError ? (
@@ -137,17 +137,17 @@ export default function OwnerDashboardPage() {
             )}
           </section>
           {/* 專案統計區塊 */}
-          <section style={{ flex: 1, minWidth: 320, background: '#f8f6f0', borderRadius: 12, padding: 24, boxShadow: '0 1px 6px #0001' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#8f6b2a' }}>專案統計</h3>
-            <div style={{ fontSize: 48, fontWeight: 700, color: '#8f6b2a', marginBottom: 8 }}>
+          <section className="flex-1 min-w-[320px] bg-yellow-50 dark:bg-yellow-950 rounded-xl p-6 shadow-md">
+            <h3 className="text-xl font-semibold mb-4 text-yellow-800 dark:text-yellow-200">專案統計</h3>
+            <div className="text-5xl font-bold text-yellow-800 dark:text-yellow-200 mb-2">
               {projectsLoading ? '載入中...' : projectsError ? '錯誤' : projectsSnapshot?.size ?? 0}
             </div>
-            <div style={{ fontSize: 18, color: '#8f6b2a' }}>專案總數</div>
+            <div className="text-lg text-yellow-800 dark:text-yellow-200">專案總數</div>
           </section>
         </div>
         {/* S曲線區塊 */}
-        <section style={{ marginTop: 48, background: '#f6f8fa', borderRadius: 12, padding: 24, boxShadow: '0 1px 6px #0001' }}>
-          <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: '#2a8f4d' }}>流程累積進度（S曲線）</h3>
+        <section className="mt-12 bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-md">
+          <h3 className="text-xl font-semibold mb-4 text-green-800 dark:text-green-200">流程累積進度（S曲線）</h3>
           {flowsLoading ? (
             <div>載入中...</div>
           ) : flowsError ? (
