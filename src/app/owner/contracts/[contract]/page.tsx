@@ -9,7 +9,7 @@ export default function ContractDetailPage() {
     const params = useParams();
     const router = useRouter();
     const contractId = params?.contract as string;
-    const [contractDoc, loading, error] = useDocument(contractId ? doc(db, "contracts", contractId) : null);
+    const [contractDoc, loading, error] = useDocument(contractId ? doc(db, "finance", "default", "contracts", contractId) : null);
 
     if (loading) {
         return <main className="max-w-xl mx-auto px-4 py-8"><div>載入中...</div></main>;

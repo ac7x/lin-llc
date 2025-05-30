@@ -36,7 +36,7 @@ export default function OrderDetailPage() {
     const [editClientEmail, setEditClientEmail] = useState("");
 
     // Firestore hooks 實現同步數據
-    const [orderDoc] = useDocument(orderId ? doc(db, "orders", orderId) : null);
+    const [orderDoc] = useDocument(orderId ? doc(db, "finance", "default", "orders", orderId) : null);
 
     useEffect(() => {
         if (!orderId) return;
@@ -82,7 +82,7 @@ export default function OrderDetailPage() {
         e.preventDefault();
         try {
             await import("firebase/firestore").then(({ updateDoc, doc }) =>
-                updateDoc(doc(db, "orders", orderId), {
+                updateDoc(doc(db, "finance", "default", "orders", orderId), {
                     orderName: editOrderName,
                     orderPrice: editOrderPrice,
                     orderItems: editOrderItems.map((item, idx) => ({

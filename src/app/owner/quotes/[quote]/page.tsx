@@ -37,7 +37,7 @@ export default function QuoteDetailPage() {
     const [editClientEmail, setEditClientEmail] = useState("");
 
     // Firestore hooks 實現同步數據
-    const [quoteDoc] = useDocument(quoteId ? doc(db, "quotes", quoteId) : null);
+    const [quoteDoc] = useDocument(quoteId ? doc(db, "finance", "default", "quotes", quoteId) : null);
 
     useEffect(() => {
         if (!quoteId) return;
@@ -83,7 +83,7 @@ export default function QuoteDetailPage() {
         e.preventDefault();
         try {
             await import("firebase/firestore").then(({ updateDoc, doc }) =>
-                updateDoc(doc(db, "quotes", quoteId), {
+                updateDoc(doc(db, "finance", "default", "quotes", quoteId), {
                     quoteName: editQuoteName,
                     quotePrice: editQuotePrice,
                     quoteItems: editQuoteItems.map((item, idx) => ({

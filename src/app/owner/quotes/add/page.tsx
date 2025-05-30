@@ -65,7 +65,7 @@ export default function QuoteAddPage() {
         try {
             const quoteId = nanoid(5);
             const now = new Date();
-            await setDoc(doc(db, "quotes", quoteId), {
+            await setDoc(doc(db, "finance", "default", "quotes", quoteId), {
                 quoteId,
                 quoteName,
                 quotePrice: autoSum ? totalQuoteItemPrice : quotePrice,

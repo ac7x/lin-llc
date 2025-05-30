@@ -47,7 +47,7 @@ export default function OrderAddPage() {
         try {
             const orderId = nanoid(5);
             const now = new Date();
-            await setDoc(doc(db, "orders", orderId), {
+            await setDoc(doc(db, "finance", "default", "orders", orderId), {
                 orderId,
                 orderName,
                 orderPrice,

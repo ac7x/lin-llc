@@ -9,7 +9,7 @@ import { QuotePdfDocument } from '@/modules/shared/interfaces/pdf/QuotePdfDocume
 import { exportPdfToBlob } from '@/modules/shared/interfaces/pdf/pdfExport';
 
 export default function QuotesPage() {
-    const [quotesSnapshot, loading, error] = useCollection(collection(db, "quotes"));
+    const [quotesSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "quotes"));
     // 搜尋與排序狀態
     const [search, setSearch] = useState("");
     const [sortKey, setSortKey] = useState<null | string>(null);
@@ -75,7 +75,7 @@ export default function QuotesPage() {
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
         // 取得完整詳細資料
-        const docRef = doc(db, "quotes", String(row.quoteId));
+        const docRef = doc(db, "finance", "default", "quotes", String(row.quoteId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
             alert("找不到該估價單");

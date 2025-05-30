@@ -17,8 +17,8 @@ interface ContractData {
 
 export default function ImportContractPage() {
     const [tab, setTab] = useState<'order' | 'quote'>("order");
-    const [ordersSnapshot] = useCollection(collection(db, "orders"));
-    const [quotesSnapshot] = useCollection(collection(db, "quotes"));
+    const [ordersSnapshot] = useCollection(collection(db, "finance", "default", "orders"));
+    const [quotesSnapshot] = useCollection(collection(db, "finance", "default", "quotes"));
     const [importingId, setImportingId] = useState<string | null>(null);
     const [message, setMessage] = useState<string>("");
 
@@ -84,7 +84,7 @@ export default function ImportContractPage() {
             } else {
                 contractData.contractContent = `估價單內容：\n${JSON.stringify(row.raw, null, 2)}`;
             }
-            const docRef = await addDoc(collection(db, "contracts"), contractData);
+            const docRef = await addDoc(collection(db, "finance", "default", "contracts"), contractData);
             setMessage(`已成功匯入並建立合約，ID: ${docRef.id}`);
         } catch (err) {
             setMessage("匯入失敗: " + (err instanceof Error ? err.message : String(err)));

@@ -10,7 +10,7 @@ import { exportPdfToBlob } from '@/modules/shared/interfaces/pdf/pdfExport';
 import QRCode from "qrcode";
 
 export default function ContractsPage() {
-    const [contractsSnapshot, loading, error] = useCollection(collection(db, "contracts"));
+    const [contractsSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "contracts"));
     const [search, setSearch] = useState("");
 
     const rows = useMemo(() => {
@@ -40,7 +40,7 @@ export default function ContractsPage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        const docRef = doc(db, "contracts", String(row.contractId));
+        const docRef = doc(db, "finance", "default", "contracts", String(row.contractId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
             alert("找不到該合約");
