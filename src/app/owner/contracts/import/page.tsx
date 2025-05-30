@@ -8,6 +8,12 @@ import { collection, addDoc, Timestamp } from "firebase/firestore";
 // 定義 ContractData 型別
 interface ContractData {
     contractName: string;
+    contractPrice: number;
+    contractItems: any[];
+    clientName: string;
+    clientContact: string;
+    clientPhone: string;
+    clientEmail: string;
     createdAt: Date | Timestamp;
     updatedAt: Timestamp;
     sourceType: 'order' | 'quote';
@@ -70,19 +76,50 @@ export default function ImportContractPage() {
                 setMessage("來源資料缺少正確的建立日期，無法建立合約。");
                 throw new Error("來源資料缺少正確的建立日期，無法建立合約。");
             }
-            const contractData: ContractData = {
-                contractName: row.name,
-                createdAt: rawCreatedAt as Timestamp | Date,
-                updatedAt: Timestamp.now(),
-                sourceType: type,
-                sourceId: row.id,
-                contractContent: '',
-            };
-            // 可根據需要帶入更多欄位
+            // 依來源型別轉換合約內容
+            let contractData: ContractData;
             if (type === 'order') {
-                contractData.contractContent = `訂單內容：\n${JSON.stringify(row.raw, null, 2)}`;
+                contractData = {
+                    contractName: String(row.raw.orderName || row.name),
+                    contractPrice: Number(row.raw.orderPrice || 0),
+                    contractItems: Array.isArray(row.raw.orderItems) ? row.raw.orderItems.map((item: any) => ({
+                        contractItemId: item.orderItemId,
+                        contractItemPrice: item.orderItemPrice,
+                        contractItemQuantity: item.orderItemQuantity,
+                        contractItemWeight: item.orderItemWeight ?? null,
+                    })) : [],
+                    clientName: String(row.raw.clientName || ''),
+                    clientContact: String(row.raw.clientContact || ''),
+                    clientPhone: String(row.raw.clientPhone || ''),
+                    clientEmail: String(row.raw.clientEmail || ''),
+                    createdAt: rawCreatedAt as Timestamp | Date,
+                    updatedAt: Timestamp.now(),
+                    sourceType: 'order',
+                    sourceId: row.id,
+                    contractContent:
+                        `本合約由甲方（本公司）與乙方（${row.raw.clientName || '客戶'}）簽訂，內容如下：\n\n1. 合約名稱：${row.raw.orderName || row.name}\n2. 合約金額：${row.raw.orderPrice || 0} 元\n3. 合約項目：\n${Array.isArray(row.raw.orderItems) ? row.raw.orderItems.map((item: any, idx: number) => `   (${idx + 1}) ${item.orderItemId || ''}，單價：${item.orderItemPrice}，數量：${item.orderItemQuantity}`).join('\n') : ''}\n4. 聯絡人：${row.raw.clientContact || ''}\n5. 聯絡電話：${row.raw.clientPhone || ''}\n6. Email：${row.raw.clientEmail || ''}\n\n雙方同意依上述條款履行本合約。`
+                };
             } else {
-                contractData.contractContent = `估價單內容：\n${JSON.stringify(row.raw, null, 2)}`;
+                contractData = {
+                    contractName: String(row.raw.quoteName || row.name),
+                    contractPrice: Number(row.raw.quotePrice || 0),
+                    contractItems: Array.isArray(row.raw.quoteItems) ? row.raw.quoteItems.map((item: any) => ({
+                        contractItemId: item.quoteItemId,
+                        contractItemPrice: item.quoteItemPrice,
+                        contractItemQuantity: item.quoteItemQuantity,
+                        contractItemWeight: item.quoteItemWeight ?? null,
+                    })) : [],
+                    clientName: String(row.raw.clientName || ''),
+                    clientContact: String(row.raw.clientContact || ''),
+                    clientPhone: String(row.raw.clientPhone || ''),
+                    clientEmail: String(row.raw.clientEmail || ''),
+                    createdAt: rawCreatedAt as Timestamp | Date,
+                    updatedAt: Timestamp.now(),
+                    sourceType: 'quote',
+                    sourceId: row.id,
+                    contractContent:
+                        `本合約由甲方（本公司）與乙方（${row.raw.clientName || '客戶'}）簽訂，內容如下：\n\n1. 合約名稱：${row.raw.quoteName || row.name}\n2. 合約金額：${row.raw.quotePrice || 0} 元\n3. 合約項目：\n${Array.isArray(row.raw.quoteItems) ? row.raw.quoteItems.map((item: any, idx: number) => `   (${idx + 1}) ${item.quoteItemId || ''}，單價：${item.quoteItemPrice}，數量：${item.quoteItemQuantity}${item.quoteItemWeight !== undefined ? `，權重：${item.quoteItemWeight}` : ''}`).join('\n') : ''}\n4. 聯絡人：${row.raw.clientContact || ''}\n5. 聯絡電話：${row.raw.clientPhone || ''}\n6. Email：${row.raw.clientEmail || ''}\n\n雙方同意依上述條款履行本合約。`
+                };
             }
             const docRef = await addDoc(collection(db, "finance", "default", "contracts"), contractData);
             setMessage(`已成功匯入並建立合約，ID: ${docRef.id}`);

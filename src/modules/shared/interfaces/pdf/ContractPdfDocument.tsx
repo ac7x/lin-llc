@@ -28,11 +28,11 @@ export function ContractPdfDocument({ contract, qrCodeDataUrl }: { contract: Rec
                 <View style={styles.section}>
                     <Text style={styles.title}>合約明細</Text>
                     <Text>合約名稱: {String(contract.contractName ?? '')}</Text>
+                    <Text>合約金額: {String(contract.contractPrice ?? '')}</Text>
                     <Text>客戶名稱: {String(contract.clientName ?? '')}</Text>
                     <Text>聯絡人: {String(contract.clientContact ?? '')}</Text>
                     <Text>電話: {String(contract.clientPhone ?? '')}</Text>
                     <Text>Email: {String(contract.clientEmail ?? '')}</Text>
-                    <Text>價格: {String(contract.contractPrice ?? '')}</Text>
                     <Text>建立日期: {contract.createdAt && typeof contract.createdAt === 'object' && 'toLocaleDateString' in contract.createdAt ? (contract.createdAt as Date).toLocaleDateString() : '-'}</Text>
                     <Text>修改日期: {contract.updatedAt && typeof contract.updatedAt === 'object' && 'toLocaleDateString' in contract.updatedAt ? (contract.updatedAt as Date).toLocaleDateString() : '-'}</Text>
                 </View>
@@ -55,6 +55,15 @@ export function ContractPdfDocument({ contract, qrCodeDataUrl }: { contract: Rec
                         ))}
                     </View>
                 )}
+                {/* 合約條款內容 */}
+                <View style={styles.section}>
+                    <Text style={{ fontWeight: 'bold', marginBottom: 6 }}>合約條款</Text>
+                    {String(contract.contractContent || '（無內容）')
+                        .split('\n')
+                        .map((line, idx) => (
+                            <Text key={idx} style={{ fontSize: 10 }}>{line}</Text>
+                        ))}
+                </View>
             </Page>
         </Document>
     );
