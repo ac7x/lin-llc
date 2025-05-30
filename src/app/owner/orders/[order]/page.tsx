@@ -122,9 +122,8 @@ export default function OrderDetailPage() {
                 <div className="text-red-500">{error}</div>
             ) : editing ? (
                 <form onSubmit={handleSaveEdit}>
-                    {/* 客戶欄位 */}
+                    {/* 客戶資訊 */}
                     <div className="mb-4">
-                        <label className="block font-medium mb-1">客戶名稱：</label>
                         <input
                             type="text"
                             className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
@@ -133,7 +132,6 @@ export default function OrderDetailPage() {
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="block font-medium mb-1">客戶聯絡人：</label>
                         <input
                             type="text"
                             className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
@@ -142,7 +140,6 @@ export default function OrderDetailPage() {
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="block font-medium mb-1">聯絡電話：</label>
                         <input
                             type="text"
                             className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
@@ -151,7 +148,6 @@ export default function OrderDetailPage() {
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="block font-medium mb-1">郵箱：</label>
                         <input
                             type="email"
                             className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
@@ -159,20 +155,27 @@ export default function OrderDetailPage() {
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientEmail(e.target.value)}
                         />
                     </div>
-                    {/* 訂單金額與項目移到下方 */}
+
+                    {/* 訂單基本資訊 */}
                     <div className="mb-4">
-                        <label className="block font-medium mb-1">訂單金額：</label>
+                        <input
+                            type="text"
+                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={editOrderName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderName(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-4">
                         <input
                             type="number"
                             className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                             value={editOrderPrice}
-                            min={0}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderPrice(Number(e.target.value))}
-                            required
                         />
                     </div>
+
+                    {/* 訂單項目 */}
                     <div className="mb-4">
-                        <label className="block font-medium mb-1">訂單項目：</label>
                         <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
                             <thead>
                                 <tr className="bg-gray-100 dark:bg-gray-800">
@@ -243,8 +246,7 @@ export default function OrderDetailPage() {
                         <button type="button" className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded mt-2" onClick={addEditItem}>新增項目</button>
                     </div>
                     <div className="mt-6 flex gap-2">
-                        <button type="submit" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded">儲存</button>
-                        <button type="button" className="bg-gray-300 dark:bg-gray-800 text-black dark:text-gray-100 px-6 py-2 rounded" onClick={() => setEditing(false)}>取消</button>
+                        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">儲存</button>
                     </div>
                 </form>
             ) : (

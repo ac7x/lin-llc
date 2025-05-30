@@ -76,7 +76,7 @@ export default function OrderAddPage() {
         <main className="max-w-xl mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold mb-4">新增訂單</h1>
             <form onSubmit={handleSubmit}>
-                {/* 客戶欄位 */}
+                {/* 客戶資訊 */}
                 <div className="mb-4">
                     <label className="block font-medium mb-1">客戶名稱：</label>
                     <input
@@ -113,7 +113,8 @@ export default function OrderAddPage() {
                         onChange={e => setClientEmail(e.target.value)}
                     />
                 </div>
-                {/* 訂單名稱與金額移到下方 */}
+
+                {/* 訂單基本資訊 */}
                 <div className="mb-4">
                     <label className="block font-medium mb-1">訂單名稱：</label>
                     <input
@@ -135,6 +136,8 @@ export default function OrderAddPage() {
                         required
                     />
                 </div>
+
+                {/* 訂單項目 */}
                 <div className="mb-4">
                     <label className="block font-medium mb-1">訂單項目：</label>
                     <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
