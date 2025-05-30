@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection } from "firebase/firestore";
+import { useCollection, } from "react-firebase-hooks/firestore";
+import { collection, doc, getDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useMemo, useState } from "react";
+import { ContractPdfDocument } from '@/modules/shared/interfaces/pdf/ContractPdfDocument';
+import { exportPdfToBlob } from '@/modules/shared/interfaces/pdf/pdfExport';
 
 export default function ContractsPage() {
     const [contractsSnapshot, loading, error] = useCollection(collection(db, "contracts"));
@@ -21,6 +23,7 @@ export default function ContractsPage() {
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
                 sourceType: data.sourceType, // "order" or "quote"
                 sourceId: data.sourceId,
+                raw: data,
             };
         });
         if (search.trim()) {
@@ -33,6 +36,23 @@ export default function ContractsPage() {
         }
         return arr;
     }, [contractsSnapshot, search]);
+
+    // 匯出 PDF
+    const handleExportPdf = async (row: Record<string, unknown>) => {
+        const docRef = doc(db, "contracts", String(row.contractId));
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+            alert("找不到該合約");
+            return;
+        }
+        const data = docSnap.data();
+        data.createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt;
+        data.updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt;
+        exportPdfToBlob(
+            <ContractPdfDocument contract={data} />,
+            `${data.contractName || data.contractId || '合約'}.pdf`
+        );
+    };
 
     return (
         <main className="max-w-2xl mx-auto px-4 py-8">
@@ -78,6 +98,12 @@ export default function ContractsPage() {
                                 <td className="border px-2 py-1">{row.createdAt ? row.createdAt.toLocaleDateString() : "-"}</td>
                                 <td className="border px-2 py-1">
                                     <Link href={`/owner/contracts/${row.contractId}`} className="text-blue-600 hover:underline">查看</Link>
+                                    <button
+                                        className="ml-2 text-indigo-600 hover:underline dark:text-yellow-400 dark:hover:text-yellow-300"
+                                        onClick={() => handleExportPdf(row)}
+                                    >
+                                        匯出PDF
+                                    </button>
                                 </td>
                             </tr>
                         ))
