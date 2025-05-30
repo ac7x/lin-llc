@@ -5,11 +5,19 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 
+// 定義 ContractItem 型別
+interface ContractItem {
+    contractItemId: string;
+    contractItemPrice: number;
+    contractItemQuantity: number;
+    contractItemWeight?: number | null;
+}
+
 // 定義 ContractData 型別
 interface ContractData {
     contractName: string;
     contractPrice: number;
-    contractItems: any[];
+    contractItems: ContractItem[];
     clientName: string;
     clientContact: string;
     clientPhone: string;
@@ -32,12 +40,14 @@ export default function ImportContractPage() {
     const orderRows = useMemo(() => {
         if (!ordersSnapshot) return [];
         return ordersSnapshot.docs.map((doc, idx) => {
-            const data = doc.data();
+            const data = doc.data() as Record<string, unknown>;
             return {
                 idx: idx + 1,
-                id: data.orderId || doc.id,
-                name: data.orderName || data.orderId || doc.id,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+                id: (data.orderId as string) || doc.id,
+                name: (data.orderName as string) || (data.orderId as string) || doc.id,
+                createdAt: (data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt)
+                    ? (data.createdAt as Timestamp).toDate()
+                    : (data.createdAt ? new Date(data.createdAt as string) : null),
                 raw: data,
             };
         });
@@ -45,12 +55,14 @@ export default function ImportContractPage() {
     const quoteRows = useMemo(() => {
         if (!quotesSnapshot) return [];
         return quotesSnapshot.docs.map((doc, idx) => {
-            const data = doc.data();
+            const data = doc.data() as Record<string, unknown>;
             return {
                 idx: idx + 1,
-                id: data.quoteId || doc.id,
-                name: data.quoteName || data.quoteId || doc.id,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+                id: (data.quoteId as string) || doc.id,
+                name: (data.quoteName as string) || (data.quoteId as string) || doc.id,
+                createdAt: (data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt)
+                    ? (data.createdAt as Timestamp).toDate()
+                    : (data.createdAt ? new Date(data.createdAt as string) : null),
                 raw: data,
             };
         });
@@ -79,15 +91,18 @@ export default function ImportContractPage() {
             // 依來源型別轉換合約內容
             let contractData: ContractData;
             if (type === 'order') {
+                const orderItems = Array.isArray(row.raw.orderItems)
+                    ? (row.raw.orderItems as Array<Record<string, unknown>>).map((item) => ({
+                        contractItemId: String(item.orderItemId ?? ''),
+                        contractItemPrice: Number(item.orderItemPrice ?? 0),
+                        contractItemQuantity: Number(item.orderItemQuantity ?? 0),
+                        contractItemWeight: item.orderItemWeight !== undefined ? Number(item.orderItemWeight) : null,
+                    }))
+                    : [];
                 contractData = {
                     contractName: String(row.raw.orderName || row.name),
                     contractPrice: Number(row.raw.orderPrice || 0),
-                    contractItems: Array.isArray(row.raw.orderItems) ? row.raw.orderItems.map((item: any) => ({
-                        contractItemId: item.orderItemId,
-                        contractItemPrice: item.orderItemPrice,
-                        contractItemQuantity: item.orderItemQuantity,
-                        contractItemWeight: item.orderItemWeight ?? null,
-                    })) : [],
+                    contractItems: orderItems,
                     clientName: String(row.raw.clientName || ''),
                     clientContact: String(row.raw.clientContact || ''),
                     clientPhone: String(row.raw.clientPhone || ''),
@@ -97,18 +112,21 @@ export default function ImportContractPage() {
                     sourceType: 'order',
                     sourceId: row.id,
                     contractContent:
-                        `本合約由甲方（本公司）與乙方（${row.raw.clientName || '客戶'}）簽訂，內容如下：\n\n1. 合約名稱：${row.raw.orderName || row.name}\n2. 合約金額：${row.raw.orderPrice || 0} 元\n3. 合約項目：\n${Array.isArray(row.raw.orderItems) ? row.raw.orderItems.map((item: any, idx: number) => `   (${idx + 1}) ${item.orderItemId || ''}，單價：${item.orderItemPrice}，數量：${item.orderItemQuantity}`).join('\n') : ''}\n4. 聯絡人：${row.raw.clientContact || ''}\n5. 聯絡電話：${row.raw.clientPhone || ''}\n6. Email：${row.raw.clientEmail || ''}\n\n雙方同意依上述條款履行本合約。`
+                        `本合約由甲方（本公司）與乙方（${row.raw.clientName || '客戶'}）簽訂，內容如下：\n\n1. 合約名稱：${row.raw.orderName || row.name}\n2. 合約金額：${row.raw.orderPrice || 0} 元\n3. 合約項目：\n${orderItems.map((item, idx) => `   (${idx + 1}) ${item.contractItemId}，單價：${item.contractItemPrice}，數量：${item.contractItemQuantity}`).join('\n')}\n4. 聯絡人：${row.raw.clientContact || ''}\n5. 聯絡電話：${row.raw.clientPhone || ''}\n6. Email：${row.raw.clientEmail || ''}\n\n雙方同意依上述條款履行本合約。`
                 };
             } else {
+                const quoteItems = Array.isArray(row.raw.quoteItems)
+                    ? (row.raw.quoteItems as Array<Record<string, unknown>>).map((item) => ({
+                        contractItemId: String(item.quoteItemId ?? ''),
+                        contractItemPrice: Number(item.quoteItemPrice ?? 0),
+                        contractItemQuantity: Number(item.quoteItemQuantity ?? 0),
+                        contractItemWeight: item.quoteItemWeight !== undefined ? Number(item.quoteItemWeight) : null,
+                    }))
+                    : [];
                 contractData = {
                     contractName: String(row.raw.quoteName || row.name),
                     contractPrice: Number(row.raw.quotePrice || 0),
-                    contractItems: Array.isArray(row.raw.quoteItems) ? row.raw.quoteItems.map((item: any) => ({
-                        contractItemId: item.quoteItemId,
-                        contractItemPrice: item.quoteItemPrice,
-                        contractItemQuantity: item.quoteItemQuantity,
-                        contractItemWeight: item.quoteItemWeight ?? null,
-                    })) : [],
+                    contractItems: quoteItems,
                     clientName: String(row.raw.clientName || ''),
                     clientContact: String(row.raw.clientContact || ''),
                     clientPhone: String(row.raw.clientPhone || ''),
@@ -118,7 +136,7 @@ export default function ImportContractPage() {
                     sourceType: 'quote',
                     sourceId: row.id,
                     contractContent:
-                        `本合約由甲方（本公司）與乙方（${row.raw.clientName || '客戶'}）簽訂，內容如下：\n\n1. 合約名稱：${row.raw.quoteName || row.name}\n2. 合約金額：${row.raw.quotePrice || 0} 元\n3. 合約項目：\n${Array.isArray(row.raw.quoteItems) ? row.raw.quoteItems.map((item: any, idx: number) => `   (${idx + 1}) ${item.quoteItemId || ''}，單價：${item.quoteItemPrice}，數量：${item.quoteItemQuantity}${item.quoteItemWeight !== undefined ? `，權重：${item.quoteItemWeight}` : ''}`).join('\n') : ''}\n4. 聯絡人：${row.raw.clientContact || ''}\n5. 聯絡電話：${row.raw.clientPhone || ''}\n6. Email：${row.raw.clientEmail || ''}\n\n雙方同意依上述條款履行本合約。`
+                        `本合約由甲方（本公司）與乙方（${row.raw.clientName || '客戶'}）簽訂，內容如下：\n\n1. 合約名稱：${row.raw.quoteName || row.name}\n2. 合約金額：${row.raw.quotePrice || 0} 元\n3. 合約項目：\n${quoteItems.map((item, idx) => `   (${idx + 1}) ${item.contractItemId}，單價：${item.contractItemPrice}，數量：${item.contractItemQuantity}${item.contractItemWeight !== null ? `，權重：${item.contractItemWeight}` : ''}`).join('\n')}\n4. 聯絡人：${row.raw.clientContact || ''}\n5. 聯絡電話：${row.raw.clientPhone || ''}\n6. Email：${row.raw.clientEmail || ''}\n\n雙方同意依上述條款履行本合約。`
                 };
             }
             const docRef = await addDoc(collection(db, "finance", "default", "contracts"), contractData);
