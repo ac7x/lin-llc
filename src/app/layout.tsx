@@ -24,6 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://www.google.com/recaptcha/api.js?render=6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
