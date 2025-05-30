@@ -3,7 +3,7 @@ import "../styles/globals.css";
 
 export const metadata: Metadata = {
   title: "Lin.LLC",
-  description: "Lin.LLC app",
+  description: "Lin.LLC - 提供專業的軟體開發與 AI 解決方案",
 };
 
 export default function RootLayout({
