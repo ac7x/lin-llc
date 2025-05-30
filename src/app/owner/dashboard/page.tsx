@@ -14,6 +14,8 @@ export default function DashboardPage() {
   // 新增：取得 orders 與 quotes 集合的 snapshot
   const [ordersSnapshot, ordersLoading, ordersError] = useCollection(collection(db, 'orders'));
   const [quotesSnapshot, quotesLoading, quotesError] = useCollection(collection(db, 'quotes'));
+  // 新增：取得 contracts 集合的 snapshot
+  const [contractsSnapshot, contractsLoading, contractsError] = useCollection(collection(db, 'contracts'));
   // flowsSnapshot 型別修正
   interface FlowDoc {
     id: string;
@@ -146,6 +148,13 @@ export default function DashboardPage() {
               <div className="text-[11px] text-yellow-800 dark:text-yellow-200 mb-0.5">專案總數</div>
               <div className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 leading-tight">
                 {projectsLoading ? '...' : projectsError ? '錯誤' : projectsSnapshot?.size ?? 0}
+              </div>
+            </section>
+            {/* 合約總數卡片 */}
+            <section className="flex-1 min-w-[100px] bg-blue-50 dark:bg-blue-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
+              <div className="text-[11px] text-blue-800 dark:text-blue-200 mb-0.5">合約總數</div>
+              <div className="text-2xl font-bold text-blue-800 dark:text-blue-200 leading-tight">
+                {contractsLoading ? '...' : contractsError ? '錯誤' : contractsSnapshot?.size ?? 0}
               </div>
             </section>
             {/* 訂單總數卡片 */}
