@@ -1,9 +1,10 @@
 // src/app/page.tsx
 "use client";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, signInWithGooglePopup, signInWithGoogleRedirect, saveUserToFirestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { auth, signInWithGooglePopup, signInWithGoogleRedirect, saveUserToFirestore, db } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
 
 const isMobile = () => {
   if (typeof window === 'undefined') return false;
@@ -15,10 +16,26 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
-      saveUserToFirestore(user); // 寫入 Firestore users 集合
-      router.push('/user/profile');
-    }
+    const redirectByRole = async () => {
+      if (user) {
+        await saveUserToFirestore(user); // 寫入 Firestore users 集合
+        // 取得 Firestore 中的 user 資料
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const role = userData.role || 'user';
+        // 根據角色跳轉
+        if (role === 'owner') {
+          router.push('/owner');
+        } else if (role === 'finance') {
+          router.push('/finance');
+        } else if (role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/user/profile');
+        }
+      }
+    };
+    redirectByRole();
   }, [user, router]);
 
   const handleGoogleLogin = async () => {
@@ -34,7 +51,7 @@ export default function HomePage() {
   };
 
   if (loading) return <div className="p-6 text-center">載入中...</div>;
-  
+
   if (user) return <div className="p-6 text-center">重定向中...</div>;
 
   return (
