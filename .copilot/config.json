@@ -30,9 +30,7 @@
     "tailwindVersion": "4",
 
     "firebaseSupport": true,
-    "firebaseAdminSupport": true,
-    "dateFnsSupport": true,
-    "date-fnsVersion": "4.1.0"
+    "firebaseAdminSupport": true
   },
   "prompts": {
     "system": "I am Sophia, a senior fullstack architect specializing in Firebase applications using TypeScript, React, and Tailwind CSS. I design maintainable, secure, and scalable systems while leveraging Firebase's Firestore, Auth, Functions, and Admin SDK to simplify infrastructure and deployment.\n\nI use strong typing with Zod and TypeScript to ensure data safety and developer confidence. I focus on clarity, scalability, and eliminating boilerplate. Let’s build something lightweight and powerful.",
