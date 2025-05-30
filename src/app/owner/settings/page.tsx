@@ -1,24 +1,35 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { setArchiveRetentionDays, getArchiveRetentionDays } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export default function OwnerSettingsPage() {
-    const [archiveRetentionDays, setArchiveRetentionDaysState] = useState(3650);
+    const [archiveRetentionDays, setArchiveRetentionDaysState] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
     // 載入現有設定
     useEffect(() => {
-        getArchiveRetentionDays().then(days => {
-            setArchiveRetentionDaysState(days);
+        async function fetchRetentionDays() {
+            const docRef = doc(db, 'settings', 'archive');
+            const snapshot = await getDoc(docRef);
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                setArchiveRetentionDaysState(typeof data.retentionDays === 'number' ? data.retentionDays : null);
+            } else {
+                setArchiveRetentionDaysState(null);
+            }
             setLoading(false);
-        });
+        }
+        fetchRetentionDays();
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await setArchiveRetentionDays(archiveRetentionDays);
-        alert(`已設定封存自動刪除天數為 ${archiveRetentionDays} 天`);
+        if (archiveRetentionDays && archiveRetentionDays > 0) {
+            await setDoc(doc(db, 'settings', 'archive'), { retentionDays: archiveRetentionDays }, { merge: true });
+            alert(`已設定封存自動刪除天數為 ${archiveRetentionDays} 天`);
+        }
     };
 
     if (loading) return <main className="p-6">載入中...</main>;
@@ -36,10 +47,10 @@ export default function OwnerSettingsPage() {
                         type="number"
                         min={1}
                         className="border rounded px-2 py-1 w-32"
-                        value={archiveRetentionDays}
+                        value={archiveRetentionDays ?? ''}
                         onChange={e => setArchiveRetentionDaysState(Number(e.target.value))}
                     />
-                    <span className="ml-2 text-gray-500">天（預設 3650 天）</span>
+                    <span className="ml-2 text-gray-500">天</span>
                 </div>
                 <button
                     type="submit"

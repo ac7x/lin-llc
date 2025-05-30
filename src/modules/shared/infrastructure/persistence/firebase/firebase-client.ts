@@ -129,18 +129,5 @@ export async function createVirtualUser({
   return userData;
 }
 
-// 儲存封存自動刪除天數（全域設定）
-export async function setArchiveRetentionDays(days: number) {
-  await setDoc(doc(db, 'settings', 'archive'), { retentionDays: days }, { merge: true });
-}
-
-// 取得封存自動刪除天數
-export async function getArchiveRetentionDays(): Promise<number> {
-  const docRef = doc(db, 'settings', 'archive');
-  const snapshot = await import('firebase/firestore').then(m => m.getDoc(docRef));
-  if (snapshot.exists()) {
-    const data = snapshot.data();
-    return typeof data.retentionDays === 'number' ? data.retentionDays : 3650;
-  }
-  return 3650;
-}
+// 匯出 RECAPTCHA_SITE_KEY 供其他檔案共用
+export const RECAPTCHA_SITE_KEY = "6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE";

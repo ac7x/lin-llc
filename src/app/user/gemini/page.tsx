@@ -1,38 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel, ChatSession } from "firebase/ai";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
-  authDomain: "lin-llc.firebaseapp.com",
-  projectId: "lin-llc",
-  storageBucket: "lin-llc.firebasestorage.app",
-  messagingSenderId: "394023041902",
-  appId: "1:394023041902:web:f9874be5d0d192557b1f7f",
-  measurementId: "G-62JEHK00G8"
-};
-
-const RECAPTCHA_SITE_KEY = "6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE";
-
-let firebaseAppInstance: FirebaseApp;
-
-try {
-  if (!getApps().length) {
-    firebaseAppInstance = initializeApp(firebaseConfig);
-  } else {
-    firebaseAppInstance = getApp();
-  }
-} catch (error) {
-  console.error("Error initializing Firebase App:", error);
-}
-
-// Define an interface to extend FirebaseApp for the internal flag
-interface FirebaseAppWithAppCheckFlag extends FirebaseApp {
-  _isinitializeAppCheckCalled?: boolean;
-}
+import { app as firebaseAppInstance, RECAPTCHA_SITE_KEY } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 
 interface ChatMessage {
   role: "user" | "model";
@@ -84,17 +54,7 @@ export default function GeminiPage() {
       }
 
       try {
-        // Use the extended interface to avoid `any`
-        const app = firebaseAppInstance as FirebaseAppWithAppCheckFlag;
-        if (!app._isinitializeAppCheckCalled) {
-          initializeAppCheck(app, {
-            provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
-            isTokenAutoRefreshEnabled: true
-          });
-          app._isinitializeAppCheckCalled = true;
-          console.log("Firebase App Check initialized.");
-        }
-
+        // 不再呼叫 initializeAppCheck，因為已在 firebase-client.ts 初始化
         const ai = getAI(firebaseAppInstance, { backend: new GoogleAIBackend() });
         modelRef.current = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
         console.log("Gemini model initialized.");
@@ -110,13 +70,12 @@ export default function GeminiPage() {
         setIsInitialized(true);
         setError(""); // Clear any initialization errors
 
-      } catch (err: unknown) { // Changed from any to unknown
-        console.error("Error initializing AI Model or App Check:", err);
-        // Perform type check before accessing error properties
+      } catch (err: unknown) {
+        console.error("Error initializing AI Model:", err);
         if (err instanceof Error) {
-          setError(`AI 模型或 App Check 初始化失敗: ${err.message}`);
+          setError(`AI 模型初始化失敗: ${err.message}`);
         } else {
-          setError("AI 模型或 App Check 初始化失敗: 未知錯誤");
+          setError("AI 模型初始化失敗: 未知錯誤");
         }
       }
     };
