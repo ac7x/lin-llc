@@ -6,7 +6,7 @@ Font.register({
     src: '/fonts/NotoSerifTC-Regular.ttf',
 });
 
-export function OrderPdfDocument({ order }: { order: Record<string, any> }) {
+export function OrderPdfDocument({ order }: { order: Record<string, unknown> }) {
     const orderItems = Array.isArray(order.orderItems) ? order.orderItems : [];
     return (
         <Document>

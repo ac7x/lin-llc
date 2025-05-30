@@ -6,7 +6,7 @@ Font.register({
     src: '/fonts/NotoSerifTC-Regular.ttf',
 });
 
-export function ContractPdfDocument({ contract }: { contract: Record<string, any> }) {
+export function ContractPdfDocument({ contract }: { contract: Record<string, unknown> }) {
     const contractItems = Array.isArray(contract.contractItems) ? contract.contractItems : [];
     return (
         <Document>

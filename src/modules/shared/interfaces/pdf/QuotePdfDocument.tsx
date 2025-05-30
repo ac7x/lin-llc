@@ -5,7 +5,7 @@ Font.register({
     src: '/fonts/NotoSerifTC-Regular.ttf',
 });
 
-export function QuotePdfDocument({ quote }: { quote: Record<string, any> }) {
+export function QuotePdfDocument({ quote }: { quote: Record<string, unknown> }) {
     const quoteItems = Array.isArray(quote.quoteItems) ? quote.quoteItems : [];
     return (
         <Document>
