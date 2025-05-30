@@ -181,15 +181,7 @@ export default function OrderAddPage() {
                                             required
                                         />
                                     </td>
-                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">
-                                        <input
-                                            type="number"
-                                            className="border px-2 py-1 rounded w-20 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-700 cursor-not-allowed"
-                                            value={getUnitPrice(item)}
-                                            disabled
-                                            tabIndex={-1}
-                                        />
-                                    </td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getUnitPrice(item)}</td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.orderItemQuantity).toFixed(2)}</td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.orderItemQuantity)}%</td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
