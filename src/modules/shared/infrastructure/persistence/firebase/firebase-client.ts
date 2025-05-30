@@ -15,14 +15,14 @@ const firebaseConfig = {
   measurementId: "G-62JEHK00G8"
 };
 
-// SSR/多次初始化防呆
+// SSR / 多次初始化防呆，確保只初始化一次 Firebase App
 export const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
-// App Check 初始化（僅在瀏覽器端執行）
+// 只在瀏覽器端初始化 App Check，避免 SSR 錯誤
 if (typeof window !== 'undefined') {
   initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider('6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE'),
-    isTokenAutoRefreshEnabled: true,
+    isTokenAutoRefreshEnabled: true, // 啟用自動續期 token
   });
 }
 
@@ -31,13 +31,16 @@ export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Google 登入
+// Google 登入 - Popup 方式
 export const signInWithGooglePopup = () => signInWithPopup(auth, googleProvider);
+
+// Google 登入 - Redirect 方式
 export const signInWithGoogleRedirect = () => signInWithRedirect(auth, googleProvider);
 
 // 登出
 export const logout = () => signOut(auth);
 
+// 儲存用戶資料到 Firestore
 export async function saveUserToFirestore(user: {
   uid: string;
   email?: string | null;
@@ -56,11 +59,13 @@ export async function saveUserToFirestore(user: {
   }, { merge: true });
 }
 
+// 更新用戶角色
 export async function updateUserRole(uid: string, role: string) {
   if (!uid || !role) return;
   await setDoc(doc(db, 'users', uid), { role }, { merge: true });
 }
 
+// 取得用戶列表
 export async function getUsersList() {
   try {
     const usersRef = collection(db, 'users');
@@ -75,6 +80,7 @@ export async function getUsersList() {
   }
 }
 
+// 刪除用戶
 export async function deleteUserFromFirestore(uid: string) {
   try {
     const userRef = doc(db, 'users', uid);
@@ -93,7 +99,6 @@ export async function createVirtualUser({
   displayName: string;
   role: string;
 }) {
-  // 產生 28 字元隨機 UID
   function generateUid(length = 28) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let uid = '';
@@ -108,9 +113,9 @@ export async function createVirtualUser({
     uid,
     displayName,
     role,
-    email: '', // 修正: 不存 undefined
+    email: '', // 不存 undefined
     emailVerified: false,
-    photoURL: '', // 修正: 不存 undefined
+    photoURL: '', // 不存 undefined
     updatedAt: now,
     metadata: {
       creationTime: now.toISOString(),
@@ -119,13 +124,12 @@ export async function createVirtualUser({
     disabled: false,
   };
 
-  // 直接使用上方已初始化的 db
   await setDoc(doc(db, 'users', uid), userData);
 
   return userData;
 }
 
-// 儲存封存自動刪除天數（全域設定，可依需求調整 collection/doc 結構）
+// 儲存封存自動刪除天數（全域設定）
 export async function setArchiveRetentionDays(days: number) {
   await setDoc(doc(db, 'settings', 'archive'), { retentionDays: days }, { merge: true });
 }
