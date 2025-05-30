@@ -61,6 +61,10 @@ export default function OrderAddPage() {
                 totalOrderItemPrice,
                 createdAt: now,
                 updatedAt: now,
+                clientName,           // 新增
+                clientContact,        // 新增
+                clientPhone,          // 新增
+                clientEmail,          // 新增
             });
             router.push("/owner/orders");
         } catch (err) {
