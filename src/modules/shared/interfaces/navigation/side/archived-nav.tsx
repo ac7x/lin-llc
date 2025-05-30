@@ -8,6 +8,7 @@ export default function ArchivedNav() {
     const navs = [
         { label: "封存訂單", href: "/owner/archived/orders" },
         { label: "封存估價單", href: "/owner/archived/quotes" },
+        { label: "封存合約", href: "/owner/archived/contracts" },
     ];
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">

@@ -19,6 +19,7 @@ const defaultOwnerNavItems: NavItem[] = [
     { href: '/owner/dashboard', icon: '📊', label: '儀表板', active: false },
     { href: '/owner/orders', icon: '🧾', label: '訂單', active: false },
     { href: '/owner/quotes', icon: '📄', label: '估價單', active: false },
+    { href: '/owner/contracts', icon: '📑', label: '合約', active: false }, // 新增合約
     { href: '/owner/archived', icon: '🗄️', label: '封存', active: false },
     { href: '/owner/users', icon: '👤', label: '用戶管理', active: false },
     { href: '/owner/settings', icon: '⚙️', label: '設定', active: false }, // 新增設定
