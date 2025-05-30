@@ -11,6 +11,9 @@ export default function DashboardPage() {
   // 取得 users 和 projects 集合的 snapshot
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
+  // 新增：取得 orders 與 quotes 集合的 snapshot
+  const [ordersSnapshot, ordersLoading, ordersError] = useCollection(collection(db, 'orders'));
+  const [quotesSnapshot, quotesLoading, quotesError] = useCollection(collection(db, 'quotes'));
   // flowsSnapshot 型別修正
   interface FlowDoc {
     id: string;
@@ -136,14 +139,30 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             )}
           </section>
-          {/* 專案統計區塊 */}
-          <section className="flex-1 min-w-[320px] bg-yellow-50 dark:bg-yellow-950 rounded-xl p-6 shadow-md">
-            <h3 className="text-xl font-semibold mb-4 text-yellow-800 dark:text-yellow-200">專案統計</h3>
-            <div className="text-5xl font-bold text-yellow-800 dark:text-yellow-200 mb-2">
-              {projectsLoading ? '載入中...' : projectsError ? '錯誤' : projectsSnapshot?.size ?? 0}
-            </div>
-            <div className="text-lg text-yellow-800 dark:text-yellow-200">專案總數</div>
-          </section>
+          {/* 小型統計卡片區塊（更小更緊湊） */}
+          <div className="flex gap-2 flex-wrap mb-6">
+            {/* 專案總數卡片 */}
+            <section className="flex-1 min-w-[100px] bg-yellow-50 dark:bg-yellow-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
+              <div className="text-[11px] text-yellow-800 dark:text-yellow-200 mb-0.5">專案總數</div>
+              <div className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 leading-tight">
+                {projectsLoading ? '...' : projectsError ? '錯誤' : projectsSnapshot?.size ?? 0}
+              </div>
+            </section>
+            {/* 訂單總數卡片 */}
+            <section className="flex-1 min-w-[100px] bg-green-50 dark:bg-green-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
+              <div className="text-[11px] text-green-800 dark:text-green-200 mb-0.5">訂單總數</div>
+              <div className="text-2xl font-bold text-green-800 dark:text-green-200 leading-tight">
+                {ordersLoading ? '...' : ordersError ? '錯誤' : ordersSnapshot?.size ?? 0}
+              </div>
+            </section>
+            {/* 估價單總數卡片 */}
+            <section className="flex-1 min-w-[100px] bg-purple-50 dark:bg-purple-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
+              <div className="text-[11px] text-purple-800 dark:text-purple-200 mb-0.5">估價單總數</div>
+              <div className="text-2xl font-bold text-purple-800 dark:text-purple-200 leading-tight">
+                {quotesLoading ? '...' : quotesError ? '錯誤' : quotesSnapshot?.size ?? 0}
+              </div>
+            </section>
+          </div>
         </div>
         {/* S曲線區塊 */}
         <section className="mt-12 bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-md">
