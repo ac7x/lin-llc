@@ -16,46 +16,68 @@ export default function DashboardPage() {
   const [quotesSnapshot, quotesLoading, quotesError] = useCollection(collection(db, 'finance', 'default', 'quotes'));
   // 新增：取得 contracts 集合的 snapshot（改為 finance/default 子集合）
   const [contractsSnapshot, contractsLoading, contractsError] = useCollection(collection(db, 'finance', 'default', 'contracts'));
-  // flowsSnapshot 型別修正
-  interface FlowDoc {
-    id: string;
-    projectId: string;
-    name?: string;
-    date?: string;
-    end?: unknown;
-    [key: string]: unknown;
-  }
-  const [flowsSnapshot, setFlowsSnapshot] = React.useState<FlowDoc[]>([]);
-  const [flowsLoading, setFlowsLoading] = React.useState(true);
-  const [flowsError, setFlowsError] = React.useState<string | null>(null);
+
+  // 四合一折線圖資料處理
+  const [multiLineData, setMultiLineData] = React.useState<Array<{ date: string; 訂單: number; 估價單: number; 合約: number; 專案: number }>>([]);
+  const [multiLineLoading, setMultiLineLoading] = React.useState(true);
+  const [multiLineError, setMultiLineError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    setFlowsLoading(true);
-    setFlowsError(null);
-    // 取得所有 projects，再取得每個 project 的 flows 子集合
-    getDocs(collection(db, 'projects'))
-      .then(async (projectsSnap) => {
-        const allFlows: FlowDoc[] = [];
-        await Promise.all(
-          projectsSnap.docs.map(async (projectDoc) => {
-            const flowsSnap = await getDocs(collection(db, 'projects', projectDoc.id, 'flows'));
-            flowsSnap.docs.forEach(doc => {
-              allFlows.push({
-                ...doc.data(),
-                id: doc.id,
-                projectId: projectDoc.id,
-              });
-            });
-          })
-        );
-        setFlowsSnapshot(allFlows);
-      })
-      .catch((err: unknown) => {
-        setFlowsError((err as Error).message || '載入資料失敗');
-      })
-      .finally(() => {
-        setFlowsLoading(false);
-      });
+    setMultiLineLoading(true);
+    setMultiLineError(null);
+    async function fetchAllCreatedAt() {
+      try {
+        // 取得四個集合的 createdAt
+        const [ordersSnap, quotesSnap, contractsSnap, projectsSnap] = await Promise.all([
+          getDocs(collection(db, 'finance', 'default', 'orders')),
+          getDocs(collection(db, 'finance', 'default', 'quotes')),
+          getDocs(collection(db, 'finance', 'default', 'contracts')),
+          getDocs(collection(db, 'projects')),
+        ]);
+        // 依集合分類
+        const orders = ordersSnap.docs.map(doc => doc.data()?.createdAt?.toDate ? doc.data().createdAt.toDate() : (doc.data().createdAt instanceof Date ? doc.data().createdAt : null)).filter(Boolean) as Date[];
+        const quotes = quotesSnap.docs.map(doc => doc.data()?.createdAt?.toDate ? doc.data().createdAt.toDate() : (doc.data().createdAt instanceof Date ? doc.data().createdAt : null)).filter(Boolean) as Date[];
+        const contracts = contractsSnap.docs.map(doc => doc.data()?.createdAt?.toDate ? doc.data().createdAt.toDate() : (doc.data().createdAt instanceof Date ? doc.data().createdAt : null)).filter(Boolean) as Date[];
+        const projects = projectsSnap.docs.map(doc => doc.data()?.createdAt?.toDate ? doc.data().createdAt.toDate() : (doc.data().createdAt instanceof Date ? doc.data().createdAt : null)).filter(Boolean) as Date[];
+        // 將所有日期合併，找出所有出現過的日期
+        const allDatesSet = new Set<string>();
+        [orders, quotes, contracts, projects].forEach(arr => {
+          arr.forEach((d: Date) => allDatesSet.add(d.toISOString().slice(0, 10)));
+        });
+        const allDates = Array.from(allDatesSet).sort();
+        // 依日期累積數量
+        function getCumulative(arr: Date[], allDates: string[]): number[] {
+          const dateCounts: Record<string, number> = {};
+          arr.forEach((d: Date) => {
+            const dateStr = d.toISOString().slice(0, 10);
+            dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
+          });
+          let cumulative = 0;
+          return allDates.map(date => {
+            cumulative += dateCounts[date] || 0;
+            return cumulative;
+          });
+        }
+        const ordersC = getCumulative(orders, allDates);
+        const quotesC = getCumulative(quotes, allDates);
+        const contractsC = getCumulative(contracts, allDates);
+        const projectsC = getCumulative(projects, allDates);
+        // 組合成圖表資料
+        const chartData = allDates.map((date, i) => ({
+          date,
+          訂單: ordersC[i],
+          估價單: quotesC[i],
+          合約: contractsC[i],
+          專案: projectsC[i],
+        }));
+        setMultiLineData(chartData);
+      } catch (err: unknown) {
+        setMultiLineError((err as Error).message || '載入資料失敗');
+      } finally {
+        setMultiLineLoading(false);
+      }
+    }
+    fetchAllCreatedAt();
   }, []);
 
   // 統計各角色人數
@@ -81,69 +103,6 @@ export default function DashboardPage() {
   // 將 roleCounts 轉為陣列格式供圖表使用
   const roleData = Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count }));
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#2a8f4d', '#8f6b2a'];
-
-  // 四合一折線圖資料處理
-  const [multiLineData, setMultiLineData] = React.useState<any[]>([]);
-  const [multiLineLoading, setMultiLineLoading] = React.useState(true);
-  const [multiLineError, setMultiLineError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    setMultiLineLoading(true);
-    setMultiLineError(null);
-    async function fetchAllCreatedAt() {
-      try {
-        // 取得四個集合的 createdAt
-        const [ordersSnap, quotesSnap, contractsSnap, projectsSnap] = await Promise.all([
-          getDocs(collection(db, 'finance', 'default', 'orders')),
-          getDocs(collection(db, 'finance', 'default', 'quotes')),
-          getDocs(collection(db, 'finance', 'default', 'contracts')),
-          getDocs(collection(db, 'projects')),
-        ]);
-        // 依集合分類
-        const orders = ordersSnap.docs.map(doc => doc.data()?.createdAt?.toDate ? doc.data().createdAt.toDate() : (doc.data().createdAt instanceof Date ? doc.data().createdAt : null)).filter(Boolean);
-        const quotes = quotesSnap.docs.map(doc => doc.data()?.createdAt?.toDate ? doc.data().createdAt.toDate() : (doc.data().createdAt instanceof Date ? doc.data().createdAt : null)).filter(Boolean);
-        const contracts = contractsSnap.docs.map(doc => doc.data()?.createdAt?.toDate ? doc.data().createdAt.toDate() : (doc.data().createdAt instanceof Date ? doc.data().createdAt : null)).filter(Boolean);
-        const projects = projectsSnap.docs.map(doc => doc.data()?.createdAt?.toDate ? doc.data().createdAt.toDate() : (doc.data().createdAt instanceof Date ? doc.data().createdAt : null)).filter(Boolean);
-        // 將所有日期合併，找出所有出現過的日期
-        const allDatesSet = new Set<string>();
-        [orders, quotes, contracts, projects].forEach(arr => {
-          arr.forEach((d: Date) => allDatesSet.add(d.toISOString().slice(0, 10)));
-        });
-        const allDates = Array.from(allDatesSet).sort();
-        // 依日期累積數量
-        function getCumulative(arr: Date[], allDates: string[]) {
-          const dateCounts: Record<string, number> = {};
-          arr.forEach((d: Date) => {
-            const dateStr = d.toISOString().slice(0, 10);
-            dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
-          });
-          let cumulative = 0;
-          return allDates.map(date => {
-            cumulative += dateCounts[date] || 0;
-            return cumulative;
-          });
-        }
-        const ordersC = getCumulative(orders, allDates);
-        const quotesC = getCumulative(quotes, allDates);
-        const contractsC = getCumulative(contracts, allDates);
-        const projectsC = getCumulative(projects, allDates);
-        // 組合成圖表資料
-        const chartData = allDates.map((date, i) => ({
-          date,
-          訂單: ordersC[i],
-          估價單: quotesC[i],
-          合約: contractsC[i],
-          專案: projectsC[i],
-        }));
-        setMultiLineData(chartData);
-      } catch (err: any) {
-        setMultiLineError(err.message || '載入資料失敗');
-      } finally {
-        setMultiLineLoading(false);
-      }
-    }
-    fetchAllCreatedAt();
-  }, []);
 
   return (
     <main className="min-h-screen py-8 bg-white dark:bg-gray-900">
