@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection } from "firebase/firestore";
+import { collection, doc, getDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useState, useMemo } from "react";
 import { OrderPdfDocument } from '@/modules/shared/interfaces/pdf/OrderPdfDocument';
@@ -73,10 +73,22 @@ export default function OrdersPage() {
     };
 
     // 匯出 PDF
-    const handleExportPdf = (row: Record<string, unknown>) => {
+    const handleExportPdf = async (row: Record<string, unknown>) => {
+        // 取得完整詳細資料
+        const docRef = doc(db, "orders", String(row.orderId));
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+            alert("找不到該訂單");
+            return;
+        }
+        const data = docSnap.data();
+        // 轉換日期格式（如有需要）
+        data.createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt;
+        data.updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt;
+        // 匯出 PDF
         exportPdfToBlob(
-            <OrderPdfDocument order={row} />,
-            `${row.orderName || row.orderId || '訂單'}.pdf`
+            <OrderPdfDocument order={data} />,
+            `${data.orderName || data.orderId || '訂單'}.pdf`
         );
     };
 

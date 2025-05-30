@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection } from "firebase/firestore";
+import { collection, doc, getDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useState, useMemo } from "react";
 import { QuotePdfDocument } from '@/modules/shared/interfaces/pdf/QuotePdfDocument';
@@ -73,10 +73,22 @@ export default function QuotesPage() {
     };
 
     // 匯出 PDF
-    const handleExportPdf = (row: Record<string, unknown>) => {
+    const handleExportPdf = async (row: Record<string, unknown>) => {
+        // 取得完整詳細資料
+        const docRef = doc(db, "quotes", String(row.quoteId));
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+            alert("找不到該估價單");
+            return;
+        }
+        const data = docSnap.data();
+        // 轉換日期格式（如有需要）
+        data.createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt;
+        data.updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt;
+        // 匯出 PDF
         exportPdfToBlob(
-            <QuotePdfDocument quote={row} />,
-            `${row.quoteName || row.quoteId || '估價單'}.pdf`
+            <QuotePdfDocument quote={data} />,
+            `${data.quoteName || data.quoteId || '估價單'}.pdf`
         );
     };
 
@@ -126,7 +138,7 @@ export default function QuotesPage() {
                     {loading ? (
                         <tr><td colSpan={8} className="text-center py-4">載入中...</td></tr>
                     ) : error ? (
-                        <tr><td colSpan={8} className="text-center text-red-500 py-4">{String(error)}</td></tr>
+                        <tr><td colSpan={8} className="text-center text-red-500 py-4"></td></tr>
                     ) : rows.length > 0 ? (
                         rows.map((row) => {
                             const format = (d: Date | null) => d ? d.toLocaleDateString() : '-';
@@ -152,7 +164,7 @@ export default function QuotesPage() {
                             );
                         })
                     ) : (
-                        <tr><td colSpan={8} className="text-center text-gray-400 py-4">尚無估價單</td></tr>
+                        <tr></tr>
                     )}
                 </tbody>
             </table>
