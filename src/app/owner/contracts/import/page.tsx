@@ -6,6 +6,16 @@ import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebas
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import Link from "next/link";
 
+// 定義 ContractData 型別
+interface ContractData {
+    contractName: string;
+    createdAt: Date | Timestamp;
+    updatedAt: Timestamp;
+    sourceType: 'order' | 'quote';
+    sourceId: string;
+    contractContent: string;
+}
+
 export default function ImportContractPage() {
     const [tab, setTab] = useState<'order' | 'quote'>("order");
     const [ordersSnapshot] = useCollection(collection(db, "orders"));
@@ -42,13 +52,28 @@ export default function ImportContractPage() {
     }, [quotesSnapshot]);
 
     // 匯入生成合約
-    const handleImport = async (row: any, type: 'order' | 'quote') => {
+    const handleImport = async (
+        row: {
+            id: string;
+            name: string;
+            createdAt: Date | null;
+            raw: Record<string, unknown>;
+        },
+        type: 'order' | 'quote'
+    ) => {
         setImportingId(row.id);
         setMessage("");
         try {
-            let contractData: any = {
+            // 檢查 createdAt 必須存在且型別正確
+            const rawCreatedAt = row.raw.createdAt;
+            if (!rawCreatedAt || !(rawCreatedAt instanceof Timestamp || rawCreatedAt instanceof Date)) {
+                setImportingId(null);
+                setMessage("來源資料缺少正確的建立日期，無法建立合約。");
+                throw new Error("來源資料缺少正確的建立日期，無法建立合約。");
+            }
+            const contractData: ContractData = {
                 contractName: row.name,
-                createdAt: row.raw.createdAt || Timestamp.now(),
+                createdAt: rawCreatedAt as Timestamp | Date,
                 updatedAt: Timestamp.now(),
                 sourceType: type,
                 sourceId: row.id,
