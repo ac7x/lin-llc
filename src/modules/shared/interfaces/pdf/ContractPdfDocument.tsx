@@ -22,6 +22,7 @@ export function ContractPdfDocument({ contract, qrCodeDataUrl }: { contract: Rec
                         }}
                     >
                         {/* @react-pdf/renderer 的 <Image> 不支援 alt 屬性，已確認無需加 alt，忽略 jsx-a11y/alt-text 警告 */}
+                        {/* eslint-disable-next-line jsx-a11y/alt-text */}
                         <Image src={qrCodeDataUrl} style={{ width: 64, height: 64 }} />
                         <Text style={{ fontSize: 8, marginTop: 2 }}>掃描查看合約</Text>
                     </View>
