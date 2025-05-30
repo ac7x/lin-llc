@@ -16,8 +16,8 @@ export function ContractPdfDocument({ contract, qrCodeDataUrl }: { contract: Rec
                     <View
                         style={{
                             position: 'absolute',
-                            left: 30,
-                            top: 30,
+                            right: 30,
+                            bottom: 30,
                             alignItems: 'center',
                         }}
                     >
@@ -26,7 +26,7 @@ export function ContractPdfDocument({ contract, qrCodeDataUrl }: { contract: Rec
                     </View>
                 )}
                 <View style={styles.section}>
-                    <Text style={styles.title}>合約明細</Text>
+                    <Text style={[styles.title, { textAlign: 'center' }]}>工程承攬合約書</Text>
                     <Text>合約名稱: {String(contract.contractName ?? '')}</Text>
                     <Text>合約金額: {String(contract.contractPrice ?? '')}</Text>
                     <Text>客戶名稱: {String(contract.clientName ?? '')}</Text>
@@ -72,5 +72,5 @@ export function ContractPdfDocument({ contract, qrCodeDataUrl }: { contract: Rec
 const styles = StyleSheet.create({
     page: { padding: 30, fontFamily: 'NotoSerifTC', position: 'relative' },
     section: { margin: 10, padding: 10 },
-    title: { fontSize: 18, marginBottom: 10, fontWeight: 'bold' },
+    title: { fontSize: 18, marginBottom: 10, fontWeight: 'bold', textAlign: 'center' },
 });
