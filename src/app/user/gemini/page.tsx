@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel, ChatSession } from "firebase/ai";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -65,7 +65,7 @@ export default function GeminiPage() {
         const app = firebaseAppInstance as FirebaseAppWithAppCheckFlag;
         if (!app._isinitializeAppCheckCalled) {
           initializeAppCheck(app, {
-            provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+            provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
             isTokenAutoRefreshEnabled: true
           });
           app._isinitializeAppCheckCalled = true;
