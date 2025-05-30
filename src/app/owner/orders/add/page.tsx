@@ -16,6 +16,10 @@ interface OrderItem {
 
 export default function OrderAddPage() {
     const router = useRouter();
+    const [clientName, setClientName] = useState("");
+    const [clientContact, setClientContact] = useState("");
+    const [clientPhone, setClientPhone] = useState("");
+    const [clientEmail, setClientEmail] = useState("");
     const [orderPrice, setOrderPrice] = useState(0);
     const [orderName, setOrderName] = useState("");
     const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -68,6 +72,44 @@ export default function OrderAddPage() {
         <main className="max-w-xl mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold mb-4">新增訂單</h1>
             <form onSubmit={handleSubmit}>
+                {/* 客戶欄位 */}
+                <div className="mb-4">
+                    <label className="block font-medium mb-1">客戶名稱：</label>
+                    <input
+                        type="text"
+                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                        value={clientName}
+                        onChange={e => setClientName(e.target.value)}
+                    />
+                </div>
+                <div className="mb-4">
+                    <label className="block font-medium mb-1">客戶聯絡人：</label>
+                    <input
+                        type="text"
+                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                        value={clientContact}
+                        onChange={e => setClientContact(e.target.value)}
+                    />
+                </div>
+                <div className="mb-4">
+                    <label className="block font-medium mb-1">聯絡電話：</label>
+                    <input
+                        type="text"
+                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                        value={clientPhone}
+                        onChange={e => setClientPhone(e.target.value)}
+                    />
+                </div>
+                <div className="mb-4">
+                    <label className="block font-medium mb-1">郵箱：</label>
+                    <input
+                        type="email"
+                        className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                        value={clientEmail}
+                        onChange={e => setClientEmail(e.target.value)}
+                    />
+                </div>
+                {/* 訂單名稱與金額移到下方 */}
                 <div className="mb-4">
                     <label className="block font-medium mb-1">訂單名稱：</label>
                     <input

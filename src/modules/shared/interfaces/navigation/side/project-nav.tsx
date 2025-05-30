@@ -34,7 +34,7 @@ export function ProjectSideNav({ items }: ProjectSideNavProps) {
     }));
 
     return (
-        <nav className="hidden md:block w-56 min-h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 py-8 px-4">
+        <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
             <ul className="space-y-2">
                 {navItems.map((item, idx) => (
                     <li key={idx}>

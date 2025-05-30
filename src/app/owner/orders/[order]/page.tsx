@@ -122,93 +122,7 @@ export default function OrderDetailPage() {
                 <div className="text-red-500">{error}</div>
             ) : editing ? (
                 <form onSubmit={handleSaveEdit}>
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">訂單名稱：</label>
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={editOrderName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderName(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">訂單金額：</label>
-                        <input
-                            type="number"
-                            className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={editOrderPrice}
-                            min={0}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderPrice(Number(e.target.value))}
-                            required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">訂單項目：</label>
-                        <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
-                            <thead>
-                                <tr className="bg-gray-100 dark:bg-gray-800">
-                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目ID</th>
-                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目金額</th>
-                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目數量</th>
-                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目單價</th>
-                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
-                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {editOrderItems.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center text-gray-400">無項目</td></tr>
-                                ) : editOrderItems.map((item, idx) => (
-                                    <tr key={item.orderItemId + idx}>
-                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
-                                            <input
-                                                type="text"
-                                                className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                                                value={item.orderItemId}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemId", e.target.value)}
-                                                required
-                                            />
-                                        </td>
-                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">
-                                            <input
-                                                type="number"
-                                                className="border px-2 py-1 rounded w-24 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 text-right"
-                                                min={0}
-                                                value={item.orderItemPrice}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemPrice", Number(e.target.value))}
-                                                required
-                                            />
-                                        </td>
-                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
-                                            <input
-                                                type="number"
-                                                className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                                                min={0}
-                                                value={item.orderItemQuantity}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemQuantity", Number(e.target.value))}
-                                                required
-                                            />
-                                        </td>
-                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
-                                            {/* 單價顯示，樣式簡單化 */}
-                                            {item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}
-                                        </td>
-                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
-                                            {/* 權重顯示，保留兩位小數 */}
-                                            {totalOrderItemQuantity ? (item.orderItemQuantity / totalOrderItemQuantity).toFixed(2) : "0.00"}
-                                        </td>
-                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
-                                            {editOrderItems.length > 1 && (
-                                                <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeEditItem(idx)}>刪除</button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <button type="button" className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded mt-2" onClick={addEditItem}>新增項目</button>
-                    </div>
+                    {/* 客戶欄位 */}
                     <div className="mb-4">
                         <label className="block font-medium mb-1">客戶名稱：</label>
                         <input
@@ -245,29 +159,16 @@ export default function OrderDetailPage() {
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditClientEmail(e.target.value)}
                         />
                     </div>
-                    <div className="mt-6 flex gap-2">
-                        <button type="submit" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded">儲存</button>
-                        <button type="button" className="bg-gray-300 dark:bg-gray-800 text-black dark:text-gray-100 px-6 py-2 rounded" onClick={() => setEditing(false)}>取消</button>
-                    </div>
-                </form>
-            ) : (
-                <form>
-                    <div className="mb-4">
-                        <label className="block font-medium mb-1">訂單名稱：</label>
-                        <input
-                            type="text"
-                            className="border px-2 py-1 rounded w-80 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={orderName}
-                            readOnly
-                        />
-                    </div>
+                    {/* 訂單金額與項目移到下方 */}
                     <div className="mb-4">
                         <label className="block font-medium mb-1">訂單金額：</label>
                         <input
                             type="number"
                             className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
-                            value={orderPrice}
-                            readOnly
+                            value={editOrderPrice}
+                            min={0}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderPrice(Number(e.target.value))}
+                            required
                         />
                     </div>
                     <div className="mb-4">
@@ -280,23 +181,75 @@ export default function OrderDetailPage() {
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目數量</th>
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目單價</th>
                                     <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {orderItems.length === 0 ? (
-                                    <tr><td colSpan={5} className="text-center text-gray-400">無項目</td></tr>
-                                ) : orderItems.map((item, idx) => (
-                                    <tr key={item.orderItemId + idx}>
-                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemId}</td>
-                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">{item.orderItemPrice}</td>
-                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemQuantity}</td>
-                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}</td>
-                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{totalOrderItemQuantity ? (item.orderItemQuantity / totalOrderItemQuantity).toFixed(2) : "0.00"}</td>
-                                    </tr>
-                                ))}
+                                {editOrderItems.length === 0 ? (
+                                    <tr><td colSpan={6} className="text-center text-gray-400">無項目</td></tr>
+                                ) : [...editOrderItems]
+                                    .sort((a, b) => {
+                                        const aNum = Number(a.orderItemId);
+                                        const bNum = Number(b.orderItemId);
+                                        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+                                        return String(a.orderItemId).localeCompare(String(b.orderItemId));
+                                    })
+                                    .map((item, idx) => (
+                                        <tr key={item.orderItemId + idx}>
+                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
+                                                <input
+                                                    type="text"
+                                                    className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                                    value={item.orderItemId}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemId", e.target.value)}
+                                                    required
+                                                />
+                                            </td>
+                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">
+                                                <input
+                                                    type="number"
+                                                    className="border px-2 py-1 rounded w-24 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 text-right"
+                                                    min={0}
+                                                    value={item.orderItemPrice}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemPrice", Number(e.target.value))}
+                                                    required
+                                                />
+                                            </td>
+                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
+                                                <input
+                                                    type="number"
+                                                    className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                                                    min={0}
+                                                    value={item.orderItemQuantity}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEditItemChange(idx, "orderItemQuantity", Number(e.target.value))}
+                                                    required
+                                                />
+                                            </td>
+                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                                {item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}
+                                            </td>
+                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                                {totalOrderItemQuantity ? (item.orderItemQuantity / totalOrderItemQuantity).toFixed(2) : "0.00"}
+                                            </td>
+                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                                {editOrderItems.length > 1 && (
+                                                    <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeEditItem(idx)}>刪除</button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
+                        <button type="button" className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded mt-2" onClick={addEditItem}>新增項目</button>
                     </div>
+                    <div className="mt-6 flex gap-2">
+                        <button type="submit" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded">儲存</button>
+                        <button type="button" className="bg-gray-300 dark:bg-gray-800 text-black dark:text-gray-100 px-6 py-2 rounded" onClick={() => setEditing(false)}>取消</button>
+                    </div>
+                </form>
+            ) : (
+                <form>
+                    {/* 客戶欄位 */}
                     <div className="mb-4">
                         <label className="block font-medium mb-1">客戶名稱：</label>
                         <input
@@ -332,6 +285,50 @@ export default function OrderDetailPage() {
                             value={clientEmail}
                             readOnly
                         />
+                    </div>
+                    {/* 訂單金額與項目移到下方 */}
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">訂單金額：</label>
+                        <input
+                            type="number"
+                            className="border px-2 py-1 rounded w-40 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                            value={orderPrice}
+                            readOnly
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block font-medium mb-1">訂單項目：</label>
+                        <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
+                            <thead>
+                                <tr className="bg-gray-100 dark:bg-gray-800">
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目ID</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目金額</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目數量</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">項目單價</th>
+                                    <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">權重</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orderItems.length === 0 ? (
+                                    <tr><td colSpan={5} className="text-center text-gray-400">無項目</td></tr>
+                                ) : [...orderItems]
+                                    .sort((a, b) => {
+                                        const aNum = Number(a.orderItemId);
+                                        const bNum = Number(b.orderItemId);
+                                        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+                                        return String(a.orderItemId).localeCompare(String(b.orderItemId));
+                                    })
+                                    .map((item, idx) => (
+                                        <tr key={item.orderItemId + idx}>
+                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemId}</td>
+                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">{item.orderItemPrice}</td>
+                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemQuantity}</td>
+                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}</td>
+                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{totalOrderItemQuantity ? (item.orderItemQuantity / totalOrderItemQuantity).toFixed(2) : "0.00"}</td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
                     </div>
                     <div className="mt-6 flex gap-2">
                         <button type="button" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded" onClick={() => router.push("/owner/orders")}>返回列表</button>
