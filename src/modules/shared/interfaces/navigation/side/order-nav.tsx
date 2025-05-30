@@ -15,7 +15,7 @@ export function OrderSideNav() {
     const [ordersSnapshot, loading, error] = useCollection(collection(db, "orders"));
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
-            <h2 className="text-lg font-bold mb-4">訂單管理</h2>
+            <h2 className="text-lg font-bold mb-4 text-center">訂單管理</h2>
             <ul className="space-y-2">
                 {/* 列表按鈕 */}
                 <li key={navs[0].href}>

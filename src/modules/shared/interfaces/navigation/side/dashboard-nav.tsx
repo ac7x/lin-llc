@@ -11,7 +11,7 @@ export default function DashboardNav() {
     ];
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
-            <h2 className="text-lg font-bold mb-4">儀表板管理</h2>
+            <h2 className="text-lg font-bold mb-4 text-center">儀表板管理</h2>
             <ul className="space-y-2">
                 {navs.map((nav) => (
                     <li key={nav.href}>
