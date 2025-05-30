@@ -61,7 +61,7 @@ export default function ContractDetailPage() {
             {/* 其他合約內容顯示 */}
             <div className="mb-4">
                 <span className="font-bold">合約內容：</span>
-                <pre className="bg-gray-100 rounded p-2 mt-1 whitespace-pre-wrap">{data.contractContent || "（無內容）"}</pre>
+                <pre className="bg-gray-100 dark:bg-neutral-800 rounded p-2 mt-1 whitespace-pre-wrap border border-gray-200 dark:border-neutral-700">{data.contractContent || "（無內容）"}</pre>
             </div>
             <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => router.push("/owner/contracts")}>返回列表</button>
         </main>

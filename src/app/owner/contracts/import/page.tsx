@@ -97,15 +97,21 @@ export default function ImportContractPage() {
     return (
         <main className="max-w-2xl mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold mb-6">從訂單/估價單匯入生成合約</h1>
-            <div className="mb-4 flex gap-2">
+            <div className="mb-4 flex gap-2 border-b border-gray-200 dark:border-neutral-700">
                 <button
-                    className={`px-4 py-2 rounded ${tab === 'order' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                    className={`px-4 py-2 font-semibold border-b-2 transition-colors duration-150
+                        ${tab === 'order'
+                            ? 'border-blue-600 text-blue-700 dark:border-blue-400 dark:text-blue-300 bg-white dark:bg-neutral-900'
+                            : 'border-transparent text-gray-600 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-400 bg-transparent'}`}
                     onClick={() => setTab('order')}
                 >
                     訂單
                 </button>
                 <button
-                    className={`px-4 py-2 rounded ${tab === 'quote' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                    className={`px-4 py-2 font-semibold border-b-2 transition-colors duration-150
+                        ${tab === 'quote'
+                            ? 'border-blue-600 text-blue-700 dark:border-blue-400 dark:text-blue-300 bg-white dark:bg-neutral-900'
+                            : 'border-transparent text-gray-600 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-400 bg-transparent'}`}
                     onClick={() => setTab('quote')}
                 >
                     估價單
@@ -132,13 +138,18 @@ export default function ImportContractPage() {
                                 <td className="border px-2 py-1">{row.createdAt ? row.createdAt.toLocaleDateString() : '-'}</td>
                                 <td className="border px-2 py-1">
                                     <button
-                                        className="bg-blue-500 text-white px-3 py-1 rounded disabled:opacity-50"
+                                        className="bg-blue-500 text-white px-3 py-1 rounded disabled:opacity-50 dark:bg-blue-700 dark:text-gray-200 hover:bg-blue-600 dark:hover:bg-blue-800 transition-colors duration-150"
                                         disabled={!!importingId}
                                         onClick={() => handleImport(row, tab)}
                                     >
                                         {importingId === row.id ? '匯入中...' : '匯入生成合約'}
                                     </button>
-                                    <Link href={`/${tab === 'order' ? 'owner/orders' : 'owner/quotes'}/${row.id}`} className="ml-2 text-blue-600 underline">查看</Link>
+                                    <Link
+                                        href={`/${tab === 'order' ? 'owner/orders' : 'owner/quotes'}/${row.id}`}
+                                        className="ml-2 text-blue-600 underline hover:text-blue-800 transition-colors duration-150 dark:text-blue-300 dark:hover:text-blue-400"
+                                    >
+                                        查看
+                                    </Link>
                                 </td>
                             </tr>
                         ))
