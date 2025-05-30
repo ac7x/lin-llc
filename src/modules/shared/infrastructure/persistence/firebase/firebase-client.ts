@@ -3,6 +3,7 @@ import { getApps, initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -16,6 +17,15 @@ const firebaseConfig = {
 
 // SSR/多次初始化防呆
 export const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+
+// App Check 初始化（僅在瀏覽器端執行）
+if (typeof window !== 'undefined') {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE'),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
