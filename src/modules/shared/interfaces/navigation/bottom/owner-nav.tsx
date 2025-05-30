@@ -18,6 +18,7 @@ interface OwnerBottomNavProps {
 const defaultOwnerNavItems: NavItem[] = [
     { href: '/owner/dashboard', icon: '📊', label: '儀表板', active: false },
     { href: '/owner/orders', icon: '🧾', label: '訂單', active: false },
+    { href: '/owner/quotes', icon: '📄', label: '估價單', active: false },
     { href: '/owner/archived', icon: '🗄️', label: '封存訂單', active: false },
     { href: '/owner/users', icon: '👤', label: '用戶管理', active: false },
 ];
