@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
-import Link from "next/link";
 
 // 定義 ContractData 型別
 interface ContractData {
@@ -144,12 +143,6 @@ export default function ImportContractPage() {
                                     >
                                         {importingId === row.id ? '匯入中...' : '匯入生成合約'}
                                     </button>
-                                    <Link
-                                        href={`/${tab === 'order' ? 'owner/orders' : 'owner/quotes'}/${row.id}`}
-                                        className="ml-2 text-blue-600 underline hover:text-blue-800 transition-colors duration-150 dark:text-blue-300 dark:hover:text-blue-400"
-                                    >
-                                        查看
-                                    </Link>
                                 </td>
                             </tr>
                         ))
