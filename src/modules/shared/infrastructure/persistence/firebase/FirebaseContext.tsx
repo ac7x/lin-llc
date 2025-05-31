@@ -65,25 +65,6 @@ import {
     analytics,
     getAnalytics,
     logEvent,
-    setUserId,
-    setUserProperties,
-    setConsent,
-    performance,
-    getPerformance,
-    trace,
-    messaging,
-    getMessaging,
-    getToken,
-    onMessage,
-    deleteToken,
-    isMessagingSupported,
-    remoteConfig,
-    getRemoteConfig,
-    fetchAndActivate,
-    getValue,
-    getAll,
-    setRemoteConfigLogLevel,
-    activate,
 } from "./firebase";
 import type {
     User,
@@ -110,11 +91,7 @@ import type {
     UploadTaskSnapshot,
     FullMetadata,
     SettableMetadata,
-    FirebaseMessaging,
-    MessagePayload,
     Analytics,
-    RemoteConfig,
-    Value,
     FieldPathType,
     GeoPointType,
 } from "./firebase";
@@ -212,25 +189,6 @@ type FirebaseContextType = {
     analytics: typeof analytics;
     getAnalytics: typeof getAnalytics;
     logEvent: typeof logEvent;
-    setUserId: typeof setUserId;
-    setUserProperties: typeof setUserProperties;
-    setConsent: typeof setConsent;
-    performance: typeof performance;
-    getPerformance: typeof getPerformance;
-    trace: typeof trace;
-    messaging: typeof messaging;
-    getMessaging: typeof getMessaging;
-    getToken: typeof getToken;
-    onMessage: typeof onMessage;
-    deleteToken: typeof deleteToken;
-    isMessagingSupported: typeof isMessagingSupported;
-    remoteConfig: typeof remoteConfig;
-    getRemoteConfig: typeof getRemoteConfig;
-    fetchAndActivate: typeof fetchAndActivate;
-    getValue: typeof getValue;
-    getAll: typeof getAll;
-    setRemoteConfigLogLevel: typeof setRemoteConfigLogLevel;
-    activate: typeof activate;
     useCollection: typeof useCollection;
     useCollectionData: typeof useCollectionData;
     useCollectionOnce: typeof useCollectionOnce;
@@ -323,25 +281,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 analytics,
                 getAnalytics,
                 logEvent,
-                setUserId,
-                setUserProperties,
-                setConsent,
-                performance,
-                getPerformance,
-                trace,
-                messaging,
-                getMessaging,
-                getToken,
-                onMessage,
-                deleteToken,
-                isMessagingSupported,
-                remoteConfig,
-                getRemoteConfig,
-                fetchAndActivate,
-                getValue,
-                getAll,
-                setRemoteConfigLogLevel,
-                activate,
                 useCollection,
                 useCollectionData,
                 useCollectionOnce,
@@ -402,11 +341,7 @@ export type {
     UploadTaskSnapshot,
     FullMetadata,
     SettableMetadata,
-    FirebaseMessaging,
-    MessagePayload,
     Analytics,
-    RemoteConfig,
-    Value,
     FieldPathType,
     GeoPointType,
 };

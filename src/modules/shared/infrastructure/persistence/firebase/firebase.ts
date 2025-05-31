@@ -63,33 +63,7 @@ import {
     getMetadata,
     updateMetadata,
 } from "firebase/storage";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
-import {
-    getAnalytics,
-    logEvent,
-    setUserId,
-    setUserProperties,
-    setConsent,
-} from "firebase/analytics";
-import {
-    getPerformance,
-    trace,
-} from "firebase/performance";
-import {
-    getMessaging,
-    getToken,
-    onMessage,
-    deleteToken,
-    isSupported as isMessagingSupported,
-} from "firebase/messaging";
-import {
-    getRemoteConfig,
-    fetchAndActivate,
-    getValue,
-    getAll,
-    setLogLevel as setRemoteConfigLogLevel,
-    activate,
-} from "firebase/remote-config";
+import { getAnalytics, logEvent } from "firebase/analytics";
 
 import type {
     User,
@@ -122,17 +96,7 @@ import type {
     FullMetadata,
     SettableMetadata,
 } from "firebase/storage";
-import type {
-    Messaging as FirebaseMessaging,
-    MessagePayload,
-} from "firebase/messaging";
-import type {
-    Analytics,
-} from "firebase/analytics";
-import type {
-    RemoteConfig,
-    Value,
-} from "firebase/remote-config";
+import type { Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -148,29 +112,10 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 const isBrowser = typeof window !== "undefined";
 
-if (isBrowser) {
-    initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider("6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"),
-        isTokenAutoRefreshEnabled: true,
-    });
-}
-
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-
 const analytics = isBrowser ? getAnalytics(app) : undefined;
-const performance = isBrowser ? getPerformance(app) : undefined;
-
-let messaging: ReturnType<typeof getMessaging> | undefined;
-if (isBrowser) {
-    isMessagingSupported().then((supported) => {
-        if (supported) {
-            messaging = getMessaging(app);
-        }
-    });
-}
-const remoteConfig = isBrowser ? getRemoteConfig(app) : undefined;
 
 export {
     app,
@@ -237,25 +182,6 @@ export {
     analytics,
     getAnalytics,
     logEvent,
-    setUserId,
-    setUserProperties,
-    setConsent,
-    performance,
-    getPerformance,
-    trace,
-    messaging,
-    getMessaging,
-    getToken,
-    onMessage,
-    deleteToken,
-    isMessagingSupported,
-    remoteConfig,
-    getRemoteConfig,
-    fetchAndActivate,
-    getValue,
-    getAll,
-    setRemoteConfigLogLevel,
-    activate,
 };
 
 export type {
@@ -285,9 +211,5 @@ export type {
     UploadTaskSnapshot,
     FullMetadata,
     SettableMetadata,
-    FirebaseMessaging,
-    MessagePayload,
     Analytics,
-    RemoteConfig,
-    Value,
 };
