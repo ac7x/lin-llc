@@ -101,35 +101,58 @@ function NetworkGraph({
                         setOperationLogs(prev => [...prev, "編輯邊操作開始"]);
                         const newLabel = prompt("請輸入新的邊標籤：", data.label) || data.label;
                         data.label = newLabel;
-                        // 先寫入 Firestore
                         const allEdges = edgesRef.current.get().map(edge =>
                             edge.id === data.id ? { ...edge, label: newLabel } : edge
                         );
                         try {
                             await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
-                            setSyncStatus("同步成功");
                             setOperationLogs(prev => [...prev, "邊資料同步成功"]);
                             callback(data);
-                        } catch {
-                            setSyncStatus("同步失敗");
-                            setOperationLogs(prev => [...prev, "邊資料同步失敗"]);
-                            callback(data);
+                        } catch (e: unknown) {
+                            const message = e instanceof Error ? e.message : String(e);
+                            setOperationLogs(prev => [...prev, `邊資料同步失敗: ${message}`]);
+                            callback(null);
                         }
                     },
                     deleteEdge: async (data: DeleteEdgeData, callback: Callback<DeleteEdgeData>) => {
                         setOperationLogs(prev => [...prev, `開始刪除邊: ${data.map((edge) => edge.id).join(", ")}`]);
-                        // 先寫入 Firestore
                         const idsToDelete = data.map((edge) => edge.id);
                         const allEdges = edgesRef.current.get().filter(edge => !idsToDelete.includes(edge.id));
                         try {
                             await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
-                            setSyncStatus("同步成功");
                             setOperationLogs(prev => [...prev, "邊刪除同步成功"]);
                             callback(data);
                         } catch (e: unknown) {
-                            setSyncStatus("同步失敗");
                             const message = e instanceof Error ? e.message : String(e);
                             setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${message}`]);
+                            callback(null);
+                        }
+                    },
+                    addNode: async (data: NodeType, callback: Callback<NodeType>) => {
+                        setOperationLogs(prev => [...prev, `新增節點: ${data.id}`]);
+                        nodesRef.current.add(data);
+                        try {
+                            const allNodes = nodesRef.current.get();
+                            await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { nodes: allNodes }, { merge: true });
+                            setOperationLogs(prev => [...prev, "節點新增同步成功"]);
+                            callback(data);
+                        } catch (e: unknown) {
+                            const message = e instanceof Error ? e.message : String(e);
+                            setOperationLogs(prev => [...prev, `節點新增同步失敗: ${message}`]);
+                            callback(null);
+                        }
+                    },
+                    addEdge: async (data: EdgeType, callback: Callback<EdgeType>) => {
+                        setOperationLogs(prev => [...prev, `新增邊: ${data.id}`]);
+                        edgesRef.current.add(data);
+                        try {
+                            const allEdges = edgesRef.current.get();
+                            await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
+                            setOperationLogs(prev => [...prev, "邊新增同步成功"]);
+                            callback(data);
+                        } catch (e: unknown) {
+                            const message = e instanceof Error ? e.message : String(e);
+                            setOperationLogs(prev => [...prev, `邊新增同步失敗: ${message}`]);
                             callback(null);
                         }
                     }
@@ -187,8 +210,7 @@ function NetworkGraph({
     return (
         <>
             <div ref={containerRef} style={{ height: "700px" }} />
-            {syncStatus && <div style={{ marginTop: "8px", color: "green" }}>{syncStatus}</div>}
-            {/* 修改懸浮區塊改用 Tailwind CSS class 支援深色模式 */}
+            {/* 移除 syncStatus 顯示，統一到懸浮窗 */}
             <div className="fixed top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 p-2 max-w-[300px] max-h-[300px] overflow-y-auto z-50">
                 <h3 className="text-black dark:text-white">操作記錄:</h3>
                 <ul>
