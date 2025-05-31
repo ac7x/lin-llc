@@ -13,6 +13,8 @@ import {
     OnConnectStart,
     OnConnectStartParams,
     useReactFlow,
+    Handle,
+    Position,
 } from '@xyflow/react';
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import '@xyflow/react/dist/style.css';
@@ -40,9 +42,13 @@ const CustomNode = ({ data, selected, colorMode }: any) => (
             justifyContent: "center",
             cursor: "pointer",
             transition: "box-shadow 0.2s, border 0.2s, background 0.2s",
+            position: "relative",
         }}
     >
+        {/* 加入 handle，讓 custom node 可以連線 */}
+        <Handle type="target" position={Position.Top} />
         {data.label}
+        <Handle type="source" position={Position.Bottom} />
     </div>
 );
 
@@ -207,14 +213,12 @@ function DecompositionFlow(props: any) {
         });
     }, [rfEdges]);
 
-    if (loading) return <div className="flex items-center justify-center h-full text-gray-400 text-lg">載入中...</div>;
-    if (error) return <div className="flex items-center justify-center h-full text-red-500 text-lg">讀取失敗: {error.message}</div>;
-    if (!projectDoc?.exists()) return <div className="flex items-center justify-center h-full text-gray-400 text-lg">尚無資料</div>;
-
     return (
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
             <div className="flex items-center justify-between px-4 pt-4 mb-2">
-                <div className="text-xl font-bold">{projectDoc.data()?.projectName || projectId}</div>
+                <div className="text-xl font-bold">
+                    {(projectDoc && projectDoc.data && projectDoc.data())?.projectName || projectId}
+                </div>
             </div>
             {rfNodes.length === 0 && rfEdges.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">尚無分解資料</div>
