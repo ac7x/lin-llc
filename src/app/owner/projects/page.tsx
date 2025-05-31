@@ -7,7 +7,7 @@ import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebas
 import { useMemo, useState } from "react";
 
 export default function ProjectsPage() {
-    const [projectsSnapshot, loading, error] = useCollection(collection(db, "projects"));
+    const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
     const [search, setSearch] = useState("");
 
     const rows = useMemo(() => {
@@ -60,8 +60,6 @@ export default function ProjectsPage() {
                 <tbody>
                     {loading ? (
                         <tr><td colSpan={6} className="text-center py-4">載入中...</td></tr>
-                    ) : error ? (
-                        <tr><td colSpan={6} className="text-center text-red-500 py-4">{String(error)}</td></tr>
                     ) : rows.length > 0 ? (
                         rows.map(row => (
                             <tr key={row.projectId}>
