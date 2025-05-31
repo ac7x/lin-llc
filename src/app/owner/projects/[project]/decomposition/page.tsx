@@ -18,6 +18,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { FirestoreSync } from "./FirestoreSync";
+import { DeleteButton } from "./DeleteButton";
 
 let nodeId = 1;
 const getId = () => `node_${nodeId++}`;
@@ -86,8 +87,30 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
         []
     );
 
+    // 新增選取狀態
+    const [selectedNodeIds, setSelectedNodeIds] = React.useState<string[]>([]);
+    const [selectedEdgeIds, setSelectedEdgeIds] = React.useState<string[]>([]);
+
+    // 處理選取變更
+    const onSelectionChange = React.useCallback(({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) => {
+        setSelectedNodeIds(nodes.map((n: Node) => n.id));
+        setSelectedEdgeIds(edges.map((e: Edge) => e.id));
+    }, []);
+
+    // 刪除選取
+    const handleDelete = React.useCallback(() => {
+        setNodes(nds => nds.filter(n => !selectedNodeIds.includes(n.id)));
+        setEdges(eds => eds.filter(e => !selectedEdgeIds.includes(e.id)));
+        setSelectedNodeIds([]);
+        setSelectedEdgeIds([]);
+    }, [selectedNodeIds, selectedEdgeIds, setNodes, setEdges]);
+
     return (
         <div style={{ height: "100vh" }}>
+            <DeleteButton
+                onDelete={handleDelete}
+                disabled={selectedNodeIds.length === 0 && selectedEdgeIds.length === 0}
+            />
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -97,6 +120,7 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
                 onConnectStart={onConnectStart}
                 onConnectEnd={onConnectEnd}
                 onNodeDragStop={onNodeDragStop}
+                onSelectionChange={onSelectionChange}
                 fitView
             >
                 <MiniMap />
