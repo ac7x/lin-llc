@@ -27,6 +27,15 @@ function NetworkGraph() {
             const options = {
                 layout: { hierarchical: false },
                 physics: { enabled: true },
+                manipulation: {
+                    enabled: true,
+                    initiallyActive: true,
+                    editEdge: function (data: any, callback: any) { // 已加入參數類型
+                        // 利用 prompt 編輯邊的標籤（或其他屬性）
+                        data.label = prompt("請輸入新的邊標籤：", data.label) || data.label;
+                        callback(data);
+                    }
+                }
             };
             new Network(containerRef.current, data, options);
         }
