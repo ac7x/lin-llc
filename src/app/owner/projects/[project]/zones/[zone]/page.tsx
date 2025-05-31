@@ -8,8 +8,13 @@ import { Project, Zone } from "@/types/project";
 
 export default function ZoneDetailPage() {
     const params = useParams();
-    const projectId = params?.project as string;
-    const zoneId = params?.zone as string;
+    const projectId = params?.project as string; // 確保 projectId 是字串類型
+    const zoneId = params?.zone as string;       // 確保 zoneId 是字串類型
+
+    if (!projectId || !zoneId) {
+        return <div>無效的專案或分區 ID</div>;
+    }
+
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
 
     if (loading) return <div>載入中...</div>;

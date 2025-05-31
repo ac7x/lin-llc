@@ -80,12 +80,8 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                                                             {data.zones.map((zone: Zone) => (
                                                                 <li key={zone.zoneId}>
                                                                     <Link
-                                                                        href={`${projectHref}?zone=${zone.zoneId}`}
-                                                                        className={`block px-3 py-1 text-sm rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === projectHref &&
-                                                                            new URLSearchParams(window.location.search).get('zone') === zone.zoneId
-                                                                            ? "bg-blue-200 dark:bg-gray-700"
-                                                                            : ""
-                                                                            }`}
+                                                                        href={`/owner/projects/${project.id}/zones/${zone.zoneId}`}
+                                                                        className={`block px-3 py-1 text-sm rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === `/owner/projects/${project.id}/zones/${zone.zoneId}` ? "bg-blue-200 dark:bg-gray-700" : ""}`}
                                                                     >
                                                                         {zone.zoneName}
                                                                     </Link>

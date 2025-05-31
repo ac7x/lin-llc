@@ -44,7 +44,15 @@ export default function ImportProjectPage() {
                 createdAt: Timestamp.now(),
                 updatedAt: Timestamp.now(),
                 status: "新建立",
-                // 你可以根據需求加入更多欄位
+                zones: [
+                    {
+                        zoneId: "default",
+                        zoneName: "默認分區",
+                        desc: "此為自動建立的默認分區",
+                        order: 0,
+                        createdAt: new Date(),
+                    },
+                ],
             };
             await addDoc(collection(db, "projects"), projectData);
             setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
