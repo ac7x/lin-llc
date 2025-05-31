@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -25,5 +25,16 @@ if (typeof window !== "undefined") {
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 重新 export doc, getDoc，讓 context 也能用
-export { app, auth, db, doc, getDoc };
+// 重新 export 需要用到的 firebase 方法與物件
+export {
+    app,
+    auth,
+    db,
+    doc,
+    getDoc,
+    setDoc,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithRedirect,
+    signOut,
+};
