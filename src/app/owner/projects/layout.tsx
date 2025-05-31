@@ -4,58 +4,26 @@ import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { collection } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Disclosure } from '@headlessui/react';
-import { Zone } from "@/types/project";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-
-function SortableZone({ zone, projectId, pathname }: { zone: Zone; projectId: string; pathname: string }) {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: zone.zoneId });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-
-    return (
-        <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <Link
-                href={`/owner/projects/${projectId}/zones/${zone.zoneId}`}
-                className={`block px-3 py-1 text-sm rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === `/owner/projects/${projectId}/zones/${zone.zoneId}` ? "bg-blue-200 dark:bg-gray-700" : ""}`}
-            >
-                {zone.zoneName}
-            </Link>
-        </li>
-    );
-}
+import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
-    const [addingZone, setAddingZone] = useState<string | null>(null);
-    const [showModal, setShowModal] = useState(false);
-    const [zoneName, setZoneName] = useState("");
-    const [selectedProjectId, setSelectedProjectId] = useState<string>("");
     const navs = [
         { label: "專案列表", href: "/owner/projects" },
         { label: "從合約建立專案", href: "/owner/projects/import" },
     ];
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
+    // 控制展開狀態
+    const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
 
-    const handleDragEnd = async ({ active, over }: DragEndEvent, projectId: string, zones: Zone[]) => {
-        if (!over || active.id === over.id) return;
-        const oldIndex = zones.findIndex((z: Zone) => z.zoneId === active.id);
-        const newIndex = zones.findIndex((z: Zone) => z.zoneId === over.id);
-        if (oldIndex === -1 || newIndex === -1) return;
-        const newZones = arrayMove(zones, oldIndex, newIndex);
-        try {
-            await updateDoc(doc(db, "projects", projectId), { zones: newZones });
-        } catch {
-            alert("更新排序失敗");
-        }
+    const toggleOpen = (projectId: string) => {
+        setOpenMap(prev => ({
+            ...prev,
+            [projectId]: !prev[projectId]
+        }));
     };
 
     return (
@@ -78,94 +46,46 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                     ) : projectsSnapshot && projectsSnapshot.docs.length > 0 ? (
                         projectsSnapshot.docs.map(project => {
                             const data = project.data();
-                            const projectHref = `/owner/projects/${project.id}`;
+                            const projectId = project.id;
+                            const projectHref = `/owner/projects/${projectId}`;
+                            const decompositionHref = `/owner/projects/${projectId}/decomposition`;
+                            const isOpen = !!openMap[projectId];
                             return (
-                                <li key={project.id} className="group">
-                                    <Disclosure defaultOpen={false}>
-                                        {({ open }) => (
-                                            <div>
-                                                <div className="flex items-center">
-                                                    <Disclosure.Button
-                                                        className="p-1 mr-1 text-gray-500 hover:text-blue-500 focus:outline-none"
-                                                    >
-                                                        <svg
-                                                            className={`w-4 h-4 transform transition-transform ${open ? 'rotate-180' : ''
-                                                                }`}
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={2}
-                                                                d="M19 9l-7 7-7-7"
-                                                            />
-                                                        </svg>
-                                                    </Disclosure.Button>
+                                <li key={projectId} className="group">
+                                    <div>
+                                        <div className="flex items-center">
+                                            <button
+                                                type="button"
+                                                aria-label={isOpen ? "收合" : "展開"}
+                                                onClick={() => toggleOpen(projectId)}
+                                                className="p-1 mr-1 rounded hover:bg-blue-100 dark:hover:bg-gray-800"
+                                            >
+                                                {isOpen ? (
+                                                    <ChevronDownIcon className="w-4 h-4 text-gray-500" />
+                                                ) : (
+                                                    <ChevronRightIcon className="w-4 h-4 text-gray-500" />
+                                                )}
+                                            </button>
+                                            <Link
+                                                href={projectHref}
+                                                className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === projectHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                            >
+                                                {data.projectName || data.projectId || projectId}
+                                            </Link>
+                                        </div>
+                                        {isOpen && (
+                                            <ul className="ml-7 mt-1 space-y-1">
+                                                <li>
                                                     <Link
-                                                        href={projectHref}
-                                                        className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === projectHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                                        href={decompositionHref}
+                                                        className={`block px-2 py-1 text-sm rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === decompositionHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
                                                     >
-                                                        {data.projectName || data.projectId || project.id}
+                                                        分解索引
                                                     </Link>
-                                                </div>
-
-                                                <Disclosure.Panel>
-                                                    {data.zones && data.zones.length > 0 && (
-                                                        <DndContext
-                                                            collisionDetection={closestCenter}
-                                                            onDragEnd={(event) => handleDragEnd(event, project.id, data.zones)}
-                                                        >
-                                                            <SortableContext
-                                                                items={data.zones.map((zone: Zone) => zone.zoneId)}
-                                                                strategy={verticalListSortingStrategy}
-                                                            >
-                                                                <ul className="ml-8 mt-1 space-y-1">
-                                                                    {data.zones.map((zone: Zone) => (
-                                                                        <SortableZone
-                                                                            key={zone.zoneId}
-                                                                            zone={zone}
-                                                                            projectId={project.id}
-                                                                            pathname={pathname}
-                                                                        />
-                                                                    ))}
-                                                                </ul>
-                                                            </SortableContext>
-                                                        </DndContext>
-                                                    )}
-                                                    {/* 現代化圓形新增分區按鈕（小巧和諧） */}
-                                                    <div className="ml-8 mt-3 flex">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                setSelectedProjectId(project.id); // 保留供新增分區使用
-                                                                setZoneName("");
-                                                                setShowModal(true);
-                                                            }}
-                                                            className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-400 hover:bg-blue-500 active:bg-blue-600 text-white shadow transition"
-                                                            title="新增分區"
-                                                            style={{ fontSize: 0 }}
-                                                        >
-                                                            <svg
-                                                                className="w-3.5 h-3.5"
-                                                                fill="none"
-                                                                stroke="currentColor"
-                                                                viewBox="0 0 24 24"
-                                                            >
-                                                                <path
-                                                                    strokeLinecap="round"
-                                                                    strokeLinejoin="round"
-                                                                    strokeWidth={2}
-                                                                    d="M12 5v14m7-7H5"
-                                                                />
-                                                            </svg>
-                                                        </button>
-                                                    </div>
-                                                </Disclosure.Panel>
-                                            </div>
+                                                </li>
+                                            </ul>
                                         )}
-                                    </Disclosure>
+                                    </div>
                                 </li>
                             );
                         })
@@ -182,65 +102,6 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                 </ul>
             </nav>
             <div className="flex-1 p-4">{children}</div>
-
-            {/* 新增分區彈窗 */}
-            {showModal && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) {
-                            setShowModal(false);
-                        }
-                    }}
-                >
-                    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg w-80">
-                        <h3 className="text-lg font-bold mb-4">新增分區</h3>
-                        <input
-                            type="text"
-                            value={zoneName}
-                            onChange={(e) => setZoneName(e.target.value)}
-                            placeholder="請輸入分區名稱"
-                            className="w-full border p-2 rounded mb-4 dark:bg-gray-700"
-                            autoFocus
-                        />
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="px-4 py-2 text-gray-500"
-                            >
-                                取消
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    if (!zoneName.trim() || addingZone) return;
-                                    setAddingZone(selectedProjectId);
-                                    try {
-                                        const projectDoc = projectsSnapshot?.docs.find(d => d.id === selectedProjectId);
-                                        const data = projectDoc?.data();
-                                        await updateDoc(doc(db, "projects", selectedProjectId), {
-                                            zones: arrayUnion({
-                                                zoneId: Math.random().toString(36).slice(2, 10),
-                                                zoneName: zoneName.trim(),
-                                                desc: "",
-                                                order: (data?.zones?.length || 0),
-                                                createdAt: new Date()
-                                            })
-                                        });
-                                        setShowModal(false);
-                                    } catch {
-                                        alert("新增分區失敗");
-                                    }
-                                    setAddingZone(null);
-                                }}
-                                disabled={!zoneName.trim() || !!addingZone}
-                                className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-                            >
-                                {addingZone ? "新增中..." : "確定"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

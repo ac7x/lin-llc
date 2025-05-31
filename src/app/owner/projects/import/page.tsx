@@ -56,15 +56,6 @@ export default function ImportProjectPage() {
                 createdAt: Timestamp.now(),
                 updatedAt: Timestamp.now(),
                 status: "新建立",
-                zones: [
-                    {
-                        zoneId: "default",
-                        zoneName: "默認分區",
-                        desc: "此為自動建立的默認分區",
-                        order: 0,
-                        createdAt: new Date(),
-                    },
-                ],
                 decomposition, // 新增分解資料
             };
             await addDoc(collection(db, "projects"), projectData);
