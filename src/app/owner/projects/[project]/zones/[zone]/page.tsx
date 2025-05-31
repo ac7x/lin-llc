@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { doc, onSnapshot, setDoc, Firestore } from "firebase/firestore";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { Project, Zone } from "@/types/project";
 import { Network } from "vis-network/standalone";
@@ -31,7 +30,7 @@ function NetworkGraph({
 }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const networkRef = useRef<Network | null>(null);
-    const { db } = useFirebase();
+    const { db, doc, onSnapshot, setDoc } = useFirebase();
     const [operationLogs, setOperationLogs] = useState<string[]>([]);
     // DataSet 僅初始化一次
     const nodesRef = useRef<DataSet<NodeType>>(new DataSet<NodeType>([]));
@@ -43,7 +42,7 @@ function NetworkGraph({
     useEffect(() => {
         setOperationLogs(prev => [...prev, "開始訂閱 Firestore 實時更新"]);
         // graph 資料建議存放於 projects/{projectId}/zones_graph/{zoneId}
-        const graphDocRef = doc(db as Firestore, "projects", projectId, "zones_graph", zoneId);
+        const graphDocRef = doc(db as typeof db, "projects", projectId, "zones_graph", zoneId);
         const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.data() as { nodes?: NodeType[]; edges?: EdgeType[] };
@@ -105,7 +104,7 @@ function NetworkGraph({
                         );
                         try {
                             await setDoc(
-                                doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                                doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
                                 { edges: allEdges },
                                 { merge: true }
                             );
@@ -123,7 +122,7 @@ function NetworkGraph({
                         const allEdges: EdgeType[] = edgesRef.current.get().filter(edge => !idsToDelete.includes(edge.id));
                         try {
                             await setDoc(
-                                doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                                doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
                                 { edges: allEdges },
                                 { merge: true }
                             );
@@ -141,7 +140,7 @@ function NetworkGraph({
                         try {
                             const allNodes: NodeType[] = nodesRef.current.get();
                             await setDoc(
-                                doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                                doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
                                 { nodes: allNodes },
                                 { merge: true }
                             );
@@ -159,7 +158,7 @@ function NetworkGraph({
                         try {
                             const allEdges: EdgeType[] = edgesRef.current.get();
                             await setDoc(
-                                doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                                doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
                                 { edges: allEdges },
                                 { merge: true }
                             );
@@ -188,7 +187,7 @@ function NetworkGraph({
             const allNodes: NodeType[] = nodesDS.get();
             try {
                 await setDoc(
-                    doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                    doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
                     { nodes: allNodes },
                     { merge: true }
                 );
@@ -203,7 +202,7 @@ function NetworkGraph({
             const allEdges: EdgeType[] = edgesDS.get();
             try {
                 await setDoc(
-                    doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                    doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
                     { edges: allEdges },
                     { merge: true }
                 );
@@ -249,8 +248,8 @@ export default function ZoneDetailPage() {
     const projectId = params?.project as string;
     const zoneId = params?.zone as string;
 
-    const { db } = useFirebase();
-    const [projectDoc, loading, error] = useDocument(doc(db as Firestore, "projects", projectId));
+    const { db, doc } = useFirebase();
+    const [projectDoc, loading, error] = useDocument(doc(db as typeof db, "projects", projectId));
 
     if (!projectId || !zoneId) {
         return <div>無效的專案或分區 ID</div>;
