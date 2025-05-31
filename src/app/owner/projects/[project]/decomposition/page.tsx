@@ -3,20 +3,60 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from "next/navigation";
 import { ReactFlow, ReactFlowProvider, addEdge, applyNodeChanges, applyEdgeChanges, Background, Controls, MiniMap, NodeChange, EdgeChange, Connection } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
+import '@xyflow/react/dist/style.css';
+
+// 根據 colorMode 動態調整節點樣式
+const CustomNode = ({ data, selected, colorMode }: any) => {
+    const isDark = colorMode === "dark";
+    return (
+        <div
+            style={{
+                background: isDark ? "#223047" : "#2a6c97",
+                border: selected
+                    ? "2.5px solid #fbbf24"
+                    : isDark
+                        ? "2px solid #3b82f6"
+                        : "2px solid #0d618f",
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "1rem",
+                borderRadius: 8,
+                boxShadow: selected
+                    ? "0 8px 24px 0 rgba(0,0,0,0.18)"
+                    : "0 4px 16px 0 rgba(0,0,0,0.10)",
+                padding: "16px 20px",
+                minWidth: 100,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "box-shadow 0.2s, border 0.2s, background 0.2s",
+            }}
+        >
+            {data.label}
+        </div>
+    );
+};
 
 export default function DecompositionPage() {
     const { db, doc, useDocument, updateDoc } = useFirebase();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
-
-    // 先初始化為空陣列，避免 hooks 順序錯亂
     const [rfNodes, setNodes] = useState<any[]>([]);
     const [rfEdges, setEdges] = useState<any[]>([]);
 
-    // 當 projectDoc 變動時，同步 nodes/edges 狀態
+    // 自動偵測系統深淺模式
+    const [colorMode, setColorMode] = useState<"light" | "dark">("light");
+    useEffect(() => {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const update = () => setColorMode(mq.matches ? "dark" : "light");
+        update();
+        mq.addEventListener("change", update);
+        return () => mq.removeEventListener("change", update);
+    }, []);
+
     useEffect(() => {
         if (projectDoc?.exists()) {
             const decomposition = projectDoc.data()?.decomposition;
@@ -30,13 +70,14 @@ export default function DecompositionPage() {
         }
     }, [projectDoc]);
 
-    // 新增節點功能
+    const nodeTypes = { custom: CustomNode };
+
     const handleAddNode = () => {
         setNodes((prev) => {
             const newId = `node_${Date.now()}`;
             const newNode = {
                 id: newId,
-                type: "default",
+                type: "custom",
                 position: { x: 100 + prev.length * 40, y: 100 + prev.length * 40 },
                 data: { label: `新節點${prev.length + 1}` },
             };
@@ -44,7 +85,6 @@ export default function DecompositionPage() {
         });
     };
 
-    // 同步到 Firestore
     const syncDecomposition = async (nodes: any[], edges: any[]) => {
         if (!projectId) return;
         try {
@@ -110,6 +150,8 @@ export default function DecompositionPage() {
                             onEdgesChange={onEdgesChange}
                             onConnect={onConnect}
                             fitView
+                            nodeTypes={nodeTypes}
+                            colorMode={colorMode}
                         >
                             <MiniMap />
                             <Controls />
