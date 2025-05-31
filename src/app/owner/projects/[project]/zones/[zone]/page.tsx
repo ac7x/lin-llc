@@ -46,7 +46,6 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
     // 若 Firestore 沒有初始化，利用 zones 陣列初始化節點與邊
     useEffect(() => {
         if (nodes.length > 0 || zones.length === 0) return;
-        // 記錄初始化開始
         setOperationLogs(prev => [...prev, "初始化同步開始"]);
         const projectNode: NodeType = { id: "project", label: "專案" };
         const zoneNodes = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName } as NodeType));
@@ -58,7 +57,7 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
             label: "連接"
         } as EdgeType));
         setEdges(new DataSet<EdgeType>(newEdges));
-        updateDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), {
+        setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), {
             nodes: [projectNode, ...zoneNodes],
             edges: newEdges
         })
