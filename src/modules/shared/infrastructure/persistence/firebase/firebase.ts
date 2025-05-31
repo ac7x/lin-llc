@@ -1,7 +1,64 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "firebase/firestore";
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithRedirect,
+    signOut,
+    onAuthStateChanged,
+} from "firebase/auth";
+import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    collection,
+    getDocs,
+    addDoc,
+    updateDoc,
+    onSnapshot,
+    Timestamp,
+    query,
+    type QuerySnapshot,
+    type DocumentData,
+} from "firebase/firestore";
+import {
+    getStorage,
+    ref,
+    uploadBytes,
+    uploadBytesResumable,
+    getDownloadURL,
+    deleteObject,
+    listAll,
+} from "firebase/storage";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import {
+    getAnalytics,
+    logEvent,
+    setUserId,
+    setUserProperties,
+    setCurrentScreen,
+} from "firebase/analytics";
+import {
+    getPerformance,
+    trace,
+} from "firebase/performance";
+import {
+    getMessaging,
+    getToken,
+    onMessage,
+} from "firebase/messaging";
+import {
+    getRemoteConfig,
+    fetchAndActivate,
+    getValue,
+    setLogLevel,
+} from "firebase/remote-config";
+import {
+    getFunctions,
+    httpsCallable,
+    connectFunctionsEmulator,
+} from "firebase/functions";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -24,20 +81,71 @@ if (typeof window !== "undefined") {
 
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-// 重新 export 需要用到的 firebase 方法與物件
+// Analytics、Performance、Messaging、Remote Config、Functions 只在瀏覽器端初始化
+const analytics = typeof window !== "undefined" ? getAnalytics(app) : undefined;
+const performance = typeof window !== "undefined" ? getPerformance(app) : undefined;
+const messaging = typeof window !== "undefined" ? getMessaging(app) : undefined;
+const remoteConfig = typeof window !== "undefined" ? getRemoteConfig(app) : undefined;
+const functions = typeof window !== "undefined" ? getFunctions(app) : undefined;
+
 export {
     app,
     auth,
     db,
+    storage,
     doc,
     getDoc,
     setDoc,
     collection,
+    getDocs,
+    addDoc,
+    updateDoc,
     onSnapshot,
+    Timestamp,
+    query,
     getFirestore,
     GoogleAuthProvider,
     signInWithPopup,
     signInWithRedirect,
     signOut,
+    onAuthStateChanged,
+    // firebase/storage 常用語法
+    getStorage,
+    ref,
+    uploadBytes,
+    uploadBytesResumable,
+    getDownloadURL,
+    deleteObject,
+    listAll,
+    // firebase/analytics 常用語法
+    analytics,
+    getAnalytics,
+    logEvent,
+    setUserId,
+    setUserProperties,
+    setCurrentScreen,
+    // firebase/performance 常用語法
+    performance,
+    getPerformance,
+    trace,
+    // firebase/messaging 常用語法
+    messaging,
+    getMessaging,
+    getToken,
+    onMessage,
+    // firebase/remote-config 常用語法
+    remoteConfig,
+    getRemoteConfig,
+    fetchAndActivate,
+    getValue,
+    setLogLevel,
+    // firebase/functions 常用語法
+    functions,
+    getFunctions,
+    httpsCallable,
+    connectFunctionsEmulator,
 };
+// 型別 export 必須用 export type
+export type { QuerySnapshot, DocumentData };
