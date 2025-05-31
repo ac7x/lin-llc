@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useState } from "react";
 import {
     ReactFlow,
     ReactFlowProvider,
@@ -15,20 +15,39 @@ import {
     Connection,
     OnConnectStart,
     OnConnectEnd,
+    applyNodeChanges,
+    applyEdgeChanges,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 let nodeId = 1;
 const getId = () => `node_${nodeId++}`;
 
-function Flow() {
+function Flow({ useSimpleState = false }: { useSimpleState?: boolean }) {
     const initialNodes: Node[] = [
         { id: "1", position: { x: 250, y: 5 }, data: { label: "節點 1" } },
         { id: "2", position: { x: 100, y: 100 }, data: { label: "節點 2" } },
     ];
     const initialEdges: Edge[] = [];
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+    // 切換不同 hook
+    const [
+        nodes, setNodes, onNodesChange,
+        edges, setEdges, onEdgesChange
+    ] = useSimpleState
+            ? [
+                useState<Node[]>(initialNodes)[0],
+                useState<Node[]>(initialNodes)[1],
+                (changes: any) => setNodes((nds: Node[]) => applyNodeChanges(changes, nds)),
+                useState<Edge[]>(initialEdges)[0],
+                useState<Edge[]>(initialEdges)[1],
+                (changes: any) => setEdges((eds: Edge[]) => applyEdgeChanges(changes, eds)),
+            ]
+            : [
+                ...useNodesState(initialNodes),
+                ...useEdgesState(initialEdges),
+            ];
+
     const { screenToFlowPosition } = useReactFlow();
     const connectingNodeId = useRef<string | null>(null);
 
@@ -45,22 +64,28 @@ function Flow() {
         const sourceId = connectingNodeId.current;
         if (!sourceId) return;
 
-        // 直接新增節點，不判斷 pane
-        const { clientX, clientY } =
-            "changedTouches" in event ? event.changedTouches[0] : event;
-        const position = screenToFlowPosition({ x: clientX, y: clientY });
-        const newNodeId = getId();
-        const newNode: Node = {
-            id: newNodeId,
-            position,
-            data: { label: "新節點" },
-        };
-        setNodes(nds => [...nds, newNode]);
-        setEdges(eds => [
-            ...eds,
-            { id: `e${sourceId}-${newNodeId}`, source: sourceId, target: newNodeId },
-        ]);
-        draggingNodeId.current = newNodeId;
+        // 檢查是否拖曳到 pane（空白處），只有這種情況才新增節點
+        const targetIsPane =
+            event.target &&
+            (event.target as HTMLElement).classList.contains("react-flow__pane");
+
+        if (targetIsPane) {
+            const { clientX, clientY } =
+                "changedTouches" in event ? event.changedTouches[0] : event;
+            const position = screenToFlowPosition({ x: clientX, y: clientY });
+            const newNodeId = getId();
+            const newNode: Node = {
+                id: newNodeId,
+                position,
+                data: { label: "新節點" },
+            };
+            setNodes(nds => [...nds, newNode]);
+            setEdges(eds => [
+                ...eds,
+                { id: `e${sourceId}-${newNodeId}`, source: sourceId, target: newNodeId },
+            ]);
+            draggingNodeId.current = newNodeId;
+        }
         connectingNodeId.current = null;
     }, [screenToFlowPosition, setNodes, setEdges]);
 
