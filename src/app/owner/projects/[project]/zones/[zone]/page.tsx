@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { Project, Zone } from "@/types/project";
 import { Network } from "vis-network/standalone";
 import { DataSet } from "vis-data";
@@ -53,6 +53,7 @@ export default function ZoneDetailPage() {
         return <div>無效的專案或分區 ID</div>;
     }
 
+    const { db } = useFirebase();
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
 
     if (loading) return <div>載入中...</div>;
