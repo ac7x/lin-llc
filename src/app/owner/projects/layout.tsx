@@ -8,6 +8,30 @@ import { collection, doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Disclosure } from '@headlessui/react';
 import { Zone } from "@/types/project";
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+function SortableZone({ zone, projectId, pathname }: { zone: Zone; projectId: string; pathname: string }) {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: zone.zoneId });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            <Link
+                href={`/owner/projects/${projectId}/zones/${zone.zoneId}`}
+                className={`block px-3 py-1 text-sm rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === `/owner/projects/${projectId}/zones/${zone.zoneId}` ? "bg-blue-200 dark:bg-gray-700" : ""}`}
+            >
+                {zone.zoneName}
+            </Link>
+        </li>
+    );
+}
 
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
@@ -20,6 +44,19 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
         { label: "從合約建立專案", href: "/owner/projects/import" },
     ];
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
+
+    const handleDragEnd = async ({ active, over }: { active: any; over: any }, projectId: string, zones: Zone[]) => {
+        if (!over || active.id === over.id) return;
+        const oldIndex = zones.findIndex((z: Zone) => z.zoneId === active.id);
+        const newIndex = zones.findIndex((z: Zone) => z.zoneId === over.id);
+        if (oldIndex === -1 || newIndex === -1) return;
+        const newZones = arrayMove(zones, oldIndex, newIndex);
+        try {
+            await updateDoc(doc(db, "projects", projectId), { zones: newZones });
+        } catch {
+            alert("更新排序失敗");
+        }
+    };
 
     return (
         <div className="flex">
@@ -75,26 +112,34 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                                                 </div>
 
                                                 <Disclosure.Panel>
-                                                    {data.zones && data.zones.length > 0 && ( // zones 作為陣列進行渲染
-                                                        <ul className="ml-8 mt-1 space-y-1">
-                                                            {data.zones.map((zone: Zone) => (
-                                                                <li key={zone.zoneId}>
-                                                                    <Link
-                                                                        href={`/owner/projects/${project.id}/zones/${zone.zoneId}`}
-                                                                        className={`block px-3 py-1 text-sm rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === `/owner/projects/${project.id}/zones/${zone.zoneId}` ? "bg-blue-200 dark:bg-gray-700" : ""}`}
-                                                                    >
-                                                                        {zone.zoneName}
-                                                                    </Link>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
+                                                    {data.zones && data.zones.length > 0 && (
+                                                        <DndContext
+                                                            collisionDetection={closestCenter}
+                                                            onDragEnd={(event) => handleDragEnd(event, project.id, data.zones)}
+                                                        >
+                                                            <SortableContext
+                                                                items={data.zones.map((zone: Zone) => zone.zoneId)}
+                                                                strategy={verticalListSortingStrategy}
+                                                            >
+                                                                <ul className="ml-8 mt-1 space-y-1">
+                                                                    {data.zones.map((zone: Zone) => (
+                                                                        <SortableZone
+                                                                            key={zone.zoneId}
+                                                                            zone={zone}
+                                                                            projectId={project.id}
+                                                                            pathname={pathname}
+                                                                        />
+                                                                    ))}
+                                                                </ul>
+                                                            </SortableContext>
+                                                        </DndContext>
                                                     )}
                                                     {/* 現代化圓形新增分區按鈕（小巧和諧） */}
                                                     <div className="ml-8 mt-3 flex">
                                                         <button
                                                             onClick={(e) => {
                                                                 e.preventDefault();
-                                                                setSelectedProjectId(project.id);
+                                                                setSelectedProjectId(project.id); // 保留供新增分區使用
                                                                 setZoneName("");
                                                                 setShowModal(true);
                                                             }}
