@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc, setDoc } from "firebase/firestore";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { Project, Zone } from "@/types/project";
 import { Network } from "vis-network/standalone";
@@ -16,6 +16,9 @@ type EdgeType = { id: string; from: string; to: string; label: string };
 function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId: string; zones: Zone[] }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { db } = useFirebase();
+    // 新增同步狀態與操作訊息 state
+    const [syncStatus, setSyncStatus] = useState<string>("");
+    const [operationLogs, setOperationLogs] = useState<string[]>([]);
     // 使用泛型指定 DataSet 型別
     const [nodes, setNodes] = useState(new DataSet<NodeType>([]));
     const [edges, setEdges] = useState(new DataSet<EdgeType>([]));
@@ -28,6 +31,7 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
                 const data = snapshot.data();
                 setNodes(new DataSet<NodeType>(data.nodes || []));
                 setEdges(new DataSet<EdgeType>(data.edges || []));
+                setOperationLogs(prev => [...prev, "從 Firestore 同步更新節點與邊"]);
             }
         });
         return () => unsubscribe();
@@ -49,7 +53,13 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
         updateDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), {
             nodes: [projectNode, ...zoneNodes],
             edges: newEdges
-        }).catch(() => { });
+        })
+            .then(() => {
+                setOperationLogs(prev => [...prev, "初始化同步成功"]);
+            })
+            .catch(() => {
+                setOperationLogs(prev => [...prev, "初始化同步失敗"]);
+            });
     }, [zones, nodes, db, projectId, zoneId]);
 
     useEffect(() => {
@@ -62,12 +72,25 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
                     enabled: true,
                     initiallyActive: true,
                     editEdge: function (data: any, callback: any) {
+                        setOperationLogs(prev => [...prev, "編輯邊操作開始"]);
+                        console.log("editEdge 開始，原始邊資料:", data);
                         const newLabel = prompt("請輸入新的邊標籤：", data.label) || data.label;
                         data.label = newLabel;
                         edges.update({ id: data.id, label: newLabel });
                         const allEdges = edges.get();
-                        updateDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges });
-                        callback(data);
+                        console.log("更新後的所有邊:", allEdges);
+                        setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true })
+                            .then(() => {
+                                setSyncStatus("同步成功");
+                                setOperationLogs(prev => [...prev, "邊資料同步成功"]);
+                                callback(data);
+                            })
+                            .catch(err => {
+                                setSyncStatus("同步失敗");
+                                setOperationLogs(prev => [...prev, "邊資料同步失敗"]);
+                                console.error("邊資料同步失敗:", err);
+                                callback(data);
+                            });
                     }
                 }
             };
@@ -75,7 +98,19 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
         }
     }, [containerRef, nodes, edges, db, projectId, zoneId]);
 
-    return <div ref={containerRef} style={{ height: "400px" }} />;
+    return (
+        <>
+            <div ref={containerRef} style={{ height: "400px" }} />
+            {/* 顯示同步狀態 */}
+            {syncStatus && <div style={{ marginTop: "8px", color: "green" }}>{syncStatus}</div>}
+            <div style={{ marginTop: "8px" }}>
+                <h3>操作記錄:</h3>
+                <ul>
+                    {operationLogs.map((log, index) => <li key={index}>{log}</li>)}
+                </ul>
+            </div>
+        </>
+    );
 }
 
 export default function ZoneDetailPage() {
