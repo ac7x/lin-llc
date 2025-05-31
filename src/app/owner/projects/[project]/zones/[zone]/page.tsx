@@ -139,7 +139,6 @@ export default function ZoneDetailPage() {
     return (
         <main className="max-w-9xl mx-auto p-4">
             <div className="mt-6">
-                <h2 className="text-xl font-bold mb-2">網路圖</h2>
                 <NetworkGraph
                     projectId={projectId}
                     zoneId={zoneId}
