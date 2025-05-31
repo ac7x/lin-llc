@@ -35,7 +35,7 @@ function NetworkGraph({
     // 新增 flag 避免循環觸發
     const isRemoteUpdate = useRef(false);
 
-    // Firestore 監聽只同步資料到 DataSet
+    // Firestore 監聽只同步資料到 DataSet，並在無資料時初始化
     useEffect(() => {
         setOperationLogs(prev => [...prev, "開始訂閱 Firestore 實時更新"]);
         const graphDocRef = doc(db, "projects", projectId, "zones", zoneId, "graph", "data");
@@ -49,45 +49,36 @@ function NetworkGraph({
                 edgesRef.current.add(data.edges || []);
                 setOperationLogs(prev => [...prev, "從 Firestore 同步更新節點與邊"]);
                 isRemoteUpdate.current = false;
+            } else if (zones.length > 0) {
+                setOperationLogs(prev => [...prev, "Firestore 無資料，開始初始化同步"]);
+                const projectNode: NodeType = { id: "project", label: projectName || "專案" };
+                const zoneNodes = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName } as NodeType));
+                const newEdges = zones.map(zone => ({
+                    id: `edge-${zone.zoneId}`,
+                    from: zone.zoneId,
+                    to: "project",
+                    label: "連接"
+                } as EdgeType));
+                setDoc(graphDocRef, {
+                    nodes: [projectNode, ...zoneNodes],
+                    edges: newEdges
+                })
+                    .then(() => {
+                        setOperationLogs(prev => [
+                            ...prev,
+                            `初始化同步成功: 節點數量=${[projectNode, ...zoneNodes].length}, 邊數量=${newEdges.length}`
+                        ]);
+                    })
+                    .catch((err) => {
+                        setOperationLogs(prev => [...prev, `初始化同步失敗: ${err.message}`]);
+                    });
             }
         });
         return () => {
             unsubscribe();
             setOperationLogs(prev => [...prev, "取消訂閱 Firestore"]);
         };
-    }, [db, projectId, zoneId]);
-
-    // Firestore 未初始化時，利用 zones 初始化
-    useEffect(() => {
-        if (nodesRef.current.length > 0 || zones.length === 0) return;
-        setOperationLogs(prev => [...prev, "初始化同步開始"]);
-        // 將專案名稱作為節點 label
-        const projectNode: NodeType = { id: "project", label: projectName || "專案" };
-        const zoneNodes = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName } as NodeType));
-        nodesRef.current.clear();
-        nodesRef.current.add([projectNode, ...zoneNodes]);
-        const newEdges = zones.map(zone => ({
-            id: `edge-${zone.zoneId}`,
-            from: zone.zoneId,
-            to: "project",
-            label: "連接"
-        } as EdgeType));
-        edgesRef.current.clear();
-        edgesRef.current.add(newEdges);
-        setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), {
-            nodes: [projectNode, ...zoneNodes],
-            edges: newEdges
-        })
-            .then(() => {
-                setOperationLogs(prev => [
-                    ...prev,
-                    `初始化同步成功: 節點數量=${[projectNode, ...zoneNodes].length}, 邊數量=${newEdges.length}`
-                ]);
-            })
-            .catch((err) => {
-                setOperationLogs(prev => [...prev, `初始化同步失敗: ${err.message}`]);
-            });
-    }, [zones, db, projectId, zoneId, projectName]);
+    }, [db, projectId, zoneId, zones, projectName]);
 
     // Network 實例只初始化一次
     useEffect(() => {
