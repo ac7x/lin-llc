@@ -15,48 +15,50 @@ type EdgeType = { id: string; from: string; to: string; label: string };
 
 function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId: string; zones: Zone[] }) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const networkRef = useRef<Network | null>(null);
     const { db } = useFirebase();
-    // 新增同步狀態與操作訊息 state
     const [syncStatus, setSyncStatus] = useState<string>("");
     const [operationLogs, setOperationLogs] = useState<string[]>([]);
-    // 使用泛型指定 DataSet 型別
-    const [nodes, setNodes] = useState(new DataSet<NodeType>([]));
-    const [edges, setEdges] = useState(new DataSet<EdgeType>([]));
+    // DataSet 只初始化一次
+    const nodesRef = useRef(new DataSet<NodeType>([]));
+    const edgesRef = useRef(new DataSet<EdgeType>([]));
 
-    // 從 Firestore 同步網路圖資料
+    // Firestore 監聽只同步資料到 DataSet
     useEffect(() => {
-        // 新增訂閱開始日誌
         setOperationLogs(prev => [...prev, "開始訂閱 Firestore 實時更新"]);
         const graphDocRef = doc(db, "projects", projectId, "zones", zoneId, "graph", "data");
         const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.data();
-                setNodes(new DataSet<NodeType>(data.nodes || []));
-                setEdges(new DataSet<EdgeType>(data.edges || []));
+                nodesRef.current.clear();
+                edgesRef.current.clear();
+                nodesRef.current.add(data.nodes || []);
+                edgesRef.current.add(data.edges || []);
                 setOperationLogs(prev => [...prev, "從 Firestore 同步更新節點與邊"]);
             }
         });
         return () => {
             unsubscribe();
-            // 可選：記錄取消訂閱
             setOperationLogs(prev => [...prev, "取消訂閱 Firestore"]);
         };
     }, [db, projectId, zoneId]);
 
-    // 若 Firestore 沒有初始化，利用 zones 陣列初始化節點與邊
+    // Firestore 未初始化時，利用 zones 初始化
     useEffect(() => {
-        if (nodes.length > 0 || zones.length === 0) return;
+        if (nodesRef.current.length > 0 || zones.length === 0) return;
         setOperationLogs(prev => [...prev, "初始化同步開始"]);
         const projectNode: NodeType = { id: "project", label: "專案" };
         const zoneNodes = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName } as NodeType));
-        setNodes(new DataSet<NodeType>([projectNode, ...zoneNodes]));
+        nodesRef.current.clear();
+        nodesRef.current.add([projectNode, ...zoneNodes]);
         const newEdges = zones.map(zone => ({
             id: `edge-${zone.zoneId}`,
             from: zone.zoneId,
             to: "project",
             label: "連接"
         } as EdgeType));
-        setEdges(new DataSet<EdgeType>(newEdges));
+        edgesRef.current.clear();
+        edgesRef.current.add(newEdges);
         setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), {
             nodes: [projectNode, ...zoneNodes],
             edges: newEdges
@@ -70,68 +72,64 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
             .catch((err) => {
                 setOperationLogs(prev => [...prev, `初始化同步失敗: ${err.message}`]);
             });
-    }, [zones, nodes, db, projectId, zoneId]);
+    }, [zones, db, projectId, zoneId]);
 
+    // Network 實例只初始化一次
     useEffect(() => {
-        if (containerRef.current) {
-            const data = { nodes, edges };
+        if (containerRef.current && !networkRef.current) {
+            const data = { nodes: nodesRef.current, edges: edgesRef.current };
             const options = {
                 layout: { hierarchical: false },
                 physics: { enabled: true },
                 manipulation: {
                     enabled: true,
                     initiallyActive: true,
-                    editEdge: function (data: any, callback: any) {
+                    editEdge: async (data: any, callback: any) => {
                         setOperationLogs(prev => [...prev, `開始編輯邊: ${data.id}`]);
                         setOperationLogs(prev => [...prev, "編輯邊操作開始"]);
-                        console.log("editEdge 開始，原始邊資料:", data);
                         const newLabel = prompt("請輸入新的邊標籤：", data.label) || data.label;
                         data.label = newLabel;
-                        edges.update({ id: data.id, label: newLabel });
-                        const allEdges = edges.get();
-                        console.log("更新後的所有邊:", allEdges);
-                        setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true })
-                            .then(() => {
-                                setSyncStatus("同步成功");
-                                setOperationLogs(prev => [...prev, "邊資料同步成功"]);
-                                callback(data);
-                            })
-                            .catch(err => {
-                                setSyncStatus("同步失敗");
-                                setOperationLogs(prev => [...prev, "邊資料同步失敗"]);
-                                console.error("邊資料同步失敗:", err);
-                                callback(data);
-                            });
+                        // 先寫入 Firestore
+                        const allEdges = edgesRef.current.get().map(edge =>
+                            edge.id === data.id ? { ...edge, label: newLabel } : edge
+                        );
+                        try {
+                            await setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true });
+                            setSyncStatus("同步成功");
+                            setOperationLogs(prev => [...prev, "邊資料同步成功"]);
+                            callback(data);
+                        } catch (err: any) {
+                            setSyncStatus("同步失敗");
+                            setOperationLogs(prev => [...prev, "邊資料同步失敗"]);
+                            callback(data);
+                        }
                     },
-                    deleteEdge: function (data: any, callback: any) {
-                        console.log("deleteEdge triggered", data);
+                    deleteEdge: async (data: any, callback: any) => {
                         setOperationLogs(prev => [...prev, `開始刪除邊: ${data.map((edge: any) => edge.id).join(", ")}`]);
-                        edges.remove(data);
-                        const allEdges = edges.get();
-                        setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true })
-                            .then(() => {
-                                setSyncStatus("同步成功");
-                                setOperationLogs(prev => [...prev, "邊刪除同步成功"]);
-                                callback(data);
-                            })
-                            .catch(err => {
-                                setSyncStatus("同步失敗");
-                                setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${err.message}`]);
-                                callback(null);
-                            });
+                        // 先寫入 Firestore
+                        const idsToDelete = data.map((edge: any) => edge.id);
+                        const allEdges = edgesRef.current.get().filter(edge => !idsToDelete.includes(edge.id));
+                        try {
+                            await setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true });
+                            setSyncStatus("同步成功");
+                            setOperationLogs(prev => [...prev, "邊刪除同步成功"]);
+                            callback(data);
+                        } catch (err: any) {
+                            setSyncStatus("同步失敗");
+                            setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${err.message}`]);
+                            callback(null);
+                        }
                     }
                 }
             };
-            new Network(containerRef.current, data, options);
-            // 網路圖建立完成後加入日誌
+            networkRef.current = new Network(containerRef.current, data, options);
             setOperationLogs(prev => [...prev, "網路圖載入完成"]);
         }
-    }, [containerRef, nodes, edges, db, projectId, zoneId]);
+    }, [containerRef, db, projectId, zoneId]);
 
     return (
         <>
             <div ref={containerRef} style={{ height: "400px" }} />
-            {/* 顯示同步狀態 */}
             {syncStatus && <div style={{ marginTop: "8px", color: "green" }}>{syncStatus}</div>}
             <div style={{ marginTop: "8px" }}>
                 <h3>操作記錄:</h3>
