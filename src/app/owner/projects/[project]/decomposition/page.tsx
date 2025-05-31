@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback } from "react";
 import {
     ReactFlow,
     ReactFlowProvider,
@@ -15,8 +15,6 @@ import {
     Connection,
     OnConnectStart,
     OnConnectEnd,
-    applyNodeChanges,
-    applyEdgeChanges,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { FirestoreSync } from "./FirestoreSync";
@@ -25,10 +23,7 @@ let nodeId = 1;
 const getId = () => `node_${nodeId++}`;
 
 function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: Edge[] }) {
-    const initialNodes: Node[] = propNodes ?? [
-        { id: "1", position: { x: 250, y: 5 }, data: { label: "節點 1" } },
-        { id: "2", position: { x: 100, y: 100 }, data: { label: "節點 2" } },
-    ];
+    const initialNodes: Node[] = propNodes ?? [];
     const initialEdges: Edge[] = propEdges ?? [];
 
     const [
