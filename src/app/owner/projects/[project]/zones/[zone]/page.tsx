@@ -5,6 +5,35 @@ import { useDocument } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Project, Zone } from "@/types/project";
+import { Network } from "vis-network/standalone";
+import { DataSet } from "vis-data";
+import { useRef, useEffect } from "react";
+
+function NetworkGraph() {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (containerRef.current) {
+            const nodes = new DataSet([
+                { id: 1, label: "Zone" },
+                { id: 2, label: "Project" },
+                // ...additional nodes if needed...
+            ]);
+            const edges = new DataSet([
+                { id: 1, from: 1, to: 2 },
+                // ...additional edges if needed...
+            ]);
+            const data = { nodes, edges };
+            const options = {
+                layout: { hierarchical: false },
+                physics: { enabled: true },
+            };
+            new Network(containerRef.current, data, options);
+        }
+    }, []);
+
+    return <div ref={containerRef} style={{ height: "400px" }} />;
+}
 
 export default function ZoneDetailPage() {
     const params = useParams();
@@ -45,6 +74,11 @@ export default function ZoneDetailPage() {
             </div>
             <div className="text-gray-400 text-sm">
                 所屬專案：{project.projectName}
+            </div>
+            {/* 新增網路圖區域 */}
+            <div className="mt-6">
+                <h2 className="text-xl font-bold mb-2">網路圖</h2>
+                <NetworkGraph />
             </div>
         </main>
     );
