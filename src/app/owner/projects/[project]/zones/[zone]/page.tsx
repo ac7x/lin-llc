@@ -25,6 +25,8 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
 
     // 從 Firestore 同步網路圖資料
     useEffect(() => {
+        // 新增訂閱開始日誌
+        setOperationLogs(prev => [...prev, "開始訂閱 Firestore 實時更新"]);
         const graphDocRef = doc(db, "projects", projectId, "zones", zoneId, "graph", "data");
         const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -34,7 +36,11 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
                 setOperationLogs(prev => [...prev, "從 Firestore 同步更新節點與邊"]);
             }
         });
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            // 可選：記錄取消訂閱
+            setOperationLogs(prev => [...prev, "取消訂閱 Firestore"]);
+        };
     }, [db, projectId, zoneId]);
 
     // 若 Firestore 沒有初始化，利用 zones 陣列初始化節點與邊
@@ -77,6 +83,8 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
                     enabled: true,
                     initiallyActive: true,
                     editEdge: function (data: any, callback: any) {
+                        // 加入編輯前詳細日誌，包含邊的 id
+                        setOperationLogs(prev => [...prev, `開始編輯邊: ${data.id}`]);
                         setOperationLogs(prev => [...prev, "編輯邊操作開始"]);
                         console.log("editEdge 開始，原始邊資料:", data);
                         const newLabel = prompt("請輸入新的邊標籤：", data.label) || data.label;
@@ -100,6 +108,8 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
                 }
             };
             new Network(containerRef.current, data, options);
+            // 網路圖建立完成後加入日誌
+            setOperationLogs(prev => [...prev, "網路圖載入完成"]);
         }
     }, [containerRef, nodes, edges, db, projectId, zoneId]);
 
