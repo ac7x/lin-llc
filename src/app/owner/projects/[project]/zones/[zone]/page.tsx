@@ -30,187 +30,72 @@ function NetworkGraph({
     const containerRef = useRef<HTMLDivElement>(null);
     const networkRef = useRef<Network | null>(null);
     const { db, doc, onSnapshot, setDoc } = useFirebase();
-    const [operationLogs, setOperationLogs] = useState<string[]>([]);
-    const nodesRef = useRef<DataSet<NodeType>>(new DataSet<NodeType>([]));
-    const edgesRef = useRef<DataSet<EdgeType>>(new DataSet<EdgeType>([]));
-    const isRemoteUpdate = useRef<boolean>(false);
+    const [logs, setLogs] = useState<string[]>([]);
+    const nodesRef = useRef(new DataSet<NodeType>([]));
+    const edgesRef = useRef(new DataSet<EdgeType>([]));
+    const isRemoteUpdate = useRef(false);
 
-    // 確保數據同步的核心實現
+    // 數據同步核心功能
     useEffect(() => {
-        setOperationLogs(prev => [...prev, "開始訂閱 Firestore 實時更新"]);
-        const graphDocRef = doc(db as typeof db, "projects", projectId, "zones_graph", zoneId);
+        setLogs(prev => [...prev, "開始監聽"]);
+        const docRef = doc(db as typeof db, "projects", projectId, "zones_graph", zoneId);
 
-        const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
+        const unsubscribe = onSnapshot(docRef, (snapshot) => {
             if (snapshot.exists()) {
-                const data = snapshot.data() as { nodes?: NodeType[]; edges?: EdgeType[] };
                 isRemoteUpdate.current = true;
-
-                if (data.nodes) {
-                    nodesRef.current.clear();
-                    nodesRef.current.add(data.nodes);
-                }
-
-                if (data.edges) {
-                    edgesRef.current.clear();
-                    edgesRef.current.add(data.edges);
-                }
-
-                setOperationLogs(prev => [...prev, "從 Firestore 同步更新完成"]);
+                const data = snapshot.data();
+                if (data.nodes) nodesRef.current.update(data.nodes);
+                if (data.edges) edgesRef.current.update(data.edges);
+                setLogs(prev => [...prev, "數據更新完成"]);
                 isRemoteUpdate.current = false;
-            } else {
-                // 初始化數據
-                initializeGraphData();
             }
         });
 
-        const initializeGraphData = async () => {
-            if (zones.length === 0) return;
-
-            const projectNode: NodeType = { id: "project", label: projectName || "專案" };
-            const zoneNodes: NodeType[] = zones.map(zone => ({
-                id: zone.zoneId,
-                label: zone.zoneName
-            }));
-            const newEdges: EdgeType[] = zones.map(zone => ({
-                id: `edge-${zone.zoneId}`,
-                from: zone.zoneId,
-                to: "project",
-                label: "連接"
-            }));
-
-            try {
-                await setDoc(graphDocRef, {
-                    nodes: [projectNode, ...zoneNodes],
-                    edges: newEdges
-                });
-                setOperationLogs(prev => [...prev, "初始化數據成功"]);
-            } catch (error) {
-                setOperationLogs(prev => [...prev, "初始化數據失敗"]);
-            }
-        };
-
-        return () => {
-            unsubscribe();
-            setOperationLogs(prev => [...prev, "結束 Firestore 監聽"]);
-        };
-    }, [db, doc, onSnapshot, setDoc, projectId, zoneId, zones, projectName]);
-
-    // 網路圖設定與操作按鈕
-    useEffect(() => {
-        if (!containerRef.current || networkRef.current) return;
-
-        const data = { nodes: nodesRef.current, edges: edgesRef.current };
-        const options = {
-            layout: { hierarchical: { enabled: true, direction: "LR" } },
-            manipulation: {
-                enabled: true,
-                initiallyActive: true,
-                addNode: async (data: NodeType, callback: Callback<NodeType>) => {
-                    if (isRemoteUpdate.current) return;
-                    setOperationLogs(prev => [...prev, `新增節點: ${data.id}`]);
-                    try {
-                        nodesRef.current.add(data);
-                        const allNodes = nodesRef.current.get();
-                        await setDoc(
-                            doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
-                            { nodes: allNodes },
-                            { merge: true }
-                        );
-                        callback(data);
-                    } catch (error) {
-                        setOperationLogs(prev => [...prev, "節點新增失敗"]);
-                        callback(null);
-                    }
-                },
-                addEdge: async (data: EdgeType, callback: Callback<EdgeType>) => {
-                    if (isRemoteUpdate.current) return;
-                    setOperationLogs(prev => [...prev, `新增連線: ${data.id}`]);
-                    try {
-                        edgesRef.current.add(data);
-                        const allEdges = edgesRef.current.get();
-                        await setDoc(
-                            doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
-                            { edges: allEdges },
-                            { merge: true }
-                        );
-                        callback(data);
-                    } catch (error) {
-                        setOperationLogs(prev => [...prev, "連線新增失敗"]);
-                        callback(null);
+        if (containerRef.current) {
+            networkRef.current = new Network(containerRef.current,
+                { nodes: nodesRef.current, edges: edgesRef.current },
+                {
+                    layout: { hierarchical: true },
+                    manipulation: {
+                        enabled: true,
+                        addNode: async (data: NodeType, callback: Callback<NodeType>) => {
+                            if (isRemoteUpdate.current) return;
+                            try {
+                                nodesRef.current.add(data);
+                                await setDoc(docRef, { nodes: nodesRef.current.get() }, { merge: true });
+                                setLogs(prev => [...prev, `新增節點: ${data.id}`]);
+                                callback(data);
+                            } catch (error) {
+                                setLogs(prev => [...prev, "節點新增失敗"]);
+                                callback(null);
+                            }
+                        },
+                        addEdge: async (data: EdgeType, callback: Callback<EdgeType>) => {
+                            if (isRemoteUpdate.current) return;
+                            try {
+                                edgesRef.current.add(data);
+                                await setDoc(docRef, { edges: edgesRef.current.get() }, { merge: true });
+                                setLogs(prev => [...prev, `新增連線: ${data.id}`]);
+                                callback(data);
+                            } catch (error) {
+                                setLogs(prev => [...prev, "連線新增失敗"]);
+                                callback(null);
+                            }
+                        }
                     }
                 }
-            }
-        };
+            );
+        }
 
-        networkRef.current = new Network(containerRef.current, data, options);
-        setOperationLogs(prev => [...prev, "網路圖初始化完成"]);
-    }, [containerRef.current]);
+        return () => unsubscribe();
+    }, []);
 
-    useEffect(() => {
-        const nodesDS = nodesRef.current;
-        const edgesDS = edgesRef.current;
-
-        const handleNodesChange = async () => {
-            if (isRemoteUpdate.current) return;
-            const allNodes: NodeType[] = nodesDS.get();
-            try {
-                await setDoc(
-                    doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
-                    { nodes: allNodes },
-                    { merge: true }
-                );
-                setOperationLogs(prev => [...prev, "本地節點變更已同步到 Firestore"]);
-            } catch (e) {
-                const message = e instanceof Error ? e.message : String(e);
-                setOperationLogs(prev => [...prev, `節點同步失敗: ${message}`]);
-            }
-        };
-        const handleEdgesChange = async () => {
-            if (isRemoteUpdate.current) return;
-            const allEdges: EdgeType[] = edgesDS.get();
-            try {
-                await setDoc(
-                    doc(db as typeof db, "projects", projectId, "zones_graph", zoneId),
-                    { edges: allEdges },
-                    { merge: true }
-                );
-                setOperationLogs(prev => [...prev, "本地邊變更已同步到 Firestore"]);
-            } catch (e) {
-                const message = e instanceof Error ? e.message : String(e);
-                setOperationLogs(prev => [...prev, `邊同步失敗: ${message}`]);
-            }
-        };
-        nodesDS.on("add", handleNodesChange);
-        nodesDS.on("remove", handleNodesChange);
-        nodesDS.on("update", handleNodesChange);
-        edgesDS.on("add", handleEdgesChange);
-        edgesDS.on("remove", handleEdgesChange);
-        edgesDS.on("update", handleEdgesChange);
-        return () => {
-            nodesDS.off("add", handleNodesChange);
-            nodesDS.off("remove", handleNodesChange);
-            nodesDS.off("update", handleNodesChange);
-            edgesDS.off("add", handleEdgesChange);
-            edgesDS.off("remove", handleEdgesChange);
-            edgesDS.off("update", handleEdgesChange);
-        };
-    }, [db, doc, setDoc, projectId, zoneId]);
-
-    // --------- Minimum Viable Code 只加一行顯示節點數量 ---------
     return (
         <>
-            <div ref={containerRef} style={{ height: "700px" }} />
-            {/* 只加這一行，完全不動其它程式碼 */}
-            <div style={{ position: "absolute", left: 10, top: 10, background: "#eee", padding: "2px 8px", borderRadius: "4px", zIndex: 99 }}>
-                節點數量：{nodesRef.current.get().length}
-            </div>
-            <div className="fixed top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 p-2 max-w-[300px] max-h-[300px] overflow-y-auto z-50">
-                <h3 className="text-black dark:text-white">操作記錄:</h3>
-                <ul>
-                    {operationLogs.map((log, index) => (
-                        <li key={index} className="text-black dark:text-gray-300">{log}</li>
-                    ))}
-                </ul>
+            <div ref={containerRef} style={{ height: "500px" }} />
+            <div className="fixed right-2 top-2 bg-white p-2 border rounded shadow-sm max-h-[200px] overflow-y-auto">
+                <h3>操作記錄:</h3>
+                {logs.map((log, i) => <div key={i}>{log}</div>)}
             </div>
         </>
     );
