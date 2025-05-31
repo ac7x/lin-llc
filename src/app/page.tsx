@@ -1,6 +1,5 @@
 "use client";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
+import { useFirebase, User, Firestore } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -9,34 +8,15 @@ const isMobile = () => {
   return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 };
 
-// Google 登入 - Popup 方式
-const signInWithGooglePopup = async (auth: any, GoogleAuthProvider: any, signInWithPopup: any) => {
-  const provider = new GoogleAuthProvider();
-  await signInWithPopup(auth, provider);
-};
-
-// Google 登入 - Redirect 方式
-const signInWithGoogleRedirect = async (auth: any, GoogleAuthProvider: any, signInWithRedirect: any) => {
-  const provider = new GoogleAuthProvider();
-  await signInWithRedirect(auth, provider);
-};
-
-// 儲存用戶資料到 Firestore
 const saveUserToFirestore = async (
-  user: {
-    uid: string;
-    email?: string | null;
-    emailVerified?: boolean;
-    displayName?: string | null;
-    photoURL?: string | null;
-  },
-  db: any,
-  docFn: any,
-  setDoc: any
+  user: Pick<User, "uid" | "email" | "emailVerified" | "displayName" | "photoURL">,
+  db: Firestore,
+  doc: typeof import("firebase/firestore").doc,
+  setDoc: typeof import("firebase/firestore").setDoc
 ) => {
   if (!user?.uid) return;
   await setDoc(
-    docFn(db, "users", user.uid),
+    doc(db, "users", user.uid),
     {
       uid: user.uid,
       email: user.email || "",
@@ -53,13 +33,14 @@ export default function HomePage() {
   const {
     auth,
     db,
-    doc: docFn,
+    doc,
     getDoc,
     setDoc,
     GoogleAuthProvider,
     signInWithPopup,
     signInWithRedirect,
     signOut,
+    useAuthState,
   } = useFirebase();
   const [user, loading] = useAuthState(auth);
   const router = useRouter();
@@ -67,12 +48,10 @@ export default function HomePage() {
   useEffect(() => {
     const redirectByRole = async () => {
       if (user) {
-        await saveUserToFirestore(user, db, docFn, setDoc); // 寫入 Firestore users 集合
-        // 取得 Firestore 中的 user 資料
-        const userDoc = await getDoc(docFn(db, "users", user.uid));
+        await saveUserToFirestore(user, db, doc, setDoc);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
         const role = userData.role || "user";
-        // 根據角色跳轉
         if (role === "owner") {
           router.push("/owner");
         } else if (role === "finance") {
@@ -85,14 +64,15 @@ export default function HomePage() {
       }
     };
     redirectByRole();
-  }, [user, router, db, docFn, getDoc, setDoc]);
+  }, [user, router, db, doc, getDoc, setDoc]);
 
   const handleGoogleLogin = async () => {
     try {
+      const provider = new GoogleAuthProvider();
       if (isMobile()) {
-        await signInWithGoogleRedirect(auth, GoogleAuthProvider, signInWithRedirect);
+        await signInWithRedirect(auth, provider);
       } else {
-        await signInWithGooglePopup(auth, GoogleAuthProvider, signInWithPopup);
+        await signInWithPopup(auth, provider);
       }
     } catch {
       alert("登入失敗");
@@ -102,7 +82,7 @@ export default function HomePage() {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-    } catch (error) {
+    } catch {
       alert("登出失敗");
     }
   };
