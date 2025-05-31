@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -33,6 +33,9 @@ export {
     doc,
     getDoc,
     setDoc,
+    collection,
+    onSnapshot,
+    getFirestore,
     GoogleAuthProvider,
     signInWithPopup,
     signInWithRedirect,

@@ -8,11 +8,17 @@ import {
     doc,
     getDoc,
     setDoc,
+    collection,
+    onSnapshot,
+    getFirestore,
     GoogleAuthProvider,
     signInWithPopup,
     signInWithRedirect,
     signOut,
 } from "./firebase";
+
+// react-firebase-hooks 的 useCollection
+import { useCollection } from "react-firebase-hooks/firestore";
 
 type FirebaseContextType = {
     app: typeof app;
@@ -21,10 +27,14 @@ type FirebaseContextType = {
     doc: typeof doc;
     getDoc: typeof getDoc;
     setDoc: typeof setDoc;
+    collection: typeof collection;
+    onSnapshot: typeof onSnapshot;
+    getFirestore: typeof getFirestore;
     GoogleAuthProvider: typeof GoogleAuthProvider;
     signInWithPopup: typeof signInWithPopup;
     signInWithRedirect: typeof signInWithRedirect;
     signOut: typeof signOut;
+    useCollection: typeof useCollection;
 };
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -39,10 +49,14 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 doc,
                 getDoc,
                 setDoc,
+                collection,
+                onSnapshot,
+                getFirestore,
                 GoogleAuthProvider,
                 signInWithPopup,
                 signInWithRedirect,
                 signOut,
+                useCollection,
             }}
         >
             {children}
