@@ -17,7 +17,7 @@ export default function ZoneDetailPage() {
     if (!projectDoc?.exists()) return <div>找不到專案</div>;
 
     const project = projectDoc.data() as Project;
-    const zone = project.zones.find((z: Zone) => z.zoneId === zoneId);
+    const zone = project.zones.find((z: Zone) => z.zoneId === zoneId); // zones 作為陣列進行查找
 
     if (!zone) return <div>找不到分區</div>;
 

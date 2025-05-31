@@ -21,7 +21,7 @@ export interface Project {
     owner?: string;
     createdAt: Date;
     updatedAt: Date;
-    zones: Zone[];
+    zones: Zone[]; // zones 作為陣列
     supervisor?: string;      // 監工
     safetyOfficer?: string;   // 安全人員
     region?: string;          // 地區

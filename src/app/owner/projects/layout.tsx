@@ -75,7 +75,7 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                                                 </div>
 
                                                 <Disclosure.Panel>
-                                                    {data.zones && data.zones.length > 0 && (
+                                                    {data.zones && data.zones.length > 0 && ( // zones 作為陣列進行渲染
                                                         <ul className="ml-8 mt-1 space-y-1">
                                                             {data.zones.map((zone: Zone) => (
                                                                 <li key={zone.zoneId}>
