@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useDocument } from "react-firebase-hooks/firestore";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { Project, Zone } from "@/types/project";
 import { Network } from "vis-network/standalone";
@@ -222,7 +221,7 @@ export default function ZoneDetailPage() {
     const projectId = params?.project as string;
     const zoneId = params?.zone as string;
 
-    const { db, doc } = useFirebase();
+    const { db, doc, useDocument } = useFirebase();  // 新增 useDocument
     const [projectDoc, loading, error] = useDocument(doc(db as typeof db, "projects", projectId));
 
     if (!projectId || !zoneId) {
