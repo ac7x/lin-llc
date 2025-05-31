@@ -1,16 +1,8 @@
-// src/app/page.tsx
 "use client";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  signOut,
-} from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
 
 const isMobile = () => {
   if (typeof window === "undefined") return false;
@@ -18,13 +10,13 @@ const isMobile = () => {
 };
 
 // Google 登入 - Popup 方式
-const signInWithGooglePopup = async (auth: any) => {
+const signInWithGooglePopup = async (auth: any, GoogleAuthProvider: any, signInWithPopup: any) => {
   const provider = new GoogleAuthProvider();
   await signInWithPopup(auth, provider);
 };
 
 // Google 登入 - Redirect 方式
-const signInWithGoogleRedirect = async (auth: any) => {
+const signInWithGoogleRedirect = async (auth: any, GoogleAuthProvider: any, signInWithRedirect: any) => {
   const provider = new GoogleAuthProvider();
   await signInWithRedirect(auth, provider);
 };
@@ -39,7 +31,8 @@ const saveUserToFirestore = async (
     photoURL?: string | null;
   },
   db: any,
-  docFn: any
+  docFn: any,
+  setDoc: any
 ) => {
   if (!user?.uid) return;
   await setDoc(
@@ -57,14 +50,24 @@ const saveUserToFirestore = async (
 };
 
 export default function HomePage() {
-  const { auth, db, doc: docFn, getDoc } = useFirebase();
+  const {
+    auth,
+    db,
+    doc: docFn,
+    getDoc,
+    setDoc,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithRedirect,
+    signOut,
+  } = useFirebase();
   const [user, loading] = useAuthState(auth);
   const router = useRouter();
 
   useEffect(() => {
     const redirectByRole = async () => {
       if (user) {
-        await saveUserToFirestore(user, db, docFn); // 寫入 Firestore users 集合
+        await saveUserToFirestore(user, db, docFn, setDoc); // 寫入 Firestore users 集合
         // 取得 Firestore 中的 user 資料
         const userDoc = await getDoc(docFn(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
@@ -82,14 +85,14 @@ export default function HomePage() {
       }
     };
     redirectByRole();
-  }, [user, router, db, docFn, getDoc]);
+  }, [user, router, db, docFn, getDoc, setDoc]);
 
   const handleGoogleLogin = async () => {
     try {
       if (isMobile()) {
-        await signInWithGoogleRedirect(auth);
+        await signInWithGoogleRedirect(auth, GoogleAuthProvider, signInWithRedirect);
       } else {
-        await signInWithGooglePopup(auth);
+        await signInWithGooglePopup(auth, GoogleAuthProvider, signInWithPopup);
       }
     } catch {
       alert("登入失敗");
@@ -97,7 +100,6 @@ export default function HomePage() {
   };
 
   const handleSignOut = async () => {
-    const { auth } = useFirebase();
     try {
       await signOut(auth);
     } catch (error) {
