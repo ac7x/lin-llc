@@ -40,6 +40,8 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
     // 若 Firestore 沒有初始化，利用 zones 陣列初始化節點與邊
     useEffect(() => {
         if (nodes.length > 0 || zones.length === 0) return;
+        // 記錄初始化開始
+        setOperationLogs(prev => [...prev, "初始化同步開始"]);
         const projectNode: NodeType = { id: "project", label: "專案" };
         const zoneNodes = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName } as NodeType));
         setNodes(new DataSet<NodeType>([projectNode, ...zoneNodes]));
@@ -55,10 +57,13 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
             edges: newEdges
         })
             .then(() => {
-                setOperationLogs(prev => [...prev, "初始化同步成功"]);
+                setOperationLogs(prev => [
+                    ...prev,
+                    `初始化同步成功: 節點數量=${[projectNode, ...zoneNodes].length}, 邊數量=${newEdges.length}`
+                ]);
             })
-            .catch(() => {
-                setOperationLogs(prev => [...prev, "初始化同步失敗"]);
+            .catch((err) => {
+                setOperationLogs(prev => [...prev, `初始化同步失敗: ${err.message}`]);
             });
     }, [zones, nodes, db, projectId, zoneId]);
 
