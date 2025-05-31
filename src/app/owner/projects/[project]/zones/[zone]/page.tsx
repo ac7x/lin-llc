@@ -38,14 +38,18 @@ function NetworkGraph({
     // 數據同步核心功能
     useEffect(() => {
         setLogs(prev => [...prev, "開始監聽"]);
-        const docRef = doc(db as typeof db, "projects", projectId, "zones_graph", zoneId);
+        const docRef = doc(db as typeof db, "projects", projectId);
 
         const unsubscribe = onSnapshot(docRef, (snapshot) => {
             if (snapshot.exists()) {
                 isRemoteUpdate.current = true;
                 const data = snapshot.data();
-                if (data.nodes) nodesRef.current.update(data.nodes);
-                if (data.edges) edgesRef.current.update(data.edges);
+                if (data.zones_graph?.[zoneId]?.nodes) {
+                    nodesRef.current.update(data.zones_graph[zoneId].nodes);
+                }
+                if (data.zones_graph?.[zoneId]?.edges) {
+                    edgesRef.current.update(data.zones_graph[zoneId].edges);
+                }
                 setLogs(prev => [...prev, "數據更新完成"]);
                 isRemoteUpdate.current = false;
             }
@@ -62,7 +66,13 @@ function NetworkGraph({
                             if (isRemoteUpdate.current) return;
                             try {
                                 nodesRef.current.add(data);
-                                await setDoc(docRef, { nodes: nodesRef.current.get() }, { merge: true });
+                                await setDoc(docRef, {
+                                    zones_graph: {
+                                        [zoneId]: {
+                                            nodes: nodesRef.current.get()
+                                        }
+                                    }
+                                }, { merge: true });
                                 setLogs(prev => [...prev, `新增節點: ${data.id}`]);
                                 callback(data);
                             } catch (error) {
@@ -74,7 +84,13 @@ function NetworkGraph({
                             if (isRemoteUpdate.current) return;
                             try {
                                 edgesRef.current.add(data);
-                                await setDoc(docRef, { edges: edgesRef.current.get() }, { merge: true });
+                                await setDoc(docRef, {
+                                    zones_graph: {
+                                        [zoneId]: {
+                                            edges: edgesRef.current.get()
+                                        }
+                                    }
+                                }, { merge: true });
                                 setLogs(prev => [...prev, `新增連線: ${data.id}`]);
                                 callback(data);
                             } catch (error) {
