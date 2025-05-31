@@ -35,10 +35,11 @@ function NetworkGraph({
     // 新增 flag 避免循環觸發
     const isRemoteUpdate = useRef(false);
 
-    // Firestore 監聽只同步資料到 DataSet，並在無資料時初始化
+    // Firestore 監聽只同步 graph 資料到 DataSet
     useEffect(() => {
         setOperationLogs(prev => [...prev, "開始訂閱 Firestore 實時更新"]);
-        const graphDocRef = doc(db, "projects", projectId, "zones", zoneId, "graph", "data");
+        // graph 資料建議存放於 projects/{projectId}/zones_graph/{zoneId}
+        const graphDocRef = doc(db, "projects", projectId, "zones_graph", zoneId);
         const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.data();
@@ -100,7 +101,7 @@ function NetworkGraph({
                             edge.id === data.id ? { ...edge, label: newLabel } : edge
                         );
                         try {
-                            await setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true });
+                            await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
                             setSyncStatus("同步成功");
                             setOperationLogs(prev => [...prev, "邊資料同步成功"]);
                             callback(data);
@@ -116,7 +117,7 @@ function NetworkGraph({
                         const idsToDelete = data.map((edge: any) => edge.id);
                         const allEdges = edgesRef.current.get().filter(edge => !idsToDelete.includes(edge.id));
                         try {
-                            await setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true });
+                            await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
                             setSyncStatus("同步成功");
                             setOperationLogs(prev => [...prev, "邊刪除同步成功"]);
                             callback(data);
@@ -139,7 +140,7 @@ function NetworkGraph({
             if (isRemoteUpdate.current) return;
             const allNodes = nodesRef.current.get();
             try {
-                await setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { nodes: allNodes }, { merge: true });
+                await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { nodes: allNodes }, { merge: true });
                 setOperationLogs(prev => [...prev, "本地節點變更已同步到 Firestore"]);
             } catch (err: any) {
                 setOperationLogs(prev => [...prev, `節點同步失敗: ${err.message}`]);
@@ -149,7 +150,7 @@ function NetworkGraph({
             if (isRemoteUpdate.current) return;
             const allEdges = edgesRef.current.get();
             try {
-                await setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true });
+                await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
                 setOperationLogs(prev => [...prev, "本地邊變更已同步到 Firestore"]);
             } catch (err: any) {
                 setOperationLogs(prev => [...prev, `邊同步失敗: ${err.message}`]);
