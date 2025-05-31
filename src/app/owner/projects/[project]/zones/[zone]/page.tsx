@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { doc, onSnapshot, setDoc } from "firebase/firestore"; // 移除 updateDoc
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { Project, Zone } from "@/types/project";
 import { Network } from "vis-network/standalone";
@@ -75,8 +75,8 @@ function NetworkGraph({
                             `初始化同步成功: 節點數量=${[projectNode, ...zoneNodes].length}, 邊數量=${newEdges.length}`
                         ]);
                     })
-                    .catch((e: Error) => {
-                        setOperationLogs(prev => [...prev, `初始化同步失敗: ${e.message}`]);
+                    .catch(() => {
+                        setOperationLogs(prev => [...prev, `初始化同步失敗`]);
                     });
             }
         });
@@ -110,7 +110,7 @@ function NetworkGraph({
                             setSyncStatus("同步成功");
                             setOperationLogs(prev => [...prev, "邊資料同步成功"]);
                             callback(data);
-                        } catch (e) {
+                        } catch {
                             setSyncStatus("同步失敗");
                             setOperationLogs(prev => [...prev, "邊資料同步失敗"]);
                             callback(data);
@@ -126,9 +126,10 @@ function NetworkGraph({
                             setSyncStatus("同步成功");
                             setOperationLogs(prev => [...prev, "邊刪除同步成功"]);
                             callback(data);
-                        } catch (e: any) {
+                        } catch (e: unknown) {
                             setSyncStatus("同步失敗");
-                            setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${e.message}`]);
+                            const message = e instanceof Error ? e.message : String(e);
+                            setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${message}`]);
                             callback(null);
                         }
                     }
@@ -151,8 +152,9 @@ function NetworkGraph({
             try {
                 await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { nodes: allNodes }, { merge: true });
                 setOperationLogs(prev => [...prev, "本地節點變更已同步到 Firestore"]);
-            } catch (e: any) {
-                setOperationLogs(prev => [...prev, `節點同步失敗: ${e.message}`]);
+            } catch (e: unknown) {
+                const message = e instanceof Error ? e.message : String(e);
+                setOperationLogs(prev => [...prev, `節點同步失敗: ${message}`]);
             }
         };
         const handleEdgesChange = async () => {
@@ -161,8 +163,9 @@ function NetworkGraph({
             try {
                 await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
                 setOperationLogs(prev => [...prev, "本地邊變更已同步到 Firestore"]);
-            } catch (e: any) {
-                setOperationLogs(prev => [...prev, `邊同步失敗: ${e.message}`]);
+            } catch (e: unknown) {
+                const message = e instanceof Error ? e.message : String(e);
+                setOperationLogs(prev => [...prev, `邊同步失敗: ${message}`]);
             }
         };
         nodesDS.on("add", handleNodesChange);
