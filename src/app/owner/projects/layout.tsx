@@ -186,7 +186,7 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                                             })
                                         });
                                         setShowModal(false);
-                                    } catch (error) {
+                                    } catch {
                                         alert("新增分區失敗");
                                     }
                                     setAddingZone(null);
