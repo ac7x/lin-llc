@@ -67,7 +67,7 @@ export default function ProjectDetailPage() {
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
                     <Disclosure defaultOpen={true}>
                         {({ open }) => (
-                            <>
+                            <div>
                                 <Disclosure.Button className="w-full px-6 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded-t-lg">
                                     <h2 className="text-xl font-bold">工作分區</h2>
                                     <span className="text-xl">{open ? '−' : '+'}</span>
@@ -88,7 +88,7 @@ export default function ProjectDetailPage() {
                                         ))}
                                     </div>
                                 </Disclosure.Panel>
-                            </>
+                            </div>
                         )}
                     </Disclosure>
                 </div>
