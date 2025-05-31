@@ -13,7 +13,17 @@ import { useRef, useState, useEffect } from "react";
 type NodeType = { id: string; label: string };
 type EdgeType = { id: string; from: string; to: string; label: string };
 
-function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId: string; zones: Zone[] }) {
+function NetworkGraph({
+    projectId,
+    zoneId,
+    zones,
+    projectName,
+}: {
+    projectId: string;
+    zoneId: string;
+    zones: Zone[];
+    projectName: string;
+}) {
     const containerRef = useRef<HTMLDivElement>(null);
     const networkRef = useRef<Network | null>(null);
     const { db } = useFirebase();
@@ -51,7 +61,8 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
     useEffect(() => {
         if (nodesRef.current.length > 0 || zones.length === 0) return;
         setOperationLogs(prev => [...prev, "初始化同步開始"]);
-        const projectNode: NodeType = { id: "project", label: "專案" };
+        // 將專案名稱作為節點 label
+        const projectNode: NodeType = { id: "project", label: projectName || "專案" };
         const zoneNodes = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName } as NodeType));
         nodesRef.current.clear();
         nodesRef.current.add([projectNode, ...zoneNodes]);
@@ -76,7 +87,7 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
             .catch((err) => {
                 setOperationLogs(prev => [...prev, `初始化同步失敗: ${err.message}`]);
             });
-    }, [zones, db, projectId, zoneId]);
+    }, [zones, db, projectId, zoneId, projectName]);
 
     // Network 實例只初始化一次
     useEffect(() => {
@@ -205,10 +216,15 @@ export default function ZoneDetailPage() {
 
     return (
         <main className="max-w-3xl mx-auto p-4">
-            {/* 新增網路圖區域，傳入 zones 陣列 */}
+            {/* 新增網路圖區域，傳入 zones 陣列與 projectName */}
             <div className="mt-6">
                 <h2 className="text-xl font-bold mb-2">網路圖</h2>
-                <NetworkGraph projectId={projectId} zoneId={zoneId} zones={project.zones} />
+                <NetworkGraph
+                    projectId={projectId}
+                    zoneId={zoneId}
+                    zones={project.zones}
+                    projectName={project.projectName}
+                />
             </div>
         </main>
     );
