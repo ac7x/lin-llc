@@ -82,7 +82,6 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
                     enabled: true,
                     initiallyActive: true,
                     editEdge: function (data: any, callback: any) {
-                        // 加入編輯前詳細日誌，包含邊的 id
                         setOperationLogs(prev => [...prev, `開始編輯邊: ${data.id}`]);
                         setOperationLogs(prev => [...prev, "編輯邊操作開始"]);
                         console.log("editEdge 開始，原始邊資料:", data);
@@ -102,6 +101,23 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
                                 setOperationLogs(prev => [...prev, "邊資料同步失敗"]);
                                 console.error("邊資料同步失敗:", err);
                                 callback(data);
+                            });
+                    },
+                    deleteEdge: function (data: any, callback: any) {
+                        console.log("deleteEdge triggered", data);
+                        setOperationLogs(prev => [...prev, `開始刪除邊: ${data.map((edge: any) => edge.id).join(", ")}`]);
+                        edges.remove(data);
+                        const allEdges = edges.get();
+                        setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true })
+                            .then(() => {
+                                setSyncStatus("同步成功");
+                                setOperationLogs(prev => [...prev, "邊刪除同步成功"]);
+                                callback(data);
+                            })
+                            .catch(err => {
+                                setSyncStatus("同步失敗");
+                                setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${err.message}`]);
+                                callback(null);
                             });
                     }
                 }
