@@ -44,7 +44,7 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                             const projectHref = `/owner/projects/${project.id}`;
                             return (
                                 <li key={project.id} className="group">
-                                    <Disclosure defaultOpen>
+                                    <Disclosure defaultOpen={false}>
                                         {({ open }) => (
                                             <div>
                                                 <div className="flex items-center">

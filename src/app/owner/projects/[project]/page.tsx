@@ -65,7 +65,7 @@ export default function ProjectDetailPage() {
             {/* 分區列表 */}
             {project.zones && project.zones.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <Disclosure defaultOpen={true}>
+                    <Disclosure defaultOpen={false}>
                         {({ open }) => (
                             <div>
                                 <Disclosure.Button className="w-full px-6 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded-t-lg">
