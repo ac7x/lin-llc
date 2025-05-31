@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "../styles/globals.css";
+import { FirebaseProvider } from "../modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 
 export const metadata: Metadata = {
   title: "Lin.LLC",
@@ -13,7 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-Hant">
-      <body>{children}</body>
+      <body>
+        <FirebaseProvider>
+          {children}
+        </FirebaseProvider>
+      </body>
     </html>
   );
 }

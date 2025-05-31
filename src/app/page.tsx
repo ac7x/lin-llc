@@ -1,17 +1,18 @@
 // src/app/page.tsx
 "use client";
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, signInWithGooglePopup, signInWithGoogleRedirect, saveUserToFirestore, db } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { signInWithGooglePopup, signInWithGoogleRedirect, saveUserToFirestore } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 
 const isMobile = () => {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 };
 
 export default function HomePage() {
+  const { auth, db, doc, getDoc } = useFirebase();
   const [user, loading] = useAuthState(auth);
   const router = useRouter();
 
@@ -20,23 +21,23 @@ export default function HomePage() {
       if (user) {
         await saveUserToFirestore(user); // 寫入 Firestore users 集合
         // 取得 Firestore 中的 user 資料
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
-        const role = userData.role || 'user';
+        const role = userData.role || "user";
         // 根據角色跳轉
-        if (role === 'owner') {
-          router.push('/owner');
-        } else if (role === 'finance') {
-          router.push('/finance');
-        } else if (role === 'admin') {
-          router.push('/admin');
+        if (role === "owner") {
+          router.push("/owner");
+        } else if (role === "finance") {
+          router.push("/finance");
+        } else if (role === "admin") {
+          router.push("/admin");
         } else {
-          router.push('/user/profile');
+          router.push("/user/profile");
         }
       }
     };
     redirectByRole();
-  }, [user, router]);
+  }, [user, router, db, doc, getDoc]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -46,7 +47,7 @@ export default function HomePage() {
         await signInWithGooglePopup();
       }
     } catch {
-      alert('登入失敗');
+      alert("登入失敗");
     }
   };
 
