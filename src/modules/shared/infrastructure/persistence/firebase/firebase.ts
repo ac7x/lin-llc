@@ -18,7 +18,6 @@ import {
     sendSignInLinkToEmail,
     isSignInWithEmailLink,
     signInWithEmailLink,
-    connectAuthEmulator,
 } from "firebase/auth";
 import {
     getFirestore,
@@ -51,7 +50,6 @@ import {
     FieldPath,
     GeoPoint,
     setLogLevel as setFirestoreLogLevel,
-    connectFirestoreEmulator,
 } from "firebase/firestore";
 import {
     getStorage,
@@ -64,7 +62,6 @@ import {
     list,
     getMetadata,
     updateMetadata,
-    connectStorageEmulator,
 } from "firebase/storage";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import {
@@ -93,11 +90,6 @@ import {
     setLogLevel as setRemoteConfigLogLevel,
     activate,
 } from "firebase/remote-config";
-import {
-    getFunctions,
-    httpsCallable,
-    connectFunctionsEmulator,
-} from "firebase/functions";
 
 import type {
     User,
@@ -141,11 +133,6 @@ import type {
     RemoteConfig,
     Value,
 } from "firebase/remote-config";
-import type {
-    Functions,
-    HttpsCallable,
-    HttpsCallableResult,
-} from "firebase/functions";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
@@ -159,7 +146,9 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
-if (typeof window !== "undefined") {
+const isBrowser = typeof window !== "undefined";
+
+if (isBrowser) {
     initializeAppCheck(app, {
         provider: new ReCaptchaV3Provider("6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"),
         isTokenAutoRefreshEnabled: true,
@@ -170,18 +159,18 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-const analytics = typeof window !== "undefined" ? getAnalytics(app) : undefined;
-const performance = typeof window !== "undefined" ? getPerformance(app) : undefined;
-let messaging: ReturnType<typeof getMessaging> | undefined = undefined;
-if (typeof window !== "undefined") {
+const analytics = isBrowser ? getAnalytics(app) : undefined;
+const performance = isBrowser ? getPerformance(app) : undefined;
+
+let messaging: ReturnType<typeof getMessaging> | undefined;
+if (isBrowser) {
     isMessagingSupported().then((supported) => {
         if (supported) {
             messaging = getMessaging(app);
         }
     });
 }
-const remoteConfig = typeof window !== "undefined" ? getRemoteConfig(app) : undefined;
-const functions = typeof window !== "undefined" ? getFunctions(app) : undefined;
+const remoteConfig = isBrowser ? getRemoteConfig(app) : undefined;
 
 export {
     app,
@@ -226,7 +215,6 @@ export {
     sendSignInLinkToEmail,
     isSignInWithEmailLink,
     signInWithEmailLink,
-    connectAuthEmulator,
     getStorage,
     ref,
     uploadBytes,
@@ -237,7 +225,6 @@ export {
     list,
     getMetadata,
     updateMetadata,
-    connectStorageEmulator,
     deleteField,
     writeBatch,
     arrayUnion,
@@ -247,7 +234,6 @@ export {
     FieldPath,
     GeoPoint,
     setFirestoreLogLevel,
-    connectFirestoreEmulator,
     analytics,
     getAnalytics,
     logEvent,
@@ -270,10 +256,6 @@ export {
     getAll,
     setRemoteConfigLogLevel,
     activate,
-    functions,
-    getFunctions,
-    httpsCallable,
-    connectFunctionsEmulator,
 };
 
 export type {
@@ -297,7 +279,7 @@ export type {
     CollectionReference,
     FieldPathType,
     GeoPointType,
-    FirebaseStorage as Storage,
+    FirebaseStorage,
     StorageReference,
     UploadTask,
     UploadTaskSnapshot,
@@ -308,7 +290,4 @@ export type {
     Analytics,
     RemoteConfig,
     Value,
-    Functions,
-    HttpsCallable,
-    HttpsCallableResult,
 };

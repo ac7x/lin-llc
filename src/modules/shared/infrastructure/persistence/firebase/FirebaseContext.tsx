@@ -43,7 +43,6 @@ import {
     sendSignInLinkToEmail,
     isSignInWithEmailLink,
     signInWithEmailLink,
-    connectAuthEmulator,
     getStorage,
     ref,
     uploadBytes,
@@ -54,7 +53,6 @@ import {
     list,
     getMetadata,
     updateMetadata,
-    connectStorageEmulator,
     deleteField,
     writeBatch,
     arrayUnion,
@@ -64,7 +62,6 @@ import {
     FieldPath,
     GeoPoint,
     setFirestoreLogLevel,
-    connectFirestoreEmulator,
     analytics,
     getAnalytics,
     logEvent,
@@ -87,10 +84,6 @@ import {
     getAll,
     setRemoteConfigLogLevel,
     activate,
-    functions,
-    getFunctions,
-    httpsCallable,
-    connectFunctionsEmulator,
 } from "./firebase";
 import type {
     User,
@@ -111,7 +104,7 @@ import type {
     Query,
     DocumentReference,
     CollectionReference,
-    Storage,
+    FirebaseStorage,
     StorageReference,
     UploadTask,
     UploadTaskSnapshot,
@@ -122,9 +115,6 @@ import type {
     Analytics,
     RemoteConfig,
     Value,
-    Functions,
-    HttpsCallable,
-    HttpsCallableResult,
     FieldPathType,
     GeoPointType,
 } from "./firebase";
@@ -200,7 +190,6 @@ type FirebaseContextType = {
     sendSignInLinkToEmail: typeof sendSignInLinkToEmail;
     isSignInWithEmailLink: typeof isSignInWithEmailLink;
     signInWithEmailLink: typeof signInWithEmailLink;
-    connectAuthEmulator: typeof connectAuthEmulator;
     getStorage: typeof getStorage;
     ref: typeof ref;
     uploadBytes: typeof uploadBytes;
@@ -211,7 +200,6 @@ type FirebaseContextType = {
     list: typeof list;
     getMetadata: typeof getMetadata;
     updateMetadata: typeof updateMetadata;
-    connectStorageEmulator: typeof connectStorageEmulator;
     deleteField: typeof deleteField;
     writeBatch: typeof writeBatch;
     arrayUnion: typeof arrayUnion;
@@ -221,7 +209,6 @@ type FirebaseContextType = {
     FieldPath: typeof FieldPath;
     GeoPoint: typeof GeoPoint;
     setFirestoreLogLevel: typeof setFirestoreLogLevel;
-    connectFirestoreEmulator: typeof connectFirestoreEmulator;
     analytics: typeof analytics;
     getAnalytics: typeof getAnalytics;
     logEvent: typeof logEvent;
@@ -244,10 +231,6 @@ type FirebaseContextType = {
     getAll: typeof getAll;
     setRemoteConfigLogLevel: typeof setRemoteConfigLogLevel;
     activate: typeof activate;
-    functions: typeof functions;
-    getFunctions: typeof getFunctions;
-    httpsCallable: typeof httpsCallable;
-    connectFunctionsEmulator: typeof connectFunctionsEmulator;
     useCollection: typeof useCollection;
     useCollectionData: typeof useCollectionData;
     useCollectionOnce: typeof useCollectionOnce;
@@ -318,7 +301,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 sendSignInLinkToEmail,
                 isSignInWithEmailLink,
                 signInWithEmailLink,
-                connectAuthEmulator,
                 getStorage,
                 ref,
                 uploadBytes,
@@ -329,7 +311,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 list,
                 getMetadata,
                 updateMetadata,
-                connectStorageEmulator,
                 deleteField,
                 writeBatch,
                 arrayUnion,
@@ -339,7 +320,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 FieldPath,
                 GeoPoint,
                 setFirestoreLogLevel,
-                connectFirestoreEmulator,
                 analytics,
                 getAnalytics,
                 logEvent,
@@ -362,10 +342,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 getAll,
                 setRemoteConfigLogLevel,
                 activate,
-                functions,
-                getFunctions,
-                httpsCallable,
-                connectFunctionsEmulator,
                 useCollection,
                 useCollectionData,
                 useCollectionOnce,
@@ -413,14 +389,14 @@ export type {
     QuerySnapshot,
     QueryDocumentSnapshot,
     Firestore,
-    TimestampType as Timestamp,
+    TimestampType,
     FieldValue,
     Transaction,
     WriteBatch,
     Query,
     DocumentReference,
     CollectionReference,
-    Storage,
+    FirebaseStorage,
     StorageReference,
     UploadTask,
     UploadTaskSnapshot,
@@ -431,9 +407,6 @@ export type {
     Analytics,
     RemoteConfig,
     Value,
-    Functions,
-    HttpsCallable,
-    HttpsCallableResult,
     FieldPathType,
     GeoPointType,
 };
