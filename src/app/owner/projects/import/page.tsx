@@ -38,6 +38,18 @@ export default function ImportProjectPage() {
         setImportingId(row.id);
         setMessage("");
         try {
+            // 預設一個基本的分解資料
+            const decomposition = {
+                nodes: [
+                    {
+                        id: "root",
+                        type: "input",
+                        position: { x: 250, y: 50 },
+                        data: { label: row.name || "專案分解" },
+                    },
+                ],
+                edges: [],
+            };
             const projectData = {
                 projectName: row.name,
                 contractId: row.id,
@@ -53,6 +65,7 @@ export default function ImportProjectPage() {
                         createdAt: new Date(),
                     },
                 ],
+                decomposition, // 新增分解資料
             };
             await addDoc(collection(db, "projects"), projectData);
             setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
