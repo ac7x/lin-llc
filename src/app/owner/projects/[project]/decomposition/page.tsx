@@ -15,6 +15,10 @@ import {
     useReactFlow,
     Handle,
     Position,
+    useNodesState,
+    useEdgesState,
+    Edge,
+    Connection,
 } from '@xyflow/react';
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import '@xyflow/react/dist/style.css';
