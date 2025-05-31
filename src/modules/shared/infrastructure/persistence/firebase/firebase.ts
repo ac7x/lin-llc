@@ -17,7 +17,7 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 if (typeof window !== "undefined") {
     initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider("YOUR_SITE_KEY"),
+        provider: new ReCaptchaV3Provider("6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"),
         isTokenAutoRefreshEnabled: true,
     });
 }
