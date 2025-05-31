@@ -1,100 +1,31 @@
 import { initializeApp, getApps } from "firebase/app";
 import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup,
-    signInWithRedirect,
-    signOut,
-    onAuthStateChanged,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    sendPasswordResetEmail,
-    updateProfile,
-    updatePassword,
-    reauthenticateWithCredential,
-    sendEmailVerification,
-    linkWithCredential,
-    unlink,
-    sendSignInLinkToEmail,
-    isSignInWithEmailLink,
-    signInWithEmailLink,
+    getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile,
+    updatePassword, reauthenticateWithCredential, sendEmailVerification, linkWithCredential, unlink,
+    sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink
 } from "firebase/auth";
 import {
-    getFirestore,
-    doc,
-    getDoc,
-    setDoc,
-    collection,
-    collectionGroup,
-    getDocs,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    onSnapshot,
-    Timestamp,
-    query,
-    where,
-    orderBy,
-    limit,
-    startAfter,
-    startAt,
-    endBefore,
-    endAt,
-    runTransaction,
-    deleteField,
-    writeBatch,
-    arrayUnion,
-    arrayRemove,
-    increment,
-    serverTimestamp,
-    FieldPath,
-    GeoPoint,
-    setLogLevel as setFirestoreLogLevel,
+    getFirestore, doc, getDoc, setDoc, collection, collectionGroup, getDocs, addDoc, updateDoc, deleteDoc,
+    onSnapshot, Timestamp, query, where, orderBy, limit, startAfter, startAt, endBefore, endAt, runTransaction,
+    deleteField, writeBatch, arrayUnion, arrayRemove, increment, serverTimestamp, FieldPath, GeoPoint,
+    setLogLevel as setFirestoreLogLevel
 } from "firebase/firestore";
 import {
-    getStorage,
-    ref,
-    uploadBytes,
-    uploadBytesResumable,
-    getDownloadURL,
-    deleteObject,
-    listAll,
-    list,
-    getMetadata,
-    updateMetadata,
+    getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject, listAll, list,
+    getMetadata, updateMetadata
 } from "firebase/storage";
 import { getAnalytics, logEvent } from "firebase/analytics";
 
 import type {
-    User,
-    UserCredential,
-    AuthProvider,
-    Auth,
-    UserInfo,
-    AdditionalUserInfo,
+    User, UserCredential, AuthProvider, Auth, UserInfo, AdditionalUserInfo
 } from "firebase/auth";
 import type {
-    DocumentData,
-    DocumentSnapshot,
-    QuerySnapshot,
-    QueryDocumentSnapshot,
-    Firestore,
-    FieldValue,
-    Transaction,
-    WriteBatch,
-    Query,
-    DocumentReference,
-    CollectionReference,
-    FieldPath as FieldPathType,
-    GeoPoint as GeoPointType,
+    DocumentData, DocumentSnapshot, QuerySnapshot, QueryDocumentSnapshot, Firestore, FieldValue, Transaction,
+    WriteBatch, Query, DocumentReference, CollectionReference, FieldPath as FieldPathType, GeoPoint as GeoPointType
 } from "firebase/firestore";
 import type {
-    FirebaseStorage,
-    StorageReference,
-    UploadTask,
-    UploadTaskSnapshot,
-    FullMetadata,
-    SettableMetadata,
+    FirebaseStorage, StorageReference, UploadTask, UploadTaskSnapshot, FullMetadata, SettableMetadata
 } from "firebase/storage";
 import type { Analytics } from "firebase/analytics";
 
