@@ -2,27 +2,43 @@
 
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { doc } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { Project, Zone } from "@/types/project";
 import { Network } from "vis-network/standalone";
 import { DataSet } from "vis-data";
-import { useRef, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 
-function NetworkGraph() {
+function NetworkGraph({ projectId, zoneId }: { projectId: string; zoneId: string }) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const { db } = useFirebase();
+    // 初始預設節點與邊
+    const [nodes, setNodes] = useState(new DataSet([
+        { id: 1, label: "Zone" },
+        { id: 2, label: "Project" },
+        // ...existing code...
+    ]));
+    const [edges, setEdges] = useState(new DataSet([
+        { id: 1, from: 1, to: 2, label: "連接" },
+        // ...existing code...
+    ]));
+
+    // 監聽 Firestore 中圖形資料文件更新（假設存放於 projects/{projectId}/zones/{zoneId}/graph/data）
+    useEffect(() => {
+        const graphDocRef = doc(db, "projects", projectId, "zones", zoneId, "graph", "data");
+        const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                // 假設 data.nodes 與 data.edges 分別為陣列
+                setNodes(new DataSet(data.nodes || []));
+                setEdges(new DataSet(data.edges || []));
+            }
+        });
+        return () => unsubscribe();
+    }, [db, projectId, zoneId]);
 
     useEffect(() => {
         if (containerRef.current) {
-            const nodes = new DataSet([
-                { id: 1, label: "Zone" },
-                { id: 2, label: "Project" },
-                // ...additional nodes if needed...
-            ]);
-            const edges = new DataSet([
-                { id: 1, from: 1, to: 2 },
-                // ...additional edges if needed...
-            ]);
             const data = { nodes, edges };
             const options = {
                 layout: { hierarchical: false },
@@ -30,16 +46,21 @@ function NetworkGraph() {
                 manipulation: {
                     enabled: true,
                     initiallyActive: true,
-                    editEdge: function (data: any, callback: any) { // 已加入參數類型
-                        // 利用 prompt 編輯邊的標籤（或其他屬性）
-                        data.label = prompt("請輸入新的邊標籤：", data.label) || data.label;
+                    editEdge: function (data: any, callback: any) {
+                        const newLabel = prompt("請輸入新的邊標籤：", data.label) || data.label;
+                        data.label = newLabel;
+                        // 更新 edges dataset
+                        edges.update({ id: data.id, label: newLabel });
+                        // 將最新的 edges 寫回 Firestore
+                        const allEdges = edges.get();
+                        updateDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges });
                         callback(data);
                     }
                 }
             };
             new Network(containerRef.current, data, options);
         }
-    }, []);
+    }, [containerRef, nodes, edges, db, projectId, zoneId]);
 
     return <div ref={containerRef} style={{ height: "400px" }} />;
 }
@@ -61,34 +82,17 @@ export default function ZoneDetailPage() {
     if (!projectDoc?.exists()) return <div>找不到專案</div>;
 
     const project = projectDoc.data() as Project;
-    const zone = project.zones.find((z: Zone) => z.zoneId === zoneId); // zones 作為陣列進行查找
+    const zone = project.zones.find((z: Zone) => z.zoneId === zoneId); // ...existing code...
 
     if (!zone) return <div>找不到分區</div>;
 
     return (
         <main className="max-w-3xl mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">{zone.zoneName}</h1>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                <div className="mb-2">
-                    <span className="text-gray-500">分區描述：</span>
-                    <span>{zone.desc || "暫無描述"}</span>
-                </div>
-                <div className="mb-2">
-                    <span className="text-gray-500">建立時間：</span>
-                    <span>{zone.createdAt instanceof Date ? zone.createdAt.toLocaleString() : String(zone.createdAt)}</span>
-                </div>
-                <div className="mb-2">
-                    <span className="text-gray-500">排序：</span>
-                    <span>{zone.order ?? "-"}</span>
-                </div>
-            </div>
-            <div className="text-gray-400 text-sm">
-                所屬專案：{project.projectName}
-            </div>
+            // ...existing code...
             {/* 新增網路圖區域 */}
             <div className="mt-6">
                 <h2 className="text-xl font-bold mb-2">網路圖</h2>
-                <NetworkGraph />
+                <NetworkGraph projectId={projectId} zoneId={zoneId} />
             </div>
         </main>
     );
