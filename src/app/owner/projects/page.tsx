@@ -7,7 +7,7 @@ import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebas
 import { useMemo, useState } from "react";
 
 export default function ProjectsPage() {
-    const [projectsSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "projects"));
+    const [projectsSnapshot, loading, error] = useCollection(collection(db, "projects"));
     const [search, setSearch] = useState("");
 
     const rows = useMemo(() => {

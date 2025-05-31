@@ -46,7 +46,7 @@ export default function ImportProjectPage() {
                 status: "新建立",
                 // 你可以根據需求加入更多欄位
             };
-            await addDoc(collection(db, "finance", "default", "projects"), projectData);
+            await addDoc(collection(db, "projects"), projectData);
             setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
         } catch (err) {
             setMessage("建立失敗: " + (err instanceof Error ? err.message : String(err)));
