@@ -1,3 +1,4 @@
+"use client";
 // lib/FirebaseContext.tsx
 import React, { createContext, useContext } from "react";
 import { app, auth, db, doc, getDoc } from "./firebase";
