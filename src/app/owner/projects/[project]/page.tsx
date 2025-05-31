@@ -1,15 +1,13 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { Project, Zone } from "@/types/project";
-import { Disclosure } from '@headlessui/react';
+import { Project } from "@/types/project";
 
 export default function ProjectDetailPage() {
     const params = useParams();
-    const searchParams = useSearchParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
 
@@ -61,38 +59,6 @@ export default function ProjectDetailPage() {
                     </div>
                 </div>
             </div>
-
-            {/* 分區列表 */}
-            {project.zones && project.zones.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <Disclosure defaultOpen={false}>
-                        {({ open }) => (
-                            <div>
-                                <Disclosure.Button className="w-full px-6 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded-t-lg">
-                                    <h2 className="text-xl font-bold">工作分區</h2>
-                                    <span className="text-xl">{open ? '−' : '+'}</span>
-                                </Disclosure.Button>
-                                <Disclosure.Panel className="p-6">
-                                    <div className="grid gap-4">
-                                        {project.zones.map((zone: Zone) => (
-                                            <div
-                                                key={zone.zoneId}
-                                                className={`p-4 border rounded-lg ${searchParams.get('zone') === zone.zoneId
-                                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                                    : ''
-                                                    }`}
-                                            >
-                                                <h3 className="font-bold mb-2">{zone.zoneName}</h3>
-                                                <p className="text-gray-600 dark:text-gray-400">{zone.desc || '暫無描述'}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Disclosure.Panel>
-                            </div>
-                        )}
-                    </Disclosure>
-                </div>
-            )}
         </main>
     );
 }
