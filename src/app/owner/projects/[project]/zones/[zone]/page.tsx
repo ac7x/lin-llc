@@ -9,33 +9,48 @@ import { Network } from "vis-network/standalone";
 import { DataSet } from "vis-data";
 import { useRef, useState, useEffect } from "react";
 
-function NetworkGraph({ projectId, zoneId }: { projectId: string; zoneId: string }) {
+// 新增型別定義
+type NodeType = { id: string; label: string };
+type EdgeType = { id: string; from: string; to: string; label: string };
+
+function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId: string; zones: Zone[] }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { db } = useFirebase();
-    // 初始預設節點與邊
-    const [nodes, setNodes] = useState(new DataSet([
-        { id: 1, label: "Zone" },
-        { id: 2, label: "Project" },
-        // ...existing code...
-    ]));
-    const [edges, setEdges] = useState(new DataSet([
-        { id: 1, from: 1, to: 2, label: "連接" },
-        // ...existing code...
-    ]));
+    // 使用泛型指定 DataSet 型別
+    const [nodes, setNodes] = useState(new DataSet<NodeType>([]));
+    const [edges, setEdges] = useState(new DataSet<EdgeType>([]));
 
-    // 監聽 Firestore 中圖形資料文件更新（假設存放於 projects/{projectId}/zones/{zoneId}/graph/data）
+    // 從 Firestore 同步網路圖資料
     useEffect(() => {
         const graphDocRef = doc(db, "projects", projectId, "zones", zoneId, "graph", "data");
         const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.data();
-                // 假設 data.nodes 與 data.edges 分別為陣列
-                setNodes(new DataSet(data.nodes || []));
-                setEdges(new DataSet(data.edges || []));
+                setNodes(new DataSet<NodeType>(data.nodes || []));
+                setEdges(new DataSet<EdgeType>(data.edges || []));
             }
         });
         return () => unsubscribe();
     }, [db, projectId, zoneId]);
+
+    // 若 Firestore 沒有初始化，利用 zones 陣列初始化節點與邊
+    useEffect(() => {
+        if (nodes.length > 0 || zones.length === 0) return;
+        const projectNode: NodeType = { id: "project", label: "專案" };
+        const zoneNodes = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName } as NodeType));
+        setNodes(new DataSet<NodeType>([projectNode, ...zoneNodes]));
+        const newEdges = zones.map(zone => ({
+            id: `edge-${zone.zoneId}`,
+            from: zone.zoneId,
+            to: "project",
+            label: "連接"
+        } as EdgeType));
+        setEdges(new DataSet<EdgeType>(newEdges));
+        updateDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), {
+            nodes: [projectNode, ...zoneNodes],
+            edges: newEdges
+        }).catch(() => { });
+    }, [zones, nodes, db, projectId, zoneId]);
 
     useEffect(() => {
         if (containerRef.current) {
@@ -49,9 +64,7 @@ function NetworkGraph({ projectId, zoneId }: { projectId: string; zoneId: string
                     editEdge: function (data: any, callback: any) {
                         const newLabel = prompt("請輸入新的邊標籤：", data.label) || data.label;
                         data.label = newLabel;
-                        // 更新 edges dataset
                         edges.update({ id: data.id, label: newLabel });
-                        // 將最新的 edges 寫回 Firestore
                         const allEdges = edges.get();
                         updateDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges });
                         callback(data);
@@ -82,17 +95,15 @@ export default function ZoneDetailPage() {
     if (!projectDoc?.exists()) return <div>找不到專案</div>;
 
     const project = projectDoc.data() as Project;
-    const zone = project.zones.find((z: Zone) => z.zoneId === zoneId); // ...existing code...
-
+    const zone = project.zones.find((z: Zone) => z.zoneId === zoneId);
     if (!zone) return <div>找不到分區</div>;
 
     return (
         <main className="max-w-3xl mx-auto p-4">
-            // ...existing code...
-            {/* 新增網路圖區域 */}
+            {/* 新增網路圖區域，傳入 zones 陣列 */}
             <div className="mt-6">
                 <h2 className="text-xl font-bold mb-2">網路圖</h2>
-                <NetworkGraph projectId={projectId} zoneId={zoneId} />
+                <NetworkGraph projectId={projectId} zoneId={zoneId} zones={project.zones} />
             </div>
         </main>
     );
