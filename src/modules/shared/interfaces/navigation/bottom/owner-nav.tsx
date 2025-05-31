@@ -21,6 +21,7 @@ const defaultOwnerNavItems: NavItem[] = [
     { href: '/owner/quotes', icon: '📄', label: '估價單', active: false },
     { href: '/owner/contracts', icon: '📑', label: '合約', active: false },
     { href: '/owner/projects', icon: '📁', label: '專案', active: false },
+    { href: '/owner/schedule', icon: '📅', label: '行程', active: false }, // 新增行程導航
     { href: '/owner/users', icon: '👤', label: '用戶管理', active: false },
     { href: '/owner/archived', icon: '🗄️', label: '封存', active: false },
     { href: '/owner/settings', icon: '⚙️', label: '設定', active: false },
