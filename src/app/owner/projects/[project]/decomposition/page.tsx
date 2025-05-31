@@ -19,34 +19,25 @@ import {
     applyEdgeChanges,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { FirestoreSync } from "./FirestoreSync";
 
 let nodeId = 1;
 const getId = () => `node_${nodeId++}`;
 
-function Flow({ useSimpleState = false }: { useSimpleState?: boolean }) {
-    const initialNodes: Node[] = [
+function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: Edge[] }) {
+    const initialNodes: Node[] = propNodes ?? [
         { id: "1", position: { x: 250, y: 5 }, data: { label: "節點 1" } },
         { id: "2", position: { x: 100, y: 100 }, data: { label: "節點 2" } },
     ];
-    const initialEdges: Edge[] = [];
+    const initialEdges: Edge[] = propEdges ?? [];
 
-    // 切換不同 hook
     const [
         nodes, setNodes, onNodesChange,
         edges, setEdges, onEdgesChange
-    ] = useSimpleState
-            ? [
-                useState<Node[]>(initialNodes)[0],
-                useState<Node[]>(initialNodes)[1],
-                (changes: any) => setNodes((nds: Node[]) => applyNodeChanges(changes, nds)),
-                useState<Edge[]>(initialEdges)[0],
-                useState<Edge[]>(initialEdges)[1],
-                (changes: any) => setEdges((eds: Edge[]) => applyEdgeChanges(changes, eds)),
-            ]
-            : [
-                ...useNodesState(initialNodes),
-                ...useEdgesState(initialEdges),
-            ];
+    ] = [
+            ...useNodesState(initialNodes),
+            ...useEdgesState(initialEdges),
+        ];
 
     const { screenToFlowPosition } = useReactFlow();
     const connectingNodeId = useRef<string | null>(null);
@@ -124,7 +115,13 @@ function Flow({ useSimpleState = false }: { useSimpleState?: boolean }) {
 export default function DecompositionPage() {
     return (
         <ReactFlowProvider>
-            <Flow />
+            <FirestoreSync>
+                {(nodes, edges, loading, error) => {
+                    if (loading) return <div>載入中...</div>;
+                    if (error) return <div>錯誤: {String(error)}</div>;
+                    return <Flow nodes={nodes} edges={edges} />;
+                }}
+            </FirestoreSync>
         </ReactFlowProvider>
     );
 }
