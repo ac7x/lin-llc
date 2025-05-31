@@ -32,16 +32,12 @@ function NetworkGraph({
     const networkRef = useRef<Network | null>(null);
     const { db, doc, onSnapshot, setDoc } = useFirebase();
     const [operationLogs, setOperationLogs] = useState<string[]>([]);
-    // DataSet 僅初始化一次
     const nodesRef = useRef<DataSet<NodeType>>(new DataSet<NodeType>([]));
     const edgesRef = useRef<DataSet<EdgeType>>(new DataSet<EdgeType>([]));
-    // 新增 flag 避免循環觸發
     const isRemoteUpdate = useRef<boolean>(false);
 
-    // Firestore 監聽只同步 graph 資料到 DataSet
     useEffect(() => {
         setOperationLogs(prev => [...prev, "開始訂閱 Firestore 實時更新"]);
-        // graph 資料建議存放於 projects/{projectId}/zones_graph/{zoneId}
         const graphDocRef = doc(db as typeof db, "projects", projectId, "zones_graph", zoneId);
         const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -82,9 +78,8 @@ function NetworkGraph({
             unsubscribe();
             setOperationLogs(prev => [...prev, "取消訂閱 Firestore"]);
         };
-    }, [db, projectId, zoneId, zones, projectName]);
+    }, [db, doc, onSnapshot, setDoc, projectId, zoneId, zones, projectName]);
 
-    // Network 實例只初始化一次
     useEffect(() => {
         if (containerRef.current && !networkRef.current) {
             const data = { nodes: nodesRef.current, edges: edgesRef.current };
@@ -175,9 +170,8 @@ function NetworkGraph({
             networkRef.current = new Network(containerRef.current, data, options);
             setOperationLogs(prev => [...prev, "網路圖載入完成"]);
         }
-    }, [containerRef, db, projectId, zoneId]);
+    }, [containerRef, db, doc, setDoc, projectId, zoneId]);
 
-    // 本地 DataSet 事件監聽，將本地變更同步到 Firestore
     useEffect(() => {
         const nodesDS = nodesRef.current;
         const edgesDS = edgesRef.current;
@@ -226,11 +220,16 @@ function NetworkGraph({
             edgesDS.off("remove", handleEdgesChange);
             edgesDS.off("update", handleEdgesChange);
         };
-    }, [db, projectId, zoneId]);
+    }, [db, doc, setDoc, projectId, zoneId]);
 
+    // --------- Minimum Viable Code 只加一行顯示節點數量 ---------
     return (
         <>
             <div ref={containerRef} style={{ height: "700px" }} />
+            {/* 只加這一行，完全不動其它程式碼 */}
+            <div style={{ position: "absolute", left: 10, top: 10, background: "#eee", padding: "2px 8px", borderRadius: "4px", zIndex: 99 }}>
+                節點數量：{nodesRef.current.get().length}
+            </div>
             <div className="fixed top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 p-2 max-w-[300px] max-h-[300px] overflow-y-auto z-50">
                 <h3 className="text-black dark:text-white">操作記錄:</h3>
                 <ul>
