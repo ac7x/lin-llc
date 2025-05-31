@@ -32,7 +32,6 @@ function NetworkGraph({
     const containerRef = useRef<HTMLDivElement>(null);
     const networkRef = useRef<Network | null>(null);
     const { db } = useFirebase();
-    const [syncStatus, setSyncStatus] = useState<string>("");
     const [operationLogs, setOperationLogs] = useState<string[]>([]);
     // DataSet 只初始化一次
     const nodesRef = useRef(new DataSet<NodeType>([]));
