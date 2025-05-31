@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { doc, onSnapshot, updateDoc, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc } from "firebase/firestore"; // 移除 updateDoc
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { Project, Zone } from "@/types/project";
 import { Network } from "vis-network/standalone";
@@ -12,6 +12,11 @@ import { useRef, useState, useEffect } from "react";
 // 新增型別定義
 type NodeType = { id: string; label: string };
 type EdgeType = { id: string; from: string; to: string; label: string };
+
+// 針對 vis-network 事件的類型
+type EditEdgeData = { id: string; label: string };
+type DeleteEdgeData = Array<{ id: string }>;
+type Callback<T> = (data: T | null) => void;
 
 function NetworkGraph({
     projectId,
@@ -70,8 +75,8 @@ function NetworkGraph({
                             `初始化同步成功: 節點數量=${[projectNode, ...zoneNodes].length}, 邊數量=${newEdges.length}`
                         ]);
                     })
-                    .catch((err) => {
-                        setOperationLogs(prev => [...prev, `初始化同步失敗: ${err.message}`]);
+                    .catch((e: Error) => {
+                        setOperationLogs(prev => [...prev, `初始化同步失敗: ${e.message}`]);
                     });
             }
         });
@@ -91,7 +96,7 @@ function NetworkGraph({
                 manipulation: {
                     enabled: true,
                     initiallyActive: true,
-                    editEdge: async (data: any, callback: any) => {
+                    editEdge: async (data: EditEdgeData, callback: Callback<EditEdgeData>) => {
                         setOperationLogs(prev => [...prev, `開始編輯邊: ${data.id}`]);
                         setOperationLogs(prev => [...prev, "編輯邊操作開始"]);
                         const newLabel = prompt("請輸入新的邊標籤：", data.label) || data.label;
@@ -105,25 +110,25 @@ function NetworkGraph({
                             setSyncStatus("同步成功");
                             setOperationLogs(prev => [...prev, "邊資料同步成功"]);
                             callback(data);
-                        } catch (err: any) {
+                        } catch (e) {
                             setSyncStatus("同步失敗");
                             setOperationLogs(prev => [...prev, "邊資料同步失敗"]);
                             callback(data);
                         }
                     },
-                    deleteEdge: async (data: any, callback: any) => {
-                        setOperationLogs(prev => [...prev, `開始刪除邊: ${data.map((edge: any) => edge.id).join(", ")}`]);
+                    deleteEdge: async (data: DeleteEdgeData, callback: Callback<DeleteEdgeData>) => {
+                        setOperationLogs(prev => [...prev, `開始刪除邊: ${data.map((edge) => edge.id).join(", ")}`]);
                         // 先寫入 Firestore
-                        const idsToDelete = data.map((edge: any) => edge.id);
+                        const idsToDelete = data.map((edge) => edge.id);
                         const allEdges = edgesRef.current.get().filter(edge => !idsToDelete.includes(edge.id));
                         try {
                             await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
                             setSyncStatus("同步成功");
                             setOperationLogs(prev => [...prev, "邊刪除同步成功"]);
                             callback(data);
-                        } catch (err: any) {
+                        } catch (e: any) {
                             setSyncStatus("同步失敗");
-                            setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${err.message}`]);
+                            setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${e.message}`]);
                             callback(null);
                         }
                     }
@@ -136,39 +141,43 @@ function NetworkGraph({
 
     // 本地 DataSet 事件監聽，將本地變更同步到 Firestore
     useEffect(() => {
+        // 用區域變數保存 current，避免 React cleanup ref 問題
+        const nodesDS = nodesRef.current;
+        const edgesDS = edgesRef.current;
+
         const handleNodesChange = async () => {
             if (isRemoteUpdate.current) return;
-            const allNodes = nodesRef.current.get();
+            const allNodes = nodesDS.get();
             try {
                 await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { nodes: allNodes }, { merge: true });
                 setOperationLogs(prev => [...prev, "本地節點變更已同步到 Firestore"]);
-            } catch (err: any) {
-                setOperationLogs(prev => [...prev, `節點同步失敗: ${err.message}`]);
+            } catch (e: any) {
+                setOperationLogs(prev => [...prev, `節點同步失敗: ${e.message}`]);
             }
         };
         const handleEdgesChange = async () => {
             if (isRemoteUpdate.current) return;
-            const allEdges = edgesRef.current.get();
+            const allEdges = edgesDS.get();
             try {
                 await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
                 setOperationLogs(prev => [...prev, "本地邊變更已同步到 Firestore"]);
-            } catch (err: any) {
-                setOperationLogs(prev => [...prev, `邊同步失敗: ${err.message}`]);
+            } catch (e: any) {
+                setOperationLogs(prev => [...prev, `邊同步失敗: ${e.message}`]);
             }
         };
-        nodesRef.current.on("add", handleNodesChange);
-        nodesRef.current.on("remove", handleNodesChange);
-        nodesRef.current.on("update", handleNodesChange);
-        edgesRef.current.on("add", handleEdgesChange);
-        edgesRef.current.on("remove", handleEdgesChange);
-        edgesRef.current.on("update", handleEdgesChange);
+        nodesDS.on("add", handleNodesChange);
+        nodesDS.on("remove", handleNodesChange);
+        nodesDS.on("update", handleNodesChange);
+        edgesDS.on("add", handleEdgesChange);
+        edgesDS.on("remove", handleEdgesChange);
+        edgesDS.on("update", handleEdgesChange);
         return () => {
-            nodesRef.current.off("add", handleNodesChange);
-            nodesRef.current.off("remove", handleNodesChange);
-            nodesRef.current.off("update", handleNodesChange);
-            edgesRef.current.off("add", handleEdgesChange);
-            edgesRef.current.off("remove", handleEdgesChange);
-            edgesRef.current.off("update", handleEdgesChange);
+            nodesDS.off("add", handleNodesChange);
+            nodesDS.off("remove", handleNodesChange);
+            nodesDS.off("update", handleNodesChange);
+            edgesDS.off("add", handleEdgesChange);
+            edgesDS.off("remove", handleEdgesChange);
+            edgesDS.off("update", handleEdgesChange);
         };
     }, [db, projectId, zoneId]);
 
@@ -191,12 +200,13 @@ export default function ZoneDetailPage() {
     const projectId = params?.project as string; // 確保 projectId 是字串類型
     const zoneId = params?.zone as string;       // 確保 zoneId 是字串類型
 
+    // hooks 一定要無條件呼叫
+    const { db } = useFirebase();
+    const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
+
     if (!projectId || !zoneId) {
         return <div>無效的專案或分區 ID</div>;
     }
-
-    const { db } = useFirebase();
-    const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
 
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;

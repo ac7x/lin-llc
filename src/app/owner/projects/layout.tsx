@@ -8,7 +8,7 @@ import { collection, doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Disclosure } from '@headlessui/react';
 import { Zone } from "@/types/project";
-import { DndContext, closestCenter } from "@dnd-kit/core";
+import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -45,7 +45,7 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
     ];
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
 
-    const handleDragEnd = async ({ active, over }: { active: any; over: any }, projectId: string, zones: Zone[]) => {
+    const handleDragEnd = async ({ active, over }: DragEndEvent, projectId: string, zones: Zone[]) => {
         if (!over || active.id === over.id) return;
         const oldIndex = zones.findIndex((z: Zone) => z.zoneId === active.id);
         const newIndex = zones.findIndex((z: Zone) => z.zoneId === over.id);
@@ -143,7 +143,7 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                                                                 setZoneName("");
                                                                 setShowModal(true);
                                                             }}
-                                                            className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-400 hover:bg-blue-500 active:bg-blue-600 text-white shadow transition-colors"
+                                                            className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-400 hover:bg-blue-500 active:bg-blue-600 text-white shadow transition"
                                                             title="新增分區"
                                                             style={{ fontSize: 0 }}
                                                         >
