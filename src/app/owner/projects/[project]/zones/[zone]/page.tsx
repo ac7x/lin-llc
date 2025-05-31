@@ -22,6 +22,8 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
     // DataSet 只初始化一次
     const nodesRef = useRef(new DataSet<NodeType>([]));
     const edgesRef = useRef(new DataSet<EdgeType>([]));
+    // 新增 flag 避免循環觸發
+    const isRemoteUpdate = useRef(false);
 
     // Firestore 監聽只同步資料到 DataSet
     useEffect(() => {
@@ -30,11 +32,13 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
         const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.data();
+                isRemoteUpdate.current = true;
                 nodesRef.current.clear();
                 edgesRef.current.clear();
                 nodesRef.current.add(data.nodes || []);
                 edgesRef.current.add(data.edges || []);
                 setOperationLogs(prev => [...prev, "從 Firestore 同步更新節點與邊"]);
+                isRemoteUpdate.current = false;
             }
         });
         return () => {
@@ -126,6 +130,44 @@ function NetworkGraph({ projectId, zoneId, zones }: { projectId: string; zoneId:
             setOperationLogs(prev => [...prev, "網路圖載入完成"]);
         }
     }, [containerRef, db, projectId, zoneId]);
+
+    // 本地 DataSet 事件監聽，將本地變更同步到 Firestore
+    useEffect(() => {
+        const handleNodesChange = async () => {
+            if (isRemoteUpdate.current) return;
+            const allNodes = nodesRef.current.get();
+            try {
+                await setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { nodes: allNodes }, { merge: true });
+                setOperationLogs(prev => [...prev, "本地節點變更已同步到 Firestore"]);
+            } catch (err: any) {
+                setOperationLogs(prev => [...prev, `節點同步失敗: ${err.message}`]);
+            }
+        };
+        const handleEdgesChange = async () => {
+            if (isRemoteUpdate.current) return;
+            const allEdges = edgesRef.current.get();
+            try {
+                await setDoc(doc(db, "projects", projectId, "zones", zoneId, "graph", "data"), { edges: allEdges }, { merge: true });
+                setOperationLogs(prev => [...prev, "本地邊變更已同步到 Firestore"]);
+            } catch (err: any) {
+                setOperationLogs(prev => [...prev, `邊同步失敗: ${err.message}`]);
+            }
+        };
+        nodesRef.current.on("add", handleNodesChange);
+        nodesRef.current.on("remove", handleNodesChange);
+        nodesRef.current.on("update", handleNodesChange);
+        edgesRef.current.on("add", handleEdgesChange);
+        edgesRef.current.on("remove", handleEdgesChange);
+        edgesRef.current.on("update", handleEdgesChange);
+        return () => {
+            nodesRef.current.off("add", handleNodesChange);
+            nodesRef.current.off("remove", handleNodesChange);
+            nodesRef.current.off("update", handleNodesChange);
+            edgesRef.current.off("add", handleEdgesChange);
+            edgesRef.current.off("remove", handleEdgesChange);
+            edgesRef.current.off("update", handleEdgesChange);
+        };
+    }, [db, projectId, zoneId]);
 
     return (
         <>
