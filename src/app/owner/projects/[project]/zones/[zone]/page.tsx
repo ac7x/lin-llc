@@ -188,10 +188,11 @@ function NetworkGraph({
         <>
             <div ref={containerRef} style={{ height: "700px" }} />
             {syncStatus && <div style={{ marginTop: "8px", color: "green" }}>{syncStatus}</div>}
-            <div style={{ marginTop: "8px" }}>
-                <h3>操作記錄:</h3>
+            {/* 修改懸浮區塊改用 Tailwind CSS class 支援深色模式 */}
+            <div className="fixed top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 p-2 max-w-[300px] max-h-[300px] overflow-y-auto z-50">
+                <h3 className="text-black dark:text-white">操作記錄:</h3>
                 <ul>
-                    {operationLogs.map((log, index) => <li key={index}>{log}</li>)}
+                    {operationLogs.map((log, index) => <li key={index} className="text-black dark:text-gray-300">{log}</li>)}
                 </ul>
             </div>
         </>
