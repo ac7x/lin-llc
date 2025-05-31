@@ -32,7 +32,7 @@ import {
     updateDoc,
     deleteDoc,
     onSnapshot,
-    Timestamp, // Import Timestamp class (value and instance type)
+    Timestamp,
     query,
     where,
     orderBy,
@@ -99,7 +99,6 @@ import {
     connectFunctionsEmulator,
 } from "firebase/functions";
 
-// 型別補齊
 import type {
     User,
     UserCredential,
@@ -114,15 +113,14 @@ import type {
     QuerySnapshot,
     QueryDocumentSnapshot,
     Firestore,
-    // Timestamp as TimestampType, // REMOVED - Timestamp class will provide its type
     FieldValue,
     Transaction,
     WriteBatch,
     Query,
     DocumentReference,
     CollectionReference,
-    FieldPath as FieldPathType, // Keep alias for FieldPath type
-    GeoPoint as GeoPointType,   // Keep alias for GeoPoint type
+    FieldPath as FieldPathType,
+    GeoPoint as GeoPointType,
 } from "firebase/firestore";
 import type {
     FirebaseStorage,
@@ -172,10 +170,8 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Analytics、Performance、Messaging、Remote Config、Functions 只在瀏覽器端初始化
 const analytics = typeof window !== "undefined" ? getAnalytics(app) : undefined;
 const performance = typeof window !== "undefined" ? getPerformance(app) : undefined;
-// 正確 async 檢查 isMessagingSupported
 let messaging: ReturnType<typeof getMessaging> | undefined = undefined;
 if (typeof window !== "undefined") {
     isMessagingSupported().then((supported) => {
@@ -202,7 +198,7 @@ export {
     updateDoc,
     deleteDoc,
     onSnapshot,
-    Timestamp, // Export Timestamp class (value and its instance type)
+    Timestamp,
     query,
     where,
     orderBy,
@@ -231,7 +227,6 @@ export {
     isSignInWithEmailLink,
     signInWithEmailLink,
     connectAuthEmulator,
-    // firebase/storage 常用語法
     getStorage,
     ref,
     uploadBytes,
@@ -243,7 +238,6 @@ export {
     getMetadata,
     updateMetadata,
     connectStorageEmulator,
-    // firebase/firestore 進階
     deleteField,
     writeBatch,
     arrayUnion,
@@ -254,25 +248,21 @@ export {
     GeoPoint,
     setFirestoreLogLevel,
     connectFirestoreEmulator,
-    // firebase/analytics 常用語法
     analytics,
     getAnalytics,
     logEvent,
     setUserId,
     setUserProperties,
     setConsent,
-    // firebase/performance 常用語法
     performance,
     getPerformance,
     trace,
-    // firebase/messaging 常用語法
     messaging,
     getMessaging,
     getToken,
     onMessage,
     deleteToken,
     isMessagingSupported,
-    // firebase/remote-config 常用語法
     remoteConfig,
     getRemoteConfig,
     fetchAndActivate,
@@ -280,14 +270,12 @@ export {
     getAll,
     setRemoteConfigLogLevel,
     activate,
-    // firebase/functions 常用語法
     functions,
     getFunctions,
     httpsCallable,
     connectFunctionsEmulator,
 };
 
-// 型別 export 必須用 export type
 export type {
     User,
     UserCredential,
@@ -300,15 +288,15 @@ export type {
     QuerySnapshot,
     QueryDocumentSnapshot,
     Firestore,
-    Timestamp as TimestampType, // 只 export 型別，避免重複
+    Timestamp as TimestampType,
     FieldValue,
     Transaction,
     WriteBatch,
     Query,
     DocumentReference,
     CollectionReference,
-    FieldPathType, // Export aliased FieldPath type
-    GeoPointType,  // Export aliased GeoPoint type
+    FieldPathType,
+    GeoPointType,
     FirebaseStorage as Storage,
     StorageReference,
     UploadTask,

@@ -15,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     onSnapshot,
-    Timestamp, // Value import
+    Timestamp,
     query,
     where,
     orderBy,
@@ -65,25 +65,21 @@ import {
     GeoPoint,
     setFirestoreLogLevel,
     connectFirestoreEmulator,
-    // analytics
     analytics,
     getAnalytics,
     logEvent,
     setUserId,
     setUserProperties,
     setConsent,
-    // performance
     performance,
     getPerformance,
     trace,
-    // messaging
     messaging,
     getMessaging,
     getToken,
     onMessage,
     deleteToken,
     isMessagingSupported,
-    // remote-config
     remoteConfig,
     getRemoteConfig,
     fetchAndActivate,
@@ -91,7 +87,6 @@ import {
     getAll,
     setRemoteConfigLogLevel,
     activate,
-    // functions
     functions,
     getFunctions,
     httpsCallable,
@@ -109,14 +104,14 @@ import type {
     QuerySnapshot,
     QueryDocumentSnapshot,
     Firestore,
-    Timestamp as TimestampType, // Type import (instance type of Timestamp class)
+    Timestamp as TimestampType,
     FieldValue,
     Transaction,
     WriteBatch,
     Query,
     DocumentReference,
     CollectionReference,
-    Storage, // This was aliased as FirebaseStorage in firebase.ts, ensure consistency
+    Storage,
     StorageReference,
     UploadTask,
     UploadTaskSnapshot,
@@ -130,9 +125,9 @@ import type {
     Functions,
     HttpsCallable,
     HttpsCallableResult,
-    FieldPathType, // Import aliased FieldPathType
-    GeoPointType,  // Import aliased GeoPointType
-} from "./firebase"; // Corrected: Timestamp is now directly imported as a type
+    FieldPathType,
+    GeoPointType,
+} from "./firebase";
 import {
     useCollection,
     useCollectionData,
@@ -177,7 +172,7 @@ type FirebaseContextType = {
     updateDoc: typeof updateDoc;
     deleteDoc: typeof deleteDoc;
     onSnapshot: typeof onSnapshot;
-    Timestamp: typeof Timestamp; // This refers to the Timestamp class/constructor
+    Timestamp: typeof Timestamp;
     query: typeof query;
     where: typeof where;
     orderBy: typeof orderBy;
@@ -227,25 +222,21 @@ type FirebaseContextType = {
     GeoPoint: typeof GeoPoint;
     setFirestoreLogLevel: typeof setFirestoreLogLevel;
     connectFirestoreEmulator: typeof connectFirestoreEmulator;
-    // analytics
     analytics: typeof analytics;
     getAnalytics: typeof getAnalytics;
     logEvent: typeof logEvent;
     setUserId: typeof setUserId;
     setUserProperties: typeof setUserProperties;
     setConsent: typeof setConsent;
-    // performance
     performance: typeof performance;
     getPerformance: typeof getPerformance;
     trace: typeof trace;
-    // messaging
     messaging: typeof messaging;
     getMessaging: typeof getMessaging;
     getToken: typeof getToken;
     onMessage: typeof onMessage;
     deleteToken: typeof deleteToken;
     isMessagingSupported: typeof isMessagingSupported;
-    // remote-config
     remoteConfig: typeof remoteConfig;
     getRemoteConfig: typeof getRemoteConfig;
     fetchAndActivate: typeof fetchAndActivate;
@@ -253,12 +244,10 @@ type FirebaseContextType = {
     getAll: typeof getAll;
     setRemoteConfigLogLevel: typeof setRemoteConfigLogLevel;
     activate: typeof activate;
-    // functions
     functions: typeof functions;
     getFunctions: typeof getFunctions;
     httpsCallable: typeof httpsCallable;
     connectFunctionsEmulator: typeof connectFunctionsEmulator;
-    // firestore hooks
     useCollection: typeof useCollection;
     useCollectionData: typeof useCollectionData;
     useCollectionOnce: typeof useCollectionOnce;
@@ -267,7 +256,6 @@ type FirebaseContextType = {
     useDocumentData: typeof useDocumentData;
     useDocumentOnce: typeof useDocumentOnce;
     useDocumentDataOnce: typeof useDocumentDataOnce;
-    // auth hooks
     useAuthState: typeof useAuthState;
     useCreateUserWithEmailAndPassword: typeof useCreateUserWithEmailAndPassword;
     useSignInWithEmailAndPassword: typeof useSignInWithEmailAndPassword;
@@ -277,15 +265,9 @@ type FirebaseContextType = {
     useUpdatePassword: typeof useUpdatePassword;
     useSendEmailVerification: typeof useSendEmailVerification;
     useSignInWithEmailLink: typeof useSignInWithEmailLink;
-    // storage hooks
     useUploadFile: typeof useUploadFile;
     useDownloadURL: typeof useDownloadURL;
-    // messaging hooks
     useToken: typeof useToken;
-    // Types that might be used with the context values
-    // These are illustrative, actual usage dictates what's needed here
-    // For example, if you pass a function that returns a User, you might want User type here
-    // User: User; // This would be the type, not typeof User
 };
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -358,25 +340,21 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 GeoPoint,
                 setFirestoreLogLevel,
                 connectFirestoreEmulator,
-                // analytics
                 analytics,
                 getAnalytics,
                 logEvent,
                 setUserId,
                 setUserProperties,
                 setConsent,
-                // performance
                 performance,
                 getPerformance,
                 trace,
-                // messaging
                 messaging,
                 getMessaging,
                 getToken,
                 onMessage,
                 deleteToken,
                 isMessagingSupported,
-                // remote-config
                 remoteConfig,
                 getRemoteConfig,
                 fetchAndActivate,
@@ -384,12 +362,10 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 getAll,
                 setRemoteConfigLogLevel,
                 activate,
-                // functions
                 functions,
                 getFunctions,
                 httpsCallable,
                 connectFunctionsEmulator,
-                // firestore hooks
                 useCollection,
                 useCollectionData,
                 useCollectionOnce,
@@ -398,7 +374,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 useDocumentData,
                 useDocumentOnce,
                 useDocumentDataOnce,
-                // auth hooks
                 useAuthState,
                 useCreateUserWithEmailAndPassword,
                 useSignInWithEmailAndPassword,
@@ -408,10 +383,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 useUpdatePassword,
                 useSendEmailVerification,
                 useSignInWithEmailLink,
-                // storage hooks
                 useUploadFile,
                 useDownloadURL,
-                // messaging hooks
                 useToken,
             }}
         >
@@ -428,7 +401,6 @@ export const useFirebase = () => {
     return context;
 };
 
-// Re-export types for convenience if needed by consumers of useFirebase()
 export type {
     User,
     UserCredential,
@@ -441,7 +413,7 @@ export type {
     QuerySnapshot,
     QueryDocumentSnapshot,
     Firestore,
-    TimestampType as Timestamp, // Instance type
+    TimestampType as Timestamp,
     FieldValue,
     Transaction,
     WriteBatch,
