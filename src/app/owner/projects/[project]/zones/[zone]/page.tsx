@@ -2,18 +2,18 @@
 
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, Firestore } from "firebase/firestore";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { Project, Zone } from "@/types/project";
 import { Network } from "vis-network/standalone";
 import { DataSet } from "vis-data";
 import { useRef, useState, useEffect } from "react";
 
-// 新增型別定義
+// 型別定義
 type NodeType = { id: string; label: string };
 type EdgeType = { id: string; from: string; to: string; label: string };
 
-// 針對 vis-network 事件的類型
+// vis-network manipulation 事件型別
 type EditEdgeData = { id: string; label: string };
 type DeleteEdgeData = Array<{ id: string }>;
 type Callback<T> = (data: T | null) => void;
@@ -33,20 +33,20 @@ function NetworkGraph({
     const networkRef = useRef<Network | null>(null);
     const { db } = useFirebase();
     const [operationLogs, setOperationLogs] = useState<string[]>([]);
-    // DataSet 只初始化一次
-    const nodesRef = useRef(new DataSet<NodeType>([]));
-    const edgesRef = useRef(new DataSet<EdgeType>([]));
+    // DataSet 僅初始化一次
+    const nodesRef = useRef<DataSet<NodeType>>(new DataSet<NodeType>([]));
+    const edgesRef = useRef<DataSet<EdgeType>>(new DataSet<EdgeType>([]));
     // 新增 flag 避免循環觸發
-    const isRemoteUpdate = useRef(false);
+    const isRemoteUpdate = useRef<boolean>(false);
 
     // Firestore 監聽只同步 graph 資料到 DataSet
     useEffect(() => {
         setOperationLogs(prev => [...prev, "開始訂閱 Firestore 實時更新"]);
         // graph 資料建議存放於 projects/{projectId}/zones_graph/{zoneId}
-        const graphDocRef = doc(db, "projects", projectId, "zones_graph", zoneId);
+        const graphDocRef = doc(db as Firestore, "projects", projectId, "zones_graph", zoneId);
         const unsubscribe = onSnapshot(graphDocRef, (snapshot) => {
             if (snapshot.exists()) {
-                const data = snapshot.data();
+                const data = snapshot.data() as { nodes?: NodeType[]; edges?: EdgeType[] };
                 isRemoteUpdate.current = true;
                 nodesRef.current.clear();
                 edgesRef.current.clear();
@@ -57,13 +57,13 @@ function NetworkGraph({
             } else if (zones.length > 0) {
                 setOperationLogs(prev => [...prev, "Firestore 無資料，開始初始化同步"]);
                 const projectNode: NodeType = { id: "project", label: projectName || "專案" };
-                const zoneNodes = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName } as NodeType));
-                const newEdges = zones.map(zone => ({
+                const zoneNodes: NodeType[] = zones.map(zone => ({ id: zone.zoneId, label: zone.zoneName }));
+                const newEdges: EdgeType[] = zones.map(zone => ({
                     id: `edge-${zone.zoneId}`,
                     from: zone.zoneId,
                     to: "project",
                     label: "連接"
-                } as EdgeType));
+                }));
                 setDoc(graphDocRef, {
                     nodes: [projectNode, ...zoneNodes],
                     edges: newEdges
@@ -90,7 +90,7 @@ function NetworkGraph({
         if (containerRef.current && !networkRef.current) {
             const data = { nodes: nodesRef.current, edges: edgesRef.current };
             const options = {
-                layout: { hierarchical: { enabled: true, direction: "LR" } }, // 由左至右
+                layout: { hierarchical: { enabled: true, direction: "LR" } },
                 physics: { enabled: true },
                 manipulation: {
                     enabled: true,
@@ -98,16 +98,20 @@ function NetworkGraph({
                     editEdge: async (data: EditEdgeData, callback: Callback<EditEdgeData>) => {
                         setOperationLogs(prev => [...prev, `開始編輯邊: ${data.id}`]);
                         setOperationLogs(prev => [...prev, "編輯邊操作開始"]);
-                        const newLabel = prompt("請輸入新的邊標籤：", data.label) || data.label;
+                        const newLabel = prompt("請輸入新的邊標籤：", data.label) ?? data.label;
                         data.label = newLabel;
-                        const allEdges = edgesRef.current.get().map(edge =>
+                        const allEdges: EdgeType[] = edgesRef.current.get().map(edge =>
                             edge.id === data.id ? { ...edge, label: newLabel } : edge
                         );
                         try {
-                            await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
+                            await setDoc(
+                                doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                                { edges: allEdges },
+                                { merge: true }
+                            );
                             setOperationLogs(prev => [...prev, "邊資料同步成功"]);
                             callback(data);
-                        } catch (e: unknown) {
+                        } catch (e) {
                             const message = e instanceof Error ? e.message : String(e);
                             setOperationLogs(prev => [...prev, `邊資料同步失敗: ${message}`]);
                             callback(null);
@@ -116,12 +120,16 @@ function NetworkGraph({
                     deleteEdge: async (data: DeleteEdgeData, callback: Callback<DeleteEdgeData>) => {
                         setOperationLogs(prev => [...prev, `開始刪除邊: ${data.map((edge) => edge.id).join(", ")}`]);
                         const idsToDelete = data.map((edge) => edge.id);
-                        const allEdges = edgesRef.current.get().filter(edge => !idsToDelete.includes(edge.id));
+                        const allEdges: EdgeType[] = edgesRef.current.get().filter(edge => !idsToDelete.includes(edge.id));
                         try {
-                            await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
+                            await setDoc(
+                                doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                                { edges: allEdges },
+                                { merge: true }
+                            );
                             setOperationLogs(prev => [...prev, "邊刪除同步成功"]);
                             callback(data);
-                        } catch (e: unknown) {
+                        } catch (e) {
                             const message = e instanceof Error ? e.message : String(e);
                             setOperationLogs(prev => [...prev, `邊刪除同步失敗: ${message}`]);
                             callback(null);
@@ -131,11 +139,15 @@ function NetworkGraph({
                         setOperationLogs(prev => [...prev, `新增節點: ${data.id}`]);
                         nodesRef.current.add(data);
                         try {
-                            const allNodes = nodesRef.current.get();
-                            await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { nodes: allNodes }, { merge: true });
+                            const allNodes: NodeType[] = nodesRef.current.get();
+                            await setDoc(
+                                doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                                { nodes: allNodes },
+                                { merge: true }
+                            );
                             setOperationLogs(prev => [...prev, "節點新增同步成功"]);
                             callback(data);
-                        } catch (e: unknown) {
+                        } catch (e) {
                             const message = e instanceof Error ? e.message : String(e);
                             setOperationLogs(prev => [...prev, `節點新增同步失敗: ${message}`]);
                             callback(null);
@@ -145,11 +157,15 @@ function NetworkGraph({
                         setOperationLogs(prev => [...prev, `新增邊: ${data.id}`]);
                         edgesRef.current.add(data);
                         try {
-                            const allEdges = edgesRef.current.get();
-                            await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
+                            const allEdges: EdgeType[] = edgesRef.current.get();
+                            await setDoc(
+                                doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                                { edges: allEdges },
+                                { merge: true }
+                            );
                             setOperationLogs(prev => [...prev, "邊新增同步成功"]);
                             callback(data);
-                        } catch (e: unknown) {
+                        } catch (e) {
                             const message = e instanceof Error ? e.message : String(e);
                             setOperationLogs(prev => [...prev, `邊新增同步失敗: ${message}`]);
                             callback(null);
@@ -164,28 +180,35 @@ function NetworkGraph({
 
     // 本地 DataSet 事件監聽，將本地變更同步到 Firestore
     useEffect(() => {
-        // 用區域變數保存 current，避免 React cleanup ref 問題
         const nodesDS = nodesRef.current;
         const edgesDS = edgesRef.current;
 
         const handleNodesChange = async () => {
             if (isRemoteUpdate.current) return;
-            const allNodes = nodesDS.get();
+            const allNodes: NodeType[] = nodesDS.get();
             try {
-                await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { nodes: allNodes }, { merge: true });
+                await setDoc(
+                    doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                    { nodes: allNodes },
+                    { merge: true }
+                );
                 setOperationLogs(prev => [...prev, "本地節點變更已同步到 Firestore"]);
-            } catch (e: unknown) {
+            } catch (e) {
                 const message = e instanceof Error ? e.message : String(e);
                 setOperationLogs(prev => [...prev, `節點同步失敗: ${message}`]);
             }
         };
         const handleEdgesChange = async () => {
             if (isRemoteUpdate.current) return;
-            const allEdges = edgesDS.get();
+            const allEdges: EdgeType[] = edgesDS.get();
             try {
-                await setDoc(doc(db, "projects", projectId, "zones_graph", zoneId), { edges: allEdges }, { merge: true });
+                await setDoc(
+                    doc(db as Firestore, "projects", projectId, "zones_graph", zoneId),
+                    { edges: allEdges },
+                    { merge: true }
+                );
                 setOperationLogs(prev => [...prev, "本地邊變更已同步到 Firestore"]);
-            } catch (e: unknown) {
+            } catch (e) {
                 const message = e instanceof Error ? e.message : String(e);
                 setOperationLogs(prev => [...prev, `邊同步失敗: ${message}`]);
             }
@@ -209,11 +232,12 @@ function NetworkGraph({
     return (
         <>
             <div ref={containerRef} style={{ height: "700px" }} />
-            {/* 移除 syncStatus 顯示，統一到懸浮窗 */}
             <div className="fixed top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 p-2 max-w-[300px] max-h-[300px] overflow-y-auto z-50">
                 <h3 className="text-black dark:text-white">操作記錄:</h3>
                 <ul>
-                    {operationLogs.map((log, index) => <li key={index} className="text-black dark:text-gray-300">{log}</li>)}
+                    {operationLogs.map((log, index) => (
+                        <li key={index} className="text-black dark:text-gray-300">{log}</li>
+                    ))}
                 </ul>
             </div>
         </>
@@ -222,17 +246,15 @@ function NetworkGraph({
 
 export default function ZoneDetailPage() {
     const params = useParams();
-    const projectId = params?.project as string; // 確保 projectId 是字串類型
-    const zoneId = params?.zone as string;       // 確保 zoneId 是字串類型
+    const projectId = params?.project as string;
+    const zoneId = params?.zone as string;
 
-    // hooks 一定要無條件呼叫
     const { db } = useFirebase();
-    const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
+    const [projectDoc, loading, error] = useDocument(doc(db as Firestore, "projects", projectId));
 
     if (!projectId || !zoneId) {
         return <div>無效的專案或分區 ID</div>;
     }
-
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;
     if (!projectDoc?.exists()) return <div>找不到專案</div>;
@@ -243,7 +265,6 @@ export default function ZoneDetailPage() {
 
     return (
         <main className="max-w-9xl mx-auto p-4">
-            {/* 新增網路圖區域，傳入 zones 陣列與 projectName */}
             <div className="mt-6">
                 <h2 className="text-xl font-bold mb-2">網路圖</h2>
                 <NetworkGraph
