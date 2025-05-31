@@ -133,7 +133,34 @@ import type {
     FieldPathType, // Import aliased FieldPathType
     GeoPointType,  // Import aliased GeoPointType
 } from "./firebase"; // Corrected: Timestamp is now directly imported as a type
-import { useCollection } from "react-firebase-hooks/firestore";
+import {
+    useCollection,
+    useCollectionData,
+    useCollectionOnce,
+    useCollectionDataOnce,
+    useDocument,
+    useDocumentData,
+    useDocumentOnce,
+    useDocumentDataOnce,
+} from "react-firebase-hooks/firestore";
+import {
+    useAuthState,
+    useCreateUserWithEmailAndPassword,
+    useSignInWithEmailAndPassword,
+    useSignOut,
+    useSendPasswordResetEmail,
+    useUpdateProfile,
+    useUpdatePassword,
+    useSendEmailVerification,
+    useSignInWithEmailLink,
+} from "react-firebase-hooks/auth";
+import {
+    useUploadFile,
+    useDownloadURL,
+} from "react-firebase-hooks/storage";
+import {
+    useToken,
+} from "react-firebase-hooks/messaging";
 
 type FirebaseContextType = {
     app: typeof app;
@@ -231,7 +258,30 @@ type FirebaseContextType = {
     getFunctions: typeof getFunctions;
     httpsCallable: typeof httpsCallable;
     connectFunctionsEmulator: typeof connectFunctionsEmulator;
+    // firestore hooks
     useCollection: typeof useCollection;
+    useCollectionData: typeof useCollectionData;
+    useCollectionOnce: typeof useCollectionOnce;
+    useCollectionDataOnce: typeof useCollectionDataOnce;
+    useDocument: typeof useDocument;
+    useDocumentData: typeof useDocumentData;
+    useDocumentOnce: typeof useDocumentOnce;
+    useDocumentDataOnce: typeof useDocumentDataOnce;
+    // auth hooks
+    useAuthState: typeof useAuthState;
+    useCreateUserWithEmailAndPassword: typeof useCreateUserWithEmailAndPassword;
+    useSignInWithEmailAndPassword: typeof useSignInWithEmailAndPassword;
+    useSignOut: typeof useSignOut;
+    useSendPasswordResetEmail: typeof useSendPasswordResetEmail;
+    useUpdateProfile: typeof useUpdateProfile;
+    useUpdatePassword: typeof useUpdatePassword;
+    useSendEmailVerification: typeof useSendEmailVerification;
+    useSignInWithEmailLink: typeof useSignInWithEmailLink;
+    // storage hooks
+    useUploadFile: typeof useUploadFile;
+    useDownloadURL: typeof useDownloadURL;
+    // messaging hooks
+    useToken: typeof useToken;
     // Types that might be used with the context values
     // These are illustrative, actual usage dictates what's needed here
     // For example, if you pass a function that returns a User, you might want User type here
@@ -339,7 +389,30 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 getFunctions,
                 httpsCallable,
                 connectFunctionsEmulator,
+                // firestore hooks
                 useCollection,
+                useCollectionData,
+                useCollectionOnce,
+                useCollectionDataOnce,
+                useDocument,
+                useDocumentData,
+                useDocumentOnce,
+                useDocumentDataOnce,
+                // auth hooks
+                useAuthState,
+                useCreateUserWithEmailAndPassword,
+                useSignInWithEmailAndPassword,
+                useSignOut,
+                useSendPasswordResetEmail,
+                useUpdateProfile,
+                useUpdatePassword,
+                useSendEmailVerification,
+                useSignInWithEmailLink,
+                // storage hooks
+                useUploadFile,
+                useDownloadURL,
+                // messaging hooks
+                useToken,
             }}
         >
             {children}
