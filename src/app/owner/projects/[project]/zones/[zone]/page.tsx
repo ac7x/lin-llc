@@ -91,7 +91,7 @@ function NetworkGraph({
         if (containerRef.current && !networkRef.current) {
             const data = { nodes: nodesRef.current, edges: edgesRef.current };
             const options = {
-                layout: { hierarchical: false },
+                layout: { hierarchical: { enabled: true, direction: "LR" } }, // 由左至右
                 physics: { enabled: true },
                 manipulation: {
                     enabled: true,
@@ -186,7 +186,7 @@ function NetworkGraph({
 
     return (
         <>
-            <div ref={containerRef} style={{ height: "400px" }} />
+            <div ref={containerRef} style={{ height: "700px" }} />
             {syncStatus && <div style={{ marginTop: "8px", color: "green" }}>{syncStatus}</div>}
             <div style={{ marginTop: "8px" }}>
                 <h3>操作記錄:</h3>
@@ -220,7 +220,7 @@ export default function ZoneDetailPage() {
     if (!zone) return <div>找不到分區</div>;
 
     return (
-        <main className="max-w-3xl mx-auto p-4">
+        <main className="max-w-9xl mx-auto p-4">
             {/* 新增網路圖區域，傳入 zones 陣列與 projectName */}
             <div className="mt-6">
                 <h2 className="text-xl font-bold mb-2">網路圖</h2>
