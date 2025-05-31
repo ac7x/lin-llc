@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { Project } from "@/types/project";
+import { Project, Zone } from "@/types/project";
 import { Disclosure } from '@headlessui/react';
 
 export default function ProjectDetailPage() {
@@ -74,12 +74,12 @@ export default function ProjectDetailPage() {
                                 </Disclosure.Button>
                                 <Disclosure.Panel className="p-6">
                                     <div className="grid gap-4">
-                                        {project.zones.map((zone: any) => (
+                                        {project.zones.map((zone: Zone) => (
                                             <div
                                                 key={zone.zoneId}
                                                 className={`p-4 border rounded-lg ${searchParams.get('zone') === zone.zoneId
-                                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                                        : ''
+                                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                                    : ''
                                                     }`}
                                             >
                                                 <h3 className="font-bold mb-2">{zone.zoneName}</h3>

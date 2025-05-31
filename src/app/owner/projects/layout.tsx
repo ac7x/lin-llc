@@ -7,6 +7,7 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Disclosure } from '@headlessui/react';
+import { Zone } from "@/types/project";
 
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
@@ -18,7 +19,7 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
         { label: "專案列表", href: "/owner/projects" },
         { label: "從合約建立專案", href: "/owner/projects/import" },
     ];
-    const [projectsSnapshot, loading, error] = useCollection(collection(db, "projects"));
+    const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
 
     return (
         <div className="flex">
@@ -37,8 +38,6 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                     {/* 動態專案列表 */}
                     {loading ? (
                         <li className="text-gray-400 px-3 py-2">載入中...</li>
-                    ) : error ? (
-                        <li className="text-red-500 px-3 py-2">{String(error)}</li>
                     ) : projectsSnapshot && projectsSnapshot.docs.length > 0 ? (
                         projectsSnapshot.docs.map(project => {
                             const data = project.data();
@@ -47,7 +46,7 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                                 <li key={project.id} className="group">
                                     <Disclosure defaultOpen>
                                         {({ open }) => (
-                                            <>
+                                            <div>
                                                 <div className="flex items-center">
                                                     <Disclosure.Button
                                                         className="p-1 mr-1 text-gray-500 hover:text-blue-500 focus:outline-none"
@@ -73,43 +72,19 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                                                     >
                                                         {data.projectName || data.projectId || project.id}
                                                     </Link>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            setSelectedProjectId(project.id);
-                                                            setZoneName("");
-                                                            setShowModal(true);
-                                                        }}
-                                                        className="p-1 opacity-0 group-hover:opacity-100 hover:text-blue-500"
-                                                        title="新增分區"
-                                                    >
-                                                        <svg
-                                                            className="w-4 h-4"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={2}
-                                                                d="M12 4v16m8-8H4"
-                                                            />
-                                                        </svg>
-                                                    </button>
                                                 </div>
 
                                                 <Disclosure.Panel>
                                                     {data.zones && data.zones.length > 0 && (
                                                         <ul className="ml-8 mt-1 space-y-1">
-                                                            {data.zones.map((zone: any) => (
+                                                            {data.zones.map((zone: Zone) => (
                                                                 <li key={zone.zoneId}>
                                                                     <Link
                                                                         href={`${projectHref}?zone=${zone.zoneId}`}
                                                                         className={`block px-3 py-1 text-sm rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === projectHref &&
-                                                                                new URLSearchParams(window.location.search).get('zone') === zone.zoneId
-                                                                                ? "bg-blue-200 dark:bg-gray-700"
-                                                                                : ""
+                                                                            new URLSearchParams(window.location.search).get('zone') === zone.zoneId
+                                                                            ? "bg-blue-200 dark:bg-gray-700"
+                                                                            : ""
                                                                             }`}
                                                                     >
                                                                         {zone.zoneName}
@@ -118,8 +93,36 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
                                                             ))}
                                                         </ul>
                                                     )}
+                                                    {/* 現代化圓形新增分區按鈕（小巧和諧） */}
+                                                    <div className="ml-8 mt-3 flex">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setSelectedProjectId(project.id);
+                                                                setZoneName("");
+                                                                setShowModal(true);
+                                                            }}
+                                                            className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-400 hover:bg-blue-500 active:bg-blue-600 text-white shadow transition-colors"
+                                                            title="新增分區"
+                                                            style={{ fontSize: 0 }}
+                                                        >
+                                                            <svg
+                                                                className="w-3.5 h-3.5"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth={2}
+                                                                    d="M12 5v14m7-7H5"
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </Disclosure.Panel>
-                                            </>
+                                            </div>
                                         )}
                                     </Disclosure>
                                 </li>
