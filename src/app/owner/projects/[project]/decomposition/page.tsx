@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from "next/navigation";
 import { ReactFlow, ReactFlowProvider, addEdge, applyNodeChanges, applyEdgeChanges, Background, Controls, MiniMap } from '@xyflow/react';
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
@@ -42,7 +42,9 @@ export default function DecompositionPage() {
     const [rfNodes, setNodes] = useState<any[]>([]);
     const [rfEdges, setEdges] = useState<any[]>([]);
     const [colorMode, setColorMode] = useState<"light" | "dark">("light");
+    const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
 
+    // 修正 colorMode 的 useEffect 依賴
     useEffect(() => {
         const mq = window.matchMedia("(prefers-color-scheme: dark)");
         const update = () => setColorMode(mq.matches ? "dark" : "light");
@@ -51,11 +53,25 @@ export default function DecompositionPage() {
         return () => mq.removeEventListener("change", update);
     }, []);
 
+    // 修正 projectDoc 依賴，避免 setState 造成無窮迴圈
+    // 用 ref 記錄上次的 nodes/edges，避免無窮 setState
+    const lastNodesRef = useRef<any[]>([]);
+    const lastEdgesRef = useRef<any[]>([]);
+
     useEffect(() => {
         if (projectDoc?.exists()) {
             const d = projectDoc.data()?.decomposition;
-            setNodes(Array.isArray(d?.nodes) ? d.nodes : []);
-            setEdges(Array.isArray(d?.edges) ? d.edges : []);
+            const newNodes = Array.isArray(d?.nodes) ? d.nodes : [];
+            const newEdges = Array.isArray(d?.edges) ? d.edges : [];
+            // 僅當資料真正變動時才 setState
+            if (JSON.stringify(lastNodesRef.current) !== JSON.stringify(newNodes)) {
+                setNodes(newNodes);
+                lastNodesRef.current = newNodes;
+            }
+            if (JSON.stringify(lastEdgesRef.current) !== JSON.stringify(newEdges)) {
+                setEdges(newEdges);
+                lastEdgesRef.current = newEdges;
+            }
         }
     }, [projectDoc]);
 
@@ -71,31 +87,60 @@ export default function DecompositionPage() {
         }
     ]);
 
-    const syncDecomposition = async (nodes: any[], edges: any[]) => {
+    const syncDecomposition = useCallback(async (nodes: any[], edges: any[]) => {
         if (!projectId) return;
         try {
             await updateDoc(doc(db, "projects", projectId), { decomposition: { nodes, edges } });
         } catch { }
-    };
+    }, [db, doc, projectId, updateDoc]);
 
-    const onNodesChange = (changes: any) =>
+    // 監聽鍵盤 Delete 鍵刪除選中節點
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Delete" && selectedNodes.length > 0) {
+                setNodes(prevNodes => {
+                    const newNodes = prevNodes.filter(n => !selectedNodes.includes(n.id));
+                    setEdges(prevEdges => {
+                        const newEdges = prevEdges.filter(e => !selectedNodes.includes(e.source) && !selectedNodes.includes(e.target));
+                        syncDecomposition(newNodes, newEdges);
+                        return newEdges;
+                    });
+                    syncDecomposition(newNodes, rfEdges.filter(e => !selectedNodes.includes(e.source) && !selectedNodes.includes(e.target)));
+                    return newNodes;
+                });
+                setSelectedNodes([]);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [selectedNodes, syncDecomposition, rfEdges]);
+
+    const onNodesChange = useCallback((changes: any) => {
         setNodes(nds => {
             const newNodes = applyNodeChanges(changes, nds);
             syncDecomposition(newNodes, rfEdges);
+            // 處理選中節點
+            const selected = newNodes.filter(n => n.selected).map(n => n.id);
+            setSelectedNodes(selected);
             return newNodes;
         });
-    const onEdgesChange = (changes: any) =>
+    }, [rfEdges, syncDecomposition]);
+
+    const onEdgesChange = useCallback((changes: any) => {
         setEdges(eds => {
             const newEdges = applyEdgeChanges(changes, eds);
             syncDecomposition(rfNodes, newEdges);
             return newEdges;
         });
-    const onConnect = (connection: any) =>
+    }, [rfNodes, syncDecomposition]);
+
+    const onConnect = useCallback((connection: any) => {
         setEdges(eds => {
             const newEdges = addEdge(connection, eds);
             syncDecomposition(rfNodes, newEdges);
             return newEdges;
         });
+    }, [rfNodes, syncDecomposition]);
 
     if (loading) return <div className="flex items-center justify-center h-full text-gray-400 text-lg">載入中...</div>;
     if (error) return <div className="flex items-center justify-center h-full text-red-500 text-lg">讀取失敗: {error.message}</div>;
@@ -128,6 +173,10 @@ export default function DecompositionPage() {
                             nodeTypes={nodeTypes}
                             colorMode={colorMode}
                             proOptions={{ hideAttribution: true }}
+                            // 讓 ReactFlow 支援選中狀態
+                            onSelectionChange={params => {
+                                setSelectedNodes(params?.nodes?.map((n: any) => n.id) || []);
+                            }}
                         >
                             <MiniMap />
                             <Controls />
