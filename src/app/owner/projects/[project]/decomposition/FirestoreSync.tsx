@@ -27,7 +27,8 @@ export function FirestoreSync({
         loading: boolean,
         error: any,
         setNodes: React.Dispatch<React.SetStateAction<Node[] | undefined>>,
-        setEdges: React.Dispatch<React.SetStateAction<Edge[] | undefined>>
+        setEdges: React.Dispatch<React.SetStateAction<Edge[] | undefined>>,
+        addLog: (message: string) => void
     ) => React.ReactNode;
 }) {
     const params = useParams();
@@ -40,6 +41,10 @@ export function FirestoreSync({
     // 本地狀態
     const [nodes, setNodes] = React.useState<Node[] | undefined>(undefined);
     const [edges, setEdges] = React.useState<Edge[] | undefined>(undefined);
+    const [logs, setLogs] = React.useState<string[]>([]);
+    const addLog = React.useCallback((message: string) => {
+        setLogs((prevLogs) => [...prevLogs, message]);
+    }, []);
 
     // Firestore 變更時，更新本地狀態
     React.useEffect(() => {
@@ -47,8 +52,9 @@ export function FirestoreSync({
             const decomposition = projectDoc.data().decomposition;
             setNodes(ensureUniqueStringId(decomposition?.nodes, "node"));
             setEdges(ensureUniqueStringId(decomposition?.edges, "edge"));
+            addLog("從 Firestore 載入節點與邊");
         }
-    }, [projectDoc]);
+    }, [projectDoc, addLog]);
 
     // 本地變更時，自動同步到 Firestore
     const prevNodes = React.useRef<Node[] | undefined>(undefined);
@@ -79,8 +85,9 @@ export function FirestoreSync({
             });
             prevNodes.current = nodes;
             prevEdges.current = edges;
+            addLog("同步到 Firestore");
         }
-    }, [nodes, edges, db, doc, projectId, updateDoc]);
+    }, [nodes, edges, db, doc, projectId, updateDoc, addLog]);
 
-    return <>{children(nodes, edges, loading, error, setNodes, setEdges)}</>;
+    return <>{children(nodes, edges, loading, error, setNodes, setEdges, addLog)}</>;
 }

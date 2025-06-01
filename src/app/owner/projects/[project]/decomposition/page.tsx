@@ -19,6 +19,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { FirestoreSync } from "./FirestoreSync";
 import { DeleteButton } from "./DeleteButton";
+import { LogOverlay } from "./LogOverlay";
 
 let nodeId = 1;
 const getId = () => `node_${nodeId++}`;
@@ -41,7 +42,16 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
     // 拖曳新節點時的 id
     const draggingNodeId = useRef<string | null>(null);
 
-    const onConnect = useCallback((params: Connection) => setEdges(eds => addEdge(params, eds)), [setEdges]);
+    const [logs, setLogs] = React.useState<string[]>([]);
+
+    const addLog = useCallback((message: string) => {
+        setLogs((prevLogs) => [...prevLogs, message]);
+    }, []);
+
+    const onConnect = useCallback((params: Connection) => {
+        setEdges(eds => addEdge(params, eds));
+        addLog(`新增邊: ${params.source} -> ${params.target}`);
+    }, [setEdges, addLog]);
 
     const onConnectStart: OnConnectStart = useCallback((_, params) => {
         connectingNodeId.current = params.nodeId || null;
@@ -72,9 +82,10 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
                 { id: `e${sourceId}-${newNodeId}`, source: sourceId, target: newNodeId },
             ]);
             draggingNodeId.current = newNodeId;
+            addLog(`新增節點: ${newNodeId}，來源節點: ${sourceId}`);
         }
         connectingNodeId.current = null;
-    }, [screenToFlowPosition, setNodes, setEdges]);
+    }, [screenToFlowPosition, setNodes, setEdges, addLog]);
 
     // 拖動新節點
     const onNodeDragStop = useCallback(
@@ -103,10 +114,13 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
         setEdges(eds => eds.filter(e => !selectedEdgeIds.includes(e.id)));
         setSelectedNodeIds([]);
         setSelectedEdgeIds([]);
-    }, [selectedNodeIds, selectedEdgeIds, setNodes, setEdges]);
+        addLog(`刪除節點: ${selectedNodeIds.join(", ")}`);
+        addLog(`刪除邊: ${selectedEdgeIds.join(", ")}`);
+    }, [selectedNodeIds, selectedEdgeIds, setNodes, setEdges, addLog]);
 
     return (
         <div style={{ height: "100vh" }}>
+            <LogOverlay logs={logs} />
             <DeleteButton
                 onDelete={handleDelete}
                 disabled={selectedNodeIds.length === 0 && selectedEdgeIds.length === 0}
