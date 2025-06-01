@@ -5,26 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection } from "firebase/firestore";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { LogProvider, useLog, LogOverlay } from "./[project]/decomposition/LogOverlay";
 
 function Sidebar() {
+    const { db } = useFirebase();
     const pathname = usePathname();
     const navs = [
         { label: "專案列表", href: "/owner/projects" },
         { label: "從合約建立專案", href: "/owner/projects/import" },
     ];
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
-    // 控制展開狀態
     const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
-    const { logs } = useLog();
 
     const toggleOpen = (projectId: string) => {
-        setOpenMap(prev => ({
-            ...prev,
-            [projectId]: !prev[projectId]
-        }));
+        setOpenMap(prev => ({ ...prev, [projectId]: !prev[projectId] }));
     };
 
     return (
@@ -48,11 +43,13 @@ function Sidebar() {
                         const data = project.data();
                         const projectId = project.id;
                         const projectHref = `/owner/projects/${projectId}`;
-                        const decompositionHref = `/owner/projects/${projectId}/decomposition`;
                         const isOpen = !!openMap[projectId];
+                        const workpackages = data.workpackages || [];
+
                         return (
-                            <li key={projectId} className="group">
+                            <li key={projectId}>
                                 <div>
+                                    {/* 專案主項 */}
                                     <div className="flex items-center">
                                         <button
                                             type="button"
@@ -73,16 +70,19 @@ function Sidebar() {
                                             {data.projectName || data.projectId || projectId}
                                         </Link>
                                     </div>
-                                    {isOpen && (
-                                        <ul className="ml-7 mt-1 space-y-1">
-                                            <li>
-                                                <Link
-                                                    href={decompositionHref}
-                                                    className={`block px-2 py-1 text-sm rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === decompositionHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                                                >
-                                                    分解索引
-                                                </Link>
-                                            </li>
+                                    {/* 工作包列表 */}
+                                    {isOpen && workpackages.length > 0 && (
+                                        <ul className="pl-8 mt-1 space-y-1">
+                                            {workpackages.map((wp: { id: string, name: string }) => (
+                                                <li key={wp.id}>
+                                                    <Link
+                                                        href={`${projectHref}/workpackages/${wp.id}`}
+                                                        className={`block px-3 py-1 rounded text-sm hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === `${projectHref}/workpackages/${wp.id}` ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                                    >
+                                                        {wp.name}
+                                                    </Link>
+                                                </li>
+                                            ))}
                                         </ul>
                                     )}
                                 </div>
@@ -100,18 +100,15 @@ function Sidebar() {
                     </Link>
                 </li>
             </ul>
-            <LogOverlay logs={logs} embedded />
         </nav>
     );
 }
 
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
     return (
-        <LogProvider>
-            <div className="flex">
-                <Sidebar />
-                <div className="flex-1 p-4">{children}</div>
-            </div>
-        </LogProvider>
+        <div className="flex">
+            <Sidebar />
+            <div className="flex-1 p-4">{children}</div>
+        </div>
     );
 }
