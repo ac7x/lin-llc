@@ -16,6 +16,7 @@ interface Workpackage {
     progress?: number;
     assignedTo?: string;
     childrenIds: string[];
+    createdAt?: string;
 }
 
 export default function WorkpackageDetailPage() {
@@ -26,6 +27,8 @@ export default function WorkpackageDetailPage() {
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
     const [tab, setTab] = useState<"info" | "edit" | "subworkpackages">("info");
     const [saving, setSaving] = useState(false);
+    const [newSubWpName, setNewSubWpName] = useState("");
+    const [subSaving, setSubSaving] = useState(false);
 
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;
@@ -50,6 +53,40 @@ export default function WorkpackageDetailPage() {
             console.error("更新失敗:", err);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleAddSubWorkpackage = async () => {
+        if (!newSubWpName.trim() || subSaving) return;
+        setSubSaving(true);
+        try {
+            const newId = Date.now().toString();
+            // 建立新的子工作包
+            const newSubWp = {
+                id: newId,
+                name: newSubWpName.trim(),
+                childrenIds: [],
+                status: "新建立",
+                createdAt: new Date().toISOString(),
+            };
+            // 更新父工作包的 childrenIds
+            const updatedWorkpackages = project.workpackages.map((wp: Workpackage) =>
+                wp.id === workpackageId
+                    ? { ...wp, childrenIds: [...wp.childrenIds, newId] }
+                    : wp
+            );
+            // 加入新的子工作包
+            updatedWorkpackages.push(newSubWp);
+
+            await updateDoc(doc(db, "projects", projectId), {
+                workpackages: updatedWorkpackages,
+            });
+            setNewSubWpName("");
+            router.refresh();
+        } catch (err) {
+            console.error("建立子工作包失敗:", err);
+        } finally {
+            setSubSaving(false);
         }
     };
 
@@ -245,6 +282,27 @@ export default function WorkpackageDetailPage() {
             {tab === "subworkpackages" && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h2 className="text-xl font-bold mb-4">子工作包列表</h2>
+
+                    {/* 新增子工作包表單 */}
+                    <div className="mb-6 flex gap-2">
+                        <input
+                            type="text"
+                            className="flex-1 border rounded px-3 py-2"
+                            placeholder="輸入子工作包名稱"
+                            value={newSubWpName}
+                            onChange={e => setNewSubWpName(e.target.value)}
+                            disabled={subSaving}
+                        />
+                        <button
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                            onClick={handleAddSubWorkpackage}
+                            disabled={subSaving || !newSubWpName.trim()}
+                        >
+                            {subSaving ? "建立中..." : "新增子工作包"}
+                        </button>
+                    </div>
+
+                    {/* 子工作包列表 */}
                     {subWorkpackages.length > 0 ? (
                         <div className="space-y-4">
                             {subWorkpackages.map((subWp: Workpackage) => (
@@ -254,14 +312,17 @@ export default function WorkpackageDetailPage() {
                                     onClick={() => router.push(`/owner/projects/${projectId}/workpackages/${subWp.id}`)}
                                 >
                                     <div className="flex justify-between items-center">
-                                        <h3 className="font-medium">{subWp.name}</h3>
-                                        <span className="text-sm text-gray-500">
+                                        <h3 className="text-lg font-medium">{subWp.name}</h3>
+                                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                                             {subWp.status || "未開始"}
                                         </span>
                                     </div>
                                     {subWp.description && (
-                                        <p className="text-gray-600 text-sm mt-2">{subWp.description}</p>
+                                        <p className="mt-2 text-gray-600">{subWp.description}</p>
                                     )}
+                                    <div className="mt-2 text-sm text-gray-500">
+                                        建立時間：{subWp.createdAt ? new Date(subWp.createdAt).toLocaleDateString() : "-"}
+                                    </div>
                                 </div>
                             ))}
                         </div>
