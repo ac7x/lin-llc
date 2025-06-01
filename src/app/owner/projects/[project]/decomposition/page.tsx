@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import {
     ReactFlow,
@@ -10,72 +10,82 @@ import {
     Background,
     Controls,
     MiniMap,
-    OnConnectStart,
-    OnConnectStartParams,
-    useReactFlow,
     Handle,
     Position,
-} from '@xyflow/react';
+    type Node,
+    type Edge,
+    type NodeChange,
+    type EdgeChange,
+    type Connection,
+    type OnConnectStart,
+    type OnConnectEnd,
+    type OnSelectionChangeFunc,
+    type NodeProps,
+    type OnConnectStartParams,
+} from "@xyflow/react";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
-import '@xyflow/react/dist/style.css';
+import "@xyflow/react/dist/style.css";
 import { LogProvider, LogOverlay, useLog } from "./LogOverlay";
 
-const CustomNode = ({ data, selected, colorMode }: any) => (
-    <div
-        style={{
-            background: colorMode === "dark" ? "#223047" : "#2a6c97",
-            border: selected
-                ? "2.5px solid #fbbf24"
-                : colorMode === "dark"
-                    ? "2px solid #3b82f6"
-                    : "2px solid #0d618f",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: "1rem",
-            borderRadius: 8,
-            boxShadow: selected
-                ? "0 8px 24px 0 rgba(0,0,0,0.18)"
-                : "0 4px 16px 0 rgba(0,0,0,0.10)",
-            padding: "16px 20px",
-            minWidth: 100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            transition: "box-shadow 0.2s, border 0.2s, background 0.2s",
-            position: "relative",
-        }}
-    >
-        {/* 加入 handle，讓 custom node 可以連線 */}
-        <Handle type="target" position={Position.Top} />
-        {data.label}
-        <Handle type="source" position={Position.Bottom} />
-    </div>
-);
+// 將 CustomNode 的泛型從 Record<string, unknown> 改為 { label?: string }
+const CustomNode: React.FC<NodeProps<{ label?: string }>> = ({ data, selected }) => {
+    const isDark = typeof window !== "undefined"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        : false;
+    return (
+        <div
+            style={{
+                background: isDark ? "#223047" : "#2a6c97",
+                border: selected
+                    ? "2.5px solid #fbbf24"
+                    : isDark
+                        ? "2px solid #3b82f6"
+                        : "2px solid #0d618f",
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "1rem",
+                borderRadius: 8,
+                boxShadow: selected
+                    ? "0 8px 24px 0 rgba(0,0,0,0.18)"
+                    : "0 4px 16px 0 rgba(0,0,0,0.10)",
+                padding: "16px 20px",
+                minWidth: 100,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "box-shadow 0.2s, border 0.2s, background 0.2s",
+                position: "relative",
+            }}
+        >
+            <Handle type="target" position={Position.Top} />
+            {String(data?.label || "")}
+            <Handle type="source" position={Position.Bottom} />
+        </div>
+    );
+};
 
 let nodeId = 1;
 const getId = () => `node_${nodeId++}`;
-
-// 產生唯一 edge id
 const getEdgeId = (source: string, target: string) =>
     `edge_${source}_${target}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-function DecompositionFlow(props: any) {
+function DecompositionFlow() {
     const { db, doc, useDocument, updateDoc } = useFirebase();
     const params = useParams();
     const projectId = params?.project as string;
-    const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
-    const [rfNodes, setNodes] = useState<any[]>([]);
-    const [rfEdges, setEdges] = useState<any[]>([]);
-    const [colorMode, setColorMode] = useState<"light" | "dark">("light");
-    const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
-    const [selectedEdges, setSelectedEdges] = useState<any[]>([]);
+    const [projectDoc] = useDocument(doc(db, "projects", projectId));
+    // 修改：將 Node<Record<string, unknown>> 改為 Node<{ label?: string }>
+    const [nodes, setNodes] = useState<Node<{ label?: string }>[]>([]);
+    const [edges, setEdges] = useState<Edge[]>([]);
+    const [selectedNodes, setSelectedNodes] = useState<Node<{ label?: string }>[]>([]);
+    const [selectedEdges, setSelectedEdges] = useState<Edge[]>([]);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
     const { addLog, logs } = useLog();
-
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
-    const { screenToFlowPosition } = useReactFlow();
 
+    // colorMode 只給 CustomNode 用，不要傳給 nodeTypes
+    const [colorMode, setColorMode] = useState<"light" | "dark">("light");
     useEffect(() => {
         const mq = window.matchMedia("(prefers-color-scheme: dark)");
         const update = () => setColorMode(mq.matches ? "dark" : "light");
@@ -94,143 +104,171 @@ function DecompositionFlow(props: any) {
 
     const nodeTypes = { custom: CustomNode };
 
-    const syncDecomposition = async (nodes: any[], edges: any[]) => {
-        if (!projectId) return;
-        try {
-            await updateDoc(doc(db, "projects", projectId), { decomposition: { nodes, edges } });
-        } catch { }
-    };
+    const syncDecomposition = useCallback(
+        async (
+            nodes: Node<{ label?: string }>[],
+            edges: Edge[]
+        ) => {
+            if (!projectId) return;
+            try {
+                await updateDoc(doc(db, "projects", projectId), { decomposition: { nodes, edges } });
+            } catch { }
+        },
+        [projectId, db, doc, updateDoc]
+    );
 
-    const onNodesChange = useCallback((changes: any) =>
-        setNodes(nds => {
-            const newNodes = applyNodeChanges(changes, nds);
-            syncDecomposition(newNodes, rfEdges);
-            return newNodes;
-        }), [rfEdges]);
-    const onEdgesChange = useCallback((changes: any) =>
-        setEdges(eds => {
-            const newEdges = applyEdgeChanges(changes, eds);
-            syncDecomposition(rfNodes, newEdges);
-            return newEdges;
-        }), [rfNodes]);
-    const onConnect = useCallback((connection: any) =>
-        setEdges(eds => {
-            const newEdges = addEdge(connection, eds);
-            syncDecomposition(rfNodes, newEdges);
-            return newEdges;
-        }), [rfNodes]);
+    const onNodesChange = useCallback(
+        (changes: NodeChange[]) =>
+            setNodes((nds) => {
+                const newNodes = applyNodeChanges(changes, nds);
+                syncDecomposition(newNodes, edges);
+                return newNodes;
+            }),
+        [edges, syncDecomposition]
+    );
 
-    // onConnectStart: 記錄開始連線的節點 id
+    const onEdgesChange = useCallback(
+        (changes: EdgeChange[]) =>
+            setEdges((eds) => {
+                const newEdges = applyEdgeChanges(changes, eds);
+                syncDecomposition(nodes, newEdges);
+                return newEdges;
+            }),
+        [nodes, syncDecomposition]
+    );
+
+    const onConnect = useCallback(
+        (connection: Connection) =>
+            setEdges((eds) => {
+                const newEdges = addEdge(connection, eds);
+                syncDecomposition(nodes, newEdges);
+                return newEdges;
+            }),
+        [nodes, syncDecomposition]
+    );
+
     const onConnectStart: OnConnectStart = useCallback((_, params: OnConnectStartParams) => {
-        setConnectingNodeId(params.nodeId || null);
+        setConnectingNodeId(params.nodeId ?? null);
     }, []);
 
-    // onConnectEnd: 在畫布空白處放開時新增節點並連線
-    const onConnectEnd = useCallback((event: MouseEvent | TouchEvent, connectionState: any) => {
-        if (!connectingNodeId || !reactFlowWrapper.current) return;
-
-        // 只有拖到空白處才新增節點
-        if (connectionState?.isValid) {
-            setConnectingNodeId(null);
-            return;
-        }
-
-        const { clientX, clientY } =
-            'changedTouches' in event ? event.changedTouches[0] : event;
-        const position = screenToFlowPosition({
-            x: clientX,
-            y: clientY,
-        });
-
-        const newNodeId = getId();
-        const newNode = {
-            id: newNodeId,
-            type: "custom",
-            position,
-            data: { label: `新節點` },
-        };
-        // 使用 getEdgeId 產生唯一 edge id
-        const newEdge = {
-            id: getEdgeId(connectingNodeId, newNodeId),
-            source: connectingNodeId,
-            target: newNodeId,
-        };
-
-        setNodes(nds => {
-            const nodes = [...nds, newNode];
-            setEdges(eds => {
-                // 避免重複 id
-                const edges = [...eds, newEdge];
+    const onConnectEnd: OnConnectEnd = useCallback(
+        (event, connectionState) => {
+            if (!connectingNodeId || !reactFlowWrapper.current) return;
+            if (connectionState?.isValid) {
+                setConnectingNodeId(null);
+                return;
+            }
+            let clientX = 0, clientY = 0;
+            if ("clientX" in event && "clientY" in event) {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            } else if ("touches" in event && event.touches.length > 0) {
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            }
+            const position = { x: clientX, y: clientY };
+            const newNodeId = getId();
+            // 修改：使用 Node<{ label?: string }> 型別
+            const newNode: Node<{ label?: string }> = {
+                id: newNodeId,
+                type: "custom",
+                position,
+                data: { label: `新節點` },
+            };
+            const newEdge: Edge = {
+                id: getEdgeId(connectingNodeId, newNodeId),
+                source: connectingNodeId,
+                target: newNodeId,
+            };
+            setNodes((nds) => {
+                const nodes = [...nds, newNode];
+                setEdges((eds) => {
+                    const edges = [...eds, newEdge];
+                    syncDecomposition(nodes, edges);
+                    return edges;
+                });
                 syncDecomposition(nodes, edges);
-                return edges;
+                return nodes;
             });
-            syncDecomposition(nodes, rfEdges);
-            return nodes;
-        });
+            setConnectingNodeId(null);
+        },
+        [connectingNodeId, syncDecomposition]
+    );
 
-        setConnectingNodeId(null);
-    }, [connectingNodeId, screenToFlowPosition, rfEdges]);
+    const onSelectionChange: OnSelectionChangeFunc<Node<{ label?: string }>, Edge> =
+        useCallback(
+            ({ nodes: selNodes = [], edges: selEdges = [] }) => {
+                setSelectedNodes(selNodes);
+                setSelectedEdges(selEdges);
+            },
+            []
+        );
 
-    const onSelectionChange = ({ nodes, edges }: { nodes: any[]; edges: any[] }) => {
-        setSelectedNodes(nodes || []);
-        setSelectedEdges(edges || []);
-    };
-
-    // Delete鍵刪除
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Delete" || e.key === "Backspace") {
                 if (selectedNodes.length === 0 && selectedEdges.length === 0) return;
-                setNodes(prevNodes => {
-                    const newNodes = prevNodes.filter(n => !selectedNodes.some(sn => sn.id === n.id));
-                    setEdges(prevEdges => {
-                        const newEdges = prevEdges
-                            .filter(e =>
-                                !selectedEdges.some(se => se.id === e.id) &&
-                                !selectedNodes.some(sn => sn.id === e.source || sn.id === e.target)
-                            );
+                setNodes((prevNodes) => {
+                    const newNodes = prevNodes.filter(
+                        (n) => !selectedNodes.some((sn) => sn.id === n.id)
+                    );
+                    setEdges((prevEdges) => {
+                        const newEdges = prevEdges.filter(
+                            (e) =>
+                                !selectedEdges.some((se) => se.id === e.id) &&
+                                !selectedNodes.some((sn) => sn.id === e.source || sn.id === e.target)
+                        );
                         syncDecomposition(newNodes, newEdges);
-                        // 新增日誌
-                        if (selectedNodes.length > 0) addLog(`刪除節點: ${selectedNodes.map(n => n.data?.label || n.id).join(", ")}`);
-                        if (selectedEdges.length > 0) addLog(`刪除連線: ${selectedEdges.map(e => `${e.source}→${e.target}`).join(", ")}`);
+                        if (selectedNodes.length > 0)
+                            addLog(
+                                `刪除節點: ${selectedNodes
+                                    .map((n) => String(n.data?.label ?? n.id))
+                                    .join(", ")}`
+                            );
+                        if (selectedEdges.length > 0)
+                            addLog(
+                                `刪除連線: ${selectedEdges
+                                    .map((e) => `${e.source}→${e.target}`)
+                                    .join(", ")}`
+                            );
                         return newEdges;
                     });
-                    syncDecomposition(newNodes, rfEdges);
+                    syncDecomposition(newNodes, edges);
                     return newNodes;
                 });
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [selectedNodes, selectedEdges, rfEdges, addLog]);
+    }, [selectedNodes, selectedEdges, edges, syncDecomposition, addLog]);
 
-    // 保證 rfEdges 中每個 edge 的 id 唯一
     const uniqueEdges = React.useMemo(() => {
         const seen = new Set<string>();
-        return rfEdges.map(e => {
+        return edges.map((e) => {
             let id = e.id;
-            // 若 id 已重複或不存在則產生新 id
             if (!id || seen.has(id)) {
                 id = getEdgeId(e.source, e.target);
             }
             seen.add(id);
             return { ...e, id };
         });
-    }, [rfEdges]);
+    }, [edges]);
 
     return (
-        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
             <div className="flex items-center justify-between px-4 pt-4 mb-2">
                 <div className="text-xl font-bold">
-                    {(projectDoc && projectDoc.data && projectDoc.data())?.projectName || projectId}
+                    {projectDoc?.data?.()?.projectName || projectId}
                 </div>
             </div>
-            {rfNodes.length === 0 && rfEdges.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">尚無分解資料</div>
+            {nodes.length === 0 && edges.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">
+                    尚無分解資料
+                </div>
             ) : (
                 <div style={{ flex: 1 }} ref={reactFlowWrapper}>
                     <ReactFlow
-                        nodes={rfNodes}
+                        nodes={nodes}
                         edges={uniqueEdges}
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
@@ -239,7 +277,6 @@ function DecompositionFlow(props: any) {
                         onConnectEnd={onConnectEnd}
                         fitView
                         nodeTypes={nodeTypes}
-                        colorMode={colorMode}
                         proOptions={{ hideAttribution: true }}
                         onSelectionChange={onSelectionChange}
                     >
@@ -247,7 +284,6 @@ function DecompositionFlow(props: any) {
                         <Controls />
                         <Background />
                     </ReactFlow>
-                    {/* 日誌浮動顯示 */}
                     <LogOverlay logs={logs} />
                 </div>
             )}
