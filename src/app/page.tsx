@@ -51,7 +51,7 @@ export default function HomePage() {
         await saveUserToFirestore(user, db, doc, setDoc);
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
-        const role = userData.role || "user";
+        const role = userData.role || "owner";
         if (role === "owner") {
           router.push("/owner");
         } else if (role === "finance") {
