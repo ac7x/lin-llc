@@ -20,22 +20,38 @@ const saveUserToFirestore = async (
   if (!user?.uid) return;
 
   const userRef = doc(db, "users", user.uid);
-  const existingDoc = await getDoc(userRef);
-  const isNewUser = !existingDoc.exists();
+  const existingDocSnap = await getDoc(userRef);
 
-  await setDoc(
-    userRef,
-    {
-      uid: user.uid,
-      email: user.email || "",
-      emailVerified: user.emailVerified ?? false,
-      displayName: user.displayName || "",
-      photoURL: user.photoURL || "",
-      updatedAt: new Date(),
-      ...(isNewUser && { role: "owner" }), // 僅新用戶預設為 owner
-    },
-    { merge: true }
-  );
+  const userDataFromAuth = {
+    uid: user.uid,
+    email: user.email || "",
+    emailVerified: user.emailVerified ?? false,
+    displayName: user.displayName || "",
+    photoURL: user.photoURL || "",
+    updatedAt: new Date(), // 每次登入都更新時間戳
+  };
+
+  let dataToSet;
+
+  if (!existingDocSnap.exists()) {
+    // 新用戶
+    dataToSet = {
+      ...userDataFromAuth,
+      role: "owner", // 新用戶預設為 owner
+      createdAt: new Date(), // 記錄創建時間
+    };
+  } else {
+    // 現有用戶
+    const existingData = existingDocSnap.data();
+    dataToSet = {
+      ...userDataFromAuth,
+      // 如果現有用戶沒有 role 欄位，則賦予 "owner" 角色
+      // 如果已有 role，則 setDoc 時 merge:true 會保留現有角色
+      ...(!existingData?.role && { role: "owner" }),
+    };
+  }
+
+  await setDoc(userRef, dataToSet, { merge: true });
 };
 
 export default function HomePage() {
@@ -57,23 +73,46 @@ export default function HomePage() {
   useEffect(() => {
     const redirectByRole = async () => {
       if (user) {
-        await saveUserToFirestore(user, db, doc, getDoc, setDoc);
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.exists() ? userDoc.data() : {};
-        const role = userData.role || "owner"; // fallback
-        if (role === "owner") {
-          router.push("/owner");
-        } else if (role === "finance") {
-          router.push("/finance");
-        } else if (role === "admin") {
-          router.push("/admin");
-        } else {
-          router.push("/user/profile");
+        try {
+          // 確保使用者資料 (包含角色) 在 Firestore 中是最新的
+          await saveUserToFirestore(user, db, doc, getDoc, setDoc);
+
+          // 重新從 Firestore 獲取使用者資料以進行角色判斷
+          const userDocSnap = await getDoc(doc(db, "users", user.uid));
+
+          if (!userDocSnap.exists()) {
+            // 這種情況理論上不應該在 saveUserToFirestore 成功後發生
+            console.error("User document not found in Firestore after attempting to save. UID:", user.uid);
+            alert("無法驗證您的使用者資訊，請嘗試重新登入。");
+            await signOut(auth); // 登出用戶
+            return;
+          }
+
+          const userData = userDocSnap.data();
+          // 經過 saveUserToFirestore 後，userData.role 應該存在
+          // Fallback 增加穩健性，以防 userData 為空或 role 意外缺失
+          const role = userData?.role || "owner";
+
+          if (role === "owner") {
+            router.push("/owner");
+          } else if (role === "finance") {
+            router.push("/finance");
+          } else if (role === "admin") {
+            router.push("/admin");
+          } else {
+            // 預設導向或特定 "user" 角色的導向 (例如，如果角色不匹配任何已知角色)
+            router.push("/user/profile");
+          }
+        } catch (error) {
+          console.error("Error during user processing or redirection:", error);
+          alert("處理您的帳戶時發生錯誤。如果問題持續，請聯繫支援。");
+          // 根據錯誤的性質，可以考慮是否需要登出用戶
+          // await signOut(auth); 
         }
       }
     };
     redirectByRole();
-  }, [user, router, db, doc, getDoc, setDoc]);
+  }, [user, router, db, doc, getDoc, setDoc, signOut, auth]); // 確保依賴項完整
 
   const handleGoogleLogin = async () => {
     try {
