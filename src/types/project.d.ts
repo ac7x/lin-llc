@@ -1,3 +1,5 @@
+import { Workpackage } from './workpackage';
+
 export interface Zone {
     zoneId: string;
     zoneName: string;
@@ -7,7 +9,7 @@ export interface Zone {
 }
 
 export interface Project {
-    projectId: string;
+    projectId?: string;
     projectName: string;
     contractId?: string;
     status: string;
@@ -16,13 +18,15 @@ export interface Project {
     safety?: string;
     area?: string;
     address?: string;
-    startDate?: Date;
-    estimatedEndDate?: Date;
+    startDate?: Date | string;
+    estimatedEndDate?: Date | string;
     owner?: string;
     createdAt: Date;
     updatedAt: Date;
-    zones: Zone[]; // zones 作為陣列
+    zones?: Zone[];
     supervisor?: string;      // 監工
     safetyOfficer?: string;   // 安全人員
     region?: string;          // 地區
+    workpackages: Workpackage[]; // 工作包列表
+    decomposition?: any;      // 專案分解資料
 }

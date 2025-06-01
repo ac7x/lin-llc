@@ -73,13 +73,13 @@ function Sidebar() {
                                     {/* 工作包列表 */}
                                     {isOpen && workpackages.length > 0 && (
                                         <ul className="pl-8 mt-1 space-y-1">
-                                            {workpackages.map((wp: { id: string, name: string }) => (
+                                            {workpackages.map((wp: { id: string, name: string, subWorkpackages?: any[] }) => (
                                                 <li key={wp.id}>
                                                     <Link
-                                                        href={`${projectHref}/workpackages/${wp.id}`}
-                                                        className={`block px-3 py-1 rounded text-sm hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === `${projectHref}/workpackages/${wp.id}` ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                                        href={`/owner/projects/${projectId}/workpackages/${wp.id}`}
+                                                        className={`block px-3 py-1 rounded text-sm hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname.includes(`/workpackages/${wp.id}`) ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
                                                     >
-                                                        {wp.name}
+                                                        {wp.name} {(wp.subWorkpackages?.length || 0) > 0 && `(${wp.subWorkpackages?.length})`}
                                                     </Link>
                                                 </li>
                                             ))}

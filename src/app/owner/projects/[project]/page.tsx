@@ -1,18 +1,25 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Project } from "@/types/project";
+import { Workpackage } from "@/types/workpackage";
 import { useState } from "react";
 
 export default function ProjectDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
     const [tab, setTab] = useState<"info" | "create" | "edit">("info");
-    const [newWorkpackageName, setNewWorkpackageName] = useState("");
+    const [newWorkpackage, setNewWorkpackage] = useState({
+        name: "",
+        description: "",
+        category: "",
+        priority: "medium" as "low" | "medium" | "high",
+    });
     const [saving, setSaving] = useState(false);
 
     if (loading) return <div>載入中...</div>;
@@ -22,17 +29,37 @@ export default function ProjectDetailPage() {
     const project = projectDoc.data() as Project;
 
     const handleAddWorkpackage = async () => {
-        if (!newWorkpackageName.trim()) return;
+        if (!newWorkpackage.name.trim()) return;
         setSaving(true);
-        await updateDoc(doc(db, "projects", projectId), {
-            workpackages: arrayUnion({
+        try {
+            const newWp: Workpackage = {
                 id: Date.now().toString(),
-                name: newWorkpackageName.trim(),
-                childrenIds: [],
-            }),
-        });
-        setNewWorkpackageName("");
-        setSaving(false);
+                name: newWorkpackage.name.trim(),
+                description: newWorkpackage.description,
+                category: newWorkpackage.category,
+                priority: newWorkpackage.priority,
+                status: "新建立",
+                progress: 0,
+                createdAt: new Date().toISOString(),
+                subWorkpackages: [],
+            };
+
+            const updatedWorkpackages = [...(project.workpackages || []), newWp];
+            await updateDoc(doc(db, "projects", projectId), {
+                workpackages: updatedWorkpackages,
+            });
+
+            setNewWorkpackage({
+                name: "",
+                description: "",
+                category: "",
+                priority: "medium",
+            });
+        } catch (error) {
+            console.error("建立工作包失敗:", error);
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -103,21 +130,60 @@ export default function ProjectDetailPage() {
                     <h2 className="text-xl font-bold mb-4">建立工作包</h2>
                     <div>專案名稱：{project.projectName}</div>
                     {/* 新增工作包表單 */}
-                    <div className="flex mt-4 gap-2">
-                        <input
-                            className="border px-2 py-1 rounded flex-1"
-                            placeholder="工作包名稱"
-                            value={newWorkpackageName}
-                            onChange={e => setNewWorkpackageName(e.target.value)}
-                            disabled={saving}
-                        />
-                        <button
-                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            onClick={handleAddWorkpackage}
-                            disabled={saving || !newWorkpackageName.trim()}
-                        >
-                            新增工作包
-                        </button>
+                    <div className="space-y-4 mt-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">工作包名稱</label>
+                            <input
+                                className="border px-3 py-2 rounded w-full"
+                                placeholder="工作包名稱"
+                                value={newWorkpackage.name}
+                                onChange={e => setNewWorkpackage(prev => ({ ...prev, name: e.target.value }))}
+                                disabled={saving}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">描述</label>
+                            <textarea
+                                className="border px-3 py-2 rounded w-full"
+                                placeholder="工作包描述"
+                                value={newWorkpackage.description}
+                                onChange={e => setNewWorkpackage(prev => ({ ...prev, description: e.target.value }))}
+                                rows={3}
+                                disabled={saving}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">類別</label>
+                            <input
+                                className="border px-3 py-2 rounded w-full"
+                                placeholder="工作包類別"
+                                value={newWorkpackage.category}
+                                onChange={e => setNewWorkpackage(prev => ({ ...prev, category: e.target.value }))}
+                                disabled={saving}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">優先級</label>
+                            <select
+                                className="border px-3 py-2 rounded w-full"
+                                value={newWorkpackage.priority}
+                                onChange={e => setNewWorkpackage(prev => ({ ...prev, priority: e.target.value as "low" | "medium" | "high" }))}
+                                disabled={saving}
+                            >
+                                <option value="low">低</option>
+                                <option value="medium">中</option>
+                                <option value="high">高</option>
+                            </select>
+                        </div>
+                        <div className="pt-2">
+                            <button
+                                className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                                onClick={handleAddWorkpackage}
+                                disabled={saving || !newWorkpackage.name.trim()}
+                            >
+                                {saving ? "建立中..." : "新增工作包"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

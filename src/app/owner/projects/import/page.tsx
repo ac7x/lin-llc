@@ -57,7 +57,8 @@ export default function ImportProjectPage() {
                 createdAt: Timestamp.now(),
                 updatedAt: Timestamp.now(),
                 status: "新建立",
-                decomposition, // 新增分解資料
+                decomposition, // 專案分解資料
+                workpackages: [], // 初始化空的工作包列表
             };
             await addDoc(collection(db, "projects"), projectData);
             setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
