@@ -29,4 +29,10 @@ export interface Project {
     region?: string;          // 地區
     workpackages: Workpackage[]; // 工作包列表
     decomposition?: object;      // 專案分解資料
+
+    // 新增進度追蹤相關欄位
+    reports?: DailyReport[];  // 工作日誌
+    photos?: PhotoRecord[];   // 照片記錄
+    materials?: MaterialEntry[]; // 材料記錄
+    issues?: IssueRecord[];   // 問題記錄
 }
