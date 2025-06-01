@@ -44,7 +44,7 @@ export default function ImportProjectPage() {
                     {
                         id: "root",                // 節點唯一識別碼
                         type: "custom",            // 可選欄位：節點類型
-                        position: { x: 250, y: 50 },// 節點座標
+                        position: { x: 0, y: 50 },// 節點座標，x=0 貼齊左邊
                         data: { label: row.name || "專案分解" }, // 自訂資料型別，至少含 label
                         // ...其他可選欄位如 width, height 等...
                     },

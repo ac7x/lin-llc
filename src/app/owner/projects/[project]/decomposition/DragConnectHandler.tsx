@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import { useReactFlow, Node, Edge, Connection, OnConnectStart, OnConnectEnd } from "@xyflow/react";
+import { useReactFlow, Node, Edge, OnConnectStart, OnConnectEnd } from "@xyflow/react";
 
 export type DragConnectHandlerProps = {
     setNodes: React.Dispatch<React.SetStateAction<Node[]>>;

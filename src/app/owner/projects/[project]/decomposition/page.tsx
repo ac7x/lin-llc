@@ -64,7 +64,7 @@ const getEdgeId = (source: string, target: string) =>
 
 function DecompositionFlow(props: any) {
     const { db, doc, useDocument, updateDoc } = useFirebase();
-    const { logs, addLog } = useLog();
+    const { logs, addLog } = useLog(); // 直接用外層 LogProvider
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -278,7 +278,7 @@ function DecompositionFlow(props: any) {
                             </ReactFlow>
                         )}
                     </DragConnectHandler>
-                    <LogOverlay logs={logs} />
+                    {/* 移除 LogOverlay，統一用左側欄位 */}
                 </div>
             )}
         </div>
@@ -286,11 +286,10 @@ function DecompositionFlow(props: any) {
 }
 
 export default function DecompositionPage() {
+    // 只回傳 DecompositionFlow，不再包 LogProvider
     return (
         <ReactFlowProvider>
-            <LogProvider>
-                <DecompositionFlow />
-            </LogProvider>
+            <DecompositionFlow />
         </ReactFlowProvider>
     );
 }
