@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams } from "next/navigation";
-import { doc } from "firebase/firestore";
-import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
-import { useDocument } from "react-firebase-hooks/firestore";
 import { Node, Edge } from "@xyflow/react";
+import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 
+// 修正：邊的 id 也需唯一且不能與節點重複
 function ensureUniqueStringId(arr: any[] | undefined, prefix: string): any[] {
     if (!arr) return [];
     const seen = new Set<string>();
     return arr.map((item, idx) => {
         let id = typeof item.id === "string" ? item.id : String(item.id ?? idx);
-        // 保證唯一
+        // 強制加上前綴避免節點和邊 id 衝突
+        id = `${prefix}_${id}`;
         while (seen.has(id)) {
             id = `${id}_${Math.random().toString(36).slice(2, 8)}`;
         }
@@ -26,7 +26,7 @@ export function FirestoreSync({
 }) {
     const params = useParams();
     const projectId = params?.project as string;
-    const { db } = useFirebase();
+    const { db, doc, useDocument } = useFirebase();
     const [projectDoc, loading, error] = useDocument(
         projectId ? doc(db, "projects", projectId) : undefined
     );
