@@ -73,7 +73,7 @@ function Sidebar() {
                                     {/* 工作包列表 */}
                                     {isOpen && workpackages.length > 0 && (
                                         <ul className="pl-8 mt-1 space-y-1">
-                                            {workpackages.map((wp: { id: string, name: string, subWorkpackages?: any[] }) => (
+                                            {workpackages.map((wp: { id: string, name: string, subWorkpackages?: import("@/types/workpackage").SubWorkpackage[] }) => (
                                                 <li key={wp.id}>
                                                     <Link
                                                         href={`/owner/projects/${projectId}/workpackages/${wp.id}`}

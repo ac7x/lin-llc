@@ -1,8 +1,8 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Project } from "@/types/project";
 import { Workpackage } from "@/types/workpackage";
@@ -10,7 +10,6 @@ import { useState } from "react";
 
 export default function ProjectDetailPage() {
     const params = useParams();
-    const router = useRouter();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
     const [tab, setTab] = useState<"info" | "create" | "edit">("info");

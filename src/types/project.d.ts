@@ -28,5 +28,5 @@ export interface Project {
     safetyOfficer?: string;   // 安全人員
     region?: string;          // 地區
     workpackages: Workpackage[]; // 工作包列表
-    decomposition?: any;      // 專案分解資料
+    decomposition?: object;      // 專案分解資料
 }
