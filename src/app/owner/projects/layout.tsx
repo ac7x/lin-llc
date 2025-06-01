@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection } from "firebase/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { Disclosure } from '@headlessui/react';
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { LogProvider, useLog, LogOverlay } from "./[project]/decomposition/LogOverlay";
 

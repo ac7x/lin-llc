@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useLog } from "./LogOverlay";
 
 export function DeleteButton({
