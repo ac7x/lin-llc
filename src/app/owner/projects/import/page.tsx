@@ -38,14 +38,15 @@ export default function ImportProjectPage() {
         setImportingId(row.id);
         setMessage("");
         try {
-            // 預設一個基本的分解資料
+            // 預設一個基本的分解資料，包含必要的節點欄位與可選欄位
             const decomposition = {
                 nodes: [
                     {
-                        id: "root",
-                        type: "input",
-                        position: { x: 250, y: 50 },
-                        data: { label: row.name || "專案分解" },
+                        id: "root",                // 節點唯一識別碼
+                        type: "custom",            // 可選欄位：節點類型
+                        position: { x: 250, y: 50 },// 節點座標
+                        data: { label: row.name || "專案分解" }, // 自訂資料型別，至少含 label
+                        // ...其他可選欄位如 width, height 等...
                     },
                 ],
                 edges: [],

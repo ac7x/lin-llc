@@ -22,22 +22,25 @@ import {
     type OnSelectionChangeFunc,
     type NodeProps,
     type OnConnectStartParams,
+    type NodeTypes,
 } from "@xyflow/react";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import "@xyflow/react/dist/style.css";
 import { LogProvider, LogOverlay, useLog } from "./LogOverlay";
 
 // 定義明確的 NodeData 型別
-type NodeData = {
+interface NodeData extends Record<string, unknown> {
     label: string;
     // 你可以加更多欄位
-};
+}
 
-// colorMode 請用 context/hook 判斷（不要當 prop 傳給 nodeTypes）
-const CustomNode: React.FC<NodeProps<NodeData>> = ({ data, selected }) => {
-    const isDark = typeof window !== "undefined"
-        ? window.matchMedia("(prefers-color-scheme: dark)").matches
-        : false;
+// 修改 CustomNode 的型別設定，改為使用 NodeProps<any>
+const CustomNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
+    const nodeData = data as NodeData;
+    const isDark =
+        typeof window !== "undefined"
+            ? window.matchMedia("(prefers-color-scheme: dark)").matches
+            : false;
     return (
         <div
             style={{
@@ -65,7 +68,7 @@ const CustomNode: React.FC<NodeProps<NodeData>> = ({ data, selected }) => {
             }}
         >
             <Handle type="target" position={Position.Top} />
-            {data.label}
+            {nodeData.label}
             <Handle type="source" position={Position.Bottom} />
         </div>
     );
@@ -89,7 +92,6 @@ function DecompositionFlow() {
     const { addLog, logs } = useLog();
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-    // colorMode 只給 CustomNode 用，不要傳給 nodeTypes
     const [colorMode, setColorMode] = useState<"light" | "dark">("light");
     useEffect(() => {
         const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -102,13 +104,12 @@ function DecompositionFlow() {
     useEffect(() => {
         if (projectDoc?.exists()) {
             const d = projectDoc.data()?.decomposition;
-            // 確保 nodes/edges 的 data 結構正確
-            setNodes(Array.isArray(d?.nodes) ? d.nodes : []);
-            setEdges(Array.isArray(d?.edges) ? d.edges : []);
+            setNodes(Array.isArray(d?.nodes) ? (d.nodes as Node<NodeData>[]) : []);
+            setEdges(Array.isArray(d?.edges) ? (d.edges as Edge[]) : []);
         }
     }, [projectDoc]);
 
-    const nodeTypes = { custom: CustomNode };
+    const nodeTypes: NodeTypes = { custom: CustomNode };
 
     const syncDecomposition = useCallback(
         async (
@@ -126,7 +127,7 @@ function DecompositionFlow() {
     const onNodesChange = useCallback(
         (changes: NodeChange[]) =>
             setNodes((nds) => {
-                const newNodes = applyNodeChanges(changes, nds);
+                const newNodes = applyNodeChanges(changes, nds) as Node<NodeData>[];
                 syncDecomposition(newNodes, edges);
                 return newNodes;
             }),
@@ -153,7 +154,6 @@ function DecompositionFlow() {
         [nodes, syncDecomposition]
     );
 
-    // 型別必須完全正確
     const onConnectStart: OnConnectStart = useCallback((_, params: OnConnectStartParams) => {
         setConnectingNodeId(params.nodeId ?? null);
     }, []);
@@ -240,7 +240,6 @@ function DecompositionFlow() {
                             );
                         return newEdges;
                     });
-                    syncDecomposition(newNodes, edges);
                     return newNodes;
                 });
             }
