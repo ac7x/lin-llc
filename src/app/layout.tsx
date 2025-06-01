@@ -13,12 +13,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-
   return (
     <html lang="zh-Hant">
       <body>
-        {isDevelopment && <DevNav />}
+        <DevNav />
         <FirebaseProvider>
           {children}
         </FirebaseProvider>
