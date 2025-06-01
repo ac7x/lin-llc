@@ -27,8 +27,9 @@ import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebas
 import "@xyflow/react/dist/style.css";
 import { LogProvider, LogOverlay, useLog } from "./LogOverlay";
 
-// 將 CustomNode 的泛型從 Record<string, unknown> 改為 { label?: string }
-const CustomNode: React.FC<NodeProps<{ label?: string }>> = ({ data, selected }) => {
+// 不要自訂型別，直接用官方 Node<Record<string, unknown>>
+// colorMode 請用 context/hook 判斷（不要當 prop 傳給 nodeTypes）
+const CustomNode: React.FC<NodeProps<Record<string, unknown>>> = ({ data, selected }) => {
     const isDark = typeof window !== "undefined"
         ? window.matchMedia("(prefers-color-scheme: dark)").matches
         : false;
@@ -75,10 +76,9 @@ function DecompositionFlow() {
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc] = useDocument(doc(db, "projects", projectId));
-    // 修改：將 Node<Record<string, unknown>> 改為 Node<{ label?: string }>
-    const [nodes, setNodes] = useState<Node<{ label?: string }>[]>([]);
+    const [nodes, setNodes] = useState<Node<Record<string, unknown>>[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
-    const [selectedNodes, setSelectedNodes] = useState<Node<{ label?: string }>[]>([]);
+    const [selectedNodes, setSelectedNodes] = useState<Node<Record<string, unknown>>[]>([]);
     const [selectedEdges, setSelectedEdges] = useState<Edge[]>([]);
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
     const { addLog, logs } = useLog();
@@ -106,7 +106,7 @@ function DecompositionFlow() {
 
     const syncDecomposition = useCallback(
         async (
-            nodes: Node<{ label?: string }>[],
+            nodes: Node<Record<string, unknown>>[],
             edges: Edge[]
         ) => {
             if (!projectId) return;
@@ -147,6 +147,7 @@ function DecompositionFlow() {
         [nodes, syncDecomposition]
     );
 
+    // 型別必須完全正確
     const onConnectStart: OnConnectStart = useCallback((_, params: OnConnectStartParams) => {
         setConnectingNodeId(params.nodeId ?? null);
     }, []);
@@ -166,10 +167,10 @@ function DecompositionFlow() {
                 clientX = event.touches[0].clientX;
                 clientY = event.touches[0].clientY;
             }
+            // 你可能需要用 useReactFlow().screenToFlowPosition (這裡請根據你的框架補上)
             const position = { x: clientX, y: clientY };
             const newNodeId = getId();
-            // 修改：使用 Node<{ label?: string }> 型別
-            const newNode: Node<{ label?: string }> = {
+            const newNode: Node<Record<string, unknown>> = {
                 id: newNodeId,
                 type: "custom",
                 position,
@@ -195,7 +196,7 @@ function DecompositionFlow() {
         [connectingNodeId, syncDecomposition]
     );
 
-    const onSelectionChange: OnSelectionChangeFunc<Node<{ label?: string }>, Edge> =
+    const onSelectionChange: OnSelectionChangeFunc<Node<Record<string, unknown>>, Edge> =
         useCallback(
             ({ nodes: selNodes = [], edges: selEdges = [] }) => {
                 setSelectedNodes(selNodes);
