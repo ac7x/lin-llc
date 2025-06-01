@@ -138,6 +138,8 @@ export default function DecompositionPage() {
                 {(nodes, edges, loading, error) => {
                     if (loading) return <div>載入中...</div>;
                     if (error) return <div>錯誤: {String(error)}</div>;
+                    // 防禦性檢查，避免 ReactFlow 無法渲染
+                    if (!nodes || !edges) return <div>無法載入節點或邊</div>;
                     return <Flow nodes={nodes} edges={edges} />;
                 }}
             </FirestoreSync>
