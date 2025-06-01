@@ -1,97 +1,32 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "next/navigation";
+import React, { useRef, useCallback, Dispatch, SetStateAction, ReactNode } from "react";
 import {
     ReactFlow,
     ReactFlowProvider,
     addEdge,
-    applyNodeChanges,
-    applyEdgeChanges,
-    Background,
-    Controls,
     MiniMap,
-    Handle,
-    Position,
-    type Node,
-    type Edge,
-    type NodeChange,
-    type EdgeChange,
-    type Connection,
-    type OnConnectStart,
-    type OnConnectEnd,
-    type OnSelectionChangeFunc,
-    type OnConnectStartParams,
+    Controls,
+    Background,
     useReactFlow,
     useNodesState,
-    useEdgesState
-} from "reactflow";
-import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
-import "reactflow/dist/style.css";
-import { LogProvider, LogOverlay, useLog } from "./LogOverlay";
+    useEdgesState,
+    Node,
+    Edge,
+    Connection,
+    OnConnectStart,
+    OnConnectEnd,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { DeleteButton } from "./DeleteButton";
-
-// 將原 NodeData 改名為 CustomNodeData，僅保留 data 欄位
-interface CustomNodeData {
-    label: string;
-    width?: number;
-    height?: number;
-    [key: string]: unknown;
-}
-
-// 修改 CustomNode 型別使用 any workaround，避免型別錯誤
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomNode = (props: any) => {
-    const { data, selected } = props;
-    const nodeData = data as CustomNodeData;
-    const isDark =
-        typeof window !== "undefined"
-            ? window.matchMedia("(prefers-color-scheme: dark)").matches
-            : false;
-    return (
-        <div
-            style={{
-                background: isDark ? "#223047" : "#2a6c97",
-                border: selected
-                    ? "2.5px solid #fbbf24"
-                    : isDark
-                        ? "2px solid #3b82f6"
-                        : "2px solid #0d618f",
-                color: "#fff",
-                fontWeight: 600,
-                fontSize: "1rem",
-                borderRadius: 8,
-                boxShadow: selected
-                    ? "0 8px 24px 0 rgba(0,0,0,0.18)"
-                    : "0 4px 16px 0 rgba(0,0,0,0.10)",
-                padding: "16px 20px",
-                minWidth: 100,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                transition: "box-shadow 0.2s, border 0.2s, background 0.2s",
-                position: "relative",
-            }}
-        >
-            <Handle type="target" position={Position.Top} />
-            {nodeData.label}
-            <Handle type="source" position={Position.Bottom} />
-        </div>
-    );
-};
-
-// 不加型別註記，讓 TS 自動推斷
-const nodeTypes = { custom: CustomNode };
-
-const getEdgeId = (source: string, target: string) =>
-    `edge_${source}_${target}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+import { useLog } from "./LogOverlay";
+import { useParams } from "next/navigation";
+import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 
 // 修正：確保節點 ID 格式一致且簡單
 let nodeId = 1;
 const getId = () => `${nodeId++}`;
 
 // 型別定義
-// === Flow 元件 ===
 type FlowProps = {
     nodes?: Node[];
     edges?: Edge[];
@@ -198,242 +133,110 @@ function Flow({ nodes: propNodes, edges: propEdges }: FlowProps) {
     );
 }
 
-function Sidebar() {
-    // 拖曳開始時，設置 dataTransfer type
-    const onDragStart = (event: React.DragEvent) => {
-        event.dataTransfer.setData("application/reactflow", "custom");
-        event.dataTransfer.effectAllowed = "move";
-    };
-    return (
-        <div className="p-4 border-r bg-gray-50 dark:bg-gray-900" style={{ minWidth: 120 }}>
-            <div
-                className="bg-blue-500 text-white px-3 py-2 rounded cursor-move select-none text-center"
-                draggable
-                onDragStart={onDragStart}
-                style={{ marginBottom: 12 }}
-            >
-                拖曳新增節點
-            </div>
-        </div>
-    );
+// === FirestoreSync 相關程式碼開始 ===
+
+type FirestoreSyncProps = {
+    children: (
+        nodes: Node[] | undefined,
+        edges: Edge[] | undefined,
+        loading: boolean,
+        error: unknown,
+        setNodes: Dispatch<SetStateAction<Node[] | undefined>>,
+        setEdges: Dispatch<SetStateAction<Edge[] | undefined>>,
+        addLog: (message: string) => void
+    ) => ReactNode;
+};
+
+function ensureUniqueStringId<T extends { id?: string | number }>(arr: T[] | undefined, prefix: string): T[] {
+    if (!arr) return [];
+    const seen = new Set<string>();
+    return arr.map((item, idx) => {
+        let rawId = typeof item.id === "string" ? item.id : String(item.id ?? idx);
+        const prefixRegex = new RegExp(`^(?:${prefix}_)+`);
+        rawId = rawId.replace(prefixRegex, '');
+        let id = `${prefix}_${rawId}`;
+        while (seen.has(id)) {
+            id = `${prefix}_${rawId}_${Math.random().toString(36).slice(2, 8)}`;
+        }
+        seen.add(id);
+        return { ...item, id };
+    });
 }
 
-function DecompositionFlow() {
-    const { db, doc, useDocument, updateDoc } = useFirebase();
+export function FirestoreSync({ children }: FirestoreSyncProps) {
     const params = useParams();
-    const projectId = params?.project as string;
-    const [projectDoc] = useDocument(doc(db, "projects", projectId));
-    const [nodes, setNodes] = useState<Node<CustomNodeData>[]>([]);
-    const [edges, setEdges] = useState<Edge[]>([]);
-    const [selectedNodes, setSelectedNodes] = useState<Node<CustomNodeData>[]>([]);
-    const [selectedEdges, setSelectedEdges] = useState<Edge[]>([]);
-    const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
-    const { addLog, logs } = useLog();
-    const reactFlowWrapper = useRef<HTMLDivElement>(null);
-    const reactFlowInstance = useReactFlow();
+    const projectId = params?.project as string | undefined;
+    const { db, doc, useDocument, updateDoc } = useFirebase();
 
-    useEffect(() => {
-        if (projectDoc?.exists()) {
-            const d = projectDoc.data()?.decomposition;
-            setNodes(Array.isArray(d?.nodes) ? (d.nodes as Node<CustomNodeData>[]) : []);
-            setEdges(Array.isArray(d?.edges) ? (d.edges as Edge[]) : []);
+    // 直接使用 useDocument 回傳的型別
+    const [projectDoc, loading, error] = useDocument(
+        projectId ? doc(db, "projects", projectId) : undefined
+    );
+
+    const [nodes, setNodes] = React.useState<Node[] | undefined>(undefined);
+    const [edges, setEdges] = React.useState<Edge[] | undefined>(undefined);
+    const { addLog } = useLog();
+    const loadedRef = useRef(false);
+
+    React.useEffect(() => {
+        if (projectDoc && projectDoc.exists()) {
+            // 修正：projectDoc.data() 可能回傳 undefined，需防禦
+            const decomposition = projectDoc.data()?.decomposition;
+            setNodes(ensureUniqueStringId<Node>(decomposition?.nodes, "node"));
+            setEdges(ensureUniqueStringId<Edge>(decomposition?.edges, "edge"));
+            if (!loadedRef.current) {
+                addLog("從 Firestore 載入節點與邊");
+                loadedRef.current = true;
+            }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [projectDoc]);
 
-    const syncDecomposition = useCallback(
-        async (
-            nodes: Node<CustomNodeData>[],
-            edges: Edge[]
-        ) => {
-            if (!projectId) return;
-            try {
-                await updateDoc(doc(db, "projects", projectId), { decomposition: { nodes, edges } });
-            } catch { }
-        },
-        [projectId, db, doc, updateDoc]
-    );
+    const prevNodes = useRef<Node[] | undefined>(undefined);
+    const prevEdges = useRef<Edge[] | undefined>(undefined);
 
-    const onNodesChange = useCallback(
-        (changes: NodeChange[]) =>
-            setNodes((nds) => {
-                const newNodes = applyNodeChanges(changes, nds) as Node<CustomNodeData>[];
-                syncDecomposition(newNodes, edges);
-                return newNodes;
-            }),
-        [edges, syncDecomposition]
-    );
+    React.useEffect(() => {
+        if (!projectId) return;
+        if (!nodes || !edges) return;
+        if (prevNodes.current === undefined && prevEdges.current === undefined) {
+            prevNodes.current = nodes;
+            prevEdges.current = edges;
+            return;
+        }
+        if (
+            JSON.stringify(nodes) !== JSON.stringify(prevNodes.current) ||
+            JSON.stringify(edges) !== JSON.stringify(prevEdges.current)
+        ) {
+            updateDoc(doc(db, "projects", projectId), {
+                decomposition: {
+                    nodes,
+                    edges,
+                },
+                updatedAt: new Date(),
+            });
+            prevNodes.current = nodes;
+            prevEdges.current = edges;
+            addLog("同步到 Firestore");
+        }
+    }, [nodes, edges, db, doc, projectId, updateDoc, addLog]);
 
-    const onEdgesChange = useCallback(
-        (changes: EdgeChange[]) =>
-            setEdges((eds) => {
-                const newEdges = applyEdgeChanges(changes, eds);
-                syncDecomposition(nodes, newEdges);
-                return newEdges;
-            }),
-        [nodes, syncDecomposition]
-    );
-
-    const onConnect = useCallback(
-        (connection: Connection) =>
-            setEdges((eds) => {
-                const newEdges = addEdge(connection, eds);
-                syncDecomposition(nodes, newEdges);
-                return newEdges;
-            }),
-        [nodes, syncDecomposition]
-    );
-
-    const onConnectStart: OnConnectStart = useCallback((_, params: OnConnectStartParams) => {
-        setConnectingNodeId(params.nodeId ?? null);
-    }, []);
-
-    // 修正 OnConnectEnd 型別：reactflow v11 只接受一個 event 參數
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const onConnectEnd: OnConnectEnd = useCallback((event) => {
-        if (!connectingNodeId || !reactFlowWrapper.current) return;
-        // 這裡如需判斷是否有效連線，需用 useReactFlow().getIntersectingNodes 等 API
-        setConnectingNodeId(null);
-    }, [connectingNodeId]);
-
-    // 修正 OnSelectionChangeFunc 型別：reactflow v11 不是泛型
-    const onSelectionChange: OnSelectionChangeFunc = useCallback(
-        ({ nodes: selNodes = [], edges: selEdges = [] }) => {
-            setSelectedNodes(selNodes);
-            setSelectedEdges(selEdges);
-        },
-        []
-    );
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Delete" || e.key === "Backspace") {
-                if (selectedNodes.length === 0 && selectedEdges.length === 0) return;
-                setNodes((prevNodes) => {
-                    const newNodes = prevNodes.filter(
-                        (n) => !selectedNodes.some((sn) => sn.id === n.id)
-                    );
-                    setEdges((prevEdges) => {
-                        const newEdges = prevEdges.filter(
-                            (e) =>
-                                !selectedEdges.some((se) => se.id === e.id) &&
-                                !selectedNodes.some((sn) => sn.id === e.source || sn.id === e.target)
-                        );
-                        syncDecomposition(newNodes, newEdges);
-                        if (selectedNodes.length > 0)
-                            addLog(
-                                `刪除節點: ${selectedNodes
-                                    .map((n) => String(n.data?.label ?? n.id))
-                                    .join(", ")}`
-                            );
-                        if (selectedEdges.length > 0)
-                            addLog(
-                                `刪除連線: ${selectedEdges
-                                    .map((e) => `${e.source}→${e.target}`)
-                                    .join(", ")}`
-                            );
-                        return newEdges;
-                    });
-                    return newNodes;
-                });
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [selectedNodes, selectedEdges, edges, syncDecomposition, addLog]);
-
-    const uniqueEdges = React.useMemo(() => {
-        const seen = new Set<string>();
-        return edges.map((e) => {
-            let id = e.id;
-            if (!id || seen.has(id)) {
-                id = getEdgeId(e.source, e.target);
-            }
-            seen.add(id);
-            return { ...e, id };
-        });
-    }, [edges]);
-
-    // 新增 onDrop/onDragOver 實作
-    const onDrop = useCallback((event: React.DragEvent) => {
-        event.preventDefault();
-        const type = event.dataTransfer.getData("application/reactflow");
-        if (!type) return;
-        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-        if (!bounds) return;
-        const position = reactFlowInstance.project({
-            x: event.clientX - bounds.left,
-            y: event.clientY - bounds.top,
-        });
-        const newNode = {
-            id: `node_${Date.now()}`,
-            type: "custom",
-            position,
-            data: { label: "新節點" },
-        };
-        setNodes((nds) => {
-            const newNodes = [...nds, newNode];
-            syncDecomposition(newNodes, edges);
-            addLog(`拖曳新增節點: ${newNode.id}`);
-            return newNodes;
-        });
-    }, [reactFlowInstance, setNodes, syncDecomposition, edges, addLog]);
-
-    const onDragOver = useCallback((event: React.DragEvent) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-    }, []);
-
-    return (
-        <div style={{ height: "100vh", display: "flex", flexDirection: "row" }}>
-            <Sidebar />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                <div className="flex items-center justify-between px-4 pt-4 mb-2">
-                    <div className="text-xl font-bold">
-                        {projectDoc?.data?.()?.projectName || projectId}
-                    </div>
-                </div>
-                {nodes.length === 0 && edges.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">
-                        尚無分解資料
-                    </div>
-                ) : (
-                    <div
-                        style={{ flex: 1 }}
-                        ref={reactFlowWrapper}
-                        onDrop={onDrop}
-                        onDragOver={onDragOver}
-                    >
-                        <ReactFlow
-                            nodes={nodes}
-                            edges={uniqueEdges}
-                            onNodesChange={onNodesChange}
-                            onEdgesChange={onEdgesChange}
-                            onConnect={onConnect}
-                            onConnectStart={onConnectStart}
-                            onConnectEnd={onConnectEnd}
-                            fitView
-                            nodeTypes={nodeTypes}
-                            proOptions={{ hideAttribution: true }}
-                            onSelectionChange={onSelectionChange}
-                        >
-                            <MiniMap />
-                            <Controls />
-                            <Background />
-                        </ReactFlow>
-                        <LogOverlay logs={logs} />
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+    return <>{children(nodes, edges, loading, error, setNodes, setEdges, addLog)}</>;
 }
+
+// === FirestoreSync 相關程式碼結束 ===
 
 export default function DecompositionPage() {
     return (
-        <LogProvider>
-            <ReactFlowProvider>
-                <DecompositionFlow />
-            </ReactFlowProvider>
-        </LogProvider>
+        <ReactFlowProvider>
+            <FirestoreSync>
+                {(nodes, edges, loading, error) => {
+                    if (loading) return <div>載入中...</div>;
+                    if (error) return <div>錯誤: {String(error)}</div>;
+                    if (!nodes || !edges) return <div>無法載入節點或邊</div>;
+                    return <Flow nodes={nodes} edges={edges} />;
+                }}
+            </FirestoreSync>
+        </ReactFlowProvider>
     );
 }
+
