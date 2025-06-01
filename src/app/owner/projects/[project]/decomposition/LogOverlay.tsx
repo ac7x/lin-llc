@@ -30,7 +30,7 @@ export function LogOverlay({ logs, embedded = false }: { logs: string[], embedde
             <div
                 style={{
                     backgroundColor: "rgba(0,0,0,0.05)",
-                    color: "#222",
+                    color: "white", // 改為白字
                     padding: "10px",
                     borderRadius: "5px",
                     fontSize: "12px",
@@ -61,7 +61,7 @@ export function LogOverlay({ logs, embedded = false }: { logs: string[], embedde
                 maxHeight: "400px",
                 overflowY: "auto",
                 backgroundColor: "rgba(0, 0, 0, 0.7)",
-                color: "white",
+                color: "white", // 改為白字
                 padding: "10px",
                 borderRadius: "5px",
                 fontSize: "12px",
