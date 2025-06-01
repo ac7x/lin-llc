@@ -1,12 +1,13 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Project } from "@/types/project";
+import Image from 'next/image';
 
 // 界定照片類型
 type PhotoType = "progress" | "issue" | "material" | "safety" | "other";
@@ -86,8 +87,6 @@ export default function ProjectPhotosPage() {
             const projectSnap = await getDoc(doc(db, "projects", projectId));
             if (!projectSnap.exists()) throw new Error("專案不存在");
 
-            const projectName = projectSnap.data().projectName || projectId;
-
             // 上傳到 Firebase Storage
             const storage = getStorage();
             const timestamp = Date.now();
@@ -154,8 +153,6 @@ export default function ProjectPhotosPage() {
     if (loading) return <div className="p-4">載入中...</div>;
     if (error) return <div className="p-4 text-red-500">錯誤: {error.message}</div>;
     if (!projectDoc?.exists()) return <div className="p-4">找不到專案</div>;
-
-    const project = projectDoc.data() as Project;
 
     return (
         <div className="p-4 max-w-4xl mx-auto">
@@ -269,10 +266,12 @@ export default function ProjectPhotosPage() {
                             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                             .map((photo) => (
                                 <div key={photo.id} className="border rounded overflow-hidden">
-                                    <img
+                                    <Image
                                         src={photo.url}
                                         alt={photo.description}
                                         className="w-full h-48 object-cover"
+                                        width={300}
+                                        height={192}
                                     />
                                     <div className="p-3">
                                         <div className="flex justify-between mb-1">

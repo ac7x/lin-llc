@@ -87,8 +87,6 @@ export default function ProjectMaterialsPage() {
     if (error) return <div className="p-4 text-red-500">錯誤: {error.message}</div>;
     if (!projectDoc?.exists()) return <div className="p-4">找不到專案</div>;
 
-    const project = projectDoc.data() as Project;
-
     return (
         <div className="p-4 max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-6">

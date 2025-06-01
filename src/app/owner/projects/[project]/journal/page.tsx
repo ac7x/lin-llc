@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
-import { doc, updateDoc, arrayUnion, Timestamp } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Project } from "@/types/project";
@@ -115,8 +115,6 @@ export default function ProjectJournalPage() {
     if (loading) return <div className="p-4">載入中...</div>;
     if (error) return <div className="p-4 text-red-500">錯誤: {error.message}</div>;
     if (!projectDoc?.exists()) return <div className="p-4">找不到專案</div>;
-
-    const project = projectDoc.data() as Project;
 
     return (
         <div className="p-4 max-w-4xl mx-auto">

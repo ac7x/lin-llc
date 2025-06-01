@@ -135,8 +135,6 @@ export default function ProjectIssuesPage() {
     if (error) return <div className="p-4 text-red-500">錯誤: {error.message}</div>;
     if (!projectDoc?.exists()) return <div className="p-4">找不到專案</div>;
 
-    const project = projectDoc.data() as Project;
-
     return (
         <div className="p-4 max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-6">
@@ -159,7 +157,7 @@ export default function ProjectIssuesPage() {
                             <select
                                 className="border rounded w-full px-3 py-2"
                                 value={newIssue.type}
-                                onChange={(e) => setNewIssue({ ...newIssue, type: e.target.value as any })}
+                                onChange={(e) => setNewIssue({ ...newIssue, type: e.target.value as 'quality' | 'safety' | 'progress' | 'other' })}
                                 required
                             >
                                 <option value="quality">品質問題</option>
@@ -173,7 +171,7 @@ export default function ProjectIssuesPage() {
                             <select
                                 className="border rounded w-full px-3 py-2"
                                 value={newIssue.severity}
-                                onChange={(e) => setNewIssue({ ...newIssue, severity: e.target.value as any })}
+                                onChange={(e) => setNewIssue({ ...newIssue, severity: e.target.value as 'low' | 'medium' | 'high' })}
                                 required
                             >
                                 <option value="low">低</option>

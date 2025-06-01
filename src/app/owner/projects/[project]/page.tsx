@@ -1,19 +1,18 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Project } from "@/types/project";
 import { Workpackage, DailyReport, ActivityLog, IssueRecord, MaterialEntry, PhotoRecord } from "@/types/workpackage";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { updateWorkpackagesProgress } from "@/utils/progressCalculation";
-import Link from "next/link";
+import Image from "next/image";
 
 export default function ProjectDetailPage() {
     const params = useParams();
-    const router = useRouter();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
     const [tab, setTab] = useState<"info" | "create" | "edit" | "journal" | "photos" | "materials" | "issues">("info");
@@ -100,26 +99,38 @@ export default function ProjectDetailPage() {
         severity: ""
     });
 
-    if (loading) return <div>載入中...</div>;
-    if (error) return <div>錯誤: {error.message}</div>;
-    if (!projectDoc?.exists()) return <div>找不到專案</div>;
+    // 先取得各種資料，避免在條件判斷後呼叫 hooks
+    const reports = useMemo(() => {
+        if (!projectDoc?.exists()) return [];
+        const project = projectDoc.data() as Project;
+        return project.reports || [];
+    }, [projectDoc]);
 
-    const project = projectDoc.data() as Project;
+    const issues = useMemo(() => {
+        if (!projectDoc?.exists()) return [];
+        const project = projectDoc.data() as Project;
+        return project.issues || [];
+    }, [projectDoc]);
 
-    // 從 Firestore 獲取各項數據
-    const reports = useMemo(() => project.reports || [], [projectDoc]);
-    const issues = useMemo(() => project.issues || [], [projectDoc]);
-    const photos = useMemo(() => project.photos || [], [projectDoc]);
+    const photos = useMemo(() => {
+        if (!projectDoc?.exists()) return [];
+        const project = projectDoc.data() as Project;
+        return project.photos || [];
+    }, [projectDoc]);
+
     const materials = useMemo(() => {
+        if (!projectDoc?.exists()) return [];
         // 從報告中收集所有材料條目
         const allMaterials: MaterialEntry[] = [];
-        reports.forEach(report => {
+        const project = projectDoc.data() as Project;
+        const projectReports = project.reports || [];
+        projectReports.forEach(report => {
             if (report.materials && report.materials.length > 0) {
                 allMaterials.push(...report.materials);
             }
         });
         return allMaterials;
-    }, [reports]);
+    }, [projectDoc]);
 
     // 篩選問題
     const filteredIssues = useMemo(() => {
@@ -130,6 +141,45 @@ export default function ProjectDetailPage() {
             return true;
         });
     }, [issues, filter]);
+
+    // 更新所有工作包進度的函數
+    const updateAllWorkpackagesProgress = async () => {
+        if (!projectDoc?.exists() || !projectDoc.data().workpackages) return;
+        
+        try {
+            const project = projectDoc.data() as Project;
+            // 從報告中收集所有活動記錄
+            const allActivityLogs: ActivityLog[] = [];
+            reports.forEach(report => {
+                if (report.activities && report.activities.length > 0) {
+                    allActivityLogs.push(...report.activities);
+                }
+            });
+
+            // 使用工具函數更新工作包進度
+            const updatedWorkpackages = updateWorkpackagesProgress(project.workpackages, allActivityLogs);
+
+            // 更新到 Firestore
+            await updateDoc(doc(db, "projects", projectId), {
+                workpackages: updatedWorkpackages,
+            });
+
+            console.log("已更新所有工作包進度");
+        } catch (error) {
+            console.error("更新工作包進度失敗:", error);
+        }
+    };
+
+    // 當報告發生變化時重新計算進度
+    useEffect(() => {
+        updateAllWorkpackagesProgress();
+    }, [reports.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    if (loading) return <div>載入中...</div>;
+    if (error) return <div>錯誤: {error.message}</div>;
+    if (!projectDoc?.exists()) return <div>找不到專案</div>;
+
+    const project = projectDoc.data() as Project;
 
     // 工作包相關函數
     const handleAddWorkpackage = async () => {
@@ -393,39 +443,6 @@ export default function ProjectDetailPage() {
             setSaving(false);
         }
     };
-
-    // 更新所有工作包進度的函數
-    const updateAllWorkpackagesProgress = async () => {
-        if (!projectDoc?.exists() || !project.workpackages) return;
-
-        try {
-            // 從報告中收集所有活動記錄
-            const allActivityLogs: ActivityLog[] = [];
-            reports.forEach(report => {
-                if (report.activities && report.activities.length > 0) {
-                    allActivityLogs.push(...report.activities);
-                }
-            });
-
-            // 使用工具函數更新工作包進度
-            const updatedWorkpackages = updateWorkpackagesProgress(project.workpackages, allActivityLogs);
-
-            // 更新到 Firestore
-            await updateDoc(doc(db, "projects", projectId), {
-                workpackages: updatedWorkpackages,
-            });
-
-            console.log("已更新所有工作包進度");
-        } catch (error) {
-            console.error("更新工作包進度失敗:", error);
-        }
-    };
-
-    // 當報告發生變化時重新計算進度
-    useEffect(() => {
-        updateAllWorkpackagesProgress();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [reports.length]);
 
     return (
         <main className="max-w-4xl mx-auto p-4">
@@ -701,7 +718,7 @@ export default function ProjectDetailPage() {
                         <h3 className="text-lg font-semibold mb-4">歷史日誌</h3>
                         {reports.length > 0 ? (
                             <div className="space-y-4">
-                                {reports.map((report, index) => (
+                                {reports.map((report) => (
                                     <div key={report.id} className="border rounded-lg p-4">
                                         <div className="flex justify-between items-center mb-2">
                                             <h4 className="font-medium">
@@ -758,7 +775,7 @@ export default function ProjectDetailPage() {
                                 <select
                                     className="border px-3 py-2 rounded w-full"
                                     value={newPhoto.type}
-                                    onChange={e => setNewPhoto(prev => ({ ...prev, type: e.target.value as any }))}
+                                    onChange={e => setNewPhoto(prev => ({ ...prev, type: e.target.value as "progress" | "issue" | "material" | "safety" | "other" }))}
                                     disabled={isUploading}
                                 >
                                     <option value="progress">進度記錄</option>
@@ -809,10 +826,12 @@ export default function ProjectDetailPage() {
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {photos.map(photo => (
                                     <div key={photo.id} className="border rounded-lg overflow-hidden">
-                                        <img
+                                        <Image
                                             src={photo.url}
                                             alt={photo.description}
                                             className="w-full h-40 object-cover"
+                                            width={300}
+                                            height={200}
                                             loading="lazy"
                                         />
                                         <div className="p-2">
@@ -934,8 +953,8 @@ export default function ProjectDetailPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {materials.map((material, index) => (
-                                            <tr key={material.materialId || index} className="border-b">
+                                        {materials.map((material) => (
+                                            <tr key={material.materialId} className="border-b">
                                                 <td className="px-4 py-3 font-medium">{material.name}</td>
                                                 <td className="px-4 py-3">{material.quantity} {material.unit}</td>
                                                 <td className="px-4 py-3">{material.supplier || '-'}</td>
@@ -1011,7 +1030,7 @@ export default function ProjectDetailPage() {
                                 <select
                                     className="border px-3 py-2 rounded w-full"
                                     value={newIssue.type}
-                                    onChange={e => setNewIssue(prev => ({ ...prev, type: e.target.value as any }))}
+                                    onChange={e => setNewIssue(prev => ({ ...prev, type: e.target.value as 'quality' | 'safety' | 'progress' | 'other' }))}
                                     disabled={saving}
                                     required
                                 >
@@ -1026,7 +1045,7 @@ export default function ProjectDetailPage() {
                                 <select
                                     className="border px-3 py-2 rounded w-full"
                                     value={newIssue.severity}
-                                    onChange={e => setNewIssue(prev => ({ ...prev, severity: e.target.value as any }))}
+                                    onChange={e => setNewIssue(prev => ({ ...prev, severity: e.target.value as 'low' | 'medium' | 'high' }))}
                                     disabled={saving}
                                 >
                                     <option value="low">低</option>
