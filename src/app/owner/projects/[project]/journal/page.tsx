@@ -6,7 +6,7 @@ import { doc, updateDoc, arrayUnion, Timestamp } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { Project } from "@/types/project";
-import { DailyReport } from "@/types/workpackage";
+import { DailyReport, ActivityLog, IssueRecord } from "@/types/workpackage";
 
 export default function ProjectJournalPage() {
     const params = useParams();
@@ -240,14 +240,14 @@ export default function ProjectJournalPage() {
                                     <div className="mb-2">
                                         <span className="font-medium">工作內容:</span>
                                         <p className="text-gray-700 dark:text-gray-300">
-                                            {report.activities?.map(a => a.description).join("; ")}
+                                            {report.activities?.map((a: ActivityLog) => a.description).join("; ")}
                                         </p>
                                     </div>
                                     {report.issues && report.issues.length > 0 && (
                                         <div>
                                             <span className="font-medium">問題:</span>
                                             <p className="text-gray-700 dark:text-gray-300">
-                                                {report.issues.map(i => i.description).join("; ")}
+                                                {report.issues.map((i: IssueRecord) => i.description).join("; ")}
                                             </p>
                                         </div>
                                     )}
