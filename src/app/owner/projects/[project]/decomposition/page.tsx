@@ -21,8 +21,9 @@ import { FirestoreSync } from "./FirestoreSync";
 import { DeleteButton } from "./DeleteButton";
 import { useLog } from "./LogOverlay";
 
+// 修正：確保節點 ID 格式一致且簡單
 let nodeId = 1;
-const getId = () => `node_${nodeId++}`;
+const getId = () => `${nodeId++}`; // 移除前綴，由 FirestoreSync 統一處理前綴
 
 function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: Edge[] }) {
     const initialNodes: Node[] = propNodes ?? [];

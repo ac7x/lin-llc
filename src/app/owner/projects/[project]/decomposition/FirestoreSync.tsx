@@ -4,15 +4,23 @@ import { Node, Edge } from "@xyflow/react";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
 import { useLog } from "./LogOverlay";
 
-// 修正：邊的 id 也需唯一且不能與節點重複
+// 修正：避免重複添加前綴，並確保 ID 的唯一性
 function ensureUniqueStringId(arr: any[] | undefined, prefix: string): any[] {
     if (!arr) return [];
     const seen = new Set<string>();
     return arr.map((item, idx) => {
-        let id = typeof item.id === "string" ? item.id : String(item.id ?? idx);
-        id = `${prefix}_${id}`;
+        // 先清理 ID，移除所有可能的重複前綴
+        let rawId = typeof item.id === "string" ? item.id : String(item.id ?? idx);
+        // 如果 ID 已有前綴，移除所有前綴實例，如 node_node_node_123 -> 123
+        const prefixRegex = new RegExp(`^(?:${prefix}_)+`);
+        rawId = rawId.replace(prefixRegex, '');
+
+        // 添加單一前綴
+        let id = `${prefix}_${rawId}`;
+
+        // 確保唯一性
         while (seen.has(id)) {
-            id = `${id}_${Math.random().toString(36).slice(2, 8)}`;
+            id = `${prefix}_${rawId}_${Math.random().toString(36).slice(2, 8)}`;
         }
         seen.add(id);
         return { ...item, id };
