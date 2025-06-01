@@ -1,18 +1,18 @@
 "use client";
-import { useFirebase, User, Firestore } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
+import { getRedirectResult } from "firebase/auth";
 
-const isMobile = () => {
-  if (typeof window === "undefined") return false;
-  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
-};
+const isMobile = () =>
+  typeof window !== "undefined" &&
+  /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 
 const saveUserToFirestore = async (
-  user: Pick<User, "uid" | "email" | "emailVerified" | "displayName" | "photoURL">,
-  db: Firestore,
-  doc: typeof import("firebase/firestore").doc,
-  setDoc: typeof import("firebase/firestore").setDoc
+  user: any,
+  db: any,
+  doc: any,
+  setDoc: any
 ) => {
   if (!user?.uid) return;
   await setDoc(
@@ -29,7 +29,7 @@ const saveUserToFirestore = async (
   );
 };
 
-export default function HomePage() {
+export default function LoginPage() {
   const {
     auth,
     db,
@@ -42,8 +42,20 @@ export default function HomePage() {
     signOut,
     useAuthState,
   } = useFirebase();
+
   const [user, loading] = useAuthState(auth);
   const router = useRouter();
+
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        await getRedirectResult(auth);
+      } catch (error) {
+        console.error("getRedirectResult 錯誤：", error);
+      }
+    };
+    handleRedirectResult();
+  }, [auth]);
 
   useEffect(() => {
     const redirectByRole = async () => {
@@ -64,18 +76,18 @@ export default function HomePage() {
       }
     };
     redirectByRole();
-  }, [user, router, db, doc, getDoc, setDoc]);
+  }, [user, db, doc, getDoc, setDoc, router]);
 
   const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
     try {
-      const provider = new GoogleAuthProvider();
       if (isMobile()) {
         await signInWithRedirect(auth, provider);
       } else {
         await signInWithPopup(auth, provider);
       }
-    } catch {
-      alert("登入失敗");
+    } catch (err) {
+      alert("登入失敗：" + (err as Error).message);
     }
   };
 
@@ -89,26 +101,28 @@ export default function HomePage() {
 
   if (loading) return <div className="p-6 text-center">載入中...</div>;
 
-  if (user) return (
-    <div className="p-6 text-center">
-      <div>重定向中...</div>
-      <button
-        className="mt-4 px-4 py-2 bg-gray-300 rounded"
-        onClick={handleSignOut}
-      >
-        登出
-      </button>
-    </div>
-  );
+  if (user) {
+    return (
+      <div className="p-6 text-center">
+        <div>登入成功，正在重定向...</div>
+        <button
+          className="mt-4 px-4 py-2 bg-gray-300 rounded"
+          onClick={handleSignOut}
+        >
+          登出
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-lg mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Google 帳號登入</h1>
+      <h1 className="text-2xl font-bold">使用 Google 帳號登入</h1>
       <button
         className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
         onClick={handleGoogleLogin}
       >
-        使用 Google 帳號登入
+        Google 登入
       </button>
     </div>
   );
