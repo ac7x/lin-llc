@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel, ChatSession } from "firebase/ai";
-import { RECAPTCHA_SITE_KEY } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { useFirebase } from '@/modules/shared/infrastructure/persistence/firebase/FirebaseContext';
 
 interface ChatMessage {
@@ -27,9 +26,17 @@ export default function GeminiPage() {
     // 動態載入 reCAPTCHA v3 script
     if (typeof window === 'undefined') return;
     if (document.getElementById('recaptcha-v3-script')) return;
+
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY;
+    if (!siteKey) {
+      setError('reCAPTCHA v3 網站金鑰未設定。請檢查環境變數 NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY。');
+      console.error('reCAPTCHA v3 網站金鑰未設定。請檢查環境變數 NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY。');
+      return;
+    }
+
     const script = document.createElement('script');
     script.id = 'recaptcha-v3-script';
-    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${RECAPTCHA_SITE_KEY}`;
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`;
     script.async = true;
     script.onload = () => {
       console.log('reCAPTCHA v3 script loaded.');
