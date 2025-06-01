@@ -16,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <body>
+        {/* PRODUCTION_STANDARD: DevNav 通常僅用於開發環境。在生產打包時應考慮移除或條件渲染。 */}
         <DevNav />
         <FirebaseProvider>
           {children}

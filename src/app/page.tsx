@@ -83,6 +83,7 @@ export default function HomePage() {
           if (!userDocSnap.exists()) {
             // 這種情況理論上不應該在 saveUserToFirestore 成功後發生
             console.error("User document not found in Firestore after attempting to save. UID:", user.uid);
+            // PRODUCTION_STANDARD: 考慮使用更友好的 UI 提示取代 alert
             alert("無法驗證您的使用者資訊，請嘗試重新登入。");
             await signOut(auth); // 登出用戶
             return;
@@ -105,6 +106,7 @@ export default function HomePage() {
           }
         } catch (error) {
           console.error("Error during user processing or redirection:", error);
+          // PRODUCTION_STANDARD: 考慮使用更友好的 UI 提示取代 alert，並將錯誤記錄到監控系統
           alert("處理您的帳戶時發生錯誤。如果問題持續，請聯繫支援。");
           // 根據錯誤的性質，可以考慮是否需要登出用戶
           // await signOut(auth); 
@@ -124,6 +126,7 @@ export default function HomePage() {
       }
     } catch (err) {
       console.error("登入失敗", err);
+      // PRODUCTION_STANDARD: 考慮使用更友好的 UI 提示取代 alert
       alert("登入失敗，請再試一次");
     }
   };
@@ -132,6 +135,7 @@ export default function HomePage() {
     try {
       await signOut(auth);
     } catch {
+      // PRODUCTION_STANDARD: 考慮使用更友好的 UI 提示取代 alert
       alert("登出失敗");
     }
   };

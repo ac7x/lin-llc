@@ -46,13 +46,13 @@ env:
     availability:
       - BUILD
       - RUNTIME
-  - variable: RECAPTCHA_SITE_KEY
+  - variable: RECAPTCHA_SITE_KEY # This might be used for other server-side purposes, keep if needed.
     value: "6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"
     availability:
       - BUILD
       - RUNTIME
-  - variable: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
-    value: "6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE"
+  - variable: NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY # Renamed from NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+    value: "6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE" # Ensure this is your V3 site key
     availability:
       - BUILD
       - RUNTIME

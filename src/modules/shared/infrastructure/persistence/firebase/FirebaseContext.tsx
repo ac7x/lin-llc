@@ -45,29 +45,35 @@ import { useUploadFile, useDownloadURL } from "react-firebase-hooks/storage";
 import { useToken } from "react-firebase-hooks/messaging";
 
 // Firebase 初始化
+// 建議將這些設定移至環境變數，以提高安全性與可配置性
+// 例如： process.env.NEXT_PUBLIC_FIREBASE_API_KEY
 const firebaseConfig = {
-    apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
-    authDomain: "lin-llc.firebaseapp.com",
-    projectId: "lin-llc",
-    storageBucket: "lin-llc.appspot.com",
-    messagingSenderId: "394023041902",
-    appId: "1:394023041902:web:f9874be5d0d192557b1f7f",
-    measurementId: "G-62JEHK00G8"
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "lin-llc.firebaseapp.com",
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "lin-llc",
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "lin-llc.appspot.com",
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "394023041902",
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:394023041902:web:f9874be5d0d192557b1f7f",
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-62JEHK00G8"
 };
+
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const isBrowser = typeof window !== "undefined";
 
 // 初始化 App Check
-// 將 'YOUR_RECAPTCHA_V3_SITE_KEY' 替換成您的 reCAPTCHA v3 網站金鑰
-// 重要：確保此金鑰與您在 Firebase 控制台中設定的金鑰相符。
-// 您提供的金鑰：6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE
 // 將 isTokenAutoRefreshEnabled 設為 true 以便自動刷新 token
 let appCheck: AppCheck | undefined = undefined;
 if (isBrowser) {
-    appCheck = initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider('6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE'),
-        isTokenAutoRefreshEnabled: true
-    });
+    // 建議將 reCAPTCHA v3 網站金鑰移至環境變數
+    const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY;
+    if (recaptchaSiteKey) {
+        appCheck = initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+            isTokenAutoRefreshEnabled: true
+        });
+    } else {
+        console.warn("reCAPTCHA v3 site key is not defined. App Check will not be initialized.");
+    }
 }
 
 
