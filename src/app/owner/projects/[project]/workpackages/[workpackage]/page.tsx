@@ -32,14 +32,14 @@ export default function WorkpackageDetailPage() {
     if (!projectDoc?.exists()) return <div>找不到專案</div>;
 
     const project = projectDoc.data();
-    const workpackage = project?.workpackages?.find((wp: { id: string }) => wp.id === workpackageId) as Workpackage | undefined;
+    const workpackage = project?.workpackages?.find((wp: { id: string }) => wp.id === workpackageId);
 
     if (!workpackage) return <div>找不到此工作包</div>;
 
     const handleSave = async (updates: Partial<Workpackage>) => {
         setSaving(true);
         try {
-            const updatedWorkpackages = project?.workpackages.map((wp: Workpackage) =>
+            const updatedWorkpackages = project.workpackages.map((wp: Workpackage) =>
                 wp.id === workpackageId ? { ...wp, ...updates } : wp
             );
             await updateDoc(doc(db, "projects", projectId), {
@@ -53,7 +53,7 @@ export default function WorkpackageDetailPage() {
         }
     };
 
-    const subWorkpackages = project?.workpackages?.filter((wp: Workpackage) =>
+    const subWorkpackages = project.workpackages?.filter((wp: Workpackage) =>
         workpackage.childrenIds.includes(wp.id)
     ) || [];
 
@@ -250,9 +250,8 @@ export default function WorkpackageDetailPage() {
                             {subWorkpackages.map((subWp: Workpackage) => (
                                 <div
                                     key={subWp.id}
-                                    className="border rounded-lg p-4 hover:bg-gray-50"
+                                    className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
                                     onClick={() => router.push(`/owner/projects/${projectId}/workpackages/${subWp.id}`)}
-                                    role="button"
                                 >
                                     <div className="flex justify-between items-center">
                                         <h3 className="font-medium">{subWp.name}</h3>
