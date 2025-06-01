@@ -19,7 +19,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { FirestoreSync } from "./FirestoreSync";
 import { DeleteButton } from "./DeleteButton";
-import { LogOverlay } from "./LogOverlay";
+import { useLog } from "./LogOverlay";
 
 let nodeId = 1;
 const getId = () => `node_${nodeId++}`;
@@ -42,11 +42,7 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
     // 拖曳新節點時的 id
     const draggingNodeId = useRef<string | null>(null);
 
-    const [logs, setLogs] = React.useState<string[]>([]);
-
-    const addLog = useCallback((message: string) => {
-        setLogs((prevLogs) => [...prevLogs, message]);
-    }, []);
+    const { addLog } = useLog();
 
     const onConnect = useCallback((params: Connection) => {
         setEdges(eds => addEdge(params, eds));
@@ -120,7 +116,6 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
 
     return (
         <div style={{ height: "100vh" }}>
-            <LogOverlay logs={logs} />
             <DeleteButton
                 onDelete={handleDelete}
                 disabled={selectedNodeIds.length === 0 && selectedEdgeIds.length === 0}

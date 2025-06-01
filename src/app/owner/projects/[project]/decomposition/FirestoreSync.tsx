@@ -2,6 +2,7 @@ import React from "react";
 import { useParams } from "next/navigation";
 import { Node, Edge } from "@xyflow/react";
 import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebase/FirebaseContext";
+import { useLog } from "./LogOverlay";
 
 // 修正：邊的 id 也需唯一且不能與節點重複
 function ensureUniqueStringId(arr: any[] | undefined, prefix: string): any[] {
@@ -41,20 +42,24 @@ export function FirestoreSync({
     // 本地狀態
     const [nodes, setNodes] = React.useState<Node[] | undefined>(undefined);
     const [edges, setEdges] = React.useState<Edge[] | undefined>(undefined);
-    const [logs, setLogs] = React.useState<string[]>([]);
-    const addLog = React.useCallback((message: string) => {
-        setLogs((prevLogs) => [...prevLogs, message]);
-    }, []);
+    const { addLog } = useLog();
 
-    // Firestore 變更時，更新本地狀態
+    // 用一個 ref 來避免重複 log
+    const loadedRef = React.useRef(false);
+
     React.useEffect(() => {
         if (projectDoc?.exists()) {
             const decomposition = projectDoc.data().decomposition;
             setNodes(ensureUniqueStringId(decomposition?.nodes, "node"));
             setEdges(ensureUniqueStringId(decomposition?.edges, "edge"));
-            addLog("從 Firestore 載入節點與邊");
+            if (!loadedRef.current) {
+                addLog("從 Firestore 載入節點與邊");
+                loadedRef.current = true;
+            }
         }
-    }, [projectDoc, addLog]);
+        // 這裡 addLog 不用放進依賴，因為只要 log 一次
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projectDoc]);
 
     // 本地變更時，自動同步到 Firestore
     const prevNodes = React.useRef<Node[] | undefined>(undefined);
