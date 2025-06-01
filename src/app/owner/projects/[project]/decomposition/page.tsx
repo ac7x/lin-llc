@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, Dispatch, SetStateAction, ReactNode } from "react";
 import {
     ReactFlow,
     ReactFlowProvider,
@@ -24,24 +24,23 @@ import { useFirebase } from "@/modules/shared/infrastructure/persistence/firebas
 
 // 修正：確保節點 ID 格式一致且簡單
 let nodeId = 1;
-const getId = () => `${nodeId++}`; // 移除前綴，由 FirestoreSync 統一處理前綴
+const getId = () => `${nodeId++}`;
 
-function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: Edge[] }) {
+// 型別定義
+type FlowProps = {
+    nodes?: Node[];
+    edges?: Edge[];
+};
+
+function Flow({ nodes: propNodes, edges: propEdges }: FlowProps) {
     const initialNodes: Node[] = propNodes ?? [];
     const initialEdges: Edge[] = propEdges ?? [];
 
-    const [
-        nodes, setNodes, onNodesChange,
-        edges, setEdges, onEdgesChange
-    ] = [
-            ...useNodesState(initialNodes),
-            ...useEdgesState(initialEdges),
-        ];
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
     const { screenToFlowPosition } = useReactFlow();
     const connectingNodeId = useRef<string | null>(null);
-
-    // 拖曳新節點時的 id
     const draggingNodeId = useRef<string | null>(null);
 
     const { addLog } = useLog();
@@ -58,12 +57,9 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
     const onConnectEnd: OnConnectEnd = useCallback((event) => {
         const sourceId = connectingNodeId.current;
         if (!sourceId) return;
-
-        // 檢查是否拖曳到 pane（空白處），只有這種情況才新增節點
         const targetIsPane =
             event.target &&
             (event.target as HTMLElement).classList.contains("react-flow__pane");
-
         if (targetIsPane) {
             const { clientX, clientY } =
                 "changedTouches" in event ? event.changedTouches[0] : event;
@@ -85,29 +81,24 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
         connectingNodeId.current = null;
     }, [screenToFlowPosition, setNodes, setEdges, addLog]);
 
-    // 拖動新節點
     const onNodeDragStop = useCallback(
-        (event: React.MouseEvent | React.TouchEvent, node: Node) => {
+        (_event: React.MouseEvent | React.TouchEvent, node: Node) => {
             if (draggingNodeId.current && node.id === draggingNodeId.current) {
-                // 只處理剛新增的節點
                 draggingNodeId.current = null;
             }
         },
         []
     );
 
-    // 新增選取狀態
     const [selectedNodeIds, setSelectedNodeIds] = React.useState<string[]>([]);
     const [selectedEdgeIds, setSelectedEdgeIds] = React.useState<string[]>([]);
 
-    // 處理選取變更
-    const onSelectionChange = React.useCallback(({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) => {
-        setSelectedNodeIds(nodes.map((n: Node) => n.id));
-        setSelectedEdgeIds(edges.map((e: Edge) => e.id));
+    const onSelectionChange = useCallback(({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) => {
+        setSelectedNodeIds(nodes.map(n => n.id));
+        setSelectedEdgeIds(edges.map(e => e.id));
     }, []);
 
-    // 刪除選取
-    const handleDelete = React.useCallback(() => {
+    const handleDelete = useCallback(() => {
         setNodes(nds => nds.filter(n => !selectedNodeIds.includes(n.id)));
         setEdges(eds => eds.filter(e => !selectedEdgeIds.includes(e.id)));
         setSelectedNodeIds([]);
@@ -144,23 +135,26 @@ function Flow({ nodes: propNodes, edges: propEdges }: { nodes?: Node[]; edges?: 
 
 // === FirestoreSync 相關程式碼開始 ===
 
-// 移除錯誤的 import
+type FirestoreSyncProps = {
+    children: (
+        nodes: Node[] | undefined,
+        edges: Edge[] | undefined,
+        loading: boolean,
+        error: unknown,
+        setNodes: Dispatch<SetStateAction<Node[] | undefined>>,
+        setEdges: Dispatch<SetStateAction<Edge[] | undefined>>,
+        addLog: (message: string) => void
+    ) => ReactNode;
+};
 
-// 修正：避免重複添加前綴，並確保 ID 的唯一性
-function ensureUniqueStringId(arr: any[] | undefined, prefix: string): any[] {
+function ensureUniqueStringId<T extends { id?: string | number }>(arr: T[] | undefined, prefix: string): T[] {
     if (!arr) return [];
     const seen = new Set<string>();
     return arr.map((item, idx) => {
-        // 先清理 ID，移除所有可能的重複前綴
         let rawId = typeof item.id === "string" ? item.id : String(item.id ?? idx);
-        // 如果 ID 已有前綴，移除所有前綴實例，如 node_node_node_123 -> 123
         const prefixRegex = new RegExp(`^(?:${prefix}_)+`);
         rawId = rawId.replace(prefixRegex, '');
-
-        // 添加單一前綴
         let id = `${prefix}_${rawId}`;
-
-        // 確保唯一性
         while (seen.has(id)) {
             id = `${prefix}_${rawId}_${Math.random().toString(36).slice(2, 8)}`;
         }
@@ -169,65 +163,46 @@ function ensureUniqueStringId(arr: any[] | undefined, prefix: string): any[] {
     });
 }
 
-export function FirestoreSync({
-    children,
-}: {
-    children: (
-        nodes: Node[] | undefined,
-        edges: Edge[] | undefined,
-        loading: boolean,
-        error: any,
-        setNodes: React.Dispatch<React.SetStateAction<Node[] | undefined>>,
-        setEdges: React.Dispatch<React.SetStateAction<Edge[] | undefined>>,
-        addLog: (message: string) => void
-    ) => React.ReactNode;
-}) {
+export function FirestoreSync({ children }: FirestoreSyncProps) {
     const params = useParams();
-    const projectId = params?.project as string;
-    // 正確取得 db, doc, useDocument, updateDoc
+    const projectId = params?.project as string | undefined;
     const { db, doc, useDocument, updateDoc } = useFirebase();
+
+    // 直接使用 useDocument 回傳的型別
     const [projectDoc, loading, error] = useDocument(
         projectId ? doc(db, "projects", projectId) : undefined
     );
 
-    // 本地狀態
     const [nodes, setNodes] = React.useState<Node[] | undefined>(undefined);
     const [edges, setEdges] = React.useState<Edge[] | undefined>(undefined);
     const { addLog } = useLog();
-
-    // 用一個 ref 來避免重複 log
-    const loadedRef = React.useRef(false);
+    const loadedRef = useRef(false);
 
     React.useEffect(() => {
-        if (projectDoc?.exists()) {
-            const decomposition = projectDoc.data().decomposition;
-            setNodes(ensureUniqueStringId(decomposition?.nodes, "node"));
-            setEdges(ensureUniqueStringId(decomposition?.edges, "edge"));
+        if (projectDoc && projectDoc.exists()) {
+            // 修正：projectDoc.data() 可能回傳 undefined，需防禦
+            const decomposition = projectDoc.data()?.decomposition;
+            setNodes(ensureUniqueStringId<Node>(decomposition?.nodes, "node"));
+            setEdges(ensureUniqueStringId<Edge>(decomposition?.edges, "edge"));
             if (!loadedRef.current) {
                 addLog("從 Firestore 載入節點與邊");
                 loadedRef.current = true;
             }
         }
-        // 這裡 addLog 不用放進依賴，因為只要 log 一次
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [projectDoc]);
 
-    // 本地變更時，自動同步到 Firestore
-    const prevNodes = React.useRef<Node[] | undefined>(undefined);
-    const prevEdges = React.useRef<Edge[] | undefined>(undefined);
+    const prevNodes = useRef<Node[] | undefined>(undefined);
+    const prevEdges = useRef<Edge[] | undefined>(undefined);
+
     React.useEffect(() => {
         if (!projectId) return;
         if (!nodes || !edges) return;
-        // 避免初始載入時觸發
-        if (
-            prevNodes.current === undefined &&
-            prevEdges.current === undefined
-        ) {
+        if (prevNodes.current === undefined && prevEdges.current === undefined) {
             prevNodes.current = nodes;
             prevEdges.current = edges;
             return;
         }
-        // 僅當內容有變更時才寫入
         if (
             JSON.stringify(nodes) !== JSON.stringify(prevNodes.current) ||
             JSON.stringify(edges) !== JSON.stringify(prevEdges.current)
@@ -257,7 +232,6 @@ export default function DecompositionPage() {
                 {(nodes, edges, loading, error) => {
                     if (loading) return <div>載入中...</div>;
                     if (error) return <div>錯誤: {String(error)}</div>;
-                    // 防禦性檢查，避免 ReactFlow 無法渲染
                     if (!nodes || !edges) return <div>無法載入節點或邊</div>;
                     return <Flow nodes={nodes} edges={edges} />;
                 }}
