@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel, ChatSession } from "firebase/ai";
-import { app as firebaseAppInstance, RECAPTCHA_SITE_KEY } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { RECAPTCHA_SITE_KEY } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
+import { useFirebase } from '@/modules/shared/infrastructure/persistence/firebase/FirebaseContext';
 
 interface ChatMessage {
   role: "user" | "model";
@@ -10,6 +11,8 @@ interface ChatMessage {
 }
 
 export default function GeminiPage() {
+  const { app: firebaseAppInstance } = useFirebase();
+
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,6 +42,7 @@ export default function GeminiPage() {
 
   useEffect(() => {
     const initializeAI = async () => {
+      // 確認 firebaseAppInstance 已定義
       if (isInitialized || !firebaseAppInstance || typeof window === 'undefined') return;
 
       // 等待 grecaptcha 載入
@@ -81,7 +85,8 @@ export default function GeminiPage() {
     };
 
     initializeAI();
-  }, [isInitialized]);
+    // 將 firebaseAppInstance 加入依賴項陣列
+  }, [isInitialized, firebaseAppInstance]);
 
 
   useEffect(() => {

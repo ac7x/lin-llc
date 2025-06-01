@@ -1,6 +1,8 @@
 "use client";
 import React, { createContext, useContext } from "react";
 import { initializeApp, getApps } from "firebase/app";
+// 匯入 App Check 相關模組
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import {
     getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile,
@@ -29,6 +31,8 @@ import type {
     FirebaseStorage, StorageReference, UploadTask, UploadTaskSnapshot, FullMetadata, SettableMetadata
 } from "firebase/storage";
 import type { Analytics } from "firebase/analytics";
+// 匯入 App Check 型別
+import type { AppCheck } from "firebase/app-check";
 import {
     useCollection, useCollectionData, useCollectionOnce, useCollectionDataOnce, useDocument, useDocumentData,
     useDocumentOnce, useDocumentDataOnce,
@@ -52,6 +56,21 @@ const firebaseConfig = {
 };
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const isBrowser = typeof window !== "undefined";
+
+// 初始化 App Check
+// 將 'YOUR_RECAPTCHA_V3_SITE_KEY' 替換成您的 reCAPTCHA v3 網站金鑰
+// 重要：確保此金鑰與您在 Firebase 控制台中設定的金鑰相符。
+// 您提供的金鑰：6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE
+// 將 isTokenAutoRefreshEnabled 設為 true 以便自動刷新 token
+let appCheck: AppCheck | undefined = undefined;
+if (isBrowser) {
+    appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6Leykk4rAAAAAE8l-TYIU-N42B4fkl4bBBVWYibE'),
+        isTokenAutoRefreshEnabled: true
+    });
+}
+
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
@@ -59,6 +78,7 @@ const analytics = isBrowser ? getAnalytics(app) : undefined;
 
 type FirebaseContextType = {
     app: typeof app;
+    appCheck: typeof appCheck; // 加入 appCheck 型別
     auth: typeof auth;
     db: typeof db;
     storage: typeof storage;
@@ -151,6 +171,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         <FirebaseContext.Provider
             value={{
                 app,
+                appCheck, // 加入 appCheck 實例
                 auth,
                 db,
                 storage,
@@ -277,4 +298,5 @@ export type {
     FullMetadata,
     SettableMetadata,
     Analytics,
+    AppCheck, // 匯出 AppCheck 型別
 };
