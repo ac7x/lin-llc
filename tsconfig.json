@@ -46,8 +46,7 @@
       "finance",
       "gemini",
       "project",
-      "user",
-      "env"
+      "user"
     ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
