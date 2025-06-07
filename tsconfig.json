@@ -41,7 +41,6 @@
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": [
-      "grecaptcha",
       "charts",
       "finance",
       "project",
