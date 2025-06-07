@@ -5,7 +5,7 @@ import { User, onAuthStateChanged } from 'firebase/auth';
 import { auth, db, doc, getDoc, setDoc } from './firebase-client';
 
 // 重新匯出 Firestore 相關函數供其他模組使用
-export { db, doc, getDoc, setDoc };
+export { db, doc, getDoc, setDoc, collection, getDocs } from './firebase-client';
 
 interface FirebaseContextType {
   user: User | null;
