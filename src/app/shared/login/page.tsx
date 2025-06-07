@@ -4,7 +4,6 @@ import { auth } from "@/lib/firebase-client";
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Image from 'next/image';
-import { useFirebase } from "@/lib/firebase-context";
 
 // SVG 圖示元件
 function GoogleLogo({ style }: { style?: React.CSSProperties }) {
@@ -28,18 +27,8 @@ function SignOut({ style }: { style?: React.CSSProperties }) {
 
 function SignIn() {
     const [user, loading] = useAuthState(auth);
-    const { appCheckReady, appCheckTimeout, appCheckLog, retryAppCheck } = useFirebase();
-
-    const handleRefresh = (): void => {
-        window.location.reload();
-    };
 
     const handleGoogleSignIn = async (): Promise<void> => {
-        if (!appCheckReady) {
-            alert("系統正在初始化中，請稍後再試");
-            return;
-        }
-
         try {
             const provider = new GoogleAuthProvider();
             await signInWithPopup(auth, provider);
@@ -59,69 +48,6 @@ function SignIn() {
 
     if (loading) {
         return <div>載入中...</div>;
-    }
-
-    if (appCheckTimeout) {
-        return (
-            <div className="max-w-4xl mx-auto p-6 text-center">
-                <div className="text-red-600 text-lg font-semibold mb-4">
-                    🚫 安全性驗證載入超時
-                </div>
-                <div className="text-gray-600 mb-4">
-                    請檢查網路連線、reCAPTCHA script 或關閉廣告阻擋程式
-                </div>
-
-                <div className="bg-white border border-red-200 rounded-lg p-4 shadow-sm">
-                    <div className="text-sm text-gray-700 mb-2 font-medium">📋 詳細除錯資訊：</div>
-                    <pre className="bg-gray-50 text-xs text-left p-3 rounded border overflow-x-auto"
-                        style={{ whiteSpace: "pre-wrap", maxHeight: "300px" }}>
-                        {appCheckLog}
-                    </pre>
-                </div>
-
-                <div className="flex gap-3 justify-center mt-6">
-                    <button
-                        onClick={handleRefresh}
-                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                    >
-                        🔄 重新載入頁面
-                    </button>
-                    {retryAppCheck && (
-                        <button
-                            onClick={retryAppCheck}
-                            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                        >
-                            🔁 重試 App Check
-                        </button>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    if (!appCheckReady) {
-        return (
-            <div className="max-w-4xl mx-auto p-6 text-center">
-                <div className="text-blue-600 text-lg font-semibold mb-4">
-                    🔄 系統初始化中...
-                </div>
-                <div className="text-gray-600 mb-4">
-                    正在驗證安全性設定，請稍候
-                </div>
-
-                <div className="bg-white border border-blue-200 rounded-lg p-4 shadow-sm">
-                    <div className="text-sm text-gray-700 mb-2 font-medium">📊 初始化進度：</div>
-                    <pre className="bg-blue-50 text-xs text-left p-3 rounded border overflow-x-auto"
-                        style={{ whiteSpace: "pre-wrap", maxHeight: "300px" }}>
-                        {appCheckLog || "正在載入..."}
-                    </pre>
-                </div>
-
-                <div className="mt-4 text-sm text-gray-500">
-                    💡 如果等待時間過長，可能是：reCAPTCHA 載入緩慢、網路連線問題或廣告阻擋程式干擾
-                </div>
-            </div>
-        );
     }
 
     const containerStyle: React.CSSProperties = {
