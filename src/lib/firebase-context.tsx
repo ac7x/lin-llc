@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, db, doc, getDoc, setDoc, initializeFirebaseAppCheck } from './firebase-client';
+import { auth, db, doc, getDoc, setDoc } from './firebase-client';
 
 // 重新匯出 Firestore 相關函數供其他模組使用
 export { db, doc, getDoc, setDoc };
@@ -10,16 +10,11 @@ export { db, doc, getDoc, setDoc };
 interface FirebaseContextType {
   user: User | null;
   loading: boolean;
-  appCheckReady: boolean;
-  appCheckTimeout?: boolean;
-  appCheckLog?: string;
-  retryAppCheck?: () => void;
 }
 
 const FirebaseContext = createContext<FirebaseContextType>({
   user: null,
   loading: true,
-  appCheckReady: false,
 });
 
 export function useFirebase(): FirebaseContextType {
@@ -33,78 +28,22 @@ interface FirebaseProviderProps {
 export function FirebaseProvider({ children }: FirebaseProviderProps): React.JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [appCheckReady, setAppCheckReady] = useState(false);
-  const [appCheckTimeout, setAppCheckTimeout] = useState(false);
-  const [appCheckLog, setAppCheckLog] = useState<string>("");
-
-  const retryAppCheck = () => {
-    setAppCheckReady(false);
-    setAppCheckTimeout(false);
-    setAppCheckLog("");
-    // 觸發重新初始化
-    window.location.reload();
-  };
 
   useEffect(() => {
-    let mounted = true;
-    const timeoutId: NodeJS.Timeout = setTimeout(() => {
-      if (mounted && !appCheckReady) {
-        setAppCheckTimeout(true);
-        setAppCheckLog(log =>
-          log +
-          `\n⏰ [超時警告] App Check 初始化超過 12 秒` +
-          `\n🔍 [除錯資訊] grecaptcha: ${typeof window !== "undefined" ? (window.grecaptcha ? '✅ 已載入' : '❌ 未載入') : "N/A"}` +
-          `\n🔍 [除錯資訊] App Check Ready: ${appCheckReady}` +
-          `\n🔍 [除錯資訊] 當前時間: ${new Date().toLocaleString()}` +
-          `\n📋 [可能原因]` +
-          `\n   • reCAPTCHA script 載入失敗或被阻擋` +
-          `\n   • 網路連線速度過慢或不穩定` +
-          `\n   • 廣告阻擋程式或防火牆干擾` +
-          `\n   • Firebase 配置錯誤` +
-          `\n   • reCAPTCHA site key 不正確`
-        );
-      }
-    }, 12000);
-
-    // 初始化 App Check
-    const initAppCheck = async () => {
-      try {
-        await initializeFirebaseAppCheck();
-        if (mounted) {
-          setAppCheckReady(true);
-        }
-      } catch {
-        if (mounted) {
-          setAppCheckReady(false);
-        }
-      }
-    };
-
     // 監聽認證狀態變化
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (mounted) {
-        setUser(user);
-        setLoading(false);
-      }
+      setUser(user);
+      setLoading(false);
     });
 
-    // 開始初始化
-    initAppCheck();
-
     return () => {
-      mounted = false;
       unsubscribe();
-      clearTimeout(timeoutId);
     };
-  }, [appCheckReady]); // 加入 appCheckReady 作為依賴
+  }, []);
 
   const value: FirebaseContextType = {
     user,
     loading,
-    appCheckReady,
-    appCheckTimeout,
-    appCheckLog,
-    retryAppCheck,
   };
 
   return (
