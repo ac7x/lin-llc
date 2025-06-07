@@ -5,7 +5,7 @@ import { signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { db, doc, getDoc, setDoc } from "@/lib/firebase/firebase-firestore";
+import { db, doc, getDoc, setDoc } from "@/lib/firebase/firebase-context";
 import { GoogleLogo, SignOut } from "phosphor-react";
 import { serverTimestamp } from "firebase/firestore";
 
