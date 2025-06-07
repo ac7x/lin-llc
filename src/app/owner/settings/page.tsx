@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { db } from "@/lib/firebase/firebase-client";
+import { db } from "@/lib/firebase-client";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export default function OwnerSettingsPage() {

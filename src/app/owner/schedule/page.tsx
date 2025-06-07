@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, DateType } from "vis-timeline/standalone";
-import { db, collection, getDocs, doc, updateDoc } from "@/lib/firebase/firebase-client";
+import { db, collection, getDocs, doc, updateDoc } from "@/lib/firebase-client";
 import { SubWorkpackage, Workpackage } from "@/types/project";
 import { Timestamp } from "firebase/firestore";
 

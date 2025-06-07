@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { QuotePdfDocument } from '@/components/QuotePdfDocument';
 import { exportPdfToBlob } from '@/components/pdfExport';
-import { db, collection } from "@/lib/firebase/firebase-client";
+import { db, collection } from "@/lib/firebase-client";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { QuoteData } from "@/types/finance";
 

@@ -10,7 +10,7 @@ import {
   updateDoc,
   setDoc,
   serverTimestamp,
-} from "@/lib/firebase/firebase-client";
+} from "@/lib/firebase-client";
 import type { AppUser } from "@/types/user";
 
 const usersCollection = collection(db, "users");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { db, doc, updateDoc, Timestamp } from "@/lib/firebase/firebase-client";
+import { db, doc, updateDoc, Timestamp } from "@/lib/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { useState, useMemo } from "react";
 // 新增 DND 相關引入

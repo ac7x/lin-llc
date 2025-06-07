@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db, collection, doc, getDoc } from "@/lib/firebase/firebase-client";
+import { db, collection, doc, getDoc } from "@/lib/firebase-client";
 import { useCollection } from "react-firebase-hooks/firestore";
 
 export default function ArchivedContractsPage() {

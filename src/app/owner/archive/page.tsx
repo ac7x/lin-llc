@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { db, collection, getDocs, deleteDoc, doc } from "@/lib/firebase/firebase-client";
+import { db, collection, getDocs, deleteDoc, doc } from "@/lib/firebase-client";
 
 export default function ArchivedPage() {
     const [clickCount, setClickCount] = useState(0);

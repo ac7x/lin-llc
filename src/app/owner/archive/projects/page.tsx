@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { db, collection } from "@/lib/firebase/firebase-client";
+import { db, collection } from "@/lib/firebase-client";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useMemo, useState } from "react";
 

@@ -3,7 +3,7 @@
 import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { db, collection, doc } from "@/lib/firebase/firebase-client";
+import { db, collection, doc } from "@/lib/firebase-client";
 import { updateDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";

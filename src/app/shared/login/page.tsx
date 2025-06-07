@@ -1,10 +1,10 @@
 "use client";
 
-import { auth } from "@/lib/firebase/firebase-client";
+import { auth } from "@/lib/firebase-client";
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Image from 'next/image';
-import { useFirebase } from "@/lib/firebase/firebase-context";
+import { useFirebase } from "@/lib/firebase-context";
 
 // SVG 圖示元件
 function GoogleLogo({ style }: { style?: React.CSSProperties }) {

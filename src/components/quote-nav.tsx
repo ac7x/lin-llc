@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { db, collection, doc, setDoc, deleteDoc } from "@/lib/firebase/firebase-client";
+import { db, collection, doc, setDoc, deleteDoc } from "@/lib/firebase-client";
 import { useCollection } from "react-firebase-hooks/firestore";
 
-export function OrderSideNav() {
+export function QuoteSideNav() {
     const pathname = usePathname();
     const navs = [
-        { label: "訂單列表", href: "/owner/orders" },
-        { label: "新增訂單", href: "/owner/orders/add" },
+        { label: "估價單列表", href: "/owner/quotes" },
+        { label: "新增估價單", href: "/owner/quotes/add" },
     ];
-    const [ordersSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "orders"));
+    const [quotesSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "quotes"));
+
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
-            <h2 className="text-lg font-bold mb-4 text-center">訂單管理</h2>
+            <h2 className="text-lg font-bold mb-4 text-center">估價單管理</h2>
             <ul className="space-y-2">
                 {/* 列表按鈕 */}
                 <li key={navs[0].href}>
@@ -25,34 +26,34 @@ export function OrderSideNav() {
                         {navs[0].label}
                     </Link>
                 </li>
-                {/* 動態訂單詳情按鈕 */}
+                {/* 動態估價單詳情按鈕 */}
                 {loading ? (
                     <li className="text-gray-400 px-3 py-2">載入中...</li>
                 ) : error ? (
                     <li className="text-red-500 px-3 py-2">{String(error)}</li>
-                ) : ordersSnapshot && ordersSnapshot.docs.length > 0 ? (
-                    ordersSnapshot.docs.map(order => {
-                        const data = order.data();
-                        const orderHref = `/owner/orders/${data.orderId || order.id}`;
+                ) : quotesSnapshot && quotesSnapshot.docs.length > 0 ? (
+                    quotesSnapshot.docs.map(quote => {
+                        const data = quote.data();
+                        const quoteHref = `/owner/quotes/${data.quoteId || quote.id}`;
                         return (
-                            <li key={data.orderId || order.id} className="flex items-center group">
+                            <li key={data.quoteId || quote.id} className="flex items-center group">
                                 <Link
-                                    href={orderHref}
-                                    className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === orderHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                    href={quoteHref}
+                                    className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === quoteHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
                                 >
-                                    {data.orderName || data.orderId || order.id}
+                                    {data.quoteName || data.quoteId || quote.id}
                                 </Link>
                                 <button
-                                    title="封存訂單"
+                                    title="封存估價單"
                                     className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
                                     onClick={async (e) => {
                                         e.preventDefault();
-                                        if (!window.confirm('確定要封存此訂單？')) return;
-                                        const orderData = { ...data, archivedAt: new Date() };
-                                        // 封存到 archived/{userId}/orders/{orderId}
+                                        if (!window.confirm('確定要封存此估價單？')) return;
+                                        const quoteData = { ...data, archivedAt: new Date() };
+                                        // 封存到 archived/{userId}/quotes/{quoteId}
                                         const userId = data.ownerId || "default";
-                                        await setDoc(doc(db, "archived", userId, "orders", data.orderId || order.id), orderData);
-                                        await deleteDoc(doc(db, "orders", data.orderId || order.id));
+                                        await setDoc(doc(db, "archived", userId, "quotes", data.quoteId || quote.id), quoteData);
+                                        await deleteDoc(doc(db, "quotes", data.quoteId || quote.id));
                                     }}
                                 >
                                     🗑️

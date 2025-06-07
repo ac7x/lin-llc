@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { db, collection, doc, setDoc, deleteDoc } from "@/lib/firebase/firebase-client";
+import { db, collection, doc, setDoc, deleteDoc } from "@/lib/firebase-client";
 import { useCollection } from "react-firebase-hooks/firestore";
 
 export default function ContractNav() {

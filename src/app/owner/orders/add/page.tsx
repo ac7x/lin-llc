@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
-import { db, doc } from "@/lib/firebase/firebase-client";
+import { db, doc } from "@/lib/firebase-client";
 import { OrderItem } from "@/types/finance";
 
 export default function OrderAddPage() {

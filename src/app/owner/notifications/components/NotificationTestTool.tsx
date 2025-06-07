@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { useFirebase } from '@/lib/firebase/firebase-context';
-import { createNotification } from '@/lib/firebase/firebase-notifications';
+import { useFirebase } from '@/lib/firebase-context';
+import { createNotification } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';
 
 const NOTIFICATION_TYPES: NotificationMessage['type'][] = ['info', 'success', 'warning', 'error'];

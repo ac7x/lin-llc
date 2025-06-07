@@ -6,7 +6,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import "@/styles/react-big-calendar.css";
 
-import { db, collection, getDocs } from "@/lib/firebase/firebase-client";
+import { db, collection, getDocs } from "@/lib/firebase-client";
 import { Workpackage } from "@/types/project";
 import { ProgressColorScale } from "@/utils/colorScales";
 

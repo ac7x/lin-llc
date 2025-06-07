@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { db, collection, getDocs } from '@/lib/firebase/firebase-client';
+import { db, collection, getDocs } from '@/lib/firebase-client';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { useFirebase } from "@/lib/firebase/firebase-context";
+import { useFirebase } from "@/lib/firebase-context";
 
 export default function DashboardPage() {
   const { appCheckReady } = useFirebase();

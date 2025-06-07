@@ -1,6 +1,6 @@
 "use client";
 
-import { db } from "@/lib/firebase/firebase-client";
+import { db } from "@/lib/firebase-client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useState, useMemo } from "react";

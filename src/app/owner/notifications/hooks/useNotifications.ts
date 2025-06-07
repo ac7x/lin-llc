@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useFirebase } from '@/lib/firebase/firebase-context';
+import { useFirebase } from '@/lib/firebase-context';
 import {
   getUserNotifications,
   subscribeToUserNotifications,
@@ -7,7 +7,7 @@ import {
   markAllNotificationsAsRead,
   getUnreadNotificationCount,
   archiveNotification,
-} from '@/lib/firebase/firebase-notifications';
+} from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';
 
 interface UseNotificationsReturn {

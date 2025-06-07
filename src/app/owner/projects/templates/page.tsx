@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { db, doc, collection, addDoc, updateDoc, deleteDoc } from "@/lib/firebase/firebase-client";
-import { auth } from "@/lib/firebase/firebase-client";
+import { db, doc, collection, addDoc, updateDoc, deleteDoc } from "@/lib/firebase-client";
+import { auth } from "@/lib/firebase-client";
 import { Timestamp } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { Template, SubWorkpackageTemplateItem } from "@/types/project";

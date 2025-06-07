@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import { DevNav } from "../components/dev-nav";
-import { FirebaseProvider } from "@/lib/firebase/firebase-context";
+import { FirebaseProvider } from "@/lib/firebase-context";
 import Script from "next/script";
 
 const geistSans = Geist({

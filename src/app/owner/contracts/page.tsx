@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { ContractPdfDocument } from '@/components/ContractPdfDocument';
 import { exportPdfToBlob } from '@/components/pdfExport';
 import QRCode from "qrcode";
-import { db, collection, doc, getDoc } from "@/lib/firebase/firebase-client";
+import { db, collection, doc, getDoc } from "@/lib/firebase-client";
 
 export default function ContractsPage() {
     const [contractsSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "contracts"));

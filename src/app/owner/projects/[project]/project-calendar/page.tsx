@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
-import { db, doc } from "@/lib/firebase/firebase-client";
+import { db, doc } from "@/lib/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';

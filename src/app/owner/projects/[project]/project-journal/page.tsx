@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { db, doc } from "@/lib/firebase/firebase-client";
+import { db, doc } from "@/lib/firebase-client";
 import { updateDoc, arrayUnion } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";

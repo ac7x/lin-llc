@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { db, doc, updateDoc } from "@/lib/firebase/firebase-client";
+import { db, doc, updateDoc } from "@/lib/firebase-client";
 import { Timestamp } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import {

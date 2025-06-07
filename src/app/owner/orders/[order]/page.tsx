@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { db, doc, Timestamp } from "@/lib/firebase/firebase-client";
+import { db, doc, Timestamp } from "@/lib/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { OrderItem } from "@/types/finance";
 

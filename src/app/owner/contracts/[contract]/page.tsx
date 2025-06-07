@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { db, doc } from "@/lib/firebase/firebase-client";
+import { db, doc } from "@/lib/firebase-client";
 
 export default function ContractDetailPage() {
     const params = useParams();

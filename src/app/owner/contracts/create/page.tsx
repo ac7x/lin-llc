@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { nanoid } from "nanoid";
-import { db } from "@/lib/firebase/firebase-client";
+import { db } from "@/lib/firebase-client";
 import { collection, addDoc, Timestamp, getDocs } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData, QuoteData, OrderItem, QuoteItem } from "@/types/finance";

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { db, doc, updateDoc, collection, getDocs } from "@/lib/firebase/firebase-client";
+import { db, doc, updateDoc, collection, getDocs } from "@/lib/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { SubWorkpackage, Workpackage } from "@/types/project";
