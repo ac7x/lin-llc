@@ -2,6 +2,7 @@
 
 import { GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
 import { useState } from "react";
+import Image from "next/image";
 import { auth } from "@/lib/firebase-client";
 
 export default function SignIn() {
@@ -27,7 +28,13 @@ export default function SignIn() {
       {user && (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 32 }}>
           {user.photoURL && (
-            <img src={user.photoURL} alt="User Avatar" width={80} height={80} style={{ borderRadius: "50%", marginBottom: 8 }} />
+            <Image 
+              src={user.photoURL} 
+              alt="User Avatar" 
+              width={80} 
+              height={80} 
+              style={{ borderRadius: "50%", marginBottom: 8 }} 
+            />
           )}
           <strong>{user.displayName}</strong>
           <small>{user.email}</small>

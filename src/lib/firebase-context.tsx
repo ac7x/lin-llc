@@ -2,13 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, db, doc, getDoc, setDoc, initializeFirebaseAppCheck, isAppCheckInitialized, getAppCheckToken } from './firebase-client';
+import { auth, db, doc, getDoc, setDoc, initializeFirebaseAppCheck } from './firebase-client';
 
 // 重新匯出 Firestore 相關函數供其他模組使用
 export { db, doc, getDoc, setDoc };
-
-// 重新匯出 App Check 相關函數供其他模組使用
-export { initializeFirebaseAppCheck, isAppCheckInitialized, getAppCheckToken } from './firebase-client';
 
 interface FirebaseContextType {
   user: User | null;
@@ -50,32 +47,7 @@ export function FirebaseProvider({ children }: FirebaseProviderProps): React.JSX
 
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
-
-    // 初始化 App Check
-    const initAppCheck = async () => {
-      try {
-        await initializeFirebaseAppCheck();
-        if (mounted) {
-          setAppCheckReady(true);
-        }
-      } catch (error) {
-        if (mounted) {
-          setAppCheckReady(false);
-        }
-      }
-    };
-
-    // 監聽認證狀態變化
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (mounted) {
-        setUser(user);
-        setLoading(false);
-      }
-    });
-
-    // 設定超時（12 秒，給更多時間）
-    timeoutId = setTimeout(() => {
+    const timeoutId: NodeJS.Timeout = setTimeout(() => {
       if (mounted && !appCheckReady) {
         setAppCheckTimeout(true);
         setAppCheckLog(log =>
@@ -94,6 +66,28 @@ export function FirebaseProvider({ children }: FirebaseProviderProps): React.JSX
       }
     }, 12000);
 
+    // 初始化 App Check
+    const initAppCheck = async () => {
+      try {
+        await initializeFirebaseAppCheck();
+        if (mounted) {
+          setAppCheckReady(true);
+        }
+      } catch {
+        if (mounted) {
+          setAppCheckReady(false);
+        }
+      }
+    };
+
+    // 監聽認證狀態變化
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (mounted) {
+        setUser(user);
+        setLoading(false);
+      }
+    });
+
     // 開始初始化
     initAppCheck();
 
@@ -102,7 +96,7 @@ export function FirebaseProvider({ children }: FirebaseProviderProps): React.JSX
       unsubscribe();
       clearTimeout(timeoutId);
     };
-  }, []); // 只在 mount 時執行一次
+  }, [appCheckReady]); // 加入 appCheckReady 作為依賴
 
   const value: FirebaseContextType = {
     user,
