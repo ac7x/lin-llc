@@ -1,175 +1,308 @@
-import { getPerformance, trace } from 'firebase/performance';
-import type { FirebasePerformance } from 'firebase/performance';
-import { firebaseApp } from './firebase-client';
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  onSnapshot,
+  serverTimestamp,
+  writeBatch
+} from 'firebase/firestore';
+import { db } from './firebase-client';
+import type { NotificationMessage, AppUser } from '@/types/user';
 
-let firebasePerformance: FirebasePerformance | null = null;
+const NOTIFICATIONS_COLLECTION = 'notifications';
+const USERS_COLLECTION = 'users';
 
-export function initializePerformance(): FirebasePerformance | null {
-  if (typeof window === 'undefined') return null;
-  if (firebasePerformance) return firebasePerformance;
-  firebasePerformance = getPerformance(firebaseApp);
-  return firebasePerformance;
-}
+/**
+ * 建立新通知
+ */
+export async function createNotification(
+  userId: string,
+  notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
+): Promise<string> {
+  try {
+    const notificationData: Omit<NotificationMessage, 'id'> = {
+      ...notification,
+      userId,
+      isRead: false,
+      isArchived: false,
+      createdAt: new Date().toISOString(),
+    };
 
-export function getPerformanceInstance(): FirebasePerformance | null {
-  return firebasePerformance ?? initializePerformance();
-}
+    const docRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
+      ...notificationData,
+      createdAt: serverTimestamp(),
+    });
 
-export function createTrace(traceName: string) {
-  const perf = getPerformanceInstance();
-  if (!perf) return null;
-  return trace(perf, traceName);
-}
-
-export function measurePageLoad(pageName: string) {
-  const pageTrace = createTrace(`page_load_${pageName}`);
-  if (!pageTrace) return null;
-  pageTrace.start();
-  if (document.readyState === 'complete') {
-    pageTrace.stop();
-  } else {
-    window.addEventListener('load', () => pageTrace.stop());
+    return docRef.id;
+  } catch (error) {
+    console.error('Failed to create notification:', error);
+    throw error;
   }
-  return pageTrace;
 }
 
-export function measureApiCall(apiName: string, method: string = 'GET') {
-  const apiTrace = createTrace(`api_call_${apiName}_${method.toLowerCase()}`);
-  if (!apiTrace) return null;
-  apiTrace.start();
-  return {
-    trace: apiTrace,
-    stop: () => apiTrace.stop(),
-    addAttribute: (name: string, value: string) => apiTrace.putAttribute(name, value),
-  };
-}
+/**
+ * 批量建立通知（例如系統廣播）
+ */
+export async function createBulkNotifications(
+  userIds: string[],
+  notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
+): Promise<void> {
+  try {
+    const batch = writeBatch(db);
+    const now = new Date().toISOString();
 
-export function measureDatabaseOperation(operation: string, collection?: string) {
-  const operationName = collection ? `db_${operation}_${collection}` : `db_${operation}`;
-  const dbTrace = createTrace(operationName);
-  if (!dbTrace) return null;
-  dbTrace.start();
-  return {
-    trace: dbTrace,
-    stop: () => dbTrace.stop(),
-    addAttribute: (name: string, value: string) => dbTrace.putAttribute(name, value),
-  };
-}
+    userIds.forEach((userId) => {
+      const notificationRef = doc(collection(db, NOTIFICATIONS_COLLECTION));
+      const notificationData: Omit<NotificationMessage, 'id'> = {
+        ...notification,
+        userId,
+        isRead: false,
+        isArchived: false,
+        createdAt: now,
+      };
 
-export function measureFileUpload(fileName: string) {
-  const uploadTrace = createTrace(`file_upload_${fileName.replace(/[^a-zA-Z0-9]/g, '_')}`);
-  if (!uploadTrace) return null;
-  uploadTrace.start();
-  return {
-    trace: uploadTrace,
-    stop: () => uploadTrace.stop(),
-    addMetric: (metricName: string, value: number) => uploadTrace.putMetric(metricName, value),
-    addAttribute: (name: string, value: string) => uploadTrace.putAttribute(name, value),
-  };
-}
+      batch.set(notificationRef, {
+        ...notificationData,
+        createdAt: serverTimestamp(),
+      });
+    });
 
-export function measureComponentRender(componentName: string) {
-  const renderTrace = createTrace(`component_render_${componentName}`);
-  if (!renderTrace) return null;
-  renderTrace.start();
-  return {
-    trace: renderTrace,
-    stop: () => renderTrace.stop(),
-    addAttribute: (name: string, value: string) => renderTrace.putAttribute(name, value),
-  };
-}
-
-export class PerformanceTimer {
-  private startTime: number;
-  private endTime?: number;
-  private traceName: string;
-  private trace: any;
-
-  constructor(traceName: string) {
-    this.traceName = traceName;
-    this.startTime = window.performance.now();
-    this.trace = createTrace(traceName);
-    if (this.trace) this.trace.start();
+    await batch.commit();
+  } catch (error) {
+    console.error('Failed to create bulk notifications:', error);
+    throw error;
   }
+}
 
-  stop(): number {
-    this.endTime = window.performance.now();
-    const duration = this.endTime - this.startTime;
-    if (this.trace) {
-      this.trace.putMetric('duration_ms', Math.round(duration));
-      this.trace.stop();
+/**
+ * 取得用戶的通知列表
+ */
+export async function getUserNotifications(
+  userId: string,
+  options: {
+    includeArchived?: boolean;
+    limitCount?: number;
+    onlyUnread?: boolean;
+  } = {}
+): Promise<NotificationMessage[]> {
+  try {
+    const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
+
+    let q = query(
+      collection(db, NOTIFICATIONS_COLLECTION),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+
+    if (!includeArchived) {
+      q = query(q, where('isArchived', '==', false));
     }
-    return duration;
-  }
 
-  addAttribute(name: string, value: string) {
-    if (this.trace) this.trace.putAttribute(name, value);
-  }
-
-  addMetric(name: string, value: number) {
-    if (this.trace) this.trace.putMetric(name, value);
-  }
-}
-
-export function withPerformanceTracking<T extends (...args: any[]) => any>(fn: T, traceName: string): T {
-  return ((...args: any[]) => {
-    const timer = new PerformanceTimer(traceName);
-    const result = fn(...args);
-    if (result instanceof Promise) {
-      return result.finally(() => timer.stop());
-    } else {
-      timer.stop();
-      return result;
+    if (onlyUnread) {
+      q = query(q, where('isRead', '==', false));
     }
-  }) as T;
-}
 
-export function setupWebVitalsTracking() {
-  const perf = getPerformanceInstance();
-  if (!perf) return;
-  if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
-    new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        const lcpTrace = createTrace('web_vitals_lcp');
-        if (lcpTrace) {
-          lcpTrace.start();
-          lcpTrace.putMetric('lcp_time', Math.round(entry.startTime));
-          lcpTrace.stop();
-        }
-      }
-    }).observe({ entryTypes: ['largest-contentful-paint'] });
+    if (limitCount > 0) {
+      q = query(q, limit(limitCount));
+    }
 
-    new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        const fidTrace = createTrace('web_vitals_fid');
-        if (fidTrace) {
-          fidTrace.start();
-          fidTrace.putMetric('fid_time', Math.round((entry as any).processingStart - entry.startTime));
-          fidTrace.stop();
-        }
-      }
-    }).observe({ entryTypes: ['first-input'] });
+    const snapshot = await getDocs(q);
 
-    new PerformanceObserver((list) => {
-      let clsValue = 0;
-      for (const entry of list.getEntries()) {
-        if (!(entry as any).hadRecentInput) {
-          clsValue += (entry as any).value;
-        }
-      }
-      if (clsValue > 0) {
-        const clsTrace = createTrace('web_vitals_cls');
-        if (clsTrace) {
-          clsTrace.start();
-          clsTrace.putMetric('cls_score', Math.round(clsValue * 1000) / 1000);
-          clsTrace.stop();
-        }
-      }
-    }).observe({ entryTypes: ['layout-shift'] });
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
+      readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
+    })) as NotificationMessage[];
+  } catch (error) {
+    console.error('Failed to get user notifications:', error);
+    throw error;
   }
 }
 
-if (typeof window !== 'undefined') {
-  initializePerformance();
-  setupWebVitalsTracking();
+/**
+ * 監聽用戶通知的即時更新
+ */
+export function subscribeToUserNotifications(
+  userId: string,
+  callback: (notifications: NotificationMessage[]) => void,
+  options: {
+    includeArchived?: boolean;
+    limitCount?: number;
+    onlyUnread?: boolean;
+  } = {}
+): () => void {
+  const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
+
+  let q = query(
+    collection(db, NOTIFICATIONS_COLLECTION),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc')
+  );
+
+  if (!includeArchived) {
+    q = query(q, where('isArchived', '==', false));
+  }
+
+  if (onlyUnread) {
+    q = query(q, where('isRead', '==', false));
+  }
+
+  if (limitCount > 0) {
+    q = query(q, limit(limitCount));
+  }
+
+  return onSnapshot(q, (snapshot) => {
+    const notifications = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
+      readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
+    })) as NotificationMessage[];
+
+    callback(notifications);
+  }, (error) => {
+    console.error('Failed to subscribe to notifications:', error);
+  });
+}
+
+/**
+ * 標記通知為已讀
+ */
+export async function markNotificationAsRead(notificationId: string): Promise<void> {
+  try {
+    const notificationRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+    await updateDoc(notificationRef, {
+      isRead: true,
+      readAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Failed to mark notification as read:', error);
+    throw error;
+  }
+}
+
+/**
+ * 批量標記通知為已讀
+ */
+export async function markMultipleNotificationsAsRead(notificationIds: string[]): Promise<void> {
+  try {
+    const batch = writeBatch(db);
+
+    notificationIds.forEach((notificationId) => {
+      const notificationRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+      batch.update(notificationRef, {
+        isRead: true,
+        readAt: serverTimestamp(),
+      });
+    });
+
+    await batch.commit();
+  } catch (error) {
+    console.error('Failed to mark multiple notifications as read:', error);
+    throw error;
+  }
+}
+
+/**
+ * 標記所有通知為已讀
+ */
+export async function markAllNotificationsAsRead(userId: string): Promise<void> {
+  try {
+    const q = query(
+      collection(db, NOTIFICATIONS_COLLECTION),
+      where('userId', '==', userId),
+      where('isRead', '==', false)
+    );
+
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(db);
+
+    snapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        isRead: true,
+        readAt: serverTimestamp(),
+      });
+    });
+
+    await batch.commit();
+  } catch (error) {
+    console.error('Failed to mark all notifications as read:', error);
+    throw error;
+  }
+}
+
+/**
+ * 封存通知
+ */
+export async function archiveNotification(notificationId: string): Promise<void> {
+  try {
+    const notificationRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+    await updateDoc(notificationRef, {
+      isArchived: true,
+    });
+  } catch (error) {
+    console.error('Failed to archive notification:', error);
+    throw error;
+  }
+}
+
+/**
+ * 刪除通知
+ */
+export async function deleteNotification(notificationId: string): Promise<void> {
+  try {
+    const notificationRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+    await updateDoc(notificationRef, {
+      isArchived: true, // 軟刪除，實際上是封存
+    });
+  } catch (error) {
+    console.error('Failed to delete notification:', error);
+    throw error;
+  }
+}
+
+/**
+ * 取得未讀通知數量
+ */
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  try {
+    const q = query(
+      collection(db, NOTIFICATIONS_COLLECTION),
+      where('userId', '==', userId),
+      where('isRead', '==', false),
+      where('isArchived', '==', false)
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.size;
+  } catch (error) {
+    console.error('Failed to get unread notification count:', error);
+    return 0;
+  }
+}
+
+/**
+ * 更新用戶通知設定
+ */
+export async function updateUserNotificationSettings(
+  userId: string,
+  settings: Partial<AppUser['notificationSettings']>
+): Promise<void> {
+  try {
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(userRef, {
+      'notificationSettings': settings,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Failed to update notification settings:', error);
+    throw error;
+  }
 }
