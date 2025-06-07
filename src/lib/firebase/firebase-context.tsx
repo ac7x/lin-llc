@@ -2,11 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, db, doc, getDoc, setDoc } from './firebase-client';
-import { initializeFirebaseAppCheck } from './firebase-appcheck';
+import { auth, db, doc, getDoc, setDoc, initializeFirebaseAppCheck, isAppCheckInitialized, getAppCheckToken } from './firebase-client';
 
 // 重新匯出 Firestore 相關函數供其他模組使用
 export { db, doc, getDoc, setDoc };
+
+// 重新匯出 App Check 相關函數供其他模組使用
+export { initializeFirebaseAppCheck, isAppCheckInitialized, getAppCheckToken } from './firebase-client';
 
 interface FirebaseContextType {
   user: User | null;

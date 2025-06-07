@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect, FormEvent, KeyboardEvent } from "react";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel } from "firebase/ai";
-import { firebaseApp } from "@/lib/firebase/firebase-client";
+import { firebaseApp, initializeFirebaseAppCheck, isAppCheckInitialized, getAppCheckToken } from "@/lib/firebase/firebase-client";
 import { useFirebase } from "@/lib/firebase/firebase-context";
-import { initializeFirebaseAppCheck, isAppCheckInitialized, getAppCheckToken } from "@/lib/firebase/firebase-appcheck";
 
 // 型別定義
 type ChatSession = ReturnType<GenerativeModel["startChat"]>;

@@ -8,4 +8,4 @@ export const firebaseConfig = {
     measurementId: "G-62JEHK00G8",
 };
 
-// 沒有呼叫 initializeFirebaseAppCheck
+export const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY || '6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg';
