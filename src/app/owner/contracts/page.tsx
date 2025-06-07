@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useMemo, useState } from "react";
-import { ContractPdfDocument } from '@/features/pdf/components/ContractPdfDocument';
-import { exportPdfToBlob } from '@/features/pdf/utils/pdfExport';
+import { ContractPdfDocument } from '@/pdf/ContractPdfDocument';
+import { exportPdfToBlob } from '@/pdf/pdfExport';
 import QRCode from "qrcode";
 import { db, collection, doc, getDoc } from "@/lib/firebase/firebase-client";
 
