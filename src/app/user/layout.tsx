@@ -1,5 +1,6 @@
+"use client";
 import { ReactNode } from 'react';
-import { UserBottomNav } from '@/modules/shared/interfaces/navigation/bottom/user-nav';
+import { UserBottomNav } from '@/components/navigation/bottom/user-nav';
 
 export default function UserLayout({ children }: { children: ReactNode }) {
   return (

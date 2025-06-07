@@ -1,7 +1,22 @@
+import React from "react";
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
-import { FirebaseProvider } from "../modules/shared/infrastructure/persistence/firebase/FirebaseContext";
-import { DevNav } from "../modules/shared/interfaces/navigation/dev/DevNav";
+import { DevNav } from "../components/dev-nav";
+import { FirebaseProvider } from "@/lib/firebase/firebase-context";
+import Script from "next/script";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  weight: ["300", "400", "500", "700"],
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  weight: ["300", "400", "500", "700"],
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Lin.LLC",
@@ -10,15 +25,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>): React.JSX.Element {
   return (
     <html lang="zh-Hant">
-      <body>
-        {/* PRODUCTION_STANDARD: DevNav 通常僅用於開發環境。在生產打包時應考慮移除或條件渲染。 */}
-        <DevNav />
+      <head>
+        <Script
+          src={`https://www.google.com/recaptcha/api.js?render=${process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY}`}
+          strategy="beforeInteractive"
+        />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <FirebaseProvider>
+          <DevNav />
           {children}
         </FirebaseProvider>
       </body>

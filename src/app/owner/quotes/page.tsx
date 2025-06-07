@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, doc, getDoc } from "firebase/firestore";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useState, useMemo } from "react";
-import { QuotePdfDocument } from '@/modules/shared/interfaces/pdf/QuotePdfDocument';
-import { exportPdfToBlob } from '@/modules/shared/interfaces/pdf/pdfExport';
+import { QuotePdfDocument } from '@/features/pdf/components/QuotePdfDocument';
+import { exportPdfToBlob } from '@/features/pdf/utils/pdfExport';
+import { db, collection } from "@/lib/firebase/firebase-client";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { QuoteData } from "@/types/finance";
 
 export default function QuotesPage() {
-    const [quotesSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "quotes"));
+    const [quotesSnapshot, loading, error] = useCollection(
+        collection(db, "finance", "default", "quotes")
+    );
     // 搜尋與排序狀態
     const [search, setSearch] = useState("");
     const [sortKey, setSortKey] = useState<null | string>(null);
@@ -17,7 +19,6 @@ export default function QuotesPage() {
 
     // 處理後的資料
     const rows = useMemo(() => {
-        // 排序函數移到 useMemo 內部
         const sortFns: Record<string, (a: Record<string, unknown>, b: Record<string, unknown>) => number> = {
             idx: (a, b) => (a.idx as number) - (b.idx as number),
             quoteName: (a, b) => (a.quoteName as string || "").localeCompare(b.quoteName as string || ""),
@@ -29,18 +30,18 @@ export default function QuotesPage() {
         };
         if (!quotesSnapshot) return [];
         let arr = quotesSnapshot.docs.map((quote, idx) => {
-            const data = quote.data();
-            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null);
-            const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null);
-            const daysAgo = createdAt ? Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)) : '-';
+            const data = quote.data() as QuoteData;
+            const createdAtDate = data.createdAt.toDate();
+            const updatedAtDate = data.updatedAt.toDate();
+            const daysAgo = createdAtDate ? Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24)) : '-';
             return {
                 idx: idx + 1,
                 quoteId: data.quoteId || quote.id,
                 quoteName: data.quoteName || data.quoteId || quote.id,
                 clientName: data.clientName ?? '-',
                 quotePrice: data.quotePrice ?? '-',
-                createdAt,
-                updatedAt,
+                createdAt: createdAtDate,
+                updatedAt: updatedAtDate,
                 daysAgo,
                 raw: data,
                 docId: quote.id,
@@ -50,7 +51,7 @@ export default function QuotesPage() {
         if (search.trim()) {
             const s = search.trim().toLowerCase();
             arr = arr.filter(
-                r =>
+                (r: Record<string, unknown>) =>
                     String(r.quoteName).toLowerCase().includes(s) ||
                     String(r.clientName).toLowerCase().includes(s)
             );
@@ -74,7 +75,7 @@ export default function QuotesPage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        // 取得完整詳細資料
+        const { doc, getDoc } = await import("firebase/firestore");
         const docRef = doc(db, "finance", "default", "quotes", String(row.quoteId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
@@ -82,10 +83,7 @@ export default function QuotesPage() {
             return;
         }
         const data = docSnap.data();
-        // 轉換日期格式（如有需要）
-        data.createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt;
-        data.updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt;
-        // 匯出 PDF
+        // 保持原始的 Timestamp 格式，PDF 元件將負責處理
         exportPdfToBlob(
             <QuotePdfDocument quote={data} />,
             `${data.quoteName || data.quoteId || '估價單'}.pdf`
@@ -93,7 +91,7 @@ export default function QuotesPage() {
     };
 
     return (
-        <main className="max-w-2xl mx-auto px-4 py-8">
+        <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900 text-black dark:text-gray-100">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">估價單列表</h1>
             </div>
@@ -101,57 +99,57 @@ export default function QuotesPage() {
             <div className="mb-4 flex">
                 <input
                     type="text"
-                    className="border rounded px-2 py-1 w-full"
+                    className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                     placeholder="搜尋估價單名稱或客戶名稱"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                 />
             </div>
-            <table className="w-full border text-sm">
+            <table className="w-full border text-sm border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
                 <thead>
                     <tr className="bg-gray-100 dark:bg-gray-800">
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("idx")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("idx")}>
                             序號 {sortKey === "idx" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("quoteName")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("quoteName")}>
                             估價單名稱 {sortKey === "quoteName" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("clientName")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("clientName")}>
                             客戶名稱 {sortKey === "clientName" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("quotePrice")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("quotePrice")}>
                             價格 {sortKey === "quotePrice" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("createdAt")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("createdAt")}>
                             建立日期 {sortKey === "createdAt" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("updatedAt")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("updatedAt")}>
                             修改日期 {sortKey === "updatedAt" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("daysAgo")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("daysAgo")}>
                             建立至今(天) {sortKey === "daysAgo" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1">操作</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
                         <tr><td colSpan={8} className="text-center py-4">載入中...</td></tr>
                     ) : error ? (
-                        <tr><td colSpan={8} className="text-center text-red-500 py-4"></td></tr>
+                        <tr><td colSpan={8} className="text-center text-red-500 py-4">{String(error)}</td></tr>
                     ) : rows.length > 0 ? (
                         rows.map((row) => {
                             const format = (d: Date | null) => d ? d.toLocaleDateString() : '-';
                             return (
-                                <tr key={row.quoteId}>
-                                    <td className="border px-2 py-1 text-center">{row.idx}</td>
-                                    <td className="border px-2 py-1">{row.quoteName}</td>
-                                    <td className="border px-2 py-1">{row.clientName}</td>
-                                    <td className="border px-2 py-1">{row.quotePrice}</td>
-                                    <td className="border px-2 py-1">{format(row.createdAt)}</td>
-                                    <td className="border px-2 py-1">{format(row.updatedAt)}</td>
-                                    <td className="border px-2 py-1 text-center">{row.daysAgo}</td>
-                                    <td className="border px-2 py-1">
+                                <tr key={row.quoteId as string} className="bg-white dark:bg-gray-900">
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{row.idx as number}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.quoteName as string}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.clientName as string}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.quotePrice as number}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{format(row.createdAt as Date | null)}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{format(row.updatedAt as Date | null)}</td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{row.daysAgo as number | string}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
                                         <Link href={`/owner/quotes/${row.quoteId}`} className="text-blue-600 hover:underline dark:text-green-400 dark:hover:text-green-300">查看</Link>
                                         <button
                                             className="ml-2 text-indigo-600 hover:underline dark:text-yellow-400 dark:hover:text-yellow-300"
@@ -164,7 +162,7 @@ export default function QuotesPage() {
                             );
                         })
                     ) : (
-                        <tr></tr>
+                        <tr><td colSpan={8} className="text-center text-gray-400 py-4">尚無估價單</td></tr>
                     )}
                 </tbody>
             </table>

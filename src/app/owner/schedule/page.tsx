@@ -1,166 +1,244 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { db, auth } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, Timestamp } from "firebase/firestore";
 import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, DateType } from "vis-timeline/standalone";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { db, collection, getDocs, doc, updateDoc } from "@/lib/firebase/firebase-client";
+import { SubWorkpackage, Workpackage } from "@/types/project";
+import { Timestamp } from "firebase/firestore";
 
 interface Group extends TimelineGroup {
     id: string;
     content: string;
 }
 
-interface Item extends TimelineItem {
-    id: string;
-    group: string;
-    content: string; // Ensure content is string for our internal Item model
-    start: Date;
-    end: Date;
+interface TimelineSubWorkpackage extends SubWorkpackage {
     projectId: string;
-    userId: string;
+    projectName: string;
+    workpackageId: string;
+    workpackageName: string;
+    group: string; // projectId
+    content: string; // 顯示內容
+    start: Date; // vis-timeline 需要使用 Date 物件
+    end: Date; // vis-timeline 需要使用 Date 物件
 }
 
-// Helper function to convert DateType to Date
+// Helper: Timestamp 轉 Date
+function timestampToDate(ts?: Timestamp | null): Date | undefined {
+    return ts ? ts.toDate() : undefined;
+}
+
+// Helper: Date 轉 Timestamp
+function dateToTimestamp(date: Date | null | undefined): Timestamp | undefined {
+    return date ? Timestamp.fromDate(date) : undefined;
+}
+
+// Helper: DateType 轉 Date
 function toDate(dateInput: DateType): Date {
     if (dateInput instanceof Date) {
         return dateInput;
+    }
+    if (dateInput && typeof dateInput === 'object' && 'toDate' in dateInput) {
+        return (dateInput as unknown as Timestamp).toDate();
     }
     return new Date(dateInput);
 }
 
 export default function ProjectsPage() {
     const [groups, setGroups] = useState<Group[]>([]);
-    const [items, setItems] = useState<Item[]>([]);
-    const [user] = useAuthState(auth);
+    const [allItems, setAllItems] = useState<TimelineSubWorkpackage[]>([]);
+    const [items, setItems] = useState<TimelineSubWorkpackage[]>([]);
+    const [search, setSearch] = useState("");
+    const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const timelineRef = useRef<HTMLDivElement>(null);
 
-    // CRUD Handlers
-    const handleItemMove = useCallback(async (itemIdString: string, newStart: DateType, newEnd: DateType, newGroupIdString: string) => {
-        const item = items.find(i => i.id === itemIdString);
-        if (!item) return false;
+    const quickKeywords = ["搬運", "定位", "清潔", "測試"];
 
+    const handleItemMove = useCallback(async (itemId: string, newStart: DateType, newEnd: DateType) => {
+        const item = items.find(i => i.id === itemId);
+        if (!item) return false;
         const startDate = toDate(newStart);
         const endDate = toDate(newEnd);
-
-        if (item.projectId !== newGroupIdString) {
-            await deleteDoc(doc(db, "projects", item.projectId, "flows", itemIdString));
-            const ref = await addDoc(collection(db, "projects", newGroupIdString, "flows"), {
-                name: item.content,
-                start: startDate,
-                end: endDate,
-                userId: item.userId,
-            });
-            setItems(prev => prev.map(i => i.id === itemIdString ? { ...i, id: ref.id, group: newGroupIdString, projectId: newGroupIdString, start: startDate, end: endDate } : i));
-        } else {
-            await updateDoc(doc(db, "projects", newGroupIdString, "flows", itemIdString), { start: startDate, end: endDate });
-            setItems(prev => prev.map(i => i.id === itemIdString ? { ...i, start: startDate, end: endDate } : i));
-        }
+        const projectDocRef = doc(db, "projects", item.projectId);
+        const projectSnap = await getDocs(collection(db, "projects"));
+        const projectDoc = projectSnap.docs.find(d => d.id === item.projectId);
+        if (!projectDoc) return false;
+        const projectData = projectDoc.data();
+        const workpackages: Workpackage[] = projectData.workpackages || [];
+        const updatedWorkpackages = workpackages.map(wp => {
+            if (wp.id !== item.workpackageId) return wp;
+            return {
+                ...wp,
+                subWorkpackages: wp.subWorkpackages.map(sw =>
+                    sw.id === item.id
+                        ? {
+                            ...sw,
+                            estimatedStartDate: dateToTimestamp(startDate),
+                            estimatedEndDate: dateToTimestamp(endDate)
+                        }
+                        : sw
+                ),
+            };
+        });
+        await updateDoc(projectDocRef, { workpackages: updatedWorkpackages });
+        setItems(prev => prev.map(i => {
+            if (i.id === itemId) {
+                const startTimestamp = dateToTimestamp(startDate);
+                const endTimestamp = dateToTimestamp(endDate);
+                return {
+                    ...i,
+                    start: startDate,
+                    end: endDate,
+                    estimatedStartDate: startTimestamp,
+                    estimatedEndDate: endTimestamp
+                };
+            }
+            return i;
+        }));
         return true;
     }, [items]);
 
-    const handleItemAdd = useCallback(async (itemData: TimelineItem, cb: (item: Item | null) => void) => {
-        if (!user) return cb(null);
-        const groupString = String(itemData.group);
-        const contentString = String(itemData.content || "新流程"); // Ensure content is a string
-        const startDate = itemData.start ? toDate(itemData.start) : new Date();
-        const endDate = itemData.end ? toDate(itemData.end) : new Date(Date.now() + 3600000);
-
-        const dataToSave = {
-            name: contentString,
-            start: startDate,
-            end: endDate,
-            userId: user.uid,
-        };
-        const ref = await addDoc(collection(db, "projects", groupString, "flows"), dataToSave);
-        const newItem: Item = {
-            id: ref.id,
-            group: groupString,
-            content: contentString,
-            start: startDate,
-            end: endDate,
-            projectId: groupString,
-            userId: user.uid,
-        };
-        setItems(prev => [...prev, newItem]);
-        cb(newItem);
-    }, [user]);
-
-    const handleItemRemove = useCallback(async (itemData: TimelineItem, cb: (item: TimelineItem | null) => void) => {
-        const id = String(itemData.id);
-        const target = items.find(i => i.id === id);
-        if (!target) return cb(null);
-        await deleteDoc(doc(db, "projects", target.projectId, "flows", id));
-        setItems(prev => prev.filter(i => i.id !== id));
-        cb(itemData);
-    }, [items]);
-
-    // Fetch Data
     useEffect(() => {
         (async () => {
             const projects = await getDocs(collection(db, "projects"));
-            // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 修改這一行 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-            const groupList: Group[] = projects.docs.map(d => ({ id: d.id, content: d.data().projectName || d.id }));
-            // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+            const groupList: Group[] = projects.docs.map((d): Group => ({
+                id: d.id,
+                content: (d.data().projectName as string) || d.id
+            }));
             setGroups(groupList);
-            const allItems: Item[] = [];
+            const all: TimelineSubWorkpackage[] = [];
             for (const project of projects.docs) {
-                const flows = await getDocs(collection(db, "projects", project.id, "flows"));
-                allItems.push(...flows.docs.map(f => {
-                    const d = f.data();
-                    return {
-                        id: f.id,
-                        group: project.id,
-                        content: d.name,
-                        start: d.start?.toDate?.() || new Date(),
-                        end: d.end?.toDate?.() || new Date(Date.now() + 3600000),
-                        projectId: project.id,
-                        userId: d.userId,
-                    } as Item; // Ensure the object conforms to the Item interface
-                }));
+                const projectData = project.data();
+                const projectId = project.id;
+                const projectName = (projectData.projectName as string) || projectId;
+                const workpackages: Workpackage[] = (projectData.workpackages as Workpackage[]) || [];
+                for (const wp of workpackages) {
+                    const workpackageId = wp.id;
+                    const workpackageName = wp.name;
+                    const subWorkpackages: SubWorkpackage[] = wp.subWorkpackages || [];
+                    for (const sub of subWorkpackages) {
+                        const start = timestampToDate(sub.estimatedStartDate);
+                        const end = timestampToDate(sub.estimatedEndDate);
+                        if (start && end) {
+                            all.push({
+                                ...sub,
+                                projectId,
+                                projectName,
+                                workpackageId,
+                                workpackageName,
+                                group: projectId,
+                                content: `${workpackageName} - ${sub.name}`,
+                                start,
+                                end,
+                            });
+                        }
+                    }
+                }
             }
-            setItems(allItems);
+            setAllItems(all);
+            setItems(all);
         })();
     }, []);
 
-    // vis-timeline
+    const toggleKeyword = (keyword: string) => {
+        setSelectedKeywords(prev =>
+            prev.includes(keyword)
+                ? prev.filter(k => k !== keyword)
+                : [...prev, keyword]
+        );
+    };
+
     useEffect(() => {
-        if (!timelineRef.current || groups.length === 0) return; // Wait for groups to load
+        let filtered = allItems;
+        const s = search.trim().toLowerCase();
+        const searchKeywords = s ? s.split(/\s+|,|;/).filter(Boolean) : [];
+        if (selectedKeywords.length > 0 || searchKeywords.length > 0) {
+            filtered = allItems.filter(item => {
+                const name = item.name.toLowerCase();
+                const desc = item.description?.toLowerCase() || "";
+                const matchKeyword = selectedKeywords.some(k => name.includes(k) || desc.includes(k));
+                const matchSearch = searchKeywords.some(kw => name.includes(kw) || desc.includes(kw));
+                return (selectedKeywords.length > 0 ? matchKeyword : false) || (searchKeywords.length > 0 ? matchSearch : false);
+            });
+        }
+        setItems(filtered);
+    }, [search, selectedKeywords, allItems]);
 
+    useEffect(() => {
+        if (!timelineRef.current || groups.length === 0) return;
         const groupsDataSet = new DataSet<Group>(groups);
-        const itemsDataSet = new DataSet<Item>(items);
-
+        const itemsDataSet = new DataSet<TimelineSubWorkpackage>(items);
         const timelineOptions: TimelineOptions = {
-            editable: { add: true, remove: true, updateTime: true, updateGroup: true },
-            onAdd: handleItemAdd,
-            onRemove: handleItemRemove,
-            onMoving: (item: TimelineItem, callback: (item: TimelineItem | null) => void) => callback(item),
+            editable: { add: false, remove: false, updateTime: true, updateGroup: false },
             onMove: async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-                // item.id, item.start, item.end, item.group are all DateType or IdType from vis-timeline
-                // Assert item.start and item.end are not undefined as they should be present in onMove
-                const success = await handleItemMove(String(item.id), item.start!, item.end!, String(item.group));
+                const success = await handleItemMove(String(item.id), item.start!, item.end!);
                 callback(success ? item : null);
             },
         };
         const timeline = new Timeline(timelineRef.current, itemsDataSet, groupsDataSet, timelineOptions);
         return () => timeline.destroy();
-    }, [groups, items, handleItemAdd, handleItemMove, handleItemRemove]);
+    }, [groups, items, handleItemMove]);
 
-    // Create Project
-    const [n, setN] = useState(""); const addProject = async () => {
-        if (!user || !n.trim()) return;
-        const ref = await addDoc(collection(db, "projects"), { projectName: n, createdAt: Timestamp.now(), ownerId: user.uid }); // 改成 projectName
-        setGroups(g => [...g, { id: ref.id, content: n }]);
-        const start = Timestamp.now(), end = Timestamp.fromMillis(start.toMillis() + 3600000);
-        const flow = await addDoc(collection(db, "projects", ref.id, "flows"), { name: n + " - 初始流程", start, end, userId: user.uid });
-        setItems(i => [...i, { id: flow.id, group: ref.id, content: n + " - 初始流程", start: start.toDate(), end: end.toDate(), projectId: ref.id, userId: user.uid }]);
-        setN("");
-    };
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
 
     return (
-        <main>
-            <input value={n} onChange={e => setN(e.target.value)} placeholder="專案名稱" />
-            <button onClick={addProject} disabled={!user || !n.trim()}>建立</button>
-            <div ref={timelineRef} style={{ height: 600 }} />
+        <main className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen p-4">
+            <div className="flex justify-end mb-2">
+                <button
+                    className="px-3 py-1 rounded text-sm border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-100 flex items-center"
+                    onClick={() => {
+                        if (timelineRef.current) {
+                            if (document.fullscreenElement) {
+                                document.exitFullscreen();
+                            } else {
+                                timelineRef.current.requestFullscreen();
+                            }
+                        }
+                    }}
+                    type="button"
+                    aria-label={isFullscreen ? '退出全螢幕' : '全螢幕'}
+                >
+                    {isFullscreen ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 15H5v4m0 0h4m-4 0l5-5m5-5h4V5m0 0h-4m4 0l-5 5" /></svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 9V5h4m0 0v4m0-4l-5 5m-6 6v4H5m0 0v-4m0 4l5-5" /></svg>
+                    )}
+                </button>
+            </div>
+            <div
+                ref={timelineRef}
+                style={{ height: 600 }}
+                className="bg-white dark:bg-gray-800 rounded shadow mb-4"
+            />
+            <div className="mb-2 flex flex-wrap gap-2">
+                {quickKeywords.map(keyword => (
+                    <button
+                        key={keyword}
+                        className={`px-3 py-1 rounded text-sm border transition-all duration-100 ${selectedKeywords.includes(keyword) ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600'}`}
+                        onClick={() => toggleKeyword(keyword)}
+                        type="button"
+                    >
+                        {keyword}
+                    </button>
+                ))}
+            </div>
+            <div className="mb-4 flex">
+                <input
+                    type="text"
+                    className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-900 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                    placeholder="搜尋子工作包名稱或描述"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                可用「空白、逗號、分號」分隔多個關鍵字進行搜尋
+            </div>
         </main>
     );
 }

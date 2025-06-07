@@ -2,17 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setDoc, doc } from "firebase/firestore";
 import { nanoid } from "nanoid";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-
-// 項目型別
-interface QuoteItem {
-    quoteItemId: string;
-    quoteItemPrice: number; // 項目金額
-    quoteItemQuantity: number;
-    quoteItemWeight?: number; // 權重 (0~1)
-}
+import { db, doc } from "@/lib/firebase/firebase-client";
+import { QuoteItem } from "@/types/finance";
 
 export default function QuoteAddPage() {
     const router = useRouter();
@@ -63,6 +55,7 @@ export default function QuoteAddPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const { setDoc } = await import("firebase/firestore");
             const quoteId = nanoid(5);
             const now = new Date();
             await setDoc(doc(db, "finance", "default", "quotes", quoteId), {
@@ -88,7 +81,7 @@ export default function QuoteAddPage() {
     };
 
     return (
-        <main className="max-w-xl mx-auto px-4 py-8">
+        <main className="max-w-xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded shadow">
             <h1 className="text-2xl font-bold mb-4">新增估價單</h1>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-3 gap-4 mb-4">

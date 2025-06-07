@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { db } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { collection, getDocs } from 'firebase/firestore';
+import { db, collection, getDocs } from '@/lib/firebase/firebase-client';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { useFirebase } from "@/lib/firebase/firebase-context";
 
 export default function DashboardPage() {
+  const { appCheckReady } = useFirebase();
   // 取得 users 和 projects 集合的 snapshot
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
@@ -103,6 +104,10 @@ export default function DashboardPage() {
   // 將 roleCounts 轉為陣列格式供圖表使用
   const roleData = Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count }));
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#2a8f4d', '#8f6b2a'];
+
+  if (!appCheckReady) {
+    return <div>Firebase App Check 初始化中...</div>;
+  }
 
   return (
     <main className="min-h-screen py-8 bg-white dark:bg-gray-900">

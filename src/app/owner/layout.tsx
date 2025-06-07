@@ -1,5 +1,6 @@
+"use client";
 import { ReactNode } from 'react';
-import { OwnerBottomNav } from '@/modules/shared/interfaces/navigation/bottom/owner-nav';
+import { OwnerBottomNav } from '@/components/navigation/bottom/owner-nav';
 
 export default function OwnerLayout({ children }: { children: ReactNode }) {
     return (

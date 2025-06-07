@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, doc, getDoc } from "firebase/firestore";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
 import { useState, useMemo } from "react";
-import { OrderPdfDocument } from '@/modules/shared/interfaces/pdf/OrderPdfDocument';
-import { exportPdfToBlob } from '@/modules/shared/interfaces/pdf/pdfExport';
+import { OrderPdfDocument } from '@/features/pdf/components/OrderPdfDocument';
+import { exportPdfToBlob } from '@/features/pdf/utils/pdfExport';
+import { db, collection } from "@/lib/firebase/firebase-client";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { OrderData } from "@/types/finance";
 
 export default function OrdersPage() {
-    const [ordersSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "orders"));
+    const [ordersSnapshot, loading, error] = useCollection(
+        collection(db, "finance", "default", "orders")
+    );
     // 搜尋與排序狀態
     const [search, setSearch] = useState("");
     const [sortKey, setSortKey] = useState<null | string>(null);
@@ -29,18 +31,19 @@ export default function OrdersPage() {
         };
         if (!ordersSnapshot) return [];
         let arr = ordersSnapshot.docs.map((order, idx) => {
-            const data = order.data();
-            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null);
-            const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : null);
-            const daysAgo = createdAt ? Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)) : '-';
+            // 型別明確化
+            const data = order.data() as OrderData;
+            const createdAtDate = data.createdAt.toDate();
+            const updatedAtDate = data.updatedAt.toDate();
+            const daysAgo = createdAtDate ? Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24)) : '-';
             return {
                 idx: idx + 1,
                 orderId: data.orderId || order.id,
                 orderName: data.orderName || data.orderId || order.id,
                 clientName: data.clientName ?? '-',
                 orderPrice: data.orderPrice ?? '-',
-                createdAt,
-                updatedAt,
+                createdAt: createdAtDate,
+                updatedAt: updatedAtDate,
                 daysAgo,
                 raw: data,
                 docId: order.id,
@@ -50,7 +53,7 @@ export default function OrdersPage() {
         if (search.trim()) {
             const s = search.trim().toLowerCase();
             arr = arr.filter(
-                r =>
+                (r: Record<string, unknown>) =>
                     String(r.orderName).toLowerCase().includes(s) ||
                     String(r.clientName).toLowerCase().includes(s)
             );
@@ -74,7 +77,7 @@ export default function OrdersPage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        // 取得完整詳細資料
+        const { doc, getDoc } = await import("firebase/firestore");
         const docRef = doc(db, "finance", "default", "orders", String(row.orderId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
@@ -82,9 +85,7 @@ export default function OrdersPage() {
             return;
         }
         const data = docSnap.data();
-        // 轉換日期格式（如有需要）
-        data.createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt;
-        data.updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt;
+        // 保持原始的 Timestamp 格式，PDF 元件將負責處理
         // 匯出 PDF
         exportPdfToBlob(
             <OrderPdfDocument order={data} />,
@@ -93,7 +94,7 @@ export default function OrdersPage() {
     };
 
     return (
-        <main className="max-w-2xl mx-auto px-4 py-8">
+        <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900 text-black dark:text-gray-100">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">訂單列表</h1>
             </div>
@@ -101,37 +102,37 @@ export default function OrdersPage() {
             <div className="mb-4 flex">
                 <input
                     type="text"
-                    className="border rounded px-2 py-1 w-full"
+                    className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                     placeholder="搜尋訂單名稱或客戶名稱"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                 />
             </div>
-            <table className="w-full border text-sm">
+            <table className="w-full border text-sm border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
                 <thead>
                     <tr className="bg-gray-100 dark:bg-gray-800">
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("idx")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("idx")}>
                             序號 {sortKey === "idx" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("orderName")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("orderName")}>
                             訂單名稱 {sortKey === "orderName" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("clientName")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("clientName")}>
                             客戶名稱 {sortKey === "clientName" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("orderPrice")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("orderPrice")}>
                             價格 {sortKey === "orderPrice" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("createdAt")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("createdAt")}>
                             建立日期 {sortKey === "createdAt" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("updatedAt")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("updatedAt")}>
                             修改日期 {sortKey === "updatedAt" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1 cursor-pointer" onClick={() => handleSort("daysAgo")}>
+                        <th className="border px-2 py-1 cursor-pointer border-gray-300 dark:border-gray-700" onClick={() => handleSort("daysAgo")}>
                             建立至今(天) {sortKey === "daysAgo" ? (sortAsc ? "▲" : "▼") : ""}
                         </th>
-                        <th className="border px-2 py-1">操作</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -143,15 +144,15 @@ export default function OrdersPage() {
                         rows.map((row) => {
                             const format = (d: Date | null) => d ? d.toLocaleDateString() : '-';
                             return (
-                                <tr key={row.orderId}>
-                                    <td className="border px-2 py-1 text-center">{row.idx}</td>
-                                    <td className="border px-2 py-1">{row.orderName}</td>
-                                    <td className="border px-2 py-1">{row.clientName}</td>
-                                    <td className="border px-2 py-1">{row.orderPrice}</td>
-                                    <td className="border px-2 py-1">{format(row.createdAt)}</td>
-                                    <td className="border px-2 py-1">{format(row.updatedAt)}</td>
-                                    <td className="border px-2 py-1 text-center">{row.daysAgo}</td>
-                                    <td className="border px-2 py-1">
+                                <tr key={row.orderId as string} className="bg-white dark:bg-gray-900">
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{row.idx as number}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.orderName as string}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.clientName as string}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.orderPrice as number}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{format(row.createdAt as Date | null)}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{format(row.updatedAt as Date | null)}</td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{row.daysAgo as number | string}</td>
+                                    <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
                                         <Link href={`/owner/orders/${row.orderId}`} className="text-blue-600 hover:underline dark:text-green-400 dark:hover:text-green-300">查看</Link>
                                         <button
                                             className="ml-2 text-indigo-600 hover:underline dark:text-yellow-400 dark:hover:text-yellow-300"

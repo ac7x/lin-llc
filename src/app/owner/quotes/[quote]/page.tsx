@@ -2,17 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { doc } from "firebase/firestore";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { db, doc, Timestamp } from "@/lib/firebase/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
-
-// 項目型別
-interface QuoteItem {
-    quoteItemId: string;
-    quoteItemPrice: number;
-    quoteItemQuantity: number;
-    quoteItemWeight?: number; // 權重 (0~1)
-}
+import { QuoteItem } from "@/types/finance";
 
 export default function QuoteDetailPage() {
     const router = useRouter();
@@ -82,21 +74,20 @@ export default function QuoteDetailPage() {
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await import("firebase/firestore").then(({ updateDoc, doc }) =>
-                updateDoc(doc(db, "finance", "default", "quotes", quoteId), {
-                    quoteName: editQuoteName,
-                    quotePrice: editQuotePrice,
-                    quoteItems: editQuoteItems.map((item, idx) => ({
-                        ...item,
-                        quoteItemId: item.quoteItemId || String(idx + 1),
-                    })),
-                    clientName: editClientName,
-                    clientContact: editClientContact,
-                    clientPhone: editClientPhone,
-                    clientEmail: editClientEmail,
-                    updatedAt: new Date(),
-                })
-            );
+            const { updateDoc } = await import("firebase/firestore");
+            await updateDoc(doc(db, "finance", "default", "quotes", quoteId), {
+                quoteName: editQuoteName,
+                quotePrice: editQuotePrice,
+                quoteItems: editQuoteItems.map((item, idx) => ({
+                    ...item,
+                    quoteItemId: item.quoteItemId || String(idx + 1),
+                })),
+                clientName: editClientName,
+                clientContact: editClientContact,
+                clientPhone: editClientPhone,
+                clientEmail: editClientEmail,
+                updatedAt: Timestamp.now(),
+            });
             setQuoteName(editQuoteName);
             setQuotePrice(editQuotePrice);
             setQuoteItems(editQuoteItems);
@@ -111,7 +102,7 @@ export default function QuoteDetailPage() {
     };
 
     return (
-        <main className="max-w-xl mx-auto px-4 py-8">
+        <main className="max-w-xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded shadow">
             <h1 className="text-2xl font-bold mb-4">估價單詳情</h1>
             {loading ? (
                 <div className="text-center py-8">載入中...</div>
@@ -124,7 +115,7 @@ export default function QuoteDetailPage() {
                             <label className="block font-medium mb-1">估價單名稱：</label>
                             <input
                                 type="text"
-                                className="border px-2 py-1 rounded w-full"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-900 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                                 value={editQuoteName}
                                 onChange={e => setEditQuoteName(e.target.value)}
                                 required
@@ -134,7 +125,7 @@ export default function QuoteDetailPage() {
                             <label className="block font-medium mb-1">估價金額：</label>
                             <input
                                 type="number"
-                                className="border px-2 py-1 rounded w-full"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-900 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                                 value={editQuotePrice}
                                 min={0}
                                 onChange={e => setEditQuotePrice(Number(e.target.value))}
@@ -145,7 +136,7 @@ export default function QuoteDetailPage() {
                             <label className="block font-medium mb-1">客戶名稱：</label>
                             <input
                                 type="text"
-                                className="border px-2 py-1 rounded w-full"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-900 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                                 value={editClientName}
                                 onChange={e => setEditClientName(e.target.value)}
                             />
@@ -156,7 +147,7 @@ export default function QuoteDetailPage() {
                             <label className="block font-medium mb-1">聯絡人：</label>
                             <input
                                 type="text"
-                                className="border px-2 py-1 rounded w-full"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-900 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                                 value={editClientContact}
                                 onChange={e => setEditClientContact(e.target.value)}
                             />
@@ -165,7 +156,7 @@ export default function QuoteDetailPage() {
                             <label className="block font-medium mb-1">電話：</label>
                             <input
                                 type="text"
-                                className="border px-2 py-1 rounded w-full"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-900 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                                 value={editClientPhone}
                                 onChange={e => setEditClientPhone(e.target.value)}
                             />
@@ -174,7 +165,7 @@ export default function QuoteDetailPage() {
                             <label className="block font-medium mb-1">Email：</label>
                             <input
                                 type="email"
-                                className="border px-2 py-1 rounded w-full"
+                                className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-900 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                                 value={editClientEmail}
                                 onChange={e => setEditClientEmail(e.target.value)}
                             />

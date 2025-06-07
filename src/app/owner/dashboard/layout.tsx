@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import DashboardNav from "@/modules/shared/interfaces/navigation/side/dashboard-nav";
+import DashboardNav from "@/components/navigation/side/dashboard-nav";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (

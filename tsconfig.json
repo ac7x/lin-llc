@@ -30,9 +30,25 @@
       ],
       "@/modules/*": [
         "./src/modules/*"
+      ],
+      "@/lib/*": [
+        "./src/lib/*"
+      ],
+      "@/styles/*": [
+        "./src/styles/*"
       ]
     },
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": [
+      "grecaptcha",
+      "charts",
+      "finance",
+      "gemini",
+      "project",
+      "user",
+      "env"
+    ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

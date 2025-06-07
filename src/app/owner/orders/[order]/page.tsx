@@ -2,16 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { doc } from "firebase/firestore";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { db, doc, Timestamp } from "@/lib/firebase/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
-
-// 項目型別
-interface OrderItem {
-    orderItemId: string;
-    orderItemPrice: number;
-    orderItemQuantity: number;
-}
+import { OrderItem } from "@/types/finance";
 
 export default function OrderDetailPage() {
     const router = useRouter();
@@ -81,21 +74,20 @@ export default function OrderDetailPage() {
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await import("firebase/firestore").then(({ updateDoc, doc }) =>
-                updateDoc(doc(db, "finance", "default", "orders", orderId), {
-                    orderName: editOrderName,
-                    orderPrice: editOrderPrice,
-                    orderItems: editOrderItems.map((item, idx) => ({
-                        ...item,
-                        orderItemId: item.orderItemId || String(idx + 1),
-                    })),
-                    clientName: editClientName,
-                    clientContact: editClientContact,
-                    clientPhone: editClientPhone,
-                    clientEmail: editClientEmail,
-                    updatedAt: new Date(),
-                })
-            );
+            const { updateDoc } = await import("firebase/firestore");
+            await updateDoc(doc(db, "finance", "default", "orders", orderId), {
+                orderName: editOrderName,
+                orderPrice: editOrderPrice,
+                orderItems: editOrderItems.map((item, idx) => ({
+                    ...item,
+                    orderItemId: item.orderItemId || String(idx + 1),
+                })),
+                clientName: editClientName,
+                clientContact: editClientContact,
+                clientPhone: editClientPhone,
+                clientEmail: editClientEmail,
+                updatedAt: Timestamp.now(),
+            });
             setOrderName(editOrderName);
             setOrderPrice(editOrderPrice);
             setOrderItems(editOrderItems);

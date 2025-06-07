@@ -1,9 +1,12 @@
 "use client";
 
-import { useCollection } from "react-firebase-hooks/firestore";
+import { db } from "@/lib/firebase/firebase-client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { useCollection } from "react-firebase-hooks/firestore";
 import { useState, useMemo } from "react";
+import { nanoid } from "nanoid";
+import { Workpackage } from "@/types/project";
+import { ContractItem } from "@/types/finance";
 
 // 定義合約列型別
 interface ContractRow {
@@ -31,13 +34,43 @@ export default function ImportProjectPage() {
                 raw: data,
             };
         });
-    }, [contractsSnapshot]);
+    }, [contractsSnapshot]);    // 將合約項目轉換為工作包
+    const convertContractItemsToWorkpackages = (contractItems: ContractItem[]): Workpackage[] => {
+        if (!contractItems || !Array.isArray(contractItems) || contractItems.length === 0) {
+            return [];
+        }
+
+        // 將合約項目轉換為工作包
+        return contractItems.map(item => {
+            const id = nanoid(8); // 使用 nanoid 生成唯一 ID
+
+            // 創建工作包 - 不再建立子工作包
+            const workpackage: Workpackage = {
+                id,
+                name: String(item.contractItemId),
+                description: `合約項目 ${item.contractItemId}`,
+                status: "待開始",
+                progress: 0,
+                createdAt: Timestamp.now(),
+                budget: item.contractItemPrice * item.contractItemQuantity,
+                category: "合約項目",
+                priority: "medium",
+                subWorkpackages: []
+            };
+
+            return workpackage;
+        });
+    };
 
     // 匯入合約建立專案
     const handleImport = async (row: ContractRow) => {
         setImportingId(row.id);
         setMessage("");
         try {
+            // 取得合約項目並轉換為工作包
+            const contractItems = row.raw.contractItems as ContractItem[] || [];
+            const workpackages = convertContractItemsToWorkpackages(contractItems);
+
             // 預設一個基本的分解資料，包含必要的節點欄位與可選欄位
             const decomposition = {
                 nodes: [
@@ -58,7 +91,7 @@ export default function ImportProjectPage() {
                 updatedAt: Timestamp.now(),
                 status: "新建立",
                 decomposition, // 專案分解資料
-                workpackages: [], // 初始化空的工作包列表
+                workpackages, // 將合約項目轉換後的工作包列表
             };
             await addDoc(collection(db, "projects"), projectData);
             setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
@@ -70,10 +103,10 @@ export default function ImportProjectPage() {
     };
 
     return (
-        <main className="max-w-2xl mx-auto px-4 py-8">
+        <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded shadow">
             <h1 className="text-2xl font-bold mb-6">從合約建立專案</h1>
             {message && <div className="mb-4 text-green-600">{message}</div>}
-            <table className="w-full border text-sm">
+            <table className="w-full border text-sm bg-white dark:bg-gray-900 text-black dark:text-gray-100">
                 <thead>
                     <tr className="bg-gray-100 dark:bg-gray-800">
                         <th className="border px-2 py-1">序號</th>

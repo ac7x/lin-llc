@@ -1,11 +1,13 @@
 import { ReactNode } from "react";
-import { QuoteSideNav } from "@/modules/shared/interfaces/navigation/side/quote-nav";
+import { QuoteSideNav } from "@/components/navigation/side/quote-nav";
 
 export default function QuotesLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="flex">
+        <div className="flex bg-gray-50 dark:bg-gray-900 min-h-screen">
             <QuoteSideNav />
-            <div className="flex-1">{children}</div>
+            <div className="flex-1 bg-white dark:bg-gray-800 text-black dark:text-gray-100">
+                {children}
+            </div>
         </div>
     );
 }

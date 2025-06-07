@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
+import { db } from "@/lib/firebase/firebase-client";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export default function OwnerSettingsPage() {
@@ -32,13 +32,13 @@ export default function OwnerSettingsPage() {
         }
     };
 
-    if (loading) return <main className="p-6">載入中...</main>;
+    if (loading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
 
     return (
-        <main className="p-6">
+        <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
             <h1 className="text-2xl font-bold mb-4">設定</h1>
             <p className="mb-6">這是業主的設定頁面。</p>
-            <form onSubmit={handleSubmit} className="max-w-md space-y-4">
+            <form onSubmit={handleSubmit} className="max-w-md space-y-4 bg-white dark:bg-gray-800 p-4 rounded shadow">
                 <div>
                     <label className="block font-medium mb-1">
                         封存自動刪除天數
@@ -46,11 +46,11 @@ export default function OwnerSettingsPage() {
                     <input
                         type="number"
                         min={1}
-                        className="border rounded px-2 py-1 w-32"
+                        className="border rounded px-2 py-1 w-32 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={archiveRetentionDays ?? ''}
                         onChange={e => setArchiveRetentionDaysState(Number(e.target.value))}
                     />
-                    <span className="ml-2 text-gray-500">天</span>
+                    <span className="ml-2 text-gray-500 dark:text-gray-400">天</span>
                 </div>
                 <button
                     type="submit"

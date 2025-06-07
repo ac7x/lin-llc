@@ -1,4 +1,7 @@
-import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/bottom/admin-nav';
+"use client";
+
+import { AdminBottomNav } from '@/components/navigation/bottom/admin-nav';
+import React from "react";
 
 export default function AdminLayout({
     children,

@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setDoc, doc } from "firebase/firestore";
 import { nanoid } from "nanoid";
-import { db } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client";
-
-// 項目型別
-interface OrderItem {
-    orderItemId: string;
-    orderItemPrice: number; // 項目金額
-    orderItemQuantity: number;
-}
+import { db, doc } from "@/lib/firebase/firebase-client";
+import { OrderItem } from "@/types/finance";
 
 export default function OrderAddPage() {
     const router = useRouter();
@@ -45,6 +38,7 @@ export default function OrderAddPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const { setDoc } = await import("firebase/firestore");
             const orderId = nanoid(5);
             const now = new Date();
             await setDoc(doc(db, "finance", "default", "orders", orderId), {

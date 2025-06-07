@@ -1,0 +1,61 @@
+import {
+  db,
+  collection,
+  doc,
+  getDoc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAt,
+  startAfter,
+  endAt,
+  endBefore,
+  onSnapshot,
+  writeBatch,
+  runTransaction,
+  Timestamp,
+  increment,
+  arrayUnion,
+  arrayRemove,
+  serverTimestamp,
+} from "./firebase-client";
+import { getAppCheckToken } from "./firebase-appcheck";
+
+export async function ensureFirestoreReady(): Promise<boolean> {
+  const appCheckToken = await getAppCheckToken();
+  return !!appCheckToken;
+}
+
+export {
+  db,
+  collection,
+  doc,
+  getDoc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAt,
+  startAfter,
+  endAt,
+  endBefore,
+  onSnapshot,
+  writeBatch,
+  runTransaction,
+  Timestamp,
+  increment,
+  arrayUnion,
+  arrayRemove,
+  serverTimestamp,
+};
