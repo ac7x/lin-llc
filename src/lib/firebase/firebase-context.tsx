@@ -50,34 +50,13 @@ export function FirebaseProvider({ children }: FirebaseProviderProps): React.JSX
     // 初始化 App Check
     const initAppCheck = async () => {
       try {
-        setAppCheckLog("🔄 開始初始化 App Check...");
-        
-        // 檢查當前環境
-        if (typeof window !== 'undefined') {
-          setAppCheckLog(log => log + `\n🔍 檢查 reCAPTCHA: ${typeof window.grecaptcha !== 'undefined' ? '✅ 已載入' : '❌ 未載入'}`);
-          setAppCheckLog(log => log + `\n🌐 當前 URL: ${window.location.href}`);
-          setAppCheckLog(log => log + `\n📍 User Agent: ${navigator.userAgent.substring(0, 100)}...`);
-        }
-        
-        await initializeFirebaseAppCheck((logMessage: string) => {
-          if (mounted) {
-            setAppCheckLog(log => log + `\n${logMessage}`);
-          }
-        });
-        
+        await initializeFirebaseAppCheck();
         if (mounted) {
           setAppCheckReady(true);
-          setAppCheckLog(log => log + "\n✅ App Check 初始化成功！");
-          // 清除超時計時器，因為已經成功
-          clearTimeout(timeoutId);
         }
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        setAppCheckLog(log => log + `\n❌ App Check 初始化失敗: ${errorMsg}`);
-        
         if (mounted) {
           setAppCheckReady(false);
-          // 不要在這裡設定 timeout，讓超時機制來處理
         }
       }
     };
