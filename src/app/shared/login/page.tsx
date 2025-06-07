@@ -128,20 +128,21 @@ function SignIn() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center", // 新增垂直置中
+        justifyContent: "center",
         padding: 32,
         maxWidth: 400,
-        margin: "auto", // 改為 auto
-        marginTop: "2rem", // 新增上邊距
+        margin: "auto",
+        marginTop: "10vh",
         backgroundColor: "#f9f9f9",
         borderRadius: 12,
         boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-        minHeight: "50vh", // 新增最小高度確保垂直置中效果
+        minHeight: "60vh",
     };
 
     const buttonStyle: React.CSSProperties = {
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         padding: "12px 24px",
         backgroundColor: "#ffffff",
         border: "1px solid #dadce0",
@@ -152,14 +153,17 @@ function SignIn() {
         color: "#3c4043",
         textDecoration: "none",
         transition: "all 0.2s ease",
-        marginTop: "1rem", // 新增上邊距讓按鈕與上方內容有適當間距
+        width: "100%",
+        maxWidth: 280,
     };
 
     const userStyle: React.CSSProperties = {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        marginBottom: 32, // 原本 64，改為 32 讓間距更自然
+        marginBottom: 24,
+        flex: 1,
+        justifyContent: "center",
     };
 
     const imgStyle: React.CSSProperties = {
@@ -187,7 +191,6 @@ function SignIn() {
                 </div>
             )}
 
-            {/* 按鈕與 user 區塊間距適中，按鈕不會緊貼底部 */}
             <button
                 type="button"
                 style={buttonStyle}
