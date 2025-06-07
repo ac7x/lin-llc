@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { QuotePdfDocument } from '@/pdf/QuotePdfDocument';
-import { exportPdfToBlob } from '@/pdf/pdfExport';
+import { QuotePdfDocument } from '@/components/QuotePdfDocument';
+import { exportPdfToBlob } from '@/components/pdfExport';
 import { db, collection } from "@/lib/firebase/firebase-client";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { QuoteData } from "@/types/finance";
