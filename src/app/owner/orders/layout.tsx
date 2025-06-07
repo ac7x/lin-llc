@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { OrderSideNav } from "@/components/order-nav";
+import { OrderSideNav } from "@/components/bottom/order-nav";
 
 export default function OrdersLayout({ children }: { children: ReactNode }) {
     return (

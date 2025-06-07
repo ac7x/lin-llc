@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { QuoteSideNav } from "@/components/quote-nav";
+import { QuoteSideNav } from "@/components/side/quote-nav";
 
 export default function QuotesLayout({ children }: { children: ReactNode }) {
     return (

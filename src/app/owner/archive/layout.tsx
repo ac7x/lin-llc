@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { ArchivedNav } from "@/components/archive-nav";
+import { ArchivedNav } from "@/components/side/archive-nav";
 
 export default function ArchivedLayout({ children }: { children: ReactNode }) {
     return (
