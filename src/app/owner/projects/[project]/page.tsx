@@ -27,7 +27,7 @@ import ProjectMaterialsPage from "./project-materials/page";
 import ProjectIssuesPage from "./project-issues/page";
 import SubWorkpackageSortingPage from "./workpackages/subworkpackages/page";
 import ProjectCalendarPage from "./project-calendar/page";
-import { TaiwanCityList } from "@/constants/taiwan-city.enum";
+import { TaiwanCityList } from "@/utils/taiwan-city.enum";
 import { Project, Workpackage } from "@/types/project";
 
 function getWorkpackageProgress(wp: Workpackage): number {

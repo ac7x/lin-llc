@@ -8,7 +8,7 @@ import "@/styles/react-big-calendar.css";
 
 import { db, collection, getDocs } from "@/lib/firebase/firebase-client";
 import { Workpackage } from "@/types/project";
-import { ProgressColorScale } from "@/constants/colorScales";
+import { ProgressColorScale } from "@/utils/colorScales";
 
 const localizer = dateFnsLocalizer({
     format,

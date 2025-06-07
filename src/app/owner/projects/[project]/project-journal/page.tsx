@@ -9,7 +9,7 @@ import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { ActivityLog, PhotoRecord, PhotoType, IssueRecord } from "@/types/project";
 import Image from 'next/image';
-import { TaiwanCityList } from '@/constants/taiwan-city.enum';
+import { TaiwanCityList } from '@/utils/taiwan-city.enum';
 import { Timestamp } from "firebase/firestore";
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
