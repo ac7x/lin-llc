@@ -65,30 +65,15 @@ export function initializeFirebaseAppCheck(): Promise<void> {
       return;
     }
 
-    const maxWaitTime = 8000;
-    const startTime = Date.now();
-
-    const waitForGrecaptcha = () => {
-      if (typeof window.grecaptcha !== 'undefined') {
-        window.grecaptcha.ready(() => {
-          try {
-            appCheck = initializeAppCheck(firebaseApp, {
-              provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
-              isTokenAutoRefreshEnabled: true,
-            });
-            resolve();
-          } catch (error) {
-            reject(error);
-          }
-        });
-      } else if (Date.now() - startTime > maxWaitTime) {
-        reject(new Error('reCAPTCHA initialization timeout'));
-      } else {
-        setTimeout(waitForGrecaptcha, 100);
-      }
-    };
-
-    waitForGrecaptcha();
+    try {
+      appCheck = initializeAppCheck(firebaseApp, {
+        provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+        isTokenAutoRefreshEnabled: true,
+      });
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
