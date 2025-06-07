@@ -1,0 +1,141 @@
+├── app
+│   ├── admin
+│   │   └── layout.tsx
+│   ├── finance
+│   │   └── layout.tsx
+│   ├── layout.tsx
+│   ├── login
+│   │   └── page.tsx
+│   ├── owner
+│   │   ├── archive
+│   │   │   ├── contracts
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   ├── orders
+│   │   │   │   └── page.tsx
+│   │   │   ├── page.tsx
+│   │   │   ├── projects
+│   │   │   │   └── page.tsx
+│   │   │   └── quotes
+│   │   │       └── page.tsx
+│   │   ├── calendar
+│   │   │   └── page.tsx
+│   │   ├── contracts
+│   │   │   ├── [contract]
+│   │   │   │   └── page.tsx
+│   │   │   ├── create
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── dashboard
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── gemini
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   ├── notifications
+│   │   │   └── page.tsx
+│   │   ├── orders
+│   │   │   ├── add
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   ├── [order]
+│   │   │   │   └── page.tsx
+│   │   │   └── page.tsx
+│   │   ├── page.tsx
+│   │   ├── projects
+│   │   │   ├── import
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   ├── page.tsx
+│   │   │   ├── [project]
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── project-calendar
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── project-issues
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── project-journal
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── project-materials
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── workpackages
+│   │   │   │       ├── subworkpackages
+│   │   │   │       │   └── page.tsx
+│   │   │   │       └── [workpackage]
+│   │   │   │           └── page.tsx
+│   │   │   └── templates
+│   │   │       └── page.tsx
+│   │   ├── quotes
+│   │   │   ├── add
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   ├── page.tsx
+│   │   │   └── [quote]
+│   │   │       └── page.tsx
+│   │   ├── schedule
+│   │   │   └── page.tsx
+│   │   ├── settings
+│   │   │   └── page.tsx
+│   │   └── users
+│   │       └── page.tsx
+│   ├── page.tsx
+│   ├── safety
+│   │   └── layout.tsx
+│   ├── shared
+│   │   └── profile
+│   │       └── page.tsx
+│   ├── user
+│   │   └── layout.tsx
+│   └── vendor
+│       └── layout.tsx
+├── components
+│   ├── dev-nav.tsx
+│   ├── navigation
+│   │   ├── bottom
+│   │   │   ├── admin-nav.tsx
+│   │   │   ├── finance-nav.tsx
+│   │   │   ├── owner-nav.tsx
+│   │   │   ├── safety-nav.tsx
+│   │   │   ├── user-nav.tsx
+│   │   │   └── vendor-nav.tsx
+│   │   └── side
+│   │       ├── archive-nav.tsx
+│   │       ├── contract-nav.tsx
+│   │       ├── dashboard-nav.tsx
+│   │       ├── order-nav.tsx
+│   │       └── quote-nav.tsx
+│   └── signin.tsx
+├── constants
+│   ├── colorScales.ts
+│   ├── role.ts
+│   └── taiwan-city.enum.ts
+├── features
+│   └── pdf
+│       ├── components
+│       │   ├── ContractPdfDocument.tsx
+│       │   ├── OrderPdfDocument.tsx
+│       │   └── QuotePdfDocument.tsx
+│       └── utils
+│           └── pdfExport.ts
+├── hooks
+│   └── firebase-hook.ts
+├── lib
+│   ├── firebase
+│   │   ├── firebase-appcheck.ts
+│   │   ├── firebase-client.ts
+│   │   ├── firebase-config.ts
+│   │   └── firebase-context.tsx
+│   └── utils.ts
+├── styles
+│   ├── globals.css
+│   └── react-big-calendar.css
+├── types
+│   ├── charts.d.ts
+│   ├── finance.d.ts
+│   ├── gemini.d.ts
+│   ├── grecaptcha.d.ts
+│   ├── project.d.ts
+│   └── user.d.ts
+└── utils
+    ├── date-format.tsx
+    └── templateHelpers.ts
