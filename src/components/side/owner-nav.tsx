@@ -27,7 +27,6 @@ const defaultOwnerNavItems: NavItem[] = [
     { href: '/owner/notifications', icon: '🔔', label: '通知', active: false },
     { href: '/shared/profile', icon: '🙍‍♂️', label: '個人檔案', active: false },
     { href: '/owner/settings', icon: '⚙️', label: '設定', active: false },
-    { href: '/owner/gemini', icon: '💎', label: 'Gemini', active: false },
     { href: '/owner/archive', icon: '🗄️', label: '封存', active: false },
 ];
 
