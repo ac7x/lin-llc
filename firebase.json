@@ -3,11 +3,15 @@
     "backendId": "lin-llc",
     "rootDir": "/",
     "ignore": [
-      "node_modules",
+      ".next",
+      "**/node_modules/**",
       ".git",
+      ".vscode",
+      ".copilot",
+      "package-lock.json",
       "firebase-debug.log",
       "firebase-debug.*.log",
-      "functions"
+      "README.md"
     ],
     "alwaysDeployFromSource": true
   },
