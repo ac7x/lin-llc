@@ -1,5 +1,5 @@
 #!/bin/bash
-# filepath: scripts/reset-to.sh
+# filepath: scripts/reset.sh
 
 read -p "請輸入要 reset 的 commit hash: " commit
 if [ -z "$commit" ]; then
