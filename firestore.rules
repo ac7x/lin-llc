@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 用戶資料規則
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'owner']);
+    }
+    
+    // 通知規則
+    match /notifications/{notificationId} {
+      // 用戶只能讀取和更新自己的通知
+      allow read, update: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      // 管理員和系統可以建立通知
+      allow create: if request.auth != null && (
+        request.auth.uid == request.resource.data.userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'system']
+      );
+      
+      // 軟刪除（封存）
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.userId &&
+        request.resource.data.keys().hasAll(['isArchived']) &&
+        request.resource.data.isArchived == true;
+    }
+    
+    // 其他集合的通用規則（臨時開放，實際專案中應該更嚴格）
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

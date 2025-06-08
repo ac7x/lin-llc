@@ -1,0 +1,55 @@
+{
+  "name": "lin-llc",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "to": "git reset --hard 0302020d9ae1783dac787a9bba123318319d44b1",
+    "top": "git push origin main --force",
+    "rr": "git fetch origin && git reset --hard origin/main",
+    "fs": "firebase emulators:start",
+    "fp": "firebase deploy",
+    "dev": "rm -rf .next && next dev --turbopack",
+    "build": "rm -rf .next && next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
+    "@react-pdf/renderer": "^4.3.0",
+    "colord": "^2.9.3",
+    "date-fns": "^4.1.0",
+    "firebase": "^11.8.1",
+    "nanoid": "^5.1.5",
+    "next": "15.3.2",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-big-calendar": "^1.19.2",
+    "react-dom": "^19.0.0",
+    "react-firebase-hooks": "^5.1.1",
+    "react-hook-form": "^7.57.0",
+    "recharts": "^2.15.3",
+    "tailwind-merge": "^3.3.0",
+    "vis-timeline": "^7.7.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19",
+    "@types/react-big-calendar": "^1.16.2",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.2",
+    "sass": "^1.89.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
