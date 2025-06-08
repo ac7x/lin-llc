@@ -13,9 +13,11 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     ignores: [
-      "src/lib/firebase/firebase-client.ts",
-      "src/lib/firebase/firebase-context.tsx",
-      "src/lib/firebase/firebase-notifications.ts",
+      "src/lib/firebase-client.ts",
+      "src/lib/firebase-config.ts",
+      "src/lib/firebase-context.tsx",
+      "src/lib/firebase-notifications.ts",
+      "src/lib/firebase-remote-config.ts",
     ],
   },
 ];
