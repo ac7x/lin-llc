@@ -1,11 +1,9 @@
 {
   "apphosting": {
     "backendId": "lin-llc",
-    "rootDir": "/",
+    "rootDir": ".",
     "ignore": [
       "**/node_modules/**",
-      "package-lock.json",
-      ".next",
       ".git",
       ".vscode",
       ".copilot",
@@ -13,8 +11,13 @@
       "firebase-debug.*.log",
       "README.md"
     ],
-    "alwaysDeployFromSource": true,
-    "useCloudBuild": true
+    "alwaysDeployFromSource": false,
+    "useCloudBuild": false,
+    "cleanBuild": false,
+    "predeploy": [
+      "npm ci",
+      "npm run build"
+    ]
   },
   "emulators": {
     "auth": {},
