@@ -4,11 +4,11 @@
     "rootDir": "/",
     "ignore": [
       "**/node_modules/**",
+      "package-lock.json",
       ".next",
       ".git",
       ".vscode",
       ".copilot",
-      "package-lock.json",
       "firebase-debug.log",
       "firebase-debug.*.log",
       "README.md"
