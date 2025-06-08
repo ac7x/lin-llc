@@ -6,11 +6,11 @@
     "node": "20.x"
   },
   "scripts": {
-    "to": "git reset --hard 0302020d9ae1783dac787a9bba123318319d44b1",
-    "top": "git push origin main --force",
-    "rr": "git fetch origin && git reset --hard origin/main",
-    "fs": "firebase emulators:start",
-    "fp": "firebase deploy",
+    "reset": "bash scripts/reset-to.sh",
+    "pfm": "git push origin main --force",
+    "rb": "git fetch origin && git reset --hard origin/main",
+    "fes": "firebase emulators:start",
+    "fd": "firebase deploy",
     "dev": "rm -rf .next && next dev --turbopack",
     "build": "rm -rf .next && next build",
     "start": "next start",

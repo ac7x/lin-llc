@@ -8,11 +8,11 @@
       "firebase-debug.log",
       "firebase-debug.*.log",
       "functions"
-    ]
+    ],
+    "alwaysDeployFromSource": true
   },
   "emulators": {
-    "auth": {
-    },
+    "auth": {},
     "firestore": {
       "rules": "firestore.rules"
     },
@@ -24,6 +24,7 @@
     }
   },
   "storage": {
-    "rules": "storage.rules"
+    "rules": "storage.rules",
+    "bucket": "lin-llc.firebasestorage.app"
   }
 }
