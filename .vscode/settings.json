@@ -1,16 +1,9 @@
 {
   // VS Code Editor 基本設定
   "editor.formatOnSave": false,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit" // 儲存時自動修正 ESLint 問題
-  },
   "files.exclude": {
-    "node_modules/": true,
-    ".next/": true
   },
   "search.exclude": {
-    "node_modules": true,
-    ".next": true
   },
   "typescript.tsdk": "node_modules/typescript/lib", // 指定 TypeScript SDK 路徑
   "editor.inlineSuggest.enabled": true, // 啟用 Copilot 行內建議

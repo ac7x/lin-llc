@@ -3,8 +3,8 @@
     "backendId": "lin-llc",
     "rootDir": "/",
     "ignore": [
-      ".next",
       "**/node_modules/**",
+      ".next",
       ".git",
       ".vscode",
       ".copilot",
@@ -14,6 +14,20 @@
       "README.md"
     ],
     "alwaysDeployFromSource": true
+  },
+  "hosting": {
+    "public": "public",
+    "headers": [
+      {
+        "source": "/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ]
   },
   "emulators": {
     "auth": {},
