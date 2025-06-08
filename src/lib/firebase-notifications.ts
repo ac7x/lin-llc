@@ -13,10 +13,10 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase-client';
+import { COLLECTIONS } from './firebase-config';
 import type { NotificationMessage, AppUser } from '@/types/user';
 
-const NOTIFICATIONS_COLLECTION = 'notifications';
-const USERS_COLLECTION = 'users';
+const { NOTIFICATIONS, USERS } = COLLECTIONS;
 
 /**
  * 建立新通知
@@ -34,7 +34,7 @@ export async function createNotification(
       createdAt: new Date().toISOString(),
     };
 
-    const docRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
+    const docRef = await addDoc(collection(db, NOTIFICATIONS), {
       ...notificationData,
       createdAt: serverTimestamp(),
     });
@@ -58,7 +58,7 @@ export async function createBulkNotifications(
     const now = new Date().toISOString();
 
     userIds.forEach((userId) => {
-      const notificationRef = doc(collection(db, NOTIFICATIONS_COLLECTION));
+      const notificationRef = doc(collection(db, NOTIFICATIONS));
       const notificationData: Omit<NotificationMessage, 'id'> = {
         ...notification,
         userId,
@@ -95,7 +95,7 @@ export async function getUserNotifications(
     const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
 
     let q = query(
-      collection(db, NOTIFICATIONS_COLLECTION),
+      collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
@@ -141,7 +141,7 @@ export function subscribeToUserNotifications(
   const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
 
   let q = query(
-    collection(db, NOTIFICATIONS_COLLECTION),
+    collection(db, NOTIFICATIONS),
     where('userId', '==', userId),
     orderBy('createdAt', 'desc')
   );
@@ -177,7 +177,7 @@ export function subscribeToUserNotifications(
  */
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
   try {
-    const notificationRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+    const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isRead: true,
       readAt: serverTimestamp(),
@@ -196,7 +196,7 @@ export async function markMultipleNotificationsAsRead(notificationIds: string[])
     const batch = writeBatch(db);
 
     notificationIds.forEach((notificationId) => {
-      const notificationRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+      const notificationRef = doc(db, NOTIFICATIONS, notificationId);
       batch.update(notificationRef, {
         isRead: true,
         readAt: serverTimestamp(),
@@ -216,7 +216,7 @@ export async function markMultipleNotificationsAsRead(notificationIds: string[])
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
   try {
     const q = query(
-      collection(db, NOTIFICATIONS_COLLECTION),
+      collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
       where('isRead', '==', false)
     );
@@ -243,7 +243,7 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
  */
 export async function archiveNotification(notificationId: string): Promise<void> {
   try {
-    const notificationRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+    const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isArchived: true,
     });
@@ -258,7 +258,7 @@ export async function archiveNotification(notificationId: string): Promise<void>
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
   try {
-    const notificationRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+    const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isArchived: true, // 軟刪除，實際上是封存
     });
@@ -274,7 +274,7 @@ export async function deleteNotification(notificationId: string): Promise<void> 
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
   try {
     const q = query(
-      collection(db, NOTIFICATIONS_COLLECTION),
+      collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
       where('isRead', '==', false),
       where('isArchived', '==', false)
@@ -296,7 +296,7 @@ export async function updateUserNotificationSettings(
   settings: Partial<AppUser['notificationSettings']>
 ): Promise<void> {
   try {
-    const userRef = doc(db, USERS_COLLECTION, userId);
+    const userRef = doc(db, USERS, userId);
     await updateDoc(userRef, {
       'notificationSettings': settings,
       updatedAt: serverTimestamp(),
