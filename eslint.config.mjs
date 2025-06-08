@@ -14,7 +14,6 @@ const eslintConfig = [
   {
     ignores: [
       "src/lib/firebase/firebase-client.ts",
-      "src/lib/firebase/firebase-config.ts",
       "src/lib/firebase/firebase-context.tsx",
       "src/lib/firebase/firebase-notifications.ts",
     ],

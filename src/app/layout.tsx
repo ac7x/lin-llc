@@ -2,7 +2,6 @@ import React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
-import { DevNav } from "../components/side/dev-nav";
 import { FirebaseProvider } from "@/lib/firebase-context";
 import Script from "next/script";
 
@@ -38,7 +37,6 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <FirebaseProvider>
-          <DevNav />
           {children}
         </FirebaseProvider>
       </body>
