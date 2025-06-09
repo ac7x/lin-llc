@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { nanoid } from "nanoid";
 import { db } from "@/lib/firebase-client";
-import { collection, addDoc, Timestamp, getDocs } from "firebase/firestore";
+import { collection, setDoc, doc, Timestamp, getDocs } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData, QuoteData, OrderItem, QuoteItem } from "@/types/finance";
 
@@ -91,10 +91,13 @@ export default function ImportContractPage() {
         setMessage("");
         try {
             let contractData: Record<string, unknown> = {};
+            // 生成 contractId
+            const newContractId = nanoid(8);
+            
             if (tab === "order") {
                 const order = row.raw as unknown as OrderData;
                 contractData = {
-                    contractId: nanoid(8),
+                    contractId: newContractId, // 使用生成的 ID
                     contractName: order.orderName,
                     contractPrice: order.orderPrice,
                     contractItems: (order.orderItems as OrderItem[]).map(item => ({
@@ -116,7 +119,7 @@ export default function ImportContractPage() {
             } else {
                 const quote = row.raw as unknown as QuoteData;
                 contractData = {
-                    contractId: nanoid(8),
+                    contractId: newContractId, // 使用生成的 ID
                     contractName: quote.quoteName,
                     contractPrice: quote.quotePrice,
                     contractItems: (quote.quoteItems as QuoteItem[]).map(item => ({
@@ -136,7 +139,11 @@ export default function ImportContractPage() {
                     contractContent: "",
                 };
             }
-            await addDoc(collection(db, "finance", "default", "contracts"), contractData);
+            
+            // 使用 setDoc 代替 addDoc，並指定文件 ID 與 contractId 一致
+            // 這樣文件路徑就會是 /finance/default/contracts/newContractId
+            await setDoc(doc(db, "finance", "default", "contracts", newContractId), contractData);
+            
             setMessage(`已成功由${tab === "order" ? "訂單" : "估價單"}建立合約，來源ID: ${row.id}`);
         } catch (err) {
             setMessage("建立失敗: " + (err instanceof Error ? err.message : String(err)));
