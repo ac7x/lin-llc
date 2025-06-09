@@ -1,130 +1,145 @@
 "use client";
 
-import { GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
-import { useState } from "react";
-import { auth, db, initializeFirebaseAppCheck } from "@/lib/firebase-client";
-import { setDoc, doc, getDoc } from "firebase/firestore";
-import Image from "next/image";
-import { serverTimestamp } from "firebase/firestore";
+import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
+import { useEffect, useState } from "react";
+
+import { 
+  auth, 
+  db, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  signOut, 
+  useFirebase,
+  initializeFirebaseAppCheck
+} from "../../../lib/firebase-context";
 
 export default function SignIn() {
-   const [user, setUser] = useState<User | null>(null);
+  const { user: authUser, loading } = useFirebase();
+  const [user, setUser] = useState<User | null>(null);
 
-   async function handleGoogleSignIn() {
-       const provider = new GoogleAuthProvider();
+  useEffect(() => {
+    // 初始化 App Check 驗證
+    initializeFirebaseAppCheck().catch(console.error);
+    
+    // 當 auth 狀態變更時更新本地狀態
+    setUser(authUser);
+  }, [authUser]);
 
-       try {
-           // 初始化 App Check，確保 Firestore 請求被允許
-           await initializeFirebaseAppCheck();
+  // 處理用戶資料儲存到 Firestore
+  const saveUserToFirestore = async (user: User): Promise<void> => {
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userSnapshot = await getDoc(userRef);
+      
+      // 建立基本用戶資料
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        lastLogin: new Date().toISOString(),
+      };
 
-           const result = await signInWithPopup(auth, provider);
+      // 如果用戶不存在，新建用戶並設定初始角色
+      if (!userSnapshot.exists()) {
+        await setDoc(userRef, {
+          ...userData,
+          role: "user", // 預設角色
+          createdAt: new Date().toISOString(),
+        });
+      } else {
+        // 用戶存在則只更新登入時間
+        await setDoc(userRef, userData, { merge: true });
+      }
+    } catch (error) {
+      console.error("儲存用戶資料失敗:", error);
+    }
+  };
 
-           setUser(result.user);
+  // Google 登入處理
+  async function handleGoogleSignIn() {
+    const provider = new GoogleAuthProvider();
 
-           if (result.user) {
-               const { uid, displayName, email, photoURL } = result.user;
-               const userRef = doc(db, "users", uid);
-               const snap = await getDoc(userRef);
-               await setDoc(
-                   userRef,
-                   snap.exists()
-                       ? { displayName, email, photoURL }
-                       : {
-                           uid,
-                           displayName,
-                           email,
-                           photoURL,
-                           role: "user",
-                           emailVerified: false,
-                           updatedAt: serverTimestamp(),
-                           disabled: false,
-                           metadata: {
-                               creationTime: new Date().toISOString(),
-                               lastSignInTime: ""
-                           }
-                       },
-                   { merge: true }
-               );
-           }
-       } catch (error) {
-           console.error(error);
-       }
-   }
+    try {
+      const result = await signInWithPopup(auth, provider);
+      setUser(result.user);
+      
+      // 儲存用戶資料到 Firestore
+      await saveUserToFirestore(result.user);
+    } catch (error) {
+      console.error("登入失敗:", error);
+    }
+  }
 
-   async function handleSignOut() {
-       await signOut(auth);
-       setUser(null);
-   }
+  // 登出處理
+  async function handleSignOut() {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error("登出失敗:", error);
+    }
+  }
 
-   const containerStyle: React.CSSProperties = {
-       width: "100%",
-       height: "100vh",
-       display: "flex",
-       flex: 1,
-       flexDirection: "column",
-       alignItems: "center",
-       justifyContent: "center",
-   };
+  // 載入中狀態
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
-   const buttonStyle: React.CSSProperties = {
-       height: 56,
-       width: 650,
-       color: "var(--text)",
-       background: "none",
-       borderImage: "linear-gradient(to right, var(--primary), var(--gray)) 1",
-       marginTop: 32,
-       fontSize: 18,
-       display: "flex",
-       alignItems: "center",
-       justifyContent: "center",
-       transition: "background-color 0.3s",
-   };
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+        {user && (
+          <div className="flex flex-col items-center mb-8">
+            {user.photoURL && (
+              <img 
+                src={user.photoURL} 
+                alt="用戶照片"
+                className="w-24 h-24 rounded-full mb-4 border-2 border-gray-200 dark:border-gray-700"
+              />
+            )}
+            <h2 className="text-xl font-bold dark:text-white">{user.displayName}</h2>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">{user.email}</p>
+          </div>
+        )}
 
-   const userStyle: React.CSSProperties = {
-       display: "flex",
-       flexDirection: "column",
-       alignItems: "center",
-       marginBottom: 64,
-   };
+        <h1 className="text-2xl font-bold text-center mb-6 dark:text-white">
+          {user ? "歡迎回來" : "登入您的帳號"}
+        </h1>
 
-   const imgStyle: React.CSSProperties = {
-       width: 140,
-       height: 140,
-       borderRadius: "50%",
-       marginBottom: 16,
-   };
-
-   return (
-       <div style={containerStyle}>
-           {user && (
-               <div style={userStyle}>
-                   {user.photoURL && (
-                       <Image
-                           src={user.photoURL}
-                           alt="使用者頭像"
-                           width={140}
-                           height={140}
-                           style={imgStyle}
-                       />
-                   )}
-                   <strong>{user.displayName}</strong>
-                   <small>{user.email}</small>
-               </div>
-           )}
-
-           {user ? (
-               <button type="button" style={buttonStyle} onClick={handleSignOut}>
-                   {/* 使用 emoji 取代 SignOut icon */}
-                   <span style={{ fontSize: 24, marginRight: 7 }}>🚪</span>
-                   登出
-               </button>
-           ) : (
-               <button type="button" style={buttonStyle} onClick={handleGoogleSignIn}>
-                   {/* 使用 emoji 取代 GoogleLogo icon */}
-                   <span style={{ fontSize: 24, marginRight: 7 }}>🔎</span>
-                   Entrar com Google
-               </button>
-           )}
-       </div>
-   );
+        {!user ? (
+          <>
+            <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
+              使用社交媒體帳號登入，例如 Google 帳號，<br />
+              您可以輕鬆使用我們的服務，無需額外註冊。
+            </p>
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold py-3 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm transition duration-150"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+              </svg>
+              使用 Google 登入
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleSignOut}
+            className="w-full bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white font-semibold py-3 px-4 rounded-md shadow-sm transition duration-150"
+          >
+            登出
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
