@@ -17,19 +17,35 @@ export default function OrderAddPage() {
         { orderItemId: "", orderItemPrice: 0, orderItemQuantity: 1 },
     ]);
 
-    // 項目總價
+    // 項目總價與自動計算
+    const getOrderItemPrice = (quantity: number, unitPrice: number) => quantity * unitPrice;
     const totalOrderItemPrice = orderItems.reduce((sum, item) => sum + (item.orderItemPrice || 0), 0);
-    const orderPrice = totalOrderItemPrice; // 訂單金額 = 項目總價
+    const orderPrice = totalOrderItemPrice;
 
-    // 權重與百分比（以金額為基礎）
+    // 權重與百分比
     const getWeight = (price: number) => (orderPrice ? price / orderPrice : 0);
     const getPercent = (price: number) => (orderPrice ? ((price / orderPrice) * 100).toFixed(2) : "0.00");
-    // 單價自動計算
-    const getUnitPrice = (item: OrderItem) => (item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00");
+    
+    // 單價與自動計算
+    const getUnitPrice = (item: OrderItem) => item.orderItemPrice / (item.orderItemQuantity || 1);
+    const setUnitPrice = (idx: number, unitPrice: number) => {
+        const item = orderItems[idx];
+        handleItemChange(idx, "orderItemPrice", unitPrice * (item.orderItemQuantity || 1));
+    };
 
     // 項目操作
     const handleItemChange = (idx: number, key: keyof OrderItem, value: string | number) => {
-        setOrderItems(items => items.map((item, i) => i === idx ? { ...item, [key]: value } : item));
+        setOrderItems(items => items.map((item, i) => {
+            if (i !== idx) return item;
+            
+            const updated = { ...item, [key]: value };
+            // 當數量改變時，保持單價不變並重新計算總價
+            if (key === "orderItemQuantity") {
+                const unitPrice = getUnitPrice(item);
+                updated.orderItemPrice = getOrderItemPrice(Number(value) || 0, unitPrice);
+            }
+            return updated;
+        }));
     };
     const addItem = () => setOrderItems([...orderItems, { orderItemId: "", orderItemPrice: 0, orderItemQuantity: 1 }]);
     const removeItem = (idx: number) => setOrderItems(items => items.filter((_, i) => i !== idx));
@@ -181,7 +197,17 @@ export default function OrderAddPage() {
                                             required
                                         />
                                     </td>
-                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getUnitPrice(item)}</td>
+                                    <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
+                                        <input
+                                            type="number"
+                                            className="border px-2 py-1 rounded w-24 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 text-right focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
+                                            min={0}
+                                            value={getUnitPrice(item)}
+                                            onChange={e => setUnitPrice(idx, Number(e.target.value))}
+                                            step="0.01"
+                                            required
+                                        />
+                                    </td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.orderItemPrice).toFixed(2)}</td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.orderItemPrice)}%</td>
                                     <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">
