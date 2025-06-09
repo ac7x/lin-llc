@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import { FirebaseProvider } from "@/lib/firebase-context";
 import Script from "next/script";
+import { OwnerBottomNav } from "@/components/bottom/owner-nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
         <FirebaseProvider>
           {children}
         </FirebaseProvider>
+        <OwnerBottomNav />
       </body>
     </html>
   );
