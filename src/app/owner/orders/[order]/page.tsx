@@ -21,7 +21,7 @@ export default function OrderDetailPage() {
     const [error, setError] = useState("");
     const [editing, setEditing] = useState(false);
     const [editOrderName, setEditOrderName] = useState("");
-    const [editOrderPrice, setEditOrderPrice] = useState(0);
+    // const [editOrderPrice, setEditOrderPrice] = useState(0); // 不再手動編輯
     const [editOrderItems, setEditOrderItems] = useState<OrderItem[]>([]);
     const [editClientName, setEditClientName] = useState("");
     const [editClientContact, setEditClientContact] = useState("");
@@ -49,7 +49,7 @@ export default function OrderDetailPage() {
             setClientEmail(data.clientEmail || "");
             // 編輯狀態初始化
             setEditOrderName(data.orderName || "");
-            setEditOrderPrice(data.orderPrice || 0);
+            // setEditOrderPrice(data.orderPrice || 0); // 不再手動編輯
             setEditOrderItems(Array.isArray(data.orderItems) ? data.orderItems : []);
             setEditClientName(data.clientName || "");
             setEditClientContact(data.clientContact || "");
@@ -58,6 +58,9 @@ export default function OrderDetailPage() {
             setLoading(false);
         }
     }, [orderId, orderDoc]);
+
+    // 訂單金額 = 編輯項目金額加總
+    const editOrderPrice = editOrderItems.reduce((sum, item) => sum + (item.orderItemPrice || 0), 0);
 
     // 權重與百分比（以金額為基礎）
     const getWeight = (price: number) => (orderPrice ? price / orderPrice : 0);
@@ -77,7 +80,7 @@ export default function OrderDetailPage() {
             const { updateDoc } = await import("firebase/firestore");
             await updateDoc(doc(db, "finance", "default", "orders", orderId), {
                 orderName: editOrderName,
-                orderPrice: editOrderPrice,
+                orderPrice: editOrderPrice, // 用加總
                 orderItems: editOrderItems.map((item, idx) => ({
                     ...item,
                     orderItemId: item.orderItemId || String(idx + 1),
@@ -127,8 +130,8 @@ export default function OrderDetailPage() {
                                 type="number"
                                 className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                                 value={editOrderPrice}
-                                min={0}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditOrderPrice(Number(e.target.value))}
+                                readOnly
+                                tabIndex={-1}
                             />
                         </div>
                         <div>
@@ -309,23 +312,16 @@ export default function OrderDetailPage() {
                             <tbody>
                                 {orderItems.length === 0 ? (
                                     <tr><td colSpan={5} className="text-center text-gray-400">無項目</td></tr>
-                                ) : [...orderItems]
-                                    .sort((a, b) => {
-                                        const aNum = Number(a.orderItemId);
-                                        const bNum = Number(b.orderItemId);
-                                        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
-                                        return String(a.orderItemId).localeCompare(String(b.orderItemId));
-                                    })
-                                    .map((item, idx) => (
-                                        <tr key={item.orderItemId + idx}>
-                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemId}</td>
-                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">{item.orderItemPrice}</td>
-                                            <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemQuantity}</td>
-                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}</td>
-                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.orderItemPrice).toFixed(2)}</td>
-                                            <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.orderItemPrice)}%</td>
-                                        </tr>
-                                    ))}
+                                ) : orderItems.map((item, idx) => (
+                                    <tr key={item.orderItemId + idx}>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemId}</td>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">{item.orderItemPrice}</td>
+                                        <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{item.orderItemQuantity}</td>
+                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{item.orderItemQuantity ? (item.orderItemPrice / item.orderItemQuantity).toFixed(2) : "0.00"}</td>
+                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getWeight(item.orderItemPrice).toFixed(2)}</td>
+                                        <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{getPercent(item.orderItemPrice)}%</td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>

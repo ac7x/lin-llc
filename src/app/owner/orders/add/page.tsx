@@ -12,7 +12,6 @@ export default function OrderAddPage() {
     const [clientContact, setClientContact] = useState("");
     const [clientPhone, setClientPhone] = useState("");
     const [clientEmail, setClientEmail] = useState("");
-    const [orderPrice, setOrderPrice] = useState(0);
     const [orderName, setOrderName] = useState("");
     const [orderItems, setOrderItems] = useState<OrderItem[]>([
         { orderItemId: "", orderItemPrice: 0, orderItemQuantity: 1 },
@@ -20,6 +19,7 @@ export default function OrderAddPage() {
 
     // 項目總價
     const totalOrderItemPrice = orderItems.reduce((sum, item) => sum + (item.orderItemPrice || 0), 0);
+    const orderPrice = totalOrderItemPrice; // 訂單金額 = 項目總價
 
     // 權重與百分比（以金額為基礎）
     const getWeight = (price: number) => (orderPrice ? price / orderPrice : 0);
@@ -44,7 +44,7 @@ export default function OrderAddPage() {
             await setDoc(doc(db, "finance", "default", "orders", orderId), {
                 orderId,
                 orderName,
-                orderPrice,
+                orderPrice, // 直接用加總
                 orderItems: orderItems.map((item, idx) => ({
                     ...item,
                     orderItemId: item.orderItemId || String(idx + 1), // 若未填則用序號
@@ -52,10 +52,10 @@ export default function OrderAddPage() {
                 totalOrderItemPrice,
                 createdAt: now,
                 updatedAt: now,
-                clientName,           // 新增
-                clientContact,        // 新增
-                clientPhone,          // 新增
-                clientEmail,          // 新增
+                clientName,
+                clientContact,
+                clientPhone,
+                clientEmail,
             });
             router.push("/owner/orders");
         } catch (err) {
@@ -85,9 +85,8 @@ export default function OrderAddPage() {
                             type="number"
                             className="border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:outline-blue-400 focus:ring-2 focus:ring-blue-200"
                             value={orderPrice}
-                            min={0}
-                            onChange={e => setOrderPrice(Number(e.target.value))}
-                            required
+                            readOnly
+                            tabIndex={-1}
                         />
                     </div>
                     <div>
