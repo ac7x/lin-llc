@@ -5,6 +5,7 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { db, collection, getDocs } from '@/lib/firebase-client';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { Workpackage } from '@/types/project';
 
 export default function DashboardPage() {
   // 取得 users 和 projects 集合的 snapshot
@@ -16,10 +17,41 @@ export default function DashboardPage() {
   // 新增：取得 contracts 集合的 snapshot（改為 finance/default 子集合）
   const [contractsSnapshot, contractsLoading, contractsError] = useCollection(collection(db, 'finance', 'default', 'contracts'));
 
+  // 工作包和子工作包統計
+  const [workpackagesCount, setWorkpackagesCount] = React.useState<number>(0);
+  const [subWorkpackagesCount, setSubWorkpackagesCount] = React.useState<number>(0);
+  const [statsLoading, setStatsLoading] = React.useState<boolean>(true);
+
   // 四合一折線圖資料處理
   const [multiLineData, setMultiLineData] = React.useState<Array<{ date: string; 訂單: number; 估價單: number; 合約: number; 專案: number }>>([]);
   const [multiLineLoading, setMultiLineLoading] = React.useState(true);
   const [multiLineError, setMultiLineError] = React.useState<string | null>(null);
+
+  // 計算工作包和子工作包數量
+  React.useEffect(() => {
+    if (projectsSnapshot && !projectsLoading && !projectsError) {
+      setStatsLoading(true);
+      let totalWorkpackages = 0;
+      let totalSubWorkpackages = 0;
+      
+      projectsSnapshot.docs.forEach(doc => {
+        const projectData = doc.data();
+        if (projectData.workpackages && Array.isArray(projectData.workpackages)) {
+          totalWorkpackages += projectData.workpackages.length;
+          
+          projectData.workpackages.forEach((workpackage: Workpackage) => {
+            if (workpackage.subWorkpackages && Array.isArray(workpackage.subWorkpackages)) {
+              totalSubWorkpackages += workpackage.subWorkpackages.length;
+            }
+          });
+        }
+      });
+      
+      setWorkpackagesCount(totalWorkpackages);
+      setSubWorkpackagesCount(totalSubWorkpackages);
+      setStatsLoading(false);
+    }
+  }, [projectsSnapshot, projectsLoading, projectsError]);
 
   React.useEffect(() => {
     setMultiLineLoading(true);
@@ -159,6 +191,20 @@ export default function DashboardPage() {
               <div className="text-[11px] text-purple-800 dark:text-purple-200 mb-0.5">估價單總數</div>
               <div className="text-2xl font-bold text-purple-800 dark:text-purple-200 leading-tight">
                 {quotesLoading ? '...' : quotesError ? '錯誤' : quotesSnapshot?.size ?? 0}
+              </div>
+            </section>
+            {/* 工作包總數卡片 */}
+            <section className="flex-1 min-w-[100px] bg-orange-50 dark:bg-orange-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
+              <div className="text-[11px] text-orange-800 dark:text-orange-200 mb-0.5">工作包總數</div>
+              <div className="text-2xl font-bold text-orange-800 dark:text-orange-200 leading-tight">
+                {statsLoading ? '...' : workpackagesCount}
+              </div>
+            </section>
+            {/* 子工作包總數卡片 */}
+            <section className="flex-1 min-w-[100px] bg-teal-50 dark:bg-teal-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
+              <div className="text-[11px] text-teal-800 dark:text-teal-200 mb-0.5">子工作包總數</div>
+              <div className="text-2xl font-bold text-teal-800 dark:text-teal-200 leading-tight">
+                {statsLoading ? '...' : subWorkpackagesCount}
               </div>
             </section>
           </div>
