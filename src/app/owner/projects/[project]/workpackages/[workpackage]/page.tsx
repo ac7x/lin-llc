@@ -34,6 +34,7 @@ function templateItemToSubWorkpackage(
         createdAt: now
     }));
 
+    // 建立子工作包物件，日期欄位可為 undefined
     return {
         id: nanoid(8),
         name: templateItem.name,
@@ -45,8 +46,9 @@ function templateItemToSubWorkpackage(
         status: 'pending',
         tasks: tasks,
         createdAt: now,
-        estimatedStartDate: estimatedStartDate,
-        estimatedEndDate: estimatedEndDate,
+        // 日期欄位為選填，可為 undefined
+        estimatedStartDate: estimatedStartDate || undefined,
+        estimatedEndDate: estimatedEndDate || undefined,
         priority: 0
     };
 }
@@ -192,6 +194,7 @@ export default function WorkpackageDetailPage() {
         if (!newSubWorkpackage.name.trim() || subSaving) return;
         setSubSaving(true);
         try {
+            // 建立子工作包物件
             const newSubWp: SubWorkpackage = {
                 id: Date.now().toString(),
                 name: newSubWorkpackage.name.trim(),
@@ -199,10 +202,11 @@ export default function WorkpackageDetailPage() {
                 estimatedQuantity: newSubWorkpackage.estimatedQuantity,
                 unit: newSubWorkpackage.unit,
                 budget: newSubWorkpackage.budget,
-                estimatedStartDate: newSubWorkpackage.estimatedStartDate
+                // 改善日期處理邏輯: 確保空字串、無效日期等都會回傳 undefined
+                estimatedStartDate: newSubWorkpackage.estimatedStartDate && newSubWorkpackage.estimatedStartDate.trim() 
                     ? Timestamp.fromDate(new Date(newSubWorkpackage.estimatedStartDate))
                     : undefined,
-                estimatedEndDate: newSubWorkpackage.estimatedEndDate
+                estimatedEndDate: newSubWorkpackage.estimatedEndDate && newSubWorkpackage.estimatedEndDate.trim()
                     ? Timestamp.fromDate(new Date(newSubWorkpackage.estimatedEndDate))
                     : undefined,
                 status: "新建立",
@@ -233,14 +237,20 @@ export default function WorkpackageDetailPage() {
     const handleAddFromTemplate = async (template: Template) => {
         setSubSaving(true);
         try {
-            const subWorkpackages = templateToSubWorkpackages(template, {
+            // 只有在工作包已有預計日期時才傳遞預設日期
+            const templateOptions: TemplateToSubWorkpackageOptions = {
                 workpackageId: workpackageId,
-                estimatedStartDate: workpackage.estimatedStartDate,
-                estimatedEndDate: workpackage.estimatedEndDate
-            }).map(subWp => ({
-                ...subWp,
-                estimatedQuantity: templateQuantities[subWp.id] ?? 0
-            }));
+                // 確保只有在有日期的情況下傳遞日期參數，否則為 undefined
+                estimatedStartDate: workpackage.estimatedStartDate || undefined,
+                estimatedEndDate: workpackage.estimatedEndDate || undefined
+            };
+            
+            const subWorkpackages = templateToSubWorkpackages(template, templateOptions)
+                .map(subWp => ({
+                    ...subWp,
+                    estimatedQuantity: templateQuantities[subWp.id] ?? 0
+                }));
+                
             const updatedWorkpackages = project.workpackages.map(wp =>
                 wp.id === workpackageId
                     ? { ...wp, subWorkpackages: [...(wp.subWorkpackages || []), ...subWorkpackages] }
@@ -373,11 +383,11 @@ export default function WorkpackageDetailPage() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">預計開始日期</label>
+                                        <label className="block text-sm font-medium mb-1">預計開始日期 (選填)</label>
                                         <input type="date" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.estimatedStartDate} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, estimatedStartDate: e.target.value }))} />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">預計結束日期</label>
+                                        <label className="block text-sm font-medium mb-1">預計結束日期 (選填)</label>
                                         <input type="date" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.estimatedEndDate} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, estimatedEndDate: e.target.value }))} />
                                     </div>
                                     <div>

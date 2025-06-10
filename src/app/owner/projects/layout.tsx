@@ -8,7 +8,7 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 
 function Sidebar() {
-    const { db, collection, doc, updateDoc, setDoc, deleteDoc } = useFirebase();
+    const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useFirebase();
     const pathname = usePathname();
     const navs = [
         { label: "專案列表", href: "/owner/projects" },
@@ -53,7 +53,7 @@ function Sidebar() {
                 status: "新建立",
                 progress: 0,
                 budget: newWorkpackage.budget,
-                createdAt: new Date().toISOString(),
+                createdAt: Timestamp.now(),
                 subWorkpackages: [],
             };
 
