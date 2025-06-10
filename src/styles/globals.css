@@ -18,24 +18,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.grecaptcha-badge-container {
-  /* 這個容器只用來定位 grecaptcha badge */
-  pointer-events: none;
-  position: fixed;
-  right: 0;
-  left: auto;
-  top: 0;
-  bottom: auto;
-  width: auto;
-  height: auto;
-  z-index: 50;
-  display: flex;
-  justify-content: flex-end;
-}
-
+/* 調整 reCAPTCHA v3 徽標位置 */
 .grecaptcha-badge {
-  z-index: 9999 !important;
-  position: static !important; /* 讓 badge 跟隨 container 定位 */
-  margin-bottom: 0 !important;
-  pointer-events: auto;
+  bottom: 80px !important; /* 將徽標上移，避開底部導航欄 */
 }
