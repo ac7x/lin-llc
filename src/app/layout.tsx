@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import Script from "next/script";
+import { OwnerBottomNavWrapper } from "@/components/bottom/owner-nav-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,8 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+        {/* 僅用戶登入時顯示底部導覽列 */}
+        <OwnerBottomNavWrapper />
       </body>
     </html>
   );
