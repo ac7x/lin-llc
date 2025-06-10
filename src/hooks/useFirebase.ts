@@ -6,22 +6,36 @@ import { Firestore } from 'firebase/firestore';
 import {
   subscribeToAuthState,
   initializeFirebaseAppCheck,
-  auth, // 新增匯入
-  signOut, // 新增匯入
+  auth,
+  signOut,
   db,
+  // Firestore core
   collection,
   doc,
   getDoc,
   getDocs,
+  addDoc,
   setDoc,
   updateDoc,
   deleteDoc,
+  // Queries
   query,
   where,
   orderBy,
   limit,
-  Timestamp
+  // Utils
+  Timestamp,
+  serverTimestamp,
+  // Array operations
+  arrayUnion,
+  arrayRemove,
 } from '@/lib/firebase-client';
+
+// 導出 react-firebase-hooks
+export { 
+  useCollection,
+  useDocument 
+} from 'react-firebase-hooks/firestore';
 
 // 定義 FirebaseAuth 回傳型別
 interface FirebaseAuthReturn {
@@ -31,19 +45,27 @@ interface FirebaseAuthReturn {
   isInitialized: boolean;
   isReady: boolean;
   db: Firestore;
+  auth: typeof auth;
   // Firestore 功能
   collection: typeof collection;
   doc: typeof doc;
   getDoc: typeof getDoc;
   getDocs: typeof getDocs;
+  addDoc: typeof addDoc;
   setDoc: typeof setDoc;
   updateDoc: typeof updateDoc;
   deleteDoc: typeof deleteDoc;
+  // Queries
   query: typeof query;
   where: typeof where;
   orderBy: typeof orderBy;
   limit: typeof limit;
+  // Utils
   Timestamp: typeof Timestamp;
+  serverTimestamp: typeof serverTimestamp;
+  // Array operations
+  arrayUnion: typeof arrayUnion;
+  arrayRemove: typeof arrayRemove;
 }
 
 export function useAuth(): FirebaseAuthReturn {
@@ -84,19 +106,27 @@ export function useAuth(): FirebaseAuthReturn {
     isInitialized: initialized,
     isReady: initialized && !loading,
     db,
+    auth,
     // Firestore 功能
     collection,
     doc,
     getDoc,
     getDocs,
+    addDoc,
     setDoc,
     updateDoc,
     deleteDoc,
+    // Queries
     query,
     where,
     orderBy,
     limit,
+    // Utils
     Timestamp,
+    serverTimestamp,
+    // Array operations
+    arrayUnion,
+    arrayRemove,
   };
 }
 
@@ -151,6 +181,7 @@ export {
   doc,
   getDoc,
   getDocs,
+  addDoc,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -159,7 +190,10 @@ export {
   orderBy,
   limit,
   Timestamp,
+  serverTimestamp,
+  arrayUnion,
+  arrayRemove,
   db,
-  auth, // 新增匯出
-  signOut // 新增匯出
+  auth,
+  signOut
 };
