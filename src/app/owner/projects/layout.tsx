@@ -3,12 +3,12 @@
 import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { db, collection, doc } from "@/lib/firebase-client";
-import { updateDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 
 function Sidebar() {
+    const { db, collection, doc, updateDoc, setDoc, deleteDoc } = useFirebase();
     const pathname = usePathname();
     const navs = [
         { label: "專案列表", href: "/owner/projects" },

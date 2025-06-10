@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { db, doc, collection, addDoc, updateDoc, deleteDoc } from "@/lib/firebase-client";
-import { auth } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { Timestamp } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { Template, SubWorkpackageTemplateItem } from "@/types/project";
 import { nanoid } from "nanoid";
 
 export default function TemplatesAdminPage() {
+  const { db, doc, collection, addDoc, updateDoc, deleteDoc, auth } = useFirebase();
   const [templatesSnapshot] = useCollection(collection(db, "templates"));
   const [showModal, setShowModal] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);

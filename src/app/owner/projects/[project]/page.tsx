@@ -1,7 +1,8 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { db, doc, updateDoc, Timestamp } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
+import { Timestamp } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { useState, useMemo } from "react";
 // 新增 DND 相關引入
@@ -81,6 +82,7 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
 }
 
 export default function ProjectDetailPage() {
+    const { db, doc, updateDoc } = useFirebase();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));

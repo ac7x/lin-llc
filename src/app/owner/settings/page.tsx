@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { db } from "@/lib/firebase-client";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { useFirebase } from "@/hooks/useFirebase";
 
 export default function OwnerSettingsPage() {
+    const { db, doc, getDoc, setDoc } = useFirebase();
     const [archiveRetentionDays, setArchiveRetentionDaysState] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 

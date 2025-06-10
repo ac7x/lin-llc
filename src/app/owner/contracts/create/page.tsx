@@ -2,8 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { nanoid } from "nanoid";
-import { db } from "@/lib/firebase-client";
-import { collection, setDoc, doc, Timestamp, getDocs } from "firebase/firestore";
+import { useFirebase } from '@/hooks/useFirebase';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData, QuoteData, OrderItem, QuoteItem } from "@/types/finance";
 
@@ -19,6 +18,7 @@ interface RowBase {
 }
 
 export default function ImportContractPage() {
+    const { db, collection, setDoc, doc } = useFirebase();
     const [tab, setTab] = useState<SourceTab>("order");
     // 訂單與估價單快照
     const [ordersSnapshot] = useCollection(collection(db, "finance", "default", "orders"));

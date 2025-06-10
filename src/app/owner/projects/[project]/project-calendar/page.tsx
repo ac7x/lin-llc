@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
-import { db, doc } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -34,6 +34,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
+    const { db, doc } = useFirebase();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));

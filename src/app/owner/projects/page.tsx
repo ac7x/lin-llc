@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { db, collection } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
@@ -24,6 +24,7 @@ const formatDate = (timestamp: TimestampInput, formatStr = "yyyy-MM-dd"): string
 };
 
 export default function ProjectsPage() {
+    const { db, collection } = useFirebase();
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
     const [search, setSearch] = useState("");
 

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { db, doc, Timestamp } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
+import { Timestamp } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { OrderItem } from "@/types/finance";
 
@@ -10,6 +11,7 @@ export default function OrderDetailPage() {
     const router = useRouter();
     const params = useParams();
     const orderId = params?.order as string;
+    const { db, doc, updateDoc } = useFirebase();
     const [orderName, setOrderName] = useState("");
     const [orderPrice, setOrderPrice] = useState(0);
     const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -77,10 +79,9 @@ export default function OrderDetailPage() {
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const { updateDoc } = await import("firebase/firestore");
             await updateDoc(doc(db, "finance", "default", "orders", orderId), {
                 orderName: editOrderName,
-                orderPrice: editOrderPrice, // 用加總
+                orderPrice: editOrderPrice,
                 orderItems: editOrderItems.map((item, idx) => ({
                     ...item,
                     orderItemId: item.orderItemId || String(idx + 1),

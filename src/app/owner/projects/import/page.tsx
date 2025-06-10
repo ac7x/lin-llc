@@ -1,9 +1,9 @@
 "use client";
 
-import { db } from "@/lib/firebase-client";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
-import { useCollection } from "react-firebase-hooks/firestore";
 import { useState, useMemo } from "react";
+import { useFirebase } from "@/hooks/useFirebase";
+import { Timestamp } from "firebase/firestore";
+import { useCollection } from "react-firebase-hooks/firestore";
 import { nanoid } from "nanoid";
 import { Workpackage } from "@/types/project";
 import { ContractItem } from "@/types/finance";
@@ -18,6 +18,7 @@ interface ContractRow {
 }
 
 export default function ImportProjectPage() {
+    const { db, collection, addDoc } = useFirebase();
     const [contractsSnapshot] = useCollection(collection(db, "finance", "default", "contracts"));
     const [importingId, setImportingId] = useState<string | null>(null);
     const [message, setMessage] = useState<string>("");

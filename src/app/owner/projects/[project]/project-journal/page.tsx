@@ -2,15 +2,13 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
+import { useFirebase } from "@/hooks/useFirebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { db, doc } from "@/lib/firebase-client";
-import { updateDoc, arrayUnion } from "firebase/firestore";
-import { useDocument } from "react-firebase-hooks/firestore";
+import { Timestamp } from "firebase/firestore";
 import { Project } from "@/types/project";
 import { ActivityLog, PhotoRecord, PhotoType, IssueRecord } from "@/types/project";
 import Image from 'next/image';
 import { TaiwanCityList } from '@/utils/taiwan-city.enum';
-import { Timestamp } from "firebase/firestore";
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
@@ -32,6 +30,7 @@ async function fetchWeather(region: string) {
 }
 
 export default function ProjectJournalPage() {
+    const { db, doc, updateDoc } = useFirebase();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));

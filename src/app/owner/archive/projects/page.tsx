@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { db, collection } from "@/lib/firebase-client";
+import { useFirebase } from '@/hooks/useFirebase';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useMemo, useState } from "react";
 
 export default function ArchivedProjectsPage() {
+    const { db, collection } = useFirebase();
     // 修改為從 archived/default/projects 集合讀取
     const [projectsSnapshot, loading] = useCollection(
         collection(db, "archived", "default", "projects")

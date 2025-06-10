@@ -2,9 +2,10 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { db, doc } from "@/lib/firebase-client";
+import { useFirebase } from '@/hooks/useFirebase';
 
 export default function ContractDetailPage() {
+    const { db, doc } = useFirebase();
     const params = useParams();
     const router = useRouter();
     const contractId = params?.contract as string;

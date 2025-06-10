@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { db, collection, doc, setDoc, deleteDoc } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 
 export function OrderSideNav() {
     const pathname = usePathname();
+    const { db, collection, doc, setDoc, deleteDoc } = useFirebase();
     const navs = [
         { label: "訂單列表", href: "/owner/orders" },
         { label: "新增訂單", href: "/owner/orders/add" },

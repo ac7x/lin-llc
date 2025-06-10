@@ -4,10 +4,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { db, collection, doc, setDoc, deleteDoc } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 
 export default function ContractNav() {
+    const { db, collection, doc, setDoc, deleteDoc } = useFirebase();
     const pathname = usePathname();
     const navs = [
         { label: "合約總表", href: "/owner/contracts" },

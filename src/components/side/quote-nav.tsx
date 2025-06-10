@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { db, collection, doc, setDoc, deleteDoc } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 
 export function QuoteSideNav() {
     const pathname = usePathname();
+    const { db, collection, doc, setDoc, deleteDoc } = useFirebase();
     const navs = [
         { label: "估價單列表", href: "/owner/quotes" },
         { label: "新增估價單", href: "/owner/quotes/add" },

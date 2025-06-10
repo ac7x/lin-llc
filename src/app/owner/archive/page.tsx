@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { db, collection, getDocs, deleteDoc, doc } from "@/lib/firebase-client";
+import { useFirebase } from '@/hooks/useFirebase';
 
 export default function ArchivedPage() {
+    const { db, collection, getDocs, deleteDoc, doc } = useFirebase();
     const [clickCount, setClickCount] = useState(0);
     const [lastClickTime, setLastClickTime] = useState<number>(0);
 

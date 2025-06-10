@@ -2,15 +2,51 @@
 
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { subscribeToAuthState, initializeFirebaseAppCheck } from '@/lib/firebase-client';
+import { Firestore } from 'firebase/firestore';
+import {
+  subscribeToAuthState,
+  initializeFirebaseAppCheck,
+  auth, // 新增匯入
+  signOut, // 新增匯入
+  db,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  Timestamp
+} from '@/lib/firebase-client';
 
-// 重新導出所有 firebase-client.ts 功能
-export * from '@/lib/firebase-client';
+// 定義 FirebaseAuth 回傳型別
+interface FirebaseAuthReturn {
+  user: User | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  isInitialized: boolean;
+  isReady: boolean;
+  db: Firestore;
+  // Firestore 功能
+  collection: typeof collection;
+  doc: typeof doc;
+  getDoc: typeof getDoc;
+  getDocs: typeof getDocs;
+  setDoc: typeof setDoc;
+  updateDoc: typeof updateDoc;
+  deleteDoc: typeof deleteDoc;
+  query: typeof query;
+  where: typeof where;
+  orderBy: typeof orderBy;
+  limit: typeof limit;
+  Timestamp: typeof Timestamp;
+}
 
-/**
- * Firebase 認證狀態 hook
- */
-export function useAuth() {
+export function useAuth(): FirebaseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
@@ -41,12 +77,26 @@ export function useAuth() {
     return unsubscribe;
   }, [initialized]);
 
-  return { 
-    user, 
+  return {
+    user,
     loading: loading || !initialized,
     isAuthenticated: !!user,
     isInitialized: initialized,
-    isReady: initialized && !loading // 新增 isReady 屬性
+    isReady: initialized && !loading,
+    db,
+    // Firestore 功能
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
+    orderBy,
+    limit,
+    Timestamp,
   };
 }
 
@@ -77,7 +127,14 @@ export function useAppCheck() {
 /**
  * 組合 hook - 提供完整的 Firebase 狀態
  */
-export function useFirebase() {
+interface FirebaseReturn extends FirebaseAuthReturn {
+  appCheck: {
+    initialized: boolean;
+    error: Error | null;
+  };
+}
+
+export function useFirebase(): FirebaseReturn {
   const auth = useAuth();
   const appCheck = useAppCheck();
 
@@ -87,3 +144,22 @@ export function useFirebase() {
     isReady: auth.isInitialized && appCheck.initialized
   };
 }
+
+// 重新導出所需的 Firebase 功能
+export {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  Timestamp,
+  db,
+  auth, // 新增匯出
+  signOut // 新增匯出
+};

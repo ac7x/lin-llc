@@ -3,54 +3,48 @@
 import { useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useForm } from "react-hook-form";
-import {
-  db,
-  collection,
-  doc,
-  updateDoc,
-  setDoc,
-  serverTimestamp,
-} from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import type { AppUser } from "@/types/user";
 
-const usersCollection = collection(db, "users");
-
-// 更新用戶角色
-async function updateUserRole(uid: string, newRole: string): Promise<void> {
-  const userDoc = doc(usersCollection, uid);
-  await updateDoc(userDoc, { role: newRole });
-}
-
-// 建立虛擬用戶
-async function createVirtualUser({
-  displayName,
-  role,
-}: {
-  displayName: string;
-  role: string;
-}): Promise<void> {
-  const newDocRef = doc(usersCollection);
-  const newUser: AppUser = {
-    uid: newDocRef.id,
-    email: "",
-    displayName,
-    emailVerified: false,
-    photoURL: "",
-    disabled: false,
-    role,
-    metadata: {
-      creationTime: new Date().toISOString(),
-      lastSignInTime: "",
-    },
-  };
-  await setDoc(newDocRef, {
-    ...newUser,
-    updatedAt: serverTimestamp(),
-    createdAt: serverTimestamp(),
-  });
-}
-
 export default function AdminUsersPage() {
+  const { db, collection, doc, updateDoc, setDoc, serverTimestamp } = useFirebase();
+  const usersCollection = collection(db, "users");
+
+  // 更新用戶角色
+  async function updateUserRole(uid: string, newRole: string): Promise<void> {
+    const userDoc = doc(usersCollection, uid);
+    await updateDoc(userDoc, { role: newRole });
+  }
+
+  // 建立虛擬用戶
+  async function createVirtualUser({
+    displayName,
+    role,
+  }: {
+    displayName: string;
+    role: string;
+  }): Promise<void> {
+    const newDocRef = doc(usersCollection);
+    const newUser: AppUser = {
+      uid: newDocRef.id,
+      email: "",
+      displayName,
+      emailVerified: false,
+      photoURL: "",
+      disabled: false,
+      role,
+      metadata: {
+        creationTime: new Date().toISOString(),
+        lastSignInTime: "",
+      },
+    };
+    await setDoc(newDocRef, {
+      ...newUser,
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+    });
+  }
+
   const [snapshot, loading, error] = useCollection(usersCollection);
   const { register, handleSubmit, reset } = useForm<{
     displayName: string;

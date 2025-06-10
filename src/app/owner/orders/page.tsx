@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { db, collection } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
 
 export default function OrdersPage() {
+    const { db, collection, doc, getDoc } = useFirebase();
     const [ordersSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "orders")
     );
@@ -77,7 +78,6 @@ export default function OrdersPage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        const { doc, getDoc } = await import("firebase/firestore");
         const docRef = doc(db, "finance", "default", "orders", String(row.orderId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
@@ -86,7 +86,6 @@ export default function OrdersPage() {
         }
         const data = docSnap.data();
         // 保持原始的 Timestamp 格式，PDF 元件將負責處理
-        // 匯出 PDF
         exportPdfToBlob(
             <OrderPdfDocument order={data} />,
             `${data.orderName || data.orderId || '訂單'}.pdf`

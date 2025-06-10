@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { db, doc, Timestamp } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { QuoteItem } from "@/types/finance";
 
@@ -10,6 +10,7 @@ export default function QuoteDetailPage() {
     const router = useRouter();
     const params = useParams();
     const quoteId = params?.quote as string;
+    const { db, doc, updateDoc, Timestamp } = useFirebase();
     const [quoteName, setQuoteName] = useState("");
     const [quotePrice, setQuotePrice] = useState(0);
     const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
@@ -74,7 +75,6 @@ export default function QuoteDetailPage() {
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const { updateDoc } = await import("firebase/firestore");
             await updateDoc(doc(db, "finance", "default", "quotes", quoteId), {
                 quoteName: editQuoteName,
                 quotePrice: editQuotePrice,

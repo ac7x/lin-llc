@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
-import { db, doc } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { QuoteItem } from "@/types/finance";
 
 export default function QuoteAddPage() {
     const router = useRouter();
+    const { db, doc, setDoc } = useFirebase();
     const [clientName, setClientName] = useState("");
     const [clientContact, setClientContact] = useState("");
     const [clientPhone, setClientPhone] = useState("");
@@ -55,7 +56,6 @@ export default function QuoteAddPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const { setDoc } = await import("firebase/firestore");
             const quoteId = nanoid(5);
             const now = new Date();
             await setDoc(doc(db, "finance", "default", "quotes", quoteId), {

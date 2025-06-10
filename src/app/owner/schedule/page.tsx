@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, DateType } from "vis-timeline/standalone";
-import { db, collection, getDocs, doc, updateDoc } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { SubWorkpackage, Workpackage } from "@/types/project";
 import { Timestamp } from "firebase/firestore";
 
@@ -43,6 +44,7 @@ function toDate(dateInput: DateType): Date {
 }
 
 export default function ProjectsPage() {
+    const { db, isReady } = useFirebase();
     const [groups, setGroups] = useState<Group[]>([]);
     const [allItems, setAllItems] = useState<TimelineSubWorkpackage[]>([]);
     const [items, setItems] = useState<TimelineSubWorkpackage[]>([]);
@@ -54,6 +56,8 @@ export default function ProjectsPage() {
     const quickKeywords = ["搬運", "定位", "清潔", "測試"];
 
     const handleItemMove = useCallback(async (itemId: string, newStart: DateType, newEnd: DateType) => {
+        if (!isReady) return false;
+        
         const item = items.find(i => i.id === itemId);
         if (!item) return false;
         const startDate = toDate(newStart);
@@ -95,9 +99,11 @@ export default function ProjectsPage() {
             return i;
         }));
         return true;
-    }, [items]);
+    }, [items, db, isReady]);
 
     useEffect(() => {
+        if (!isReady) return; // 等待 Firebase 初始化完成
+
         (async () => {
             const projects = await getDocs(collection(db, "projects"));
             const groupList: Group[] = projects.docs.map((d): Group => ({
@@ -137,7 +143,7 @@ export default function ProjectsPage() {
             setAllItems(all);
             setItems(all);
         })();
-    }, []);
+    }, [db, isReady]); // 加入 db 和 isReady 作為依賴
 
     const toggleKeyword = (keyword: string) => {
         setSelectedKeywords(prev =>

@@ -1,12 +1,13 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { db, doc, updateDoc, collection, getDocs } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
+import { Timestamp } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { SubWorkpackage, Workpackage } from "@/types/project";
 import { Template, SubWorkpackageTemplateItem, TemplateToSubWorkpackageOptions, Task } from "@/types/project";
-import { Timestamp } from "firebase/firestore";
 import { nanoid } from "nanoid";
 
 // Template helper functions
@@ -92,6 +93,7 @@ function clearSelectedTemplate(): void {
 }
 
 export default function WorkpackageDetailPage() {
+    const { db, doc, collection, updateDoc, getDocs } = useFirebase();
     const params = useParams();
     const router = useRouter();
     const projectId = params?.project as string;

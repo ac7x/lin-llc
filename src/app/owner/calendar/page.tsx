@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useFirebase } from '@/hooks/useFirebase';
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import "@/styles/react-big-calendar.css";
 
-import { db, collection, getDocs } from "@/lib/firebase-client";
 import { Workpackage } from "@/types/project";
 import { ProgressColorScale } from "@/utils/colorScales";
 
@@ -33,6 +33,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
+    const { db, collection, getDocs } = useFirebase();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
     const [loading, setLoading] = useState(true);

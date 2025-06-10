@@ -4,13 +4,15 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { db, collection } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
+import { collection, doc, getDoc } from "firebase/firestore";
 import { QuoteData } from "@/types/finance";
 
 export default function QuotesPage() {
+    const { db, isReady } = useFirebase();
     const [quotesSnapshot, loading, error] = useCollection(
-        collection(db, "finance", "default", "quotes")
+        isReady ? collection(db, "finance", "default", "quotes") : null
     );
     // 搜尋與排序狀態
     const [search, setSearch] = useState("");
@@ -75,7 +77,8 @@ export default function QuotesPage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        const { doc, getDoc } = await import("firebase/firestore");
+        if (!isReady) return;
+
         const docRef = doc(db, "finance", "default", "quotes", String(row.quoteId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {

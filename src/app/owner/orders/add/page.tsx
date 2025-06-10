@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
-import { db, doc } from "@/lib/firebase-client";
+import { useFirebase } from "@/hooks/useFirebase";
 import { OrderItem } from "@/types/finance";
 
 export default function OrderAddPage() {
     const router = useRouter();
+    const { db, doc, setDoc } = useFirebase();
     const [clientName, setClientName] = useState("");
     const [clientContact, setClientContact] = useState("");
     const [clientPhone, setClientPhone] = useState("");
@@ -54,16 +55,15 @@ export default function OrderAddPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const { setDoc } = await import("firebase/firestore");
             const orderId = nanoid(5);
             const now = new Date();
             await setDoc(doc(db, "finance", "default", "orders", orderId), {
                 orderId,
                 orderName,
-                orderPrice, // 直接用加總
+                orderPrice,
                 orderItems: orderItems.map((item, idx) => ({
                     ...item,
-                    orderItemId: item.orderItemId || String(idx + 1), // 若未填則用序號
+                    orderItemId: item.orderItemId || String(idx + 1),
                 })),
                 totalOrderItemPrice,
                 createdAt: now,

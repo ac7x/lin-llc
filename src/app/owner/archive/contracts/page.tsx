@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db, collection, doc, getDoc } from "@/lib/firebase-client";
+import { useFirebase } from '@/hooks/useFirebase';
 import { useCollection } from "react-firebase-hooks/firestore";
 
 export default function ArchivedContractsPage() {
+    const { db, collection, doc, getDoc } = useFirebase();
     const [archiveRetentionDays, setArchiveRetentionDays] = useState<number>(3650);
     useEffect(() => {
         async function fetchRetentionDays() {
