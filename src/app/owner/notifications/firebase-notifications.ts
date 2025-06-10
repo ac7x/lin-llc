@@ -10,9 +10,10 @@ import {
   getDocs,
   onSnapshot,
   serverTimestamp,
-  writeBatch
-} from 'firebase/firestore';
-import { useFirebase } from '@/hooks/useFirebase';
+  writeBatch,
+  db // 直接從 firebase-client 匯入 db
+} from '@/lib/firebase-client'; // 直接從 lib 匯入
+import { Firestore } from 'firebase/firestore'; // Firestore 型別正確來源
 import { COLLECTIONS } from '../../../lib/firebase-config';
 import type { NotificationMessage, AppUser } from '@/types/user';
 
@@ -22,11 +23,11 @@ const { NOTIFICATIONS, USERS } = COLLECTIONS;
  * 建立新通知
  */
 export async function createNotification(
+  db: Firestore, // 直接傳入 db
   userId: string,
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<string> {
   try {
-    const { db } = useFirebase();
     const notificationData: Omit<NotificationMessage, 'id'> = {
       ...notification,
       userId,
@@ -51,11 +52,11 @@ export async function createNotification(
  * 批量建立通知（例如系統廣播）
  */
 export async function createBulkNotifications(
+  db: Firestore, // 直接傳入 db
   userIds: string[],
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<void> {
   try {
-    const { db } = useFirebase();
     const batch = writeBatch(db);
     const now = new Date().toISOString();
 
@@ -94,7 +95,7 @@ export async function getUserNotifications(
   } = {}
 ): Promise<NotificationMessage[]> {
   try {
-    const { db } = useFirebase();
+    // 直接使用 db
     const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
 
     let q = query(
@@ -141,7 +142,7 @@ export function subscribeToUserNotifications(
     onlyUnread?: boolean;
   } = {}
 ): () => void {
-  const { db } = useFirebase();
+  // 直接使用 db
   const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
 
   let q = query(
@@ -181,7 +182,7 @@ export function subscribeToUserNotifications(
  */
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
   try {
-    const { db } = useFirebase();
+    // 直接使用 db
     const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isRead: true,
@@ -198,7 +199,7 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
  */
 export async function markMultipleNotificationsAsRead(notificationIds: string[]): Promise<void> {
   try {
-    const { db } = useFirebase();
+    // 直接使用 db
     const batch = writeBatch(db);
 
     notificationIds.forEach((notificationId) => {
@@ -221,7 +222,7 @@ export async function markMultipleNotificationsAsRead(notificationIds: string[])
  */
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
   try {
-    const { db } = useFirebase();
+    // 直接使用 db
     const q = query(
       collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
@@ -231,8 +232,8 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
     const snapshot = await getDocs(q);
     const batch = writeBatch(db);
 
-    snapshot.docs.forEach((doc) => {
-      batch.update(doc.ref, {
+    snapshot.docs.forEach((docSnap) => {
+      batch.update(docSnap.ref, {
         isRead: true,
         readAt: serverTimestamp(),
       });
@@ -250,7 +251,7 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
  */
 export async function archiveNotification(notificationId: string): Promise<void> {
   try {
-    const { db } = useFirebase();
+    // 直接使用 db
     const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isArchived: true,
@@ -266,7 +267,7 @@ export async function archiveNotification(notificationId: string): Promise<void>
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
   try {
-    const { db } = useFirebase();
+    // 直接使用 db
     const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isArchived: true, // 軟刪除，實際上是封存
@@ -282,7 +283,7 @@ export async function deleteNotification(notificationId: string): Promise<void> 
  */
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
   try {
-    const { db } = useFirebase();
+    // 直接使用 db
     const q = query(
       collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
@@ -306,7 +307,7 @@ export async function updateUserNotificationSettings(
   settings: Partial<AppUser['notificationSettings']>
 ): Promise<void> {
   try {
-    const { db } = useFirebase();
+    // 直接使用 db
     const userRef = doc(db, USERS, userId);
     await updateDoc(userRef, {
       'notificationSettings': settings,

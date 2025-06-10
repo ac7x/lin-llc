@@ -2,14 +2,15 @@
 
 import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
-import { 
-  auth, 
-  db, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  signOut, 
+import {
+  auth,
+  db,
+  doc,
+  getDoc,
+  setDoc,
+  signOut,
   useAuth
 } from "@/hooks/useFirebase";
 
@@ -27,7 +28,7 @@ export default function SignIn() {
     try {
       const userRef = doc(db, "users", user.uid);
       const userSnapshot = await getDoc(userRef);
-      
+
       // 建立基本用戶資料
       const userData = {
         uid: user.uid,
@@ -60,7 +61,7 @@ export default function SignIn() {
     try {
       const result = await signInWithPopup(auth, provider);
       setUser(result.user);
-      
+
       // 儲存用戶資料到 Firestore
       await saveUserToFirestore(result.user);
     } catch (error) {
@@ -93,10 +94,12 @@ export default function SignIn() {
         {user && (
           <div className="flex flex-col items-center mb-8">
             {user.photoURL && (
-              <img 
-                src={user.photoURL} 
+              <Image
+                src={user.photoURL}
                 alt="用戶照片"
-                className="w-24 h-24 rounded-full mb-4 border-2 border-gray-200 dark:border-gray-700"
+                width={96}
+                height={96}
+                className="rounded-full mb-4 border-2 border-gray-200 dark:border-gray-700"
               />
             )}
             <h2 className="text-xl font-bold dark:text-white">{user.displayName}</h2>

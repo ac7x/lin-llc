@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFirebase } from '@/hooks/useFirebase';
+import { useFirebase, useCollection } from '@/hooks/useFirebase';
 
 export default function ArchivedOrdersPage() {
     const { db, collection, doc, getDoc } = useFirebase();
@@ -16,10 +16,9 @@ export default function ArchivedOrdersPage() {
             }
         }
         fetchRetentionDays();
-    }, []); // <-- 只在 mount 時執行
+    }, [db, doc, getDoc]); // <-- 只在 mount 時執行
 
     // 取得封存訂單
-    // 假設 userId 目前為 "default"，可根據登入狀態調整
     const [ordersSnapshot, loading, error] = useCollection(collection(db, "archived/default/orders"));
 
     return (
@@ -46,9 +45,11 @@ export default function ArchivedOrdersPage() {
                     ) : error ? (
                         <tr><td colSpan={3} className="text-center text-red-500 py-4 dark:text-red-400">{String(error)}</td></tr>
                     ) : ordersSnapshot && ordersSnapshot.docs.length > 0 ? (
-                        ordersSnapshot.docs.map((order, idx) => {
+                        ordersSnapshot.docs.map((order, idx: number) => {
                             const data = order.data();
-                            const archivedAt = data.archivedAt?.toDate ? data.archivedAt.toDate() : (data.archivedAt ? new Date(data.archivedAt) : null);
+                            // 用 get('archivedAt') 取得 Firestore 欄位
+                            const archivedAtRaw = order.get('archivedAt');
+                            const archivedAt = archivedAtRaw?.toDate ? archivedAtRaw.toDate() : (archivedAtRaw ? new Date(archivedAtRaw) : null);
                             return (
                                 <tr key={data.orderId || order.id}>
                                     <td className="border px-2 py-1 text-center dark:border-gray-700 dark:text-gray-100">{idx + 1}</td>

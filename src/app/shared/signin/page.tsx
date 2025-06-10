@@ -2,14 +2,15 @@
 
 import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
-import { 
-  auth, 
-  db, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  signOut, 
+import {
+  auth,
+  db,
+  doc,
+  getDoc,
+  setDoc,
+  signOut,
   useAuth
 } from "@/hooks/useFirebase";
 
@@ -93,10 +94,12 @@ export default function SignIn() {
         {user && (
           <div className="flex flex-col items-center mb-8">
             {user.photoURL && (
-              <img 
+              <Image 
                 src={user.photoURL} 
                 alt="用戶照片"
-                className="w-24 h-24 rounded-full mb-4 border-2 border-gray-200 dark:border-gray-700"
+                width={96}
+                height={96}
+                className="rounded-full mb-4 border-2 border-gray-200 dark:border-gray-700"
               />
             )}
             <h2 className="text-xl font-bold dark:text-white">{user.displayName}</h2>

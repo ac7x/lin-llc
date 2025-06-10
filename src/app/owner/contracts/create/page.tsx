@@ -18,7 +18,7 @@ interface RowBase {
 }
 
 export default function ImportContractPage() {
-    const { db, collection, setDoc, doc } = useFirebase();
+    const { db, collection, setDoc, doc, getDocs, Timestamp } = useFirebase();
     const [tab, setTab] = useState<SourceTab>("order");
     // 訂單與估價單快照
     const [ordersSnapshot] = useCollection(collection(db, "finance", "default", "orders"));
@@ -45,7 +45,7 @@ export default function ImportContractPage() {
             setContractOrderIds(orderIds);
             setContractQuoteIds(quoteIds);
         })();
-    }, []);
+    }, [collection, db, getDocs]);
 
     // 訂單 rows
     const orderRows: RowBase[] = useMemo(() => {

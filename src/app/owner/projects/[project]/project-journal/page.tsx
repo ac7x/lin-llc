@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useFirebase } from "@/hooks/useFirebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { Timestamp } from "firebase/firestore";
+import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { ActivityLog, PhotoRecord, PhotoType, IssueRecord } from "@/types/project";
 import Image from 'next/image';
@@ -30,7 +31,7 @@ async function fetchWeather(region: string) {
 }
 
 export default function ProjectJournalPage() {
-    const { db, doc, updateDoc } = useFirebase();
+    const { db, doc, updateDoc, arrayUnion } = useFirebase();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFirebase } from '@/hooks/useFirebase';
+import { useFirebase, useCollection } from '@/hooks/useFirebase';
 
 export default function ArchivedQuotesPage() {
     const { db, collection, doc, getDoc } = useFirebase();
@@ -16,7 +16,7 @@ export default function ArchivedQuotesPage() {
             }
         }
         fetchRetentionDays();
-    }, []);
+    }, [db, doc, getDoc]);
 
     // 取得封存估價單
     // 假設 userId 目前為 "default"，可根據登入狀態調整
@@ -47,7 +47,7 @@ export default function ArchivedQuotesPage() {
                     ) : error ? (
                         <tr><td colSpan={4} className="text-center text-red-500 py-4 dark:text-red-400">{String(error)}</td></tr>
                     ) : quotesSnapshot && quotesSnapshot.docs.length > 0 ? (
-                        quotesSnapshot.docs.map((quote, idx) => {
+                        quotesSnapshot.docs.map((quote, idx: number) => {
                             const data = quote.data();
                             const archivedAt = data.archivedAt?.toDate ? data.archivedAt.toDate() : (data.archivedAt ? new Date(data.archivedAt) : null);
                             return (

@@ -103,7 +103,7 @@ export default function ProjectCalendarPage() {
             }
         }
         fetchAllWorkpackages();
-    }, []); // <-- 只在 mount 時執行
+    }, [collection, db, getDocs]); // <-- 只在 mount 時執行
 
     const eventStyleGetter = (event: CalendarEvent) => {
         let backgroundColor = "#3174ad";

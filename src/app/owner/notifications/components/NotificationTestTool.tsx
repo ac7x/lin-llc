@@ -17,7 +17,7 @@ interface NotificationTestFormData {
 }
 
 export function NotificationTestTool() {
-  const { user } = useFirebase();
+  const { user, db } = useFirebase();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   
@@ -46,17 +46,21 @@ export function NotificationTestTool() {
     setResult(null);
 
     try {
-      const notificationId = await createNotification(user.uid, {
-        title: formData.title,
-        message: formData.message,
-        type: formData.type,
-        category: formData.category,
-        actionUrl: formData.actionUrl || undefined,
-        data: {
-          testNotification: true,
-          createdBy: 'NotificationTestTool',
-        },
-      });
+      const notificationId = await createNotification(
+        db,
+        user.uid,
+        {
+          title: formData.title,
+          message: formData.message,
+          type: formData.type,
+          category: formData.category,
+          actionUrl: formData.actionUrl || undefined,
+          data: {
+            testNotification: true,
+            createdBy: 'NotificationTestTool',
+          },
+        }
+      );
 
       setResult(`✅ 通知建立成功！ID: ${notificationId}`);
       
@@ -112,14 +116,18 @@ export function NotificationTestTool() {
     setResult(null);
 
     try {
-      const notificationId = await createNotification(user.uid, {
-        ...presets[preset],
-        data: {
-          testNotification: true,
-          preset,
-          createdBy: 'NotificationTestTool',
-        },
-      });
+      const notificationId = await createNotification(
+        db,
+        user.uid,
+        {
+          ...presets[preset],
+          data: {
+            testNotification: true,
+            preset,
+            createdBy: 'NotificationTestTool',
+          },
+        }
+      );
 
       setResult(`✅ ${preset} 測試通知建立成功！ID: ${notificationId}`);
     } catch (error) {

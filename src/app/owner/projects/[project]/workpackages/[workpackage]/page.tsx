@@ -145,7 +145,7 @@ export default function WorkpackageDetailPage() {
             }
         };
         if (showTemplateModal && templates.length === 0) loadTemplates();
-    }, [showTemplateModal, templates.length]);
+    }, [showTemplateModal, templates.length, collection, db, getDocs]);
 
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;

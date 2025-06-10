@@ -9,7 +9,7 @@ import { Project } from "@/types/project";
 import { MaterialEntry } from "@/types/project";
 
 export default function ProjectMaterialsPage() {
-    const { db, doc } = useFirebase();
+    const { db, doc, updateDoc, arrayUnion } = useFirebase();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(

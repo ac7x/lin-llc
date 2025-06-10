@@ -17,7 +17,7 @@ export default function ArchivedContractsPage() {
             }
         }
         fetchRetentionDays();
-    }, []); // <-- 只在 mount 時執行
+    }, [db, doc, getDoc]); // <-- 只在 mount 時執行
 
     // 取得封存合約
     // 假設 userId 目前為 "default"，可根據登入狀態調整

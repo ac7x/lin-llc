@@ -110,7 +110,7 @@ export default function DashboardPage() {
       }
     }
     fetchAllCreatedAt();
-  }, []);
+  }, [collection, db, getDocs]);
 
   // 統計各角色人數
   const roleCounts: Record<string, number> = {

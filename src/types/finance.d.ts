@@ -63,6 +63,7 @@ export interface OrderData {
     clientEmail: string; // 客戶 Email
     createdAt: Timestamp; // 建立時間
     updatedAt: Timestamp; // 更新時間
+    archivedAt?: Timestamp; // 封存日期（可選）
 }
 
 /**

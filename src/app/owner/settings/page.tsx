@@ -22,7 +22,7 @@ export default function OwnerSettingsPage() {
             setLoading(false);
         }
         fetchRetentionDays();
-    }, []);
+    }, [db, doc, getDoc]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
