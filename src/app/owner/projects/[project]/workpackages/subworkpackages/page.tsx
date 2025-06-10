@@ -225,38 +225,43 @@ export default function SubWorkpackageSortingPage() {
     const submitEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingSubWp) return;
+        
         // 將日期字串轉為 Timestamp
         const actualStartDate = formData.actualStartDate ? Timestamp.fromDate(new Date(formData.actualStartDate)) : undefined;
         const actualEndDate = formData.actualEndDate ? Timestamp.fromDate(new Date(formData.actualEndDate)) : undefined;
-        const updatedSubWp: EnhancedSubWorkpackage = {
-            ...editingSubWp,
-            ...formData,
-            actualStartDate,
-            actualEndDate
-        };
+        
+        // 儲存工作包ID以供後續使用
+        const workpackageId = editingSubWp.workpackageId;
+        
         setSaving(true);
         try {
+            // 更新工作包陣列，確保移除額外欄位
             const newWorkpackages = workpackages.map(wp => {
-                if (wp.id === updatedSubWp.workpackageId) {
+                if (wp.id === workpackageId) {
                     return {
                         ...wp,
                         subWorkpackages: wp.subWorkpackages.map(sub =>
-                            sub.id === updatedSubWp.id ? {
-                                ...sub,
+                            sub.id === editingSubWp.id ? {
+                                ...sub, // 保留原有子工作包欄位
                                 actualStartDate,
                                 actualEndDate,
                                 estimatedQuantity: formData.estimatedQuantity,
                                 actualQuantity: formData.actualQuantity,
                                 progress: formData.progress
+                                // 不要加入 workpackageId 和 workpackageName 這些額外欄位
                             } : sub
                         )
                     };
                 }
                 return wp;
             });
+            
+            // 更新前端狀態
             setWorkpackages(newWorkpackages);
+            
+            // 更新本地子工作包列表（包含額外欄位的版本，僅用於前端顯示）
             const newAllSubWorkpackages = allSubWorkpackages.map(subWp =>
-                subWp.id === updatedSubWp.id ? {
+                subWp.id === editingSubWp.id ? {
                     ...subWp,
                     actualStartDate,
                     actualEndDate,
@@ -266,12 +271,16 @@ export default function SubWorkpackageSortingPage() {
                 } : subWp
             );
             setAllSubWorkpackages(newAllSubWorkpackages);
+            
+            // 寫入 Firestore，確保資料結構符合 project.d.ts 中的定義
             await updateDoc(doc(db, "projects", projectId), {
                 workpackages: newWorkpackages
             });
+            
             setIsEditing(false);
             setEditingSubWp(null);
-        } catch {
+        } catch (error) {
+            console.error("更新子工作包時出錯:", error);
             alert("更新子工作包時出錯，請重試。");
         } finally {
             setSaving(false);
