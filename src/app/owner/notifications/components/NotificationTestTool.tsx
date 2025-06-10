@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useFirebase } from '@/lib/firebase-context';
+import { useFirebase } from "@/hooks/useFirebase";
 import { createNotification } from '@/app/owner/notifications/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';
 

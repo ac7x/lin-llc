@@ -3,7 +3,7 @@
 import React from 'react';
 import { NotificationTestTool } from '@/app/owner/notifications/components/NotificationTestTool';
 import { NotificationBell, NotificationSummary } from '@/app/owner/notifications/components/NotificationBell';
-import { useFirebase } from '@/lib/firebase-context';
+import { useFirebase } from "@/hooks/useFirebase";
 
 export default function NotificationTestPage() {
   const { user, loading } = useFirebase();

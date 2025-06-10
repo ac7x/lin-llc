@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useFirebase, doc, db } from '@/lib/firebase-context';
+import { useAuth, doc, db } from '@/hooks/useFirebase';
 import { useDocument } from 'react-firebase-hooks/firestore';
 import type { AppUser } from '@/types/user';
 
@@ -30,7 +30,7 @@ export interface UseUserRoleReturn {
 }
 
 export function useUserRole(): UseUserRoleReturn {
-    const { user } = useFirebase();
+    const { user } = useAuth(); // 使用 useAuth 而不是 useFirebase
     const [userDoc, loading, error] = useDocument(
         user ? doc(db, 'users', user.uid) : null
     );

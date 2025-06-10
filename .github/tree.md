@@ -28,6 +28,7 @@
 │   │   │   ├── components
 │   │   │   │   ├── NotificationBell.tsx
 │   │   │   │   └── NotificationTestTool.tsx
+│   │   │   ├── firebase-notifications.ts
 │   │   │   ├── hooks
 │   │   │   │   └── useNotifications.ts
 │   │   │   ├── page.tsx
@@ -91,18 +92,20 @@
 │   └── side
 │       ├── archive-nav.tsx
 │       ├── contract-nav.tsx
-│       ├── dev-nav.tsx
 │       ├── order-nav.tsx
 │       └── quote-nav.tsx
+├── hooks
+│   ├── useFirebase.ts
+│   └── useUserRole.ts
 ├── lib
 │   ├── firebase-client.ts
-│   ├── firebase-context.tsx
-│   └── firebase-notifications.ts
+│   └── firebase-config.ts
 ├── styles
 │   ├── globals.css
 │   └── react-big-calendar.css
 ├── types
 │   ├── charts.d.ts
+│   ├── env.d.ts
 │   ├── finance.d.ts
 │   ├── project.d.ts
 │   └── user.d.ts

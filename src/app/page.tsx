@@ -10,18 +10,14 @@ import {
   getDoc, 
   setDoc, 
   signOut, 
-  useFirebase,
-  initializeFirebaseAppCheck
-} from "@/lib/firebase-context";
+  useAuth
+} from "@/hooks/useFirebase";
 
 export default function SignIn() {
-  const { user: authUser, loading } = useFirebase();
+  const { user: authUser, loading, isReady } = useAuth();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // 初始化 App Check 驗證
-    initializeFirebaseAppCheck().catch(console.error);
-    
     // 當 auth 狀態變更時更新本地狀態
     setUser(authUser);
   }, [authUser]);
@@ -83,7 +79,7 @@ export default function SignIn() {
   }
 
   // 載入中狀態
-  if (loading) {
+  if (!isReady || loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

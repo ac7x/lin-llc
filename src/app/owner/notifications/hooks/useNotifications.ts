@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useFirebase } from '@/lib/firebase-context';
+import { useAuth } from '@/hooks/useFirebase'; // 使用 useAuth 而不是 useFirebase
 import {
   getUserNotifications,
   subscribeToUserNotifications,
@@ -27,7 +27,7 @@ export function useNotifications(options: {
   onlyUnread?: boolean;
   realtime?: boolean;
 } = {}): UseNotificationsReturn {
-  const { user } = useFirebase();
+  const { user } = useAuth(); // 使用 useAuth
   const { includeArchived = false, limitCount = 50, onlyUnread = false, realtime = true } = options;
   
   const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
@@ -196,7 +196,7 @@ export function useUnreadNotificationCount(): {
   loading: boolean;
   error: string | null;
 } {
-  const { user } = useFirebase();
+  const { user } = useAuth(); // 使用 useAuth
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null);
