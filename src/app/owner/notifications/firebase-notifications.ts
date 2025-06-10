@@ -12,8 +12,8 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { db } from './firebase-client';
-import { COLLECTIONS } from './firebase-config';
+import { db } from '../../../lib/firebase-client';
+import { COLLECTIONS } from '../../../lib/firebase-config';
 import type { NotificationMessage, AppUser } from '@/types/user';
 
 const { NOTIFICATIONS, USERS } = COLLECTIONS;
