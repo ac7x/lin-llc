@@ -24,7 +24,8 @@ body {
   position: fixed;
   right: 0;
   left: auto;
-  bottom: 64px; /* 導航高度，確保 badge 在導航上方 */
+  top: 0;
+  bottom: auto;
   width: auto;
   height: auto;
   z-index: 50;

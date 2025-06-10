@@ -143,12 +143,13 @@ export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavP
                 className="grecaptcha-badge-container"
                 style={{
                     position: 'fixed',
-                    left: 0,
-                    right: 0,
-                    bottom: '64px', // OwnerBottomNav 高度為 64px (h-16)
+                    right: 0, // 右側對齊
+                    left: 'auto', // 只靠右
+                    top: 0, // 上方
+                    bottom: 'auto', // 不靠下
                     zIndex: 50, // 比 OwnerBottomNav (z-40) 高
                     display: 'flex',
-                    justifyContent: 'center',
+                    justifyContent: 'flex-end', // badge 靠右
                     pointerEvents: 'none', // 不影響點擊
                 }}
             >

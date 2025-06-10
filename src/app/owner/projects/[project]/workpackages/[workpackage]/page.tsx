@@ -111,7 +111,7 @@ export default function WorkpackageDetailPage() {
         unit: "項",
         budget: 0,
         estimatedStartDate: "", // string
-        estimatedEndDate: "",   // string
+        estimatedEndDate: ""   // string
     });
     const [subSaving, setSubSaving] = useState(false);
     const [editProgress, setEditProgress] = useState(0);
@@ -191,7 +191,8 @@ export default function WorkpackageDetailPage() {
     };
 
     const handleAddSubWorkpackage = async () => {
-        if (!newSubWorkpackage.name.trim() || subSaving) return;
+        // 預計開始/結束日期必填，否則 return
+        if (!newSubWorkpackage.estimatedStartDate?.trim() || !newSubWorkpackage.estimatedEndDate?.trim() || !newSubWorkpackage.name.trim() || subSaving) return;
         setSubSaving(true);
         try {
             // 建立子工作包物件
@@ -202,13 +203,8 @@ export default function WorkpackageDetailPage() {
                 estimatedQuantity: newSubWorkpackage.estimatedQuantity,
                 unit: newSubWorkpackage.unit,
                 budget: newSubWorkpackage.budget,
-                // 改善日期處理邏輯: 確保空字串、無效日期等都會回傳 undefined
-                estimatedStartDate: newSubWorkpackage.estimatedStartDate && newSubWorkpackage.estimatedStartDate.trim() 
-                    ? Timestamp.fromDate(new Date(newSubWorkpackage.estimatedStartDate))
-                    : undefined,
-                estimatedEndDate: newSubWorkpackage.estimatedEndDate && newSubWorkpackage.estimatedEndDate.trim()
-                    ? Timestamp.fromDate(new Date(newSubWorkpackage.estimatedEndDate))
-                    : undefined,
+                estimatedStartDate: Timestamp.fromDate(new Date(newSubWorkpackage.estimatedStartDate)),
+                estimatedEndDate: Timestamp.fromDate(new Date(newSubWorkpackage.estimatedEndDate)),
                 status: "新建立",
                 progress: 0,
                 createdAt: Timestamp.now(),

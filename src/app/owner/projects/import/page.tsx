@@ -19,23 +19,43 @@ interface ContractRow {
 
 export default function ImportProjectPage() {
     const { db, collection, addDoc } = useFirebase();
+    // 取得所有已建立專案的 contractId 清單，避免重複建立
+    const [projectsSnapshot] = useCollection(collection(db, "projects"));
+
+    // 取得已建立專案的 contractId Set
+    const existingContractIds = useMemo(() => {
+        if (!projectsSnapshot) return new Set<string>();
+        return new Set(
+            projectsSnapshot.docs
+                .map(doc => doc.data()?.contractId)
+                .filter((id): id is string => !!id)
+        );
+    }, [projectsSnapshot]);
+
     const [contractsSnapshot] = useCollection(collection(db, "finance", "default", "contracts"));
     const [importingId, setImportingId] = useState<string | null>(null);
     const [message, setMessage] = useState<string>("");
 
+    // 僅顯示尚未建立專案的合約
     const contractRows: ContractRow[] = useMemo(() => {
         if (!contractsSnapshot) return [];
-        return contractsSnapshot.docs.map((doc, idx) => {
-            const data = doc.data();
-            return {
-                idx: idx + 1,
-                id: (data.contractId as string) || doc.id,
-                name: (data.contractName as string) || (data.contractId as string) || doc.id,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
-                raw: data,
-            };
-        });
-    }, [contractsSnapshot]);    // 將合約項目轉換為工作包
+        return contractsSnapshot.docs
+            .filter(doc => {
+                const data = doc.data();
+                const contractId = (data.contractId as string) || doc.id;
+                return !existingContractIds.has(contractId);
+            })
+            .map((doc, idx) => {
+                const data = doc.data();
+                return {
+                    idx: idx + 1,
+                    id: (data.contractId as string) || doc.id,
+                    name: (data.contractName as string) || (data.contractId as string) || doc.id,
+                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null),
+                    raw: data,
+                };
+            });
+    }, [contractsSnapshot, existingContractIds]);    // 將合約項目轉換為工作包
     const convertContractItemsToWorkpackages = (contractItems: ContractItem[]): Workpackage[] => {
         if (!contractItems || !Array.isArray(contractItems) || contractItems.length === 0) {
             return [];
