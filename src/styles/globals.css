@@ -28,6 +28,15 @@ body {
 .grecaptcha-badge-container {
   /* 這個容器只用來定位 grecaptcha badge */
   pointer-events: none;
+  position: fixed;
+  right: 0;
+  left: auto;
+  bottom: 64px; /* 導航高度，確保 badge 在導航上方 */
+  width: auto;
+  height: auto;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .grecaptcha-badge {
