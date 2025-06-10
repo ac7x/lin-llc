@@ -1,54 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase-client';
+import { User } from 'firebase/auth';
+import { subscribeToAuthState } from './firebase-client';
 
-// 完整 re-export firebase-client.ts 所有功能
-export {
-  firebaseApp,
-  auth,
-  db,
-  // App Check
-  initializeFirebaseAppCheck,
-  getAppCheckToken,
-  isAppCheckInitialized,
-  // Auth
-  GoogleAuthProvider,
-  signInWithRedirect,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence,
-  getRedirectResult,
-  // Firestore
-  collection,
-  doc,
-  getDoc,
-  addDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-  startAt,
-  startAfter,
-  endAt,
-  endBefore,
-  onSnapshot,
-  writeBatch,
-  runTransaction,
-  Timestamp,
-  increment,
-  arrayUnion,
-  arrayRemove,
-  serverTimestamp,
-} from './firebase-client';
+// 重新導出所有 firebase-client.ts 功能
+export * from './firebase-client';
 
 interface FirebaseContextType {
   user: User | null;
@@ -73,24 +30,16 @@ export function FirebaseProvider({ children }: FirebaseProviderProps): React.JSX
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 監聽認證狀態變化
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = subscribeToAuthState((user) => {
       setUser(user);
       setLoading(false);
     });
 
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   }, []);
 
-  const value: FirebaseContextType = {
-    user,
-    loading,
-  };
-
   return (
-    <FirebaseContext.Provider value={value}>
+    <FirebaseContext.Provider value={{ user, loading }}>
       {children}
     </FirebaseContext.Provider>
   );

@@ -10,7 +10,8 @@ import {
   onAuthStateChanged,
   setPersistence,
   browserLocalPersistence,
-  getRedirectResult
+  getRedirectResult,
+  User
 } from "firebase/auth";
 import {
   getFirestore,
@@ -95,6 +96,31 @@ export async function getAppCheckToken(): Promise<string | null> {
 export function isAppCheckInitialized(): boolean {
   return appCheck !== null;
 }
+
+// 更新：auth 狀態管理型別與處理器，確保 User 型別已導入
+type AuthStateHandler = (user: User | null) => void;
+const authStateHandlers = new Set<AuthStateHandler>();
+
+// 新增：自動初始化 AppCheck
+initializeFirebaseAppCheck().catch(console.error);
+
+/**
+ * 訂閱 auth 狀態變更
+ */
+export function subscribeToAuthState(handler: AuthStateHandler): () => void {
+  authStateHandlers.add(handler);
+  // 立即提供當前狀態
+  handler(auth.currentUser);
+  
+  return () => {
+    authStateHandlers.delete(handler);
+  };
+}
+
+// 初始化 auth 狀態監聽
+onAuthStateChanged(auth, (user) => {
+  authStateHandlers.forEach(handler => handler(user));
+});
 
 // Re-export Firebase 功能
 export {
