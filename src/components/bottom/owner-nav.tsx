@@ -140,7 +140,7 @@ export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavP
         <>
             <nav
                 className="
-                    fixed bottom-0 left-0 z-[5] w-full h-16
+                    fixed bottom-0 left-0 w-full h-16
                     bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-gray-700
                     font-sans px-safe pb-safe
                 "
