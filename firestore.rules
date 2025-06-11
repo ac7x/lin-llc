@@ -1,35 +1,69 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // 輔助函數：檢查用戶權限
+    function hasPermission(permission) {
+      let userRole = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      let rolePermissions = get(/databases/$(database)/documents/settings/rolePermissions).data.roles;
+      let userPermissions = rolePermissions[userRole].permissions;
+      return permission in userPermissions;
+    }
+
     // 用戶資料規則
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'owner']);
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        hasPermission('user.view')
+      );
+      allow write: if request.auth != null && (
+        request.auth.uid == userId ||
+        hasPermission('user.edit')
+      );
+      allow delete: if request.auth != null && hasPermission('user.delete');
+    }
+    
+    // 專案規則
+    match /projects/{projectId} {
+      allow read: if request.auth != null && hasPermission('project.view');
+      allow create: if request.auth != null && hasPermission('project.create');
+      allow update: if request.auth != null && hasPermission('project.edit');
+      allow delete: if request.auth != null && hasPermission('project.delete');
+    }
+
+    // 工作包規則
+    match /workpackages/{workpackageId} {
+      allow read: if request.auth != null && hasPermission('workpackage.view');
+      allow create: if request.auth != null && hasPermission('workpackage.create');
+      allow update: if request.auth != null && hasPermission('workpackage.edit');
+      allow delete: if request.auth != null && hasPermission('workpackage.delete');
+    }
+
+    // 財務相關規則
+    match /finance/{document=**} {
+      allow read: if request.auth != null && hasPermission('finance.view');
+      allow create: if request.auth != null && hasPermission('finance.create');
+      allow update: if request.auth != null && hasPermission('finance.edit');
+      allow delete: if request.auth != null && hasPermission('finance.delete');
+    }
+
+    // 系統設定規則
+    match /settings/{settingId} {
+      allow read: if request.auth != null && hasPermission('system.view');
+      allow write: if request.auth != null && hasPermission('system.edit');
     }
     
     // 通知規則
     match /notifications/{notificationId} {
-      // 用戶只能讀取和更新自己的通知
       allow read, update: if request.auth != null && 
         request.auth.uid == resource.data.userId;
-      
-      // 管理員和系統可以建立通知
       allow create: if request.auth != null && (
         request.auth.uid == request.resource.data.userId ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'system']
+        hasPermission('user.edit')
       );
-      
-      // 軟刪除（封存）
       allow update: if request.auth != null && 
         request.auth.uid == resource.data.userId &&
         request.resource.data.keys().hasAll(['isArchived']) &&
         request.resource.data.isArchived == true;
-    }
-    
-    // 其他集合的通用規則（臨時開放，實際專案中應該更嚴格）
-    match /{document=**} {
-      allow read, write: if request.auth != null;
     }
   }
 }
