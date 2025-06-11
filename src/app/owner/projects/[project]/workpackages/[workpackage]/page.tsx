@@ -191,11 +191,17 @@ export default function WorkpackageDetailPage() {
     };
 
     const handleAddSubWorkpackage = async () => {
-        // 預計開始/結束日期必填，否則 return
-        if (!newSubWorkpackage.estimatedStartDate?.trim() || !newSubWorkpackage.estimatedEndDate?.trim() || !newSubWorkpackage.name.trim() || subSaving) return;
+        if (!newSubWorkpackage.name.trim() || subSaving) return;
         setSubSaving(true);
         try {
-            // 建立子工作包物件
+            // 先建立物件，後續用展開運算子動態加入日期欄位
+            const dateFields: Partial<Pick<SubWorkpackage, "estimatedStartDate" | "estimatedEndDate">> = {};
+            if (newSubWorkpackage.estimatedStartDate) {
+                dateFields.estimatedStartDate = Timestamp.fromDate(new Date(newSubWorkpackage.estimatedStartDate));
+            }
+            if (newSubWorkpackage.estimatedEndDate) {
+                dateFields.estimatedEndDate = Timestamp.fromDate(new Date(newSubWorkpackage.estimatedEndDate));
+            }
             const newSubWp: SubWorkpackage = {
                 id: Date.now().toString(),
                 name: newSubWorkpackage.name.trim(),
@@ -203,12 +209,11 @@ export default function WorkpackageDetailPage() {
                 estimatedQuantity: newSubWorkpackage.estimatedQuantity,
                 unit: newSubWorkpackage.unit,
                 budget: newSubWorkpackage.budget,
-                estimatedStartDate: Timestamp.fromDate(new Date(newSubWorkpackage.estimatedStartDate)),
-                estimatedEndDate: Timestamp.fromDate(new Date(newSubWorkpackage.estimatedEndDate)),
                 status: "新建立",
                 progress: 0,
                 createdAt: Timestamp.now(),
                 tasks: [],
+                ...dateFields,
             };
             const updatedWorkpackages = project.workpackages.map(wp =>
                 wp.id === workpackageId
@@ -222,8 +227,8 @@ export default function WorkpackageDetailPage() {
                 estimatedQuantity: 0,
                 unit: "項",
                 budget: 0,
-                estimatedStartDate: "", // 修正: 空字串
-                estimatedEndDate: ""    // 修正: 空字串
+                estimatedStartDate: "",
+                estimatedEndDate: ""
             });
         } finally {
             setSubSaving(false);
@@ -471,7 +476,7 @@ export default function WorkpackageDetailPage() {
                             <form onSubmit={async (e) => {
                                 e.preventDefault();
                                 const formData = new FormData(e.target as HTMLFormElement);
-                                // 這裡將 input string 轉為 Timestamp
+                                // 這裡將 input string 轉为 Timestamp
                                 const estimatedStartDateStr = formData.get("estimatedStartDate") as string;
                                 const estimatedEndDateStr = formData.get("estimatedEndDate") as string;
                                 await handleSave({
