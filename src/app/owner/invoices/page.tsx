@@ -47,7 +47,7 @@ const InvoicePage: React.FC = () => {
                     </td>
                     <td className="px-2 py-1 border">{data.status}</td>
                     <td className="px-2 py-1 border">
-                      <Link href={`/owner/invoice/${doc.id}`} className="text-blue-600 hover:underline">檢視</Link>
+                      <Link href={`/owner/invoices/${doc.id}`} className="text-blue-600 hover:underline">檢視</Link>
                     </td>
                   </tr>
                 );
