@@ -79,7 +79,7 @@ function Sidebar() {
     };
 
     return (
-        <nav className="w-48 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4 flex flex-col text-black dark:text-gray-100">
+        <nav className="w-80 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4 flex flex-col text-black dark:text-gray-100">
             <h2 className="text-lg font-bold mb-4 text-center">專案管理</h2>
             <ul className="space-y-2">
                 <li key={navs[0].href}>
