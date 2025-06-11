@@ -1,17 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useFirebase, useDocument } from '@/hooks/useFirebase';
-import type { InvoiceData, InvoiceItem } from '@/types/finance';
+import type { InvoiceData, Expense, InvoiceItem } from '@/types/finance';
 import { Timestamp } from 'firebase/firestore';
-import { arrayUnion, updateDoc } from 'firebase/firestore';
 
 const InvoiceDetailPage: React.FC = () => {
   const params = useParams();
-  const router = useRouter();
   const invoiceId = params?.invoice as string;
-  const { db, doc, setDoc } = useFirebase();
+  const { db, doc, updateDoc, arrayUnion } = useFirebase();
   const [invoiceDoc, loading, error] = useDocument(invoiceId ? doc(db, 'finance', 'default', 'invoice', invoiceId) : undefined);
   const data = invoiceDoc?.exists() ? (invoiceDoc.data() as InvoiceData) : undefined;
 
@@ -166,14 +164,14 @@ const InvoiceDetailPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.expenses.map((exp: any) => (
+                    {data.expenses.map((exp: Expense) => (
                       <tr key={exp.expenseId}>
                         <td className="px-2 py-1 border">{exp.expenseName}</td>
                         <td className="px-2 py-1 border text-right">{typeof exp.amount === 'number' ? exp.amount.toLocaleString() : '-'}</td>
                         <td className="px-2 py-1 border">{exp.createdAt?.toDate?.().toLocaleString?.() || '-'}</td>
                         <td className="px-2 py-1 border">
                           <ul className="list-disc pl-4">
-                            {Array.isArray(exp.items) && exp.items.map((item: any) => (
+                            {Array.isArray(exp.items) && exp.items.map((item: InvoiceItem) => (
                               <li key={item.invoiceItemId}>{item.description} × {item.quantity} @ {item.unitPrice} = {item.amount}</li>
                             ))}
                           </ul>
