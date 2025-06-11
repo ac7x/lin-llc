@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { ProjectProgressPercent } from "@/utils/projectProgress";
+import { WorkpackageProgressBar } from "@/utils/WorkpackageProgressBar";
 
 function Sidebar() {
     const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useFirebase();
@@ -121,6 +123,7 @@ function Sidebar() {
                                             className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === projectHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
                                         >
                                             {data.projectName || data.projectId || projectId}
+                                            <ProjectProgressPercent project={data as import("@/types/project").Project} />
                                         </Link>
                                         <button
                                             title="封存專案"
@@ -148,6 +151,9 @@ function Sidebar() {
                                                         >
                                                             {wp.name} {(wp.subWorkpackages?.length || 0) > 0 && `(${wp.subWorkpackages?.length})`}
                                                         </Link>
+                                                        <div className="mt-1 mb-2">
+                                                            <WorkpackageProgressBar wp={wp as import("@/types/project").Workpackage} />
+                                                        </div>
                                                     </li>
                                                 ))}
                                             </ul>
