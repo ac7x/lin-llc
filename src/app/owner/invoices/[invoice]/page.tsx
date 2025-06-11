@@ -65,8 +65,21 @@ const InvoiceDetailPage: React.FC = () => {
 
   // 支出項目編輯元件（複用 create/page.tsx 寫法）
   const ExpenseItemsEditor: React.FC<{ items: InvoiceItem[]; setItems: (items: InvoiceItem[]) => void }> = ({ items, setItems }) => {
+    // 定義本地項目型別
+    type LocalInvoiceItem = Omit<InvoiceItem, 'quantity' | 'unitPrice'> & {
+      quantity: string;
+      unitPrice: string;
+    };
+
+    // 使用 useCallback 優化處理函數
+    const calculateAmount = React.useCallback((quantity: string, unitPrice: string): number => {
+      const q = Number(quantity) || 0;
+      const p = Number(unitPrice) || 0;
+      return q * p;
+    }, []);
+
     // 本地暫存 input 狀態，避免數字欄位被強制覆蓋
-    const [localItems, setLocalItems] = useState(
+    const [localItems, setLocalItems] = useState<LocalInvoiceItem[]>(() =>
       items.length > 0
         ? items.map(item => ({
             ...item,
@@ -84,96 +97,71 @@ const InvoiceDetailPage: React.FC = () => {
           ]
     );
 
-    // 同步 localItems 到父層 items
-    React.useEffect(() => {
-      setLocalItems(
-        items.length > 0
-          ? items.map(item => ({
-              ...item,
-              quantity: String(item.quantity),
-              unitPrice: String(item.unitPrice),
-            }))
-          : [
-              {
-                invoiceItemId: String(Date.now()),
-                description: '',
-                quantity: '1',
-                unitPrice: '0',
-                amount: 0,
-              },
-            ]
-      );
-    }, [items]);
+    // 處理 input 變更，即時計算金額
+    const handleChange = React.useCallback((idx: number, key: keyof InvoiceItem, value: string) => {
+      setLocalItems(prev => {
+        const newItems = prev.map((item, i) => {
+          if (i !== idx) return item;
+          
+          const updatedItem = { ...item, [key]: value };
+          
+          // 只在數量或單價改變時重新計算金額
+          if (key === 'quantity' || key === 'unitPrice') {
+            const quantity = key === 'quantity' ? value : item.quantity;
+            const unitPrice = key === 'unitPrice' ? value : item.unitPrice;
+            updatedItem.amount = calculateAmount(quantity, unitPrice);
+          }
+          
+          return updatedItem;
+        });
 
-    // 處理 input 變更
-    const handleChange = (idx: number, key: keyof InvoiceItem, value: string) => {
-      setLocalItems(prev =>
-        prev.map((item, i) =>
-          i === idx
-            ? {
-                ...item,
-                [key]: value,
-                amount:
-                  key === 'quantity' || key === 'unitPrice'
-                    ? Number(key === 'quantity' ? value : item.quantity) * Number(key === 'unitPrice' ? value : item.unitPrice)
-                    : item.amount,
-              }
-            : item
-        )
-      );
-    };
-
-    // blur 時同步回父層
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleBlur = () => {
-      setItems(
-        localItems.map(item => ({
+        // 轉換並同步更新父層狀態
+        const convertedItems: InvoiceItem[] = newItems.map(item => ({
           ...item,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
-          amount: Number(item.quantity) * Number(item.unitPrice),
-        }))
-      );
-    };
+          amount: calculateAmount(item.quantity, item.unitPrice),
+        }));
+        setItems(convertedItems);
 
-    const addItem = () => {
-      const newItem = {
+        return newItems;
+      });
+    }, [setItems, calculateAmount]);
+
+    // 新增項目
+    const addItem = React.useCallback(() => {
+      const newLocalItem: LocalInvoiceItem = {
         invoiceItemId: String(Date.now()),
         description: '',
         quantity: '1',
         unitPrice: '0',
         amount: 0,
       };
-      setLocalItems([...localItems, newItem]);
-      setItems([
-        ...localItems.map(item => ({
-          ...item,
-          quantity: Number(item.quantity),
-          unitPrice: Number(item.unitPrice),
-          amount: Number(item.quantity) * Number(item.unitPrice),
-        })),
-        {
-          invoiceItemId: newItem.invoiceItemId,
-          description: '',
-          quantity: 1,
-          unitPrice: 0,
-          amount: 0,
-        },
-      ]);
-    };
+      
+      setLocalItems(prev => [...prev, newLocalItem]);
+      const convertedItem: InvoiceItem = {
+        ...newLocalItem,
+        quantity: 1,
+        unitPrice: 0,
+        amount: 0,
+      };
+      setItems([...items, convertedItem]);
+    }, [items, setItems]);
 
-    const removeItem = (idx: number) => {
-      const newLocal = localItems.filter((_, i) => i !== idx);
-      setLocalItems(newLocal);
-      setItems(
-        newLocal.map(item => ({
+    // 移除項目
+    const removeItem = React.useCallback((idx: number) => {
+      setLocalItems(prev => {
+        const newItems = prev.filter((_, i) => i !== idx);
+        const convertedItems: InvoiceItem[] = newItems.map(item => ({
           ...item,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
-          amount: Number(item.quantity) * Number(item.unitPrice),
-        }))
-      );
-    };
+          amount: calculateAmount(item.quantity, item.unitPrice),
+        }));
+        setItems(convertedItems);
+        return newItems;
+      });
+    }, [setItems, calculateAmount]);
 
     return (
       <div>
@@ -196,7 +184,6 @@ const InvoiceDetailPage: React.FC = () => {
                     className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                     value={item.description}
                     onChange={e => handleChange(idx, 'description', e.target.value)}
-                    onBlur={handleBlur}
                     required
                   />
                 </td>
@@ -207,7 +194,6 @@ const InvoiceDetailPage: React.FC = () => {
                     min={1}
                     value={item.quantity}
                     onChange={e => handleChange(idx, 'quantity', e.target.value)}
-                    onBlur={handleBlur}
                     required
                     inputMode="numeric"
                   />
@@ -219,13 +205,12 @@ const InvoiceDetailPage: React.FC = () => {
                     min={0}
                     value={item.unitPrice}
                     onChange={e => handleChange(idx, 'unitPrice', e.target.value)}
-                    onBlur={handleBlur}
                     required
                     inputMode="decimal"
                   />
                 </td>
                 <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">
-                  {Number(item.amount).toLocaleString()}
+                  {item.amount.toLocaleString()}
                 </td>
                 <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-center">
                   {localItems.length > 1 && (
