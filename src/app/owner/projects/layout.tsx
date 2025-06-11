@@ -7,7 +7,7 @@ import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent } from "@/utils/projectProgress";
-import { WorkpackageProgressBar } from "@/utils/WorkpackageProgressBar";
+import { WorkpackageProgressBar } from "@/utils/workpackageProgressBar";
 
 function Sidebar() {
     const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useFirebase();
