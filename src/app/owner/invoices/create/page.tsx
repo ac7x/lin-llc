@@ -16,7 +16,6 @@ const InvoiceCreatePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   // 僅保留請款
-  // ...existing code...
 
   // 監聽所選專案的 workpackages
   const [projectDoc] = useDocument(projectId ? doc(db, 'projects', projectId) : undefined);
@@ -70,7 +69,7 @@ const InvoiceCreatePage: React.FC = () => {
         notes: '',
       };
       await setDoc(doc(db, 'finance', 'default', 'invoice', projectId), invoiceData);
-      router.push('/owner/invoice');
+      router.push('/owners/invoice');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -83,15 +82,11 @@ const InvoiceCreatePage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4">新增發票</h1>
       <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-900 rounded shadow p-6">
         {error && <div className="text-red-500 mb-2">{error}</div>}
-        {/* 僅顯示請款選項 */}
-        <div className="flex gap-4 mb-2">
-          <label className="font-medium text-gray-900 dark:text-gray-100">
-            <input type="radio" value="請款" checked readOnly className="mr-1" />請款
-          </label>
-        </div>
-        {/* 請款表單 */}
+        {/* 已無請款選項，直接顯示表單 */}
         <div>
-          <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">選擇專案 <span className="text-red-500">*</span></label>
+          <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">
+            選擇專案 <span className="text-red-500">*</span>
+          </label>
           <select
             className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500"
             value={projectId}
