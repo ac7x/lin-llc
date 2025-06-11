@@ -14,6 +14,13 @@ export interface UseUserRoleReturn {
     isOwner: boolean;
     isAdmin: boolean;
     isFinance: boolean;
+    isUser: boolean;
+    isHelper: boolean;
+    isTemporary: boolean;
+    isCoord: boolean;
+    isSafety: boolean;
+    isForeman: boolean;
+    isVendor: boolean;
 }
 
 export function useUserRole(): UseUserRoleReturn {
@@ -45,6 +52,13 @@ export function useUserRole(): UseUserRoleReturn {
     const isOwner = useMemo(() => hasRole('owner'), [hasRole]);
     const isAdmin = useMemo(() => hasRole('admin'), [hasRole]);
     const isFinance = useMemo(() => hasRole('finance'), [hasRole]);
+    const isUser = useMemo(() => hasRole('user'), [hasRole]);
+    const isHelper = useMemo(() => hasRole('helper'), [hasRole]);
+    const isTemporary = useMemo(() => hasRole('temporary'), [hasRole]);
+    const isCoord = useMemo(() => hasRole('coord'), [hasRole]);
+    const isSafety = useMemo(() => hasRole('safety'), [hasRole]);
+    const isForeman = useMemo(() => hasRole('foreman'), [hasRole]);
+    const isVendor = useMemo(() => hasRole('vendor'), [hasRole]);
 
     return {
         userRole,
@@ -56,5 +70,12 @@ export function useUserRole(): UseUserRoleReturn {
         isOwner,
         isAdmin,
         isFinance,
+        isUser,
+        isHelper,
+        isTemporary,
+        isCoord,
+        isSafety,
+        isForeman,
+        isVendor,
     };
 }

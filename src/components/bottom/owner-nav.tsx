@@ -57,28 +57,28 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '📑', 
         label: '合約', 
         active: false,
-        requiredRoles: ['admin', 'owner', 'finance'],
+        requiredRoles: ['owner', 'finance'],
     },
     { 
         href: '/owner/quotes', 
         icon: '📄', 
         label: '估價單', 
         active: false,
-        requiredRoles: ['admin', 'owner', 'finance'],
+        requiredRoles: ['owner', 'finance'],
     },
     { 
         href: '/owner/orders', 
         icon: '🧾', 
         label: '訂單', 
         active: false,
-        requiredRoles: ['admin', 'owner', 'finance'],
+        requiredRoles: ['owner', 'finance'],
     },
     { 
         href: '/owner/invoices', 
         icon: '🧾', 
         label: '發票', 
         active: false,
-        requiredRoles: ['admin', 'owner', 'finance'],
+        requiredRoles: ['owner', 'finance'],
     },
 
     // 系統管理
@@ -101,7 +101,7 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '🗄️', 
         label: '封存', 
         active: false,
-        requiredRoles: ['admin', 'owner'],
+        requiredRoles: ['owner'], // 僅 owner 可見
     },
 
     // 個人相關
