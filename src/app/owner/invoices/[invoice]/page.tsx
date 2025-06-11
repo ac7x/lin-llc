@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useFirebase, useDocument, useCollection } from '@/hooks/useFirebase';
+import QRCode from 'qrcode';
+import { InvoicePdfDocument } from '@/components/pdf/InvoicePdfDocument';
+import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import type { InvoiceData, Expense, InvoiceItem } from '@/types/finance';
 import type { Project } from '@/types/project';
 import { Timestamp } from 'firebase/firestore';
@@ -253,6 +256,32 @@ const InvoiceDetailPage: React.FC = () => {
     return arr;
   }, [projectsSnapshot]);
 
+  // 處理 PDF 匯出
+  const handleExportPdf = useCallback(async () => {
+    if (!data) return;
+    try {
+      // 產生 QR code
+      const qrCodeDataUrl = await QRCode.toDataURL(window.location.href);
+      
+      // 把 InvoiceData 轉換為 Record<string, unknown>
+      const invoice: Record<string, unknown> = {
+        ...data,
+        expenses: Array.isArray(data.expenses) ? data.expenses : []
+      };
+      
+      // 產生 PDF
+      await exportPdfToBlob(
+        <InvoicePdfDocument
+          invoice={invoice}
+          qrCodeDataUrl={qrCodeDataUrl}
+        />,
+        `invoice_${data.invoiceName || invoiceId}_${new Date().toISOString().split('T')[0]}.pdf`
+      );
+    } catch (err) {
+      console.error('匯出 PDF 失敗:', err);
+    }
+  }, [data, invoiceId]);
+
   return (
     <main className="p-6 bg-white dark:bg-gray-900 min-h-screen">
       <div className="flex items-center justify-between mb-4">
@@ -269,6 +298,15 @@ const InvoiceDetailPage: React.FC = () => {
       {error && <div className="text-red-500">載入失敗：{error.message}</div>}
       {!loading && data && (
         <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{data.invoiceName || '未命名發票'}</h1>
+            <button
+              onClick={handleExportPdf}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+            >
+              匯出 PDF
+            </button>
+          </div>
           <div className="flex flex-col gap-1">
             <div><span className="font-medium">發票名稱：</span>{data.invoiceName || '-'}</div>
             <div><span className="font-medium">類型：</span>{data.type}</div>

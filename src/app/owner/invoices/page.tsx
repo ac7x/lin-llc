@@ -1,13 +1,42 @@
 "use client";
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import Link from 'next/link';
 import { useFirebase, useCollection } from '@/hooks/useFirebase';
+import { InvoicePdfDocument } from '@/components/pdf/InvoicePdfDocument';
+import { exportPdfToBlob } from '@/components/pdf/pdfExport';
+import QRCode from 'qrcode';
 import type { InvoiceData } from '@/types/finance';
 
 const InvoicePage: React.FC = () => {
   const { db, collection } = useFirebase();
   const [invoicesSnapshot, loading, error] = useCollection(collection(db, 'finance', 'default', 'invoice'));
+
+  // PDF 匯出功能
+  const handleExportPdf = useCallback(async (data: InvoiceData, id: string) => {
+    try {
+      // 產生 QR code（連結到發票詳情頁）
+      const qrCodeDataUrl = await QRCode.toDataURL(`${window.location.origin}/owner/invoices/${id}`);
+      
+      // 轉換為 Record<string, unknown>
+      const invoice: Record<string, unknown> = {
+        ...data,
+        expenses: Array.isArray(data.expenses) ? data.expenses : []
+      };
+      
+      // 匯出 PDF
+      await exportPdfToBlob(
+        <InvoicePdfDocument 
+          invoice={invoice}
+          qrCodeDataUrl={qrCodeDataUrl}
+        />,
+        `invoice_${data.invoiceName || id}_${new Date().toISOString().split('T')[0]}.pdf`
+      );
+    } catch (err) {
+      console.error('匯出 PDF 失敗:', err);
+      alert('匯出 PDF 失敗');
+    }
+  }, []);
 
   return (
     <main className="p-6 bg-white dark:bg-gray-900 min-h-screen">
@@ -47,7 +76,17 @@ const InvoicePage: React.FC = () => {
                     </td>
                     <td className="px-2 py-1 border">{data.status}</td>
                     <td className="px-2 py-1 border">
-                      <Link href={`/owner/invoices/${doc.id}`} className="text-blue-600 hover:underline">檢視</Link>
+                      <div className="flex gap-2 justify-center">
+                        <Link href={`/owner/invoices/${doc.id}`} className="text-blue-600 hover:underline">
+                          檢視
+                        </Link>
+                        <button
+                          onClick={() => handleExportPdf(data, doc.id)}
+                          className="text-green-600 hover:underline"
+                        >
+                          匯出PDF
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
