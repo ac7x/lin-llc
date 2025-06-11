@@ -97,6 +97,17 @@ export interface InvoiceItem {
 }
 
 /**
+ * 支出資料
+ */
+export interface Expense {
+  expenseId: string;
+  expenseName: string;
+  amount: number;
+  items: InvoiceItem[];
+  createdAt: Timestamp;
+}
+
+/**
  * 發票主體資料
  */
 export interface InvoiceData {
@@ -118,4 +129,5 @@ export interface InvoiceData {
     status: 'draft' | 'issued' | 'cancelled'; // 發票狀態
     notes?: string; // 備註（可選）
     invoiceName?: string; // 發票名稱（對應專案名稱，可選）
+    expenses?: Expense[]; // 支出紀錄（可選）
 }

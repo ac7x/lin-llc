@@ -10,6 +10,8 @@ export function ArchivedNav() {
         { label: "封存估價單", href: "/owner/archive/quotes" },
         { label: "封存合約", href: "/owner/archive/contracts" },
         { label: "封存專案", href: "/owner/archive/projects" },
+        { label: "封存專案", href: "/owner/archive/invoices" },
+
     ];
     return (
         <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
