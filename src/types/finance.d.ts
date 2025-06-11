@@ -92,6 +92,8 @@ export interface InvoiceItem {
     quantity: number; // 項目數量
     unitPrice: number; // 單價
     amount: number; // 總金額
+    workpackageId?: string; // 可選：關聯工作包
+    subWorkpackageId?: string; // 可選：關聯子工作包
 }
 
 /**
@@ -105,6 +107,8 @@ export interface InvoiceData {
     clientContact: string; // 客戶聯絡人
     clientPhone: string; // 客戶電話
     clientEmail: string; // 客戶 Email
+    projectId: string; // 關聯專案
+    type: '請款' | '支出'; // 發票性質
     items: InvoiceItem[]; // 發票項目清單
     totalAmount: number; // 總金額
     relatedOrderId?: string; // 相關訂單編號（可選）

@@ -65,7 +65,8 @@ export default function ImportProjectPage() {
         return contractItems.map(item => {
             const id = nanoid(8); // 使用 nanoid 生成唯一 ID
 
-            // 創建工作包 - 不再建立子工作包
+            // 注意：若 contractItemPrice 已為總價，budget 直接取用
+            // 若 contractItemPrice 為單價，請改為 item.contractItemPrice * item.contractItemQuantity
             const workpackage: Workpackage = {
                 id,
                 name: String(item.contractItemId),
@@ -73,7 +74,7 @@ export default function ImportProjectPage() {
                 status: "待開始",
                 progress: 0,
                 createdAt: Timestamp.now(),
-                budget: item.contractItemPrice * item.contractItemQuantity,
+                budget: item.contractItemPrice, // 只取 contractItemPrice，避免重複計算
                 category: "合約項目",
                 priority: "medium",
                 subWorkpackages: []

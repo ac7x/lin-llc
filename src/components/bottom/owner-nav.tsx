@@ -73,6 +73,13 @@ const defaultOwnerNavItems: NavItem[] = [
         active: false,
         requiredRoles: ['admin', 'owner', 'finance'],
     },
+    { 
+        href: '/owner/invoice', 
+        icon: '🧾', 
+        label: '發票', 
+        active: false,
+        requiredRoles: ['admin', 'owner', 'finance'],
+    },
 
     // 系統管理
     { 
