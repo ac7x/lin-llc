@@ -74,7 +74,7 @@ const defaultOwnerNavItems: NavItem[] = [
         requiredRoles: ['admin', 'owner', 'finance'],
     },
     { 
-        href: '/owner/invoice', 
+        href: '/owner/invoices', 
         icon: '🧾', 
         label: '發票', 
         active: false,

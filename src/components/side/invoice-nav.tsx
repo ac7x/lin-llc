@@ -6,8 +6,8 @@ import { useFirebase, useCollection } from '@/hooks/useFirebase';
 import type { InvoiceData } from '@/types/finance';
 
 const navItems = [
-  { label: "所有發票", href: "/owner/invoice" },
-  { label: "新增發票", href: "/owner/invoice/create" },
+  { label: "所有發票", href: "/owner/invoices" },
+  { label: "新增發票", href: "/owner/invoices/create" },
 ];
 
 const InvoiceNav: React.FC = () => {
@@ -41,7 +41,7 @@ const InvoiceNav: React.FC = () => {
                     return (
                       <li key={doc.id}>
                         <Link
-                          href={`/owner/invoice/${doc.id}`}
+                          href={`/owner/invoices/${doc.id}`}
                           className="flex justify-between items-center px-2 py-1 rounded hover:bg-blue-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
                         >
                           <span className="truncate max-w-[110px]" title={data.invoiceName || doc.id}>{data.invoiceName || doc.id}</span>
