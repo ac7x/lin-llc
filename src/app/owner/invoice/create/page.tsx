@@ -9,8 +9,9 @@ import type { InvoiceData } from '@/types/finance';
 
 const InvoiceCreatePage: React.FC = () => {
   const router = useRouter();
-  const { db, collection, addDoc, doc } = useFirebase();
+  const { db, collection, addDoc, doc, setDoc } = useFirebase();
   const [projectsSnapshot] = useCollection(collection(db, 'projects'));
+  const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoice'));
   const [projectId, setProjectId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -28,6 +29,9 @@ const InvoiceCreatePage: React.FC = () => {
     return workpackages.reduce((sum, wp) => sum + (typeof wp.budget === 'number' ? wp.budget : 0), 0);
   }, [workpackages]);
 
+  // 取得所有已建立的發票 projectId
+  const existingProjectIds = invoicesSnapshot?.docs.map(doc => (doc.data() as InvoiceData).projectId) ?? [];
+
   // 建立發票
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +40,8 @@ const InvoiceCreatePage: React.FC = () => {
     try {
       if (!projectId) throw new Error('請選擇專案');
       const invoiceData: InvoiceData = {
-        invoiceId: '', // Firestore 自動產生
-        invoiceNumber: '', // 可選填或自動產生
+        invoiceId: projectId, // 直接使用 projectId 作為 invoiceId
+        invoiceNumber: '',
         invoiceDate: Timestamp.now(),
         clientName: '',
         clientContact: '',
@@ -52,7 +56,8 @@ const InvoiceCreatePage: React.FC = () => {
         status: 'draft',
         notes: '',
       };
-      await addDoc(collection(db, 'finance', 'default', 'invoice'), invoiceData);
+      // 使用 setDoc 並指定 id
+      await setDoc(doc(db, 'finance', 'default', 'invoice', projectId), invoiceData);
       router.push('/owner/invoice');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -75,10 +80,12 @@ const InvoiceCreatePage: React.FC = () => {
             required
           >
             <option value="">請選擇</option>
-            {projectsSnapshot?.docs.map(doc => {
-              const data = doc.data() as Project;
-              return <option key={doc.id} value={doc.id}>{data.projectName || doc.id}</option>;
-            })}
+            {projectsSnapshot?.docs
+              .filter(doc => !existingProjectIds.includes(doc.id))
+              .map(doc => {
+                const data = doc.data() as Project;
+                return <option key={doc.id} value={doc.id}>{data.projectName || doc.id}</option>;
+              })}
           </select>
         </div>
         {projectId && (
