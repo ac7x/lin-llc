@@ -106,14 +106,28 @@ const defaultOwnerNavItems: NavItem[] = [
 
     // 個人相關
     { 
-        href: '/owner/notifications', 
+        href: '/owner/user-calendar', 
+        icon: '🗓️', 
+        label: '日曆', 
+        active: false,
+        minRole: 'user',
+    },
+    { 
+        href: '/owner/user-gemini', 
+        icon: '🤖', 
+        label: 'Gemini', 
+        active: false,
+        minRole: 'user',
+    },
+    { 
+        href: '/owner/user-notifications', 
         icon: '🔔', 
         label: '通知', 
         active: false,
         minRole: 'user',
     },
     { 
-        href: '/shared/signin', 
+        href: '/owner/user-panel', 
         icon: '🙍‍♂️', 
         label: '個人檔案', 
         active: false,
