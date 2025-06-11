@@ -54,11 +54,115 @@ const InvoiceDetailPage: React.FC = () => {
 
   // 支出項目編輯元件（複用 create/page.tsx 寫法）
   const ExpenseItemsEditor: React.FC<{ items: InvoiceItem[]; setItems: (items: InvoiceItem[]) => void }> = ({ items, setItems }) => {
-    const handleChange = (idx: number, key: keyof InvoiceItem, value: string | number) => {
-      setItems(items.map((item, i) => i === idx ? { ...item, [key]: value, amount: (key === 'quantity' || key === 'unitPrice') ? Number(key === 'quantity' ? value : item.quantity) * Number(key === 'unitPrice' ? value : item.unitPrice) : item.amount } : item));
+    // 本地暫存 input 狀態，避免數字欄位被強制覆蓋
+    const [localItems, setLocalItems] = useState(
+      items.length > 0
+        ? items.map(item => ({
+            ...item,
+            quantity: String(item.quantity),
+            unitPrice: String(item.unitPrice),
+          }))
+        : [
+            {
+              invoiceItemId: String(Date.now()),
+              description: '',
+              quantity: '1',
+              unitPrice: '0',
+              amount: 0,
+            },
+          ]
+    );
+
+    // 同步 localItems 到父層 items
+    React.useEffect(() => {
+      setLocalItems(
+        items.length > 0
+          ? items.map(item => ({
+              ...item,
+              quantity: String(item.quantity),
+              unitPrice: String(item.unitPrice),
+            }))
+          : [
+              {
+                invoiceItemId: String(Date.now()),
+                description: '',
+                quantity: '1',
+                unitPrice: '0',
+                amount: 0,
+              },
+            ]
+      );
+    }, [items]);
+
+    // 處理 input 變更
+    const handleChange = (idx: number, key: keyof InvoiceItem, value: string) => {
+      setLocalItems(prev =>
+        prev.map((item, i) =>
+          i === idx
+            ? {
+                ...item,
+                [key]: value,
+                amount:
+                  key === 'quantity' || key === 'unitPrice'
+                    ? Number(key === 'quantity' ? value : item.quantity) * Number(key === 'unitPrice' ? value : item.unitPrice)
+                    : item.amount,
+              }
+            : item
+        )
+      );
     };
-    const addItem = () => setItems([...items, { invoiceItemId: String(Date.now()), description: '', quantity: 1, unitPrice: 0, amount: 0 }]);
-    const removeItem = (idx: number) => setItems(items.filter((_, i) => i !== idx));
+
+    // blur 時同步回父層
+    const handleBlur = (idx: number) => {
+      setItems(
+        localItems.map(item => ({
+          ...item,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          amount: Number(item.quantity) * Number(item.unitPrice),
+        }))
+      );
+    };
+
+    const addItem = () => {
+      const newItem = {
+        invoiceItemId: String(Date.now()),
+        description: '',
+        quantity: '1',
+        unitPrice: '0',
+        amount: 0,
+      };
+      setLocalItems([...localItems, newItem]);
+      setItems([
+        ...localItems.map(item => ({
+          ...item,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          amount: Number(item.quantity) * Number(item.unitPrice),
+        })),
+        {
+          invoiceItemId: newItem.invoiceItemId,
+          description: '',
+          quantity: 1,
+          unitPrice: 0,
+          amount: 0,
+        },
+      ]);
+    };
+
+    const removeItem = (idx: number) => {
+      const newLocal = localItems.filter((_, i) => i !== idx);
+      setLocalItems(newLocal);
+      setItems(
+        newLocal.map(item => ({
+          ...item,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          amount: Number(item.quantity) * Number(item.unitPrice),
+        }))
+      );
+    };
+
     return (
       <div>
         <table className="w-full border text-sm mb-2 border-gray-300 dark:border-gray-700">
@@ -72,28 +176,63 @@ const InvoiceDetailPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {items.map((item, idx) => (
+            {localItems.map((item, idx) => (
               <tr key={item.invoiceItemId}>
                 <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
-                  <input type="text" className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700" value={item.description} onChange={e => handleChange(idx, 'description', e.target.value)} required />
+                  <input
+                    type="text"
+                    className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                    value={item.description}
+                    onChange={e => handleChange(idx, 'description', e.target.value)}
+                    onBlur={() => handleBlur(idx)}
+                    required
+                  />
                 </td>
                 <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
-                  <input type="number" className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700" min={1} value={item.quantity} onChange={e => handleChange(idx, 'quantity', Number(e.target.value))} required />
+                  <input
+                    type="number"
+                    className="border px-2 py-1 rounded w-20 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                    min={1}
+                    value={item.quantity}
+                    onChange={e => handleChange(idx, 'quantity', e.target.value)}
+                    onBlur={() => handleBlur(idx)}
+                    required
+                    inputMode="numeric"
+                  />
                 </td>
                 <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
-                  <input type="number" className="border px-2 py-1 rounded w-24 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700" min={0} value={item.unitPrice} onChange={e => handleChange(idx, 'unitPrice', Number(e.target.value))} required />
+                  <input
+                    type="number"
+                    className="border px-2 py-1 rounded w-24 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                    min={0}
+                    value={item.unitPrice}
+                    onChange={e => handleChange(idx, 'unitPrice', e.target.value)}
+                    onBlur={() => handleBlur(idx)}
+                    required
+                    inputMode="decimal"
+                  />
                 </td>
-                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">{item.amount}</td>
+                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-right">
+                  {Number(item.amount).toLocaleString()}
+                </td>
                 <td className="border px-2 py-1 border-gray-300 dark:border-gray-700 text-center">
-                  {items.length > 1 && (
-                    <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeItem(idx)}>刪除</button>
+                  {localItems.length > 1 && (
+                    <button type="button" className="text-red-500 dark:text-red-400" onClick={() => removeItem(idx)}>
+                      刪除
+                    </button>
                   )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <button type="button" className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded mt-2" onClick={addItem}>新增項目</button>
+        <button
+          type="button"
+          className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-100 px-3 py-1 rounded mt-2"
+          onClick={addItem}
+        >
+          新增項目
+        </button>
       </div>
     );
   };
