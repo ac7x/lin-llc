@@ -16,10 +16,12 @@ const InvoiceDetailPage: React.FC = () => {
   // 新增支出 modal 狀態
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [expenseName, setExpenseName] = useState('');
-  const [expenseAmount, setExpenseAmount] = useState<number>(0);
   const [expenseItems, setExpenseItems] = useState<InvoiceItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [expenseError, setExpenseError] = useState('');
+
+  // 自動計算支出金額
+  const expenseAmount = expenseItems.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0);
 
   // 新增支出送出
   const handleExpenseSubmit = async (e: React.FormEvent) => {
@@ -27,8 +29,9 @@ const InvoiceDetailPage: React.FC = () => {
     setSaving(true);
     setExpenseError('');
     try {
-      if (!expenseName || !expenseAmount || expenseItems.length === 0) throw new Error('請填寫完整支出資訊');
+      if (!expenseName || expenseItems.length === 0) throw new Error('請填寫完整支出資訊');
       if (!invoiceId) throw new Error('找不到發票 ID');
+      if (expenseAmount <= 0) throw new Error('支出金額需大於 0');
       const expenseId = `expense_${Date.now()}`;
       const expense = {
         expenseId,
@@ -43,7 +46,6 @@ const InvoiceDetailPage: React.FC = () => {
       });
       setShowExpenseModal(false);
       setExpenseName('');
-      setExpenseAmount(0);
       setExpenseItems([]);
     } catch (err) {
       setExpenseError(err instanceof Error ? err.message : String(err));
@@ -350,16 +352,19 @@ const InvoiceDetailPage: React.FC = () => {
                 <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">支出名稱 <span className="text-red-500">*</span></label>
                 <input type="text" className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700" value={expenseName} onChange={e => setExpenseName(e.target.value)} required />
               </div>
+              {/* 移除可編輯的支出金額欄位，改為顯示自動加總 */}
               <div>
                 <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">支出金額 <span className="text-red-500">*</span></label>
-                <input type="number" className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700" value={expenseAmount} onChange={e => setExpenseAmount(Number(e.target.value))} min={0} required />
+                <div className="w-full border rounded px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700">
+                  {expenseAmount.toLocaleString()} 元
+                </div>
               </div>
               <div>
                 <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">支出項目 <span className="text-red-500">*</span></label>
                 <ExpenseItemsEditor items={expenseItems} setItems={setExpenseItems} />
               </div>
               <div className="flex justify-end">
-                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50" disabled={saving || !expenseName || !expenseAmount || expenseItems.length === 0}>
+                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50" disabled={saving || !expenseName || expenseAmount <= 0 || expenseItems.length === 0}>
                   {saving ? '儲存中...' : '建立支出'}
                 </button>
               </div>
