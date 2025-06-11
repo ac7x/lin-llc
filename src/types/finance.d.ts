@@ -82,3 +82,35 @@ export interface QuoteData {
     createdAt: Timestamp; // 建立時間
     updatedAt: Timestamp; // 更新時間
 }
+
+/**
+ * 發票項目資料
+ */
+export interface InvoiceItem {
+    invoiceItemId: string; // 項目唯一識別碼
+    description: string; // 項目描述
+    quantity: number; // 項目數量
+    unitPrice: number; // 單價
+    amount: number; // 總金額
+}
+
+/**
+ * 發票主體資料
+ */
+export interface InvoiceData {
+    invoiceId: string; // 發票編號
+    invoiceNumber: string; // 發票號碼
+    invoiceDate: Timestamp; // 發票日期
+    clientName: string; // 客戶名稱
+    clientContact: string; // 客戶聯絡人
+    clientPhone: string; // 客戶電話
+    clientEmail: string; // 客戶 Email
+    items: InvoiceItem[]; // 發票項目清單
+    totalAmount: number; // 總金額
+    relatedOrderId?: string; // 相關訂單編號（可選）
+    relatedContractId?: string; // 相關合約編號（可選）
+    createdAt: Timestamp; // 建立時間
+    updatedAt: Timestamp; // 更新時間
+    status: 'draft' | 'issued' | 'cancelled'; // 發票狀態
+    notes?: string; // 備註（可選）
+}
