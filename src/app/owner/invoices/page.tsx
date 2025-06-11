@@ -34,11 +34,17 @@ const InvoicePage: React.FC = () => {
             <tbody>
               {invoicesSnapshot.docs.map(doc => {
                 const data = doc.data() as InvoiceData;
+                // 計算 expenses 的 amount 總和
+                const expensesTotal = Array.isArray(data.expenses)
+                  ? data.expenses.reduce((sum, exp) => sum + (typeof exp.amount === 'number' ? exp.amount : 0), 0)
+                  : 0;
                 return (
                   <tr key={doc.id}>
                     <td className="px-2 py-1 border">{data.invoiceName || '-'}</td>
                     <td className="px-2 py-1 border text-right">{typeof data.totalAmount === 'number' ? data.totalAmount.toLocaleString() : '-'}</td>
-                    <td className="px-2 py-1 border text-right">{data.type === '支出' ? (typeof data.totalAmount === 'number' ? data.totalAmount.toLocaleString() : '-') : '-'}</td>
+                    <td className="px-2 py-1 border text-right">
+                      {expensesTotal > 0 ? expensesTotal.toLocaleString() : '-'}
+                    </td>
                     <td className="px-2 py-1 border">{data.status}</td>
                     <td className="px-2 py-1 border">
                       <Link href={`/owner/invoice/${doc.id}`} className="text-blue-600 hover:underline">檢視</Link>
