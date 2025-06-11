@@ -105,6 +105,7 @@ export interface Expense {
   amount: number;
   items: InvoiceItem[];
   createdAt: Timestamp;
+  workpackageId?: string; // 可選：關聯工作包
 }
 
 /**

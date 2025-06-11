@@ -2,23 +2,29 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useFirebase, useDocument } from '@/hooks/useFirebase';
+import { useFirebase, useDocument, useCollection } from '@/hooks/useFirebase';
 import type { InvoiceData, Expense, InvoiceItem } from '@/types/finance';
+import type { Project } from '@/types/project';
 import { Timestamp } from 'firebase/firestore';
 
 const InvoiceDetailPage: React.FC = () => {
   const params = useParams();
   const invoiceId = params?.invoice as string;
-  const { db, doc, updateDoc, arrayUnion } = useFirebase();
+  const { db, doc, updateDoc, arrayUnion, collection } = useFirebase();
   const [invoiceDoc, loading, error] = useDocument(invoiceId ? doc(db, 'finance', 'default', 'invoice', invoiceId) : undefined);
   const data = invoiceDoc?.exists() ? (invoiceDoc.data() as InvoiceData) : undefined;
 
-  // 新增支出 modal 狀態
+  // 取得所有 projects 與 workpackages
+  const [projectsSnapshot] = useCollection(collection(db, 'projects'));
+
+  // 支出 modal 狀態
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [expenseName, setExpenseName] = useState('');
   const [expenseItems, setExpenseItems] = useState<InvoiceItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [expenseError, setExpenseError] = useState('');
+  // 新增：支出應用 workpackage
+  const [expenseWorkpackageId, setExpenseWorkpackageId] = useState<string>('');
 
   // 自動計算支出金額
   const expenseAmount = expenseItems.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0);
@@ -32,6 +38,7 @@ const InvoiceDetailPage: React.FC = () => {
       if (!expenseName || expenseItems.length === 0) throw new Error('請填寫完整支出資訊');
       if (!invoiceId) throw new Error('找不到發票 ID');
       if (expenseAmount <= 0) throw new Error('支出金額需大於 0');
+      if (!expenseWorkpackageId) throw new Error('請選擇支出應用的工作包');
       const expenseId = `expense_${Date.now()}`;
       const expense = {
         expenseId,
@@ -39,6 +46,7 @@ const InvoiceDetailPage: React.FC = () => {
         amount: expenseAmount,
         items: expenseItems,
         createdAt: Timestamp.now(),
+        workpackageId: expenseWorkpackageId,
       };
       await updateDoc(doc(db, 'finance', 'default', 'invoice', invoiceId), {
         expenses: arrayUnion(expense),
@@ -47,6 +55,7 @@ const InvoiceDetailPage: React.FC = () => {
       setShowExpenseModal(false);
       setExpenseName('');
       setExpenseItems([]);
+      setExpenseWorkpackageId('');
     } catch (err) {
       setExpenseError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -115,7 +124,8 @@ const InvoiceDetailPage: React.FC = () => {
     };
 
     // blur 時同步回父層
-    const handleBlur = (idx: number) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const handleBlur = () => {
       setItems(
         localItems.map(item => ({
           ...item,
@@ -186,7 +196,7 @@ const InvoiceDetailPage: React.FC = () => {
                     className="border px-2 py-1 rounded w-32 bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700"
                     value={item.description}
                     onChange={e => handleChange(idx, 'description', e.target.value)}
-                    onBlur={() => handleBlur(idx)}
+                    onBlur={handleBlur}
                     required
                   />
                 </td>
@@ -197,7 +207,7 @@ const InvoiceDetailPage: React.FC = () => {
                     min={1}
                     value={item.quantity}
                     onChange={e => handleChange(idx, 'quantity', e.target.value)}
-                    onBlur={() => handleBlur(idx)}
+                    onBlur={handleBlur}
                     required
                     inputMode="numeric"
                   />
@@ -209,7 +219,7 @@ const InvoiceDetailPage: React.FC = () => {
                     min={0}
                     value={item.unitPrice}
                     onChange={e => handleChange(idx, 'unitPrice', e.target.value)}
-                    onBlur={() => handleBlur(idx)}
+                    onBlur={handleBlur}
                     required
                     inputMode="decimal"
                   />
@@ -238,6 +248,25 @@ const InvoiceDetailPage: React.FC = () => {
       </div>
     );
   };
+
+  // 取得所有 workpackages（展平成一個陣列）
+  const allWorkpackages = React.useMemo(() => {
+    if (!projectsSnapshot) return [];
+    const arr: { id: string; name: string; projectName: string }[] = [];
+    projectsSnapshot.docs.forEach(docSnap => {
+      const project = docSnap.data() as Project;
+      if (Array.isArray(project.workpackages)) {
+        project.workpackages.forEach(wp => {
+          arr.push({
+            id: wp.id,
+            name: wp.name,
+            projectName: project.projectName || docSnap.id,
+          });
+        });
+      }
+    });
+    return arr;
+  }, [projectsSnapshot]);
 
   return (
     <main className="p-6 bg-white dark:bg-gray-900 min-h-screen">
@@ -348,6 +377,23 @@ const InvoiceDetailPage: React.FC = () => {
             <h2 className="text-xl font-bold mb-4">新增支出</h2>
             <form onSubmit={handleExpenseSubmit} className="space-y-4">
               {expenseError && <div className="text-red-500 mb-2">{expenseError}</div>}
+              {/* 新增：支出應用的工作包選單 */}
+              <div>
+                <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">支出應用工作包 <span className="text-red-500">*</span></label>
+                <select
+                  className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+                  value={expenseWorkpackageId}
+                  onChange={e => setExpenseWorkpackageId(e.target.value)}
+                  required
+                >
+                  <option value="">請選擇</option>
+                  {allWorkpackages.map(wp => (
+                    <option key={wp.id} value={wp.id}>
+                      {wp.projectName} - {wp.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">支出名稱 <span className="text-red-500">*</span></label>
                 <input type="text" className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700" value={expenseName} onChange={e => setExpenseName(e.target.value)} required />
@@ -364,7 +410,7 @@ const InvoiceDetailPage: React.FC = () => {
                 <ExpenseItemsEditor items={expenseItems} setItems={setExpenseItems} />
               </div>
               <div className="flex justify-end">
-                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50" disabled={saving || !expenseName || expenseAmount <= 0 || expenseItems.length === 0}>
+                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50" disabled={saving || !expenseName || expenseAmount <= 0 || expenseItems.length === 0 || !expenseWorkpackageId}>
                   {saving ? '儲存中...' : '建立支出'}
                 </button>
               </div>
