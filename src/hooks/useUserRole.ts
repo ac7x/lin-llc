@@ -2,20 +2,7 @@ import { useMemo } from 'react';
 import { useAuth, doc, db } from '@/hooks/useFirebase';
 import { useDocument } from 'react-firebase-hooks/firestore';
 import type { AppUser } from '@/types/user';
-
-// 角色層級定義（數字越高權限越大）
-const ROLE_HIERARCHY: Record<string, number> = {
-    'user': 1,
-    'helper': 2,
-    'temporary': 3,
-    'coord': 4,
-    'safety': 5,
-    'foreman': 6,
-    'vendor': 7,
-    'finance': 8,
-    'admin': 9,
-    'owner': 10,
-};
+import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 
 export interface UseUserRoleReturn {
     userRole: string | undefined;

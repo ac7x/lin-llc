@@ -25,7 +25,7 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '📊', 
         label: '儀表板', 
         active: false,
-        requiredRoles: ['admin', 'owner', 'finance', 'foreman'],
+        requiredRoles: ['owner'], // 僅 owner 可見
     },
     
     // 專案管理
