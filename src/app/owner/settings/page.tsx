@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useFirebase } from "@/hooks/useFirebase";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
-import type { AppUser } from "@/types/user";
 
 // 定義權限類型
 interface Permission {
@@ -52,35 +51,17 @@ const DEFAULT_PERMISSIONS: Permission[] = [
 ];
 
 export default function OwnerSettingsPage() {
-    const { db, doc, getDoc, setDoc, collection, getDocs, updateDoc } = useFirebase();
+    const { db, doc, getDoc, setDoc } = useFirebase();
     const { isOwner } = useUserRole();
     const [archiveRetentionDays, setArchiveRetentionDaysState] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
-    const [users, setUsers] = useState<AppUser[]>([]);
-    const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
-    const [selectedRole, setSelectedRole] = useState<string>("");
     const [updating, setUpdating] = useState(false);
     
-    // 新增：權限管理相關狀態
+    // 權限管理相關狀態
     const [permissions, setPermissions] = useState<Permission[]>([]);
     const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
     const [selectedRoleForPermission, setSelectedRoleForPermission] = useState<string>("");
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-
-    // 載入所有使用者
-    useEffect(() => {
-        async function fetchUsers() {
-            const usersCollection = collection(db, 'users');
-            const snapshot = await getDocs(usersCollection);
-            const usersData = snapshot.docs.map(doc => ({
-                ...doc.data(),
-                uid: doc.id
-            })) as AppUser[];
-            setUsers(usersData);
-        }
-
-        fetchUsers();
-    }, [db, collection, getDocs]);
 
     // 載入現有設定
     useEffect(() => {
@@ -98,35 +79,8 @@ export default function OwnerSettingsPage() {
         fetchRetentionDays();
     }, [db, doc, getDoc]);
 
-    // 初始化權限設定
-    const initializePermissions = async () => {
-        try {
-            const permissionsRef = doc(db, 'settings', 'permissions');
-            const permissionsSnapshot = await getDoc(permissionsRef);
-            
-            if (!permissionsSnapshot.exists()) {
-                await setDoc(permissionsRef, { permissions: DEFAULT_PERMISSIONS });
-                setPermissions(DEFAULT_PERMISSIONS);
-            }
-
-            const rolePermissionsRef = doc(db, 'settings', 'rolePermissions');
-            const rolePermissionsSnapshot = await getDoc(rolePermissionsRef);
-            
-            if (!rolePermissionsSnapshot.exists()) {
-                const initialRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
-                    role,
-                    permissions: getDefaultPermissionsForRole(role)
-                }));
-                await setDoc(rolePermissionsRef, { roles: initialRolePermissions });
-                setRolePermissions(initialRolePermissions);
-            }
-        } catch (error) {
-            console.error('初始化權限設定失敗:', error);
-        }
-    };
-
     // 根據角色獲取預設權限
-    const getDefaultPermissionsForRole = (role: string): string[] => {
+    const getDefaultPermissionsForRole = useCallback((role: string): string[] => {
         const basePermissions = ['project.view', 'workpackage.view'];
         
         switch (role) {
@@ -155,19 +109,38 @@ export default function OwnerSettingsPage() {
             default:
                 return basePermissions;
         }
-    };
+    }, []);
+
+    // 初始化權限設定
+    const initializePermissions = useCallback(async () => {
+        try {
+            const permissionsRef = doc(db, 'settings', 'permissions');
+            const permissionsSnapshot = await getDoc(permissionsRef);
+            
+            if (!permissionsSnapshot.exists()) {
+                await setDoc(permissionsRef, { permissions: DEFAULT_PERMISSIONS });
+                setPermissions(DEFAULT_PERMISSIONS);
+            }
+
+            const rolePermissionsRef = doc(db, 'settings', 'rolePermissions');
+            const rolePermissionsSnapshot = await getDoc(rolePermissionsRef);
+            
+            if (!rolePermissionsSnapshot.exists()) {
+                const initialRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
+                    role,
+                    permissions: getDefaultPermissionsForRole(role)
+                }));
+                await setDoc(rolePermissionsRef, { roles: initialRolePermissions });
+                setRolePermissions(initialRolePermissions);
+            }
+        } catch (error) {
+            console.error('初始化權限設定失敗:', error);
+        }
+    }, [db, doc, getDoc, setDoc, getDefaultPermissionsForRole]);
 
     // 載入權限設定
     useEffect(() => {
         async function fetchPermissions() {
-            const permissionsDoc = doc(db, 'settings', 'permissions');
-            const permissionsSnapshot = await getDoc(permissionsDoc);
-            if (permissionsSnapshot.exists()) {
-                setPermissions(permissionsSnapshot.data().permissions || []);
-            } else {
-                await initializePermissions();
-            }
-
             const rolePermissionsDoc = doc(db, 'settings', 'rolePermissions');
             const rolePermissionsSnapshot = await getDoc(rolePermissionsDoc);
             if (rolePermissionsSnapshot.exists()) {
@@ -177,45 +150,13 @@ export default function OwnerSettingsPage() {
             }
         }
         fetchPermissions();
-    }, [db, doc, getDoc]);
+    }, [db, doc, getDoc, initializePermissions]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (archiveRetentionDays && archiveRetentionDays > 0) {
             await setDoc(doc(db, 'settings', 'archive'), { retentionDays: archiveRetentionDays }, { merge: true });
             alert(`已設定封存自動刪除天數為 ${archiveRetentionDays} 天`);
-        }
-    };
-
-    const handleUserSelect = (userId: string) => {
-        const user = users.find(u => u.uid === userId);
-        setSelectedUser(user || null);
-        setSelectedRole(user?.role || "");
-    };
-
-    const handleRoleUpdate = async () => {
-        if (!selectedUser || !selectedRole || !isOwner) return;
-        
-        try {
-            setUpdating(true);
-            const userRef = doc(db, 'users', selectedUser.uid);
-            await updateDoc(userRef, {
-                role: selectedRole
-            });
-            
-            // 更新本地狀態
-            setUsers(prev => prev.map(user => 
-                user.uid === selectedUser.uid 
-                    ? { ...user, role: selectedRole }
-                    : user
-            ));
-            
-            alert(`已更新 ${selectedUser.displayName} 的角色為 ${selectedRole}`);
-        } catch (error) {
-            console.error('更新角色失敗:', error);
-            alert('更新角色失敗，請稍後再試');
-        } finally {
-            setUpdating(false);
         }
     };
 
