@@ -94,7 +94,7 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '⚙️', 
         label: '設定', 
         active: false,
-        requiredRoles: ['admin'],
+        requiredRoles: ['owner'],
     },
     { 
         href: '/owner/archive', 
