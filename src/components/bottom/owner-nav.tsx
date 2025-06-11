@@ -19,6 +19,7 @@ interface OwnerBottomNavProps {
 }
 
 const defaultOwnerNavItems: NavItem[] = [
+    // 核心管理
     { 
         href: '/owner/dashboard', 
         icon: '📊', 
@@ -26,6 +27,8 @@ const defaultOwnerNavItems: NavItem[] = [
         active: false,
         requiredRoles: ['admin', 'owner', 'finance', 'foreman'],
     },
+    
+    // 專案管理
     { 
         href: '/owner/projects', 
         icon: '📁', 
@@ -47,6 +50,8 @@ const defaultOwnerNavItems: NavItem[] = [
         active: false,
         requiredRoles: ['admin', 'owner', 'foreman', 'coord'],
     },
+
+    // 財務相關
     { 
         href: '/owner/contracts', 
         icon: '📑', 
@@ -68,26 +73,14 @@ const defaultOwnerNavItems: NavItem[] = [
         active: false,
         requiredRoles: ['admin', 'owner', 'finance'],
     },
+
+    // 系統管理
     { 
         href: '/owner/users', 
         icon: '👤', 
         label: '用戶管理', 
         active: false,
         requiredRoles: ['admin', 'owner'],
-    },
-    { 
-        href: '/owner/notifications', 
-        icon: '🔔', 
-        label: '通知', 
-        active: false,
-        minRole: 'user',
-    },
-    { 
-        href: '/shared/signin', 
-        icon: '🙍‍♂️', 
-        label: '個人檔案', 
-        active: false,
-        minRole: 'user',
     },
     { 
         href: '/owner/settings', 
@@ -102,6 +95,22 @@ const defaultOwnerNavItems: NavItem[] = [
         label: '封存', 
         active: false,
         requiredRoles: ['admin', 'owner'],
+    },
+
+    // 個人相關
+    { 
+        href: '/owner/notifications', 
+        icon: '🔔', 
+        label: '通知', 
+        active: false,
+        minRole: 'user',
+    },
+    { 
+        href: '/shared/signin', 
+        icon: '🙍‍♂️', 
+        label: '個人檔案', 
+        active: false,
+        minRole: 'user',
     },
 ];
 
