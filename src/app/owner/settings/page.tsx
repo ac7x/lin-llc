@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useFirebase } from "@/hooks/useFirebase";
 import { useUserRole } from "@/hooks/useUserRole";
-import { ROLE_HIERARCHY, RoleKey } from "@/utils/roleHierarchy";
+import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
 import type { AppUser } from "@/types/user";
 
 export default function OwnerSettingsPage() {
