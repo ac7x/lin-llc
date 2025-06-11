@@ -1,6 +1,7 @@
 'use client'
 
 import { HomeIcon, CalendarIcon, BellIcon, UserIcon } from '@heroicons/react/24/outline'
+import { SparklesIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
@@ -20,6 +21,12 @@ const UserNav = () => {
       href: '/user/calendar',
       icon: CalendarIcon,
       current: pathname === '/user/calendar'
+    },
+    {
+      name: 'Gemini',
+      href: '/user/gemini',
+      icon: SparklesIcon,
+      current: pathname === '/user/gemini'
     },
     {
       name: '通知',
