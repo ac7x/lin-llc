@@ -172,7 +172,10 @@ const InvoiceDetailPage: React.FC = () => {
                         <td className="px-2 py-1 border">
                           <ul className="list-disc pl-4">
                             {Array.isArray(exp.items) && exp.items.map((item: InvoiceItem) => (
-                              <li key={item.invoiceItemId}>{item.description} × {item.quantity} @ {item.unitPrice} = {item.amount}</li>
+                              <li key={item.invoiceItemId}>
+                                {item.description ? item.description : '-'}
+                                （{item.quantity} × {item.unitPrice.toLocaleString()} = {item.amount.toLocaleString()}）
+                              </li>
                             ))}
                           </ul>
                         </td>
