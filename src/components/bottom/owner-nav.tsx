@@ -87,7 +87,7 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '👤', 
         label: '用戶管理', 
         active: false,
-        requiredRoles: ['admin', 'owner'],
+        requiredRoles: ['owner'], // 僅 owner 可見
     },
     { 
         href: '/owner/settings', 
