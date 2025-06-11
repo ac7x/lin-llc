@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { useFirebase, useCollection } from '@/hooks/useFirebase';
 import type { InvoiceData } from '@/types/finance';
