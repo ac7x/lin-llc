@@ -5,6 +5,7 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { useForm } from "react-hook-form";
 import { useFirebase } from "@/hooks/useFirebase";
 import type { AppUser } from "@/types/user";
+import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
 
 export default function AdminUsersPage() {
   const { db, collection, doc, updateDoc, setDoc, serverTimestamp } = useFirebase();
@@ -93,16 +94,11 @@ export default function AdminUsersPage() {
             className="border rounded px-2 py-1 w-32 bg-white dark:bg-gray-800"
           >
             <option value="">選擇角色</option>
-            <option value="admin">admin</option>
-            <option value="finance">finance</option>
-            <option value="owner">owner</option>
-            <option value="user">user</option>
-            <option value="vendor">vendor</option>
-            <option value="foreman">foreman</option>
-            <option value="safety">safety</option>
-            <option value="coord">coord</option>
-            <option value="helper">helper</option>
-            <option value="temporary">temporary</option>
+            {Object.keys(ROLE_HIERARCHY).map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
           </select>
           <button
             type="submit"
@@ -149,16 +145,11 @@ export default function AdminUsersPage() {
                       className="border rounded px-1 py-0.5 bg-white dark:bg-gray-800"
                     >
                       <option value="">—</option>
-                      <option value="admin">admin</option>
-                      <option value="finance">finance</option>
-                      <option value="owner">owner</option>
-                      <option value="user">user</option>
-                      <option value="vendor">vendor</option>
-                      <option value="foreman">foreman</option>
-                      <option value="safety">safety</option>
-                      <option value="coord">coord</option>
-                      <option value="helper">helper</option>
-                      <option value="temporary">temporary</option>
+                      {Object.keys(ROLE_HIERARCHY).map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
                     </select>
                   </td>
                 </tr>

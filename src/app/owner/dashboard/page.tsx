@@ -6,6 +6,7 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Workpackage } from '@/types/project';
+import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 
 export default function DashboardPage() {
   const { db, collection, getDocs } = useFirebase();
@@ -113,16 +114,10 @@ export default function DashboardPage() {
   }, [collection, db, getDocs]);
 
   // 統計各角色人數
-  const roleCounts: Record<string, number> = {
-    admin: 0,
-    finance: 0,
-    owner: 0,
-    user: 0,
-    vendor: 0,
-    foreman: 0,
-    safety: 0,
-    coord: 0,
-  };
+  const roleCounts: Record<string, number> = Object.keys(ROLE_HIERARCHY).reduce((acc, role) => {
+    acc[role] = 0;
+    return acc;
+  }, {} as Record<string, number>);
   if (usersSnapshot && !usersLoading && !usersError) {
     usersSnapshot.docs.forEach(doc => {
       const role = doc.data().role;
