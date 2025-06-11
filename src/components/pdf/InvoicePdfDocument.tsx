@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { Timestamp } from "firebase/firestore";
 
 Font.register({
@@ -44,12 +44,12 @@ export function InvoicePdfDocument({ invoice, qrCodeDataUrl }: { invoice: Record
 
                 {/* 主要內容 */}
                 <View style={styles.section}>
-                    <Text style={styles.title}>請款明細</Text>
-                    <Text>發票名稱: {typeof invoice.invoiceName === 'string' ? invoice.invoiceName : '-'}</Text>
-                    <Text>客戶名稱: {typeof invoice.clientName === 'string' ? invoice.clientName : '-'}</Text>
-                    <Text>聯絡人: {typeof invoice.clientContact === 'string' ? invoice.clientContact : '-'}</Text>
-                    <Text>電話: {typeof invoice.clientPhone === 'string' ? invoice.clientPhone : '-'}</Text>
-                    <Text>Email: {typeof invoice.clientEmail === 'string' ? invoice.clientEmail : '-'}</Text>
+                    <Text style={styles.title}>發票明細</Text>
+                    <Text>發票名稱: {String(invoice.invoiceName ?? '')}</Text>
+                    <Text>客戶名稱: {String(invoice.clientName ?? '')}</Text>
+                    <Text>聯絡人: {String(invoice.clientContact ?? '')}</Text>
+                    <Text>電話: {String(invoice.clientPhone ?? '')}</Text>
+                    <Text>Email: {String(invoice.clientEmail ?? '')}</Text>
                     <Text>總金額: {formatNumber(invoice.totalAmount as number)}</Text>
                     <Text>支出總額: {formatNumber(expensesTotal)}</Text>
                     <Text>建立日期: {formatDate(invoice.createdAt as Timestamp)}</Text>
@@ -61,21 +61,15 @@ export function InvoicePdfDocument({ invoice, qrCodeDataUrl }: { invoice: Record
                     <View style={styles.section}>
                         <Text style={styles.subTitle}>支出項目</Text>
                         <View style={styles.tableHeader}>
-                            <Text style={[styles.cell, { width: '40%' }]}>項目名稱</Text>
+                            <Text style={[styles.cell, { width: '40%' }]}>支出名稱</Text>
                             <Text style={[styles.cell, { width: '30%' }]}>金額</Text>
-                            <Text style={[styles.cell, { width: '30%' }]}>建立日期</Text>
+                            <Text style={[styles.cell, { width: '30%' }]}>工作項目</Text>
                         </View>
                         {expenses.map((expense: Record<string, unknown>, idx: number) => (
                             <View key={typeof expense.expenseId === 'string' ? expense.expenseId : idx} style={styles.tableRow}>
-                                <Text style={[styles.cell, { width: '40%' }]}>
-                                    {typeof expense.expenseName === 'string' ? expense.expenseName : '-'}
-                                </Text>
-                                <Text style={[styles.cell, { width: '30%' }]}>
-                                    {formatNumber(expense.amount as number)}
-                                </Text>
-                                <Text style={[styles.cell, { width: '30%' }]}>
-                                    {formatDate(expense.createdAt as Timestamp)}
-                                </Text>
+                                <Text style={[styles.cell, { width: '40%' }]}>{String(expense.expenseName ?? '')}</Text>
+                                <Text style={[styles.cell, { width: '30%' }]}>{formatNumber(expense.amount as number)}</Text>
+                                <Text style={[styles.cell, { width: '30%' }]}>{String(expense.workpackageName ?? '')}</Text>
                             </View>
                         ))}
                         <View style={[styles.tableRow, styles.totalRow]}>
@@ -90,7 +84,7 @@ export function InvoicePdfDocument({ invoice, qrCodeDataUrl }: { invoice: Record
                 {typeof invoice.notes === 'string' && invoice.notes && (
                     <View style={styles.section}>
                         <Text style={styles.subTitle}>備註</Text>
-                        <Text>{invoice.notes}</Text>
+                        <Text style={styles.text}>{invoice.notes}</Text>
                     </View>
                 )}
             </Page>
@@ -118,6 +112,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 6,
         fontWeight: 'bold'
+    },
+    text: {
+        fontSize: 10,
+        lineHeight: 1.4
     },
     tableHeader: {
         flexDirection: 'row',
