@@ -9,7 +9,7 @@ import type { InvoiceData } from '@/types/finance';
 
 const InvoiceCreatePage: React.FC = () => {
   const router = useRouter();
-  const { db, collection, addDoc, doc, setDoc } = useFirebase();
+  const { db, collection, doc, setDoc } = useFirebase();
   const [projectsSnapshot] = useCollection(collection(db, 'projects'));
   const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoice'));
   const [projectId, setProjectId] = useState('');
@@ -32,6 +32,15 @@ const InvoiceCreatePage: React.FC = () => {
   // 取得所有已建立的發票 projectId
   const existingProjectIds = invoicesSnapshot?.docs.map(doc => (doc.data() as InvoiceData).projectId) ?? [];
 
+  // 取得所選專案名稱
+  const selectedProjectName = useMemo(() => {
+    if (!projectId || !projectsSnapshot) return '';
+    const docSnap = projectsSnapshot.docs.find(doc => doc.id === projectId);
+    if (!docSnap) return '';
+    const data = docSnap.data() as Project;
+    return data.projectName || docSnap.id;
+  }, [projectId, projectsSnapshot]);
+
   // 建立發票
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +57,7 @@ const InvoiceCreatePage: React.FC = () => {
         clientPhone: '',
         clientEmail: '',
         projectId,
+        invoiceName: selectedProjectName, // 新增 invoiceName 欄位
         type: '請款',
         items: [],
         totalAmount: totalBudget,
@@ -55,7 +65,7 @@ const InvoiceCreatePage: React.FC = () => {
         updatedAt: Timestamp.now(),
         status: 'draft',
         notes: '',
-      };
+      } as InvoiceData;
       // 使用 setDoc 並指定 id
       await setDoc(doc(db, 'finance', 'default', 'invoice', projectId), invoiceData);
       router.push('/owner/invoice');

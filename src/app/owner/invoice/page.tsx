@@ -24,8 +24,9 @@ const InvoicePage: React.FC = () => {
           <table className="min-w-full text-sm border mt-2">
             <thead>
               <tr className="bg-gray-100 dark:bg-gray-800">
-                <th className="px-2 py-1 border">專案</th>
+                <th className="px-2 py-1 border">發票名稱</th>
                 <th className="px-2 py-1 border">金額</th>
+                <th className="px-2 py-1 border">支出</th>
                 <th className="px-2 py-1 border">狀態</th>
                 <th className="px-2 py-1 border">操作</th>
               </tr>
@@ -35,8 +36,9 @@ const InvoicePage: React.FC = () => {
                 const data = doc.data() as InvoiceData;
                 return (
                   <tr key={doc.id}>
-                    <td className="px-2 py-1 border">{data.projectId}</td>
+                    <td className="px-2 py-1 border">{data.invoiceName || '-'}</td>
                     <td className="px-2 py-1 border text-right">{typeof data.totalAmount === 'number' ? data.totalAmount.toLocaleString() : '-'}</td>
+                    <td className="px-2 py-1 border text-right">{data.type === '支出' ? (typeof data.totalAmount === 'number' ? data.totalAmount.toLocaleString() : '-') : '-'}</td>
                     <td className="px-2 py-1 border">{data.status}</td>
                     <td className="px-2 py-1 border">
                       <Link href={`/owner/invoice/${doc.id}`} className="text-blue-600 hover:underline">檢視</Link>

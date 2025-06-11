@@ -117,4 +117,5 @@ export interface InvoiceData {
     updatedAt: Timestamp; // 更新時間
     status: 'draft' | 'issued' | 'cancelled'; // 發票狀態
     notes?: string; // 備註（可選）
+    invoiceName?: string; // 發票名稱（對應專案名稱，可選）
 }
