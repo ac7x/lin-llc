@@ -31,7 +31,7 @@ const UserNav = () => {
       name: '個人資料',
       href: '/shared/signin',
       icon: UserIcon,
-      current: pathname === '/user/profile'
+      current: pathname === '/shared/signin'
     }
   ], [pathname])
 
