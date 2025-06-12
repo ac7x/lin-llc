@@ -163,27 +163,34 @@ export default function OwnerSettingsPage() {
     // 初始化權限設定
     const initializePermissions = useCallback(async () => {
         try {
+            console.log('開始初始化權限...');
+            console.log('預設權限列表:', DEFAULT_PERMISSIONS);
+
+            // 強制重置權限設定
             const permissionsRef = doc(db, 'settings', 'permissions');
-            const permissionsSnapshot = await getDoc(permissionsRef);
-            
-            if (!permissionsSnapshot.exists()) {
-                await setDoc(permissionsRef, { permissions: DEFAULT_PERMISSIONS });
-                setPermissions(DEFAULT_PERMISSIONS);
-            }
+            await setDoc(permissionsRef, { permissions: DEFAULT_PERMISSIONS });
+            setPermissions(DEFAULT_PERMISSIONS);
 
             const rolePermissionsRef = doc(db, 'settings', 'rolePermissions');
-            const rolePermissionsSnapshot = await getDoc(rolePermissionsRef);
-            
-            if (!rolePermissionsSnapshot.exists()) {
-                const initialRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
-                    role,
-                    permissions: getDefaultPermissionsForRole(role)
-                }));
-                await setDoc(rolePermissionsRef, { roles: initialRolePermissions });
-                setRolePermissions(initialRolePermissions);
-            }
+            const initialRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
+                role,
+                permissions: getDefaultPermissionsForRole(role)
+            }));
+            await setDoc(rolePermissionsRef, { roles: initialRolePermissions });
+            setRolePermissions(initialRolePermissions);
+
+            console.log('權限初始化完成');
+            console.log('設置的權限:', DEFAULT_PERMISSIONS);
+            console.log('設置的角色權限:', initialRolePermissions);
         } catch (error) {
             console.error('初始化權限設定失敗:', error);
+            // 如果初始化失敗，至少設置預設權限
+            setPermissions(DEFAULT_PERMISSIONS);
+            const initialRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
+                role,
+                permissions: getDefaultPermissionsForRole(role)
+            }));
+            setRolePermissions(initialRolePermissions);
         }
     }, [db, doc, getDoc, setDoc, getDefaultPermissionsForRole]);
 
@@ -191,29 +198,93 @@ export default function OwnerSettingsPage() {
     useEffect(() => {
         async function fetchPermissions() {
             try {
+                console.log('開始載入權限...');
+                
                 // 載入權限列表
                 const permissionsDoc = doc(db, 'settings', 'permissions');
                 const permissionsSnapshot = await getDoc(permissionsDoc);
+                
                 if (permissionsSnapshot.exists()) {
-                    setPermissions(permissionsSnapshot.data().permissions || []);
+                    const loadedPermissions = permissionsSnapshot.data().permissions || [];
+                    console.log('從資料庫載入的權限:', loadedPermissions);
+                    setPermissions(loadedPermissions);
                 } else {
+                    console.log('權限不存在，開始初始化...');
                     await initializePermissions();
                 }
 
                 // 載入角色權限設定
                 const rolePermissionsDoc = doc(db, 'settings', 'rolePermissions');
                 const rolePermissionsSnapshot = await getDoc(rolePermissionsDoc);
+                
                 if (rolePermissionsSnapshot.exists()) {
-                    setRolePermissions(rolePermissionsSnapshot.data().roles || []);
+                    const loadedRolePermissions = rolePermissionsSnapshot.data().roles || [];
+                    console.log('從資料庫載入的角色權限:', loadedRolePermissions);
+                    setRolePermissions(loadedRolePermissions);
                 } else {
+                    console.log('角色權限不存在，開始初始化...');
                     await initializePermissions();
                 }
             } catch (error) {
                 console.error('載入權限設定失敗:', error);
+                console.log('嘗試使用預設權限...');
+                await initializePermissions();
             }
         }
         fetchPermissions();
     }, [db, doc, getDoc, initializePermissions]);
+
+    // 根據搜尋條件過濾權限
+    const filteredPermissions = permissions.filter(permission => 
+        permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        permission.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        permission.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // 按類別分組權限
+    const groupedPermissions = filteredPermissions.reduce((acc, permission) => {
+        if (!acc[permission.category]) {
+            acc[permission.category] = [];
+        }
+        acc[permission.category].push(permission);
+        return acc;
+    }, {} as Record<string, Permission[]>);
+
+    // 確保所有預設類別都存在，並包含其對應的權限
+    const defaultCategories = ['專案管理', '工作包管理', '財務管理', '用戶管理', '系統管理', '通知管理'];
+    defaultCategories.forEach(category => {
+        if (!groupedPermissions[category]) {
+            // 從預設權限中找出屬於該類別的權限
+            const categoryPermissions = DEFAULT_PERMISSIONS.filter(p => p.category === category);
+            groupedPermissions[category] = categoryPermissions;
+        }
+    });
+
+    // 切換類別展開狀態
+    const toggleCategory = (category: string) => {
+        setExpandedCategories(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(category)) {
+                newSet.delete(category);
+            } else {
+                newSet.add(category);
+            }
+            return newSet;
+        });
+    };
+
+    // 添加調試代碼來監視權限狀態
+    useEffect(() => {
+        console.log('當前權限列表:', permissions);
+        console.log('當前角色權限:', rolePermissions);
+        console.log('分組後的權限:', groupedPermissions);
+        console.log('預設權限:', DEFAULT_PERMISSIONS);
+    }, [permissions, rolePermissions, groupedPermissions]);
+
+    // 初始化時展開所有類別
+    useEffect(() => {
+        setExpandedCategories(new Set(defaultCategories));
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -252,35 +323,6 @@ export default function OwnerSettingsPage() {
         setSelectedRoleForPermission(role);
         const rolePermission = rolePermissions.find((rp: RolePermission) => rp.role === role);
         setSelectedPermissions(rolePermission?.permissions || []);
-    };
-
-    // 根據搜尋條件過濾權限
-    const filteredPermissions = permissions.filter(permission => 
-        permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        permission.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        permission.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // 按類別分組權限
-    const groupedPermissions = filteredPermissions.reduce((acc, permission) => {
-        if (!acc[permission.category]) {
-            acc[permission.category] = [];
-        }
-        acc[permission.category].push(permission);
-        return acc;
-    }, {} as Record<string, Permission[]>);
-
-    // 切換類別展開狀態
-    const toggleCategory = (category: string) => {
-        setExpandedCategories(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(category)) {
-                newSet.delete(category);
-            } else {
-                newSet.add(category);
-            }
-            return newSet;
-        });
     };
 
     if (loading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
