@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/alt-text */
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { Timestamp } from "firebase/firestore";
 

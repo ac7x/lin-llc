@@ -30,9 +30,6 @@ import {
   arrayUnion,
   arrayRemove,
 } from '@/lib/firebase-client';
-import { firebaseService } from '../lib/services/firebase.service';
-import { authUtils } from '../lib/utils/firebase-auth.utils';
-import { firestoreUtils } from '../lib/utils/firebase-firestore.utils';
 
 // 導出 react-firebase-hooks
 export { 
@@ -160,12 +157,21 @@ export function useAppCheck() {
 /**
  * 組合 hook - 提供完整的 Firebase 狀態
  */
-export function useFirebase() {
+interface FirebaseReturn extends FirebaseAuthReturn {
+  appCheck: {
+    initialized: boolean;
+    error: Error | null;
+  };
+}
+
+export function useFirebase(): FirebaseReturn {
+  const auth = useAuth();
+  const appCheck = useAppCheck();
+
   return {
-    auth: firebaseService.getAuth(),
-    db: firebaseService.getDb(),
-    ...authUtils,
-    ...firestoreUtils,
+    ...auth,
+    appCheck,
+    isReady: auth.isInitialized && appCheck.initialized
   };
 }
 

@@ -28,6 +28,6 @@ export const FIREBASE_EMULATOR = {
 
 // App Check 配置
 export const APP_CHECK_CONFIG = {
-  PROVIDER: 'recaptcha-v3',
+  PROVIDER: 'recaptcha',
   SITE_KEY: '6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg',
 } as const;

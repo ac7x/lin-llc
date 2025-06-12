@@ -2,7 +2,7 @@
 
 import { BellIcon } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolidIcon } from '@heroicons/react/24/solid';
-import { useUnreadNotificationCount } from '@/hooks/useNotifications';
+import { useUnreadNotificationCount } from '@/app/owner/notifications/hooks/useNotifications';
 import Link from 'next/link';
 
 interface NotificationBellProps {
