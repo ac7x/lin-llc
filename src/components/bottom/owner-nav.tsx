@@ -19,15 +19,22 @@ interface OwnerBottomNavProps {
 }
 
 const defaultOwnerNavItems: NavItem[] = [
-    // 核心管理
+    // 個人相關
+    { 
+        href: '/owner/profile', 
+        icon: '🙍‍♂️', 
+        label: '個人檔案', 
+        active: false,
+        minRole: 'user',
+    },
     { 
         href: '/owner/dashboard', 
         icon: '📊', 
         label: '儀表板', 
         active: false,
-        requiredRoles: ['owner'], // 僅 owner 可見
+        requiredRoles: ['owner'],
     },
-    
+
     // 專案管理
     { 
         href: '/owner/projects', 
@@ -51,18 +58,18 @@ const defaultOwnerNavItems: NavItem[] = [
         requiredRoles: ['admin', 'owner', 'foreman', 'coord'],
     },
 
-    // 財務相關
-    { 
-        href: '/owner/contracts', 
-        icon: '📑', 
-        label: '合約', 
-        active: false,
-        requiredRoles: ['owner', 'finance'],
-    },
+    // 財務管理
     { 
         href: '/owner/quotes', 
         icon: '📄', 
         label: '估價單', 
+        active: false,
+        requiredRoles: ['owner', 'finance'],
+    },
+    { 
+        href: '/owner/contracts', 
+        icon: '📑', 
+        label: '合約', 
         active: false,
         requiredRoles: ['owner', 'finance'],
     },
@@ -81,13 +88,20 @@ const defaultOwnerNavItems: NavItem[] = [
         requiredRoles: ['owner', 'finance'],
     },
 
-    // 系統管理
+    // 系統功能
+    { 
+        href: '/owner/gemini', 
+        icon: '🤖', 
+        label: 'Gemini', 
+        active: false,
+        minRole: 'user',
+    },
     { 
         href: '/owner/users', 
         icon: '👤', 
         label: '用戶管理', 
         active: false,
-        requiredRoles: ['owner'], // 僅 owner 可見
+        requiredRoles: ['owner'],
     },
     { 
         href: '/owner/settings', 
@@ -101,21 +115,7 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '🗄️', 
         label: '封存', 
         active: false,
-        requiredRoles: ['owner'], // 僅 owner 可見
-    },
-    { 
-        href: '/owner/gemini', 
-        icon: '🤖', 
-        label: 'Gemini', 
-        active: false,
-        minRole: 'user',
-    },
-    { 
-        href: '/owner/profile', 
-        icon: '🙍‍♂️', 
-        label: '個人檔案', 
-        active: false,
-        minRole: 'user',
+        requiredRoles: ['owner'],
     },
 ];
 

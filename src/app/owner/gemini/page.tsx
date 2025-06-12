@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, FormEvent } from "react";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { firebaseConfig, APP_CHECK_CONFIG } from "@/lib/firebase-config";
 import { initializeApp } from "firebase/app";
+import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
 
 // 初始化 Firebase
 const app = initializeApp(firebaseConfig);
@@ -15,6 +16,10 @@ if (typeof window !== "undefined") {
     isTokenAutoRefreshEnabled: true,
   });
 }
+
+// 初始化 Gemini API
+const ai = getAI(app, { backend: new GoogleAIBackend() });
+const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
 interface ChatMessage {
   id: string;
@@ -47,17 +52,30 @@ export default function GeminiChatPage() {
     setInput("");
     setLoading(true);
 
-    // TODO: 串接 Gemini API，這裡先用假資料
-    setTimeout(() => {
+    try {
+      const result = await model.generateContent(trimmed);
+      const response = result.response;
+      const text = response.text();
+      
       const geminiMsg: ChatMessage = {
         id: `${Date.now()}-gemini`,
         role: "gemini",
-        content: "（這裡是 Gemini 回覆的範例內容，請串接 API 取得真實回應）",
+        content: text,
         createdAt: new Date(),
       };
       setMessages(prev => [...prev, geminiMsg]);
+    } catch (error) {
+      console.error("Gemini API 錯誤:", error);
+      const errorMsg: ChatMessage = {
+        id: `${Date.now()}-gemini`,
+        role: "gemini",
+        content: "抱歉，發生錯誤，請稍後再試。",
+        createdAt: new Date(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setLoading(false);
-    }, 1200);
+    }
   };
 
   return (
