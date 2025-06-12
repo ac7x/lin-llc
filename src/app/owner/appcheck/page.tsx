@@ -3,8 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/hooks/useFirebase';
-import { getToken } from 'firebase/app-check';
-import { firebaseApp } from '@/lib/firebase-client';
 
 interface AppStatus {
     name: string;
