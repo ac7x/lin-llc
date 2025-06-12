@@ -103,31 +103,15 @@ const defaultOwnerNavItems: NavItem[] = [
         active: false,
         requiredRoles: ['owner'], // 僅 owner 可見
     },
-
-    // 個人相關
     { 
-        href: '/owner/user-calendar', 
-        icon: '🗓️', 
-        label: '日曆', 
-        active: false,
-        minRole: 'user',
-    },
-    { 
-        href: '/owner/user-gemini', 
+        href: '/owner/gemini', 
         icon: '🤖', 
         label: 'Gemini', 
         active: false,
         minRole: 'user',
     },
     { 
-        href: '/owner/user-notifications', 
-        icon: '🔔', 
-        label: '通知', 
-        active: false,
-        minRole: 'user',
-    },
-    { 
-        href: '/owner/user-panel', 
+        href: '/owner/profile', 
         icon: '🙍‍♂️', 
         label: '個人檔案', 
         active: false,
