@@ -111,13 +111,6 @@ const defaultOwnerNavItems: NavItem[] = [
         requiredRoles: ['owner'], // 僅 owner 可見
     },
     { 
-        href: '/owner/gemini', 
-        icon: '🤖', 
-        label: 'Gemini', 
-        active: false,
-        minRole: 'user',
-    },
-    { 
         href: '/owner/profile', 
         icon: '🙍‍♂️', 
         label: '個人檔案', 
