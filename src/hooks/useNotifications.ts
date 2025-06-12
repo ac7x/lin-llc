@@ -1,14 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/useFirebase'; // 使用 useAuth 而不是 useFirebase
-import {
-  getUserNotifications,
-  subscribeToUserNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  getUnreadNotificationCount,
-  archiveNotification,
-} from '@/app/owner/notifications/firebase-notifications';
+import { useAuth } from '@/hooks/useFirebase';
+import { firebaseService } from '@/lib/services/firebase.service';
 import type { NotificationMessage } from '@/types/user';
+import { COLLECTIONS } from '@/lib/firebase-config';
+import { Query, DocumentData } from 'firebase/firestore';
 
 interface UseNotificationsReturn {
   notifications: NotificationMessage[];
@@ -27,7 +22,7 @@ export function useNotifications(options: {
   onlyUnread?: boolean;
   realtime?: boolean;
 } = {}): UseNotificationsReturn {
-  const { user } = useAuth(); // 使用 useAuth
+  const { user } = useAuth();
   const { includeArchived = false, limitCount = 50, onlyUnread = false, realtime = true } = options;
   
   const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
@@ -43,13 +38,39 @@ export function useNotifications(options: {
       setLoading(true);
       setError(null);
       
-      const [notificationsData, unreadCountData] = await Promise.all([
-        getUserNotifications(user.uid, { includeArchived, limitCount, onlyUnread }),
-        getUnreadNotificationCount(user.uid),
+      const notificationsQuery = firebaseService.createQuery<NotificationMessage>(
+        `${COLLECTIONS.NOTIFICATIONS}/${user.uid}/messages`,
+        [
+          ...(onlyUnread ? [firebaseService.where('isRead', '==', false)] : []),
+          ...(includeArchived ? [] : [firebaseService.where('isArchived', '==', false)]),
+          firebaseService.orderBy('createdAt', 'desc'),
+          firebaseService.limit(limitCount)
+        ]
+      );
+
+      const [notificationsSnapshot, unreadCountSnapshot] = await Promise.all([
+        firebaseService.getQuerySnapshot(notificationsQuery),
+        firebaseService.getQuerySnapshot(
+          firebaseService.createQuery<NotificationMessage>(
+            `${COLLECTIONS.NOTIFICATIONS}/${user.uid}/messages`,
+            [
+              firebaseService.where('isRead', '==', false),
+              firebaseService.where('isArchived', '==', false)
+            ]
+          )
+        )
       ]);
       
+      const notificationsData = notificationsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id
+        } as NotificationMessage;
+      });
+      
       setNotifications(notificationsData);
-      setUnreadCount(unreadCountData);
+      setUnreadCount(unreadCountSnapshot.size);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load notifications');
       console.error('Failed to load notifications:', err);
@@ -70,31 +91,39 @@ export function useNotifications(options: {
     setLoading(true);
     setError(null);
 
+    const notificationsQuery = firebaseService.createQuery<NotificationMessage>(
+      `${COLLECTIONS.NOTIFICATIONS}/${user.uid}/messages`,
+      [
+        ...(onlyUnread ? [firebaseService.where('isRead', '==', false)] : []),
+        ...(includeArchived ? [] : [firebaseService.where('isArchived', '==', false)]),
+        firebaseService.orderBy('createdAt', 'desc'),
+        firebaseService.limit(limitCount)
+      ]
+    );
+
     // 訂閱通知更新
-    const unsubscribeNotifications = subscribeToUserNotifications(
-      user.uid,
+    const unsubscribeNotifications = firebaseService.onCollectionSnapshot<NotificationMessage>(
+      notificationsQuery,
       (notificationsData) => {
         setNotifications(notificationsData);
         setLoading(false);
-      },
-      { includeArchived, limitCount, onlyUnread }
+      }
     );
 
-    // 載入未讀數量
-    getUnreadNotificationCount(user.uid)
-      .then(setUnreadCount)
-      .catch((err) => {
-        console.error('Failed to load unread count:', err);
-      });
-
     // 訂閱未讀數量更新
-    const unsubscribeUnreadCount = subscribeToUserNotifications(
-      user.uid,
+    const unreadQuery = firebaseService.createQuery<NotificationMessage>(
+      `${COLLECTIONS.NOTIFICATIONS}/${user.uid}/messages`,
+      [
+        firebaseService.where('isRead', '==', false),
+        firebaseService.where('isArchived', '==', false)
+      ]
+    );
+
+    const unsubscribeUnreadCount = firebaseService.onCollectionSnapshot<NotificationMessage>(
+      unreadQuery,
       (notificationsData) => {
-        const unread = notificationsData.filter(n => !n.isRead && !n.isArchived).length;
-        setUnreadCount(unread);
-      },
-      { includeArchived: false, onlyUnread: true }
+        setUnreadCount(notificationsData.length);
+      }
     );
 
     return () => {
@@ -105,20 +134,16 @@ export function useNotifications(options: {
 
   // 標記單一通知為已讀
   const handleMarkAsRead = async (notificationId: string) => {
+    if (!user?.uid) return;
+
     try {
-      await markNotificationAsRead(notificationId);
-      
-      // 更新本地狀態
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === notificationId 
-            ? { ...notification, isRead: true, readAt: new Date().toISOString() }
-            : notification
-        )
+      await firebaseService.updateDocument(
+        `${COLLECTIONS.NOTIFICATIONS}/${user.uid}/messages/${notificationId}`,
+        {
+          isRead: true,
+          readAt: firebaseService.timestamp()
+        }
       );
-      
-      // 更新未讀數量
-      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to mark notification as read');
       throw err;
@@ -130,18 +155,25 @@ export function useNotifications(options: {
     if (!user?.uid) return;
     
     try {
-      await markAllNotificationsAsRead(user.uid);
-      
-      // 更新本地狀態
-      setNotifications(prev => 
-        prev.map(notification => 
-          !notification.isRead 
-            ? { ...notification, isRead: true, readAt: new Date().toISOString() }
-            : notification
-        )
+      const batch = firebaseService.createBatch();
+      const notificationsQuery = firebaseService.createQuery<NotificationMessage>(
+        `${COLLECTIONS.NOTIFICATIONS}/${user.uid}/messages`,
+        [
+          firebaseService.where('isRead', '==', false),
+          firebaseService.where('isArchived', '==', false)
+        ]
       );
+
+      const snapshot = await firebaseService.getQuerySnapshot(notificationsQuery);
       
-      setUnreadCount(0);
+      snapshot.docs.forEach(doc => {
+        batch.update(doc.ref, {
+          isRead: true,
+          readAt: firebaseService.timestamp()
+        });
+      });
+
+      await batch.commit();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to mark all notifications as read');
       throw err;
@@ -150,28 +182,15 @@ export function useNotifications(options: {
 
   // 封存通知
   const handleArchiveNotification = async (notificationId: string) => {
+    if (!user?.uid) return;
+
     try {
-      await archiveNotification(notificationId);
-      
-      // 如果不包含已封存的通知，從列表中移除
-      if (!includeArchived) {
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      } else {
-        // 更新本地狀態
-        setNotifications(prev => 
-          prev.map(notification => 
-            notification.id === notificationId 
-              ? { ...notification, isArchived: true }
-              : notification
-          )
-        );
-      }
-      
-      // 如果通知未讀，則減少未讀數量
-      const notification = notifications.find(n => n.id === notificationId);
-      if (notification && !notification.isRead) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
+      await firebaseService.updateDocument(
+        `${COLLECTIONS.NOTIFICATIONS}/${user.uid}/messages/${notificationId}`,
+        {
+          isArchived: true
+        }
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to archive notification');
       throw err;
@@ -207,29 +226,22 @@ export function useUnreadNotificationCount(): {
       return;
     }
 
-    const unsubscribe = subscribeToUserNotifications(
-      user.uid,
-      (notifications) => {
-        const unread = notifications.filter(n => !n.isRead && !n.isArchived).length;
-        setUnreadCount(unread);
-        setLoading(false);
-        setError(null);
-      },
-      { includeArchived: false, onlyUnread: true }
+    const unreadQuery = firebaseService.createQuery<NotificationMessage>(
+      `${COLLECTIONS.NOTIFICATIONS}/${user.uid}/messages`,
+      [
+        firebaseService.where('isRead', '==', false),
+        firebaseService.where('isArchived', '==', false)
+      ]
     );
 
-    // 初始載入未讀數量
-    getUnreadNotificationCount(user.uid)
-      .then(count => {
-        setUnreadCount(count);
+    const unsubscribe = firebaseService.onCollectionSnapshot<NotificationMessage>(
+      unreadQuery,
+      (notifications) => {
+        setUnreadCount(notifications.length);
         setLoading(false);
         setError(null);
-      })
-      .catch(err => {
-        console.error('Failed to load unread count:', err);
-        setError('無法載入未讀通知數量');
-        setLoading(false);
-      });
+      }
+    );
 
     return unsubscribe;
   }, [user?.uid]);

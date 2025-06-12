@@ -8,11 +8,12 @@ import {
   startAfter,
   endAt,
   endBefore,
-  Timestamp,
   increment,
   arrayUnion,
   arrayRemove,
-  serverTimestamp
+  serverTimestamp,
+  Query,
+  QueryConstraint
 } from 'firebase/firestore';
 import { firebaseService } from '../services/firebase.service';
 
@@ -37,11 +38,11 @@ export const firestoreUtils = {
     return firebaseService.addDocument(path, data);
   },
 
-  createQuery(path: string, constraints: any[] = []) {
-    return firebaseService.createQuery(path, constraints);
+  createQuery<T extends DocumentData>(path: string, constraints: QueryConstraint[] = []) {
+    return firebaseService.createQuery<T>(path, constraints);
   },
 
-  async getQuerySnapshot(query: any) {
+  async getQuerySnapshot<T extends DocumentData>(query: Query<T>) {
     return firebaseService.getQuerySnapshot(query);
   },
 
@@ -49,13 +50,13 @@ export const firestoreUtils = {
     return firebaseService.onDocumentSnapshot(path, callback);
   },
 
-  onCollectionSnapshot<T extends DocumentData>(path: string, callback: (data: (T & { id: string })[]) => void) {
-    return firebaseService.onCollectionSnapshot(path, callback);
+  onCollectionSnapshot<T extends DocumentData>(query: Query<T>, callback: (data: (T & { id: string })[]) => void) {
+    return firebaseService.onCollectionSnapshot(query, callback);
   },
 
   // 查詢輔助函數
-  where(field: string, opStr: string, value: any) {
-    return where(field, opStr as any, value);
+  where(field: string, opStr: '==' | '!=' | '>' | '>=' | '<' | '<=', value: unknown) {
+    return where(field, opStr, value);
   },
 
   orderBy(field: string, directionStr?: 'asc' | 'desc') {
@@ -66,19 +67,19 @@ export const firestoreUtils = {
     return limit(n);
   },
 
-  startAt(...fieldValues: any[]) {
+  startAt(...fieldValues: unknown[]) {
     return startAt(...fieldValues);
   },
 
-  startAfter(...fieldValues: any[]) {
+  startAfter(...fieldValues: unknown[]) {
     return startAfter(...fieldValues);
   },
 
-  endAt(...fieldValues: any[]) {
+  endAt(...fieldValues: unknown[]) {
     return endAt(...fieldValues);
   },
 
-  endBefore(...fieldValues: any[]) {
+  endBefore(...fieldValues: unknown[]) {
     return endBefore(...fieldValues);
   },
 
@@ -91,11 +92,11 @@ export const firestoreUtils = {
     return increment(n);
   },
 
-  arrayUnion(...elements: any[]) {
+  arrayUnion(...elements: unknown[]) {
     return arrayUnion(...elements);
   },
 
-  arrayRemove(...elements: any[]) {
+  arrayRemove(...elements: unknown[]) {
     return arrayRemove(...elements);
   }
 }; 

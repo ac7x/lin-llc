@@ -11,7 +11,8 @@ import {
   setPersistence,
   browserLocalPersistence,
   getRedirectResult,
-  User
+  User,
+  UserCredential
 } from "firebase/auth";
 import {
   Firestore,
@@ -35,13 +36,19 @@ import {
   onSnapshot,
   writeBatch,
   runTransaction,
-  Timestamp,
   increment,
   arrayUnion,
   arrayRemove,
   serverTimestamp,
   DocumentData,
-  WithFieldValue
+  WithFieldValue,
+  Query,
+  QueryConstraint,
+  DocumentSnapshot,
+  QuerySnapshot,
+  WriteBatch,
+  Transaction,
+  DocumentReference
 } from "firebase/firestore";
 import { 
   AppCheck, 
@@ -114,6 +121,32 @@ export class FirebaseService {
     return () => this.authStateHandlers.delete(handler);
   }
 
+  // 認證方法
+  public async signInWithGoogle(): Promise<UserCredential> {
+    const provider = new GoogleAuthProvider();
+    return signInWithRedirect(this.auth, provider);
+  }
+
+  public async signInWithEmail(email: string, password: string): Promise<UserCredential> {
+    return signInWithEmailAndPassword(this.auth, email, password);
+  }
+
+  public async createUserWithEmail(email: string, password: string): Promise<UserCredential> {
+    return createUserWithEmailAndPassword(this.auth, email, password);
+  }
+
+  public async signOut(): Promise<void> {
+    return signOut(this.auth);
+  }
+
+  public async setPersistence(): Promise<void> {
+    return setPersistence(this.auth, browserLocalPersistence);
+  }
+
+  public async getRedirectResult(): Promise<UserCredential | null> {
+    return getRedirectResult(this.auth);
+  }
+
   // Firestore 相關方法
   public getDb(): Firestore {
     return this.db;
@@ -140,7 +173,7 @@ export class FirebaseService {
 
   public async updateDocument<T extends Partial<WithFieldValue<DocumentData>>>(path: string, data: T) {
     const docRef = this.getDocument(path);
-    return updateDoc(docRef, data as any);
+    return updateDoc(docRef, data);
   }
 
   public async deleteDocument(path: string) {
@@ -153,29 +186,88 @@ export class FirebaseService {
     return addDoc(collectionRef, data);
   }
 
-  public createQuery(path: string, constraints: any[] = []) {
+  // 查詢方法
+  public createQuery<T extends DocumentData>(path: string, constraints: QueryConstraint[] = []): Query<T> {
     const collectionRef = this.getCollection(path);
-    return query(collectionRef, ...constraints);
+    return query(collectionRef, ...constraints) as Query<T>;
   }
 
-  public async getQuerySnapshot(query: any) {
+  public async getQuerySnapshot<T extends DocumentData>(query: Query<T>): Promise<QuerySnapshot<T>> {
     return getDocs(query);
   }
 
-  public onDocumentSnapshot(path: string, callback: (data: any) => void) {
-    const docRef = this.getDocument(path);
-    return onSnapshot(docRef, (doc) => {
+  // 查詢輔助方法
+  public where(field: string, opStr: '==' | '!=' | '>' | '>=' | '<' | '<=', value: unknown) {
+    return where(field, opStr, value);
+  }
+
+  public orderBy(field: string, directionStr?: 'asc' | 'desc') {
+    return orderBy(field, directionStr);
+  }
+
+  public limit(n: number) {
+    return limit(n);
+  }
+
+  public startAt(...fieldValues: unknown[]) {
+    return startAt(...fieldValues);
+  }
+
+  public startAfter(...fieldValues: unknown[]) {
+    return startAfter(...fieldValues);
+  }
+
+  public endAt(...fieldValues: unknown[]) {
+    return endAt(...fieldValues);
+  }
+
+  public endBefore(...fieldValues: unknown[]) {
+    return endBefore(...fieldValues);
+  }
+
+  // 批次操作
+  public createBatch(): WriteBatch {
+    return writeBatch(this.db);
+  }
+
+  public async runTransaction<T>(updateFunction: (transaction: Transaction) => Promise<T>): Promise<T> {
+    return runTransaction(this.db, updateFunction);
+  }
+
+  // 資料轉換輔助方法
+  public timestamp() {
+    return serverTimestamp();
+  }
+
+  public increment(n: number) {
+    return increment(n);
+  }
+
+  public arrayUnion(...elements: unknown[]) {
+    return arrayUnion(...elements);
+  }
+
+  public arrayRemove(...elements: unknown[]) {
+    return arrayRemove(...elements);
+  }
+
+  // 即時監聽
+  public onDocumentSnapshot<T extends DocumentData>(path: string, callback: (data: T | null) => void) {
+    const docRef = this.getDocument(path) as DocumentReference<T>;
+    return onSnapshot(docRef, (doc: DocumentSnapshot<T>) => {
       callback(doc.exists() ? doc.data() : null);
     });
   }
 
-  public onCollectionSnapshot(path: string, callback: (data: any[]) => void) {
-    const collectionRef = this.getCollection(path);
-    return onSnapshot(collectionRef, (snapshot) => {
+  public onCollectionSnapshot<T extends DocumentData>(
+    query: Query<T>,
+    callback: (data: (T & { id: string })[]) => void
+  ): () => void {
+    return onSnapshot(query, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as (T & { id: string })[];
       callback(data);
     });
   }

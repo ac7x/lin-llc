@@ -160,13 +160,6 @@ export function useAppCheck() {
 /**
  * 組合 hook - 提供完整的 Firebase 狀態
  */
-interface FirebaseReturn extends FirebaseAuthReturn {
-  appCheck: {
-    initialized: boolean;
-    error: Error | null;
-  };
-}
-
 export function useFirebase() {
   return {
     auth: firebaseService.getAuth(),

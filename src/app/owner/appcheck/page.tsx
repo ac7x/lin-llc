@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
-import { useFirebase } from '@/hooks/useFirebase';
+import { useAppCheck } from '@/hooks/useFirebase';
+import { useRecaptcha } from '@/hooks/useRecaptcha';
 
 interface AppStatus {
     name: string;
@@ -14,9 +15,8 @@ interface AppStatus {
 export default function AppCheckPage() {
     const [appStatus, setAppStatus] = useState<AppStatus[]>([]);
     const [loading, setLoading] = useState(true);
-    const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-    const [recaptchaStatus, setRecaptchaStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-    const { appCheck } = useFirebase();
+    const { initialized: appCheckInitialized, error: appCheckError } = useAppCheck();
+    const { token, status: recaptchaStatus, refreshToken, error: recaptchaError } = useRecaptcha('app_check');
 
     useEffect(() => {
         // TODO: 實現實際的應用程式狀態檢查邏輯
@@ -44,24 +44,6 @@ export default function AppCheckPage() {
         setAppStatus(mockData);
         setLoading(false);
     }, []);
-
-    const testRecaptcha = async () => {
-        if (!appCheck.initialized) {
-            setRecaptchaStatus('error');
-            return;
-        }
-
-        try {
-            setRecaptchaStatus('loading');
-            // 使用 window.grecaptcha 來獲取 token
-            const token = await window.grecaptcha.execute(process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY!, { action: 'app_check' });
-            setRecaptchaToken(token);
-            setRecaptchaStatus('success');
-        } catch (error) {
-            console.error('reCAPTCHA 測試失敗:', error);
-            setRecaptchaStatus('error');
-        }
-    };
 
     const getStatusColor = (status: AppStatus['status']) => {
         switch (status) {
@@ -95,6 +77,25 @@ export default function AppCheckPage() {
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-6">應用程式狀態檢查</h1>
             
+            {/* App Check 狀態 */}
+            <Card className="mb-6">
+                <CardHeader>
+                    <CardTitle>App Check 狀態</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <p className="text-gray-600">
+                            狀態：{appCheckInitialized ? '已初始化' : '未初始化'}
+                        </p>
+                        {appCheckError && (
+                            <p className="text-red-500">
+                                錯誤：{appCheckError.message}
+                            </p>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* reCAPTCHA 測試區塊 */}
             <Card className="mb-6">
                 <CardHeader>
@@ -103,24 +104,26 @@ export default function AppCheckPage() {
                 <CardContent>
                     <div className="space-y-4">
                         <button
-                            onClick={testRecaptcha}
+                            onClick={refreshToken}
                             disabled={recaptchaStatus === 'loading'}
                             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
                         >
                             {recaptchaStatus === 'loading' ? '測試中...' : '測試 reCAPTCHA'}
                         </button>
                         
-                        {recaptchaStatus === 'success' && (
+                        {recaptchaStatus === 'success' && token && (
                             <div className="mt-4">
                                 <p className="text-green-500 mb-2">reCAPTCHA 測試成功！</p>
                                 <div className="bg-gray-100 p-4 rounded">
-                                    <p className="text-sm font-mono break-all">{recaptchaToken}</p>
+                                    <p className="text-sm font-mono break-all">{token}</p>
                                 </div>
                             </div>
                         )}
                         
                         {recaptchaStatus === 'error' && (
-                            <p className="text-red-500">reCAPTCHA 測試失敗，請檢查控制台獲取詳細資訊。</p>
+                            <p className="text-red-500">
+                                reCAPTCHA 測試失敗：{recaptchaError?.message || '未知錯誤'}
+                            </p>
                         )}
                     </div>
                 </CardContent>
