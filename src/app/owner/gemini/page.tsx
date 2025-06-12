@@ -1,6 +1,20 @@
 "use client";
 
 import { useState, useRef, useEffect, FormEvent } from "react";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { firebaseConfig, APP_CHECK_CONFIG } from "@/lib/firebase-config";
+import { initializeApp } from "firebase/app";
+
+// 初始化 Firebase
+const app = initializeApp(firebaseConfig);
+
+// 初始化 App Check
+if (typeof window !== "undefined") {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
 
 interface ChatMessage {
   id: string;

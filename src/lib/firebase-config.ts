@@ -17,11 +17,17 @@ export const COLLECTIONS = {
 
 // reCAPTCHA 相關配置
 export const RECAPTCHA_CONFIG = {
-  SITE_KEY: process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY,
-  SECRET_KEY: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+  SITE_KEY: '6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg',
+  SECRET_KEY: '6LepxlYrAAAAABPi52vTvGsVP4BpZh4UPPu_WNLQ',
 } as const;
 
 // Firebase Emulator 配置
 export const FIREBASE_EMULATOR = {
   ENABLED: process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true',
+} as const;
+
+// App Check 配置
+export const APP_CHECK_CONFIG = {
+  PROVIDER: 'recaptcha',
+  SITE_KEY: '6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg',
 } as const;
