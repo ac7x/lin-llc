@@ -141,12 +141,26 @@ export default function OwnerSettingsPage() {
     // 載入權限設定
     useEffect(() => {
         async function fetchPermissions() {
-            const rolePermissionsDoc = doc(db, 'settings', 'rolePermissions');
-            const rolePermissionsSnapshot = await getDoc(rolePermissionsDoc);
-            if (rolePermissionsSnapshot.exists()) {
-                setRolePermissions(rolePermissionsSnapshot.data().roles || []);
-            } else {
-                await initializePermissions();
+            try {
+                // 載入權限列表
+                const permissionsDoc = doc(db, 'settings', 'permissions');
+                const permissionsSnapshot = await getDoc(permissionsDoc);
+                if (permissionsSnapshot.exists()) {
+                    setPermissions(permissionsSnapshot.data().permissions || []);
+                } else {
+                    await initializePermissions();
+                }
+
+                // 載入角色權限設定
+                const rolePermissionsDoc = doc(db, 'settings', 'rolePermissions');
+                const rolePermissionsSnapshot = await getDoc(rolePermissionsDoc);
+                if (rolePermissionsSnapshot.exists()) {
+                    setRolePermissions(rolePermissionsSnapshot.data().roles || []);
+                } else {
+                    await initializePermissions();
+                }
+            } catch (error) {
+                console.error('載入權限設定失敗:', error);
             }
         }
         fetchPermissions();
