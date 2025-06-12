@@ -40,12 +40,7 @@
 │   │   │   ├── components
 │   │   │   │   ├── NotificationBell.tsx
 │   │   │   │   └── NotificationTestTool.tsx
-│   │   │   ├── firebase-notifications.ts
-│   │   │   ├── hooks
-│   │   │   │   └── useNotifications.ts
-│   │   │   ├── page.tsx
-│   │   │   └── test
-│   │   │       └── page.tsx
+│   │   │   └── page.tsx
 │   │   ├── orders
 │   │   │   ├── add
 │   │   │   │   └── page.tsx
@@ -87,6 +82,8 @@
 │   │   │       └── page.tsx
 │   │   ├── schedule
 │   │   │   └── page.tsx
+│   │   ├── send-notification
+│   │   │   └── page.tsx
 │   │   ├── settings
 │   │   │   └── page.tsx
 │   │   └── users
@@ -113,10 +110,12 @@
 │       └── quote-nav.tsx
 ├── hooks
 │   ├── useFirebase.ts
+│   ├── useNotifications.ts
 │   └── useUserRole.ts
 ├── lib
 │   ├── firebase-client.ts
-│   └── firebase-config.ts
+│   ├── firebase-config.ts
+│   └── firebase-notifications.ts
 ├── styles
 │   ├── globals.css
 │   └── react-big-calendar.css
