@@ -104,6 +104,13 @@ const defaultOwnerNavItems: NavItem[] = [
         requiredRoles: ['owner'], // 僅 owner 可見
     },
     { 
+        href: '/owner/appcheck', 
+        icon: '🔍', 
+        label: '應用檢查', 
+        active: false,
+        requiredRoles: ['owner'], // 僅 owner 可見
+    },
+    { 
         href: '/owner/gemini', 
         icon: '🤖', 
         label: 'Gemini', 

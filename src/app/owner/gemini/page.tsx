@@ -1,178 +1,121 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect, FormEvent } from "react";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
-import { firebaseConfig, APP_CHECK_CONFIG } from "@/lib/firebase-config";
-import { initializeApp } from "firebase/app";
-import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
+import { useState, useRef, useEffect, FormEvent } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-// 初始化 Firebase
-const app = initializeApp(firebaseConfig);
-
-// 初始化 App Check
-if (typeof window !== "undefined") {
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
-    isTokenAutoRefreshEnabled: true,
-  });
+interface Message {
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: Date;
 }
 
-// 初始化 Gemini
-const ai = getAI(app, { backend: new GoogleAIBackend() });
-const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+export default function GeminiPage() {
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [input, setInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
-interface ChatMessage {
-  id: string;
-  role: "user" | "gemini";
-  content: string;
-  createdAt: Date;
-}
+    // 自動滾動到最新消息
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [messages]);
 
-export default function GeminiChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const chatHistory = useRef<{ role: "user" | "model"; parts: { text: string }[] }[]>([]);
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!input.trim() || isLoading) return;
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+        const userMessage: Message = {
+            role: 'user',
+            content: input.trim(),
+            timestamp: new Date(),
+        };
 
-  const handleSend = async (e: FormEvent) => {
-    e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
+        setMessages(prev => [...prev, userMessage]);
+        setInput('');
+        setIsLoading(true);
 
-    const userMsg: ChatMessage = {
-      id: `${Date.now()}-user`,
-      role: "user",
-      content: trimmed,
-      createdAt: new Date(),
+        try {
+            // TODO: 實現與 Gemini API 的實際連接
+            // 這裡使用模擬回應
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const assistantMessage: Message = {
+                role: 'assistant',
+                content: '這是一個模擬的回應。請實現與 Gemini API 的實際連接。',
+                timestamp: new Date(),
+            };
+
+            setMessages(prev => [...prev, assistantMessage]);
+        } catch (error) {
+            console.error('Error:', error);
+            // 處理錯誤情況
+        } finally {
+            setIsLoading(false);
+        }
     };
-    setMessages(prev => [...prev, userMsg]);
-    setInput("");
-    setLoading(true);
-    setError(null);
 
-    try {
-      // 更新對話歷史
-      chatHistory.current.push({
-        role: "user",
-        parts: [{ text: trimmed }]
-      });
-
-      // 生成回應
-      const result = await model.generateContent({
-        contents: chatHistory.current,
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        },
-      });
-
-      const response = result.response;
-      const text = response.text();
-
-      // 更新對話歷史
-      chatHistory.current.push({
-        role: "model",
-        parts: [{ text }]
-      });
-
-      const geminiMsg: ChatMessage = {
-        id: `${Date.now()}-gemini`,
-        role: "gemini",
-        content: text,
-        createdAt: new Date(),
-      };
-      setMessages(prev => [...prev, geminiMsg]);
-    } catch (err) {
-      console.error('AI 生成失敗:', err);
-      setError('生成回應時發生錯誤');
-      const errorMsg: ChatMessage = {
-        id: `${Date.now()}-error`,
-        role: "gemini",
-        content: "抱歉，我無法生成回應。請稍後再試。",
-        createdAt: new Date(),
-      };
-      setMessages(prev => [...prev, errorMsg]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClearChat = () => {
-    setMessages([]);
-    chatHistory.current = [];
-    setError(null);
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Gemini AI 聊天室</h1>
-        <button
-          onClick={handleClearChat}
-          className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md transition-colors"
-        >
-          清除對話
-        </button>
-      </div>
-      
-      {error && (
-        <div className="text-red-500 mb-4">
-          {error}
+    return (
+        <div className="container mx-auto p-4 max-w-4xl">
+            <Card className="h-[calc(100vh-8rem)]">
+                <CardHeader>
+                    <CardTitle>Gemini AI 助手</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col h-[calc(100%-4rem)]">
+                    <ScrollArea ref={scrollRef} className="flex-1 pr-4">
+                        <div className="space-y-4">
+                            {messages.map((message, index) => (
+                                <div
+                                    key={index}
+                                    className={`flex ${
+                                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                                    }`}
+                                >
+                                    <div
+                                        className={`max-w-[80%] rounded-lg p-3 ${
+                                            message.role === 'user'
+                                                ? 'bg-green-100 text-green-900'
+                                                : 'bg-gray-100 text-gray-900'
+                                        }`}
+                                    >
+                                        <p className="whitespace-pre-wrap">{message.content}</p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {message.timestamp.toLocaleTimeString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                            {isLoading && (
+                                <div className="flex justify-start">
+                                    <div className="bg-gray-100 rounded-lg p-3">
+                                        <div className="flex space-x-2">
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </ScrollArea>
+                    <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+                        <Input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="輸入您的問題..."
+                            disabled={isLoading}
+                            className="flex-1"
+                        />
+                        <Button type="submit" disabled={isLoading || !input.trim()}>
+                            發送
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
         </div>
-      )}
-      
-      <div className="border rounded-lg bg-white dark:bg-gray-900 shadow p-4 h-[60vh] overflow-y-auto flex flex-col gap-2 mb-4">
-        {messages.length === 0 && (
-          <div className="text-gray-400 text-center mt-8">請輸入訊息開始對話</div>
-        )}
-        {messages.map(msg => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`px-3 py-2 rounded-lg max-w-[80%] text-sm ${
-                msg.role === "user"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              }`}
-            >
-              {msg.content}
-              <span className="block text-xs text-gray-400 mt-1 text-right">
-                {msg.role === "user" ? "你" : "Gemini"}
-              </span>
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      
-      <form onSubmit={handleSend} className="flex gap-2">
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="輸入訊息..."
-          className="flex-1 rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-base bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition"
-          disabled={loading}
-          autoFocus
-        />
-        <button
-          type="submit"
-          disabled={loading || !input.trim()}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md transition disabled:opacity-50"
-        >
-          {loading ? '處理中...' : '發送'}
-        </button>
-      </form>
-    </div>
-  );
+    );
 }
