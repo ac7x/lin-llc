@@ -1,8 +1,11 @@
+.
 ├── app
 │   ├── layout.tsx
 │   ├── owner
 │   │   ├── archive
 │   │   │   ├── contracts
+│   │   │   │   └── page.tsx
+│   │   │   ├── invoices
 │   │   │   │   └── page.tsx
 │   │   │   ├── layout.tsx
 │   │   │   ├── orders
@@ -23,6 +26,15 @@
 │   │   │   └── page.tsx
 │   │   ├── dashboard
 │   │   │   └── page.tsx
+│   │   ├── gemini
+│   │   │   └── page.tsx
+│   │   ├── invoices
+│   │   │   ├── create
+│   │   │   │   └── page.tsx
+│   │   │   ├── [invoice]
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
 │   │   ├── layout.tsx
 │   │   ├── notifications
 │   │   │   ├── components
@@ -42,6 +54,8 @@
 │   │   │   │   └── page.tsx
 │   │   │   └── page.tsx
 │   │   ├── page.tsx
+│   │   ├── profile
+│   │   │   └── page.tsx
 │   │   ├── projects
 │   │   │   ├── import
 │   │   │   │   └── page.tsx
@@ -83,15 +97,18 @@
 │           └── page.tsx
 ├── components
 │   ├── bottom
-│   │   └── owner-nav.tsx
+│   │   ├── owner-nav.tsx
+│   │   └── owner-nav-wrapper.tsx
 │   ├── pdf
 │   │   ├── ContractPdfDocument.tsx
+│   │   ├── InvoicePdfDocument.tsx
 │   │   ├── OrderPdfDocument.tsx
 │   │   ├── pdfExport.ts
 │   │   └── QuotePdfDocument.tsx
 │   └── side
 │       ├── archive-nav.tsx
 │       ├── contract-nav.tsx
+│       ├── invoice-nav.tsx
 │       ├── order-nav.tsx
 │       └── quote-nav.tsx
 ├── hooks
@@ -112,4 +129,7 @@
 └── utils
     ├── colorScales.ts
     ├── date-format.tsx
-    └── taiwan-city.enum.ts
+    ├── projectProgress.tsx
+    ├── roleHierarchy.ts
+    ├── taiwan-city.enum.ts
+    └── workpackageProgressBar.tsx

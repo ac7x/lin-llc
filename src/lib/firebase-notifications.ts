@@ -14,10 +14,15 @@ import {
   db // 直接從 firebase-client 匯入 db
 } from '@/lib/firebase-client'; // 直接從 lib 匯入
 import { Firestore } from 'firebase/firestore'; // Firestore 型別正確來源
-import { COLLECTIONS } from '../../../lib/firebase-config';
+import { COLLECTIONS } from '../lib/firebase-config';
 import type { NotificationMessage, AppUser } from '@/types/user';
 
 const { NOTIFICATIONS, USERS } = COLLECTIONS;
+
+interface FirebaseError extends Error {
+  code?: string;
+  message: string;
+}
 
 /**
  * 建立新通知
@@ -95,35 +100,68 @@ export async function getUserNotifications(
   } = {}
 ): Promise<NotificationMessage[]> {
   try {
-    // 直接使用 db
     const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
 
-    let q = query(
+    // 基本查詢，只使用必要的條件
+    const q = query(
       collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
     );
 
-    if (!includeArchived) {
-      q = query(q, where('isArchived', '==', false));
+    try {
+      const snapshot = await getDocs(q);
+      let notifications = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
+        readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
+      })) as NotificationMessage[];
+
+      // 在記憶體中進行過濾
+      if (!includeArchived) {
+        notifications = notifications.filter(n => !n.isArchived);
+      }
+      if (onlyUnread) {
+        notifications = notifications.filter(n => !n.isRead);
+      }
+
+      return notifications;
+    } catch (error: unknown) {
+      const firebaseError = error as FirebaseError;
+      if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
+        console.warn('等待索引建立中，使用基本查詢...');
+        // 使用最基本的查詢
+        const basicQuery = query(
+          collection(db, NOTIFICATIONS),
+          where('userId', '==', userId),
+          limit(limitCount)
+        );
+        const basicSnapshot = await getDocs(basicQuery);
+        let notifications = basicSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
+          readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
+        })) as NotificationMessage[];
+
+        // 在記憶體中進行排序和過濾
+        notifications = notifications.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        if (!includeArchived) {
+          notifications = notifications.filter(n => !n.isArchived);
+        }
+        if (onlyUnread) {
+          notifications = notifications.filter(n => !n.isRead);
+        }
+
+        return notifications;
+      }
+      throw error;
     }
-
-    if (onlyUnread) {
-      q = query(q, where('isRead', '==', false));
-    }
-
-    if (limitCount > 0) {
-      q = query(q, limit(limitCount));
-    }
-
-    const snapshot = await getDocs(q);
-
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-      readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
-    })) as NotificationMessage[];
   } catch (error) {
     console.error('Failed to get user notifications:', error);
     throw error;
@@ -142,34 +180,34 @@ export function subscribeToUserNotifications(
     onlyUnread?: boolean;
   } = {}
 ): () => void {
-  // 直接使用 db
   const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
 
-  let q = query(
+  // 使用基本查詢
+  const q = query(
     collection(db, NOTIFICATIONS),
     where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    limit(limitCount)
   );
 
-  if (!includeArchived) {
-    q = query(q, where('isArchived', '==', false));
-  }
-
-  if (onlyUnread) {
-    q = query(q, where('isRead', '==', false));
-  }
-
-  if (limitCount > 0) {
-    q = query(q, limit(limitCount));
-  }
-
   return onSnapshot(q, (snapshot) => {
-    const notifications = snapshot.docs.map(doc => ({
+    let notifications = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
       readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
     })) as NotificationMessage[];
+
+    // 在記憶體中進行排序和過濾
+    notifications = notifications.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    if (!includeArchived) {
+      notifications = notifications.filter(n => !n.isArchived);
+    }
+    if (onlyUnread) {
+      notifications = notifications.filter(n => !n.isRead);
+    }
 
     callback(notifications);
   }, (error) => {
@@ -283,16 +321,28 @@ export async function deleteNotification(notificationId: string): Promise<void> 
  */
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
   try {
-    // 直接使用 db
+    // 使用基本查詢
     const q = query(
       collection(db, NOTIFICATIONS),
-      where('userId', '==', userId),
-      where('isRead', '==', false),
-      where('isArchived', '==', false)
+      where('userId', '==', userId)
     );
 
-    const snapshot = await getDocs(q);
-    return snapshot.size;
+    try {
+      const snapshot = await getDocs(q);
+      const notifications = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as NotificationMessage[];
+
+      return notifications.filter(n => !n.isRead && !n.isArchived).length;
+    } catch (error: unknown) {
+      const firebaseError = error as FirebaseError;
+      if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
+        console.warn('等待索引建立中，使用基本查詢...');
+        return 0; // 在索引建立期間返回 0
+      }
+      throw error;
+    }
   } catch (error) {
     console.error('Failed to get unread notification count:', error);
     return 0;

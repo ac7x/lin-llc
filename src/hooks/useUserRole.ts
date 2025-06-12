@@ -4,6 +4,19 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 import type { AppUser } from '@/types/user';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 
+const ROLE_CHECKS = {
+    owner: 'isOwner',
+    admin: 'isAdmin',
+    finance: 'isFinance',
+    user: 'isUser',
+    helper: 'isHelper',
+    temporary: 'isTemporary',
+    coord: 'isCoord',
+    safety: 'isSafety',
+    foreman: 'isForeman',
+    vendor: 'isVendor'
+} as const;
+
 export interface UseUserRoleReturn {
     userRole: string | undefined;
     loading: boolean;
@@ -24,7 +37,7 @@ export interface UseUserRoleReturn {
 }
 
 export function useUserRole(): UseUserRoleReturn {
-    const { user } = useAuth(); // 使用 useAuth 而不是 useFirebase
+    const { user } = useAuth();
     const [userDoc, loading, error] = useDocument(
         user ? doc(db, 'users', user.uid) : null
     );
@@ -49,16 +62,27 @@ export function useUserRole(): UseUserRoleReturn {
         return userLevel >= minLevel;
     }, [userRole]);
 
-    const isOwner = useMemo(() => hasRole('owner'), [hasRole]);
-    const isAdmin = useMemo(() => hasRole('admin'), [hasRole]);
-    const isFinance = useMemo(() => hasRole('finance'), [hasRole]);
-    const isUser = useMemo(() => hasRole('user'), [hasRole]);
-    const isHelper = useMemo(() => hasRole('helper'), [hasRole]);
-    const isTemporary = useMemo(() => hasRole('temporary'), [hasRole]);
-    const isCoord = useMemo(() => hasRole('coord'), [hasRole]);
-    const isSafety = useMemo(() => hasRole('safety'), [hasRole]);
-    const isForeman = useMemo(() => hasRole('foreman'), [hasRole]);
-    const isVendor = useMemo(() => hasRole('vendor'), [hasRole]);
+    // 使用 Object 來生成角色判斷函數
+    const roleChecks = useMemo(() => {
+        const checks = {
+            isOwner: false,
+            isAdmin: false,
+            isFinance: false,
+            isUser: false,
+            isHelper: false,
+            isTemporary: false,
+            isCoord: false,
+            isSafety: false,
+            isForeman: false,
+            isVendor: false
+        };
+        
+        Object.entries(ROLE_CHECKS).forEach(([role, propertyName]) => {
+            checks[propertyName as keyof typeof checks] = hasRole(role);
+        });
+        
+        return checks;
+    }, [hasRole]);
 
     return {
         userRole,
@@ -67,15 +91,6 @@ export function useUserRole(): UseUserRoleReturn {
         hasRole,
         hasAnyRole,
         hasMinRole,
-        isOwner,
-        isAdmin,
-        isFinance,
-        isUser,
-        isHelper,
-        isTemporary,
-        isCoord,
-        isSafety,
-        isForeman,
-        isVendor,
+        ...roleChecks
     };
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useFirebase } from "@/hooks/useFirebase";
-import { createNotification } from '@/app/owner/notifications/firebase-notifications';
+import { createNotification } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';
 import { db } from '@/lib/firebase-client';
 

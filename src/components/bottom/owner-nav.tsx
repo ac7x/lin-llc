@@ -97,6 +97,20 @@ const defaultOwnerNavItems: NavItem[] = [
         minRole: 'user',
     },
     { 
+        href: '/owner/notifications', 
+        icon: '🔔', 
+        label: '通知', 
+        active: false,
+        minRole: 'user',
+    },
+    { 
+        href: '/owner/send-notification', 
+        icon: '📨', 
+        label: '發送通知', 
+        active: false,
+        requiredRoles: ['owner', 'admin'],
+    },
+    { 
         href: '/owner/users', 
         icon: '👤', 
         label: '用戶管理', 
