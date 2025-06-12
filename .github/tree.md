@@ -9,13 +9,8 @@
 ├── package.json
 ├── postcss.config.mjs
 ├── public
-│   ├── file.svg
 │   ├── fonts
 │   │   └── NotoSerifTC-Regular.ttf
-│   ├── globe.svg
-│   ├── next.svg
-│   ├── vercel.svg
-│   └── window.svg
 ├── script
 │   ├── debug.sh
 │   ├── install.sh

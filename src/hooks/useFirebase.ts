@@ -30,6 +30,9 @@ import {
   arrayUnion,
   arrayRemove,
 } from '@/lib/firebase-client';
+import { firebaseService } from '../lib/services/firebase.service';
+import { authUtils } from '../lib/utils/firebase-auth.utils';
+import { firestoreUtils } from '../lib/utils/firebase-firestore.utils';
 
 // 導出 react-firebase-hooks
 export { 
@@ -164,14 +167,12 @@ interface FirebaseReturn extends FirebaseAuthReturn {
   };
 }
 
-export function useFirebase(): FirebaseReturn {
-  const auth = useAuth();
-  const appCheck = useAppCheck();
-
+export function useFirebase() {
   return {
-    ...auth,
-    appCheck,
-    isReady: auth.isInitialized && appCheck.initialized
+    auth: firebaseService.getAuth(),
+    db: firebaseService.getDb(),
+    ...authUtils,
+    ...firestoreUtils,
   };
 }
 
