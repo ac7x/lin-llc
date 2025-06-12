@@ -37,7 +37,7 @@ export function InvoicePdfDocument({ invoice, qrCodeDataUrl }: { invoice: Record
                         bottom: 30,
                         alignItems: 'center',
                     }}>
-                        <Image src={qrCodeDataUrl} style={{ width: 64, height: 64 }} alt="發票 QR Code" />
+                        <Image src={qrCodeDataUrl} style={{ width: 64, height: 64 }} />
                         <Text style={{ fontSize: 8, marginTop: 2 }}>掃描查看發票</Text>
                     </View>
                 )}
