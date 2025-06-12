@@ -48,6 +48,13 @@ const DEFAULT_PERMISSIONS: Permission[] = [
   // 系統管理權限
   { id: 'system.view', name: '查看系統設定', description: '允許查看系統設定', category: '系統管理' },
   { id: 'system.edit', name: '編輯系統設定', description: '允許編輯系統設定', category: '系統管理' },
+
+  // 通知管理權限
+  { id: 'notification.view', name: '查看通知', description: '允許查看系統通知', category: '通知管理' },
+  { id: 'notification.create', name: '建立通知', description: '允許建立新的系統通知', category: '通知管理' },
+  { id: 'notification.edit', name: '編輯通知', description: '允許編輯系統通知', category: '通知管理' },
+  { id: 'notification.delete', name: '刪除通知', description: '允許刪除系統通知', category: '通知管理' },
+  { id: 'notification.settings', name: '通知設定', description: '允許管理通知設定和偏好', category: '通知管理' },
 ];
 
 export default function OwnerSettingsPage() {
@@ -62,6 +69,8 @@ export default function OwnerSettingsPage() {
     const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
     const [selectedRoleForPermission, setSelectedRoleForPermission] = useState<string>("");
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
     // 載入現有設定
     useEffect(() => {
@@ -82,32 +91,72 @@ export default function OwnerSettingsPage() {
     // 根據角色獲取預設權限
     const getDefaultPermissionsForRole = useCallback((role: string): string[] => {
         const basePermissions = ['project.view', 'workpackage.view'];
+        const notificationBasePermissions = ['notification.view'];
         
         switch (role) {
             case 'owner':
                 return DEFAULT_PERMISSIONS.map(p => p.id);
             case 'admin':
-                return DEFAULT_PERMISSIONS
-                    .filter(p => !p.id.includes('system.'))
-                    .map(p => p.id);
+                return [
+                    ...DEFAULT_PERMISSIONS
+                        .filter(p => !p.id.includes('system.'))
+                        .map(p => p.id),
+                    'notification.settings'
+                ];
             case 'finance':
-                return [...basePermissions, 'finance.view', 'finance.create', 'finance.edit'];
+                return [
+                    ...basePermissions, 
+                    'finance.view', 
+                    'finance.create', 
+                    'finance.edit',
+                    ...notificationBasePermissions
+                ];
             case 'foreman':
-                return [...basePermissions, 'workpackage.create', 'workpackage.edit'];
+                return [
+                    ...basePermissions, 
+                    'workpackage.create', 
+                    'workpackage.edit',
+                    ...notificationBasePermissions,
+                    'notification.create'
+                ];
             case 'coord':
-                return [...basePermissions, 'workpackage.create', 'workpackage.edit'];
+                return [
+                    ...basePermissions, 
+                    'workpackage.create', 
+                    'workpackage.edit',
+                    ...notificationBasePermissions,
+                    'notification.create'
+                ];
             case 'safety':
-                return [...basePermissions, 'workpackage.view'];
+                return [
+                    ...basePermissions, 
+                    'workpackage.view',
+                    ...notificationBasePermissions,
+                    'notification.create'
+                ];
             case 'vendor':
-                return [...basePermissions, 'workpackage.view'];
+                return [
+                    ...basePermissions, 
+                    'workpackage.view',
+                    ...notificationBasePermissions
+                ];
             case 'helper':
-                return [...basePermissions];
+                return [
+                    ...basePermissions,
+                    ...notificationBasePermissions
+                ];
             case 'temporary':
-                return [...basePermissions];
+                return [
+                    ...basePermissions,
+                    ...notificationBasePermissions
+                ];
             case 'user':
-                return [...basePermissions];
+                return [
+                    ...basePermissions,
+                    ...notificationBasePermissions
+                ];
             default:
-                return basePermissions;
+                return [...basePermissions, ...notificationBasePermissions];
         }
     }, []);
 
@@ -205,6 +254,35 @@ export default function OwnerSettingsPage() {
         setSelectedPermissions(rolePermission?.permissions || []);
     };
 
+    // 根據搜尋條件過濾權限
+    const filteredPermissions = permissions.filter(permission => 
+        permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        permission.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        permission.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // 按類別分組權限
+    const groupedPermissions = filteredPermissions.reduce((acc, permission) => {
+        if (!acc[permission.category]) {
+            acc[permission.category] = [];
+        }
+        acc[permission.category].push(permission);
+        return acc;
+    }, {} as Record<string, Permission[]>);
+
+    // 切換類別展開狀態
+    const toggleCategory = (category: string) => {
+        setExpandedCategories(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(category)) {
+                newSet.delete(category);
+            } else {
+                newSet.add(category);
+            }
+            return newSet;
+        });
+    };
+
     if (loading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
 
     if (!isOwner) {
@@ -272,29 +350,54 @@ export default function OwnerSettingsPage() {
 
                         {selectedRoleForPermission && (
                             <div>
+                                <div className="mb-4">
+                                    <input
+                                        type="text"
+                                        placeholder="搜尋權限..."
+                                        className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
                                 <label className="block font-medium mb-1">權限設定</label>
-                                <div className="space-y-2 max-h-60 overflow-y-auto">
-                                    {permissions.map(permission => (
-                                        <div key={permission.id} className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                id={permission.id}
-                                                checked={selectedPermissions.includes(permission.id)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedPermissions([...selectedPermissions, permission.id]);
-                                                    } else {
-                                                        setSelectedPermissions(selectedPermissions.filter(id => id !== permission.id));
-                                                    }
-                                                }}
-                                                className="mr-2"
-                                            />
-                                            <label htmlFor={permission.id} className="text-sm">
-                                                {permission.name}
-                                                <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
-                                                    ({permission.description})
-                                                </span>
-                                            </label>
+                                <div className="space-y-4 max-h-96 overflow-y-auto">
+                                    {Object.entries(groupedPermissions).map(([category, perms]) => (
+                                        <div key={category} className="border rounded-lg overflow-hidden">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleCategory(category)}
+                                                className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 flex justify-between items-center"
+                                            >
+                                                <span className="font-medium">{category}</span>
+                                                <span>{expandedCategories.has(category) ? '▼' : '▶'}</span>
+                                            </button>
+                                            {expandedCategories.has(category) && (
+                                                <div className="p-4 space-y-2">
+                                                    {perms.map(permission => (
+                                                        <div key={permission.id} className="flex items-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                id={permission.id}
+                                                                checked={selectedPermissions.includes(permission.id)}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) {
+                                                                        setSelectedPermissions([...selectedPermissions, permission.id]);
+                                                                    } else {
+                                                                        setSelectedPermissions(selectedPermissions.filter(id => id !== permission.id));
+                                                                    }
+                                                                }}
+                                                                className="mr-2"
+                                                            />
+                                                            <label htmlFor={permission.id} className="text-sm">
+                                                                {permission.name}
+                                                                <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
+                                                                    ({permission.description})
+                                                                </span>
+                                                            </label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
