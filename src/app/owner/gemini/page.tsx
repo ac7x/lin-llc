@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, FormEvent } from "react";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { firebaseConfig, APP_CHECK_CONFIG } from "@/lib/firebase-config";
 import { initializeApp } from "firebase/app";
+import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
 
 // 初始化 Firebase
 const app = initializeApp(firebaseConfig);
@@ -16,6 +17,10 @@ if (typeof window !== "undefined") {
   });
 }
 
+// 初始化 Gemini
+const ai = getAI(app, { backend: new GoogleAIBackend() });
+const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+
 interface ChatMessage {
   id: string;
   role: "user" | "gemini";
@@ -27,7 +32,9 @@ export default function GeminiChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatHistory = useRef<{ role: "user" | "model"; parts: { text: string }[] }[]>([]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,6 +44,7 @@ export default function GeminiChatPage() {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed) return;
+
     const userMsg: ChatMessage = {
       id: `${Date.now()}-user`,
       role: "user",
@@ -46,23 +54,81 @@ export default function GeminiChatPage() {
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
+    setError(null);
 
-    // TODO: 串接 Gemini API，這裡先用假資料
-    setTimeout(() => {
+    try {
+      // 更新對話歷史
+      chatHistory.current.push({
+        role: "user",
+        parts: [{ text: trimmed }]
+      });
+
+      // 生成回應
+      const result = await model.generateContent({
+        contents: chatHistory.current,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        },
+      });
+
+      const response = result.response;
+      const text = response.text();
+
+      // 更新對話歷史
+      chatHistory.current.push({
+        role: "model",
+        parts: [{ text }]
+      });
+
       const geminiMsg: ChatMessage = {
         id: `${Date.now()}-gemini`,
         role: "gemini",
-        content: "（這裡是 Gemini 回覆的範例內容，請串接 API 取得真實回應）",
+        content: text,
         createdAt: new Date(),
       };
       setMessages(prev => [...prev, geminiMsg]);
+    } catch (err) {
+      console.error('AI 生成失敗:', err);
+      setError('生成回應時發生錯誤');
+      const errorMsg: ChatMessage = {
+        id: `${Date.now()}-error`,
+        role: "gemini",
+        content: "抱歉，我無法生成回應。請稍後再試。",
+        createdAt: new Date(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setLoading(false);
-    }, 1200);
+    }
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
+    chatHistory.current = [];
+    setError(null);
   };
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Gemini AI 聊天室</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Gemini AI 聊天室</h1>
+        <button
+          onClick={handleClearChat}
+          className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md transition-colors"
+        >
+          清除對話
+        </button>
+      </div>
+      
+      {error && (
+        <div className="text-red-500 mb-4">
+          {error}
+        </div>
+      )}
+      
       <div className="border rounded-lg bg-white dark:bg-gray-900 shadow p-4 h-[60vh] overflow-y-auto flex flex-col gap-2 mb-4">
         {messages.length === 0 && (
           <div className="text-gray-400 text-center mt-8">請輸入訊息開始對話</div>
@@ -88,6 +154,7 @@ export default function GeminiChatPage() {
         ))}
         <div ref={messagesEndRef} />
       </div>
+      
       <form onSubmit={handleSend} className="flex gap-2">
         <input
           type="text"
@@ -103,7 +170,7 @@ export default function GeminiChatPage() {
           disabled={loading || !input.trim()}
           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md transition disabled:opacity-50"
         >
-          發送
+          {loading ? '處理中...' : '發送'}
         </button>
       </form>
     </div>
