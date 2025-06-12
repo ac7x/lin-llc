@@ -67,7 +67,7 @@ export function initializeFirebaseAppCheck(): Promise<void> {
 
     try {
       appCheck = initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY),
+        provider: new ReCaptchaV3Provider('6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg'),
         isTokenAutoRefreshEnabled: true,
       });
       resolve();
