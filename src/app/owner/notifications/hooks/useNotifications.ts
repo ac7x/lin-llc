@@ -196,10 +196,10 @@ export function useUnreadNotificationCount(): {
   loading: boolean;
   error: string | null;
 } {
-  const { user } = useAuth(); // 使用 useAuth
+  const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.uid) {
@@ -213,9 +213,23 @@ export function useUnreadNotificationCount(): {
         const unread = notifications.filter(n => !n.isRead && !n.isArchived).length;
         setUnreadCount(unread);
         setLoading(false);
+        setError(null);
       },
       { includeArchived: false, onlyUnread: true }
     );
+
+    // 初始載入未讀數量
+    getUnreadNotificationCount(user.uid)
+      .then(count => {
+        setUnreadCount(count);
+        setLoading(false);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Failed to load unread count:', err);
+        setError('無法載入未讀通知數量');
+        setLoading(false);
+      });
 
     return unsubscribe;
   }, [user?.uid]);

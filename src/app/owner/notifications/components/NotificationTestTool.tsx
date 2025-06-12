@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useFirebase } from "@/hooks/useFirebase";
 import { createNotification } from '@/app/owner/notifications/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';
+import { db } from '@/lib/firebase-client';
 
 const NOTIFICATION_TYPES: NotificationMessage['type'][] = ['info', 'success', 'warning', 'error'];
 const NOTIFICATION_CATEGORIES: NotificationMessage['category'][] = ['project', 'schedule', 'system', 'work', 'emergency'];
@@ -17,7 +18,7 @@ interface NotificationTestFormData {
 }
 
 export function NotificationTestTool() {
-  const { user, db } = useFirebase();
+  const { user } = useFirebase();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   

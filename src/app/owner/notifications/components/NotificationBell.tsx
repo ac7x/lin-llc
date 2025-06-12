@@ -16,7 +16,7 @@ export function NotificationBell({
   showBadge = true, 
   size = 'md' 
 }: NotificationBellProps) {
-  const { unreadCount, loading } = useUnreadNotificationCount();
+  const { unreadCount, loading, error } = useUnreadNotificationCount();
 
   const sizeClasses = {
     sm: 'h-5 w-5',
@@ -29,6 +29,14 @@ export function NotificationBell({
     md: 'text-xs min-w-[18px] h-[18px]',
     lg: 'text-sm min-w-[20px] h-5',
   };
+
+  if (error) {
+    return (
+      <div className={`relative inline-block ${className}`} title={error}>
+        <BellIcon className={`${sizeClasses[size]} text-red-500`} />
+      </div>
+    );
+  }
 
   return (
     <Link href="/owner/notifications" className={`relative inline-block ${className}`}>
@@ -60,13 +68,22 @@ interface NotificationSummaryProps {
 }
 
 export function NotificationSummary({ className = '' }: NotificationSummaryProps) {
-  const { unreadCount, loading } = useUnreadNotificationCount();
+  const { unreadCount, loading, error } = useUnreadNotificationCount();
 
   if (loading) {
     return (
       <div className={`flex items-center space-x-2 ${className}`}>
         <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
         <div className="w-16 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`flex items-center space-x-2 text-red-500 ${className}`} title={error}>
+        <BellIcon className="h-4 w-4" />
+        <span>載入失敗</span>
       </div>
     );
   }
