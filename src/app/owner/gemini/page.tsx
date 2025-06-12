@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { model } from '@/lib/firebase';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -40,20 +41,25 @@ export default function GeminiPage() {
         setIsLoading(true);
 
         try {
-            // TODO: 實現與 Gemini API 的實際連接
-            // 這裡使用模擬回應
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const result = await model.generateContent(input.trim());
+            const response = result.response;
+            const text = response.text();
             
             const assistantMessage: Message = {
                 role: 'assistant',
-                content: '這是一個模擬的回應。請實現與 Gemini API 的實際連接。',
+                content: text,
                 timestamp: new Date(),
             };
 
             setMessages(prev => [...prev, assistantMessage]);
         } catch (error) {
             console.error('Error:', error);
-            // 處理錯誤情況
+            const errorMessage: Message = {
+                role: 'assistant',
+                content: '抱歉，發生錯誤。請稍後再試。',
+                timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
         }
