@@ -3,17 +3,9 @@
 │   ├── layout.tsx
 │   ├── owner
 │   │   ├── archive
-│   │   │   ├── contracts
-│   │   │   │   └── page.tsx
-│   │   │   ├── invoices
-│   │   │   │   └── page.tsx
 │   │   │   ├── layout.tsx
-│   │   │   ├── orders
-│   │   │   │   └── page.tsx
 │   │   │   ├── page.tsx
-│   │   │   ├── projects
-│   │   │   │   └── page.tsx
-│   │   │   └── quotes
+│   │   │   └── [type]
 │   │   │       └── page.tsx
 │   │   ├── calendar
 │   │   │   └── page.tsx
