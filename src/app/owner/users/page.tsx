@@ -1,30 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useForm } from "react-hook-form";
 import { useFirebase } from "@/hooks/useFirebase";
 import type { AppUser } from "@/types/user";
 import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
 
+// 提取角色選項組件
+const RoleSelect = ({ value, onChange, className = "" }: { value: string; onChange: (value: string) => void; className?: string }) => (
+  <select
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className={`border rounded px-1 py-0.5 bg-white dark:bg-gray-800 ${className}`}
+  >
+    <option value="">—</option>
+    {Object.keys(ROLE_HIERARCHY).map((role) => (
+      <option key={role} value={role}>
+        {role}
+      </option>
+    ))}
+  </select>
+);
+
 export default function AdminUsersPage() {
   const { db, collection, doc, updateDoc, setDoc, serverTimestamp } = useFirebase();
   const usersCollection = collection(db, "users");
+  const [formError, setFormError] = useState<string | null>(null);
+  const { register, handleSubmit, reset } = useForm<{
+    displayName: string;
+    role: string;
+  }>();
+
+  // 使用 useMemo 優化用戶列表
+  const [snapshot, loading, error] = useCollection(usersCollection);
+  const users = useMemo(() => 
+    snapshot?.docs.map(doc => doc.data() as AppUser) || [],
+    [snapshot]
+  );
 
   // 更新用戶角色
-  async function updateUserRole(uid: string, newRole: string): Promise<void> {
-    const userDoc = doc(usersCollection, uid);
-    await updateDoc(userDoc, { role: newRole });
-  }
+  const updateUserRole = async (uid: string, newRole: string): Promise<void> => {
+    try {
+      const userDoc = doc(usersCollection, uid);
+      await updateDoc(userDoc, { role: newRole });
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "角色更新失敗");
+    }
+  };
 
   // 建立虛擬用戶
-  async function createVirtualUser({
+  const createVirtualUser = async ({
     displayName,
     role,
   }: {
     displayName: string;
     role: string;
-  }): Promise<void> {
+  }): Promise<void> => {
     const newDocRef = doc(usersCollection);
     const newUser: AppUser = {
       uid: newDocRef.id,
@@ -44,14 +76,7 @@ export default function AdminUsersPage() {
       updatedAt: serverTimestamp(),
       createdAt: serverTimestamp(),
     });
-  }
-
-  const [snapshot, loading, error] = useCollection(usersCollection);
-  const { register, handleSubmit, reset } = useForm<{
-    displayName: string;
-    role: string;
-  }>();
-  const [formError, setFormError] = useState<string | null>(null);
+  };
 
   const onSubmit = async (data: { displayName: string; role: string }) => {
     if (!data.displayName || !data.role) {
@@ -64,14 +89,6 @@ export default function AdminUsersPage() {
       reset();
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "建立虛擬用戶失敗");
-    }
-  };
-
-  const handleRoleChange = async (uid: string, newRole: string) => {
-    try {
-      await updateUserRole(uid, newRole);
-    } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "角色更新失敗");
     }
   };
 
@@ -89,17 +106,11 @@ export default function AdminUsersPage() {
             {...register("displayName")}
             className="border rounded px-2 py-1 w-40"
           />
-          <select
-            {...register("role")}
-            className="border rounded px-2 py-1 w-32 bg-white dark:bg-gray-800"
-          >
-            <option value="">選擇角色</option>
-            {Object.keys(ROLE_HIERARCHY).map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
+          <RoleSelect
+            value=""
+            onChange={(value) => register("role").onChange({ target: { value } })}
+            className="w-32"
+          />
           <button
             type="submit"
             className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
@@ -122,39 +133,28 @@ export default function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
-            {snapshot?.docs.map((doc) => {
-              const user = doc.data() as AppUser;
-              return (
-                <tr
-                  key={user.uid}
-                  className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800"
-                >
-                  <td className="border px-2 py-1">{user.email || "—"}</td>
-                  <td className="border px-2 py-1">{user.displayName || "—"}</td>
-                  <td className="border px-2 py-1">
-                    {user.metadata?.creationTime?.slice(0, 10) || "—"}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {user.metadata?.lastSignInTime?.slice(0, 10) || "—"}
-                  </td>
-                  <td className="border px-2 py-1">{user.disabled ? "停用" : "啟用"}</td>
-                  <td className="border px-2 py-1">
-                    <select
-                      value={user.role || ""}
-                      onChange={(e) => handleRoleChange(user.uid, e.target.value)}
-                      className="border rounded px-1 py-0.5 bg-white dark:bg-gray-800"
-                    >
-                      <option value="">—</option>
-                      {Object.keys(ROLE_HIERARCHY).map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              );
-            })}
+            {users.map((user) => (
+              <tr
+                key={user.uid}
+                className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800"
+              >
+                <td className="border px-2 py-1">{user.email || "—"}</td>
+                <td className="border px-2 py-1">{user.displayName || "—"}</td>
+                <td className="border px-2 py-1">
+                  {user.metadata?.creationTime?.slice(0, 10) || "—"}
+                </td>
+                <td className="border px-2 py-1">
+                  {user.metadata?.lastSignInTime?.slice(0, 10) || "—"}
+                </td>
+                <td className="border px-2 py-1">{user.disabled ? "停用" : "啟用"}</td>
+                <td className="border px-2 py-1">
+                  <RoleSelect
+                    value={user.role || ""}
+                    onChange={(value) => updateUserRole(user.uid, value)}
+                  />
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

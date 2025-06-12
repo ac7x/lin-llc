@@ -6,14 +6,31 @@ import Image from 'next/image'
 import { useCallback } from 'react'
 import { useUserRole } from '@/hooks/useUserRole'
 
+const roleDisplayNames: Record<string, string> = {
+  owner: '擁有者',
+  admin: '管理員',
+  finance: '財務',
+  user: '一般用戶',
+  helper: '助手',
+  temporary: '臨時用戶',
+  coord: '協調員',
+  safety: '安全員',
+  foreman: '工頭',
+  vendor: '供應商'
+} as const;
+
 const UserPanelPage = () => {
   const { user, loading, auth } = useFirebase()
   const { userRole, loading: roleLoading } = useUserRole()
   const router = useRouter()
 
   const handleSignOut = useCallback(async () => {
-    await signOut(auth)
-    router.push('/shared/signin')
+    try {
+      await signOut(auth)
+      router.push('/shared/signin')
+    } catch (error) {
+      console.error('登出失敗:', error)
+    }
   }, [auth, router])
 
   if (loading || roleLoading) {
@@ -29,20 +46,6 @@ const UserPanelPage = () => {
 
   if (!user) {
     return null
-  }
-
-  // 角色顯示名稱映射
-  const roleDisplayNames: Record<string, string> = {
-    owner: '擁有者',
-    admin: '管理員',
-    finance: '財務',
-    user: '一般用戶',
-    helper: '助手',
-    temporary: '臨時用戶',
-    coord: '協調員',
-    safety: '安全員',
-    foreman: '工頭',
-    vendor: '供應商'
   }
 
   return (
