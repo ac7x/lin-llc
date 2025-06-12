@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useFirebase, useDocument, useCollection } from '@/hooks/useFirebase';
 import QRCode from 'qrcode';
@@ -68,72 +68,74 @@ const InvoiceDetailPage: React.FC = () => {
 
   // 支出項目編輯元件（複用 create/page.tsx 寫法）
   const ExpenseItemsEditor: React.FC<{ items: InvoiceItem[]; setItems: (items: InvoiceItem[]) => void }> = ({ items, setItems }) => {
-    // 定義本地項目型別
-    type LocalInvoiceItem = Omit<InvoiceItem, 'quantity' | 'unitPrice'> & {
-      quantity: string;
-      unitPrice: string;
-    };
-
-    // 使用 useCallback 優化處理函數
-    const calculateAmount = React.useCallback((quantity: string, unitPrice: string): number => {
-      const q = Number(quantity) || 0;
-      const p = Number(unitPrice) || 0;
-      return q * p;
-    }, []);
-
-    // 本地暫存 input 狀態，避免數字欄位被強制覆蓋
-    const [localItems, setLocalItems] = useState<LocalInvoiceItem[]>(() =>
+    // 本地暫存 input 狀態
+    const [localItems, setLocalItems] = useState(() =>
       items.length > 0
         ? items.map(item => ({
             ...item,
             quantity: String(item.quantity),
             unitPrice: String(item.unitPrice),
           }))
-        : [
-            {
-              invoiceItemId: String(Date.now()),
-              description: '',
-              quantity: '1',
-              unitPrice: '0',
-              amount: 0,
-            },
-          ]
+        : [{
+            invoiceItemId: String(Date.now()),
+            description: '',
+            quantity: '1',
+            unitPrice: '0',
+            amount: 0,
+          }]
     );
 
-    // 處理 input 變更，即時計算金額
-    const handleChange = React.useCallback((idx: number, key: keyof InvoiceItem, value: string) => {
+    // 使用 useRef 來存儲防抖定時器
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+    // 處理 input 變更，使用防抖優化
+    const handleChange = useCallback((idx: number, key: keyof InvoiceItem, value: string) => {
+      // 立即更新本地狀態以保持輸入響應性
       setLocalItems(prev => {
         const newItems = prev.map((item, i) => {
           if (i !== idx) return item;
           
           const updatedItem = { ...item, [key]: value };
           
-          // 只在數量或單價改變時重新計算金額
           if (key === 'quantity' || key === 'unitPrice') {
             const quantity = key === 'quantity' ? value : item.quantity;
             const unitPrice = key === 'unitPrice' ? value : item.unitPrice;
-            updatedItem.amount = calculateAmount(quantity, unitPrice);
+            updatedItem.amount = Number(quantity) * Number(unitPrice);
           }
           
           return updatedItem;
         });
 
-        // 轉換並同步更新父層狀態
-        const convertedItems: InvoiceItem[] = newItems.map(item => ({
-          ...item,
-          quantity: Number(item.quantity),
-          unitPrice: Number(item.unitPrice),
-          amount: calculateAmount(item.quantity, item.unitPrice),
-        }));
-        setItems(convertedItems);
+        // 使用防抖更新父組件狀態
+        if (debounceTimer.current) {
+          clearTimeout(debounceTimer.current);
+        }
+
+        debounceTimer.current = setTimeout(() => {
+          setItems(newItems.map(item => ({
+            ...item,
+            quantity: Number(item.quantity),
+            unitPrice: Number(item.unitPrice),
+            amount: Number(item.quantity) * Number(item.unitPrice),
+          })));
+        }, 300); // 300ms 的防抖延遲
 
         return newItems;
       });
-    }, [setItems, calculateAmount]);
+    }, [setItems]);
+
+    // 清理防抖定時器
+    React.useEffect(() => {
+      return () => {
+        if (debounceTimer.current) {
+          clearTimeout(debounceTimer.current);
+        }
+      };
+    }, []);
 
     // 新增項目
-    const addItem = React.useCallback(() => {
-      const newLocalItem: LocalInvoiceItem = {
+    const addItem = useCallback(() => {
+      const newItem = {
         invoiceItemId: String(Date.now()),
         description: '',
         quantity: '1',
@@ -141,30 +143,28 @@ const InvoiceDetailPage: React.FC = () => {
         amount: 0,
       };
       
-      setLocalItems(prev => [...prev, newLocalItem]);
-      const convertedItem: InvoiceItem = {
-        ...newLocalItem,
+      setLocalItems(prev => [...prev, newItem]);
+      setItems([...items, {
+        ...newItem,
         quantity: 1,
         unitPrice: 0,
         amount: 0,
-      };
-      setItems([...items, convertedItem]);
+      }]);
     }, [items, setItems]);
 
     // 移除項目
-    const removeItem = React.useCallback((idx: number) => {
+    const removeItem = useCallback((idx: number) => {
       setLocalItems(prev => {
         const newItems = prev.filter((_, i) => i !== idx);
-        const convertedItems: InvoiceItem[] = newItems.map(item => ({
+        setItems(newItems.map(item => ({
           ...item,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
-          amount: calculateAmount(item.quantity, item.unitPrice),
-        }));
-        setItems(convertedItems);
+          amount: Number(item.quantity) * Number(item.unitPrice),
+        })));
         return newItems;
       });
-    }, [setItems, calculateAmount]);
+    }, [setItems]);
 
     return (
       <div>
