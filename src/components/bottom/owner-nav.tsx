@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo, useEffect, useState } from 'react';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useFirebase } from '@/hooks/useFirebase';
 
 interface NavItem {
     href: string;
@@ -16,6 +17,13 @@ interface NavItem {
 
 interface OwnerBottomNavProps {
     items?: NavItem[];
+}
+
+interface NavPermission {
+    id: string;
+    name: string;
+    description: string;
+    defaultRoles: string[];
 }
 
 const defaultOwnerNavItems: NavItem[] = [
@@ -135,29 +143,57 @@ const defaultOwnerNavItems: NavItem[] = [
 
 export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavProps) {
     const pathname = usePathname();
-    const { hasAnyRole, hasMinRole, loading } = useUserRole();
+    const { hasAnyRole, hasMinRole, loading, userRoles } = useUserRole();
+    const { db, doc, getDoc } = useFirebase();
+    const [navPermissions, setNavPermissions] = useState<NavPermission[]>([]);
+
+    // 載入導航權限設定
+    useEffect(() => {
+        async function fetchNavPermissions() {
+            try {
+                const navPermissionsDoc = doc(db, 'settings', 'navPermissions');
+                const navPermissionsSnapshot = await getDoc(navPermissionsDoc);
+                
+                if (navPermissionsSnapshot.exists()) {
+                    const loadedNavPermissions = navPermissionsSnapshot.data().permissions || [];
+                    setNavPermissions(loadedNavPermissions);
+                }
+            } catch (error) {
+                console.error('載入導航權限設定失敗:', error);
+            }
+        }
+        fetchNavPermissions();
+    }, [db, doc, getDoc]);
 
     const filteredNavItems = useMemo(() => {
         return (items.length > 0 ? items : defaultOwnerNavItems)
             .filter(item => {
-                // 如果有指定 requiredRoles，檢查用戶是否擁有其中任一角色
+                // 從路徑中提取ID
+                const itemId = item.href.split('/').pop();
+                
+                // 檢查是否有自定義導航權限設定
+                const navPermission = navPermissions.find(np => np.id === itemId);
+                if (navPermission) {
+                    // 如果有自定義設定，檢查用戶角色是否在允許的角色列表中
+                    return userRoles.some((role: string) => navPermission.defaultRoles.includes(role));
+                }
+                
+                // 如果沒有自定義設定，使用預設的權限檢查
                 if (item.requiredRoles && item.requiredRoles.length > 0) {
                     return hasAnyRole(item.requiredRoles);
                 }
                 
-                // 如果有指定 minRole，檢查用戶角色層級是否足夠
                 if (item.minRole) {
                     return hasMinRole(item.minRole);
                 }
                 
-                // 預設允許
                 return true;
             })
             .map(item => ({
                 ...item,
                 active: pathname === item.href,
             }));
-    }, [items, hasAnyRole, hasMinRole, pathname]);
+    }, [items, hasAnyRole, hasMinRole, pathname, navPermissions, userRoles]);
 
     // 載入中或沒有可顯示項目時不渲染
     if (loading || filteredNavItems.length === 0) {

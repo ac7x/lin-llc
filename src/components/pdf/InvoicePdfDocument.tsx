@@ -37,6 +37,8 @@ export function InvoicePdfDocument({ invoice, qrCodeDataUrl }: { invoice: Record
                         bottom: 30,
                         alignItems: 'center',
                     }}>
+                        {/* @react-pdf/renderer 的 <Image> 不支援 alt 屬性，已確認無需加 alt，忽略 jsx-a11y/alt-text 警告 */}
+                        {/* eslint-disable-next-line jsx-a11y/alt-text */}
                         <Image src={qrCodeDataUrl} style={{ width: 64, height: 64 }} />
                         <Text style={{ fontSize: 8, marginTop: 2 }}>掃描查看發票</Text>
                     </View>

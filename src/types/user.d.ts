@@ -7,6 +7,7 @@ export type AppUser = {
     photoURL: string;
     disabled: boolean;
     role: string;
+    roles?: string[]; // 用戶擁有的所有角色
     metadata: {
         creationTime: string;
         lastSignInTime: string;

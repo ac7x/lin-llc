@@ -19,6 +19,7 @@ const ROLE_CHECKS = {
 
 export interface UseUserRoleReturn {
     userRole: string | undefined;
+    userRoles: string[];
     loading: boolean;
     error: Error | undefined;
     hasRole: (role: string) => boolean;
@@ -47,13 +48,19 @@ export function useUserRole(): UseUserRoleReturn {
         return userData?.role;
     }, [userDoc]);
 
+    const userRoles = useMemo(() => {
+        const userData = userDoc?.data() as AppUser | undefined;
+        return (userData?.roles || [userData?.role])
+            .filter((role): role is string => role !== undefined);
+    }, [userDoc]);
+
     const hasRole = useMemo(() => (role: string): boolean => {
         return userRole === role;
     }, [userRole]);
 
     const hasAnyRole = useMemo(() => (roles: string[]): boolean => {
-        return userRole ? roles.includes(userRole) : false;
-    }, [userRole]);
+        return userRoles.some(role => role !== undefined && roles.includes(role));
+    }, [userRoles]);
 
     const hasMinRole = useMemo(() => (minRole: string): boolean => {
         if (!userRole) return false;
@@ -86,6 +93,7 @@ export function useUserRole(): UseUserRoleReturn {
 
     return {
         userRole,
+        userRoles,
         loading,
         error,
         hasRole,

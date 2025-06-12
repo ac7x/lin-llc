@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFirebase } from "@/hooks/useFirebase";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
@@ -17,6 +17,14 @@ interface Permission {
 interface RolePermission {
   role: string;
   permissions: string[];
+}
+
+// 定義導航項目權限類型
+interface NavPermission {
+  id: string;
+  name: string;
+  description: string;
+  defaultRoles: string[];
 }
 
 // 預設權限列表
@@ -57,6 +65,100 @@ const DEFAULT_PERMISSIONS: Permission[] = [
   { id: 'notification.settings', name: '通知設定', description: '允許管理通知設定和偏好', category: '通知管理' },
 ];
 
+// 預設導航權限列表
+const DEFAULT_NAV_PERMISSIONS: NavPermission[] = [
+  { 
+    id: 'profile', 
+    name: '個人檔案', 
+    description: '允許訪問個人檔案頁面', 
+    defaultRoles: ['user'] 
+  },
+  { 
+    id: 'dashboard', 
+    name: '儀表板', 
+    description: '允許訪問儀表板頁面', 
+    defaultRoles: ['owner'] 
+  },
+  { 
+    id: 'projects', 
+    name: '專案', 
+    description: '允許訪問專案管理頁面', 
+    defaultRoles: ['admin', 'owner', 'foreman', 'coord'] 
+  },
+  { 
+    id: 'schedule', 
+    name: '行程', 
+    description: '允許訪問行程管理頁面', 
+    defaultRoles: ['admin', 'owner', 'foreman', 'coord'] 
+  },
+  { 
+    id: 'calendar', 
+    name: '日曆', 
+    description: '允許訪問日曆頁面', 
+    defaultRoles: ['admin', 'owner', 'foreman', 'coord'] 
+  },
+  { 
+    id: 'quotes', 
+    name: '估價單', 
+    description: '允許訪問估價單頁面', 
+    defaultRoles: ['owner', 'finance'] 
+  },
+  { 
+    id: 'contracts', 
+    name: '合約', 
+    description: '允許訪問合約頁面', 
+    defaultRoles: ['owner', 'finance'] 
+  },
+  { 
+    id: 'orders', 
+    name: '訂單', 
+    description: '允許訪問訂單頁面', 
+    defaultRoles: ['owner', 'finance'] 
+  },
+  { 
+    id: 'invoices', 
+    name: '發票', 
+    description: '允許訪問發票頁面', 
+    defaultRoles: ['owner', 'finance'] 
+  },
+  { 
+    id: 'gemini', 
+    name: 'Gemini', 
+    description: '允許訪問Gemini頁面', 
+    defaultRoles: ['user'] 
+  },
+  { 
+    id: 'notifications', 
+    name: '通知', 
+    description: '允許訪問通知頁面', 
+    defaultRoles: ['user'] 
+  },
+  { 
+    id: 'send-notification', 
+    name: '發送通知', 
+    description: '允許訪問發送通知頁面', 
+    defaultRoles: ['owner', 'admin'] 
+  },
+  { 
+    id: 'users', 
+    name: '用戶管理', 
+    description: '允許訪問用戶管理頁面', 
+    defaultRoles: ['owner'] 
+  },
+  { 
+    id: 'settings', 
+    name: '設定', 
+    description: '允許訪問設定頁面', 
+    defaultRoles: ['owner'] 
+  },
+  { 
+    id: 'archive', 
+    name: '封存', 
+    description: '允許訪問封存頁面', 
+    defaultRoles: ['owner'] 
+  },
+];
+
 export default function OwnerSettingsPage() {
     const { db, doc, getDoc, setDoc } = useFirebase();
     const { isOwner } = useUserRole();
@@ -71,6 +173,11 @@ export default function OwnerSettingsPage() {
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+    // 導航權限相關狀態
+    const [navPermissions, setNavPermissions] = useState<NavPermission[]>([]);
+    const [selectedNavPermissions, setSelectedNavPermissions] = useState<string[]>([]);
+    const [navSearchTerm, setNavSearchTerm] = useState<string>("");
 
     // 載入現有設定
     useEffect(() => {
@@ -192,7 +299,7 @@ export default function OwnerSettingsPage() {
             }));
             setRolePermissions(initialRolePermissions);
         }
-    }, [db, doc, getDoc, setDoc, getDefaultPermissionsForRole]);
+    }, [db, doc, setDoc, getDefaultPermissionsForRole]);
 
     // 載入權限設定
     useEffect(() => {
@@ -234,6 +341,29 @@ export default function OwnerSettingsPage() {
         fetchPermissions();
     }, [db, doc, getDoc, initializePermissions]);
 
+    // 載入導航權限設定
+    useEffect(() => {
+        async function fetchNavPermissions() {
+            try {
+                const navPermissionsDoc = doc(db, 'settings', 'navPermissions');
+                const navPermissionsSnapshot = await getDoc(navPermissionsDoc);
+                
+                if (navPermissionsSnapshot.exists()) {
+                    const loadedNavPermissions = navPermissionsSnapshot.data().permissions || [];
+                    setNavPermissions(loadedNavPermissions);
+                } else {
+                    // 如果不存在，使用預設值
+                    setNavPermissions(DEFAULT_NAV_PERMISSIONS);
+                    await setDoc(navPermissionsDoc, { permissions: DEFAULT_NAV_PERMISSIONS });
+                }
+            } catch (error) {
+                console.error('載入導航權限設定失敗:', error);
+                setNavPermissions(DEFAULT_NAV_PERMISSIONS);
+            }
+        }
+        fetchNavPermissions();
+    }, [db, doc, getDoc, setDoc]);
+
     // 根據搜尋條件過濾權限
     const filteredPermissions = permissions.filter(permission => 
         permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -251,7 +381,10 @@ export default function OwnerSettingsPage() {
     }, {} as Record<string, Permission[]>);
 
     // 確保所有預設類別都存在，並包含其對應的權限
-    const defaultCategories = ['專案管理', '工作包管理', '財務管理', '用戶管理', '系統管理', '通知管理'];
+    const defaultCategories = useMemo(() => 
+        ['專案管理', '工作包管理', '財務管理', '用戶管理', '系統管理', '通知管理'],
+        []
+    );
     defaultCategories.forEach(category => {
         if (!groupedPermissions[category]) {
             // 從預設權限中找出屬於該類別的權限
@@ -284,7 +417,7 @@ export default function OwnerSettingsPage() {
     // 初始化時展開所有類別
     useEffect(() => {
         setExpandedCategories(new Set(defaultCategories));
-    }, []);
+    }, [defaultCategories]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -309,6 +442,19 @@ export default function OwnerSettingsPage() {
             
             await setDoc(rolePermissionsRef, { roles: updatedRoles }, { merge: true });
             setRolePermissions(updatedRoles);
+
+            // 同時更新導航權限
+            const navPermissionsRef = doc(db, 'settings', 'navPermissions');
+            const updatedNavPermissions = navPermissions.map((np: NavPermission) => ({
+                ...np,
+                defaultRoles: selectedNavPermissions.includes(np.id) 
+                    ? [...(np.defaultRoles || []), selectedRoleForPermission]
+                    : (np.defaultRoles || []).filter(role => role !== selectedRoleForPermission)
+            }));
+            
+            await setDoc(navPermissionsRef, { permissions: updatedNavPermissions }, { merge: true });
+            setNavPermissions(updatedNavPermissions);
+            
             alert(`已更新 ${selectedRoleForPermission} 的權限設定`);
         } catch (error) {
             console.error('更新權限失敗:', error);
@@ -323,6 +469,12 @@ export default function OwnerSettingsPage() {
         setSelectedRoleForPermission(role);
         const rolePermission = rolePermissions.find((rp: RolePermission) => rp.role === role);
         setSelectedPermissions(rolePermission?.permissions || []);
+        
+        // 更新選中的導航權限
+        const roleNavPermissions = navPermissions
+            .filter(np => np.defaultRoles.includes(role))
+            .map(np => np.id);
+        setSelectedNavPermissions(roleNavPermissions);
     };
 
     if (loading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
@@ -340,9 +492,9 @@ export default function OwnerSettingsPage() {
         <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
             <h1 className="text-2xl font-bold mb-4">系統設定</h1>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* 封存設定區塊 */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow lg:col-span-1">
                     <h2 className="text-xl font-semibold mb-4">封存設定</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
@@ -352,7 +504,7 @@ export default function OwnerSettingsPage() {
                             <input
                                 type="number"
                                 min={1}
-                                className="border rounded px-2 py-1 w-32 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                className="border rounded px-2 py-1 w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 value={archiveRetentionDays ?? ''}
                                 onChange={e => setArchiveRetentionDaysState(Number(e.target.value))}
                             />
@@ -360,7 +512,7 @@ export default function OwnerSettingsPage() {
                         </div>
                         <button
                             type="submit"
-                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
                         >
                             儲存封存設定
                         </button>
@@ -368,7 +520,7 @@ export default function OwnerSettingsPage() {
                 </div>
 
                 {/* 角色權限設定區塊 */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow lg:col-span-3">
                     <h2 className="text-xl font-semibold mb-4">角色權限管理</h2>
                     <div className="space-y-4">
                         <div>
@@ -391,57 +543,108 @@ export default function OwnerSettingsPage() {
                         </div>
 
                         {selectedRoleForPermission && (
-                            <div>
-                                <div className="mb-4">
-                                    <input
-                                        type="text"
-                                        placeholder="搜尋權限..."
-                                        className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
+                            <>
+                                {/* 系統權限設定 */}
+                                <div>
+                                    <div className="mb-4">
+                                        <input
+                                            type="text"
+                                            placeholder="搜尋權限..."
+                                            className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
+                                    </div>
+                                    <label className="block font-medium mb-1">系統權限設定</label>
+                                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                                        {Object.entries(groupedPermissions).map(([category, perms]) => (
+                                            <div key={category} className="border rounded-lg overflow-hidden">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleCategory(category)}
+                                                    className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 flex justify-between items-center"
+                                                >
+                                                    <span className="font-medium">{category}</span>
+                                                    <span>{expandedCategories.has(category) ? '▼' : '▶'}</span>
+                                                </button>
+                                                {expandedCategories.has(category) && (
+                                                    <div className="p-4 space-y-2">
+                                                        {perms.map(permission => (
+                                                            <div key={permission.id} className="flex items-center">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id={permission.id}
+                                                                    checked={selectedPermissions.includes(permission.id)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            setSelectedPermissions([...selectedPermissions, permission.id]);
+                                                                        } else {
+                                                                            setSelectedPermissions(selectedPermissions.filter(id => id !== permission.id));
+                                                                        }
+                                                                    }}
+                                                                    className="mr-2"
+                                                                />
+                                                                <label htmlFor={permission.id} className="text-sm">
+                                                                    {permission.name}
+                                                                    <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
+                                                                        ({permission.description})
+                                                                    </span>
+                                                                </label>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <label className="block font-medium mb-1">權限設定</label>
-                                <div className="space-y-4 max-h-96 overflow-y-auto">
-                                    {Object.entries(groupedPermissions).map(([category, perms]) => (
-                                        <div key={category} className="border rounded-lg overflow-hidden">
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleCategory(category)}
-                                                className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 flex justify-between items-center"
-                                            >
-                                                <span className="font-medium">{category}</span>
-                                                <span>{expandedCategories.has(category) ? '▼' : '▶'}</span>
-                                            </button>
-                                            {expandedCategories.has(category) && (
-                                                <div className="p-4 space-y-2">
-                                                    {perms.map(permission => (
-                                                        <div key={permission.id} className="flex items-center">
+
+                                {/* 導航權限設定 */}
+                                <div className="mt-6">
+                                    <div className="mb-4">
+                                        <input
+                                            type="text"
+                                            placeholder="搜尋導航項目..."
+                                            className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
+                                            value={navSearchTerm}
+                                            onChange={(e) => setNavSearchTerm(e.target.value)}
+                                        />
+                                    </div>
+                                    <label className="block font-medium mb-1">導航權限設定</label>
+                                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <div className="p-4 space-y-2">
+                                                {navPermissions
+                                                    .filter(np => 
+                                                        np.name.toLowerCase().includes(navSearchTerm.toLowerCase()) ||
+                                                        np.description.toLowerCase().includes(navSearchTerm.toLowerCase())
+                                                    )
+                                                    .map(navPermission => (
+                                                        <div key={navPermission.id} className="flex items-center">
                                                             <input
                                                                 type="checkbox"
-                                                                id={permission.id}
-                                                                checked={selectedPermissions.includes(permission.id)}
+                                                                id={`nav-${navPermission.id}`}
+                                                                checked={selectedNavPermissions.includes(navPermission.id)}
                                                                 onChange={(e) => {
                                                                     if (e.target.checked) {
-                                                                        setSelectedPermissions([...selectedPermissions, permission.id]);
+                                                                        setSelectedNavPermissions([...selectedNavPermissions, navPermission.id]);
                                                                     } else {
-                                                                        setSelectedPermissions(selectedPermissions.filter(id => id !== permission.id));
+                                                                        setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== navPermission.id));
                                                                     }
                                                                 }}
                                                                 className="mr-2"
                                                             />
-                                                            <label htmlFor={permission.id} className="text-sm">
-                                                                {permission.name}
+                                                            <label htmlFor={`nav-${navPermission.id}`} className="text-sm">
+                                                                {navPermission.name}
                                                                 <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
-                                                                    ({permission.description})
+                                                                    ({navPermission.description})
                                                                 </span>
                                                             </label>
                                                         </div>
                                                     ))}
-                                                </div>
-                                            )}
+                                            </div>
                                         </div>
-                                    ))}
+                                    </div>
                                 </div>
 
                                 <button
@@ -451,20 +654,8 @@ export default function OwnerSettingsPage() {
                                 >
                                     {updating ? '更新中...' : '更新權限設定'}
                                 </button>
-                            </div>
+                            </>
                         )}
-
-                        <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-700 rounded">
-                            <h3 className="font-medium mb-2">權限說明</h3>
-                            <div className="space-y-2 text-sm">
-                                {permissions.map(permission => (
-                                    <div key={permission.id} className="flex justify-between">
-                                        <span>{permission.name}</span>
-                                        <span className="text-gray-500 dark:text-gray-400">{permission.category}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
