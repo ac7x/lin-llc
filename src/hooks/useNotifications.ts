@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useFirebase';
 import { firebaseService } from '@/lib/services/firebase.service';
 import type { NotificationMessage } from '@/types/user';
 import { COLLECTIONS } from '@/lib/firebase-config';
-import { Query, DocumentData } from 'firebase/firestore';
 
 interface UseNotificationsReturn {
   notifications: NotificationMessage[];
