@@ -12,6 +12,7 @@ import {
   auth,
   signOut,
   db,
+  firebaseApp,
   // Firestore core
   collection,
   doc,
@@ -33,6 +34,12 @@ import {
   arrayUnion,
   arrayRemove,
 } from '@/lib/firebase-client';
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut
+} from 'firebase/auth';
 
 // 導出 react-firebase-hooks
 export { 
@@ -109,6 +116,8 @@ interface AuthReturn extends FirebaseAuthReturn, UseUserRoleReturn {
     initialized: boolean;
     error: Error | null;
   };
+  signIn: (email: string, password: string) => Promise<User>;
+  signOut: () => Promise<void>;
 }
 
 export function useAuth(): AuthReturn {
@@ -116,6 +125,7 @@ export function useAuth(): AuthReturn {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [appCheckError, setAppCheckError] = useState<Error | null>(null);
+  const auth = getAuth(firebaseApp);
 
   // 獲取用戶角色相關數據
   const [userDoc, roleLoading, roleError] = useDocument(
@@ -188,13 +198,30 @@ export function useAuth(): AuthReturn {
   useEffect(() => {
     if (!initialized) return;
 
-    const unsubscribe = subscribeToAuthState((user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
 
-    return unsubscribe;
-  }, [initialized]);
+    return () => unsubscribe();
+  }, [initialized, auth]);
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      return result.user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      throw error;
+    }
+  };
 
   return {
     user,
@@ -236,7 +263,9 @@ export function useAuth(): AuthReturn {
     appCheck: {
       initialized,
       error: appCheckError
-    }
+    },
+    signIn,
+    signOut
   };
 }
 

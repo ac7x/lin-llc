@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from "@/hooks/useAuth";
 import { Timestamp } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { nanoid } from "nanoid";
 import { Workpackage } from "@/types/project";
 import { ContractItem } from "@/types/finance";
+import { db } from "@/lib/firebase-client";
+import { collection, addDoc } from "firebase/firestore";
 
 // 定義合約列型別
 interface ContractRow {
@@ -18,7 +20,7 @@ interface ContractRow {
 }
 
 export default function ImportProjectPage() {
-    const { db, collection, addDoc } = useFirebase();
+    const { user } = useAuth();
     // 取得所有已建立專案的 contractId 清單，避免重複建立
     const [projectsSnapshot] = useCollection(collection(db, "projects"));
 

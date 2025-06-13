@@ -2,14 +2,17 @@
 
 import React, { useCallback } from 'react';
 import Link from 'next/link';
-import { useFirebase, useCollection } from '@/hooks/useFirebase';
+import { useAuth } from '@/hooks/useAuth';
+import { useCollection } from 'react-firebase-hooks/firestore';
 import { InvoicePdfDocument } from '@/components/pdf/InvoicePdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import QRCode from 'qrcode';
 import type { InvoiceData } from '@/types/finance';
+import { db } from '@/lib/firebase-client';
+import { collection } from 'firebase/firestore';
 
 const InvoicePage: React.FC = () => {
-  const { db, collection } = useFirebase();
+  const { user } = useAuth();
   const [invoicesSnapshot, loading, error] = useCollection(collection(db, 'finance', 'default', 'invoice'));
 
   // PDF 匯出功能

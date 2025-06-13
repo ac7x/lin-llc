@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { useFirebase } from "@/hooks/useFirebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, doc, getDoc } from "firebase/firestore";
 import { QuoteData } from "@/types/finance";
 
 export default function QuotesPage() {
-    const { db, isReady } = useFirebase();
+    const { user } = useAuth();
+    const router = useRouter();
+    const { db, isReady } = useAuth();
     const [quotesSnapshot, loading, error] = useCollection(
         isReady ? collection(db, "finance", "default", "quotes") : null
     );

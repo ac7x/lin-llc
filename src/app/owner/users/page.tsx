@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useForm } from "react-hook-form";
-import { useFirebase } from "@/hooks/useFirebase";
 import type { AppUser } from "@/types/user";
 import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
+import { db } from "@/lib/firebase-client";
+import { collection, doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 // 提取角色選項組件
 const RoleSelect = ({ value, onChange, className = "" }: { value: string; onChange: (value: string) => void; className?: string }) => (
@@ -24,7 +27,8 @@ const RoleSelect = ({ value, onChange, className = "" }: { value: string; onChan
 );
 
 export default function AdminUsersPage() {
-  const { db, collection, doc, updateDoc, setDoc, serverTimestamp } = useFirebase();
+  const { user } = useAuth();
+  const router = useRouter();
   const usersCollection = collection(db, "users");
   const [formError, setFormError] = useState<string | null>(null);
   const { register, handleSubmit, reset } = useForm<{

@@ -2,18 +2,21 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { useFirebase, useDocument, useCollection } from '@/hooks/useFirebase';
+import { useAuth } from '@/hooks/useAuth';
+import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
 import QRCode from 'qrcode';
 import { InvoicePdfDocument } from '@/components/pdf/InvoicePdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import type { InvoiceData, Expense, InvoiceItem } from '@/types/finance';
 import type { Project } from '@/types/project';
 import { Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
+import { doc, updateDoc, arrayUnion, collection } from 'firebase/firestore';
 
 const InvoiceDetailPage: React.FC = () => {
   const params = useParams();
   const invoiceId = params?.invoice as string;
-  const { db, doc, updateDoc, arrayUnion, collection } = useFirebase();
+  const { user } = useAuth();
   const [invoiceDoc, loading, error] = useDocument(invoiceId ? doc(db, 'finance', 'default', 'invoice', invoiceId) : undefined);
   const data = invoiceDoc?.exists() ? (invoiceDoc.data() as InvoiceData) : undefined;
 

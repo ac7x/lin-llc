@@ -2,14 +2,16 @@
 
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { useFirebase } from '@/hooks/useFirebase';
+import { useAuth } from '@/hooks/useAuth';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Workpackage } from '@/types/project';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
+import { db } from '@/lib/firebase-client';
+import { collection, getDocs } from 'firebase/firestore';
 
 export default function DashboardPage() {
-  const { db, collection, getDocs } = useFirebase();
+  const { user } = useAuth();
   // 取得 users 和 projects 集合的 snapshot
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useFirebase } from "@/hooks/useFirebase";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
+import { db } from "@/lib/firebase-client";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 // 定義權限類型
 interface Permission {
@@ -160,8 +162,8 @@ const DEFAULT_NAV_PERMISSIONS: NavPermission[] = [
 ];
 
 export default function OwnerSettingsPage() {
-    const { db, doc, getDoc, setDoc } = useFirebase();
-    const { isOwner } = useUserRole();
+    const { user } = useAuth();
+    const router = useRouter();
     const [archiveRetentionDays, setArchiveRetentionDaysState] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -193,7 +195,7 @@ export default function OwnerSettingsPage() {
             setLoading(false);
         }
         fetchRetentionDays();
-    }, [db, doc, getDoc]);
+    }, []);
 
     // 根據角色獲取預設權限
     const getDefaultPermissionsForRole = useCallback((role: string): string[] => {
@@ -299,7 +301,7 @@ export default function OwnerSettingsPage() {
             }));
             setRolePermissions(initialRolePermissions);
         }
-    }, [db, doc, setDoc, getDefaultPermissionsForRole]);
+    }, [getDefaultPermissionsForRole]);
 
     // 載入權限設定
     useEffect(() => {
@@ -339,7 +341,7 @@ export default function OwnerSettingsPage() {
             }
         }
         fetchPermissions();
-    }, [db, doc, getDoc, initializePermissions]);
+    }, [initializePermissions]);
 
     // 載入導航權限設定
     useEffect(() => {
@@ -362,7 +364,7 @@ export default function OwnerSettingsPage() {
             }
         }
         fetchNavPermissions();
-    }, [db, doc, getDoc, setDoc]);
+    }, [setDoc]);
 
     // 根據搜尋條件過濾權限
     const filteredPermissions = permissions.filter(permission => 
@@ -429,7 +431,7 @@ export default function OwnerSettingsPage() {
 
     // 處理權限更新
     const handlePermissionUpdate = async () => {
-        if (!selectedRoleForPermission || !isOwner) return;
+        if (!selectedRoleForPermission) return;
         
         try {
             setUpdating(true);
@@ -478,15 +480,6 @@ export default function OwnerSettingsPage() {
     };
 
     if (loading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
-
-    if (!isOwner) {
-        return (
-            <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-                <h1 className="text-2xl font-bold mb-4">權限不足</h1>
-                <p>您需要擁有者權限才能存取此頁面。</p>
-            </main>
-        );
-    }
 
     return (
         <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">

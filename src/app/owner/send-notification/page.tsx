@@ -3,12 +3,12 @@
 import React from 'react';
 import { NotificationTestTool } from '@/app/owner/notifications/components/NotificationTestTool';
 import { NotificationBell } from '@/app/owner/notifications/components/NotificationBell';
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SendNotificationPage() {
-  const { user, loading } = useFirebase();
+  const { user } = useAuth();
 
-  if (loading) {
+  if (!user) {
     return (
       <main className="p-6 bg-white dark:bg-neutral-900 min-h-screen">
         <div className="flex items-center justify-center h-64">
@@ -32,18 +32,14 @@ export default function SendNotificationPage() {
         {/* 用戶狀態 */}
         <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">用戶狀態</h2>
-          {user ? (
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                <strong>用戶 UID:</strong> {user.uid}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                <strong>顯示名稱:</strong> {user.displayName || '未設定'}
-              </p>
-            </div>
-          ) : (
-            <p className="text-red-600 dark:text-red-400">用戶未登入，請先登入以發送通知</p>
-          )}
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              <strong>用戶 UID:</strong> {user.uid}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              <strong>顯示名稱:</strong> {user.displayName || '未設定'}
+            </p>
+          </div>
         </div>
 
         {/* 功能說明 */}

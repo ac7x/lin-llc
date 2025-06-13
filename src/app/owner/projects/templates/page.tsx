@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useFirebase } from "@/hooks/useFirebase";
-import { Timestamp } from "firebase/firestore";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
+import { db } from "@/lib/firebase-client";
+import { doc, collection, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { Template, SubWorkpackageTemplateItem } from "@/types/project";
 import { nanoid } from "nanoid";
 
 export default function TemplatesAdminPage() {
-  const { db, doc, collection, addDoc, updateDoc, deleteDoc, auth } = useFirebase();
+  const { user } = useAuth();
+  const router = useRouter();
   const [templatesSnapshot] = useCollection(collection(db, "templates"));
   const [showModal, setShowModal] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -56,8 +59,6 @@ export default function TemplatesAdminPage() {
     if (!newTemplate.name || templateItems.length === 0 || saving) return;
     setSaving(true);
     try {
-      const user = auth.currentUser;
-      if (!user) throw new Error();
       const now = Timestamp.now();
       const templateData: Omit<Template, 'id'> = {
         ...newTemplate,

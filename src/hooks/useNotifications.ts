@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/useFirebase';
+import { useAuth } from '@/hooks/useAuth';
 import {
   getUserNotifications,
   subscribeToUserNotifications,

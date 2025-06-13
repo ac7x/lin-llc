@@ -2,14 +2,17 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFirebase, useCollection, useDocument } from '@/hooks/useFirebase';
+import { useAuth } from '@/hooks/useAuth';
+import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 import { Timestamp } from 'firebase/firestore';
 import type { Project } from '@/types/project';
 import type { InvoiceData } from '@/types/finance';
+import { db } from '@/lib/firebase-client';
+import { collection, doc, setDoc } from 'firebase/firestore';
 
 const InvoiceCreatePage: React.FC = () => {
   const router = useRouter();
-  const { db, collection, doc, setDoc } = useFirebase();
+  const { user } = useAuth();
   const [projectsSnapshot] = useCollection(collection(db, 'projects'));
   const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoice'));
   const [projectId, setProjectId] = useState('');

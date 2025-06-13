@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from "@/hooks/useAuth";
 import { QuoteItem } from "@/types/finance";
+import { db } from "@/lib/firebase-client";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function QuoteAddPage() {
     const router = useRouter();
-    const { db, doc, setDoc } = useFirebase();
+    const { user } = useAuth();
     const [clientName, setClientName] = useState("");
     const [clientContact, setClientContact] = useState("");
     const [clientPhone, setClientPhone] = useState("");
@@ -55,28 +57,27 @@ export default function QuoteAddPage() {
     // 處理送出
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!user) return;
+        
         try {
-            const quoteId = nanoid(5);
-            const now = new Date();
+            const quoteId = nanoid();
             await setDoc(doc(db, "finance", "default", "quotes", quoteId), {
                 quoteId,
                 quoteName,
-                quotePrice: autoSum ? totalQuoteItemPrice : quotePrice,
-                quoteItems: quoteItems.map((item, idx) => ({
-                    ...item,
-                    quoteItemId: item.quoteItemId || String(idx + 1), // 若未填則用序號
-                })),
-                totalQuoteItemPrice,
-                createdAt: now,
-                updatedAt: now,
                 clientName,
                 clientContact,
                 clientPhone,
                 clientEmail,
+                quotePrice,
+                quoteItems,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                status: "draft",
+                createdBy: user.uid
             });
             router.push("/owner/quotes");
-        } catch (err) {
-            alert("新增估價單失敗: " + (err instanceof Error ? err.message : String(err)));
+        } catch (error) {
+            console.error("Error creating quote:", error);
         }
     };
 

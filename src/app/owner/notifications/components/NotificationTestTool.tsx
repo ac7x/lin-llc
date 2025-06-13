@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from "@/hooks/useAuth";
 import { createNotification } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';
 import { db } from '@/lib/firebase-client';
@@ -18,7 +18,7 @@ interface NotificationTestFormData {
 }
 
 export function NotificationTestTool() {
-  const { user } = useFirebase();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   
