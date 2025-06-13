@@ -10,6 +10,7 @@ import { Project } from "@/types/project";
 import { ActivityLog, PhotoRecord, PhotoType, IssueRecord } from "@/types/project";
 import Image from 'next/image';
 import { TaiwanCityList } from '@/utils/taiwan-city.enum';
+import { calculateProjectProgress } from '@/utils/projectProgress';
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
@@ -163,58 +164,46 @@ export default function ProjectJournalPage() {
             if (photoFiles.some(file => file !== null)) {
                 photoRecords = await uploadPhotos(reportId);
             }
-            let updatedWorkpackages = workpackages;
             const activities: ActivityLog[] = [];
+
+            // 計算並更新工作包進度
             for (const input of progressInputs) {
-                if (input.workpackageId && input.subWorkpackageId && input.actualQuantity > 0) {
-                    updatedWorkpackages = updatedWorkpackages.map(wp => {
-                        if (wp.id !== input.workpackageId) return wp;
-                        return {
-                            ...wp,
-                            subWorkpackages: wp.subWorkpackages.map(sw => {
-                                if (sw.id !== input.subWorkpackageId) return sw;
-                                const total = sw.estimatedQuantity || 0;
-                                const percent = total > 0 ? Math.round((input.actualQuantity / total) * 100) : 0;
-                                const history = Array.isArray(sw.progressHistory) ? sw.progressHistory : [];
-                                return {
-                                    ...sw,
-                                    actualQuantity: input.actualQuantity,
-                                    progress: percent,
-                                    progressHistory: [
-                                        ...history,
-                                        {
-                                            date: nowTimestamp, // 修正: 應為 Timestamp
-                                            doneCount: input.actualQuantity,
-                                            percent
-                                        }
-                                    ]
-                                };
-                            })
-                        };
-                    });
-                    const wp = workpackages.find(wp => wp.id === input.workpackageId);
-                    const sw = wp?.subWorkpackages.find(sw => sw.id === input.subWorkpackageId);
-                    const percent = sw && sw.estimatedQuantity ? Math.round((input.actualQuantity / sw.estimatedQuantity) * 100) : 0;
-                    activities.push({
-                        id: `${input.workpackageId}_${input.subWorkpackageId}_${now.getTime()}`,
-                        workpackageId: input.workpackageId,
-                        description: `${wp?.name || ''} / ${sw?.name || ''}`,
-                        startTime: nowTimestamp, // 修正: 應為 Timestamp
-                        endTime: nowTimestamp,   // 修正: 應為 Timestamp
-                        workforce: newReport.workforceCount || 0,
-                        progress: percent,
-                        notes: '',
-                    });
+                if (input.workpackageId && input.subWorkpackageId) {
+                    const wp = workpackages.find(w => w.id === input.workpackageId);
+                    if (wp) {
+                        const sw = wp.subWorkpackages.find(s => s.id === input.subWorkpackageId);
+                        if (sw) {
+                            const percent = Math.round((input.actualQuantity / (sw.estimatedQuantity || 1)) * 100);
+                            sw.progress = percent;
+                            sw.actualQuantity = input.actualQuantity;
+
+                            activities.push({
+                                id: `${input.workpackageId}_${input.subWorkpackageId}_${now.getTime()}`,
+                                workpackageId: input.workpackageId,
+                                description: `${wp?.name || ''} / ${sw?.name || ''}`,
+                                startTime: nowTimestamp,
+                                endTime: nowTimestamp,
+                                workforce: newReport.workforceCount || 0,
+                                progress: percent,
+                                notes: '',
+                            });
+                        }
+                    }
                 }
             }
-            await updateDoc(doc(db, "projects", projectId), { workpackages: updatedWorkpackages });
+
+            // 計算專案總進度
+            const projectProgress = projectDoc?.data() ? calculateProjectProgress({ ...projectDoc.data(), workpackages } as Project) : 0;
+
+            await updateDoc(doc(db, "projects", projectId), { workpackages });
             await updateDoc(doc(db, "projects", projectId), {
                 reports: arrayUnion({
                     ...newReport,
                     weather,
                     temperature,
                     activities,
-                    date: nowTimestamp, // 修正: 建議日誌日期也用 Timestamp
+                    date: nowTimestamp,
+                    projectProgress, // 新增專案進度記錄
                 }),
                 photos: arrayUnion(...photoRecords),
             });
@@ -502,9 +491,17 @@ export default function ProjectJournalPage() {
                                             <h3 className="font-bold text-gray-900 dark:text-gray-100">
                                                 {report.date.toDate().toLocaleDateString()}
                                             </h3>
-                                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                {report.weather} {report.temperature}°C
-                                            </span>
+                                            <div className="flex items-center gap-4">
+                                                {typeof report.projectProgress === 'number' && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">專案進度:</span>
+                                                        <span className="text-sm text-blue-600 dark:text-blue-400">{report.projectProgress}%</span>
+                                                    </div>
+                                                )}
+                                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                    {report.weather} {report.temperature}°C
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="mb-2">
                                             <span className="font-medium text-gray-700 dark:text-gray-300">出工人數:</span> {report.workforceCount}
@@ -548,7 +545,7 @@ export default function ProjectJournalPage() {
                                                 <ul className="text-gray-700 dark:text-gray-300 text-sm list-disc ml-6 mt-1">
                                                     {report.activities.map((a: ActivityLog, i: number) => (
                                                         <li key={a.id || i}>
-                                                            {a.description}：{a.progress}（{a.progress}%）
+                                                            {a.description}：{a.progress}%
                                                         </li>
                                                     ))}
                                                 </ul>
