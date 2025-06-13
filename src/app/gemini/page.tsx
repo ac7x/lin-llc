@@ -1,26 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect, FormEvent } from "react";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
-import { firebaseConfig, APP_CHECK_CONFIG } from "@/lib/firebase-config";
 import { initializeApp } from "firebase/app";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
+import { firebaseConfig } from "@/lib/firebase-config";
 
 // 初始化 Firebase
-const app = initializeApp(firebaseConfig);
-
-// 初始化 App Check
-if (typeof window !== "undefined") {
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
-    isTokenAutoRefreshEnabled: true,
-  });
-}
+const firebaseApp = initializeApp(firebaseConfig);
 
 // 初始化 Gemini API
-const ai = getAI(app, { backend: new GoogleAIBackend() });
+const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
 
-type ModelType = "gemini-pro" | "gemini-pro-vision";
+type ModelType = "gemini-2.0-flash";
 
 interface ChatMessage {
   id: string;
@@ -33,12 +24,11 @@ export default function GeminiChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedModel, setSelectedModel] = useState<ModelType>("gemini-pro");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 根據選擇的模型類型獲取對應的模型實例
-  const model = getGenerativeModel(ai, { model: selectedModel });
+  // 獲取模型實例
+  const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -59,7 +49,8 @@ export default function GeminiChatPage() {
     setLoading(true);
 
     try {
-      const result = await model.generateContent(trimmed);
+      const prompt = `請使用繁體中文回答以下問題：${trimmed}`;
+      const result = await model.generateContent(prompt);
       const response = result.response;
       const text = response.text();
       
@@ -94,23 +85,15 @@ export default function GeminiChatPage() {
   return (
     <main className="max-w-4xl mx-auto">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">Gemini 聊天</h1>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">Gemini 智慧助手</h1>
 
         <div className="mb-6">
           <div className="flex items-center gap-4 mb-4">
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value as ModelType)}
-              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-            >
-              <option value="gemini-pro">Gemini Pro</option>
-              <option value="gemini-pro-vision">Gemini Pro Vision</option>
-            </select>
             <button
               onClick={handleClear}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-              清除對話
+              清除對話記錄
             </button>
           </div>
 
@@ -130,7 +113,7 @@ export default function GeminiChatPage() {
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      {message.role === "user" ? "您" : "Gemini"}
+                      {message.role === "user" ? "您" : "Gemini 助手"}
                     </div>
                     <div className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
                       {message.content}
@@ -148,7 +131,7 @@ export default function GeminiChatPage() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="輸入訊息..."
+              placeholder="請輸入您的問題..."
               className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
             />
             <button
@@ -162,7 +145,7 @@ export default function GeminiChatPage() {
                   <span>處理中...</span>
                 </div>
               ) : (
-                "發送"
+                "發送訊息"
               )}
             </button>
           </div>

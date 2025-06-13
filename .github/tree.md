@@ -1,95 +1,90 @@
 .
 ├── app
-│   ├── layout.tsx
-│   ├── owner
-│   │   ├── archive
-│   │   │   ├── layout.tsx
-│   │   │   ├── page.tsx
-│   │   │   └── [type]
-│   │   │       └── page.tsx
-│   │   ├── calendar
+│   ├── archive
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── [type]
+│   │       └── page.tsx
+│   ├── calendar
+│   │   └── page.tsx
+│   ├── contracts
+│   │   ├── [contract]
 │   │   │   └── page.tsx
-│   │   ├── contracts
-│   │   │   ├── [contract]
-│   │   │   │   └── page.tsx
-│   │   │   ├── create
-│   │   │   │   └── page.tsx
-│   │   │   ├── layout.tsx
-│   │   │   └── page.tsx
-│   │   ├── dashboard
-│   │   │   └── page.tsx
-│   │   ├── gemini
-│   │   │   └── page.tsx
-│   │   ├── expenses
-│   │   │   ├── create
-│   │   │   │   └── page.tsx
-│   │   │   ├── [expense]
-│   │   │   │   └── page.tsx
-│   │   │   ├── layout.tsx
+│   │   ├── create
 │   │   │   └── page.tsx
 │   │   ├── layout.tsx
-│   │   ├── notifications
-│   │   │   ├── components
-│   │   │   │   ├── NotificationBell.tsx
-│   │   │   │   └── NotificationTestTool.tsx
+│   │   └── page.tsx
+│   ├── dashboard
+│   │   └── page.tsx
+│   ├── expenses
+│   │   ├── create
 │   │   │   └── page.tsx
-│   │   ├── orders
-│   │   │   ├── add
-│   │   │   │   └── page.tsx
-│   │   │   ├── layout.tsx
-│   │   │   ├── [order]
-│   │   │   │   └── page.tsx
+│   │   ├── [expense]
 │   │   │   └── page.tsx
-│   │   ├── page.tsx
-│   │   ├── profile
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── gemini
+│   │   └── page.tsx
+│   ├── layout.tsx
+│   ├── notifications
+│   │   ├── components
+│   │   │   ├── NotificationBell.tsx
+│   │   │   └── NotificationTestTool.tsx
+│   │   └── page.tsx
+│   ├── orders
+│   │   ├── add
 │   │   │   └── page.tsx
-│   │   ├── projects
-│   │   │   ├── import
-│   │   │   │   └── page.tsx
-│   │   │   ├── layout.tsx
-│   │   │   ├── page.tsx
-│   │   │   ├── [project]
-│   │   │   │   ├── page.tsx
-│   │   │   │   ├── project-calendar
-│   │   │   │   │   └── page.tsx
-│   │   │   │   ├── project-issues
-│   │   │   │   │   └── page.tsx
-│   │   │   │   ├── project-journal
-│   │   │   │   │   └── page.tsx
-│   │   │   │   ├── project-materials
-│   │   │   │   │   └── page.tsx
-│   │   │   │   └── workpackages
-│   │   │   │       ├── subworkpackages
-│   │   │   │       │   └── page.tsx
-│   │   │   │       └── [workpackage]
-│   │   │   │           └── page.tsx
-│   │   │   └── templates
-│   │   │       └── page.tsx
-│   │   ├── quotes
-│   │   │   ├── add
-│   │   │   │   └── page.tsx
-│   │   │   ├── layout.tsx
-│   │   │   ├── page.tsx
-│   │   │   └── [quote]
-│   │   │       └── page.tsx
-│   │   ├── schedule
+│   │   ├── layout.tsx
+│   │   ├── [order]
 │   │   │   └── page.tsx
-│   │   ├── send-notification
-│   │   │   └── page.tsx
-│   │   ├── settings
-│   │   │   └── page.tsx
-│   │   └── users
-│   │       └── page.tsx
+│   │   └── page.tsx
 │   ├── page.tsx
-│   └── shared
-│       └── signin
+│   ├── profile
+│   │   └── page.tsx
+│   ├── projects
+│   │   ├── import
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   ├── [project]
+│   │   │   ├── page.tsx
+│   │   │   ├── project-calendar
+│   │   │   │   └── page.tsx
+│   │   │   ├── project-issues
+│   │   │   │   └── page.tsx
+│   │   │   ├── project-journal
+│   │   │   │   └── page.tsx
+│   │   │   ├── project-materials
+│   │   │   │   └── page.tsx
+│   │   │   └── workpackages
+│   │   │       ├── subworkpackages
+│   │   │       │   └── page.tsx
+│   │   │       └── [workpackage]
+│   │   │           └── page.tsx
+│   │   └── templates
+│   │       └── page.tsx
+│   ├── quotes
+│   │   ├── add
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── [quote]
+│   │       └── page.tsx
+│   ├── schedule
+│   │   └── page.tsx
+│   ├── send-notification
+│   │   └── page.tsx
+│   ├── settings
+│   │   └── page.tsx
+│   └── users
+│       └── page.tsx
 ├── components
 │   ├── bottom
 │   │   ├── owner-nav.tsx
 │   │   └── owner-nav-wrapper.tsx
 │   └── pdf
 │       ├── ContractPdfDocument.tsx
-│       ├── expensePdfDocument.tsx
+│       ├── ExpensePdfDocument.tsx
 │       ├── OrderPdfDocument.tsx
 │       ├── pdfExport.ts
 │       └── QuotePdfDocument.tsx
