@@ -4,10 +4,11 @@ import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { LineChart, Line } from 'recharts';
-import { Workpackage } from '@/types/project';
+import { Workpackage, Project } from '@/types/project';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 import { db } from '@/lib/firebase-client';
 import { collection, getDocs } from 'firebase/firestore';
+import { calculateProjectProgress } from '@/utils/projectProgress';
 
 export default function DashboardPage() {
   // 取得 users 和 projects 集合的 snapshot
@@ -150,11 +151,11 @@ export default function DashboardPage() {
   const workpackageProgressData = React.useMemo(() => {
     if (!projectsSnapshot) return [];
     return projectsSnapshot.docs.map(doc => {
-      const workpackages = doc.data().workpackages || [];
-      const avgProgress = workpackages.reduce((sum: number, wp: Workpackage) => sum + (wp.progress || 0), 0) / workpackages.length;
+      const projectData = doc.data() as Project;
+      const progress = calculateProjectProgress(projectData);
       return {
-        name: doc.data().projectName,
-        progress: Math.round(avgProgress * 100) / 100
+        name: projectData.projectName,
+        progress: progress
       };
     });
   }, [projectsSnapshot]);
