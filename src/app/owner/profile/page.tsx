@@ -32,19 +32,20 @@ const UserPanelPage = () => {
   }, [auth, router])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 dark:bg-gray-800 transform transition-all duration-300 hover:shadow-2xl">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6 dark:text-gray-100 border-b pb-4">個人資料</h1>
-          
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">載入中...</p>
-            </div>
-          ) : user ? (
-            <>
-              <div className="flex items-center space-x-6 mb-8">
+    <main className="max-w-4xl mx-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">個人資料</h1>
+        </div>
+        
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : user ? (
+          <>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+              <div className="flex items-center space-x-6">
                 <div className="relative group">
                   <Image
                     src={user.photoURL || '/images/default-avatar.png'}
@@ -66,7 +67,10 @@ const UserPanelPage = () => {
                   </div>
                 </div>
               </div>
+            </div>
 
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">帳號設定</h2>
               <div className="space-y-4">
                 <button
                   onClick={handleSignOut}
@@ -75,11 +79,20 @@ const UserPanelPage = () => {
                   登出
                 </button>
               </div>
-            </>
-          ) : null}
-        </div>
+            </div>
+          </>
+        ) : (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col items-center">
+              <svg className="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              請先登入
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </main>
   )
 }
 
