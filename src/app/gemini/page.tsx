@@ -55,6 +55,8 @@ export default function GeminiChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const chatRef = useRef<ReturnType<GenerativeModel['startChat']> | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
   // 檢查認證狀態
   useEffect(() => {
@@ -86,9 +88,40 @@ export default function GeminiChatPage() {
     });
   }, [model, isAuthenticated, appCheck.initialized]);
 
+  // 檢查是否接近底部
+  const checkIfNearBottom = () => {
+    if (!chatContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    const threshold = 100; // 距離底部 100px 以內視為接近底部
+    setIsNearBottom(scrollHeight - scrollTop - clientHeight < threshold);
+  };
+
+  // 滾動到底部
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // 監聽滾動事件
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      checkIfNearBottom();
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 當有新訊息時，如果用戶在底部附近，則自動滾動
+  useEffect(() => {
+    if (isNearBottom) {
+      scrollToBottom();
+    }
+  }, [messages, isNearBottom]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -192,8 +225,8 @@ export default function GeminiChatPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto h-screen flex flex-col pb-16">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex-1 flex flex-col">
+    <main className="max-w-4xl mx-auto h-screen flex flex-col pb-16 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex-1 flex flex-col overflow-hidden">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">
           Gemini 智慧助手
           {user?.email && (
@@ -203,7 +236,7 @@ export default function GeminiChatPage() {
           )}
         </h1>
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex items-center gap-4 mb-4">
             <button
               onClick={handleClear}
@@ -213,7 +246,10 @@ export default function GeminiChatPage() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+          <div 
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar bg-gray-50 dark:bg-gray-900/30 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+          >
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -247,7 +283,7 @@ export default function GeminiChatPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSend} className="mt-4 space-y-4">
+        <form onSubmit={handleSend} className="mt-4 space-y-4 sticky bottom-0 bg-white dark:bg-gray-800 pt-4">
           <div className="flex flex-col gap-4">
             <div className="flex gap-4">
               <input
@@ -296,18 +332,29 @@ export default function GeminiChatPage() {
       </div>
 
       <style jsx global>{`
+        .custom-scrollbar {
+          scroll-behavior: smooth;
+          -webkit-overflow-scrolling: touch;
+          height: calc(100vh - 280px);
+        }
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+          width: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background-color: rgba(156, 163, 175, 0.5);
-          border-radius: 3px;
+          border-radius: 4px;
+          border: 2px solid transparent;
+          background-clip: padding-box;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background-color: rgba(156, 163, 175, 0.7);
+        }
+        .custom-scrollbar::-webkit-scrollbar-corner {
+          background: transparent;
         }
 
         @keyframes fadeIn {
