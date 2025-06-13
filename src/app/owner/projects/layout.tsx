@@ -9,6 +9,9 @@ import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent } from "@/utils/projectProgress";
 import { WorkpackageProgressBar } from "@/utils/workpackageProgressBar";
 import { Workpackage } from "@/types/project";
+import { db } from "@/lib/firebase-client";
+import { collection, setDoc, deleteDoc, doc } from "firebase/firestore";
+import type { Project } from "@/types/project";
 
 function Sidebar() {
     const { db, collection, doc, getDoc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
@@ -81,6 +84,11 @@ function Sidebar() {
         }
     };
 
+    const projects = projectsSnapshot?.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    })) as (Project & { id: string })[] || [];
+
     return (
         <nav className="w-80 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4 flex flex-col text-black dark:text-gray-100">
             <h2 className="text-lg font-bold mb-4 text-center">專案管理</h2>
@@ -95,85 +103,75 @@ function Sidebar() {
                 </li>
                 {loading ? (
                     <li className="text-gray-400 px-3 py-2">載入中...</li>
-                ) : projectsSnapshot && projectsSnapshot.docs.length > 0 ? (
-                    projectsSnapshot.docs.map(project => {
-                        const data = project.data();
-                        const projectId = project.id;
-                        const projectHref = `/owner/projects/${projectId}`;
-                        const isOpen = !!openMap[projectId];
-                        const workpackages = data.workpackages || [];
-
-                        return (
-                            <li key={projectId} className="flex items-center group">
-                                <div className="flex-1">
-                                    <div className="flex items-center">
-                                        <button
-                                            type="button"
-                                            aria-label={isOpen ? "收合" : "展開"}
-                                            onClick={() => toggleOpen(projectId)}
-                                            className="p-1 mr-1 rounded hover:bg-blue-100 dark:hover:bg-gray-800"
-                                        >
-                                            {isOpen ? (
-                                                <ChevronDownIcon className="w-4 h-4 text-gray-500" />
-                                            ) : (
-                                                <ChevronRightIcon className="w-4 h-4 text-gray-500" />
-                                            )}
-                                        </button>
-                                        <Link
-                                            href={projectHref}
-                                            className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === projectHref ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                                        >
-                                            {data.projectName || data.projectId || projectId}
-                                            <ProjectProgressPercent project={data as import("@/types/project").Project} />
-                                        </Link>
-                                        <button
-                                            title="封存專案"
-                                            className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
-                                            onClick={async (e) => {
-                                                e.preventDefault();
-                                                if (!window.confirm('確定要封存此專案？')) return;
-                                                const projectData = { ...data, archivedAt: new Date() };
-                                                const userId = data.ownerId || "default";
-                                                await setDoc(doc(db, "archived", userId, "projects", projectId), projectData);
-                                                await deleteDoc(doc(db, "projects", projectId));
-                                            }}
-                                        >
-                                            🗑️
-                                        </button>
-                                    </div>
-                                    {isOpen && (
-                                        <div className="pl-8 mt-1">
-                                            <ul className="space-y-1">
-                                                {workpackages.map((wp: { id: string, name: string, subWorkpackages?: import("@/types/project").SubWorkpackage[] }) => (
-                                                    <li key={wp.id}>
-                                                        <Link
-                                                            href={`/owner/projects/${projectId}/workpackages/${wp.id}`}
-                                                            className={`block px-3 py-1 rounded text-sm hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname.includes(`/workpackages/${wp.id}`) ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                                                        >
-                                                            {wp.name} {(wp.subWorkpackages?.length || 0) > 0 && `(${wp.subWorkpackages?.length})`}
-                                                        </Link>
-                                                        <div className="mt-1 mb-2">
-                                                            <WorkpackageProgressBar wp={wp as import("@/types/project").Workpackage} />
-                                                        </div>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedProjectId(projectId);
-                                                    setShowCreateModal(true);
-                                                }}
-                                                className="w-full text-left px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded flex items-center mt-2"
-                                            >
-                                                <span className="mr-1">+</span> 新增工作包
-                                            </button>
-                                        </div>
+                ) : projects.map((project) => (
+                    <li key={project.id} className="flex items-center group">
+                        <div className="flex-1">
+                            <div className="flex items-center">
+                                <button
+                                    type="button"
+                                    aria-label={openMap[project.id] ? "收合" : "展開"}
+                                    onClick={() => toggleOpen(project.id)}
+                                    className="p-1 mr-1 rounded hover:bg-blue-100 dark:hover:bg-gray-800"
+                                >
+                                    {openMap[project.id] ? (
+                                        <ChevronDownIcon className="w-4 h-4 text-gray-500" />
+                                    ) : (
+                                        <ChevronRightIcon className="w-4 h-4 text-gray-500" />
                                     )}
+                                </button>
+                                <Link
+                                    href={`/owner/projects/${project.id}`}
+                                    className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === `/owner/projects/${project.id}` ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                >
+                                    {project.projectName || project.projectId || project.id}
+                                    <ProjectProgressPercent project={project} />
+                                </Link>
+                                <button
+                                    title="封存專案"
+                                    className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        if (!window.confirm('確定要封存此專案？')) return;
+                                        const projectData = { ...project, archivedAt: new Date() };
+                                        const userId = project.owner || "default";
+                                        await setDoc(doc(db, "archived", userId, "projects", project.id), projectData);
+                                        await deleteDoc(doc(db, "projects", project.id));
+                                    }}
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                            {openMap[project.id] && (
+                                <div className="pl-8 mt-1">
+                                    <ul className="space-y-1">
+                                        {project.workpackages?.map((wp: { id: string, name: string, subWorkpackages?: import("@/types/project").SubWorkpackage[] }) => (
+                                            <li key={wp.id}>
+                                                <Link
+                                                    href={`/owner/projects/${project.id}/workpackages/${wp.id}`}
+                                                    className={`block px-3 py-1 rounded text-sm hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname.includes(`/workpackages/${wp.id}`) ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                                                >
+                                                    {wp.name} {(wp.subWorkpackages?.length || 0) > 0 && `(${wp.subWorkpackages?.length})`}
+                                                </Link>
+                                                <div className="mt-1 mb-2">
+                                                    <WorkpackageProgressBar wp={wp as import("@/types/project").Workpackage} />
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedProjectId(project.id);
+                                            setShowCreateModal(true);
+                                        }}
+                                        className="w-full text-left px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded flex items-center mt-2"
+                                    >
+                                        <span className="mr-1">+</span> 新增工作包
+                                    </button>
                                 </div>
-                            </li>
-                        );
-                    })
-                ) : null}
+                            )}
+                        </div>
+                    </li>
+                ))}
                 <li key={navs[1].href}>
                     <Link
                         href={navs[1].href}
@@ -272,6 +270,16 @@ function Sidebar() {
 }
 
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
+    const { loading, isAuthenticated, hasMinRole } = useAuth();
+
+    if (loading) {
+        return <div>載入中...</div>;
+    }
+
+    if (!isAuthenticated || !hasMinRole("admin")) {
+        return null;
+    }
+
     return (
         <div className="flex bg-gray-50 dark:bg-gray-900 min-h-screen">
             <Sidebar />

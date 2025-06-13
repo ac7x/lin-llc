@@ -8,43 +8,40 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
 import { useEffect } from "react";
+import type { OrderData } from "@/types/finance";
 
 const OrderSideNav: React.FC = () => {
-    const { user } = useAuth();
     const pathname = usePathname();
-    const baseNavs = [
-        { label: "訂單列表", href: "/owner/orders" },
-        { label: "新增訂單", href: "/owner/orders/create" },
-    ];
+    const [ordersSnapshot] = useCollection(collection(db, "orders"));
 
-    const [ordersSnapshot] = useCollection(collection(db, 'finance', 'default', 'orders'));
-
-    // 從數據庫獲取訂單列表
-    const orderNavs = ordersSnapshot?.docs.map(doc => ({
-        label: doc.data().orderName || `訂單 ${doc.id}`,
-        href: `/owner/orders/${doc.id}`
-    })) || [];
-
-    // 合併基礎導航和動態訂單導航
-    const navs = [
-        baseNavs[0],  // 訂單列表
-        ...orderNavs,  // 動態訂單列表
-        baseNavs[1]   // 新增訂單
-    ];
+    const orders = ordersSnapshot?.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    })) as (OrderData & { id: string })[] || [];
 
     return (
-        <nav className="space-y-1">
-            {navs.map((nav) => (
+        <nav className="space-y-2">
+            <Link
+                href="/owner/orders"
+                className={`block px-4 py-2 rounded ${
+                    pathname === "/owner/orders"
+                        ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-100"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+            >
+                所有訂單
+            </Link>
+            {orders.map((order) => (
                 <Link
-                    key={nav.href}
-                    href={nav.href}
-                    className={`block px-3 py-2 rounded-md text-sm font-medium ${
-                        pathname === nav.href
-                            ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    key={order.id}
+                    href={`/owner/orders/${order.id}`}
+                    className={`block px-4 py-2 rounded ${
+                        pathname === `/owner/orders/${order.id}`
+                            ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-100"
+                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                 >
-                    {nav.label}
+                    {order.orderName}
                 </Link>
             ))}
         </nav>
@@ -52,7 +49,7 @@ const OrderSideNav: React.FC = () => {
 };
 
 export default function OrdersLayout({ children }: { children: ReactNode }) {
-    const { user, loading, isAuthenticated, hasMinRole } = useAuth();
+    const { loading, isAuthenticated, hasMinRole } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -71,8 +68,10 @@ export default function OrdersLayout({ children }: { children: ReactNode }) {
 
     return (
         <div className="flex">
-            <OrderSideNav />
-            <div className="flex-1 p-4">{children}</div>
+            <div className="w-64 p-4 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700">
+                <OrderSideNav />
+            </div>
+            <div className="flex-1">{children}</div>
         </div>
     );
 }

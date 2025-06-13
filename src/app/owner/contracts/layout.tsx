@@ -2,55 +2,52 @@
 
 "use client";
 
-import { ReactNode } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
-import { useEffect } from "react";
+import type { ContractData } from "@/types/finance";
 
 const ContractNav: React.FC = () => {
-    const { user } = useAuth();
-    const pathname = usePathname();
-    const baseNavs = [
-        { label: "合約列表", href: "/owner/contracts" },
-        { label: "新增合約", href: "/owner/contracts/create" },
-    ];
+  const pathname = usePathname();
+  const [contractsSnapshot] = useCollection(collection(db, "contracts"));
 
-    const [contractsSnapshot] = useCollection(collection(db, 'finance', 'default', 'contracts'));
+  const contracts = contractsSnapshot?.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as (ContractData & { id: string })[] || [];
 
-    // 從數據庫獲取合約列表
-    const contractNavs = contractsSnapshot?.docs.map(doc => ({
-        label: doc.data().contractName || `合約 ${doc.id}`,
-        href: `/owner/contracts/${doc.id}`
-    })) || [];
-
-    // 合併基礎導航和動態合約導航，確保合約列表在最上方，新增合約在最下方
-    const navs = [
-        baseNavs[0],  // 合約列表
-        ...contractNavs,  // 動態合約列表
-        baseNavs[1]   // 新增合約
-    ];
-
-    return (
-        <nav className="space-y-1">
-            {navs.map((nav) => (
-                <Link
-                    key={nav.href}
-                    href={nav.href}
-                    className={`block px-3 py-2 rounded-md text-sm font-medium ${
-                        pathname === nav.href
-                            ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    }`}
-                >
-                    {nav.label}
-                </Link>
-            ))}
-        </nav>
-    );
+  return (
+    <nav className="space-y-2">
+      <Link
+        href="/owner/contracts"
+        className={`block px-4 py-2 rounded ${
+          pathname === "/owner/contracts"
+            ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-100"
+            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+        }`}
+      >
+        所有合約
+      </Link>
+      {contracts.map((contract) => (
+        <Link
+          key={contract.id}
+          href={`/owner/contracts/${contract.id}`}
+          className={`block px-4 py-2 rounded ${
+            pathname === `/owner/contracts/${contract.id}`
+              ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-100"
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
+        >
+          {contract.contractName}
+        </Link>
+      ))}
+    </nav>
+  );
 };
 
 export default function ContractsLayout({
@@ -58,7 +55,7 @@ export default function ContractsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, isAuthenticated, hasMinRole } = useAuth();
+  const { loading, isAuthenticated, hasMinRole } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
