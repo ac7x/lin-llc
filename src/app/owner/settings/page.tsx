@@ -162,7 +162,7 @@ const DEFAULT_NAV_PERMISSIONS: NavPermission[] = [
 ];
 
 export default function OwnerSettingsPage() {
-    const { user } = useAuth();
+    const { user, isOwner } = useAuth();
     const router = useRouter();
     const [archiveRetentionDays, setArchiveRetentionDaysState] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
@@ -181,9 +181,18 @@ export default function OwnerSettingsPage() {
     const [selectedNavPermissions, setSelectedNavPermissions] = useState<string[]>([]);
     const [navSearchTerm, setNavSearchTerm] = useState<string>("");
 
+    // 檢查用戶權限
+    useEffect(() => {
+        if (!loading && !isOwner) {
+            router.push('/shared/signin');
+        }
+    }, [loading, isOwner, router]);
+
     // 載入現有設定
     useEffect(() => {
         async function fetchRetentionDays() {
+            if (!user) return;
+            
             const docRef = doc(db, 'settings', 'archive');
             const snapshot = await getDoc(docRef);
             if (snapshot.exists()) {
@@ -195,7 +204,7 @@ export default function OwnerSettingsPage() {
             setLoading(false);
         }
         fetchRetentionDays();
-    }, []);
+    }, [user]);
 
     // 根據角色獲取預設權限
     const getDefaultPermissionsForRole = useCallback((role: string): string[] => {
@@ -431,7 +440,7 @@ export default function OwnerSettingsPage() {
 
     // 處理權限更新
     const handlePermissionUpdate = async () => {
-        if (!selectedRoleForPermission) return;
+        if (!selectedRoleForPermission || !user) return;
         
         try {
             setUpdating(true);
@@ -442,7 +451,11 @@ export default function OwnerSettingsPage() {
                     : rp
             );
             
-            await setDoc(rolePermissionsRef, { roles: updatedRoles }, { merge: true });
+            await setDoc(rolePermissionsRef, { 
+                roles: updatedRoles,
+                lastUpdatedBy: user.uid,
+                lastUpdatedAt: new Date().toISOString()
+            }, { merge: true });
             setRolePermissions(updatedRoles);
 
             // 同時更新導航權限
@@ -454,10 +467,15 @@ export default function OwnerSettingsPage() {
                     : (np.defaultRoles || []).filter(role => role !== selectedRoleForPermission)
             }));
             
-            await setDoc(navPermissionsRef, { permissions: updatedNavPermissions }, { merge: true });
+            await setDoc(navPermissionsRef, { 
+                permissions: updatedNavPermissions,
+                lastUpdatedBy: user.uid,
+                lastUpdatedAt: new Date().toISOString()
+            }, { merge: true });
             setNavPermissions(updatedNavPermissions);
             
             alert(`已更新 ${selectedRoleForPermission} 的權限設定`);
+            router.refresh(); // 重新整理頁面以更新導航
         } catch (error) {
             console.error('更新權限失敗:', error);
             alert('更新權限失敗，請稍後再試');
@@ -480,6 +498,7 @@ export default function OwnerSettingsPage() {
     };
 
     if (loading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
+    if (!isOwner) return null; // 如果沒有權限，不顯示內容
 
     return (
         <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
