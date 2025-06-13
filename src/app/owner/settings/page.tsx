@@ -167,6 +167,8 @@ export default function OwnerSettingsPage() {
     const [archiveRetentionDays, setArchiveRetentionDaysState] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [isEditingRetentionDays, setIsEditingRetentionDays] = useState(false);
+    const [tempRetentionDays, setTempRetentionDays] = useState<number | null>(null);
     
     // 權限管理相關狀態
     const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -430,12 +432,37 @@ export default function OwnerSettingsPage() {
         setExpandedCategories(new Set(defaultCategories));
     }, [defaultCategories]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (archiveRetentionDays && archiveRetentionDays > 0) {
-            await setDoc(doc(db, 'settings', 'archive'), { retentionDays: archiveRetentionDays }, { merge: true });
-            alert(`已設定封存自動刪除天數為 ${archiveRetentionDays} 天`);
+    // 處理封存天數更新
+    const handleRetentionDaysUpdate = async () => {
+        if (!tempRetentionDays || tempRetentionDays <= 0 || !user) return;
+        
+        try {
+            setUpdating(true);
+            await setDoc(doc(db, 'settings', 'archive'), { 
+                retentionDays: tempRetentionDays,
+                lastUpdatedBy: user.uid,
+                lastUpdatedAt: new Date().toISOString()
+            }, { merge: true });
+            setArchiveRetentionDaysState(tempRetentionDays);
+            setIsEditingRetentionDays(false);
+        } catch (error) {
+            console.error('更新封存天數失敗:', error);
+            alert('更新封存天數失敗，請稍後再試');
+        } finally {
+            setUpdating(false);
         }
+    };
+
+    // 開始編輯封存天數
+    const startEditingRetentionDays = () => {
+        setTempRetentionDays(archiveRetentionDays);
+        setIsEditingRetentionDays(true);
+    };
+
+    // 取消編輯封存天數
+    const cancelEditingRetentionDays = () => {
+        setTempRetentionDays(null);
+        setIsEditingRetentionDays(false);
     };
 
     // 處理權限更新
@@ -508,27 +535,51 @@ export default function OwnerSettingsPage() {
                 {/* 封存設定區塊 */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow lg:col-span-1">
                     <h2 className="text-xl font-semibold mb-4">封存設定</h2>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-4">
                         <div>
                             <label className="block font-medium mb-1">
                                 封存自動刪除天數
                             </label>
-                            <input
-                                type="number"
-                                min={1}
-                                className="border rounded px-2 py-1 w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                value={archiveRetentionDays ?? ''}
-                                onChange={e => setArchiveRetentionDaysState(Number(e.target.value))}
-                            />
-                            <span className="ml-2 text-gray-500 dark:text-gray-400">天</span>
+                            {isEditingRetentionDays ? (
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        className="border rounded px-2 py-1 w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                        value={tempRetentionDays ?? ''}
+                                        onChange={e => setTempRetentionDays(Number(e.target.value))}
+                                    />
+                                    <span className="text-gray-500 dark:text-gray-400">天</span>
+                                    <button
+                                        onClick={handleRetentionDaysUpdate}
+                                        disabled={updating}
+                                        className="text-green-600 hover:text-green-700 disabled:text-gray-400"
+                                    >
+                                        {updating ? '儲存中...' : '✓'}
+                                    </button>
+                                    <button
+                                        onClick={cancelEditingRetentionDays}
+                                        disabled={updating}
+                                        className="text-red-600 hover:text-red-700 disabled:text-gray-400"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-gray-900 dark:text-gray-100">
+                                        {archiveRetentionDays ?? '未設定'} 天
+                                    </span>
+                                    <button
+                                        onClick={startEditingRetentionDays}
+                                        className="text-blue-600 hover:text-blue-700"
+                                    >
+                                        編輯
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                        <button
-                            type="submit"
-                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
-                        >
-                            儲存封存設定
-                        </button>
-                    </form>
+                    </div>
                 </div>
 
                 {/* 角色權限設定區塊 */}
