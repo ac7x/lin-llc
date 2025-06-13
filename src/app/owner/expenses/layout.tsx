@@ -7,27 +7,27 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
 
-const InvoiceNav: React.FC = () => {
+const ExpenseNav: React.FC = () => {
     const pathname = usePathname();
     const baseNavs = [
-        { label: "發票列表", href: "/owner/invoices", icon: "📋" },
-        { label: "新增發票", href: "/owner/invoices/create", icon: "➕" },
+        { label: "支出列表", href: "/owner/expenses", icon: "📋" },
+        { label: "新增支出", href: "/owner/expenses/create", icon: "➕" },
     ];
 
-    const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoices'));
+    const [expensesSnapshot] = useCollection(collection(db, 'finance', 'default', 'expenses'));
 
-    // 從數據庫獲取發票列表
-    const invoiceNavs = invoicesSnapshot?.docs.map(doc => ({
-        label: doc.data().invoiceName || `發票 ${doc.id}`,
-        href: `/owner/invoices/${doc.id}`,
+    // 從數據庫獲取支出列表
+    const expenseNavs = expensesSnapshot?.docs.map(doc => ({
+        label: doc.data().expenseName || `支出 ${doc.id}`,
+        href: `/owner/expenses/${doc.id}`,
         icon: "📄"
     })) || [];
 
-    // 合併基礎導航和動態發票導航
+    // 合併基礎導航和動態支出導航
     const navs = [
-        baseNavs[0],  // 發票列表
-        ...invoiceNavs,  // 動態發票列表
-        baseNavs[1]   // 新增發票
+        baseNavs[0],  // 支出列表
+        ...expenseNavs,  // 動態支出列表
+        baseNavs[1]   // 新增支出
     ];
 
     return (
@@ -50,12 +50,12 @@ const InvoiceNav: React.FC = () => {
     );
 };
 
-export default function InvoiceLayout({ children }: { children: ReactNode }) {
+export default function expenseLayout({ children }: { children: ReactNode }) {
     return (
         <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
             <div className="w-72 p-6 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm">
-                <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-gray-100">發票管理</h2>
-                <InvoiceNav />
+                <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-gray-100">支出管理</h2>
+                <ExpenseNav />
             </div>
             <div className="flex-1 p-6">{children}</div>
         </div>

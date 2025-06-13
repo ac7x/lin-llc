@@ -84,10 +84,10 @@ export interface QuoteData {
 }
 
 /**
- * 發票項目資料
+ * 支出項目資料
  */
-export interface InvoiceItem {
-    invoiceItemId: string; // 項目唯一識別碼
+export interface ExpenseItem {
+    expenseItemId: string; // 項目唯一識別碼
     description: string; // 項目描述
     quantity: number; // 項目數量
     unitPrice: number; // 單價
@@ -103,32 +103,32 @@ export interface Expense {
   expenseId: string;
   expenseName: string;
   amount: number;
-  items: InvoiceItem[];
+  items: ExpenseItem[];
   createdAt: Timestamp;
   workpackageId?: string; // 可選：關聯工作包
 }
 
 /**
- * 發票主體資料
+ * 支出主體資料
  */
-export interface InvoiceData {
-    invoiceId: string; // 發票編號
-    invoiceNumber: string; // 發票號碼
-    invoiceDate: Timestamp; // 發票日期
+export interface ExpenseData {
+    expenseId: string; // 支出編號
+    expenseNumber: string; // 支出號碼
+    expenseDate: Timestamp; // 支出日期
     clientName: string; // 客戶名稱
     clientContact: string; // 客戶聯絡人
     clientPhone: string; // 客戶電話
     clientEmail: string; // 客戶 Email
     projectId: string; // 關聯專案
-    type: '請款' | '支出'; // 發票性質
-    items: InvoiceItem[]; // 發票項目清單
+    type: '請款' | '支出'; // 支出性質
+    items: ExpenseItem[]; // 支出項目清單
     totalAmount: number; // 總金額
     relatedOrderId?: string; // 相關訂單編號（可選）
     relatedContractId?: string; // 相關合約編號（可選）
     createdAt: Timestamp; // 建立時間
     updatedAt: Timestamp; // 更新時間
-    status: 'draft' | 'issued' | 'cancelled'; // 發票狀態
+    status: 'draft' | 'issued' | 'cancelled'; // 支出狀態
     notes?: string; // 備註（可選）
-    invoiceName?: string; // 發票名稱（對應專案名稱，可選）
+    expenseName?: string; // 支出名稱（對應專案名稱，可選）
     expenses?: Expense[]; // 支出紀錄（可選）
 }

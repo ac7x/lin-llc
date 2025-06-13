@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 // 定義封存類型
-type ArchiveType = 'contracts' | 'invoices' | 'orders' | 'quotes' | 'projects';
+type ArchiveType = 'contracts' | 'expenses' | 'orders' | 'quotes' | 'projects';
 
 // 定義欄位值類型
 type ColumnValue = string | number | Date | null;
@@ -25,8 +25,8 @@ interface ContractData extends BaseArchiveData {
     contractPrice: number;
 }
 
-interface InvoiceData extends BaseArchiveData {
-    invoiceName: string;
+interface expenseData extends BaseArchiveData {
+    expenseName: string;
     totalAmount: number;
 }
 
@@ -45,7 +45,7 @@ interface ProjectData extends BaseArchiveData {
 }
 
 // 定義所有可能的封存資料類型
-type ArchiveData = ContractData | InvoiceData | OrderData | QuoteData | ProjectData;
+type ArchiveData = ContractData | expenseData | OrderData | QuoteData | ProjectData;
 
 // 定義 Firestore 原始資料型別
 interface FirestoreData {
@@ -55,7 +55,7 @@ interface FirestoreData {
     createdAt: { toDate: () => Date } | Date | null;
     contractName?: string;
     contractPrice?: number;
-    invoiceName?: string;
+    expenseName?: string;
     totalAmount?: number;
     orderName?: string;
     quoteName?: string;
@@ -71,8 +71,8 @@ const TABLE_COLUMNS = {
         { key: 'contractName', label: '合約名稱', type: 'text' },
         { key: 'contractPrice', label: '價格', type: 'number' },
     ],
-    invoices: [
-        { key: 'invoiceName', label: '發票名稱', type: 'text' },
+    expenses: [
+        { key: 'expenseName', label: '支出名稱', type: 'text' },
         { key: 'totalAmount', label: '金額', type: 'number' },
     ],
     orders: [
@@ -92,7 +92,7 @@ const TABLE_COLUMNS = {
 // 定義頁面標題
 const PAGE_TITLES = {
     contracts: '封存合約',
-    invoices: '封存發票',
+    expenses: '封存支出',
     orders: '封存訂單',
     quotes: '封存估價單',
     projects: '封存專案',
@@ -117,8 +117,8 @@ function isContractData(data: ArchiveData): data is ContractData {
     return 'contractName' in data && 'contractPrice' in data;
 }
 
-function isInvoiceData(data: ArchiveData): data is InvoiceData {
-    return 'invoiceName' in data && 'totalAmount' in data;
+function isexpenseData(data: ArchiveData): data is expenseData {
+    return 'expenseName' in data && 'totalAmount' in data;
 }
 
 function isOrderData(data: ArchiveData): data is OrderData {
@@ -156,11 +156,11 @@ function getTypedData(data: FirestoreData, type: ArchiveType): ArchiveData {
                 throw new Error('Invalid contract data structure');
             }
             return { ...baseData, contractName: data.contractName, contractPrice: data.contractPrice } as ContractData;
-        case 'invoices':
-            if (typeof data.invoiceName !== 'string' || typeof data.totalAmount !== 'number') {
-                throw new Error('Invalid invoice data structure');
+        case 'expenses':
+            if (typeof data.expenseName !== 'string' || typeof data.totalAmount !== 'number') {
+                throw new Error('Invalid expense data structure');
             }
-            return { ...baseData, invoiceName: data.invoiceName, totalAmount: data.totalAmount } as InvoiceData;
+            return { ...baseData, expenseName: data.expenseName, totalAmount: data.totalAmount } as expenseData;
         case 'orders':
             if (typeof data.orderName !== 'string') {
                 throw new Error('Invalid order data structure');
@@ -186,8 +186,8 @@ function validateData(data: ArchiveData, type: ArchiveType): boolean {
     switch (type) {
         case 'contracts':
             return isContractData(data);
-        case 'invoices':
-            return isInvoiceData(data);
+        case 'expenses':
+            return isexpenseData(data);
         case 'orders':
             return isOrderData(data);
         case 'quotes':

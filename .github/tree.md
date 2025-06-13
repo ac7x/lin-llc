@@ -20,10 +20,10 @@
 │   │   │   └── page.tsx
 │   │   ├── gemini
 │   │   │   └── page.tsx
-│   │   ├── invoices
+│   │   ├── expenses
 │   │   │   ├── create
 │   │   │   │   └── page.tsx
-│   │   │   ├── [invoice]
+│   │   │   ├── [expense]
 │   │   │   │   └── page.tsx
 │   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
@@ -89,7 +89,7 @@
 │   │   └── owner-nav-wrapper.tsx
 │   └── pdf
 │       ├── ContractPdfDocument.tsx
-│       ├── InvoicePdfDocument.tsx
+│       ├── expensePdfDocument.tsx
 │       ├── OrderPdfDocument.tsx
 │       ├── pdfExport.ts
 │       └── QuotePdfDocument.tsx

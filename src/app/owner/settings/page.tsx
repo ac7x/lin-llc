@@ -118,9 +118,9 @@ const DEFAULT_NAV_PERMISSIONS: NavPermission[] = [
     defaultRoles: ['owner', 'finance'] 
   },
   { 
-    id: 'invoices', 
-    name: '發票', 
-    description: '允許訪問發票頁面', 
+    id: 'expenses', 
+    name: '支出', 
+    description: '允許訪問支出頁面', 
     defaultRoles: ['owner', 'finance'] 
   },
   { 

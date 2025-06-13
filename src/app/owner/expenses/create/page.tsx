@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 import { Timestamp } from 'firebase/firestore';
 import type { Project } from '@/types/project';
-import type { InvoiceData } from '@/types/finance';
+import type { ExpenseData } from '@/types/finance';
 import { db } from '@/lib/firebase-client';
 import { collection, doc, setDoc } from 'firebase/firestore';
 
-const InvoiceCreatePage: React.FC = () => {
+const ExpenseCreatePage: React.FC = () => {
   const router = useRouter();
   const [projectsSnapshot] = useCollection(collection(db, 'projects'));
-  const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoices'));
+  const [expensesSnapshot] = useCollection(collection(db, 'finance', 'default', 'expenses'));
   const [projectId, setProjectId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -31,8 +31,8 @@ const InvoiceCreatePage: React.FC = () => {
     return workpackages.reduce((sum, wp) => sum + (typeof wp.budget === 'number' ? wp.budget : 0), 0);
   }, [workpackages]);
 
-  // 取得所有已建立的發票 projectId
-  const existingProjectIds = invoicesSnapshot?.docs.map(doc => (doc.data() as InvoiceData).projectId) ?? [];
+  // 取得所有已建立的支出 projectId
+  const existingProjectIds = expensesSnapshot?.docs.map(doc => (doc.data() as ExpenseData).projectId) ?? [];
 
   // 取得所選專案名稱
   const selectedProjectName = useMemo(() => {
@@ -43,7 +43,7 @@ const InvoiceCreatePage: React.FC = () => {
     return data.projectName || docSnap.id;
   }, [projectId, projectsSnapshot]);
 
-  // 建立發票
+  // 建立支出
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -51,16 +51,16 @@ const InvoiceCreatePage: React.FC = () => {
     try {
       // 僅保留請款
       if (!projectId) throw new Error('請選擇專案');
-      const invoiceData: InvoiceData = {
-        invoiceId: projectId,
-        invoiceNumber: '',
-        invoiceDate: Timestamp.now(),
+      const expenseData: ExpenseData = {
+        expenseId: projectId,
+        expenseNumber: '',
+        expenseDate: Timestamp.now(),
         clientName: '',
         clientContact: '',
         clientPhone: '',
         clientEmail: '',
         projectId,
-        invoiceName: selectedProjectName,
+        expenseName: selectedProjectName,
         type: '請款',
         items: [],
         totalAmount: totalBudget,
@@ -69,8 +69,8 @@ const InvoiceCreatePage: React.FC = () => {
         status: 'draft',
         notes: '',
       };
-      await setDoc(doc(db, 'finance', 'default', 'invoices', projectId), invoiceData);
-      router.push('/owners/invoice');
+      await setDoc(doc(db, 'finance', 'default', 'expenses', projectId), expenseData);
+      router.push('/owner/expenses');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -80,7 +80,7 @@ const InvoiceCreatePage: React.FC = () => {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900">
-      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">新增發票</h1>
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">新增支出</h1>
       <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-900 rounded shadow p-6 border border-gray-300 dark:border-gray-700">
         {error && <div className="text-red-500 mb-2">{error}</div>}
         <div>
@@ -127,7 +127,7 @@ const InvoiceCreatePage: React.FC = () => {
         )}
         <div className="flex justify-end">
           <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50" disabled={saving || !projectId}>
-            {saving ? '儲存中...' : '建立發票'}
+            {saving ? '儲存中...' : '建立支出'}
           </button>
         </div>
       </form>
@@ -135,4 +135,4 @@ const InvoiceCreatePage: React.FC = () => {
   );
 };
 
-export default InvoiceCreatePage;
+export default ExpenseCreatePage;

@@ -4,19 +4,19 @@ import React, { useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
 import QRCode from 'qrcode';
-import { InvoicePdfDocument } from '@/components/pdf/InvoicePdfDocument';
+import { ExpensePdfDocument } from '@/components/pdf/ExpensePdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import type { InvoiceData, Expense, InvoiceItem } from '@/types/finance';
+import type { ExpenseData, Expense, ExpenseItem } from '@/types/finance';
 import type { Project } from '@/types/project';
 import { Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { doc, updateDoc, arrayUnion, collection } from 'firebase/firestore';
 
-const InvoiceDetailPage: React.FC = () => {
+const ExpenseDetailPage: React.FC = () => {
   const params = useParams();
-  const invoiceId = params?.invoice as string;
-  const [invoiceDoc, loading, error] = useDocument(invoiceId ? doc(db, 'finance', 'default', 'invoices', invoiceId) : undefined);
-  const data = invoiceDoc?.exists() ? (invoiceDoc.data() as InvoiceData) : undefined;
+  const expenseId = params?.expense as string;
+  const [expenseDoc, loading, error] = useDocument(expenseId ? doc(db, 'finance', 'default', 'expenses', expenseId) : undefined);
+  const data = expenseDoc?.exists() ? (expenseDoc.data() as ExpenseData) : undefined;
 
   // 取得所有 projects 與 workpackages
   const [projectsSnapshot] = useCollection(collection(db, 'projects'));
@@ -24,7 +24,7 @@ const InvoiceDetailPage: React.FC = () => {
   // 支出 modal 狀態
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [expenseName, setExpenseName] = useState('');
-  const [expenseItems, setExpenseItems] = useState<InvoiceItem[]>([]);
+  const [expenseItems, setExpenseItems] = useState<ExpenseItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [expenseError, setExpenseError] = useState('');
   // 新增：支出應用 workpackage
@@ -40,11 +40,14 @@ const InvoiceDetailPage: React.FC = () => {
     setExpenseError('');
     try {
       if (!expenseName || expenseItems.length === 0) throw new Error('請填寫完整支出資訊');
-      if (!invoiceId) throw new Error('找不到發票 ID');
       if (expenseAmount <= 0) throw new Error('支出金額需大於 0');
       if (!expenseWorkpackageId) throw new Error('請選擇支出應用的工作包');
+      
       const expenseId = `expense_${Date.now()}`;
-      const expense = {
+      const expenseRef = doc(db, 'finance', 'default', 'expenses', expenseId);
+      
+      // 建立支出資料
+      const expenseData: Expense = {
         expenseId,
         expenseName,
         amount: expenseAmount,
@@ -52,8 +55,8 @@ const InvoiceDetailPage: React.FC = () => {
         createdAt: Timestamp.now(),
         workpackageId: expenseWorkpackageId,
       };
-      await updateDoc(doc(db, 'finance', 'default', 'invoices', invoiceId), {
-        expenses: arrayUnion(expense),
+      await updateDoc(expenseRef, {
+        expenses: arrayUnion(expenseData),
         updatedAt: Timestamp.now(),
       });
       setShowExpenseModal(false);
@@ -68,7 +71,7 @@ const InvoiceDetailPage: React.FC = () => {
   };
 
   // 支出項目編輯元件（複用 create/page.tsx 寫法）
-  const ExpenseItemsEditor: React.FC<{ items: InvoiceItem[]; setItems: (items: InvoiceItem[]) => void }> = ({ items, setItems }) => {
+  const ExpenseItemsEditor: React.FC<{ items: ExpenseItem[]; setItems: (items: ExpenseItem[]) => void }> = ({ items, setItems }) => {
     // 本地暫存 input 狀態
     const [localItems, setLocalItems] = useState(() =>
       items.length > 0
@@ -78,7 +81,7 @@ const InvoiceDetailPage: React.FC = () => {
             unitPrice: String(item.unitPrice),
           }))
         : [{
-            invoiceItemId: String(Date.now()),
+            expenseItemId: String(Date.now()),
             description: '',
             quantity: '1',
             unitPrice: '0',
@@ -90,7 +93,7 @@ const InvoiceDetailPage: React.FC = () => {
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     // 處理 input 變更，使用防抖優化
-    const handleChange = useCallback((idx: number, key: keyof InvoiceItem, value: string) => {
+    const handleChange = useCallback((idx: number, key: keyof ExpenseItem, value: string) => {
       // 立即更新本地狀態以保持輸入響應性
       setLocalItems(prev => {
         const newItems = prev.map((item, i) => {
@@ -137,7 +140,7 @@ const InvoiceDetailPage: React.FC = () => {
     // 新增項目
     const addItem = useCallback(() => {
       const newItem = {
-        invoiceItemId: String(Date.now()),
+        expenseItemId: String(Date.now()),
         description: '',
         quantity: '1',
         unitPrice: '0',
@@ -181,7 +184,7 @@ const InvoiceDetailPage: React.FC = () => {
           </thead>
           <tbody>
             {localItems.map((item, idx) => (
-              <tr key={item.invoiceItemId}>
+              <tr key={item.expenseItemId}>
                 <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
                   <input
                     type="text"
@@ -264,29 +267,29 @@ const InvoiceDetailPage: React.FC = () => {
       // 產生 QR code
       const qrCodeDataUrl = await QRCode.toDataURL(window.location.href);
       
-      // 把 InvoiceData 轉換為 Record<string, unknown>
-      const invoice: Record<string, unknown> = {
+      // 把 expenseData 轉換為 Record<string, unknown>
+      const expense: Record<string, unknown> = {
         ...data,
         expenses: Array.isArray(data.expenses) ? data.expenses : []
       };
       
       // 產生 PDF
       await exportPdfToBlob(
-        <InvoicePdfDocument
-          invoice={invoice}
+        <ExpensePdfDocument
+          expense={expense}
           qrCodeDataUrl={qrCodeDataUrl}
         />,
-        `invoice_${data.invoiceName || invoiceId}_${new Date().toISOString().split('T')[0]}.pdf`
+        `expense_${data.expenseName || expenseId}_${new Date().toISOString().split('T')[0]}.pdf`
       );
     } catch (err) {
       console.error('匯出 PDF 失敗:', err);
     }
-  }, [data, invoiceId]);
+  }, [data, expenseId]);
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">發票詳情</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">支出詳情</h1>
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
           onClick={() => setShowExpenseModal(true)}
@@ -294,13 +297,13 @@ const InvoiceDetailPage: React.FC = () => {
           新增支出
         </button>
       </div>
-      <div className="mb-2 text-gray-700 dark:text-gray-300">發票編號：{invoiceId}</div>
+      <div className="mb-2 text-gray-700 dark:text-gray-300">支出編號：{expenseId}</div>
       {loading && <div className="text-gray-500 dark:text-gray-400">載入中...</div>}
       {error && <div className="text-red-500">載入失敗：{error.message}</div>}
       {!loading && data && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{data.invoiceName || '未命名發票'}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{data.expenseName || '未命名支出'}</h1>
             <button
               onClick={handleExportPdf}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
@@ -309,7 +312,7 @@ const InvoiceDetailPage: React.FC = () => {
             </button>
           </div>
           <div className="flex flex-col gap-1">
-            <div><span className="font-medium">發票名稱：</span>{data.invoiceName || '-'}</div>
+            <div><span className="font-medium">支出名稱：</span>{data.expenseName || '-'}</div>
             <div><span className="font-medium">類型：</span>{data.type}</div>
             {data.type === '請款' && (
               <>
@@ -333,7 +336,7 @@ const InvoiceDetailPage: React.FC = () => {
                     </thead>
                     <tbody>
                       {data.items.map(item => (
-                        <tr key={item.invoiceItemId} className="bg-white dark:bg-gray-900">
+                        <tr key={item.expenseItemId} className="bg-white dark:bg-gray-900">
                           <td className="px-2 py-1 border border-gray-300 dark:border-gray-700">{item.description}</td>
                           <td className="px-2 py-1 border border-gray-300 dark:border-gray-700 text-right">{item.quantity}</td>
                           <td className="px-2 py-1 border border-gray-300 dark:border-gray-700 text-right">{item.unitPrice}</td>
@@ -365,8 +368,8 @@ const InvoiceDetailPage: React.FC = () => {
                         <td className="px-2 py-1 border border-gray-300 dark:border-gray-700">{exp.createdAt?.toDate?.().toLocaleString?.() || '-'}</td>
                         <td className="px-2 py-1 border border-gray-300 dark:border-gray-700">
                           <ul className="list-disc pl-4">
-                            {Array.isArray(exp.items) && exp.items.map((item: InvoiceItem) => (
-                              <li key={item.invoiceItemId}>
+                            {Array.isArray(exp.items) && exp.items.map((item: ExpenseItem) => (
+                              <li key={item.expenseItemId}>
                                 {item.description ? item.description : '-'}
                                 （{item.quantity} × {item.unitPrice.toLocaleString()} = {item.amount.toLocaleString()}）
                               </li>
@@ -385,7 +388,7 @@ const InvoiceDetailPage: React.FC = () => {
           </div>
         </div>
       )}
-      {!loading && !data && <div className="text-gray-500 dark:text-gray-400">找不到發票資料。</div>}
+      {!loading && !data && <div className="text-gray-500 dark:text-gray-400">找不到支出資料。</div>}
 
       {/* 新增支出 Modal */}
       {showExpenseModal && (
@@ -444,4 +447,4 @@ const InvoiceDetailPage: React.FC = () => {
   );
 };
 
-export default InvoiceDetailPage;
+export default ExpenseDetailPage;

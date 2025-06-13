@@ -11,7 +11,7 @@ const ArchivedNav = () => {
         { label: "封存估價單", href: "/owner/archive/quotes" },
         { label: "封存合約", href: "/owner/archive/contracts" },
         { label: "封存專案", href: "/owner/archive/projects" },
-        { label: "封存發票", href: "/owner/archive/invoices" },
+        { label: "封存支出", href: "/owner/archive/expenses" },
     ];
     return (
         <nav className="w-64 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
