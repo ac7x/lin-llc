@@ -9,7 +9,6 @@ import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent } from "@/utils/projectProgress";
 import { WorkpackageProgressBar } from "@/utils/workpackageProgressBar";
 import type { Project } from "@/types/project";
-import { collection, setDoc, deleteDoc, doc } from "firebase/firestore";
 
 function Sidebar() {
     const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();

@@ -1,9 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, DateType } from "vis-timeline/standalone";
-import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { SubWorkpackage, Workpackage } from "@/types/project";
@@ -47,8 +44,6 @@ function toDate(dateInput: DateType): Date {
 }
 
 export default function ProjectsPage() {
-    const { user } = useAuth();
-    const router = useRouter();
     const [groups, setGroups] = useState<Group[]>([]);
     const [allItems, setAllItems] = useState<TimelineSubWorkpackage[]>([]);
     const [items, setItems] = useState<TimelineSubWorkpackage[]>([]);
