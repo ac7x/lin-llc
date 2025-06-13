@@ -13,12 +13,25 @@ import { collection } from "firebase/firestore";
 const ContractNav: React.FC = () => {
     const { user } = useAuth();
     const pathname = usePathname();
-    const navs = [
+    const baseNavs = [
         { label: "合約列表", href: "/owner/contracts" },
         { label: "新增合約", href: "/owner/contracts/create" },
     ];
 
-    const [contractsSnapshot] = useCollection(collection(db, 'contracts'));
+    const [contractsSnapshot] = useCollection(collection(db, 'finance', 'default', 'contracts'));
+
+    // 從數據庫獲取合約列表
+    const contractNavs = contractsSnapshot?.docs.map(doc => ({
+        label: doc.data().contractName || `合約 ${doc.id}`,
+        href: `/owner/contracts/${doc.id}`
+    })) || [];
+
+    // 合併基礎導航和動態合約導航，確保合約列表在最上方，新增合約在最下方
+    const navs = [
+        baseNavs[0],  // 合約列表
+        ...contractNavs,  // 動態合約列表
+        baseNavs[1]   // 新增合約
+    ];
 
     return (
         <nav className="space-y-1">
