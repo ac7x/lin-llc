@@ -45,11 +45,12 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": [
       "charts",
+      "env",
       "finance",
       "project",
-      "user",
-      "env"
-      
+      "settings",
+      "user"
+
     ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
