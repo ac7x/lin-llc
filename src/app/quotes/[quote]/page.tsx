@@ -61,12 +61,24 @@ export default function QuoteDetailPage() {
     }, [quoteId, quoteDoc]);
 
     // 權重與單價
-    const getWeight = (price: number) => (quotePrice ? price / quotePrice : 0);
-    const getUnitPrice = (item: QuoteItem) => (item.quoteItemQuantity ? (item.quoteItemPrice / item.quoteItemQuantity).toFixed(2) : "0.00");
+    const getWeight = (price: number) => Number((quotePrice ? price / quotePrice : 0).toFixed(4));
+    const getUnitPrice = (item: QuoteItem) => Number((item.quoteItemQuantity ? (item.quoteItemPrice / item.quoteItemQuantity) : 0).toFixed(2));
 
     // 編輯用操作
     const handleEditItemChange = (idx: number, key: keyof QuoteItem, value: string | number) => {
-        setEditQuoteItems(items => items.map((item, i) => i === idx ? { ...item, [key]: value } : item));
+        setEditQuoteItems(items => items.map((item, i) => {
+            if (i !== idx) return item;
+            const newItem = { ...item, [key]: value };
+            // 權重變動時自動算金額
+            if (key === "quoteItemWeight" && typeof value === "number" && quotePrice > 0) {
+                newItem.quoteItemPrice = Number((value as number * quotePrice).toFixed(2));
+            }
+            // 金額變動時自動算權重
+            if (key === "quoteItemPrice" && typeof value === "number" && quotePrice > 0) {
+                newItem.quoteItemWeight = Number((value as number / quotePrice).toFixed(4));
+            }
+            return newItem;
+        }));
     };
     const addEditItem = () => setEditQuoteItems([...editQuoteItems, { quoteItemId: "", quoteItemPrice: 0, quoteItemQuantity: 1 }]);
     const removeEditItem = (idx: number) => setEditQuoteItems(items => items.filter((_, i) => i !== idx));

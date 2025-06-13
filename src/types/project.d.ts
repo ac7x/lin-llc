@@ -74,6 +74,7 @@ export interface DailyReport {
     createdBy: string;
     createdAt: Timestamp;
     description?: string; // 新增，對應 UI 的工作描述
+    projectProgress?: number; // 新增，記錄當日專案總進度
 }
 
 export interface ActivityLog {
