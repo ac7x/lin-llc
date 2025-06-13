@@ -50,29 +50,42 @@ export const db = getFirestore(app);
 
 let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
 
+// 新增重試機制
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1秒
+
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  retries = MAX_RETRIES
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return retryOperation(operation, retries - 1);
+    }
+    throw error;
+  }
+}
+
 /**
  * 初始化 Firebase App Check
  */
-export function initializeFirebaseAppCheck(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') {
-      resolve();
-      return;
-    }
+export async function initializeFirebaseAppCheck(): Promise<void> {
+  if (typeof window === 'undefined' || appCheck) {
+    return;
+  }
 
-    if (appCheck) {
-      resolve();
-      return;
-    }
-
+  return retryOperation(async () => {
     try {
       appCheck = initializeAppCheck(firebaseApp, {
         provider: new ReCaptchaV3Provider('6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg'),
         isTokenAutoRefreshEnabled: true,
       });
-      resolve();
     } catch (error) {
-      reject(error);
+      console.error('App Check initialization failed:', error);
+      throw error;
     }
   });
 }
@@ -81,13 +94,19 @@ export function initializeFirebaseAppCheck(): Promise<void> {
  * 取得 App Check token
  */
 export async function getAppCheckToken(): Promise<string | null> {
-  if (!appCheck) return null;
-  try {
-    const tokenResult = await getToken(appCheck);
-    return tokenResult.token;
-  } catch {
-    return null;
+  if (!appCheck) {
+    await initializeFirebaseAppCheck();
   }
+  
+  return retryOperation(async () => {
+    try {
+      const tokenResult = await getToken(appCheck!);
+      return tokenResult.token;
+    } catch (error) {
+      console.error('Failed to get App Check token:', error);
+      return null;
+    }
+  });
 }
 
 /**
