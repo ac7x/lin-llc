@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { nanoid } from "nanoid";
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
@@ -31,8 +31,8 @@ export default function ImportContractPage() {
     const [contractQuoteIds, setContractQuoteIds] = useState<Set<string>>(new Set());
 
     // 載入已存在的合約來源ID
-    useMemo(() => {
-        (async () => {
+    useEffect(() => {
+        const loadContractIds = async () => {
             const contractsRef = collection(db, "finance", "default", "contracts");
             const contractsSnap = await getDocs(contractsRef);
             const orderIds = new Set<string>();
@@ -44,7 +44,9 @@ export default function ImportContractPage() {
             });
             setContractOrderIds(orderIds);
             setContractQuoteIds(quoteIds);
-        })();
+        };
+        
+        loadContractIds();
     }, [collection, db, getDocs]);
 
     // 訂單 rows
