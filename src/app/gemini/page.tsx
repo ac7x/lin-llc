@@ -11,8 +11,6 @@ const firebaseApp = initializeApp(firebaseConfig);
 // 初始化 Gemini API
 const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
 
-type ModelType = "gemini-2.0-flash";
-
 interface ChatMessage {
   id: string;
   role: "user" | "gemini";
