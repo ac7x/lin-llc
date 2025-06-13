@@ -51,6 +51,7 @@ export const db = getFirestore(app);
 let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
 let appCheckInitialized = false;
 let appCheckError: Error | null = null;
+let appCheckPromise: Promise<void> | null = null;
 
 /**
  * 初始化 Firebase App Check
@@ -60,6 +61,12 @@ export async function initializeFirebaseAppCheck(): Promise<void> {
     return;
   }
 
+  // 如果已經有正在進行的初始化，返回該 Promise
+  if (appCheckPromise) {
+    return appCheckPromise;
+  }
+
+  // 如果已經初始化完成，直接返回
   if (appCheckInitialized) {
     if (appCheckError) {
       throw appCheckError;
@@ -67,18 +74,25 @@ export async function initializeFirebaseAppCheck(): Promise<void> {
     return;
   }
 
-  try {
-    appCheck = initializeAppCheck(firebaseApp, {
-      provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
-      isTokenAutoRefreshEnabled: true,
-    });
-    appCheckInitialized = true;
-    appCheckError = null;
-  } catch (error) {
-    console.error('App Check 初始化失敗:', error);
-    appCheckError = error as Error;
-    throw error;
-  }
+  // 創建新的初始化 Promise
+  appCheckPromise = (async () => {
+    try {
+      appCheck = initializeAppCheck(firebaseApp, {
+        provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
+        isTokenAutoRefreshEnabled: true,
+      });
+      appCheckInitialized = true;
+      appCheckError = null;
+    } catch (error) {
+      console.error('App Check 初始化失敗:', error);
+      appCheckError = error as Error;
+      throw error;
+    } finally {
+      appCheckPromise = null;
+    }
+  })();
+
+  return appCheckPromise;
 }
 
 /**
@@ -115,10 +129,12 @@ export function isAppCheckInitialized(): boolean {
 export function getAppCheckStatus(): {
   initialized: boolean;
   error: Error | null;
+  isInitializing: boolean;
 } {
   return {
     initialized: appCheckInitialized,
-    error: appCheckError
+    error: appCheckError,
+    isInitializing: !!appCheckPromise
   };
 }
 

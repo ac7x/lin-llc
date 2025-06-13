@@ -71,10 +71,14 @@ export default function GeminiChatPage() {
 
   // 檢查 App Check 狀態
   useEffect(() => {
-    if (!appCheck.initialized) {
+    if (appCheck.isInitializing) {
       setError('系統正在初始化安全驗證，請稍後再試。');
+    } else if (!appCheck.initialized) {
+      setError('安全驗證尚未初始化，請重新整理頁面。');
     } else if (appCheck.error) {
       setError('安全驗證失敗，請重新整理頁面。');
+    } else {
+      setError(null);
     }
   }, [appCheck]);
 
@@ -82,7 +86,7 @@ export default function GeminiChatPage() {
   const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
   useEffect(() => {
-    if (!isAuthenticated || !appCheck.initialized) return;
+    if (!isAuthenticated || !appCheck.initialized || appCheck.isInitializing) return;
 
     // 初始化聊天
     chatRef.current = model.startChat({
@@ -90,7 +94,7 @@ export default function GeminiChatPage() {
         maxOutputTokens: 1000,
       },
     });
-  }, [model, isAuthenticated, appCheck.initialized]);
+  }, [model, isAuthenticated, appCheck.initialized, appCheck.isInitializing]);
 
   // 檢查是否接近底部
   const checkIfNearBottom = () => {

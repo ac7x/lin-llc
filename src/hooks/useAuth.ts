@@ -114,6 +114,7 @@ interface AuthReturn extends FirebaseAuthReturn, UseUserRoleReturn {
   appCheck: {
     initialized: boolean;
     error: Error | null;
+    isInitializing: boolean;
   };
   signIn: (email: string, password: string) => Promise<User>;
   signOut: () => Promise<void>;
@@ -261,7 +262,8 @@ export function useAuth(): AuthReturn {
     // App Check
     appCheck: {
       initialized,
-      error: appCheckError
+      error: appCheckError,
+      isInitializing: false
     },
     signIn,
     signOut
