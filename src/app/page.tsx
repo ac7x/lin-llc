@@ -30,7 +30,7 @@ export default function SignIn() {
   // 新增：若角色為 user 則自動跳轉 /user
   useEffect(() => {
     if (userRole === 'user') {
-      router.replace('/user');
+      router.replace('/owner/profile');
     }
   }, [userRole, router]);
 
