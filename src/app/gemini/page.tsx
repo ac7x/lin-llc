@@ -6,9 +6,13 @@ import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel } from "fir
 import { firebaseConfig } from "@/lib/firebase-config";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { initializeFirebaseAppCheck } from "@/lib/firebase-client";
 
 // 初始化 Firebase
 const firebaseApp = initializeApp(firebaseConfig);
+
+// 初始化 App Check
+initializeFirebaseAppCheck().catch(console.error);
 
 // 初始化 Gemini API
 const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });

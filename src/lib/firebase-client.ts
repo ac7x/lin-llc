@@ -69,13 +69,13 @@ export async function initializeFirebaseAppCheck(): Promise<void> {
 
   try {
     appCheck = initializeAppCheck(firebaseApp, {
-      provider: new ReCaptchaV3Provider('6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg'),
+      provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
       isTokenAutoRefreshEnabled: true,
     });
     appCheckInitialized = true;
     appCheckError = null;
   } catch (error) {
-    console.error('App Check initialization failed:', error);
+    console.error('App Check 初始化失敗:', error);
     appCheckError = error as Error;
     throw error;
   }
@@ -97,7 +97,7 @@ export async function getAppCheckToken(): Promise<string | null> {
     const tokenResult = await getToken(appCheck!);
     return tokenResult.token;
   } catch (error) {
-    console.error('Failed to get App Check token:', error);
+    console.error('取得 App Check token 失敗:', error);
     return null;
   }
 }
