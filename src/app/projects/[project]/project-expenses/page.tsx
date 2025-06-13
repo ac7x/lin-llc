@@ -115,6 +115,18 @@ export default function ProjectExpensesPage() {
         try {
             const now = Timestamp.now();
             const projectData = projectDoc.data();
+            
+            // 確保所有項目都有正確的 workpackageId
+            const validatedItems = newExpense.items.map(item => ({
+                expenseItemId: item.expenseItemId,
+                description: item.description || "",
+                quantity: item.quantity || 0,
+                unitPrice: item.unitPrice || 0,
+                amount: item.amount || 0,
+                workpackageId: item.workpackageId || "",
+                subWorkpackageId: item.subWorkpackageId || ""
+            }));
+
             const expenseData: ExpenseData = {
                 expenseId: editingExpense?.expenseId || nanoid(8),
                 expenseNumber: newExpense.expenseNumber || `EXP-${format(now.toDate(), "yyyyMMdd")}-${nanoid(4)}`,
@@ -125,15 +137,15 @@ export default function ProjectExpensesPage() {
                 clientEmail: projectData?.clientEmail || "",
                 projectId: projectId,
                 type: newExpense.type || "支出",
-                items: newExpense.items || [],
+                items: validatedItems,
                 totalAmount: newExpense.totalAmount || 0,
-                relatedOrderId: newExpense.relatedOrderId,
-                relatedContractId: newExpense.relatedContractId,
+                relatedOrderId: newExpense.relatedOrderId || "",
+                relatedContractId: newExpense.relatedContractId || "",
                 createdAt: editingExpense?.createdAt || now,
                 updatedAt: now,
                 status: newExpense.status || "draft",
-                notes: newExpense.notes,
-                expenseName: projectData?.projectName || "",
+                notes: newExpense.notes || "",
+                expenseName: projectData?.projectName || ""
             };
 
             let updatedExpenses: ExpenseData[];
@@ -148,14 +160,20 @@ export default function ProjectExpensesPage() {
                 setMessage("已新增費用");
             }
 
+            // 先更新本地狀態
             setExpenses(updatedExpenses);
+            
+            // 更新 Firestore
             await updateDoc(doc(db, "projects", projectId), {
                 expenses: updatedExpenses
             });
 
+            // 先關閉模態視窗
             setShowModal(false);
+            // 然後重置表單
             resetForm();
         } catch (error) {
+            console.error("儲存失敗:", error);
             setMessage("儲存失敗: " + (error instanceof Error ? error.message : String(error)));
         } finally {
             setSaving(false);
