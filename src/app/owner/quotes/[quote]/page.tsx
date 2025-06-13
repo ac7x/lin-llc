@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { QuoteItem } from "@/types/finance";
 import { db } from "@/lib/firebase-client";
 import { doc, updateDoc, Timestamp } from "firebase/firestore";
 
 export default function QuoteDetailPage() {
-    const { user } = useAuth();
     const router = useRouter();
     const params = useParams();
     const quoteId = params?.quote as string;

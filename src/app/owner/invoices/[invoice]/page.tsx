@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
 import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
 import QRCode from 'qrcode';
 import { InvoicePdfDocument } from '@/components/pdf/InvoicePdfDocument';
@@ -16,7 +15,6 @@ import { doc, updateDoc, arrayUnion, collection } from 'firebase/firestore';
 const InvoiceDetailPage: React.FC = () => {
   const params = useParams();
   const invoiceId = params?.invoice as string;
-  const { user } = useAuth();
   const [invoiceDoc, loading, error] = useDocument(invoiceId ? doc(db, 'finance', 'default', 'invoices', invoiceId) : undefined);
   const data = invoiceDoc?.exists() ? (invoiceDoc.data() as InvoiceData) : undefined;
 

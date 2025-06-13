@@ -2,16 +2,12 @@
 
 import { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
-import type { InvoiceData } from '@/types/finance';
 
 const InvoiceNav: React.FC = () => {
-    const { user } = useAuth();
-    const router = useRouter();
     const pathname = usePathname();
     const baseNavs = [
         { label: "發票列表", href: "/owner/invoices" },

@@ -5,13 +5,11 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
 
 const ContractNav: React.FC = () => {
-    const { user } = useAuth();
     const pathname = usePathname();
     const baseNavs = [
         { label: "合約列表", href: "/owner/contracts" },

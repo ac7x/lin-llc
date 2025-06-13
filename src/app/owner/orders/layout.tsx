@@ -3,13 +3,11 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
 
 const OrderSideNav: React.FC = () => {
-    const { user } = useAuth();
     const pathname = usePathname();
     const baseNavs = [
         { label: "訂單列表", href: "/owner/orders" },

@@ -373,7 +373,7 @@ export default function OwnerSettingsPage() {
             }
         }
         fetchNavPermissions();
-    }, [setDoc]);
+    }, []);
 
     // 根據搜尋條件過濾權限
     const filteredPermissions = permissions.filter(permission => 
