@@ -211,7 +211,7 @@ export interface ExpenseItem {
     quantity: number; // 項目數量
     unitPrice: number; // 單價
     amount: number; // 總金額
-    workpackageId?: string; // 可選：關聯工作包
+    workpackageId: string; // 關聯工作包 ID
     subWorkpackageId?: string; // 可選：關聯子工作包
 }
 

@@ -193,12 +193,16 @@ export default function WorkpackageDetailPage() {
     const handleSave = async (updates: Partial<Workpackage>) => {
         setSaving(true);
         try {
-            // 這裡不再處理 string 轉換，直接用 Timestamp
+            // 過濾掉 undefined 值
+            const filteredUpdates = Object.fromEntries(
+                Object.entries(updates).filter(([, value]) => value !== undefined)
+            );
+
             const updatedWorkpackages = project.workpackages.map(wp =>
                 wp.id === workpackageId
                     ? {
                         ...wp,
-                        ...updates,
+                        ...filteredUpdates,
                     }
                     : wp
             );

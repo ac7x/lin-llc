@@ -8,7 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { nanoid } from "nanoid";
-import { ExpenseData, ExpenseItem } from "@/types/project";
+import { ExpenseData, ExpenseItem, Workpackage } from "@/types/project";
 
 export default function ProjectExpensesPage() {
     const params = useParams();
@@ -22,7 +22,7 @@ export default function ProjectExpensesPage() {
     const [expenses, setExpenses] = useState<ExpenseData[]>([]);
 
     const [newExpense, setNewExpense] = useState<Partial<ExpenseData>>({
-        expenseNumber: "",
+        expenseNumber: `EXP-${format(new Date(), "yyyyMMdd")}-${nanoid(4)}`,
         expenseDate: Timestamp.now(),
         type: "支出",
         items: [],
@@ -36,6 +36,7 @@ export default function ProjectExpensesPage() {
         quantity: 1,
         unitPrice: 0,
         amount: 0,
+        workpackageId: "",
     });
 
     // 初始化或更新 expenses 陣列
@@ -57,6 +58,11 @@ export default function ProjectExpensesPage() {
             return;
         }
 
+        if (newExpense.type === "支出" && !newExpenseItem.workpackageId) {
+            setMessage("請選擇關聯工作包");
+            return;
+        }
+
         const amount = (newExpenseItem.quantity || 0) * (newExpenseItem.unitPrice || 0);
         const item: ExpenseItem = {
             expenseItemId: nanoid(8),
@@ -64,6 +70,7 @@ export default function ProjectExpensesPage() {
             quantity: newExpenseItem.quantity || 0,
             unitPrice: newExpenseItem.unitPrice || 0,
             amount: amount,
+            workpackageId: newExpenseItem.workpackageId || "",
         };
 
         setNewExpense(prev => ({
@@ -77,6 +84,7 @@ export default function ProjectExpensesPage() {
             quantity: 1,
             unitPrice: 0,
             amount: 0,
+            workpackageId: "",
         });
     };
 
@@ -186,7 +194,7 @@ export default function ProjectExpensesPage() {
 
     const resetForm = () => {
         setNewExpense({
-            expenseNumber: "",
+            expenseNumber: `EXP-${format(new Date(), "yyyyMMdd")}-${nanoid(4)}`,
             expenseDate: Timestamp.now(),
             type: "支出",
             items: [],
@@ -199,6 +207,7 @@ export default function ProjectExpensesPage() {
             quantity: 1,
             unitPrice: 0,
             amount: 0,
+            workpackageId: "",
         });
         setEditingExpense(null);
     };
@@ -335,13 +344,9 @@ export default function ProjectExpensesPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">費用編號</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                        value={newExpense.expenseNumber || ""}
-                                        onChange={e => setNewExpense({ ...newExpense, expenseNumber: e.target.value })}
-                                        required
-                                    />
+                                    <div className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+                                        {newExpense.expenseNumber}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">日期</label>
@@ -379,6 +384,28 @@ export default function ProjectExpensesPage() {
                                     </select>
                                 </div>
                             </div>
+
+                            {newExpense.type === "支出" && (
+                                <div className="mt-4">
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">關聯工作包</label>
+                                    <select
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                        value={newExpenseItem.workpackageId}
+                                        onChange={e => {
+                                            const workpackageId = e.target.value;
+                                            setNewExpenseItem(prev => ({
+                                                ...prev,
+                                                workpackageId
+                                            }));
+                                        }}
+                                    >
+                                        <option value="">請選擇工作包</option>
+                                        {projectDoc.data()?.workpackages?.map((wp: Workpackage) => (
+                                            <option key={wp.id} value={wp.id}>{wp.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                                 <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">支出項目</h3>
