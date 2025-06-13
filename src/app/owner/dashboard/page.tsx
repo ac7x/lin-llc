@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { LineChart, Line } from 'recharts';
 import { Workpackage } from '@/types/project';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 import { db } from '@/lib/firebase-client';
@@ -130,6 +130,71 @@ export default function DashboardPage() {
   // 將 roleCounts 轉為陣列格式供圖表使用
   const roleData = Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count }));
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#2a8f4d', '#8f6b2a'];
+
+  // 專案狀態分布數據
+  const projectStatusData = React.useMemo(() => {
+    if (!projectsSnapshot) return [];
+    const statusCounts = projectsSnapshot.docs.reduce((acc, doc) => {
+      const status = doc.data().status;
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(statusCounts).map(([name, value]) => ({
+      name,
+      value
+    }));
+  }, [projectsSnapshot]);
+
+  // 工作包進度分析數據
+  const workpackageProgressData = React.useMemo(() => {
+    if (!projectsSnapshot) return [];
+    return projectsSnapshot.docs.map(doc => {
+      const workpackages = doc.data().workpackages || [];
+      const avgProgress = workpackages.reduce((sum: number, wp: Workpackage) => sum + (wp.progress || 0), 0) / workpackages.length;
+      return {
+        name: doc.data().projectName,
+        progress: Math.round(avgProgress * 100) / 100
+      };
+    });
+  }, [projectsSnapshot]);
+
+  // 財務趨勢分析數據
+  const financialData = React.useMemo(() => {
+    if (!ordersSnapshot || !quotesSnapshot || !contractsSnapshot) return [];
+    
+    const allDates = new Set<string>();
+    const data: Record<string, { orders: number; quotes: number; contracts: number }> = {};
+
+    // 處理訂單數據
+    ordersSnapshot.docs.forEach(doc => {
+      const date = doc.data().createdAt.toDate().toISOString().split('T')[0];
+      allDates.add(date);
+      if (!data[date]) data[date] = { orders: 0, quotes: 0, contracts: 0 };
+      data[date].orders += doc.data().totalAmount || 0;
+    });
+
+    // 處理估價單數據
+    quotesSnapshot.docs.forEach(doc => {
+      const date = doc.data().createdAt.toDate().toISOString().split('T')[0];
+      allDates.add(date);
+      if (!data[date]) data[date] = { orders: 0, quotes: 0, contracts: 0 };
+      data[date].quotes += doc.data().totalAmount || 0;
+    });
+
+    // 處理合約數據
+    contractsSnapshot.docs.forEach(doc => {
+      const date = doc.data().createdAt.toDate().toISOString().split('T')[0];
+      allDates.add(date);
+      if (!data[date]) data[date] = { orders: 0, quotes: 0, contracts: 0 };
+      data[date].contracts += doc.data().totalAmount || 0;
+    });
+
+    return Array.from(allDates).sort().map(date => ({
+      date,
+      ...data[date]
+    }));
+  }, [ordersSnapshot, quotesSnapshot, contractsSnapshot]);
 
   return (
     <main className="max-w-4xl mx-auto">
@@ -271,6 +336,67 @@ export default function DashboardPage() {
               </LineChart>
             </ResponsiveContainer>
           )}
+        </section>
+
+        {/* 專案狀態分布圖 */}
+        <section className="mt-8 bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案狀態分布</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={projectStatusData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+                label={({ name, value }) => `${name}: ${value}`}
+              >
+                {projectStatusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </section>
+
+        {/* 工作包進度分析圖 */}
+        <section className="mt-8 bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">工作包進度分析</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <RadarChart data={workpackageProgressData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="name" />
+              <PolarRadiusAxis angle={30} domain={[0, 100]} />
+              <Radar
+                name="進度"
+                dataKey="progress"
+                stroke="#8884d8"
+                fill="#8884d8"
+                fillOpacity={0.6}
+              />
+              <Tooltip />
+            </RadarChart>
+          </ResponsiveContainer>
+        </section>
+
+        {/* 財務趨勢分析圖 */}
+        <section className="mt-8 bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">財務趨勢分析</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={financialData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Area type="monotone" dataKey="orders" stackId="1" stroke="#8884d8" fill="#8884d8" />
+              <Area type="monotone" dataKey="quotes" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+              <Area type="monotone" dataKey="contracts" stackId="1" stroke="#ffc658" fill="#ffc658" />
+            </AreaChart>
+          </ResponsiveContainer>
         </section>
       </div>
     </main>
