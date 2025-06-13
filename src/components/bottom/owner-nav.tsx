@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useMemo, useEffect, useState } from 'react';
-import { useUserRole } from '@/hooks/useUserRole';
-import { useFirebase } from '@/hooks/useFirebase';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
     href: string;
@@ -143,8 +142,7 @@ const defaultOwnerNavItems: NavItem[] = [
 
 export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavProps) {
     const pathname = usePathname();
-    const { hasAnyRole, hasMinRole, loading, userRoles } = useUserRole();
-    const { db, doc, getDoc } = useFirebase();
+    const { hasAnyRole, hasMinRole, loading, userRoles, db, doc, getDoc } = useAuth();
     const [navPermissions, setNavPermissions] = useState<NavPermission[]>([]);
 
     // 載入導航權限設定

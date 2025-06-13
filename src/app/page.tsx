@@ -13,26 +13,17 @@ import {
   setDoc,
   signOut,
   useAuth
-} from "@/hooks/useFirebase";
-import { useUserRole } from '@/hooks/useUserRole'
+} from "@/hooks/useAuth";
 
 export default function SignIn() {
-  const { user: authUser, loading, isReady } = useAuth();
+  const { user: authUser, loading, isReady, userRole } = useAuth();
   const [user, setUser] = useState<User | null>(null);
-  const { userRole } = useUserRole();
   const router = useRouter();
 
   useEffect(() => {
     // 當 auth 狀態變更時更新本地狀態
     setUser(authUser);
   }, [authUser]);
-
-  // 新增：若角色為 user 則自動跳轉 /user
-  useEffect(() => {
-    if (userRole === 'user') {
-      router.replace('/owner/profile');
-    }
-  }, [userRole, router]);
 
   // 處理用戶資料儲存到 Firestore
   const saveUserToFirestore = async (user: User): Promise<void> => {
