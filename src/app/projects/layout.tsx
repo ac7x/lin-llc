@@ -89,7 +89,6 @@ function SidebarContent() {
 
     return (
         <>
-            <h2 className="text-xl font-bold mb-6 text-center bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案管理</h2>
             <ul className="space-y-2">
                 {navs.map(nav => (
                     <li key={nav.href}>
@@ -121,7 +120,7 @@ function SidebarContent() {
                                         type="button"
                                         aria-label={openMap[project.id] ? "收合" : "展開"}
                                         onClick={() => toggleOpen(project.id)}
-                                        className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                                        className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors duration-200 flex-shrink-0"
                                     >
                                         {openMap[project.id] ? (
                                             <ChevronDownIcon className="w-5 h-5 text-gray-500" />
@@ -131,20 +130,20 @@ function SidebarContent() {
                                     </button>
                                     <Link
                                         href={`/projects/${project.id}`}
-                                        className={`flex-1 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
+                                        className={`flex-1 min-w-0 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
                                             pathname === `/projects/${project.id}` 
                                             ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
                                             : "text-gray-700 dark:text-gray-300"
                                         }`}
                                     >
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center justify-between gap-2">
                                             <span className="truncate">{project.projectName || project.projectId || project.id}</span>
                                             <ProjectProgressPercent project={project} />
                                         </div>
                                     </Link>
                                     <button
                                         title="封存專案"
-                                        className="ml-2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                                        className="ml-2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0"
                                         onClick={async (e) => {
                                             e.preventDefault();
                                             if (!window.confirm('確定要封存此專案？')) return;
@@ -169,9 +168,9 @@ function SidebarContent() {
                                                         : "text-gray-600 dark:text-gray-400"
                                                     }`}
                                                 >
-                                                    <div className="flex items-center justify-between">
+                                                    <div className="flex items-center justify-between gap-2">
                                                         <span className="truncate">{wp.name}</span>
-                                                        <span className="text-xs text-gray-500">
+                                                        <span className="text-xs text-gray-500 flex-shrink-0">
                                                             {(wp.subWorkpackages?.length || 0) > 0 && `(${wp.subWorkpackages?.length})`}
                                                         </span>
                                                     </div>
