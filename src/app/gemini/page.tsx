@@ -248,10 +248,9 @@ export default function GeminiChatPage() {
           <div className="flex items-center gap-4 mb-4">
             <button
               onClick={handleClear}
-              className="group relative px-4 py-2 bg-gradient-to-r from-red-400/20 to-red-500/20 hover:from-red-400/30 hover:to-red-500/30 text-red-600 dark:text-red-400 font-medium rounded-xl transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:ring-offset-2 backdrop-blur-md border border-red-200/50 dark:border-red-800/50 hover:border-red-300/50 dark:hover:border-red-700/50 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_20px_-3px_rgba(0,0,0,0.15)]"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-              <span className="relative z-10">清除對話記錄</span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-red-400/0 via-red-400/10 to-red-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              清除對話記錄
             </button>
           </div>
 
@@ -315,19 +314,16 @@ export default function GeminiChatPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative px-6 py-2 bg-gradient-to-r from-blue-400/20 to-blue-500/20 hover:from-blue-400/30 hover:to-blue-500/30 text-blue-600 dark:text-blue-400 font-medium rounded-xl transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2 backdrop-blur-md border border-blue-200/50 dark:border-blue-800/50 hover:border-blue-300/50 dark:hover:border-blue-700/50 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_20px_-3px_rgba(0,0,0,0.15)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)]"
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="relative z-10">
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 dark:border-blue-400"></div>
-                      <span>處理中...</span>
-                    </div>
-                  ) : (
-                    "發送訊息"
-                  )}
-                </span>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/0 via-blue-400/10 to-blue-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>處理中...</span>
+                  </div>
+                ) : (
+                  "發送訊息"
+                )}
               </button>
             </div>
             
