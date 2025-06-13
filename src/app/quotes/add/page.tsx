@@ -23,13 +23,13 @@ export default function QuoteAddPage() {
     ]);
 
     // 項目總價
-    const totalQuoteItemPrice = quoteItems.reduce((sum, item) => sum + (item.quoteItemPrice || 0), 0);
+    const totalQuoteItemPrice = Number(quoteItems.reduce((sum, item) => sum + (item.quoteItemPrice || 0), 0).toFixed(2));
 
     // quotePrice 實際顯示值
     const displayQuotePrice = autoSum ? totalQuoteItemPrice : quotePrice;
 
     // 單價自動計算
-    const getUnitPrice = (item: QuoteItem) => (item.quoteItemQuantity ? (item.quoteItemPrice / item.quoteItemQuantity).toFixed(2) : "0.00");
+    const getUnitPrice = (item: QuoteItem) => Number((item.quoteItemQuantity ? (item.quoteItemPrice / item.quoteItemQuantity) : 0).toFixed(2));
 
     // 欄位變動時自動計算
     const handleItemChange = (idx: number, key: keyof QuoteItem, value: string | number) => {
@@ -38,15 +38,11 @@ export default function QuoteAddPage() {
             const newItem = { ...item, [key]: value };
             // 權重變動時自動算金額
             if (key === "quoteItemWeight" && typeof value === "number" && quotePrice > 0) {
-                newItem.quoteItemPrice = Number((value as number) * quotePrice);
+                newItem.quoteItemPrice = Number((value as number * quotePrice).toFixed(2));
             }
             // 金額變動時自動算權重
             if (key === "quoteItemPrice" && typeof value === "number" && quotePrice > 0) {
-                newItem.quoteItemWeight = Number((value as number) / quotePrice);
-            }
-            // 數量變動時自動算單價
-            if (key === "quoteItemQuantity" && typeof value === "number" && value > 0) {
-                // 若有單價欄位可自動算，這裡暫不處理
+                newItem.quoteItemWeight = Number((value as number / quotePrice).toFixed(4));
             }
             return newItem;
         }));

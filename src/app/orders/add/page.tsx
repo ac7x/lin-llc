@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import { useAuth } from '@/hooks/useAuth';
 import { OrderItem } from "@/types/finance";
+import { doc, setDoc, Timestamp } from "firebase/firestore";
 
 export default function OrderAddPage() {
     const router = useRouter();
-    const { db, collection, addDoc, Timestamp } = useAuth();
+    const { db } = useAuth();
     const [clientName, setClientName] = useState("");
     const [clientContact, setClientContact] = useState("");
     const [clientPhone, setClientPhone] = useState("");
@@ -19,19 +20,19 @@ export default function OrderAddPage() {
     ]);
 
     // 項目總價與自動計算
-    const getOrderItemPrice = (quantity: number, unitPrice: number) => quantity * unitPrice;
-    const totalOrderItemPrice = orderItems.reduce((sum, item) => sum + (item.orderItemPrice || 0), 0);
+    const getOrderItemPrice = (quantity: number, unitPrice: number) => Number((quantity * unitPrice).toFixed(2));
+    const totalOrderItemPrice = Number(orderItems.reduce((sum, item) => sum + (item.orderItemPrice || 0), 0).toFixed(2));
     const orderPrice = totalOrderItemPrice;
 
     // 權重與百分比
-    const getWeight = (price: number) => (orderPrice ? price / orderPrice : 0);
+    const getWeight = (price: number) => Number((orderPrice ? price / orderPrice : 0).toFixed(4));
     const getPercent = (price: number) => (orderPrice ? ((price / orderPrice) * 100).toFixed(2) : "0.00");
     
     // 單價與自動計算
-    const getUnitPrice = (item: OrderItem) => item.orderItemPrice / (item.orderItemQuantity || 1);
+    const getUnitPrice = (item: OrderItem) => Number((item.orderItemPrice / (item.orderItemQuantity || 1)).toFixed(2));
     const setUnitPrice = (idx: number, unitPrice: number) => {
         const item = orderItems[idx];
-        handleItemChange(idx, "orderItemPrice", unitPrice * (item.orderItemQuantity || 1));
+        handleItemChange(idx, "orderItemPrice", getOrderItemPrice(item.orderItemQuantity || 1, unitPrice));
     };
 
     // 項目操作
@@ -57,7 +58,7 @@ export default function OrderAddPage() {
         try {
             const orderId = nanoid(5);
             const now = new Date();
-            await addDoc(collection(db, "finance", "default", "orders", orderId), {
+            await setDoc(doc(db, "finance", "default", "orders", orderId), {
                 orderId,
                 orderName,
                 orderPrice,
