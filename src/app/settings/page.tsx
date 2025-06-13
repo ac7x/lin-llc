@@ -35,12 +35,11 @@ export default function OwnerSettingsPage() {
         updatePermissions
     } = usePermissions(user?.uid);
 
-    // 檢查用戶權限
-    useEffect(() => {
-        if (!loading && !isOwner) {
-            router.push('/shared/signin');
-        }
-    }, [loading, isOwner, router]);
+    // 確保所有預設類別都存在
+    const defaultCategories = useMemo(() => 
+        ['專案管理', '工作包管理', '財務管理', '用戶管理', '系統管理', '通知管理'],
+        []
+    );
 
     // 載入現有設定
     useEffect(() => {
@@ -71,22 +70,24 @@ export default function OwnerSettingsPage() {
     );
 
     // 按類別分組權限
-    const groupedPermissions = useMemo(() => 
-        filteredPermissions.reduce((acc, permission) => {
+    const groupedPermissions = useMemo(() => {
+        const groups = filteredPermissions.reduce((acc, permission) => {
             if (!acc[permission.category]) {
                 acc[permission.category] = [];
             }
             acc[permission.category].push(permission);
             return acc;
-        }, {} as Record<string, Permission[]>),
-        [filteredPermissions]
-    );
+        }, {} as Record<string, Permission[]>);
 
-    // 確保所有預設類別都存在
-    const defaultCategories = useMemo(() => 
-        ['專案管理', '工作包管理', '財務管理', '用戶管理', '系統管理', '通知管理'],
-        []
-    );
+        // 確保所有預設類別都存在，即使沒有權限
+        defaultCategories.forEach(category => {
+            if (!groups[category]) {
+                groups[category] = [];
+            }
+        });
+
+        return groups;
+    }, [filteredPermissions, defaultCategories]);
 
     // 切換類別展開狀態
     const toggleCategory = (category: string) => {
@@ -165,6 +166,13 @@ export default function OwnerSettingsPage() {
     useEffect(() => {
         setExpandedCategories(new Set(defaultCategories));
     }, [defaultCategories]);
+
+    // 檢查用戶權限
+    useEffect(() => {
+        if (!loading && !isOwner) {
+            router.push('/shared/signin');
+        }
+    }, [loading, isOwner, router]);
 
     if (loading || permissionsLoading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
     if (!isOwner) return null;

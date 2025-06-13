@@ -29,23 +29,29 @@ export function PermissionCategory({
       </button>
       {isExpanded && (
         <div className="p-4 space-y-2">
-          {permissions.map(permission => (
-            <div key={permission.id} className="flex items-center">
-              <input
-                type="checkbox"
-                id={permission.id}
-                checked={selectedPermissions.includes(permission.id)}
-                onChange={(e) => onPermissionChange(permission.id, e.target.checked)}
-                className="mr-2"
-              />
-              <label htmlFor={permission.id} className="text-sm">
-                {permission.name}
-                <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
-                  ({permission.description})
-                </span>
-              </label>
+          {permissions.length > 0 ? (
+            permissions.map(permission => (
+              <div key={permission.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={permission.id}
+                  checked={selectedPermissions.includes(permission.id)}
+                  onChange={(e) => onPermissionChange(permission.id, e.target.checked)}
+                  className="mr-2"
+                />
+                <label htmlFor={permission.id} className="text-sm">
+                  {permission.name}
+                  <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
+                    ({permission.description})
+                  </span>
+                </label>
+              </div>
+            ))
+          ) : (
+            <div className="text-gray-500 dark:text-gray-400 text-sm italic">
+              此類別目前沒有可用的權限
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>

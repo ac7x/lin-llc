@@ -30,11 +30,21 @@ export const DEFAULT_PERMISSIONS: Permission[] = [
   { id: 'system.edit', name: '編輯系統設定', description: '允許編輯系統設定', category: '系統管理' },
 
   // 通知管理權限
-  { id: 'notification.view', name: '查看通知', description: '允許查看系統通知', category: '通知管理' },
+  { id: 'notification.view', name: '查看通知', description: '允許查看所有系統通知', category: '通知管理' },
   { id: 'notification.create', name: '建立通知', description: '允許建立新的系統通知', category: '通知管理' },
-  { id: 'notification.edit', name: '編輯通知', description: '允許編輯系統通知', category: '通知管理' },
+  { id: 'notification.edit', name: '編輯通知', description: '允許編輯現有系統通知', category: '通知管理' },
   { id: 'notification.delete', name: '刪除通知', description: '允許刪除系統通知', category: '通知管理' },
-  { id: 'notification.settings', name: '通知設定', description: '允許管理通知設定和偏好', category: '通知管理' },
+  { id: 'notification.settings', name: '通知設定', description: '允許管理系統通知設定', category: '通知管理' },
+  { id: 'notification.broadcast', name: '廣播通知', description: '允許發送廣播通知給所有用戶', category: '通知管理' },
+  { id: 'notification.target', name: '定向通知', description: '允許發送通知給特定用戶或群組', category: '通知管理' },
+  { id: 'notification.template', name: '通知模板', description: '允許管理通知模板', category: '通知管理' },
+  { id: 'notification.emergency', name: '緊急通知', description: '允許發送緊急通知', category: '通知管理' },
+  { id: 'notification.schedule', name: '排程通知', description: '允許設定排程通知', category: '通知管理' },
+  { id: 'notification.analytics', name: '通知分析', description: '允許查看通知統計和分析', category: '通知管理' },
+  { id: 'notification.profile', name: '個人通知設定', description: '允許管理個人通知偏好設定', category: '通知管理' },
+  { id: 'notification.send', name: '發送通知', description: '允許訪問發送通知頁面', category: '通知管理' },
+  { id: 'notification.archive', name: '通知封存', description: '允許管理通知封存', category: '通知管理' },
+  { id: 'notification.retention', name: '通知保留', description: '允許設定通知保留期限', category: '通知管理' },
 ];
 
 export const DEFAULT_NAV_PERMISSIONS: NavPermission[] = [
@@ -132,7 +142,11 @@ export const DEFAULT_NAV_PERMISSIONS: NavPermission[] = [
 
 export function getDefaultPermissionsForRole(role: string): string[] {
   const basePermissions = ['project.view', 'workpackage.view'];
-  const notificationBasePermissions = ['notification.view'];
+  const notificationBasePermissions = [
+    'notification.view',
+    'notification.settings',
+    'notification.profile'
+  ];
   
   switch (role) {
     case 'owner':
@@ -142,7 +156,16 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         ...DEFAULT_PERMISSIONS
           .filter(p => !p.id.includes('system.'))
           .map(p => p.id),
-        'notification.settings'
+        'notification.settings',
+        'notification.broadcast',
+        'notification.target',
+        'notification.template',
+        'notification.emergency',
+        'notification.schedule',
+        'notification.analytics',
+        'notification.send',
+        'notification.archive',
+        'notification.retention'
       ];
     case 'finance':
       return [
@@ -150,7 +173,10 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         'finance.view', 
         'finance.create', 
         'finance.edit',
-        ...notificationBasePermissions
+        ...notificationBasePermissions,
+        'notification.target',
+        'notification.schedule',
+        'notification.send'
       ];
     case 'foreman':
       return [
@@ -158,7 +184,10 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         'workpackage.create', 
         'workpackage.edit',
         ...notificationBasePermissions,
-        'notification.create'
+        'notification.create',
+        'notification.target',
+        'notification.emergency',
+        'notification.send'
       ];
     case 'coord':
       return [
@@ -166,14 +195,19 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         'workpackage.create', 
         'workpackage.edit',
         ...notificationBasePermissions,
-        'notification.create'
+        'notification.create',
+        'notification.target',
+        'notification.schedule',
+        'notification.send'
       ];
     case 'safety':
       return [
         ...basePermissions, 
         'workpackage.view',
         ...notificationBasePermissions,
-        'notification.create'
+        'notification.create',
+        'notification.emergency',
+        'notification.send'
       ];
     case 'vendor':
       return [
