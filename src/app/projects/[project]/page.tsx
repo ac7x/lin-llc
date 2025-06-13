@@ -29,6 +29,7 @@ import ProjectCalendarPage from "./project-calendar/page";
 import { TaiwanCityList } from "@/utils/taiwan-city.enum";
 import { Project, Workpackage } from "@/types/project";
 import { useAuth } from '@/hooks/useAuth';
+import ProjectExpensesPage from "./project-expenses/page";
 
 function getWorkpackageProgress(wp: Workpackage): number {
     if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) return 0;
@@ -97,7 +98,7 @@ export default function ProjectDetailPage() {
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
     const [tab, setTab] = useState<
-        "journal" | "materials" | "issues" | "info" | "calendar" | "subworkpackages"
+        "journal" | "materials" | "issues" | "info" | "calendar" | "subworkpackages" | "expenses"
     >("journal");
     const [isEditing, setIsEditing] = useState(false);
 
@@ -423,6 +424,8 @@ export default function ProjectDetailPage() {
                 return <SubWorkpackageSortingPage />;
             case "materials":
                 return <ProjectMaterialsPage />;
+            case "expenses":
+                return <ProjectExpensesPage />;
             default:
                 return null;
         }
@@ -487,6 +490,16 @@ export default function ProjectDetailPage() {
                         onClick={() => setTab("materials")}
                     >
                         材料管理
+                    </button>
+                    <button
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                            tab === "expenses"
+                            ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+                        }`}
+                        onClick={() => setTab("expenses")}
+                    >
+                        費用管理
                     </button>
                     <button
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${

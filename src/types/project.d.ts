@@ -128,6 +128,18 @@ export interface Zone {
     createdAt: Timestamp;
 }
 
+export interface Expense {
+    id: string;
+    description: string;
+    amount: number;
+    date: Timestamp;
+    category: string;
+    createdAt: Timestamp;
+    createdBy: string;
+    updatedAt: Timestamp;
+    updatedBy: string;
+}
+
 export interface Project {
     projectId?: string; // 專案唯一識別碼（可選）
     projectName: string; // 專案名稱
@@ -153,6 +165,7 @@ export interface Project {
     photos?: PhotoRecord[]; // 專案的照片清單（可選）
     materials?: MaterialEntry[]; // 專案的材料清單（可選）
     issues?: IssueRecord[]; // 專案的問題清單（可選）
+    expenses?: Expense[]; // 專案的費用清單（可選）
 }
 
 // ===== Template 型別區 =====
@@ -191,3 +204,35 @@ export type TemplateToSubWorkpackageOptions = {
     estimatedStartDate?: Timestamp;
     estimatedEndDate?: Timestamp;
 };
+
+export interface ExpenseItem {
+    expenseItemId: string; // 項目唯一識別碼
+    description: string; // 項目描述
+    quantity: number; // 項目數量
+    unitPrice: number; // 單價
+    amount: number; // 總金額
+    workpackageId: string; // 關聯工作包 ID
+    subWorkpackageId?: string; // 可選：關聯子工作包
+}
+
+export interface ExpenseData {
+    expenseId: string; // 支出編號
+    expenseNumber: string; // 支出號碼
+    expenseDate: Timestamp; // 支出日期
+    clientName: string; // 客戶名稱
+    clientContact: string; // 客戶聯絡人
+    clientPhone: string; // 客戶電話
+    clientEmail: string; // 客戶 Email
+    projectId: string; // 關聯專案
+    type: '請款' | '支出'; // 支出性質
+    items: ExpenseItem[]; // 支出項目清單
+    totalAmount: number; // 總金額
+    relatedOrderId?: string; // 相關訂單編號（可選）
+    relatedContractId?: string; // 相關合約編號（可選）
+    createdAt: Timestamp; // 建立時間
+    updatedAt: Timestamp; // 更新時間
+    status: 'draft' | 'issued' | 'cancelled'; // 支出狀態
+    notes?: string; // 備註（可選）
+    expenseName?: string; // 支出名稱（對應專案名稱，可選）
+    expenses?: Expense[]; // 支出紀錄（可選）
+}

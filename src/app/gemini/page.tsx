@@ -7,6 +7,7 @@ import { firebaseConfig } from "@/lib/firebase-config";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { initializeFirebaseAppCheck } from "@/lib/firebase-client";
+import Image from "next/image";
 
 // 初始化 Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -274,9 +275,11 @@ export default function GeminiChatPage() {
                         👤
                       </div>
                     ) : (
-                      <img 
+                      <Image 
                         src="/sup.svg" 
                         alt="Gemini" 
+                        width={32}
+                        height={32}
                         className="w-8 h-8"
                       />
                     )}

@@ -9,8 +9,9 @@ import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent } from "@/utils/projectProgress";
 import { WorkpackageProgressBar } from "@/utils/workpackageProgressBar";
 import type { Project } from "@/types/project";
+import { PageLayout, PageContent, Sidebar } from "@/components/layouts/PageLayout";
 
-function Sidebar() {
+function SidebarContent() {
     const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
     const pathname = usePathname();
     const navs = [
@@ -87,28 +88,24 @@ function Sidebar() {
     })) as (Project & { id: string })[] || [];
 
     return (
-        <nav className="w-80 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex flex-col text-black dark:text-gray-100 transition-colors duration-200">
-            <div className="sticky top-0 bg-white dark:bg-gray-900 pb-4 z-10">
-                <h2 className="text-xl font-bold mb-6 text-center bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案管理</h2>
-                <ul className="space-y-2">
-                    {navs.map(nav => (
-                        <li key={nav.href}>
-                            <Link
-                                href={nav.href}
-                                className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
-                                    pathname === nav.href 
-                                    ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
-                                    : "text-gray-700 dark:text-gray-300"
-                                }`}
-                            >
-                                <span className="mr-3">{nav.icon}</span>
-                                {nav.label}
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-
+        <>
+            <ul className="space-y-2">
+                {navs.map(nav => (
+                    <li key={nav.href}>
+                        <Link
+                            href={nav.href}
+                            className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
+                                pathname === nav.href 
+                                ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
+                                : "text-gray-700 dark:text-gray-300"
+                            }`}
+                        >
+                            <span className="mr-3">{nav.icon}</span>
+                            {nav.label}
+                        </Link>
+                    </li>
+                ))}
+            </ul>
             <div className="flex-1 overflow-y-auto mt-4">
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
@@ -123,7 +120,7 @@ function Sidebar() {
                                         type="button"
                                         aria-label={openMap[project.id] ? "收合" : "展開"}
                                         onClick={() => toggleOpen(project.id)}
-                                        className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                                        className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors duration-200 flex-shrink-0"
                                     >
                                         {openMap[project.id] ? (
                                             <ChevronDownIcon className="w-5 h-5 text-gray-500" />
@@ -133,20 +130,20 @@ function Sidebar() {
                                     </button>
                                     <Link
                                         href={`/projects/${project.id}`}
-                                        className={`flex-1 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
+                                        className={`flex-1 min-w-0 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
                                             pathname === `/projects/${project.id}` 
                                             ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
                                             : "text-gray-700 dark:text-gray-300"
                                         }`}
                                     >
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center justify-between gap-2">
                                             <span className="truncate">{project.projectName || project.projectId || project.id}</span>
                                             <ProjectProgressPercent project={project} />
                                         </div>
                                     </Link>
                                     <button
                                         title="封存專案"
-                                        className="ml-2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                                        className="ml-2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0"
                                         onClick={async (e) => {
                                             e.preventDefault();
                                             if (!window.confirm('確定要封存此專案？')) return;
@@ -171,9 +168,9 @@ function Sidebar() {
                                                         : "text-gray-600 dark:text-gray-400"
                                                     }`}
                                                 >
-                                                    <div className="flex items-center justify-between">
+                                                    <div className="flex items-center justify-between gap-2">
                                                         <span className="truncate">{wp.name}</span>
-                                                        <span className="text-xs text-gray-500">
+                                                        <span className="text-xs text-gray-500 flex-shrink-0">
                                                             {(wp.subWorkpackages?.length || 0) > 0 && `(${wp.subWorkpackages?.length})`}
                                                         </span>
                                                     </div>
@@ -276,31 +273,19 @@ function Sidebar() {
                     </div>
                 </div>
             )}
-        </nav>
+        </>
     );
 }
 
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
-    const { loading, isAuthenticated, hasMinRole } = useAuth();
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated || !hasMinRole("admin")) {
-        return null;
-    }
-
     return (
-        <div className="flex bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
-            <Sidebar />
-            <div className="flex-1 p-6 bg-white dark:bg-gray-800 text-black dark:text-gray-100 overflow-auto">
+        <PageLayout withSidebar>
+            <Sidebar>
+                <SidebarContent />
+            </Sidebar>
+            <PageContent>
                 {children}
-            </div>
-        </div>
+            </PageContent>
+        </PageLayout>
     );
 }
