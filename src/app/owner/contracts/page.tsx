@@ -63,7 +63,7 @@ export default function ContractsPage() {
     };
 
     return (
-        <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-neutral-900">
+        <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900">
             <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">合約列表</h1>
             <div className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                 合約可由訂單或估價單產生，來源類型會顯示於下方表格。
@@ -71,20 +71,20 @@ export default function ContractsPage() {
             <div className="mb-4 flex">
                 <input
                     type="text"
-                    className="border rounded px-2 py-1 w-full bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
+                    className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
                     placeholder="搜尋合約名稱"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                 />
             </div>
-            <table className="w-full border text-sm bg-white dark:bg-neutral-900">
+            <table className="w-full border text-sm bg-white dark:bg-gray-900">
                 <thead>
-                    <tr className="bg-gray-100 dark:bg-neutral-800">
-                        <th className="border px-2 py-1">序號</th>
-                        <th className="border px-2 py-1">合約名稱</th>
-                        <th className="border px-2 py-1">來源</th>
-                        <th className="border px-2 py-1">建立日期</th>
-                        <th className="border px-2 py-1">操作</th>
+                    <tr className="bg-gray-100 dark:bg-gray-800">
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">序號</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">合約名稱</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">來源</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">建立日期</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -94,10 +94,10 @@ export default function ContractsPage() {
                         <tr><td colSpan={5} className="text-center text-red-500 py-4">{String(error)}</td></tr>
                     ) : rows.length > 0 ? (
                         rows.map(row => (
-                            <tr key={row.contractId} className="bg-white dark:bg-neutral-900">
-                                <td className="border px-2 py-1 text-center">{row.idx}</td>
-                                <td className="border px-2 py-1">{row.contractName}</td>
-                                <td className="border px-2 py-1">
+                            <tr key={row.contractId} className="bg-white dark:bg-gray-900">
+                                <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{row.idx}</td>
+                                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.contractName}</td>
+                                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
                                     {row.sourceType === "order" ? (
                                         <span className="text-blue-600 dark:text-blue-400">訂單</span>
                                     ) : row.sourceType === "quote" ? (
@@ -106,8 +106,8 @@ export default function ContractsPage() {
                                         "-"
                                     )}
                                 </td>
-                                <td className="border px-2 py-1">{row.createdAt ? row.createdAt.toLocaleDateString() : "-"}</td>
-                                <td className="border px-2 py-1">
+                                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.createdAt ? row.createdAt.toLocaleDateString() : "-"}</td>
+                                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
                                     <Link href={`/owner/contracts/${row.contractId}`} className="text-blue-600 hover:underline dark:text-blue-400 dark:hover:text-blue-300">查看</Link>
                                     <button
                                         className="ml-2 text-indigo-600 hover:underline dark:text-yellow-400 dark:hover:text-yellow-300"

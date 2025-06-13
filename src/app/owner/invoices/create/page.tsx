@@ -81,11 +81,10 @@ const InvoiceCreatePage: React.FC = () => {
   };
 
   return (
-    <main className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">新增發票</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-900 rounded shadow p-6">
+    <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900">
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">新增發票</h1>
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-900 rounded shadow p-6 border border-gray-300 dark:border-gray-700">
         {error && <div className="text-red-500 mb-2">{error}</div>}
-        {/* 已無請款選項，直接顯示表單 */}
         <div>
           <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">
             選擇專案 <span className="text-red-500">*</span>
@@ -112,15 +111,15 @@ const InvoiceCreatePage: React.FC = () => {
               <table className="min-w-full text-sm border mt-2">
                 <thead>
                   <tr className="bg-gray-100 dark:bg-gray-800">
-                    <th className="px-2 py-1 border">工作包名稱</th>
-                    <th className="px-2 py-1 border">預算</th>
+                    <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">工作包名稱</th>
+                    <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">預算</th>
                   </tr>
                 </thead>
                 <tbody>
                   {workpackages.map(wp => (
-                    <tr key={wp.id}>
-                      <td className="px-2 py-1 border">{wp.name}</td>
-                      <td className="px-2 py-1 border text-right">{typeof wp.budget === 'number' ? wp.budget.toLocaleString() : '-'}</td>
+                    <tr key={wp.id} className="bg-white dark:bg-gray-900">
+                      <td className="px-2 py-1 border border-gray-300 dark:border-gray-700">{wp.name}</td>
+                      <td className="px-2 py-1 border border-gray-300 dark:border-gray-700 text-right">{typeof wp.budget === 'number' ? wp.budget.toLocaleString() : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -129,7 +128,7 @@ const InvoiceCreatePage: React.FC = () => {
           </div>
         )}
         <div className="flex justify-end">
-          <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50" disabled={saving || !projectId}>
+          <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50" disabled={saving || !projectId}>
             {saving ? '儲存中...' : '建立發票'}
           </button>
         </div>

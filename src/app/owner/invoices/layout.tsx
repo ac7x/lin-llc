@@ -55,8 +55,10 @@ const InvoiceNav: React.FC = () => {
 export default function InvoiceLayout({ children }: { children: ReactNode }) {
     return (
         <div className="flex">
-            <InvoiceNav />
-            <div className="flex-1 p-4">{children}</div>
+            <div className="w-64 p-4 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700">
+                <InvoiceNav />
+            </div>
+            <div className="flex-1">{children}</div>
         </div>
     );
 }

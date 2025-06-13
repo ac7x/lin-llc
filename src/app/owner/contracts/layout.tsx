@@ -55,8 +55,10 @@ const ContractNav: React.FC = () => {
 export default function ContractLayout({ children }: { children: ReactNode }) {
     return (
         <div className="flex">
-            <ContractNav />
-            <div className="flex-1 p-4">{children}</div>
+            <div className="w-64 p-4 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700">
+                <ContractNav />
+            </div>
+            <div className="flex-1">{children}</div>
         </div>
     );
 }

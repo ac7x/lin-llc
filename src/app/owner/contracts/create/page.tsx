@@ -166,34 +166,34 @@ export default function ImportContractPage() {
     const rows = tab === "order" ? orderRows : quoteRows;
 
     return (
-        <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded shadow">
-            <h1 className="text-2xl font-bold mb-6">從訂單/估價單建立合約</h1>
-            <div className="flex mb-4 border-b">
+        <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900">
+            <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">從訂單/估價單建立合約</h1>
+            <div className="flex mb-4 border-b border-gray-300 dark:border-gray-700">
                 {tabButton("order", "訂單")}
                 {tabButton("quote", "估價單")}
             </div>
-            {message && <div className="mb-4 text-green-600">{message}</div>}
-            <table className="w-full border text-sm bg-white dark:bg-gray-900 text-black dark:text-gray-100">
+            {message && <div className="mb-4 text-green-600 dark:text-green-400">{message}</div>}
+            <table className="w-full border text-sm bg-white dark:bg-gray-900">
                 <thead>
                     <tr className="bg-gray-100 dark:bg-gray-800">
-                        <th className="border px-2 py-1">序號</th>
-                        <th className="border px-2 py-1">{tab === "order" ? "訂單名稱" : "估價單名稱"}</th>
-                        <th className="border px-2 py-1">建立日期</th>
-                        <th className="border px-2 py-1">操作</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">序號</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">{tab === "order" ? "訂單名稱" : "估價單名稱"}</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">建立日期</th>
+                        <th className="border px-2 py-1 border-gray-300 dark:border-gray-700">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     {rows.length === 0 ? (
-                        <tr><td colSpan={4} className="text-center text-gray-400 py-4">尚無可建立合約的{tab === "order" ? "訂單" : "估價單"}</td></tr>
+                        <tr><td colSpan={4} className="text-center text-gray-400 dark:text-gray-500 py-4">尚無可建立合約的{tab === "order" ? "訂單" : "估價單"}</td></tr>
                     ) : (
                         rows.map(row => (
-                            <tr key={row.id}>
-                                <td className="border px-2 py-1 text-center">{row.idx}</td>
-                                <td className="border px-2 py-1">{row.name}</td>
-                                <td className="border px-2 py-1">{row.createdAt ? row.createdAt.toLocaleDateString() : '-'}</td>
-                                <td className="border px-2 py-1">
+                            <tr key={row.id} className="bg-white dark:bg-gray-900">
+                                <td className="border px-2 py-1 text-center border-gray-300 dark:border-gray-700">{row.idx}</td>
+                                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.name}</td>
+                                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">{row.createdAt ? row.createdAt.toLocaleDateString() : '-'}</td>
+                                <td className="border px-2 py-1 border-gray-300 dark:border-gray-700">
                                     <button
-                                        className="bg-blue-500 text-white px-3 py-1 rounded disabled:opacity-50"
+                                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50"
                                         disabled={!!importingId}
                                         onClick={() => handleImportContract(row)}
                                     >

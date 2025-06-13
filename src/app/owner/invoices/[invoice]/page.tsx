@@ -286,11 +286,11 @@ const InvoiceDetailPage: React.FC = () => {
   }, [data, invoiceId]);
 
   return (
-    <main className="p-6 bg-white dark:bg-gray-900 min-h-screen">
+    <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">發票詳情</h1>
         <button
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
           onClick={() => setShowExpenseModal(true)}
         >
           新增支出
@@ -305,7 +305,7 @@ const InvoiceDetailPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{data.invoiceName || '未命名發票'}</h1>
             <button
               onClick={handleExportPdf}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
             >
               匯出 PDF
             </button>
@@ -327,19 +327,19 @@ const InvoiceDetailPage: React.FC = () => {
                   <table className="min-w-full text-sm border mt-2">
                     <thead>
                       <tr className="bg-gray-100 dark:bg-gray-800">
-                        <th className="px-2 py-1 border">描述</th>
-                        <th className="px-2 py-1 border">數量</th>
-                        <th className="px-2 py-1 border">單價</th>
-                        <th className="px-2 py-1 border">金額</th>
+                        <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">描述</th>
+                        <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">數量</th>
+                        <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">單價</th>
+                        <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">金額</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.items.map(item => (
-                        <tr key={item.invoiceItemId}>
-                          <td className="px-2 py-1 border">{item.description}</td>
-                          <td className="px-2 py-1 border text-right">{item.quantity}</td>
-                          <td className="px-2 py-1 border text-right">{item.unitPrice}</td>
-                          <td className="px-2 py-1 border text-right">{item.amount}</td>
+                        <tr key={item.invoiceItemId} className="bg-white dark:bg-gray-900">
+                          <td className="px-2 py-1 border border-gray-300 dark:border-gray-700">{item.description}</td>
+                          <td className="px-2 py-1 border border-gray-300 dark:border-gray-700 text-right">{item.quantity}</td>
+                          <td className="px-2 py-1 border border-gray-300 dark:border-gray-700 text-right">{item.unitPrice}</td>
+                          <td className="px-2 py-1 border border-gray-300 dark:border-gray-700 text-right">{item.amount}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -353,19 +353,19 @@ const InvoiceDetailPage: React.FC = () => {
                 <table className="min-w-full text-sm border mt-2">
                   <thead>
                     <tr className="bg-gray-100 dark:bg-gray-800">
-                      <th className="px-2 py-1 border">支出名稱</th>
-                      <th className="px-2 py-1 border">金額</th>
-                      <th className="px-2 py-1 border">建立時間</th>
-                      <th className="px-2 py-1 border">項目明細</th>
+                      <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">支出名稱</th>
+                      <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">金額</th>
+                      <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">建立時間</th>
+                      <th className="px-2 py-1 border border-gray-300 dark:border-gray-700">項目明細</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.expenses.map((exp: Expense) => (
-                      <tr key={exp.expenseId}>
-                        <td className="px-2 py-1 border">{exp.expenseName}</td>
-                        <td className="px-2 py-1 border text-right">{typeof exp.amount === 'number' ? exp.amount.toLocaleString() : '-'}</td>
-                        <td className="px-2 py-1 border">{exp.createdAt?.toDate?.().toLocaleString?.() || '-'}</td>
-                        <td className="px-2 py-1 border">
+                      <tr key={exp.expenseId} className="bg-white dark:bg-gray-900">
+                        <td className="px-2 py-1 border border-gray-300 dark:border-gray-700">{exp.expenseName}</td>
+                        <td className="px-2 py-1 border border-gray-300 dark:border-gray-700 text-right">{typeof exp.amount === 'number' ? exp.amount.toLocaleString() : '-'}</td>
+                        <td className="px-2 py-1 border border-gray-300 dark:border-gray-700">{exp.createdAt?.toDate?.().toLocaleString?.() || '-'}</td>
+                        <td className="px-2 py-1 border border-gray-300 dark:border-gray-700">
                           <ul className="list-disc pl-4">
                             {Array.isArray(exp.items) && exp.items.map((item: InvoiceItem) => (
                               <li key={item.invoiceItemId}>
@@ -392,7 +392,7 @@ const InvoiceDetailPage: React.FC = () => {
       {/* 新增支出 Modal */}
       {showExpenseModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-lg relative">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-lg relative border border-gray-300 dark:border-gray-700">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
               onClick={() => setShowExpenseModal(false)}
@@ -400,10 +400,9 @@ const InvoiceDetailPage: React.FC = () => {
             >
               ×
             </button>
-            <h2 className="text-xl font-bold mb-4">新增支出</h2>
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">新增支出</h2>
             <form onSubmit={handleExpenseSubmit} className="space-y-4">
               {expenseError && <div className="text-red-500 mb-2">{expenseError}</div>}
-              {/* 新增：支出應用的工作包選單 */}
               <div>
                 <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">支出應用工作包 <span className="text-red-500">*</span></label>
                 <select
@@ -424,7 +423,6 @@ const InvoiceDetailPage: React.FC = () => {
                 <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">支出名稱 <span className="text-red-500">*</span></label>
                 <input type="text" className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700" value={expenseName} onChange={e => setExpenseName(e.target.value)} required />
               </div>
-              {/* 移除可編輯的支出金額欄位，改為顯示自動加總 */}
               <div>
                 <label className="block font-medium mb-1 text-gray-900 dark:text-gray-100">支出金額 <span className="text-red-500">*</span></label>
                 <div className="w-full border rounded px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700">
@@ -436,7 +434,7 @@ const InvoiceDetailPage: React.FC = () => {
                 <ExpenseItemsEditor items={expenseItems} setItems={setExpenseItems} />
               </div>
               <div className="flex justify-end">
-                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50" disabled={saving || !expenseName || expenseAmount <= 0 || expenseItems.length === 0 || !expenseWorkpackageId}>
+                <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50" disabled={saving || !expenseName || expenseAmount <= 0 || expenseItems.length === 0 || !expenseWorkpackageId}>
                   {saving ? '儲存中...' : '建立支出'}
                 </button>
               </div>

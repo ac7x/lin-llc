@@ -8,6 +8,7 @@ import { db } from "@/lib/firebase-client";
 import { doc, collection, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { Template, SubWorkpackageTemplateItem } from "@/types/project";
 import { nanoid } from "nanoid";
+import { Timestamp } from 'firebase/firestore';
 
 export default function TemplatesAdminPage() {
   const { user } = useAuth();
@@ -57,6 +58,10 @@ export default function TemplatesAdminPage() {
 
   const handleSaveTemplate = async () => {
     if (!newTemplate.name || templateItems.length === 0 || saving) return;
+    if (!user) {
+      setMsg("請先登入");
+      return;
+    }
     setSaving(true);
     try {
       const now = Timestamp.now();
