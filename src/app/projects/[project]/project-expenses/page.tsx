@@ -8,7 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { nanoid } from "nanoid";
-import { Expense } from "@/types/project";
+import { ExpenseData, ExpenseItem } from "@/types/finance";
 
 export default function ProjectExpensesPage() {
     const params = useParams();
@@ -16,21 +16,27 @@ export default function ProjectExpensesPage() {
     const { db, doc, updateDoc, user } = useAuth();
     const [projectDoc, loading] = useDocument(projectId ? doc(db, "projects", projectId) : null);
     const [showModal, setShowModal] = useState(false);
-    const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+    const [editingExpense, setEditingExpense] = useState<ExpenseData | null>(null);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [expenses, setExpenses] = useState<ExpenseData[]>([]);
 
-    const [newExpense, setNewExpense] = useState({
-        amount: 0,
-        description: "",
-        category: "材料",
-        date: new Date(),
+    const [newExpense, setNewExpense] = useState<Partial<ExpenseData>>({
+        expenseNumber: "",
+        expenseDate: Timestamp.now(),
+        type: "支出",
+        items: [],
+        totalAmount: 0,
+        status: "draft",
+        notes: "",
     });
 
-    const categories = [
-        "材料", "設備", "人工", "運輸", "其他"
-    ];
+    const [newExpenseItem, setNewExpenseItem] = useState<Partial<ExpenseItem>>({
+        description: "",
+        quantity: 1,
+        unitPrice: 0,
+        amount: 0,
+    });
 
     // 初始化或更新 expenses 陣列
     useEffect(() => {
@@ -42,8 +48,49 @@ export default function ProjectExpensesPage() {
     }, [projectDoc]);
 
     const totalAmount = useMemo(() => {
-        return expenses.reduce((sum, expense) => sum + expense.amount, 0);
+        return expenses.reduce((sum, expense) => sum + expense.totalAmount, 0);
     }, [expenses]);
+
+    const handleAddExpenseItem = () => {
+        if (!newExpenseItem.description || newExpenseItem.quantity === 0 || newExpenseItem.unitPrice === 0) {
+            setMessage("請填寫完整的項目資訊");
+            return;
+        }
+
+        const amount = (newExpenseItem.quantity || 0) * (newExpenseItem.unitPrice || 0);
+        const item: ExpenseItem = {
+            expenseItemId: nanoid(8),
+            description: newExpenseItem.description || "",
+            quantity: newExpenseItem.quantity || 0,
+            unitPrice: newExpenseItem.unitPrice || 0,
+            amount: amount,
+        };
+
+        setNewExpense(prev => ({
+            ...prev,
+            items: [...(prev.items || []), item],
+            totalAmount: (prev.totalAmount || 0) + amount,
+        }));
+
+        setNewExpenseItem({
+            description: "",
+            quantity: 1,
+            unitPrice: 0,
+            amount: 0,
+        });
+    };
+
+    const handleRemoveExpenseItem = (itemId: string) => {
+        setNewExpense(prev => {
+            const items = prev.items || [];
+            const itemToRemove = items.find(item => item.expenseItemId === itemId);
+            return {
+                ...prev,
+                items: items.filter(item => item.expenseItemId !== itemId),
+                totalAmount: (prev.totalAmount || 0) - (itemToRemove?.amount || 0),
+            };
+        });
+    };
 
     const handleSaveExpense = async () => {
         if (!user || !projectDoc?.data() || !projectId) {
@@ -51,39 +98,49 @@ export default function ProjectExpensesPage() {
             return;
         }
 
+        if (!newExpense.items || newExpense.items.length === 0) {
+            setMessage("請至少新增一個支出項目");
+            return;
+        }
+
         setSaving(true);
         try {
             const now = Timestamp.now();
-            const expenseData: Expense = {
-                id: editingExpense?.id || nanoid(8),
-                amount: newExpense.amount,
-                description: newExpense.description,
-                category: newExpense.category,
-                date: Timestamp.fromDate(newExpense.date),
-                createdAt: now,
-                createdBy: user.uid,
+            const projectData = projectDoc.data();
+            const expenseData: ExpenseData = {
+                expenseId: editingExpense?.expenseId || nanoid(8),
+                expenseNumber: newExpense.expenseNumber || `EXP-${format(now.toDate(), "yyyyMMdd")}-${nanoid(4)}`,
+                expenseDate: newExpense.expenseDate || now,
+                clientName: projectData?.clientName || "",
+                clientContact: projectData?.clientContact || "",
+                clientPhone: projectData?.clientPhone || "",
+                clientEmail: projectData?.clientEmail || "",
+                projectId: projectId,
+                type: newExpense.type || "支出",
+                items: newExpense.items || [],
+                totalAmount: newExpense.totalAmount || 0,
+                relatedOrderId: newExpense.relatedOrderId,
+                relatedContractId: newExpense.relatedContractId,
+                createdAt: editingExpense?.createdAt || now,
                 updatedAt: now,
-                updatedBy: user.uid,
+                status: newExpense.status || "draft",
+                notes: newExpense.notes,
+                expenseName: projectData?.projectName || "",
             };
 
-            let updatedExpenses: Expense[];
+            let updatedExpenses: ExpenseData[];
 
             if (editingExpense) {
-                // 更新現有費用
-                updatedExpenses = expenses.map((exp: Expense) => 
-                    exp.id === editingExpense.id ? expenseData : exp
+                updatedExpenses = expenses.map((exp: ExpenseData) => 
+                    exp.expenseId === editingExpense.expenseId ? expenseData : exp
                 );
                 setMessage("已更新費用");
             } else {
-                // 新增費用
                 updatedExpenses = [...expenses, expenseData];
                 setMessage("已新增費用");
             }
 
-            // 更新本地狀態
             setExpenses(updatedExpenses);
-
-            // 更新 Firestore
             await updateDoc(doc(db, "projects", projectId), {
                 expenses: updatedExpenses
             });
@@ -100,39 +157,48 @@ export default function ProjectExpensesPage() {
     const handleDeleteExpense = async (expenseId: string) => {
         if (!confirm("確定要刪除此費用？") || !projectDoc?.data() || !projectId) return;
         try {
-            const updatedExpenses = expenses.filter((exp: Expense) => exp.id !== expenseId);
-            
-            // 更新本地狀態
+            const updatedExpenses = expenses.filter((exp: ExpenseData) => exp.expenseId !== expenseId);
             setExpenses(updatedExpenses);
-            
-            // 更新 Firestore
             await updateDoc(doc(db, "projects", projectId), {
                 expenses: updatedExpenses
             });
-            
             setMessage("已刪除費用");
         } catch (error) {
             setMessage("刪除失敗: " + (error instanceof Error ? error.message : String(error)));
         }
     };
 
-    const handleEditExpense = (expense: Expense) => {
+    const handleEditExpense = (expense: ExpenseData) => {
         setEditingExpense(expense);
         setNewExpense({
-            amount: expense.amount,
-            description: expense.description,
-            category: expense.category,
-            date: expense.date.toDate(),
+            expenseNumber: expense.expenseNumber,
+            expenseDate: expense.expenseDate,
+            type: expense.type,
+            items: expense.items,
+            totalAmount: expense.totalAmount,
+            relatedOrderId: expense.relatedOrderId,
+            relatedContractId: expense.relatedContractId,
+            status: expense.status,
+            notes: expense.notes,
         });
         setShowModal(true);
     };
 
     const resetForm = () => {
         setNewExpense({
-            amount: 0,
+            expenseNumber: "",
+            expenseDate: Timestamp.now(),
+            type: "支出",
+            items: [],
+            totalAmount: 0,
+            status: "draft",
+            notes: "",
+        });
+        setNewExpenseItem({
             description: "",
-            category: "材料",
-            date: new Date(),
+            quantity: 1,
+            unitPrice: 0,
+            amount: 0,
         });
         setEditingExpense(null);
     };
@@ -198,9 +264,10 @@ export default function ProjectExpensesPage() {
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="bg-gray-50 dark:bg-gray-900">
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">費用編號</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">日期</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">類別</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">描述</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">類型</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">狀態</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">金額</th>
                             <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">操作</th>
                         </tr>
@@ -208,7 +275,7 @@ export default function ProjectExpensesPage() {
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {expenses.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                     <div className="flex flex-col items-center justify-center">
                                         <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -219,14 +286,15 @@ export default function ProjectExpensesPage() {
                             </tr>
                         ) : (
                             expenses.map(expense => (
-                                <tr key={expense.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200">
+                                <tr key={expense.expenseId} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200">
+                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{expense.expenseNumber}</td>
                                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                                        {format(expense.date.toDate(), "yyyy-MM-dd", { locale: zhTW })}
+                                        {expense.expenseDate ? format(expense.expenseDate.toDate(), "yyyy-MM-dd", { locale: zhTW }) : "-"}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{expense.category}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{expense.description}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{expense.type}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{expense.status}</td>
                                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                                        NT$ {expense.amount.toLocaleString()}
+                                        NT$ {expense.totalAmount.toLocaleString()}
                                     </td>
                                     <td className="px-4 py-3 text-sm">
                                         <div className="flex gap-2">
@@ -241,7 +309,7 @@ export default function ProjectExpensesPage() {
                                             </button>
                                             <button
                                                 className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
-                                                onClick={() => handleDeleteExpense(expense.id)}
+                                                onClick={() => handleDeleteExpense(expense.expenseId)}
                                                 title="刪除"
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,54 +327,149 @@ export default function ProjectExpensesPage() {
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl">
                         <h2 className="text-xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
                             {editingExpense ? "編輯費用" : "新增費用"}
                         </h2>
                         <form onSubmit={(e) => { e.preventDefault(); handleSaveExpense(); }} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">費用編號</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                        value={newExpense.expenseNumber || ""}
+                                        onChange={e => setNewExpense({ ...newExpense, expenseNumber: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">日期</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                        value={newExpense.expenseDate ? format(newExpense.expenseDate.toDate(), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
+                                        onChange={e => setNewExpense({ ...newExpense, expenseDate: Timestamp.fromDate(new Date(e.target.value)) })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">類型</label>
+                                    <select
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                        value={newExpense.type || "支出"}
+                                        onChange={e => setNewExpense({ ...newExpense, type: e.target.value as "請款" | "支出" })}
+                                        required
+                                    >
+                                        <option value="支出">支出</option>
+                                        <option value="請款">請款</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">狀態</label>
+                                    <select
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                        value={newExpense.status || "draft"}
+                                        onChange={e => setNewExpense({ ...newExpense, status: e.target.value as "draft" | "issued" | "cancelled" })}
+                                        required
+                                    >
+                                        <option value="draft">草稿</option>
+                                        <option value="issued">已發行</option>
+                                        <option value="cancelled">已取消</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">支出項目</h3>
+                                <div className="space-y-4">
+                                    {newExpense.items?.map((item, index) => (
+                                        <div key={item.expenseItemId} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                            <div className="flex-1">
+                                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.description}</div>
+                                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                    數量: {item.quantity} × NT$ {item.unitPrice.toLocaleString()} = NT$ {item.amount.toLocaleString()}
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="p-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                                onClick={() => handleRemoveExpenseItem(item.expenseItemId)}
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">描述</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                                value={newExpenseItem.description || ""}
+                                                onChange={e => setNewExpenseItem({ ...newExpenseItem, description: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">數量</label>
+                                            <input
+                                                type="number"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                                value={newExpenseItem.quantity || 0}
+                                                onChange={e => {
+                                                    const quantity = Number(e.target.value);
+                                                    setNewExpenseItem({
+                                                        ...newExpenseItem,
+                                                        quantity,
+                                                        amount: quantity * (newExpenseItem.unitPrice || 0)
+                                                    });
+                                                }}
+                                                min="0"
+                                                step="1"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">單價</label>
+                                            <input
+                                                type="number"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                                value={newExpenseItem.unitPrice || 0}
+                                                onChange={e => {
+                                                    const unitPrice = Number(e.target.value);
+                                                    setNewExpenseItem({
+                                                        ...newExpenseItem,
+                                                        unitPrice,
+                                                        amount: (newExpenseItem.quantity || 0) * unitPrice
+                                                    });
+                                                }}
+                                                min="0"
+                                                step="0.01"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+                                        onClick={handleAddExpenseItem}
+                                    >
+                                        新增項目
+                                    </button>
+                                </div>
+                            </div>
+
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">日期</label>
-                                <input
-                                    type="date"
+                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">備註</label>
+                                <textarea
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                    value={format(newExpense.date, "yyyy-MM-dd")}
-                                    onChange={e => setNewExpense({ ...newExpense, date: new Date(e.target.value) })}
-                                    required
+                                    value={newExpense.notes || ""}
+                                    onChange={e => setNewExpense({ ...newExpense, notes: e.target.value })}
+                                    rows={3}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">類別</label>
-                                <select
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                    value={newExpense.category}
-                                    onChange={e => setNewExpense({ ...newExpense, category: e.target.value })}
-                                    required
-                                >
-                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">描述</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                    value={newExpense.description}
-                                    onChange={e => setNewExpense({ ...newExpense, description: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">金額</label>
-                                <input
-                                    type="number"
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                    value={newExpense.amount}
-                                    onChange={e => setNewExpense({ ...newExpense, amount: Number(e.target.value) })}
-                                    required
-                                    min="0"
-                                    step="0.01"
-                                />
-                            </div>
+
                             <div className="flex justify-end gap-3 pt-4">
                                 <button
                                     type="button"
