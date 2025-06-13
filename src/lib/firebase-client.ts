@@ -49,6 +49,8 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
+let appCheckInitialized = false;
+let appCheckError: Error | null = null;
 
 // 新增重試機制
 const MAX_RETRIES = 3;
@@ -73,7 +75,14 @@ async function retryOperation<T>(
  * 初始化 Firebase App Check
  */
 export async function initializeFirebaseAppCheck(): Promise<void> {
-  if (typeof window === 'undefined' || appCheck) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (appCheckInitialized) {
+    if (appCheckError) {
+      throw appCheckError;
+    }
     return;
   }
 
@@ -83,8 +92,11 @@ export async function initializeFirebaseAppCheck(): Promise<void> {
         provider: new ReCaptchaV3Provider('6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg'),
         isTokenAutoRefreshEnabled: true,
       });
+      appCheckInitialized = true;
+      appCheckError = null;
     } catch (error) {
       console.error('App Check initialization failed:', error);
+      appCheckError = error as Error;
       throw error;
     }
   });
@@ -94,8 +106,12 @@ export async function initializeFirebaseAppCheck(): Promise<void> {
  * 取得 App Check token
  */
 export async function getAppCheckToken(): Promise<string | null> {
-  if (!appCheck) {
+  if (!appCheckInitialized) {
     await initializeFirebaseAppCheck();
+  }
+  
+  if (appCheckError) {
+    throw appCheckError;
   }
   
   return retryOperation(async () => {
@@ -113,7 +129,20 @@ export async function getAppCheckToken(): Promise<string | null> {
  * 檢查 App Check 是否已初始化
  */
 export function isAppCheckInitialized(): boolean {
-  return appCheck !== null;
+  return appCheckInitialized && !appCheckError;
+}
+
+/**
+ * 取得 App Check 狀態
+ */
+export function getAppCheckStatus(): {
+  initialized: boolean;
+  error: Error | null;
+} {
+  return {
+    initialized: appCheckInitialized,
+    error: appCheckError
+  };
 }
 
 // 更新：auth 狀態管理型別與處理器，確保 User 型別已導入

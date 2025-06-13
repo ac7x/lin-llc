@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, FormEvent, ChangeEvent } from "react";
 import { initializeApp } from "firebase/app";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel } from "firebase/ai";
 import { firebaseConfig } from "@/lib/firebase-config";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 // 初始化 Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -43,6 +45,8 @@ async function fileToGenerativePart(file: File) {
 }
 
 export default function GeminiChatPage() {
+  const router = useRouter();
+  const { user, loading: authLoading, isAuthenticated, appCheck } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -52,17 +56,35 @@ export default function GeminiChatPage() {
   const [error, setError] = useState<string | null>(null);
   const chatRef = useRef<ReturnType<GenerativeModel['startChat']> | null>(null);
 
+  // 檢查認證狀態
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  // 檢查 App Check 狀態
+  useEffect(() => {
+    if (!appCheck.initialized) {
+      setError('系統正在初始化安全驗證，請稍後再試。');
+    } else if (appCheck.error) {
+      setError('安全驗證失敗，請重新整理頁面。');
+    }
+  }, [appCheck]);
+
   // 獲取模型實例
   const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
   useEffect(() => {
+    if (!isAuthenticated || !appCheck.initialized) return;
+
     // 初始化聊天
     chatRef.current = model.startChat({
       generationConfig: {
         maxOutputTokens: 1000,
       },
     });
-  }, [model]);
+  }, [model, isAuthenticated, appCheck.initialized]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -157,10 +179,29 @@ export default function GeminiChatPage() {
     });
   };
 
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
-    <main className="max-w-4xl mx-auto h-screen flex flex-col">
+    <main className="max-w-4xl mx-auto h-screen flex flex-col pb-16">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex-1 flex flex-col">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">Gemini 智慧助手</h1>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">
+          Gemini 智慧助手
+          {user?.email && (
+            <span className="text-sm text-gray-500 ml-2">
+              ({user.email})
+            </span>
+          )}
+        </h1>
 
         <div className="flex-1 flex flex-col">
           <div className="flex items-center gap-4 mb-4">
