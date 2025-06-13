@@ -101,7 +101,7 @@ export default function ProjectsPage() {
             return i;
         }));
         return true;
-    }, [items, db]);
+    }, [items]);
 
     useEffect(() => {
         (async () => {

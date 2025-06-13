@@ -9,7 +9,6 @@ import { db } from "@/lib/firebase-client";
 import { doc, updateDoc, Timestamp } from "firebase/firestore";
 
 export default function QuoteDetailPage() {
-    const { user } = useAuth();
     const router = useRouter();
     const params = useParams();
     const quoteId = params?.quote as string;

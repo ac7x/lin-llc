@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { Timestamp } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { nanoid } from "nanoid";

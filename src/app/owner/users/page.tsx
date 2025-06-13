@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useForm } from "react-hook-form";
@@ -27,8 +26,6 @@ const RoleSelect = ({ value, onChange, className = "" }: { value: string; onChan
 );
 
 export default function AdminUsersPage() {
-  const { user } = useAuth();
-  const router = useRouter();
   const usersCollection = collection(db, "users");
   const [formError, setFormError] = useState<string | null>(null);
   const { register, handleSubmit, reset } = useForm<{

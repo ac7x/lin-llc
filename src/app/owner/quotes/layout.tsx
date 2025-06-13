@@ -10,7 +10,6 @@ import { collection } from "firebase/firestore";
 import { useEffect } from "react";
 
 const QuoteSideNav: React.FC = () => {
-    const { user } = useAuth();
     const pathname = usePathname();
     const baseNavs = [
         { label: "報價單列表", href: "/owner/quotes" },
@@ -52,7 +51,7 @@ const QuoteSideNav: React.FC = () => {
 };
 
 export default function QuotesLayout({ children }: { children: ReactNode }) {
-    const { user, loading, isAuthenticated, hasMinRole } = useAuth();
+    const { loading, isAuthenticated, hasMinRole } = useAuth();
     const router = useRouter();
 
     useEffect(() => {

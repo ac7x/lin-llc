@@ -7,7 +7,6 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 import type { AppUser } from '@/types/user';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 import {
-  subscribeToAuthState,
   initializeFirebaseAppCheck,
   auth,
   signOut,

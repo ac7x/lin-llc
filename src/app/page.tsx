@@ -16,7 +16,7 @@ import {
 } from "@/hooks/useAuth";
 
 export default function SignIn() {
-  const { user: authUser, loading, isReady, userRole } = useAuth();
+  const { user: authUser, loading, isReady } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
