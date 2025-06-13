@@ -3,7 +3,6 @@
 import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 import {
   auth,
@@ -18,7 +17,6 @@ import {
 export default function SignIn() {
   const { user: authUser, loading, isReady } = useAuth();
   const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     // 當 auth 狀態變更時更新本地狀態
