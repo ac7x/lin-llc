@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 // 定義封存類型
-type ArchiveType = 'contracts' | 'expenses' | 'orders' | 'quotes' | 'projects';
+type ArchiveType = 'contracts' | 'orders' | 'quotes' | 'projects';
 
 // 定義欄位值類型
 type ColumnValue = string | number | Date | null;
@@ -25,11 +25,6 @@ interface ContractData extends BaseArchiveData {
     contractPrice: number;
 }
 
-interface expenseData extends BaseArchiveData {
-    expenseName: string;
-    totalAmount: number;
-}
-
 interface OrderData extends BaseArchiveData {
     orderName: string;
 }
@@ -45,7 +40,7 @@ interface ProjectData extends BaseArchiveData {
 }
 
 // 定義所有可能的封存資料類型
-type ArchiveData = ContractData | expenseData | OrderData | QuoteData | ProjectData;
+type ArchiveData = ContractData | OrderData | QuoteData | ProjectData;
 
 // 定義 Firestore 原始資料型別
 interface FirestoreData {
@@ -55,8 +50,6 @@ interface FirestoreData {
     createdAt: { toDate: () => Date } | Date | null;
     contractName?: string;
     contractPrice?: number;
-    expenseName?: string;
-    totalAmount?: number;
     orderName?: string;
     quoteName?: string;
     quotePrice?: number;
@@ -70,10 +63,6 @@ const TABLE_COLUMNS = {
     contracts: [
         { key: 'contractName', label: '合約名稱', type: 'text' },
         { key: 'contractPrice', label: '價格', type: 'number' },
-    ],
-    expenses: [
-        { key: 'expenseName', label: '支出名稱', type: 'text' },
-        { key: 'totalAmount', label: '金額', type: 'number' },
     ],
     orders: [
         { key: 'orderName', label: '訂單名稱', type: 'text' },
@@ -92,7 +81,6 @@ const TABLE_COLUMNS = {
 // 定義頁面標題
 const PAGE_TITLES = {
     contracts: '封存合約',
-    expenses: '封存支出',
     orders: '封存訂單',
     quotes: '封存估價單',
     projects: '封存專案',
@@ -115,10 +103,6 @@ const formatColumnValue = (value: ColumnValue, type: 'text' | 'number' | 'date')
 // 型別守衛函數
 function isContractData(data: ArchiveData): data is ContractData {
     return 'contractName' in data && 'contractPrice' in data;
-}
-
-function isexpenseData(data: ArchiveData): data is expenseData {
-    return 'expenseName' in data && 'totalAmount' in data;
 }
 
 function isOrderData(data: ArchiveData): data is OrderData {
@@ -156,11 +140,6 @@ function getTypedData(data: FirestoreData, type: ArchiveType): ArchiveData {
                 throw new Error('Invalid contract data structure');
             }
             return { ...baseData, contractName: data.contractName, contractPrice: data.contractPrice } as ContractData;
-        case 'expenses':
-            if (typeof data.expenseName !== 'string' || typeof data.totalAmount !== 'number') {
-                throw new Error('Invalid expense data structure');
-            }
-            return { ...baseData, expenseName: data.expenseName, totalAmount: data.totalAmount } as expenseData;
         case 'orders':
             if (typeof data.orderName !== 'string') {
                 throw new Error('Invalid order data structure');
@@ -186,8 +165,6 @@ function validateData(data: ArchiveData, type: ArchiveType): boolean {
     switch (type) {
         case 'contracts':
             return isContractData(data);
-        case 'expenses':
-            return isexpenseData(data);
         case 'orders':
             return isOrderData(data);
         case 'quotes':

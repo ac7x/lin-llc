@@ -87,13 +87,6 @@ const defaultOwnerNavItems: NavItem[] = [
         active: false,
         requiredRoles: ['owner', 'finance'],
     },
-    { 
-        href: '/expenses', 
-        icon: '🧾', 
-        label: '支出', 
-        active: false,
-        requiredRoles: ['owner', 'finance'],
-    },
 
     // 系統功能
     { 

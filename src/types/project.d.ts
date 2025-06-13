@@ -128,6 +128,18 @@ export interface Zone {
     createdAt: Timestamp;
 }
 
+export interface Expense {
+    id: string;
+    description: string;
+    amount: number;
+    date: Timestamp;
+    category: string;
+    createdAt: Timestamp;
+    createdBy: string;
+    updatedAt: Timestamp;
+    updatedBy: string;
+}
+
 export interface Project {
     projectId?: string; // 專案唯一識別碼（可選）
     projectName: string; // 專案名稱
@@ -153,6 +165,7 @@ export interface Project {
     photos?: PhotoRecord[]; // 專案的照片清單（可選）
     materials?: MaterialEntry[]; // 專案的材料清單（可選）
     issues?: IssueRecord[]; // 專案的問題清單（可選）
+    expenses?: Expense[]; // 專案的費用清單（可選）
 }
 
 // ===== Template 型別區 =====
