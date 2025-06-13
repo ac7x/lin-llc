@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from '@/hooks/useAuth';
 import { OrderItem } from "@/types/finance";
 
 export default function OrderAddPage() {
     const router = useRouter();
-    const { db, doc, setDoc } = useFirebase();
+    const { db, collection, addDoc, Timestamp } = useAuth();
     const [clientName, setClientName] = useState("");
     const [clientContact, setClientContact] = useState("");
     const [clientPhone, setClientPhone] = useState("");
@@ -57,7 +57,7 @@ export default function OrderAddPage() {
         try {
             const orderId = nanoid(5);
             const now = new Date();
-            await setDoc(doc(db, "finance", "default", "orders", orderId), {
+            await addDoc(collection(db, "finance", "default", "orders", orderId), {
                 orderId,
                 orderName,
                 orderPrice,
@@ -66,8 +66,8 @@ export default function OrderAddPage() {
                     orderItemId: item.orderItemId || String(idx + 1),
                 })),
                 totalOrderItemPrice,
-                createdAt: now,
-                updatedAt: now,
+                createdAt: Timestamp.fromDate(now),
+                updatedAt: Timestamp.fromDate(now),
                 clientName,
                 clientContact,
                 clientPhone,

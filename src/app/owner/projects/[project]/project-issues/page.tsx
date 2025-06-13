@@ -1,15 +1,16 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useMemo } from "react";
-import { useFirebase } from "@/hooks/useFirebase";
+import { useState, useMemo, useEffect } from "react";
+import { useAuth } from '@/hooks/useAuth';
 import { Timestamp } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { IssueRecord } from "@/types/project";
+import { arrayUnion } from "firebase/firestore";
 
 export default function ProjectIssuesPage() {
-    const { db, doc, updateDoc, arrayUnion } = useFirebase();
+    const { db, doc, updateDoc, Timestamp } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(

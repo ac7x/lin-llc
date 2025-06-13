@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirebase } from "@/hooks/useFirebase";
-import { Timestamp } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
+import { useAuth } from '@/hooks/useAuth';
 import { Project } from "@/types/project";
 import { SubWorkpackage, Workpackage } from "@/types/project";
 import { Template, SubWorkpackageTemplateItem, TemplateToSubWorkpackageOptions, Task } from "@/types/project";
 import { nanoid } from "nanoid";
+import { collection, getDocs, Timestamp } from "firebase/firestore";
 
 // Template helper functions
 /**
@@ -95,7 +95,7 @@ function clearSelectedTemplate(): void {
 }
 
 export default function WorkpackageDetailPage() {
-    const { db, doc, collection, updateDoc, getDocs } = useFirebase();
+    const { db, doc, updateDoc } = useAuth();
     const params = useParams();
     const router = useRouter();
     const projectId = params?.project as string;
@@ -120,6 +120,7 @@ export default function WorkpackageDetailPage() {
     const [loadingTemplates, setLoadingTemplates] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
     const [templateQuantities, setTemplateQuantities] = useState<{ [id: string]: number }>({});
+    const [tasks, setTasks] = useState<Task[]>([]);
 
     useEffect(() => {
         const selected = getSelectedTemplateFromStorage();
@@ -134,20 +135,38 @@ export default function WorkpackageDetailPage() {
         const loadTemplates = async () => {
             setLoadingTemplates(true);
             try {
-                const templatesCollection = collection(db, "templates");
-                const templatesSnapshot = await getDocs(templatesCollection);
-                const templatesList = templatesSnapshot.docs.map(doc => ({
+                const templatesRef = collection(db, "templates");
+                const templatesSnapshot = await getDocs(templatesRef);
+                const templatesData = templatesSnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 })) as Template[];
-                setTemplates(templatesList);
-            } catch {
+                setTemplates(templatesData);
+            } catch (error) {
+                console.error("Error fetching templates:", error);
             } finally {
                 setLoadingTemplates(false);
             }
         };
         if (showTemplateModal && templates.length === 0) loadTemplates();
-    }, [showTemplateModal, templates.length, collection, db, getDocs]);
+    }, [showTemplateModal, templates.length, doc, db, getDocs]);
+
+    useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                const tasksRef = collection(db, "tasks");
+                const tasksSnapshot = await getDocs(tasksRef);
+                const tasksData = tasksSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as Task[];
+                setTasks(tasksData);
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+            }
+        };
+        if (showTemplateModal && tasks.length === 0) fetchTasks();
+    }, [showTemplateModal, tasks.length, doc, db, getDocs]);
 
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;

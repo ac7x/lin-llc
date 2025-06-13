@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
 
 export default function OrdersPage() {
-    const { db, collection, doc, getDoc } = useFirebase();
+    const { db, collection, doc, getDoc } = useAuth();
     const [ordersSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "orders")
     );

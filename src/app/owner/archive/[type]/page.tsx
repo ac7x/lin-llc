@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useFirebase, useCollection } from '@/hooks/useFirebase';
+import { useAuth, useCollection } from '@/hooks/useAuth';
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -201,7 +201,7 @@ function validateData(data: ArchiveData, type: ArchiveType): boolean {
 
 export default function ArchivePage() {
     const { type } = useParams<{ type: ArchiveType }>();
-    const { db, collection, doc, getDoc } = useFirebase();
+    const { db, collection, doc, getDoc } = useAuth();
     const [archiveRetentionDays, setArchiveRetentionDays] = useState<number>(3650);
     const [search, setSearch] = useState("");
 

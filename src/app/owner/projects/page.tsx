@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import type { Timestamp } from "firebase/firestore";
+import { Project } from "@/types/project";
 
 // 嚴格型別：只接受 Timestamp | null | undefined
 type TimestampInput = Timestamp | null | undefined;
@@ -24,7 +25,7 @@ const formatDate = (timestamp: TimestampInput, formatStr = "yyyy-MM-dd"): string
 };
 
 export default function ProjectsPage() {
-    const { db, collection } = useFirebase();
+    const { db, collection } = useAuth();
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
     const [search, setSearch] = useState("");
 

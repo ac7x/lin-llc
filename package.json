@@ -23,6 +23,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@firebase/remote-config": "^0.6.4",
     "@headlessui/react": "^2.2.4",
+    "@hello-pangea/dnd": "^18.0.1",
     "@heroicons/react": "^2.2.0",
     "@react-pdf/renderer": "^4.3.0",
     "colord": "^2.9.3",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useFirebase } from '@/hooks/useFirebase';
+import { useAuth } from '@/hooks/useAuth';
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { zhTW } from "date-fns/locale";
@@ -33,7 +33,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { db, collection, getDocs } = useFirebase();
+    const { db, collection, getDocs } = useAuth();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
     const [loading, setLoading] = useState(true);

@@ -6,10 +6,10 @@ import { useMemo, useState } from "react";
 import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import QRCode from "qrcode";
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ContractsPage() {
-    const { db, collection, doc, getDoc } = useFirebase();
+    const { db, collection, doc, getDoc } = useAuth();
     const [contractsSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "contracts"));
     const [search, setSearch] = useState("");
 

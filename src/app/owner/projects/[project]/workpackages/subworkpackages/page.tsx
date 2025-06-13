@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { useFirebase } from "@/hooks/useFirebase";
+import { useAuth } from "@/hooks/useAuth";
 import { useDocument } from "react-firebase-hooks/firestore";
 import {
     DndContext,
@@ -95,7 +95,7 @@ function SortableSubWorkpackage({
 export default function SubWorkpackageSortingPage() {
     const params = useParams();
     const projectId = params?.project as string;
-    const { db, doc, updateDoc, Timestamp } = useFirebase();
+    const { db, doc, updateDoc, Timestamp } = useAuth();
     const [projectDoc, loading] = useDocument(doc(db, "projects", projectId));
     const [saving, setSaving] = useState(false);
     const [workpackages, setWorkpackages] = useState<Workpackage[]>([]);

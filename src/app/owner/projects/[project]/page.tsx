@@ -1,10 +1,8 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useFirebase } from "@/hooks/useFirebase";
-import { Timestamp } from "firebase/firestore";
+import { useParams, useRouter } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 // 新增 DND 相關引入
 import {
     DndContext,
@@ -30,6 +28,8 @@ import SubWorkpackageSortingPage from "./workpackages/subworkpackages/page";
 import ProjectCalendarPage from "./project-calendar/page";
 import { TaiwanCityList } from "@/utils/taiwan-city.enum";
 import { Project, Workpackage } from "@/types/project";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { useAuth } from '@/hooks/useAuth';
 
 function getWorkpackageProgress(wp: Workpackage): number {
     if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) return 0;
@@ -82,7 +82,7 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
 }
 
 export default function ProjectDetailPage() {
-    const { db, doc, updateDoc } = useFirebase();
+    const { db, doc, updateDoc, Timestamp } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
