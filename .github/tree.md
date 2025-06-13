@@ -83,27 +83,19 @@
 │   ├── page.tsx
 │   └── shared
 │       └── signin
-│           └── page.tsx
 ├── components
 │   ├── bottom
 │   │   ├── owner-nav.tsx
 │   │   └── owner-nav-wrapper.tsx
-│   ├── pdf
-│   │   ├── ContractPdfDocument.tsx
-│   │   ├── InvoicePdfDocument.tsx
-│   │   ├── OrderPdfDocument.tsx
-│   │   ├── pdfExport.ts
-│   │   └── QuotePdfDocument.tsx
-│   └── side
-│       ├── archive-nav.tsx
-│       ├── contract-nav.tsx
-│       ├── invoice-nav.tsx
-│       ├── order-nav.tsx
-│       └── quote-nav.tsx
+│   └── pdf
+│       ├── ContractPdfDocument.tsx
+│       ├── InvoicePdfDocument.tsx
+│       ├── OrderPdfDocument.tsx
+│       ├── pdfExport.ts
+│       └── QuotePdfDocument.tsx
 ├── hooks
-│   ├── useFirebase.ts
-│   ├── useNotifications.ts
-│   └── useUserRole.ts
+│   ├── useAuth.ts
+│   └── useNotifications.ts
 ├── lib
 │   ├── firebase-client.ts
 │   ├── firebase-config.ts
