@@ -37,10 +37,10 @@ interface SidebarProps {
 export function Sidebar({ children, className = '' }: SidebarProps) {
   return (
     <aside className={`
-      w-72 h-[calc(100vh-4rem)] 
+      w-72 h-[calc(100vh-4rem)] sticky top-0
       border-r border-gray-200 dark:border-gray-700 
       bg-white dark:bg-gray-800 p-6 
-      overflow-y-auto
+      overflow-y-auto pb-20
       ${className}
     `}>
       {children}
