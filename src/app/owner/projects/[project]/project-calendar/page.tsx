@@ -230,132 +230,140 @@ export default function ProjectCalendarPage() {
     if (!project) return <div className="p-4">找不到專案</div>;
 
     return (
-        <div className="p-4 max-w-6xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                <h1 className="text-2xl font-bold mb-4 sm:mb-0">專案行事曆</h1>
-                <div className="flex items-center gap-2">
-                    <select
-                        value={view}
-                        onChange={(e) => setView(e.target.value as 'month' | 'week' | 'day' | 'agenda')}
-                        className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-                    >
-                        <option value="month">月檢視</option>
-                        <option value="week">週檢視</option>
-                        <option value="day">日檢視</option>
-                        <option value="agenda">列表檢視</option>
-                    </select>
-                    <input
-                        type="text"
-                        placeholder="搜尋子工作包/工作包/進度/數量..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="ml-2 block w-40 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-base text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition"
-                    />
-                    <button
-                        type="button"
-                        onClick={handleFullscreen}
-                        className="px-3 py-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 border border-gray-300 dark:border-gray-600 transition"
-                        title={fullscreen ? "離開全螢幕" : "全螢幕檢視"}
-                    >
-                        {fullscreen ? (
-                            // 離開全螢幕 icon（縮小）
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 15H7a2 2 0 01-2-2v-2m0 0V7a2 2 0 012-2h2m-2 6h.01M15 9h2a2 2 0 012 2v2m0 0v4a2 2 0 01-2 2h-2m2-6h-.01" />
-                            </svg>
-                        ) : (
-                            // 進入全螢幕 icon（四角放大鏡頭）
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V6a2 2 0 012-2h2M20 8V6a2 2 0 00-2-2h-2M4 16v2a2 2 0 002 2h2M20 16v2a2 2 0 01-2 2h-2" />
-                            </svg>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            <div className="mb-4 flex justify-between items-center">
-                <div className="text-sm text-gray-500">
-                    顯示 {filteredEvents.length} / {events.length} 個子工作包排程
-                </div>
-            </div>
-
-            <div
-                ref={calendarContainerRef}
-                className={`bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 transition-all ${fullscreen ? "fixed inset-0 z-50 w-screen h-screen max-w-none max-h-none p-2" : ""}`}
-                style={{ height: fullscreen ? '100vh' : '700px' }}
-            >
-                <Calendar
-                    localizer={localizer}
-                    events={filteredEvents}
-                    startAccessor="start"
-                    endAccessor="end"
-                    style={{ height: '100%' }}
-                    views={['month', 'week', 'day', 'agenda']}
-                    view={view}
-                    onView={(newView) => setView(newView as 'month' | 'week' | 'day' | 'agenda')}
-                    eventPropGetter={eventStyleGetter}
-                    components={{
-                        event: EventComponent
-                    }}
-                    onSelectEvent={handleSelectEvent}
-                    formats={formats}
-                    messages={{
-                        allDay: '全天',
-                        previous: '上一個',
-                        next: '下一個',
-                        today: '今天',
-                        month: '月',
-                        week: '週',
-                        day: '日',
-                        agenda: '列表',
-                        date: '日期',
-                        time: '時間',
-                        event: '事件',
-                        noEventsInRange: '此範圍內沒有排程'
-                    }}
-                />
-            </div>
-
-            {/* 圖例說明 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                <h2 className="text-lg font-medium mb-2">圖例說明</h2>
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex flex-wrap gap-4 items-center">
-                        {/* 進度狀態 */}
-                        {ProgressColorScale.map((s, i) => (
-                            <span className="flex items-center" key={i}>
-                                <div className="w-4 h-3 mr-1" style={{ background: s.color }}></div>
-                                <span className="text-sm mr-2">
-                                    {s.min}%
-                                    {s.max !== s.min && `~${s.max}%`}
-                                    {s.max === 100 && " 完成"}
-                                </span>
+        <main className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案行事曆</h1>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">查看專案工作包和子工作包的排程</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={view}
+                            onChange={(e) => setView(e.target.value as 'month' | 'week' | 'day' | 'agenda')}
+                            className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                        >
+                            <option value="month">月檢視</option>
+                            <option value="week">週檢視</option>
+                            <option value="day">日檢視</option>
+                            <option value="agenda">列表檢視</option>
+                        </select>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="搜尋子工作包/工作包/進度/數量..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-40 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                🔍
                             </span>
-                        ))}
-                        {/* 時間狀態 */}
-                        <span className="flex items-center">
-                            <div className="w-10 h-2.5 bg-blue-500 mr-1"></div>
-                            <span className="text-sm mr-2">預計時間</span>
-                        </span>
-                        <span className="flex items-center">
-                            <div className="w-10 h-2.5 border-l-4 border-blue-500 bg-blue-100 mr-1"></div>
-                            <span className="text-sm mr-4">實際時間</span>
-                        </span>
-                        {/* 圖示說明 */}
-                        <span className="flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span className="text-sm mr-2">預計日期</span>
-                        </span>
-                        <span className="flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                            <span className="text-sm">實際日期</span>
-                        </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleFullscreen}
+                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 border border-gray-300 dark:border-gray-600 transition-colors duration-200"
+                            title={fullscreen ? "離開全螢幕" : "全螢幕檢視"}
+                        >
+                            {fullscreen ? (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 15H7a2 2 0 01-2-2v-2m0 0V7a2 2 0 012-2h2m-2 6h.01M15 9h2a2 2 0 012 2v2m0 0v4a2 2 0 01-2 2h-2m2-6h-.01" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V6a2 2 0 012-2h2M20 8V6a2 2 0 00-2-2h-2M4 16v2a2 2 0 002 2h2M20 16v2a2 2 0 01-2 2h-2" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="mb-4 flex justify-between items-center">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                        顯示 {filteredEvents.length} / {events.length} 個子工作包排程
+                    </div>
+                </div>
+
+                <div
+                    ref={calendarContainerRef}
+                    className={`bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6 transition-all ${fullscreen ? "fixed inset-0 z-50 w-screen h-screen max-w-none max-h-none p-2" : ""}`}
+                    style={{ height: fullscreen ? '100vh' : '700px' }}
+                >
+                    <Calendar
+                        localizer={localizer}
+                        events={filteredEvents}
+                        startAccessor="start"
+                        endAccessor="end"
+                        style={{ height: '100%' }}
+                        views={['month', 'week', 'day', 'agenda']}
+                        view={view}
+                        onView={(newView) => setView(newView as 'month' | 'week' | 'day' | 'agenda')}
+                        eventPropGetter={eventStyleGetter}
+                        components={{
+                            event: EventComponent
+                        }}
+                        onSelectEvent={handleSelectEvent}
+                        formats={formats}
+                        messages={{
+                            allDay: '全天',
+                            previous: '上一個',
+                            next: '下一個',
+                            today: '今天',
+                            month: '月',
+                            week: '週',
+                            day: '日',
+                            agenda: '列表',
+                            date: '日期',
+                            time: '時間',
+                            event: '事件',
+                            noEventsInRange: '此範圍內沒有排程'
+                        }}
+                    />
+                </div>
+
+                {/* 圖例說明 */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">圖例說明</h2>
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex flex-wrap gap-4 items-center">
+                            {/* 進度狀態 */}
+                            {ProgressColorScale.map((s, i) => (
+                                <span className="flex items-center" key={i}>
+                                    <div className="w-4 h-3 mr-1 rounded" style={{ background: s.color }}></div>
+                                    <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">
+                                        {s.min}%
+                                        {s.max !== s.min && `~${s.max}%`}
+                                        {s.max === 100 && " 完成"}
+                                    </span>
+                                </span>
+                            ))}
+                            {/* 時間狀態 */}
+                            <span className="flex items-center">
+                                <div className="w-10 h-2.5 bg-blue-500 mr-1 rounded"></div>
+                                <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">預計時間</span>
+                            </span>
+                            <span className="flex items-center">
+                                <div className="w-10 h-2.5 border-l-4 border-blue-500 bg-blue-100 mr-1 rounded"></div>
+                                <span className="text-sm text-gray-700 dark:text-gray-300 mr-4">實際時間</span>
+                            </span>
+                            {/* 圖示說明 */}
+                            <span className="flex items-center">
+                                <svg className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">預計日期</span>
+                            </span>
+                            <span className="flex items-center">
+                                <svg className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">實際日期</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }
