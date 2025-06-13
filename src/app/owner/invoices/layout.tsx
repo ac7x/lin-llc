@@ -13,12 +13,25 @@ const InvoiceNav: React.FC = () => {
     const { user } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
-    const navs = [
+    const baseNavs = [
         { label: "發票列表", href: "/owner/invoices" },
         { label: "新增發票", href: "/owner/invoices/create" },
     ];
 
-    const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoice'));
+    const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoices'));
+
+    // 從數據庫獲取發票列表
+    const invoiceNavs = invoicesSnapshot?.docs.map(doc => ({
+        label: doc.data().invoiceName || `發票 ${doc.id}`,
+        href: `/owner/invoices/${doc.id}`
+    })) || [];
+
+    // 合併基礎導航和動態發票導航
+    const navs = [
+        baseNavs[0],  // 發票列表
+        ...invoiceNavs,  // 動態發票列表
+        baseNavs[1]   // 新增發票
+    ];
 
     return (
         <nav className="space-y-1">

@@ -14,7 +14,7 @@ const InvoiceCreatePage: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [projectsSnapshot] = useCollection(collection(db, 'projects'));
-  const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoice'));
+  const [invoicesSnapshot] = useCollection(collection(db, 'finance', 'default', 'invoices'));
   const [projectId, setProjectId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -71,7 +71,7 @@ const InvoiceCreatePage: React.FC = () => {
         status: 'draft',
         notes: '',
       };
-      await setDoc(doc(db, 'finance', 'default', 'invoice', projectId), invoiceData);
+      await setDoc(doc(db, 'finance', 'default', 'invoices', projectId), invoiceData);
       router.push('/owners/invoice');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

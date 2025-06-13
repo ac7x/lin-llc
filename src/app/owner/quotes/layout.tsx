@@ -11,12 +11,25 @@ import { collection } from "firebase/firestore";
 const QuoteSideNav: React.FC = () => {
     const { user } = useAuth();
     const pathname = usePathname();
-    const navs = [
+    const baseNavs = [
         { label: "報價單列表", href: "/owner/quotes" },
         { label: "新增報價單", href: "/owner/quotes/create" },
     ];
 
-    const [quotesSnapshot] = useCollection(collection(db, 'quotes'));
+    const [quotesSnapshot] = useCollection(collection(db, 'finance', 'default', 'quotes'));
+
+    // 從數據庫獲取報價單列表
+    const quoteNavs = quotesSnapshot?.docs.map(doc => ({
+        label: doc.data().quoteName || `報價單 ${doc.id}`,
+        href: `/owner/quotes/${doc.id}`
+    })) || [];
+
+    // 合併基礎導航和動態報價單導航
+    const navs = [
+        baseNavs[0],  // 報價單列表
+        ...quoteNavs,  // 動態報價單列表
+        baseNavs[1]   // 新增報價單
+    ];
 
     return (
         <nav className="space-y-1">

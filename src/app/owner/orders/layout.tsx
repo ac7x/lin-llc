@@ -11,12 +11,25 @@ import { collection } from "firebase/firestore";
 const OrderSideNav: React.FC = () => {
     const { user } = useAuth();
     const pathname = usePathname();
-    const navs = [
+    const baseNavs = [
         { label: "訂單列表", href: "/owner/orders" },
         { label: "新增訂單", href: "/owner/orders/create" },
     ];
 
-    const [ordersSnapshot] = useCollection(collection(db, 'orders'));
+    const [ordersSnapshot] = useCollection(collection(db, 'finance', 'default', 'orders'));
+
+    // 從數據庫獲取訂單列表
+    const orderNavs = ordersSnapshot?.docs.map(doc => ({
+        label: doc.data().orderName || `訂單 ${doc.id}`,
+        href: `/owner/orders/${doc.id}`
+    })) || [];
+
+    // 合併基礎導航和動態訂單導航
+    const navs = [
+        baseNavs[0],  // 訂單列表
+        ...orderNavs,  // 動態訂單列表
+        baseNavs[1]   // 新增訂單
+    ];
 
     return (
         <nav className="space-y-1">

@@ -10,7 +10,7 @@ import QRCode from "qrcode";
 
 export default function InvoicePage() {
     const { db, collection, doc, getDoc } = useAuth();
-    const [invoicesSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "invoice"));
+    const [invoicesSnapshot, loading, error] = useCollection(collection(db, "finance", "default", "invoices"));
     const [search, setSearch] = useState("");
 
     const rows = useMemo(() => {
@@ -40,7 +40,7 @@ export default function InvoicePage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        const docRef = doc(db, "finance", "default", "invoice", String(row.invoiceId));
+        const docRef = doc(db, "finance", "default", "invoices", String(row.invoiceId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
             alert("找不到該發票");

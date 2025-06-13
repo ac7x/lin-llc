@@ -17,7 +17,7 @@ const InvoiceDetailPage: React.FC = () => {
   const params = useParams();
   const invoiceId = params?.invoice as string;
   const { user } = useAuth();
-  const [invoiceDoc, loading, error] = useDocument(invoiceId ? doc(db, 'finance', 'default', 'invoice', invoiceId) : undefined);
+  const [invoiceDoc, loading, error] = useDocument(invoiceId ? doc(db, 'finance', 'default', 'invoices', invoiceId) : undefined);
   const data = invoiceDoc?.exists() ? (invoiceDoc.data() as InvoiceData) : undefined;
 
   // 取得所有 projects 與 workpackages
@@ -54,7 +54,7 @@ const InvoiceDetailPage: React.FC = () => {
         createdAt: Timestamp.now(),
         workpackageId: expenseWorkpackageId,
       };
-      await updateDoc(doc(db, 'finance', 'default', 'invoice', invoiceId), {
+      await updateDoc(doc(db, 'finance', 'default', 'invoices', invoiceId), {
         expenses: arrayUnion(expense),
         updatedAt: Timestamp.now(),
       });
