@@ -9,8 +9,9 @@ import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent } from "@/utils/projectProgress";
 import { WorkpackageProgressBar } from "@/utils/workpackageProgressBar";
 import type { Project } from "@/types/project";
+import { PageLayout, PageContent, Sidebar } from "@/components/layouts/PageLayout";
 
-function Sidebar() {
+function SidebarContent() {
     const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
     const pathname = usePathname();
     const navs = [
@@ -87,28 +88,25 @@ function Sidebar() {
     })) as (Project & { id: string })[] || [];
 
     return (
-        <nav className="w-80 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex flex-col text-black dark:text-gray-100 transition-colors duration-200">
-            <div className="sticky top-0 bg-white dark:bg-gray-900 pb-4 z-10">
-                <h2 className="text-xl font-bold mb-6 text-center bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案管理</h2>
-                <ul className="space-y-2">
-                    {navs.map(nav => (
-                        <li key={nav.href}>
-                            <Link
-                                href={nav.href}
-                                className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
-                                    pathname === nav.href 
-                                    ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
-                                    : "text-gray-700 dark:text-gray-300"
-                                }`}
-                            >
-                                <span className="mr-3">{nav.icon}</span>
-                                {nav.label}
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-
+        <>
+            <h2 className="text-xl font-bold mb-6 text-center bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案管理</h2>
+            <ul className="space-y-2">
+                {navs.map(nav => (
+                    <li key={nav.href}>
+                        <Link
+                            href={nav.href}
+                            className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
+                                pathname === nav.href 
+                                ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
+                                : "text-gray-700 dark:text-gray-300"
+                            }`}
+                        >
+                            <span className="mr-3">{nav.icon}</span>
+                            {nav.label}
+                        </Link>
+                    </li>
+                ))}
+            </ul>
             <div className="flex-1 overflow-y-auto mt-4">
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
@@ -276,31 +274,19 @@ function Sidebar() {
                     </div>
                 </div>
             )}
-        </nav>
+        </>
     );
 }
 
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
-    const { loading, isAuthenticated, hasMinRole } = useAuth();
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated || !hasMinRole("admin")) {
-        return null;
-    }
-
     return (
-        <div className="flex bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
-            <Sidebar />
-            <div className="flex-1 p-6 bg-white dark:bg-gray-800 text-black dark:text-gray-100 overflow-auto">
+        <PageLayout withSidebar>
+            <Sidebar>
+                <SidebarContent />
+            </Sidebar>
+            <PageContent>
                 {children}
-            </div>
-        </div>
+            </PageContent>
+        </PageLayout>
     );
 }
