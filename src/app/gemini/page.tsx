@@ -49,7 +49,8 @@ export default function GeminiChatPage() {
     setLoading(true);
 
     try {
-      const prompt = `請使用繁體中文回答以下問題：${trimmed}`;
+      // 設定台灣在地專業角色
+      const prompt = `你是一位在台灣具備十年以上工地管理經驗的專案經理，熟悉工地作業流程、施工進度與品質控制，擅長成本預算管控與安全規劃，並精通《建築法》、《建築技術規則》、《職業安全衛生法》、《施工安全衛生設施標準》、《政府採購法》、《公共工程施工契約範本》、《噪音管制法》。請使用繁體中文回答以下問題，並依照法規與現場實務提供明確、可落實的建議：${trimmed}`;
       const result = await model.generateContent(prompt);
       const response = result.response;
       const text = response.text();
