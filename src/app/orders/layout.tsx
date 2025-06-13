@@ -11,7 +11,7 @@ const OrderSideNav: React.FC = () => {
     const pathname = usePathname();
     const baseNavs = [
         { label: "訂單列表", href: "/orders", icon: "📋" },
-        { label: "新增訂單", href: "/orders/create", icon: "➕" },
+        { label: "新增訂單", href: "/orders/add", icon: "➕" },
     ];
 
     const [ordersSnapshot] = useCollection(collection(db, 'finance', 'default', 'orders'));
