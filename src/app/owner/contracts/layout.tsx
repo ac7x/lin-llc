@@ -4,11 +4,12 @@
 
 import { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
+import { useEffect } from "react";
 
 const ContractNav: React.FC = () => {
     const { user } = useAuth();
@@ -52,13 +53,34 @@ const ContractNav: React.FC = () => {
     );
 };
 
-export default function ContractLayout({ children }: { children: ReactNode }) {
-    return (
-        <div className="flex">
-            <div className="w-64 p-4 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700">
-                <ContractNav />
-            </div>
-            <div className="flex-1">{children}</div>
-        </div>
-    );
+export default function ContractsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user, loading, isAuthenticated, hasMinRole } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && (!isAuthenticated || !hasMinRole("admin"))) {
+      router.push("/login");
+    }
+  }, [loading, isAuthenticated, hasMinRole, router]);
+
+  if (loading) {
+    return <div>載入中...</div>;
+  }
+
+  if (!isAuthenticated || !hasMinRole("admin")) {
+    return null;
+  }
+
+  return (
+    <div className="flex">
+      <div className="w-64 p-4 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700">
+        <ContractNav />
+      </div>
+      <div className="flex-1">{children}</div>
+    </div>
+  );
 }

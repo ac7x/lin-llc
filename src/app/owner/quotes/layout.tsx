@@ -2,11 +2,12 @@
 
 import { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
+import { useEffect } from "react";
 
 const QuoteSideNav: React.FC = () => {
     const { user } = useAuth();
@@ -51,6 +52,23 @@ const QuoteSideNav: React.FC = () => {
 };
 
 export default function QuotesLayout({ children }: { children: ReactNode }) {
+    const { user, loading, isAuthenticated, hasMinRole } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && (!isAuthenticated || !hasMinRole("admin"))) {
+            router.push("/login");
+        }
+    }, [loading, isAuthenticated, hasMinRole, router]);
+
+    if (loading) {
+        return <div>載入中...</div>;
+    }
+
+    if (!isAuthenticated || !hasMinRole("admin")) {
+        return null;
+    }
+
     return (
         <div className="flex">
             <QuoteSideNav />
