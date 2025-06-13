@@ -41,7 +41,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'firebase/app-check';
-import { firebaseConfig } from './firebase-config';
+import { firebaseConfig, APP_CHECK_CONFIG } from './firebase-config';
 
 const app = initializeApp(firebaseConfig);
 export const firebaseApp = app;
