@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { useAuth } from '@/hooks/useAuth';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Workpackage } from '@/types/project';
@@ -11,7 +10,6 @@ import { db } from '@/lib/firebase-client';
 import { collection, getDocs } from 'firebase/firestore';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
   // 取得 users 和 projects 集合的 snapshot
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
@@ -113,7 +111,7 @@ export default function DashboardPage() {
       }
     }
     fetchAllCreatedAt();
-  }, [collection, db, getDocs]);
+  }, []);
 
   // 統計各角色人數
   const roleCounts: Record<string, number> = Object.keys(ROLE_HIERARCHY).reduce((acc, role) => {

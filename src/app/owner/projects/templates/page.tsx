@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
@@ -12,7 +11,6 @@ import { Timestamp } from 'firebase/firestore';
 
 export default function TemplatesAdminPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [templatesSnapshot] = useCollection(collection(db, "templates"));
   const [showModal, setShowModal] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);

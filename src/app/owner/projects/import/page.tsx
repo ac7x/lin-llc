@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 import { Timestamp } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { nanoid } from "nanoid";
@@ -20,7 +20,6 @@ interface ContractRow {
 }
 
 export default function ImportProjectPage() {
-    const { user } = useAuth();
     // 取得所有已建立專案的 contractId 清單，避免重複建立
     const [projectsSnapshot] = useCollection(collection(db, "projects"));
 

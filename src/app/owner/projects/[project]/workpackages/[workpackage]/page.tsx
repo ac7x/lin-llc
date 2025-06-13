@@ -149,7 +149,7 @@ export default function WorkpackageDetailPage() {
             }
         };
         if (showTemplateModal && templates.length === 0) loadTemplates();
-    }, [showTemplateModal, templates.length, doc, db, getDocs]);
+    }, [showTemplateModal, templates.length, db]);
 
     useEffect(() => {
         const fetchTasks = async () => {
@@ -166,7 +166,7 @@ export default function WorkpackageDetailPage() {
             }
         };
         if (showTemplateModal && tasks.length === 0) fetchTasks();
-    }, [showTemplateModal, tasks.length, doc, db, getDocs]);
+    }, [showTemplateModal, tasks.length, db]);
 
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;

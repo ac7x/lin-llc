@@ -1,8 +1,8 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 // 新增 DND 相關引入
 import {
     DndContext,
@@ -28,7 +28,6 @@ import SubWorkpackageSortingPage from "./workpackages/subworkpackages/page";
 import ProjectCalendarPage from "./project-calendar/page";
 import { TaiwanCityList } from "@/utils/taiwan-city.enum";
 import { Project, Workpackage } from "@/types/project";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useAuth } from '@/hooks/useAuth';
 
 function getWorkpackageProgress(wp: Workpackage): number {

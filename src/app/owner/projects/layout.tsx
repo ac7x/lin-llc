@@ -1,20 +1,19 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent } from "@/utils/projectProgress";
 import { WorkpackageProgressBar } from "@/utils/workpackageProgressBar";
-import { Workpackage } from "@/types/project";
 import { db } from "@/lib/firebase-client";
 import { collection, setDoc, deleteDoc, doc } from "firebase/firestore";
 import type { Project } from "@/types/project";
 
 function Sidebar() {
-    const { db, collection, doc, getDoc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
+    const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
     const pathname = usePathname();
     const navs = [
         { label: "專案列表", href: "/owner/projects" },
