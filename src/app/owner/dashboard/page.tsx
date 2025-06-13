@@ -132,17 +132,20 @@ export default function DashboardPage() {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#2a8f4d', '#8f6b2a'];
 
   return (
-    <main className="min-h-screen py-8 bg-white dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-lg">
-        {/* <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 32, letterSpacing: 2, color: '#222' }}>業主管理儀表板</h2> */}
-        <div className="flex gap-10 flex-col md:flex-row">
+    <main className="max-w-4xl mx-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">業主管理儀表板</h1>
+        
+        <div className="flex gap-6 flex-col md:flex-row">
           {/* 人員統計區塊 */}
-          <section className="flex-1 min-w-[320px] bg-blue-50 dark:bg-blue-950 rounded-xl p-6 shadow-md mb-6 md:mb-0">
-            <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-blue-200">人員分布</h3>
+          <section className="flex-1 min-w-[320px] bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">人員分布</h3>
             {usersLoading ? (
-              <div>載入中...</div>
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
             ) : usersError ? (
-              <div>錯誤</div>
+              <div className="text-red-500 text-center py-4">錯誤: {usersError.message}</div>
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
@@ -159,65 +162,106 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             )}
           </section>
-          {/* 小型統計卡片區塊（更小更緊湊） */}
-          <div className="flex gap-2 flex-wrap mb-6">
+
+          {/* 小型統計卡片區塊 */}
+          <div className="flex gap-3 flex-wrap">
             {/* 專案總數卡片 */}
-            <section className="flex-1 min-w-[100px] bg-yellow-50 dark:bg-yellow-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
-              <div className="text-[11px] text-yellow-800 dark:text-yellow-200 mb-0.5">專案總數</div>
-              <div className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 leading-tight">
-                {projectsLoading ? '...' : projectsError ? '錯誤' : projectsSnapshot?.size ?? 0}
+            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">專案總數</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {projectsLoading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                ) : projectsError ? (
+                  <span className="text-red-500">錯誤</span>
+                ) : (
+                  projectsSnapshot?.size ?? 0
+                )}
               </div>
             </section>
+
             {/* 合約總數卡片 */}
-            <section className="flex-1 min-w-[100px] bg-blue-50 dark:bg-blue-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
-              <div className="text-[11px] text-blue-800 dark:text-blue-200 mb-0.5">合約總數</div>
-              <div className="text-2xl font-bold text-blue-800 dark:text-blue-200 leading-tight">
-                {contractsLoading ? '...' : contractsError ? '錯誤' : contractsSnapshot?.size ?? 0}
+            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">合約總數</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {contractsLoading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                ) : contractsError ? (
+                  <span className="text-red-500">錯誤</span>
+                ) : (
+                  contractsSnapshot?.size ?? 0
+                )}
               </div>
             </section>
+
             {/* 訂單總數卡片 */}
-            <section className="flex-1 min-w-[100px] bg-green-50 dark:bg-green-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
-              <div className="text-[11px] text-green-800 dark:text-green-200 mb-0.5">訂單總數</div>
-              <div className="text-2xl font-bold text-green-800 dark:text-green-200 leading-tight">
-                {ordersLoading ? '...' : ordersError ? '錯誤' : ordersSnapshot?.size ?? 0}
+            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">訂單總數</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {ordersLoading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                ) : ordersError ? (
+                  <span className="text-red-500">錯誤</span>
+                ) : (
+                  ordersSnapshot?.size ?? 0
+                )}
               </div>
             </section>
+
             {/* 估價單總數卡片 */}
-            <section className="flex-1 min-w-[100px] bg-purple-50 dark:bg-purple-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
-              <div className="text-[11px] text-purple-800 dark:text-purple-200 mb-0.5">估價單總數</div>
-              <div className="text-2xl font-bold text-purple-800 dark:text-purple-200 leading-tight">
-                {quotesLoading ? '...' : quotesError ? '錯誤' : quotesSnapshot?.size ?? 0}
+            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">估價單總數</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {quotesLoading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                ) : quotesError ? (
+                  <span className="text-red-500">錯誤</span>
+                ) : (
+                  quotesSnapshot?.size ?? 0
+                )}
               </div>
             </section>
+
             {/* 工作包總數卡片 */}
-            <section className="flex-1 min-w-[100px] bg-orange-50 dark:bg-orange-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
-              <div className="text-[11px] text-orange-800 dark:text-orange-200 mb-0.5">工作包總數</div>
-              <div className="text-2xl font-bold text-orange-800 dark:text-orange-200 leading-tight">
-                {statsLoading ? '...' : workpackagesCount}
+            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">工作包總數</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {statsLoading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                ) : (
+                  workpackagesCount
+                )}
               </div>
             </section>
+
             {/* 子工作包總數卡片 */}
-            <section className="flex-1 min-w-[100px] bg-teal-50 dark:bg-teal-950 rounded-md p-2 shadow text-center h-[70px] flex flex-col justify-center items-center">
-              <div className="text-[11px] text-teal-800 dark:text-teal-200 mb-0.5">子工作包總數</div>
-              <div className="text-2xl font-bold text-teal-800 dark:text-teal-200 leading-tight">
-                {statsLoading ? '...' : subWorkpackagesCount}
+            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">子工作包總數</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {statsLoading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                ) : (
+                  subWorkpackagesCount
+                )}
               </div>
             </section>
           </div>
         </div>
+
         {/* 四合一折線圖區塊 */}
-        <section className="mt-12 bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-md">
-          <h3 className="text-xl font-semibold mb-4 text-blue-800 dark:text-blue-200">專案/合約/訂單/估價單建立數量</h3>
+        <section className="mt-8 bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案/合約/訂單/估價單建立數量</h3>
           {multiLineLoading ? (
-            <div>載入中...</div>
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
           ) : multiLineError ? (
-            <div>錯誤</div>
+            <div className="text-red-500 text-center py-4">錯誤: {multiLineError}</div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={multiLineData} margin={{ top: 16, right: 32, left: 0, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 14 }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="date" tick={{ fontSize: 14 }} stroke="#6b7280" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 14 }} stroke="#6b7280" />
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="專案" name="專案" stroke="#FFBB28" strokeWidth={2} dot={false} />

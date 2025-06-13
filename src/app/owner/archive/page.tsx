@@ -18,7 +18,6 @@ export default function ArchivedPage() {
         }
         setLastClickTime(now);
         if (clickCount + 1 >= 5) {
-            // 直接刪除 archived/default 下所有子集合的所有文件
             try {
                 const subCollections = ["orders", "quotes", "contracts", "projects"];
                 for (const sub of subCollections) {
@@ -28,7 +27,6 @@ export default function ArchivedPage() {
                         await deleteDoc(docSnap.ref);
                     }
                 }
-                // 最後刪除 archived/default 文件本身（雖然 Firestore 沒有直接刪除 collection 的 API，只能刪除文件）
                 await deleteDoc(doc(db, "archived", "default"));
                 setClickCount(0);
             } catch (err) {
@@ -38,13 +36,21 @@ export default function ArchivedPage() {
     };
 
     return (
-        <main className="flex items-center justify-center h-full w-full">
-            <button
-                className="text-gray-400 text-lg bg-transparent border-none cursor-pointer focus:outline-none dark:text-gray-500"
-                onClick={handleRemoveAll}
-            >
-                請從左側選擇要瀏覽的封存資料
-            </button>
+        <main className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div className="flex flex-col items-center justify-center py-12">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-4">封存管理</h1>
+                    <p className="text-gray-500 dark:text-gray-400 text-center mb-8">
+                        請從左側選擇要瀏覽的封存資料
+                    </p>
+                    <button
+                        className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 text-lg bg-transparent border-none cursor-pointer focus:outline-none transition-colors duration-200"
+                        onClick={handleRemoveAll}
+                    >
+                        連點5次可清除所有封存資料
+                    </button>
+                </div>
+            </div>
         </main>
     );
 }

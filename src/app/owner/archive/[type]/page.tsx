@@ -257,83 +257,103 @@ export default function ArchivePage() {
         return arr;
     }, [dataSnapshot, search, type]);
 
-    // 渲染表格內容
-    const renderTableContent = () => {
-        if (loading) {
-            return <tr><td colSpan={TABLE_COLUMNS[type].length + 2} className="text-center py-4 dark:text-gray-300">載入中...</td></tr>;
-        }
-        if (error) {
-            return <tr><td colSpan={TABLE_COLUMNS[type].length + 2} className="text-center text-red-500 py-4 dark:text-red-400">{String(error)}</td></tr>;
-        }
-        if (rows.length === 0) {
-            return <tr><td colSpan={TABLE_COLUMNS[type].length + 2} className="text-center text-gray-400 py-4 dark:text-gray-500">尚無封存資料</td></tr>;
-        }
-
-        return rows.map((row) => (
-            <tr key={row.id}>
-                <td className="border px-2 py-1 text-center dark:border-gray-700 dark:text-gray-100">{row.idx}</td>
-                {TABLE_COLUMNS[type].map(({ key, type: columnType }) => (
-                    <td key={key} className="border px-2 py-1 dark:border-gray-700 dark:text-gray-100">
-                        {formatColumnValue(row[key as keyof typeof row], columnType)}
-                    </td>
-                ))}
-                <td className="border px-2 py-1 dark:border-gray-700 dark:text-gray-100">
-                    {formatColumnValue(row.archivedAt, 'date')}
-                </td>
-                {type === 'projects' && (
-                    <td className="border px-2 py-1 dark:border-gray-700">
-                        <Link href={`/owner/projects/${row.id}`} className="text-blue-600 hover:underline dark:text-blue-400">
-                            查看
-                        </Link>
-                    </td>
-                )}
-            </tr>
-        ));
-    };
-
     return (
-        <main className="max-w-2xl mx-auto px-4 py-8">
-            {/* 封存自動刪除提示 */}
-            <div className="mb-4 p-3 rounded bg-yellow-100 text-yellow-800 border border-yellow-300 text-sm dark:bg-yellow-900 dark:text-yellow-100 dark:border-yellow-700">
-                封存文件將於 {archiveRetentionDays} 天（約{' '}
-                {Math.round(archiveRetentionDays / 365)} 年）後自動刪除。
-            </div>
+        <main className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                {/* 封存自動刪除提示 */}
+                <div className="mb-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800 text-sm">
+                    封存文件將於 {archiveRetentionDays} 天（約{' '}
+                    {Math.round(archiveRetentionDays / 365)} 年）後自動刪除。
+                </div>
 
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold dark:text-gray-100">{PAGE_TITLES[type]}</h1>
-            </div>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                        {PAGE_TITLES[type]}
+                    </h1>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            className="w-full md:w-80 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                            placeholder="搜尋..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            🔍
+                        </span>
+                    </div>
+                </div>
 
-            {/* 搜尋框 */}
-            <div className="mb-4">
-                <input
-                    type="text"
-                    className="border rounded px-2 py-1 w-full dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700"
-                    placeholder="搜尋..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
+                {/* 資料表格 */}
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 dark:bg-gray-900">
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">序號</th>
+                                {TABLE_COLUMNS[type].map(({ key, label }) => (
+                                    <th key={key} className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                        {label}
+                                    </th>
+                                ))}
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">封存日期</th>
+                                {type === 'projects' && (
+                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">操作</th>
+                                )}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={TABLE_COLUMNS[type].length + (type === 'projects' ? 3 : 2)} className="px-4 py-8 text-center">
+                                        <div className="flex items-center justify-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : error ? (
+                                <tr>
+                                    <td colSpan={TABLE_COLUMNS[type].length + (type === 'projects' ? 3 : 2)} className="px-4 py-4 text-center text-red-500 dark:text-red-400">
+                                        {String(error)}
+                                    </td>
+                                </tr>
+                            ) : rows.length === 0 ? (
+                                <tr>
+                                    <td colSpan={TABLE_COLUMNS[type].length + (type === 'projects' ? 3 : 2)} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                        尚無封存資料
+                                    </td>
+                                </tr>
+                            ) : (
+                                rows.map((row) => (
+                                    <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200">
+                                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{row.idx}</td>
+                                        {TABLE_COLUMNS[type].map(({ key, type: columnType }) => (
+                                            <td key={key} className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                                {formatColumnValue(row[key as keyof typeof row], columnType)}
+                                            </td>
+                                        ))}
+                                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                            {formatColumnValue(row.archivedAt, 'date')}
+                                        </td>
+                                        {type === 'projects' && (
+                                            <td className="px-4 py-3 text-sm">
+                                                <Link 
+                                                    href={`/owner/projects/${row.id}`}
+                                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+                                                >
+                                                    查看
+                                                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </Link>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
-            {/* 資料表格 */}
-            <table className="w-full border text-sm dark:border-gray-700">
-                <thead>
-                    <tr className="bg-gray-100 dark:bg-gray-800">
-                        <th className="border px-2 py-1 dark:border-gray-700 dark:text-gray-100">序號</th>
-                        {TABLE_COLUMNS[type].map(({ key, label }) => (
-                            <th key={key} className="border px-2 py-1 dark:border-gray-700 dark:text-gray-100">
-                                {label}
-                            </th>
-                        ))}
-                        <th className="border px-2 py-1 dark:border-gray-700 dark:text-gray-100">封存日期</th>
-                        {type === 'projects' && (
-                            <th className="border px-2 py-1 dark:border-gray-700 dark:text-gray-100">操作</th>
-                        )}
-                    </tr>
-                </thead>
-                <tbody>
-                    {renderTableContent()}
-                </tbody>
-            </table>
         </main>
     );
 } 

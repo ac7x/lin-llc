@@ -14,14 +14,18 @@ const ArchivedNav = () => {
         { label: "封存發票", href: "/owner/archive/invoices" },
     ];
     return (
-        <nav className="w-48 min-h-screen border-r bg-gray-50 dark:bg-gray-900 p-4">
-            <h2 className="text-lg font-bold mb-4 text-center">封存管理</h2>
+        <nav className="w-64 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+            <h2 className="text-xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">封存管理</h2>
             <ul className="space-y-2">
                 {navs.map((nav) => (
                     <li key={nav.href}>
                         <Link
                             href={nav.href}
-                            className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === nav.href ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
+                            className={`block px-4 py-2.5 rounded-lg transition-colors duration-200 ${
+                                pathname === nav.href 
+                                    ? "bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-medium" 
+                                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            }`}
                         >
                             {nav.label}
                         </Link>
@@ -34,9 +38,9 @@ const ArchivedNav = () => {
 
 export default function ArchivedLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="flex">
+        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
             <ArchivedNav />
-            <div className="flex-1">{children}</div>
+            <div className="flex-1 p-6">{children}</div>
         </div>
     );
 }
