@@ -1,8 +1,8 @@
 "use client";
 
 import React from 'react';
-import { NotificationTestTool } from '@/app/owner/notifications/components/NotificationTestTool';
-import { NotificationBell } from '@/app/owner/notifications/components/NotificationBell';
+import { NotificationTestTool } from '@/app/notifications/components/NotificationTestTool';
+import { NotificationBell } from '@/app/notifications/components/NotificationBell';
 import { useAuth } from "@/hooks/useAuth";
 
 export default function SendNotificationPage() {

@@ -28,14 +28,14 @@ interface NavPermission {
 const defaultOwnerNavItems: NavItem[] = [
     // 個人相關
     { 
-        href: '/owner/profile', 
+        href: '/profile', 
         icon: '🙍‍♂️', 
         label: '個人檔案', 
         active: false,
         minRole: 'user',
     },
     { 
-        href: '/owner/dashboard', 
+        href: '/dashboard', 
         icon: '📊', 
         label: '儀表板', 
         active: false,
@@ -44,21 +44,21 @@ const defaultOwnerNavItems: NavItem[] = [
 
     // 專案管理
     { 
-        href: '/owner/projects', 
+        href: '/projects', 
         icon: '📁', 
         label: '專案', 
         active: false,
         requiredRoles: ['admin', 'owner', 'foreman', 'coord'],
     },
     { 
-        href: '/owner/schedule', 
+        href: '/schedule', 
         icon: '📅', 
         label: '行程', 
         active: false,
         requiredRoles: ['admin', 'owner', 'foreman', 'coord'],
     },
     { 
-        href: '/owner/calendar', 
+        href: '/calendar', 
         icon: '🗓️', 
         label: '日曆', 
         active: false,
@@ -67,28 +67,28 @@ const defaultOwnerNavItems: NavItem[] = [
 
     // 財務管理
     { 
-        href: '/owner/quotes', 
+        href: '/quotes', 
         icon: '📄', 
         label: '估價單', 
         active: false,
         requiredRoles: ['owner', 'finance'],
     },
     { 
-        href: '/owner/contracts', 
+        href: '/contracts', 
         icon: '📑', 
         label: '合約', 
         active: false,
         requiredRoles: ['owner', 'finance'],
     },
     { 
-        href: '/owner/orders', 
+        href: '/orders', 
         icon: '🧾', 
         label: '訂單', 
         active: false,
         requiredRoles: ['owner', 'finance'],
     },
     { 
-        href: '/owner/expenses', 
+        href: '/expenses', 
         icon: '🧾', 
         label: '支出', 
         active: false,
@@ -97,42 +97,42 @@ const defaultOwnerNavItems: NavItem[] = [
 
     // 系統功能
     { 
-        href: '/owner/gemini', 
+        href: '/gemini', 
         icon: '🤖', 
         label: 'Gemini', 
         active: false,
         minRole: 'user',
     },
     { 
-        href: '/owner/notifications', 
+        href: '/notifications', 
         icon: '🔔', 
         label: '通知', 
         active: false,
         minRole: 'user',
     },
     { 
-        href: '/owner/send-notification', 
+        href: '/send-notification', 
         icon: '📨', 
         label: '發送通知', 
         active: false,
         requiredRoles: ['owner', 'admin'],
     },
     { 
-        href: '/owner/users', 
+        href: '/users', 
         icon: '👤', 
         label: '用戶管理', 
         active: false,
         requiredRoles: ['owner'],
     },
     { 
-        href: '/owner/settings', 
+        href: '/settings', 
         icon: '⚙️', 
         label: '設定', 
         active: false,
         requiredRoles: ['owner'],
     },
     { 
-        href: '/owner/archive', 
+        href: '/archive', 
         icon: '🗄️', 
         label: '封存', 
         active: false,
