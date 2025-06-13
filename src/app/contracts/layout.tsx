@@ -12,8 +12,8 @@ import { collection } from "firebase/firestore";
 const ContractNav: React.FC = () => {
     const pathname = usePathname();
     const baseNavs = [
-        { label: "合約列表", href: "/owner/contracts", icon: "📋" },
-        { label: "新增合約", href: "/owner/contracts/create", icon: "➕" },
+        { label: "合約列表", href: "/contracts", icon: "📋" },
+        { label: "新增合約", href: "/contracts/create", icon: "➕" },
     ];
 
     const [contractsSnapshot] = useCollection(collection(db, 'finance', 'default', 'contracts'));
@@ -21,7 +21,7 @@ const ContractNav: React.FC = () => {
     // 從數據庫獲取合約列表
     const contractNavs = contractsSnapshot?.docs.map(doc => ({
         label: doc.data().contractName || `合約 ${doc.id}`,
-        href: `/owner/contracts/${doc.id}`,
+        href: `/contracts/${doc.id}`,
         icon: "📄"
     })) || [];
 

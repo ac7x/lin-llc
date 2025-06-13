@@ -7,11 +7,11 @@ import { usePathname } from "next/navigation";
 const ArchivedNav = () => {
     const pathname = usePathname();
     const navs = [
-        { label: "封存訂單", href: "/owner/archive/orders" },
-        { label: "封存估價單", href: "/owner/archive/quotes" },
-        { label: "封存合約", href: "/owner/archive/contracts" },
-        { label: "封存專案", href: "/owner/archive/projects" },
-        { label: "封存支出", href: "/owner/archive/expenses" },
+        { label: "封存訂單", href: "/archive/orders" },
+        { label: "封存估價單", href: "/archive/quotes" },
+        { label: "封存合約", href: "/archive/contracts" },
+        { label: "封存專案", href: "/archive/projects" },
+        { label: "封存支出", href: "/archive/expenses" },
     ];
     return (
         <nav className="w-64 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">

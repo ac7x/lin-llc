@@ -326,7 +326,7 @@ export default function OrderDetailPage() {
                         </table>
                     </div>
                     <div className="mt-6 flex gap-2">
-                        <button type="button" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded" onClick={() => router.push("/owner/orders")}>返回列表</button>
+                        <button type="button" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded" onClick={() => router.push("/orders")}>返回列表</button>
                         <button type="button" className="bg-yellow-500 dark:bg-yellow-800 text-white dark:text-yellow-200 px-6 py-2 rounded" onClick={() => setEditing(true)}>編輯</button>
                     </div>
                 </form>

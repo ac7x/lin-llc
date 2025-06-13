@@ -73,7 +73,7 @@ export default function OrderAddPage() {
                 clientPhone,
                 clientEmail,
             });
-            router.push("/owner/orders");
+            router.push("/orders");
         } catch (err) {
             alert("新增訂單失敗: " + (err instanceof Error ? err.message : String(err)));
         }
@@ -227,7 +227,7 @@ export default function OrderAddPage() {
                 </div>
                 <div className="mt-6 flex gap-2">
                     <button type="submit" className="bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded">送出訂單</button>
-                    <button type="button" className="bg-gray-300 dark:bg-gray-800 text-black dark:text-gray-100 px-6 py-2 rounded" onClick={() => router.push("/owner/orders")}>返回列表</button>
+                    <button type="button" className="bg-gray-300 dark:bg-gray-800 text-black dark:text-gray-100 px-6 py-2 rounded" onClick={() => router.push("/orders")}>返回列表</button>
                 </div>
             </form>
         </main>

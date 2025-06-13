@@ -14,9 +14,9 @@ function Sidebar() {
     const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
     const pathname = usePathname();
     const navs = [
-        { label: "專案列表", href: "/owner/projects", icon: "📋" },
-        { label: "從合約建立專案", href: "/owner/projects/import", icon: "📄" },
-        { label: "工作包模板", href: "/owner/projects/templates", icon: "📑" },
+        { label: "專案列表", href: "/projects", icon: "📋" },
+        { label: "從合約建立專案", href: "/projects/import", icon: "📄" },
+        { label: "工作包模板", href: "/projects/templates", icon: "📑" },
     ];
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
     const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
@@ -132,9 +132,9 @@ function Sidebar() {
                                         )}
                                     </button>
                                     <Link
-                                        href={`/owner/projects/${project.id}`}
+                                        href={`/projects/${project.id}`}
                                         className={`flex-1 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
-                                            pathname === `/owner/projects/${project.id}` 
+                                            pathname === `/projects/${project.id}` 
                                             ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
                                             : "text-gray-700 dark:text-gray-300"
                                         }`}
@@ -164,7 +164,7 @@ function Sidebar() {
                                         {project.workpackages?.map((wp) => (
                                             <div key={wp.id} className="group/item">
                                                 <Link
-                                                    href={`/owner/projects/${project.id}/workpackages/${wp.id}`}
+                                                    href={`/projects/${project.id}/workpackages/${wp.id}`}
                                                     className={`block px-4 py-2 rounded-lg text-sm transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
                                                         pathname.includes(`/workpackages/${wp.id}`) 
                                                         ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 

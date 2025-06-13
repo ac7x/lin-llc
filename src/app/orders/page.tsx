@@ -156,7 +156,7 @@ export default function OrdersPage() {
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <Link 
-                                                            href={`/owner/orders/${row.orderId}`} 
+                                                            href={`/orders/${row.orderId}`} 
                                                             className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
                                                         >
                                                             查看

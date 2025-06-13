@@ -339,7 +339,7 @@ export default function QuoteDetailPage() {
                     </div>
                     <div className="mt-6 flex gap-2">
                         <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={() => setEditing(true)}>編輯</button>
-                        <button type="button" className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" onClick={() => router.push("/owner/quotes")}>返回</button>
+                        <button type="button" className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" onClick={() => router.push("/quotes")}>返回</button>
                     </div>
                 </div>
             )}

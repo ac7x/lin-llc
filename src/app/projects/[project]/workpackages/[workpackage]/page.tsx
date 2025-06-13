@@ -608,7 +608,7 @@ export default function WorkpackageDetailPage() {
                             ) : (
                                 <div className="py-10 text-center">
                                     <p className="text-gray-500 mb-4">尚未建立任何範本</p>
-                                    <button onClick={() => { setShowTemplateModal(false); router.push('/owner/templates'); }} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">前往建立範本</button>
+                                    <button onClick={() => { setShowTemplateModal(false); router.push('/templates'); }} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">前往建立範本</button>
                                 </div>
                             )}
                         </div>

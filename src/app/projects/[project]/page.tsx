@@ -79,7 +79,7 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
                 </div>
             </div>
             <a
-                href={`/owner/projects/${projectId}/workpackages/${wp.id}`}
+                href={`/projects/${projectId}/workpackages/${wp.id}`}
                 className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors duration-200 flex items-center"
             >
                 檢視

@@ -10,8 +10,8 @@ import { collection } from "firebase/firestore";
 const QuoteSideNav: React.FC = () => {
     const pathname = usePathname();
     const baseNavs = [
-        { label: "報價單列表", href: "/owner/quotes", icon: "📋" },
-        { label: "新增報價單", href: "/owner/quotes/add", icon: "➕" },
+        { label: "報價單列表", href: "/quotes", icon: "📋" },
+        { label: "新增報價單", href: "/quotes/add", icon: "➕" },
     ];
 
     const [quotesSnapshot] = useCollection(collection(db, 'finance', 'default', 'quotes'));
@@ -19,7 +19,7 @@ const QuoteSideNav: React.FC = () => {
     // 從數據庫獲取報價單列表
     const quoteNavs = quotesSnapshot?.docs.map(doc => ({
         label: doc.data().quoteName || `報價單 ${doc.id}`,
-        href: `/owner/quotes/${doc.id}`,
+        href: `/quotes/${doc.id}`,
         icon: "📄"
     })) || [];
 

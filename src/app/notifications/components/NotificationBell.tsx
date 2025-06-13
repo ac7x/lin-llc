@@ -39,7 +39,7 @@ export function NotificationBell({
   }
 
   return (
-    <Link href="/owner/notifications" className={`relative inline-block ${className}`}>
+    <Link href="/notifications" className={`relative inline-block ${className}`}>
       {unreadCount > 0 ? (
         <BellSolidIcon className={`${sizeClasses[size]} text-blue-500 hover:text-blue-600 transition-colors`} />
       ) : (
@@ -90,7 +90,7 @@ export function NotificationSummary({ className = '' }: NotificationSummaryProps
 
   return (
     <Link 
-      href="/owner/notifications" 
+      href="/notifications" 
       className={`flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors ${className}`}
     >
       <BellIcon className="h-4 w-4" />

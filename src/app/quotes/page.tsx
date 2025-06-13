@@ -157,7 +157,7 @@ export default function QuotesPage() {
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <Link 
-                                                            href={`/owner/quotes/${row.quoteId}`} 
+                                                            href={`/quotes/${row.quoteId}`} 
                                                             className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
                                                         >
                                                             查看

@@ -337,7 +337,7 @@ export default function ArchivePage() {
                                         {type === 'projects' && (
                                             <td className="px-4 py-3 text-sm">
                                                 <Link 
-                                                    href={`/owner/projects/${row.id}`}
+                                                    href={`/projects/${row.id}`}
                                                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
                                                 >
                                                     查看

@@ -10,8 +10,8 @@ import { collection } from "firebase/firestore";
 const OrderSideNav: React.FC = () => {
     const pathname = usePathname();
     const baseNavs = [
-        { label: "訂單列表", href: "/owner/orders", icon: "📋" },
-        { label: "新增訂單", href: "/owner/orders/create", icon: "➕" },
+        { label: "訂單列表", href: "/orders", icon: "📋" },
+        { label: "新增訂單", href: "/orders/create", icon: "➕" },
     ];
 
     const [ordersSnapshot] = useCollection(collection(db, 'finance', 'default', 'orders'));
@@ -19,7 +19,7 @@ const OrderSideNav: React.FC = () => {
     // 從數據庫獲取訂單列表
     const orderNavs = ordersSnapshot?.docs.map(doc => ({
         label: doc.data().orderName || `訂單 ${doc.id}`,
-        href: `/owner/orders/${doc.id}`,
+        href: `/orders/${doc.id}`,
         icon: "📄"
     })) || [];
 

@@ -70,7 +70,7 @@ const ExpenseCreatePage: React.FC = () => {
         notes: '',
       };
       await setDoc(doc(db, 'finance', 'default', 'expenses', projectId), expenseData);
-      router.push('/owner/expenses');
+      router.push('/expenses');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {

@@ -47,7 +47,7 @@ export default function ContractDetailPage() {
                             訂單
                             <button
                                 className="ml-2 text-blue-600 hover:underline dark:text-blue-400"
-                                onClick={() => router.push(`/owner/orders/${data.sourceId}`)}
+                                onClick={() => router.push(`/orders/${data.sourceId}`)}
                             >
                                 {data.sourceId}
                             </button>
@@ -57,7 +57,7 @@ export default function ContractDetailPage() {
                             估價單
                             <button
                                 className="ml-2 text-green-600 hover:underline dark:text-green-400"
-                                onClick={() => router.push(`/owner/quotes/${data.sourceId}`)}
+                                onClick={() => router.push(`/quotes/${data.sourceId}`)}
                             >
                                 {data.sourceId}
                             </button>
@@ -98,7 +98,7 @@ export default function ContractDetailPage() {
                 <span className="font-bold">合約條款：</span>
                 <pre className="bg-gray-100 dark:bg-gray-800 rounded p-2 mt-1 whitespace-pre-wrap border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200">{data.contractContent || "（無內容）"}</pre>
             </div>
-            <button className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => router.push("/owner/contracts")}>返回列表</button>
+            <button className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600" onClick={() => router.push("/contracts")}>返回列表</button>
         </main>
     );
 }

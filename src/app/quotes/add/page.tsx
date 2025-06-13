@@ -75,7 +75,7 @@ export default function QuoteAddPage() {
                 status: "draft",
                 createdBy: user.uid
             });
-            router.push("/owner/quotes");
+            router.push("/quotes");
         } catch (error) {
             console.error("Error creating quote:", error);
         }
@@ -257,7 +257,7 @@ export default function QuoteAddPage() {
                 </div>
                 <div className="mt-6 flex gap-2">
                     <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">送出</button>
-                    <button type="button" className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" onClick={() => router.push("/owner/quotes")}>取消</button>
+                    <button type="button" className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500" onClick={() => router.push("/quotes")}>取消</button>
                 </div>
             </form>
         </main>

@@ -10,8 +10,8 @@ import { collection } from "firebase/firestore";
 const ExpenseNav: React.FC = () => {
     const pathname = usePathname();
     const baseNavs = [
-        { label: "支出列表", href: "/owner/expenses", icon: "📋" },
-        { label: "新增支出", href: "/owner/expenses/create", icon: "➕" },
+        { label: "支出列表", href: "/expenses", icon: "📋" },
+        { label: "新增支出", href: "/expenses/create", icon: "➕" },
     ];
 
     const [expensesSnapshot] = useCollection(collection(db, 'finance', 'default', 'expenses'));
@@ -19,7 +19,7 @@ const ExpenseNav: React.FC = () => {
     // 從數據庫獲取支出列表
     const expenseNavs = expensesSnapshot?.docs.map(doc => ({
         label: doc.data().expenseName || `支出 ${doc.id}`,
-        href: `/owner/expenses/${doc.id}`,
+        href: `/expenses/${doc.id}`,
         icon: "📄"
     })) || [];
 

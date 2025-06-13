@@ -60,13 +60,13 @@ export default function SendNotificationPage() {
           <h2 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">相關頁面</h2>
           <div className="space-y-2">
             <a 
-              href="/owner/notifications" 
+              href="/notifications" 
               className="block text-blue-600 dark:text-blue-400 hover:underline"
             >
               → 通知中心（查看所有通知）
             </a>
             <a 
-              href="/owner/settings" 
+              href="/settings" 
               className="block text-blue-600 dark:text-blue-400 hover:underline"
             >
               → 設定頁面（管理通知偏好）

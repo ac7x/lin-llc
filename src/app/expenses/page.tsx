@@ -52,7 +52,7 @@ const ExpensePage: React.FC = () => {
 
         // 產生支出詳情頁網址
         const expenseId = String(data.expenseId || row.expenseId || docRef.id);
-        const detailUrl = `${window.location.origin}/owner/expenses/${expenseId}`;
+        const detailUrl = `${window.location.origin}/expenses/${expenseId}`;
         // 產生 QRCode DataURL
         const qrCodeDataUrl = await QRCode.toDataURL(detailUrl, { margin: 1, width: 128 });
 
@@ -117,7 +117,7 @@ const ExpensePage: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-3">
                                                     <Link 
-                                                        href={`/owner/expenses/${row.expenseId}`} 
+                                                        href={`/expenses/${row.expenseId}`} 
                                                         className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
                                                     >
                                                         查看
