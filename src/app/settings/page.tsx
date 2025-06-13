@@ -170,182 +170,238 @@ export default function OwnerSettingsPage() {
     if (!isOwner) return null;
 
     return (
-        <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
-            <h1 className="text-2xl font-bold mb-4">系統設定</h1>
+        <main className="p-6 pb-24 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+            <h1 className="text-2xl font-bold mb-6">系統設定</h1>
             
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* 封存設定區塊 */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow lg:col-span-1">
-                    <h2 className="text-xl font-semibold mb-4">封存設定</h2>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block font-medium mb-1">
-                                封存自動刪除天數
-                            </label>
-                            {isEditingRetentionDays ? (
-                                <div className="flex items-center space-x-2">
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        className="border rounded px-2 py-1 w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                        value={tempRetentionDays ?? ''}
-                                        onChange={e => setTempRetentionDays(Number(e.target.value))}
-                                    />
-                                    <span className="text-gray-500 dark:text-gray-400">天</span>
-                                    <button
-                                        onClick={handleRetentionDaysUpdate}
-                                        disabled={updating}
-                                        className="text-green-600 hover:text-green-700 disabled:text-gray-400"
-                                    >
-                                        {updating ? '儲存中...' : '✓'}
-                                    </button>
-                                    <button
-                                        onClick={() => setIsEditingRetentionDays(false)}
-                                        disabled={updating}
-                                        className="text-red-600 hover:text-red-700 disabled:text-gray-400"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-gray-900 dark:text-gray-100">
-                                        {archiveRetentionDays ?? '未設定'} 天
-                                    </span>
-                                    <button
-                                        onClick={() => {
-                                            setTempRetentionDays(archiveRetentionDays);
-                                            setIsEditingRetentionDays(true);
-                                        }}
-                                        className="text-blue-600 hover:text-blue-700"
-                                    >
-                                        編輯
-                                    </button>
-                                </div>
-                            )}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* 左側：封存設定和角色選擇區塊 */}
+                <div className="lg:col-span-3 space-y-6">
+                    {/* 封存設定 */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg sticky top-6">
+                        <h2 className="text-xl font-semibold mb-4 flex items-center">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                            封存設定
+                        </h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block font-medium mb-1">
+                                    封存自動刪除天數
+                                </label>
+                                {isEditingRetentionDays ? (
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            className="border rounded px-2 py-1 w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                            value={tempRetentionDays ?? ''}
+                                            onChange={e => setTempRetentionDays(Number(e.target.value))}
+                                        />
+                                        <span className="text-gray-500 dark:text-gray-400">天</span>
+                                        <button
+                                            onClick={handleRetentionDaysUpdate}
+                                            disabled={updating}
+                                            className="text-green-600 hover:text-green-700 disabled:text-gray-400"
+                                        >
+                                            {updating ? '儲存中...' : '✓'}
+                                        </button>
+                                        <button
+                                            onClick={() => setIsEditingRetentionDays(false)}
+                                            disabled={updating}
+                                            className="text-red-600 hover:text-red-700 disabled:text-gray-400"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-gray-900 dark:text-gray-100">
+                                            {archiveRetentionDays ?? '未設定'} 天
+                                        </span>
+                                        <button
+                                            onClick={() => {
+                                                setTempRetentionDays(archiveRetentionDays);
+                                                setIsEditingRetentionDays(true);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-700"
+                                        >
+                                            編輯
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                    </div>
+
+                    {/* 角色選擇 */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg sticky top-[calc(6rem+300px)]">
+                        <h2 className="text-xl font-semibold mb-4 flex items-center">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            選擇角色
+                        </h2>
+                        <select
+                            className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
+                            value={selectedRoleForPermission}
+                            onChange={(e) => handleRoleSelect(e.target.value)}
+                        >
+                            <option value="">請選擇角色</option>
+                            {Object.entries(ROLE_HIERARCHY)
+                                .sort(([,a], [,b]) => b - a)
+                                .map(([role, level]) => {
+                                    const roleKey = role as RoleKey;
+                                    return (
+                                        <option key={role} value={role}>
+                                            {ROLE_NAMES[roleKey]} ({role}) - 權限等級: {level}
+                                        </option>
+                                    );
+                                })
+                            }
+                        </select>
                     </div>
                 </div>
 
-                {/* 角色權限設定區塊 */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow lg:col-span-3">
-                    <h2 className="text-xl font-semibold mb-4">角色權限管理</h2>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block font-medium mb-1">選擇角色</label>
-                            <select
-                                className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
-                                value={selectedRoleForPermission}
-                                onChange={(e) => handleRoleSelect(e.target.value)}
-                            >
-                                <option value="">請選擇角色</option>
-                                {Object.entries(ROLE_HIERARCHY)
-                                    .sort(([,a], [,b]) => b - a)
-                                    .map(([role, level]) => {
-                                        const roleKey = role as RoleKey;
-                                        return (
-                                            <option key={role} value={role}>
-                                                {ROLE_NAMES[roleKey]} ({role}) - 權限等級: {level}
-                                            </option>
-                                        );
-                                    })
-                                }
-                            </select>
+                {/* 中間：系統權限設定區塊 */}
+                <div className="lg:col-span-5">
+                    {selectedRoleForPermission ? (
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <h2 className="text-xl font-semibold mb-4 flex items-center">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                系統權限設定
+                            </h2>
+                            
+                            <div className="mb-4">
+                                <input
+                                    type="text"
+                                    placeholder="搜尋權限..."
+                                    className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+                                {Object.entries(groupedPermissions).map(([category, perms]) => (
+                                    <PermissionCategory
+                                        key={category}
+                                        category={category}
+                                        permissions={perms}
+                                        selectedPermissions={selectedPermissions}
+                                        onPermissionChange={(permissionId, checked) => {
+                                            if (checked) {
+                                                setSelectedPermissions([...selectedPermissions, permissionId]);
+                                            } else {
+                                                setSelectedPermissions(selectedPermissions.filter(id => id !== permissionId));
+                                            }
+                                        }}
+                                        isExpanded={expandedCategories.has(category)}
+                                        onToggle={() => toggleCategory(category)}
+                                    />
+                                ))}
+                            </div>
                         </div>
+                    ) : (
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-center h-[calc(100vh-300px)]">
+                            <div className="text-center text-gray-500 dark:text-gray-400">
+                                <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                <p className="text-lg">請從左側選擇一個角色來管理權限</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
 
-                        {selectedRoleForPermission && (
-                            <>
-                                {/* 系統權限設定 */}
-                                <div>
-                                    <div className="mb-4">
-                                        <input
-                                            type="text"
-                                            placeholder="搜尋權限..."
-                                            className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                    </div>
-                                    <label className="block font-medium mb-1">系統權限設定</label>
-                                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                                        {Object.entries(groupedPermissions).map(([category, perms]) => (
-                                            <PermissionCategory
-                                                key={category}
-                                                category={category}
-                                                permissions={perms}
-                                                selectedPermissions={selectedPermissions}
-                                                onPermissionChange={(permissionId, checked) => {
-                                                    if (checked) {
-                                                        setSelectedPermissions([...selectedPermissions, permissionId]);
-                                                    } else {
-                                                        setSelectedPermissions(selectedPermissions.filter(id => id !== permissionId));
-                                                    }
-                                                }}
-                                                isExpanded={expandedCategories.has(category)}
-                                                onToggle={() => toggleCategory(category)}
-                                            />
-                                        ))}
+                {/* 右側：導航權限設定區塊 */}
+                <div className="lg:col-span-4">
+                    {selectedRoleForPermission ? (
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <h2 className="text-xl font-semibold mb-4 flex items-center">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                                導航權限設定
+                            </h2>
+                            <div className="mb-4">
+                                <input
+                                    type="text"
+                                    placeholder="搜尋導航項目..."
+                                    className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
+                                    value={navSearchTerm}
+                                    onChange={(e) => setNavSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+                                <div className="border rounded-lg overflow-hidden">
+                                    <div className="p-4 space-y-2">
+                                        {navPermissions
+                                            .filter(np => 
+                                                np.name.toLowerCase().includes(navSearchTerm.toLowerCase()) ||
+                                                np.description.toLowerCase().includes(navSearchTerm.toLowerCase())
+                                            )
+                                            .map(navPermission => (
+                                                <div key={navPermission.id} className="flex items-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`nav-${navPermission.id}`}
+                                                        checked={selectedNavPermissions.includes(navPermission.id)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedNavPermissions([...selectedNavPermissions, navPermission.id]);
+                                                            } else {
+                                                                setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== navPermission.id));
+                                                            }
+                                                        }}
+                                                        className="mr-2"
+                                                    />
+                                                    <label htmlFor={`nav-${navPermission.id}`} className="text-sm">
+                                                        {navPermission.name}
+                                                        <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
+                                                            ({navPermission.description})
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            ))}
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* 導航權限設定 */}
-                                <div className="mt-6">
-                                    <div className="mb-4">
-                                        <input
-                                            type="text"
-                                            placeholder="搜尋導航項目..."
-                                            className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
-                                            value={navSearchTerm}
-                                            onChange={(e) => setNavSearchTerm(e.target.value)}
-                                        />
-                                    </div>
-                                    <label className="block font-medium mb-1">導航權限設定</label>
-                                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                                        <div className="border rounded-lg overflow-hidden">
-                                            <div className="p-4 space-y-2">
-                                                {navPermissions
-                                                    .filter(np => 
-                                                        np.name.toLowerCase().includes(navSearchTerm.toLowerCase()) ||
-                                                        np.description.toLowerCase().includes(navSearchTerm.toLowerCase())
-                                                    )
-                                                    .map(navPermission => (
-                                                        <div key={navPermission.id} className="flex items-center">
-                                                            <input
-                                                                type="checkbox"
-                                                                id={`nav-${navPermission.id}`}
-                                                                checked={selectedNavPermissions.includes(navPermission.id)}
-                                                                onChange={(e) => {
-                                                                    if (e.target.checked) {
-                                                                        setSelectedNavPermissions([...selectedNavPermissions, navPermission.id]);
-                                                                    } else {
-                                                                        setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== navPermission.id));
-                                                                    }
-                                                                }}
-                                                                className="mr-2"
-                                                            />
-                                                            <label htmlFor={`nav-${navPermission.id}`} className="text-sm">
-                                                                {navPermission.name}
-                                                                <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
-                                                                    ({navPermission.description})
-                                                                </span>
-                                                            </label>
-                                                        </div>
-                                                    ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={handlePermissionUpdate}
-                                    disabled={updating}
-                                    className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full"
-                                >
-                                    {updating ? '更新中...' : '更新權限設定'}
-                                </button>
-                            </>
-                        )}
-                    </div>
+                            <button
+                                onClick={handlePermissionUpdate}
+                                disabled={updating}
+                                className="mt-6 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full flex items-center justify-center"
+                            >
+                                {updating ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        更新中...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        更新權限設定
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-center h-[calc(100vh-300px)]">
+                            <div className="text-center text-gray-500 dark:text-gray-400">
+                                <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                                <p className="text-lg">請從左側選擇一個角色來管理導航權限</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </main>
