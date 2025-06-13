@@ -62,19 +62,30 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
         <div
             ref={setNodeRef}
             style={style}
-            className="border rounded p-3 flex justify-between items-center bg-gray-50 dark:bg-gray-700"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center hover:shadow-md transition-shadow duration-200"
         >
             <div className="flex-1 cursor-grab" {...attributes} {...listeners}>
-                <div className="font-medium">{wp.name}</div>
-                <div className="text-sm text-gray-500">
-                    • 進度: {getWorkpackageProgress(wp)}% • 狀態: {wp.status || ''}
+                <div className="font-medium text-gray-900 dark:text-gray-100">{wp.name}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <span className="inline-flex items-center">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+                        進度: {getWorkpackageProgress(wp)}%
+                    </span>
+                    <span className="mx-2">•</span>
+                    <span className="inline-flex items-center">
+                        <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                        狀態: {wp.status || ''}
+                    </span>
                 </div>
             </div>
             <a
                 href={`/owner/projects/${projectId}/workpackages/${wp.id}`}
-                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors duration-200 flex items-center"
             >
                 檢視
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
             </a>
         </div>
     );
@@ -158,23 +169,43 @@ export default function ProjectDetailPage() {
         }
     };
 
-    if (loading) return <div>載入中...</div>;
-    if (error) return <div>錯誤: {error.message}</div>;
-    if (!project) return <div>找不到專案</div>;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+    
+    if (error) {
+        return (
+            <div className="bg-red-50 dark:bg-red-900/50 text-red-800 dark:text-red-200 p-4 rounded-lg">
+                錯誤: {error.message}
+            </div>
+        );
+    }
+    
+    if (!project) {
+        return (
+            <div className="bg-yellow-50 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 p-4 rounded-lg">
+                找不到專案
+            </div>
+        );
+    }
 
     const renderTabContent = () => {
         switch (tab) {
             case "info":
                 return (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                        <div className="flex justify-between items-start mb-4">
-                            <h2 className="text-xl font-bold">專案資訊</h2>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                        <div className="flex justify-between items-start mb-6">
+                            <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案資訊</h2>
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="bg-blue-500 text-white p-1 rounded-full hover:bg-blue-600 w-8 h-8 flex items-center justify-center"
+                                className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors duration-200"
                                 title="編輯"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                             </button>
@@ -182,41 +213,61 @@ export default function ProjectDetailPage() {
 
                         {/* 編輯表單彈窗 */}
                         {isEditing && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl">
-                                    <h2 className="text-xl font-bold mb-4">編輯專案資訊</h2>
+                            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl">
+                                    <h2 className="text-xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">編輯專案資訊</h2>
                                     <form onSubmit={async (e) => {
                                         e.preventDefault();
                                         const formData = new FormData(e.target as HTMLFormElement);
                                         await handleUpdateProject(formData);
                                     }} className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">專案名稱</label>
-                                                <input name="projectName" defaultValue={project.projectName} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">專案名稱</label>
+                                                <input 
+                                                    name="projectName" 
+                                                    defaultValue={project.projectName} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">合約ID</label>
-                                                <input name="contractId" defaultValue={project.contractId} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">合約ID</label>
+                                                <input 
+                                                    name="contractId" 
+                                                    defaultValue={project.contractId} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">協調者</label>
-                                                <input name="coordinator" defaultValue={project.coordinator} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">協調者</label>
+                                                <input 
+                                                    name="coordinator" 
+                                                    defaultValue={project.coordinator} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">監工</label>
-                                                <input name="supervisor" defaultValue={project.supervisor} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">監工</label>
+                                                <input 
+                                                    name="supervisor" 
+                                                    defaultValue={project.supervisor} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">安全人員</label>
-                                                <input name="safetyOfficer" defaultValue={project.safetyOfficer} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">安全人員</label>
+                                                <input 
+                                                    name="safetyOfficer" 
+                                                    defaultValue={project.safetyOfficer} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">地區</label>
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">地區</label>
                                                 <select
                                                     name="region"
                                                     defaultValue={project.region || ""}
-                                                    className="border rounded w-full px-3 py-2 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                                 >
                                                     <option value="">請選擇</option>
                                                     {TaiwanCityList.map(opt => (
@@ -225,33 +276,51 @@ export default function ProjectDetailPage() {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">地址</label>
-                                                <input name="address" defaultValue={project.address} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">地址</label>
+                                                <input 
+                                                    name="address" 
+                                                    defaultValue={project.address} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">業主</label>
-                                                <input name="owner" defaultValue={project.owner} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">業主</label>
+                                                <input 
+                                                    name="owner" 
+                                                    defaultValue={project.owner} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">起始日</label>
-                                                <input type="date" name="startDate" defaultValue={project.startDate?.toDate().toISOString().split('T')[0]} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">起始日</label>
+                                                <input 
+                                                    type="date" 
+                                                    name="startDate" 
+                                                    defaultValue={project.startDate?.toDate().toISOString().split('T')[0]} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">預估結束日</label>
-                                                <input type="date" name="estimatedEndDate" defaultValue={project.estimatedEndDate?.toDate().toISOString().split('T')[0]} className="border rounded w-full px-3 py-2" />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預估結束日</label>
+                                                <input 
+                                                    type="date" 
+                                                    name="estimatedEndDate" 
+                                                    defaultValue={project.estimatedEndDate?.toDate().toISOString().split('T')[0]} 
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                />
                                             </div>
                                         </div>
-                                        <div className="flex justify-end space-x-2 pt-4">
+                                        <div className="flex justify-end space-x-3 pt-6">
                                             <button
                                                 type="button"
                                                 onClick={() => setIsEditing(false)}
-                                                className="px-4 py-2 border border-gray-300 rounded shadow hover:bg-gray-200 hover:text-gray-900"
+                                                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                                             >
                                                 取消
                                             </button>
                                             <button
                                                 type="submit"
-                                                className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600"
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                                             >
                                                 確認儲存
                                             </button>
@@ -261,52 +330,60 @@ export default function ProjectDetailPage() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-gray-500">專案名稱</label>
-                                <div>{project.projectName}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">專案名稱</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.projectName}</div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">合約ID</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.contractId || '-'}</div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">協調者</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.coordinator || '-'}</div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">監工</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.supervisor || '-'}</div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">安全人員</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.safetyOfficer || '-'}</div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-gray-500">合約ID</label>
-                                <div>{project.contractId || '-'}</div>
-                            </div>
-                            <div>
-                                <label className="text-gray-500">協調者</label>
-                                <div>{project.coordinator || '-'}</div>
-                            </div>
-                            <div>
-                                <label className="text-gray-500">監工</label>
-                                <div>{project.supervisor || '-'}</div>
-                            </div>
-                            <div>
-                                <label className="text-gray-500">安全人員</label>
-                                <div>{project.safetyOfficer || '-'}</div>
-                            </div>
-                            <div>
-                                <label className="text-gray-500">地區</label>
-                                <div>{project.region || '-'}</div>
-                            </div>
-                            <div>
-                                <label className="text-gray-500">地址</label>
-                                <div>{project.address || '-'}</div>
-                            </div>
-                            <div>
-                                <label className="text-gray-500">業主</label>
-                                <div>{project.owner || '-'}</div>
-                            </div>
-                            <div>
-                                <label className="text-gray-500">起始日</label>
-                                <div>{project.startDate ? project.startDate.toDate().toLocaleDateString() : '-'}</div>
-                            </div>
-                            <div>
-                                <label className="text-gray-500">預估結束日</label>
-                                <div>{project.estimatedEndDate ? project.estimatedEndDate.toDate().toLocaleDateString() : '-'}</div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">地區</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.region || '-'}</div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">地址</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.address || '-'}</div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">業主</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.owner || '-'}</div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">起始日</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">
+                                        {project.startDate ? project.startDate.toDate().toLocaleDateString() : '-'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">預估結束日</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">
+                                        {project.estimatedEndDate ? project.estimatedEndDate.toDate().toLocaleDateString() : '-'}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {/* 工作包列表 */}
-                        <div className="mt-6">
-                            <h3 className="text-lg font-semibold mb-3">工作包</h3>
+                        <div className="mt-8">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">工作包</h3>
                             {workpackages && workpackages.length > 0 ? (
                                 <DndContext
                                     sensors={sensors}
@@ -317,7 +394,7 @@ export default function ProjectDetailPage() {
                                         items={workpackages.map(wp => wp.id)}
                                         strategy={verticalListSortingStrategy}
                                     >
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             {workpackages.map((wp) => (
                                                 <SortableWorkpackage
                                                     key={wp.id}
@@ -329,7 +406,9 @@ export default function ProjectDetailPage() {
                                     </SortableContext>
                                 </DndContext>
                             ) : (
-                                <p className="text-gray-500 italic">尚未建立工作包</p>
+                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    尚未建立工作包
+                                </div>
                             )}
                         </div>
                     </div>
@@ -350,68 +429,76 @@ export default function ProjectDetailPage() {
     };
 
     return (
-        <main className="max-w-4xl mx-auto p-4 bg-white dark:bg-gray-900">
+        <main className="max-w-4xl mx-auto">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">{project.projectName}</h1>
                 <div className="text-gray-600 dark:text-gray-300">狀態: {project.status}</div>
             </div>
 
-            {/* Tabs - 依使用頻率重新排序 */}
-            <div className="mb-6 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-1 overflow-x-auto bg-white dark:bg-gray-900">
-                <button
-                    className={`px-4 py-2 -mb-px border-b-2 ${tab === "journal"
-                        ? "border-blue-600 text-blue-600 font-bold dark:border-blue-400 dark:text-blue-400"
-                        : "border-transparent text-gray-600 dark:text-gray-300"
+            {/* Tabs */}
+            <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+                <nav className="flex flex-wrap gap-1 -mb-px">
+                    <button
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                            tab === "journal"
+                            ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
                         }`}
-                    onClick={() => setTab("journal")}
-                >
-                    工作日誌
-                </button>
-                <button
-                    className={`px-4 py-2 -mb-px border-b-2 ${tab === "calendar"
-                        ? "border-blue-600 text-blue-600 font-bold dark:border-blue-400 dark:text-blue-400"
-                        : "border-transparent text-gray-600 dark:text-gray-300"
+                        onClick={() => setTab("journal")}
+                    >
+                        工作日誌
+                    </button>
+                    <button
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                            tab === "calendar"
+                            ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
                         }`}
-                    onClick={() => setTab("calendar")}
-                >
-                    行程
-                </button>
-                <button
-                    className={`px-4 py-2 -mb-px border-b-2 ${tab === "issues"
-                        ? "border-blue-600 text-blue-600 font-bold dark:border-blue-400 dark:text-blue-400"
-                        : "border-transparent text-gray-600 dark:text-gray-300"
+                        onClick={() => setTab("calendar")}
+                    >
+                        行程
+                    </button>
+                    <button
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                            tab === "issues"
+                            ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
                         }`}
-                    onClick={() => setTab("issues")}
-                >
-                    問題追蹤
-                </button>
-                <button
-                    className={`px-4 py-2 -mb-px border-b-2 ${tab === "subworkpackages"
-                        ? "border-blue-600 text-blue-600 font-bold dark:border-blue-400 dark:text-blue-400"
-                        : "border-transparent text-gray-600 dark:text-gray-300"
+                        onClick={() => setTab("issues")}
+                    >
+                        問題追蹤
+                    </button>
+                    <button
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                            tab === "subworkpackages"
+                            ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
                         }`}
-                    onClick={() => setTab("subworkpackages")}
-                >
-                    子工作包排序
-                </button>
-                <button
-                    className={`px-4 py-2 -mb-px border-b-2 ${tab === "materials"
-                        ? "border-blue-600 text-blue-600 font-bold dark:border-blue-400 dark:text-blue-400"
-                        : "border-transparent text-gray-600 dark:text-gray-300"
+                        onClick={() => setTab("subworkpackages")}
+                    >
+                        子工作包排序
+                    </button>
+                    <button
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                            tab === "materials"
+                            ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
                         }`}
-                    onClick={() => setTab("materials")}
-                >
-                    材料管理
-                </button>
-                <button
-                    className={`px-4 py-2 -mb-px border-b-2 ${tab === "info"
-                        ? "border-blue-600 text-blue-600 font-bold dark:border-blue-400 dark:text-blue-400"
-                        : "border-transparent text-gray-600 dark:text-gray-300"
+                        onClick={() => setTab("materials")}
+                    >
+                        材料管理
+                    </button>
+                    <button
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                            tab === "info"
+                            ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
                         }`}
-                    onClick={() => setTab("info")}
-                >
-                    專案資訊
-                </button>
+                        onClick={() => setTab("info")}
+                    >
+                        專案資訊
+                    </button>
+                </nav>
             </div>
 
             {/* Tab Content */}

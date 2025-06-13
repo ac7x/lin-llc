@@ -55,7 +55,9 @@ export default function ImportProjectPage() {
                     raw: data,
                 };
             });
-    }, [contractsSnapshot, existingContractIds]);    // 將合約項目轉換為工作包
+    }, [contractsSnapshot, existingContractIds]);
+
+    // 將合約項目轉換為工作包
     const convertContractItemsToWorkpackages = (contractItems: ContractItem[]): Workpackage[] => {
         if (!contractItems || !Array.isArray(contractItems) || contractItems.length === 0) {
             return [];
@@ -125,41 +127,88 @@ export default function ImportProjectPage() {
     };
 
     return (
-        <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded shadow">
-            <h1 className="text-2xl font-bold mb-6">從合約建立專案</h1>
-            {message && <div className="mb-4 text-green-600">{message}</div>}
-            <table className="w-full border text-sm bg-white dark:bg-gray-900 text-black dark:text-gray-100">
-                <thead>
-                    <tr className="bg-gray-100 dark:bg-gray-800">
-                        <th className="border px-2 py-1">序號</th>
-                        <th className="border px-2 py-1">合約名稱</th>
-                        <th className="border px-2 py-1">建立日期</th>
-                        <th className="border px-2 py-1">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {contractRows.length === 0 ? (
-                        <tr><td colSpan={4} className="text-center text-gray-400 py-4">尚無合約</td></tr>
-                    ) : (
-                        contractRows.map(row => (
-                            <tr key={row.id}>
-                                <td className="border px-2 py-1 text-center">{row.idx}</td>
-                                <td className="border px-2 py-1">{row.name}</td>
-                                <td className="border px-2 py-1">{row.createdAt ? row.createdAt.toLocaleDateString() : '-'}</td>
-                                <td className="border px-2 py-1">
-                                    <button
-                                        className="bg-blue-500 text-white px-3 py-1 rounded disabled:opacity-50"
-                                        disabled={!!importingId}
-                                        onClick={() => handleImport(row)}
-                                    >
-                                        {importingId === row.id ? '建立中...' : '建立專案'}
-                                    </button>
-                                </td>
+        <main className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">從合約建立專案</h1>
+                </div>
+
+                {message && (
+                    <div className="mb-6 bg-blue-50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 p-4 rounded-lg relative">
+                        {message}
+                        <button
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                            onClick={() => setMessage("")}
+                            aria-label="關閉"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                )}
+
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 dark:bg-gray-900">
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">序號</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">合約名稱</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">建立日期</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">操作</th>
                             </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {contractRows.length === 0 ? (
+                                <tr>
+                                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            尚無合約
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                contractRows.map(row => (
+                                    <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200">
+                                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{row.idx}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{row.name}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                            {row.createdAt ? row.createdAt.toLocaleDateString() : '-'}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            <button
+                                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={!!importingId}
+                                                onClick={() => handleImport(row)}
+                                            >
+                                                {importingId === row.id ? (
+                                                    <span className="flex items-center">
+                                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                        建立中...
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center">
+                                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                        建立專案
+                                                    </span>
+                                                )}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     );
 }

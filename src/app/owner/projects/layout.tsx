@@ -14,9 +14,9 @@ function Sidebar() {
     const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
     const pathname = usePathname();
     const navs = [
-        { label: "專案列表", href: "/owner/projects" },
-        { label: "從合約建立專案", href: "/owner/projects/import" },
-        { label: "工作包模板", href: "/owner/projects/templates" },
+        { label: "專案列表", href: "/owner/projects", icon: "📋" },
+        { label: "從合約建立專案", href: "/owner/projects/import", icon: "📄" },
+        { label: "工作包模板", href: "/owner/projects/templates", icon: "📑" },
     ];
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
     const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
@@ -87,124 +87,138 @@ function Sidebar() {
     })) as (Project & { id: string })[] || [];
 
     return (
-        <nav className="w-80 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4 flex flex-col text-black dark:text-gray-100">
-            <h2 className="text-lg font-bold mb-4 text-center">專案管理</h2>
-            <ul className="space-y-2">
-                <li key={navs[0].href}>
-                    <Link
-                        href={navs[0].href}
-                        className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === navs[0].href ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                    >
-                        {navs[0].label}
-                    </Link>
-                </li>
+        <nav className="w-80 min-h-screen border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex flex-col text-black dark:text-gray-100 transition-colors duration-200">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 pb-4 z-10">
+                <h2 className="text-xl font-bold mb-6 text-center bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案管理</h2>
+                <ul className="space-y-2">
+                    {navs.map(nav => (
+                        <li key={nav.href}>
+                            <Link
+                                href={nav.href}
+                                className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
+                                    pathname === nav.href 
+                                    ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
+                                    : "text-gray-700 dark:text-gray-300"
+                                }`}
+                            >
+                                <span className="mr-3">{nav.icon}</span>
+                                {nav.label}
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            <div className="flex-1 overflow-y-auto mt-4">
                 {loading ? (
-                    <li className="text-gray-400 px-3 py-2">載入中...</li>
-                ) : projects.map((project) => (
-                    <li key={project.id} className="flex items-center group">
-                        <div className="flex-1">
-                            <div className="flex items-center">
-                                <button
-                                    type="button"
-                                    aria-label={openMap[project.id] ? "收合" : "展開"}
-                                    onClick={() => toggleOpen(project.id)}
-                                    className="p-1 mr-1 rounded hover:bg-blue-100 dark:hover:bg-gray-800"
-                                >
-                                    {openMap[project.id] ? (
-                                        <ChevronDownIcon className="w-4 h-4 text-gray-500" />
-                                    ) : (
-                                        <ChevronRightIcon className="w-4 h-4 text-gray-500" />
-                                    )}
-                                </button>
-                                <Link
-                                    href={`/owner/projects/${project.id}`}
-                                    className={`flex-1 block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === `/owner/projects/${project.id}` ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                                >
-                                    {project.projectName || project.projectId || project.id}
-                                    <ProjectProgressPercent project={project} />
-                                </Link>
-                                <button
-                                    title="封存專案"
-                                    className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
-                                    onClick={async (e) => {
-                                        e.preventDefault();
-                                        if (!window.confirm('確定要封存此專案？')) return;
-                                        const projectData = { ...project, archivedAt: new Date() };
-                                        const userId = project.owner || "default";
-                                        await setDoc(doc(db, "archived", userId, "projects", project.id), projectData);
-                                        await deleteDoc(doc(db, "projects", project.id));
-                                    }}
-                                >
-                                    🗑️
-                                </button>
-                            </div>
-                            {openMap[project.id] && (
-                                <div className="pl-8 mt-1">
-                                    <ul className="space-y-1">
-                                        {project.workpackages?.map((wp: { id: string, name: string, subWorkpackages?: import("@/types/project").SubWorkpackage[] }) => (
-                                            <li key={wp.id}>
-                                                <Link
-                                                    href={`/owner/projects/${project.id}/workpackages/${wp.id}`}
-                                                    className={`block px-3 py-1 rounded text-sm hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname.includes(`/workpackages/${wp.id}`) ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                                                >
-                                                    {wp.name} {(wp.subWorkpackages?.length || 0) > 0 && `(${wp.subWorkpackages?.length})`}
-                                                </Link>
-                                                <div className="mt-1 mb-2">
-                                                    <WorkpackageProgressBar wp={wp as import("@/types/project").Workpackage} />
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
+                    <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                ) : (
+                    <ul className="space-y-2">
+                        {projects.map((project) => (
+                            <li key={project.id} className="group">
+                                <div className="flex items-center">
                                     <button
-                                        onClick={() => {
-                                            setSelectedProjectId(project.id);
-                                            setShowCreateModal(true);
-                                        }}
-                                        className="w-full text-left px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded flex items-center mt-2"
+                                        type="button"
+                                        aria-label={openMap[project.id] ? "收合" : "展開"}
+                                        onClick={() => toggleOpen(project.id)}
+                                        className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors duration-200"
                                     >
-                                        <span className="mr-1">+</span> 新增工作包
+                                        {openMap[project.id] ? (
+                                            <ChevronDownIcon className="w-5 h-5 text-gray-500" />
+                                        ) : (
+                                            <ChevronRightIcon className="w-5 h-5 text-gray-500" />
+                                        )}
+                                    </button>
+                                    <Link
+                                        href={`/owner/projects/${project.id}`}
+                                        className={`flex-1 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
+                                            pathname === `/owner/projects/${project.id}` 
+                                            ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
+                                            : "text-gray-700 dark:text-gray-300"
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="truncate">{project.projectName || project.projectId || project.id}</span>
+                                            <ProjectProgressPercent project={project} />
+                                        </div>
+                                    </Link>
+                                    <button
+                                        title="封存專案"
+                                        className="ml-2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                                        onClick={async (e) => {
+                                            e.preventDefault();
+                                            if (!window.confirm('確定要封存此專案？')) return;
+                                            const projectData = { ...project, archivedAt: new Date() };
+                                            const userId = project.owner || "default";
+                                            await setDoc(doc(db, "archived", userId, "projects", project.id), projectData);
+                                            await deleteDoc(doc(db, "projects", project.id));
+                                        }}
+                                    >
+                                        🗑️
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                    </li>
-                ))}
-                <li key={navs[1].href}>
-                    <Link
-                        href={navs[1].href}
-                        className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === navs[1].href ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                    >
-                        {navs[1].label}
-                    </Link>
-                </li>
-                <li key={navs[2].href}>
-                    <Link
-                        href={navs[2].href}
-                        className={`block px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800 ${pathname === navs[2].href ? "bg-blue-200 dark:bg-gray-700 font-bold" : ""}`}
-                    >
-                        {navs[2].label}
-                    </Link>
-                </li>
-            </ul>
+                                {openMap[project.id] && (
+                                    <div className="pl-12 mt-2 space-y-2">
+                                        {project.workpackages?.map((wp) => (
+                                            <div key={wp.id} className="group/item">
+                                                <Link
+                                                    href={`/owner/projects/${project.id}/workpackages/${wp.id}`}
+                                                    className={`block px-4 py-2 rounded-lg text-sm transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-800 ${
+                                                        pathname.includes(`/workpackages/${wp.id}`) 
+                                                        ? "bg-blue-100 dark:bg-gray-800 font-medium text-blue-600 dark:text-blue-400" 
+                                                        : "text-gray-600 dark:text-gray-400"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="truncate">{wp.name}</span>
+                                                        <span className="text-xs text-gray-500">
+                                                            {(wp.subWorkpackages?.length || 0) > 0 && `(${wp.subWorkpackages?.length})`}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-1">
+                                                        <WorkpackageProgressBar wp={wp as import("@/types/project").Workpackage} />
+                                                    </div>
+                                                </Link>
+                                            </div>
+                                        ))}
+                                        <button
+                                            onClick={() => {
+                                                setSelectedProjectId(project.id);
+                                                setShowCreateModal(true);
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200 flex items-center"
+                                        >
+                                            <span className="mr-2">+</span> 新增工作包
+                                        </button>
+                                    </div>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+
             {showCreateModal && projectsSnapshot && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md text-black dark:text-gray-100">
-                        <h2 className="text-xl font-bold mb-4">建立工作包</h2>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md text-black dark:text-gray-100">
+                        <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">建立工作包</h2>
                         <form onSubmit={(e) => { e.preventDefault(); handleAddWorkpackage(); }} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">工作包名稱</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">工作包名稱</label>
                                 <input
                                     type="text"
-                                    className="w-full border rounded px-3 py-2"
+                                    className="w-full border rounded-lg px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                     value={newWorkpackage.name}
                                     onChange={(e) => setNewWorkpackage(prev => ({ ...prev, name: e.target.value }))}
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">描述</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">描述</label>
                                 <textarea
-                                    className="w-full border rounded px-3 py-2"
+                                    className="w-full border rounded-lg px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                     value={newWorkpackage.description}
                                     onChange={(e) => setNewWorkpackage(prev => ({ ...prev, description: e.target.value }))}
                                     rows={3}
@@ -212,28 +226,28 @@ function Sidebar() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">類別</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">類別</label>
                                     <input
                                         type="text"
-                                        className="w-full border rounded px-3 py-2"
+                                        className="w-full border rounded-lg px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                         value={newWorkpackage.category}
                                         onChange={(e) => setNewWorkpackage(prev => ({ ...prev, category: e.target.value }))}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">預算</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預算</label>
                                     <input
                                         type="number"
-                                        className="w-full border rounded px-3 py-2"
+                                        className="w-full border rounded-lg px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                         value={newWorkpackage.budget}
                                         onChange={(e) => setNewWorkpackage(prev => ({ ...prev, budget: Number(e.target.value) }))}
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">優先級</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">優先級</label>
                                 <select
-                                    className="w-full border rounded px-3 py-2"
+                                    className="w-full border rounded-lg px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                     value={newWorkpackage.priority}
                                     onChange={(e) => setNewWorkpackage(prev => ({ ...prev, priority: e.target.value as "low" | "medium" | "high" }))}
                                 >
@@ -242,17 +256,17 @@ function Sidebar() {
                                     <option value="high">高</option>
                                 </select>
                             </div>
-                            <div className="flex justify-end space-x-2 pt-4">
+                            <div className="flex justify-end space-x-3 pt-4">
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2 border rounded hover:bg-gray-100"
+                                    className="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                                 >
                                     取消
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200"
                                     disabled={saving || !newWorkpackage.name.trim()}
                                 >
                                     {saving ? "建立中..." : "建立工作包"}
@@ -270,7 +284,11 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
     const { loading, isAuthenticated, hasMinRole } = useAuth();
 
     if (loading) {
-        return <div>載入中...</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+        );
     }
 
     if (!isAuthenticated || !hasMinRole("admin")) {
@@ -278,9 +296,11 @@ export default function ProjectsLayout({ children }: { children: ReactNode }) {
     }
 
     return (
-        <div className="flex bg-gray-50 dark:bg-gray-900 min-h-screen">
+        <div className="flex bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
             <Sidebar />
-            <div className="flex-1 p-4 bg-white dark:bg-gray-800 text-black dark:text-gray-100">{children}</div>
+            <div className="flex-1 p-6 bg-white dark:bg-gray-800 text-black dark:text-gray-100 overflow-auto">
+                {children}
+            </div>
         </div>
     );
 }
