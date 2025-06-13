@@ -268,8 +268,18 @@ export default function GeminiChatPage() {
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300">
-                    {message.role === "user" ? "👤" : "🤖"}
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                    {message.role === "user" ? (
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300">
+                        👤
+                      </div>
+                    ) : (
+                      <img 
+                        src="/sup.svg" 
+                        alt="Gemini" 
+                        className="w-8 h-8"
+                      />
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
