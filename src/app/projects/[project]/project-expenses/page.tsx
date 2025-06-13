@@ -8,7 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { nanoid } from "nanoid";
-import { ExpenseData, ExpenseItem } from "@/types/finance";
+import { ExpenseData, ExpenseItem } from "@/types/project";
 
 export default function ProjectExpensesPage() {
     const params = useParams();
@@ -383,7 +383,7 @@ export default function ProjectExpensesPage() {
                             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                                 <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">支出項目</h3>
                                 <div className="space-y-4">
-                                    {newExpense.items?.map((item, index) => (
+                                    {newExpense.items?.map((item) => (
                                         <div key={item.expenseItemId} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
                                             <div className="flex-1">
                                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.description}</div>
