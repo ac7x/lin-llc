@@ -12,7 +12,7 @@ import type { Project } from "@/types/project";
 import { PageLayout, PageContent, Sidebar } from "@/components/layouts/PageLayout";
 
 function SidebarContent() {
-    const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
+    const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp, userRole } = useAuth();
     const pathname = usePathname();
     const navs = [
         { label: "專案列表", href: "/projects", icon: "📋" },
@@ -82,10 +82,22 @@ function SidebarContent() {
         }
     };
 
-    const projects = projectsSnapshot?.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    })) as (Project & { id: string })[] || [];
+    const projects = projectsSnapshot?.docs
+        .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }))
+        .filter(project => {
+            // admin 和 owner 可以看到所有專案
+            if (userRole === 'admin' || userRole === 'owner') {
+                return true;
+            }
+            
+            // 其他角色只能看到有設置角色的專案
+            const projectData = project as unknown as Project;
+            const projectRoles = projectData.roles || [];
+            return userRole ? projectRoles.includes(userRole) : false;
+        }) as (Project & { id: string })[] || [];
 
     return (
         <>

@@ -102,6 +102,7 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
 
 export default function ProjectDetailPage() {
     const { db, doc, updateDoc, Timestamp, collection } = useAuth();
+    const { userRole } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -110,6 +111,9 @@ export default function ProjectDetailPage() {
         "journal" | "materials" | "issues" | "info" | "calendar" | "subworkpackages" | "expenses"
     >("journal");
     const [isEditing, setIsEditing] = useState(false);
+
+    // 檢查是否為擁有者
+    const isOwner = userRole === 'owner';
 
     // 使用 useMemo 取得 project 物件
     const project = useMemo(() => {
@@ -229,19 +233,21 @@ export default function ProjectDetailPage() {
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                         <div className="flex justify-between items-start mb-6">
                             <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案資訊</h2>
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors duration-200"
-                                title="編輯"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                            </button>
+                            {isOwner && (
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors duration-200"
+                                    title="編輯"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
 
                         {/* 編輯表單彈窗 */}
-                        {isEditing && (
+                        {isEditing && isOwner && (
                             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl">
                                     <h2 className="text-xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">編輯專案資訊</h2>

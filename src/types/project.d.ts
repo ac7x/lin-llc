@@ -168,6 +168,7 @@ export interface Project {
     materials?: MaterialEntry[]; // 專案的材料清單（可選）
     issues?: IssueRecord[]; // 專案的問題清單（可選）
     expenses?: Expense[]; // 專案的費用清單（可選）
+    roles?: string[]; // 專案的角色權限清單（可選）
 }
 
 // ===== Template 型別區 =====
