@@ -2,11 +2,10 @@
 
 import { useState, useMemo } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { useForm } from "react-hook-form";
 import type { AppUser } from "@/types/user";
 import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
 import { db } from "@/lib/firebase-client";
-import { collection, doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, updateDoc } from "firebase/firestore";
 
 // 提取角色選項組件
 const RoleSelect = ({ value, onChange, className = "" }: { value: string; onChange: (value: string) => void; className?: string }) => (
@@ -27,10 +26,6 @@ const RoleSelect = ({ value, onChange, className = "" }: { value: string; onChan
 export default function AdminUsersPage() {
   const usersCollection = collection(db, "users");
   const [formError, setFormError] = useState<string | null>(null);
-  const { register, handleSubmit, reset } = useForm<{
-    displayName: string;
-    role: string;
-  }>();
 
   // 使用 useMemo 優化用戶列表
   const [snapshot, loading, error] = useCollection(usersCollection);
@@ -49,76 +44,10 @@ export default function AdminUsersPage() {
     }
   };
 
-  // 建立虛擬用戶
-  const createVirtualUser = async ({
-    displayName,
-    role,
-  }: {
-    displayName: string;
-    role: string;
-  }): Promise<void> => {
-    const newDocRef = doc(usersCollection);
-    const newUser: AppUser = {
-      uid: newDocRef.id,
-      email: "",
-      displayName,
-      emailVerified: false,
-      photoURL: "",
-      disabled: false,
-      role,
-      metadata: {
-        creationTime: new Date().toISOString(),
-        lastSignInTime: "",
-      },
-    };
-    await setDoc(newDocRef, {
-      ...newUser,
-      updatedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
-    });
-  };
-
-  const onSubmit = async (data: { displayName: string; role: string }) => {
-    if (!data.displayName || !data.role) {
-      setFormError("請輸入名稱並選擇角色");
-      return;
-    }
-    setFormError(null);
-    try {
-      await createVirtualUser(data);
-      reset();
-    } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "建立虛擬用戶失敗");
-    }
-  };
-
   return (
     <main className="max-w-4xl mx-auto">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">Firebase 用戶管理</h1>
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="mb-6 flex flex-col sm:flex-row gap-3 items-center justify-center"
-        >
-          <input
-            type="text"
-            placeholder="名稱"
-            {...register("displayName")}
-            className="w-full sm:w-40 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-          />
-          <RoleSelect
-            value=""
-            onChange={(value) => register("role").onChange({ target: { value } })}
-            className="w-full sm:w-40 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-          />
-          <button
-            type="submit"
-            className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            建立虛擬用戶
-          </button>
-        </form>
 
         {formError && (
           <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/50 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800">

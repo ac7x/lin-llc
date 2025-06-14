@@ -159,6 +159,7 @@ export interface Project {
     zones?: Zone[]; // 專案區域清單（可選）
     supervisor?: string; // 專案監督人（可選）
     safetyOfficer?: string; // 專案安全官（可選）
+    costController?: string; // 專案成本控制員（可選）
     region?: string; // 專案地區（可選）
     workpackages: Workpackage[]; // 專案的工作包清單
     decomposition?: object; // 專案分解結構（可選）
@@ -167,6 +168,7 @@ export interface Project {
     materials?: MaterialEntry[]; // 專案的材料清單（可選）
     issues?: IssueRecord[]; // 專案的問題清單（可選）
     expenses?: Expense[]; // 專案的費用清單（可選）
+    roles?: string[]; // 專案的角色權限清單（可選）
 }
 
 // ===== Template 型別區 =====
