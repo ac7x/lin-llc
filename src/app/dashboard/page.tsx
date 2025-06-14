@@ -326,22 +326,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={300}>
               <ComposedChart data={projectProgressData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                {/* 上方 X 軸 */}
-                <XAxis 
-                  {...chartConfig.dateAxis} 
-                  dataKey="date" 
-                  position="top"
-                  height={60}
-                  tick={{ fontSize: 12, dy: -10 }}
-                />
-                {/* 下方 X 軸 */}
-                <XAxis 
-                  {...chartConfig.dateAxis} 
-                  dataKey="date" 
-                  position="bottom"
-                  height={60}
-                  tick={{ fontSize: 12, dy: 10 }}
-                />
+                <XAxis {...chartConfig.dateAxis} dataKey="date" />
                 {/* 進度軸 */}
                 <YAxis 
                   yAxisId="progress"
