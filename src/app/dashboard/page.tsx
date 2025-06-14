@@ -306,7 +306,8 @@ export default function DashboardPage() {
 
         {/* 專案進度變化和使用人力圖表 */}
         <section className={`mt-8 ${cardStyles}`}>
-          <div className="flex justify-end items-center mb-2">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={titleStyles}>專案進度與人力分析</h3>
             <select
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
@@ -322,165 +323,209 @@ export default function DashboardPage() {
               })}
             </select>
           </div>
+          
           {projectProgressData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={projectProgressData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis {...chartConfig.dateAxis} dataKey="date" />
-                {/* 進度軸 */}
-                <YAxis 
-                  yAxisId="progress"
-                  label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
-                  domain={[0, 100]}
-                  ticks={[0, 25, 50, 75, 100]}
-                />
-                {/* 每日增長軸 */}
-                <YAxis 
-                  yAxisId="growth"
-                  orientation="right"
-                  label={{ value: '每日增長 (%)', angle: 90, position: 'insideRight' }}
-                  domain={[-50, 50]}
-                  ticks={[-50, -25, 0, 25, 50]}
-                />
-                {/* 人力軸 */}
-                <YAxis 
-                  yAxisId="workforce"
-                  orientation="right"
-                  label={{ value: '人力 (人)', angle: 90, position: 'insideRight', style: { fontSize: 10 } }}
-                  tick={{ fontSize: 10 }}
-                  domain={[0, 20]}
-                  allowDataOverflow={true}
-                />
-                {/* 效率軸 */}
-                <YAxis 
-                  yAxisId="efficiency"
-                  orientation="right"
-                  label={{ value: '效率 (%)', angle: 90, position: 'insideRight', style: { fontSize: 10 } }}
-                  tick={{ fontSize: 10 }}
-                  ticks={[0, 25, 50, 75, 100]}
-                />
-                <Tooltip 
-                  {...chartConfig.tooltip}
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-                          <p className="text-sm font-medium">{formatFullDate(label)}</p>
-                          <p className="text-sm">進度: {data.progress}%</p>
-                          <p className="text-sm">每日增長: {data.dailyGrowth}%</p>
-                          <p className="text-sm">人力: {data.workforce}人</p>
-                          <p className="text-sm">效率: {data.efficiency}%</p>
-                          <p className={`text-sm font-medium ${
-                            data.efficiencyStatus === '勤勞' ? 'text-green-600' : 
-                            data.efficiencyStatus === '偷懶' ? 'text-red-600' : 
-                            'text-yellow-600'
-                          }`}>
-                            狀態: {data.efficiencyStatus}
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Legend 
-                  verticalAlign="top" 
-                  align="left"
-                  wrapperStyle={{
-                    paddingLeft: '20px',
-                    paddingBottom: '10px'
-                  }}
-                />
-                {/* 進度線 */}
-                <Line
-                  type="monotone"
-                  dataKey="progress"
-                  name="進度"
-                  stroke={CHART_COLORS.primary}
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                  yAxisId="progress"
-                />
-                {/* 每日增長線 */}
-                <Line
-                  type="monotone"
-                  dataKey="dailyGrowth"
-                  name="每日增長"
-                  stroke={CHART_COLORS.secondary}
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                  yAxisId="growth"
-                />
-                {/* 人力柱狀圖 */}
-                <Bar 
-                  dataKey="workforce" 
-                  name="人力" 
-                  fill={CHART_COLORS.bar} 
-                  barSize={12}
-                  yAxisId="workforce"
-                  label={{ 
-                    position: 'center',
-                    fill: '#fff',
-                    fontSize: 10,
-                    formatter: (value: number) => `${value}人`
-                  }}
-                />
-                {/* 人力趨勢線 */}
-                <Line
-                  type="monotone"
-                  dataKey="workforce"
-                  name="人力趨勢"
-                  stroke={CHART_COLORS.trend}
-                  strokeWidth={2}
-                  dot={false}
-                  yAxisId="workforce"
-                />
-                {/* 效率線 */}
-                <Line
-                  type="monotone"
-                  dataKey="efficiency"
-                  name="人力效率"
-                  stroke={CHART_COLORS.tertiary}
-                  strokeWidth={2}
-                  dot={false}
-                  yAxisId="efficiency"
-                />
-                {/* 效率均值線 */}
-                <Line
-                  type="monotone"
-                  dataKey="efficiency"
-                  name="效率均值"
-                  stroke="#FFD700"
-                  strokeWidth={2}
-                  dot={false}
-                  yAxisId="efficiency"
-                  strokeDasharray="5 5"
-                  data={projectProgressData.map((item) => {
-                    const efficiencyPerPerson = item.workforce > 0 
-                      ? Number((item.efficiency / item.workforce).toFixed(2))
-                      : 0;
-                    return {
-                      ...item,
-                      efficiency: efficiencyPerPerson
-                    };
-                  })}
-                />
-                {/* 人力均值線 */}
-                <Line
-                  type="monotone"
-                  dataKey="averageWorkforce"
-                  name="人力均值"
-                  stroke="#FF69B4"
-                  strokeWidth={2}
-                  dot={false}
-                  yAxisId="workforce"
-                  strokeDasharray="5 5"
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 進度與每日增長圖表 */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h4 className="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">進度與每日增長</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={projectProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                    <XAxis {...chartConfig.dateAxis} dataKey="date" />
+                    <YAxis 
+                      yAxisId="progress"
+                      label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
+                      domain={[0, 100]}
+                      ticks={[0, 25, 50, 75, 100]}
+                    />
+                    <YAxis 
+                      yAxisId="growth"
+                      orientation="right"
+                      label={{ value: '每日增長 (%)', angle: 90, position: 'insideRight' }}
+                      domain={[-50, 50]}
+                      ticks={[-50, -25, 0, 25, 50]}
+                    />
+                    <Tooltip {...chartConfig.tooltip} />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="progress"
+                      name="進度"
+                      stroke={CHART_COLORS.primary}
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                      yAxisId="progress"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="dailyGrowth"
+                      name="每日增長"
+                      stroke={CHART_COLORS.secondary}
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                      yAxisId="growth"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* 人力與效率圖表 */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h4 className="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">人力與效率分析</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={projectProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                    <XAxis {...chartConfig.dateAxis} dataKey="date" />
+                    <YAxis 
+                      yAxisId="workforce"
+                      label={{ value: '人力 (人)', angle: -90, position: 'insideLeft' }}
+                      domain={[0, 20]}
+                      allowDataOverflow={true}
+                    />
+                    <YAxis 
+                      yAxisId="efficiency"
+                      orientation="right"
+                      label={{ value: '效率 (%)', angle: 90, position: 'insideRight' }}
+                      domain={[0, 100]}
+                      ticks={[0, 25, 50, 75, 100]}
+                    />
+                    <Tooltip {...chartConfig.tooltip} />
+                    <Legend />
+                    <Bar 
+                      dataKey="workforce" 
+                      name="人力" 
+                      fill={CHART_COLORS.bar} 
+                      barSize={12}
+                      yAxisId="workforce"
+                      label={{ 
+                        position: 'center',
+                        fill: '#fff',
+                        fontSize: 10,
+                        formatter: (value: number) => `${value}人`
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="efficiency"
+                      name="人力效率"
+                      stroke={CHART_COLORS.tertiary}
+                      strokeWidth={2}
+                      dot={false}
+                      yAxisId="efficiency"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="averageWorkforce"
+                      name="人力均值"
+                      stroke="#FF69B4"
+                      strokeWidth={2}
+                      dot={false}
+                      yAxisId="workforce"
+                      strokeDasharray="5 5"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* 效率趨勢圖表 */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h4 className="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">效率趨勢分析</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={projectProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                    <XAxis {...chartConfig.dateAxis} dataKey="date" />
+                    <YAxis 
+                      yAxisId="efficiency"
+                      label={{ value: '效率 (%)', angle: -90, position: 'insideLeft' }}
+                      domain={[0, 100]}
+                      ticks={[0, 25, 50, 75, 100]}
+                    />
+                    <Tooltip {...chartConfig.tooltip} />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="efficiency"
+                      name="人力效率"
+                      stroke={CHART_COLORS.tertiary}
+                      strokeWidth={2}
+                      dot={false}
+                      yAxisId="efficiency"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="efficiency"
+                      name="效率均值"
+                      stroke="#FFD700"
+                      strokeWidth={2}
+                      dot={false}
+                      yAxisId="efficiency"
+                      strokeDasharray="5 5"
+                      data={projectProgressData.map((item) => {
+                        const efficiencyPerPerson = item.workforce > 0 
+                          ? Number((item.efficiency / item.workforce).toFixed(2))
+                          : 0;
+                        return {
+                          ...item,
+                          efficiency: efficiencyPerPerson
+                        };
+                      })}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* 狀態分析圖表 */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h4 className="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">工作狀態分析</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={projectProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                    <XAxis {...chartConfig.dateAxis} dataKey="date" />
+                    <YAxis 
+                      yAxisId="progress"
+                      label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
+                      domain={[0, 100]}
+                      ticks={[0, 25, 50, 75, 100]}
+                    />
+                    <YAxis 
+                      yAxisId="workforce"
+                      orientation="right"
+                      label={{ value: '人力 (人)', angle: 90, position: 'insideRight' }}
+                      domain={[0, 20]}
+                      allowDataOverflow={true}
+                    />
+                    <Tooltip {...chartConfig.tooltip} />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="progress"
+                      name="進度"
+                      stroke={CHART_COLORS.primary}
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                      yAxisId="progress"
+                    />
+                    <Bar 
+                      dataKey="workforce" 
+                      name="人力" 
+                      fill={CHART_COLORS.bar} 
+                      barSize={12}
+                      yAxisId="workforce"
+                      label={{ 
+                        position: 'center',
+                        fill: '#fff',
+                        fontSize: 10,
+                        formatter: (value: number) => `${value}人`
+                      }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           ) : (
             <div className="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">
               無可用數據
