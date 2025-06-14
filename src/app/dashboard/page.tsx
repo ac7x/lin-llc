@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Bar, ComposedChart, Line as ComposedLine, Rectangle } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Bar, ComposedChart, Line as ComposedLine } from 'recharts';
 import { Workpackage, Project } from '@/types/project';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 import { db } from '@/lib/firebase-client';
@@ -135,105 +135,6 @@ export default function DashboardPage() {
 
     return progressData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [projectsSnapshot, selectedProject]);
-
-  // 熱力圖數據處理
-  const heatMapData = React.useMemo(() => {
-    if (!projectProgressData.length) return [];
-    
-    // 取得所有日期
-    const dates = [...new Set(projectProgressData.map(item => item.date))].sort();
-    
-    // 計算每個時間點的人力分配
-    return dates.map(date => {
-      const dayData = projectProgressData.find(item => item.date === date);
-      if (!dayData) return null;
-
-      // 計算人力分配比例
-      const totalWorkforce = dayData.workforce;
-      const progress = dayData.progress;
-      const efficiency = dayData.efficiency;
-
-      return {
-        date,
-        totalWorkforce,
-        progress,
-        efficiency,
-        // 計算熱力值 (0-100)
-        heatValue: Math.min(100, Math.max(0, 
-          (progress * 0.4) + // 進度佔 40%
-          (efficiency * 30) + // 效率佔 30%
-          (totalWorkforce * 2) // 人力佔 30%
-        ))
-      };
-    }).filter((item): item is NonNullable<typeof item> => item !== null);
-  }, [projectProgressData]);
-
-  // 熱力圖顏色配置
-  const getHeatColor = (value: number) => {
-    if (value >= 80) return '#216e39';
-    if (value >= 60) return '#30a14e';
-    if (value >= 40) return '#40c463';
-    if (value >= 20) return '#9be9a8';
-    return '#ebedf0';
-  };
-
-  // 自定義熱力圖單元格
-  const CustomHeatCell = (props: any) => {
-    const { x, y, width, height, value } = props;
-    return (
-      <Rectangle
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        fill={getHeatColor(value)}
-        fillOpacity={1}
-        stroke="#1b1f23"
-        strokeWidth={1}
-      />
-    );
-  };
-
-  // 生成熱力圖網格數據
-  const generateHeatMapGrid = () => {
-    if (!heatMapData.length) return [];
-    
-    const gridSize = 7; // 每週7天
-    const weeks = Math.ceil(heatMapData.length / gridSize);
-    const gridData = [];
-
-    for (let week = 0; week < weeks; week++) {
-      for (let day = 0; day < gridSize; day++) {
-        const index = week * gridSize + day;
-        const data = heatMapData[index];
-        if (data) {
-          gridData.push({
-            x: week,
-            y: day,
-            value: data.heatValue,
-            date: data.date,
-            totalWorkforce: data.totalWorkforce,
-            progress: data.progress,
-            efficiency: data.efficiency
-          });
-        }
-      }
-    }
-    return gridData;
-  };
-
-  // 計算熱力圖的總寬度和高度
-  const calculateHeatMapDimensions = () => {
-    const gridSize = 7;
-    const weeks = Math.ceil(heatMapData.length / gridSize);
-    const cellSize = 12;
-    const cellGap = 3;
-    const totalWidth = weeks * (cellSize + cellGap);
-    const totalHeight = gridSize * (cellSize + cellGap);
-    return { totalWidth, totalHeight };
-  };
-
-  const { totalWidth, totalHeight } = calculateHeatMapDimensions();
 
   return (
     <main className="max-w-4xl mx-auto mb-20">
@@ -514,41 +415,6 @@ export default function DashboardPage() {
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
-              </div>
-
-              {/* 熱力圖小區塊 */}
-              <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-                <div className="relative" style={{ width: '100%', height: '120px' }}>
-                  <div 
-                    className="absolute left-0 top-0"
-                    style={{ 
-                      width: `${totalWidth}px`,
-                      height: `${totalHeight}px`,
-                      margin: '20px'
-                    }}
-                  >
-                    {generateHeatMapGrid().map((entry, index) => (
-                      <div
-                        key={`cell-${index}`}
-                        className="absolute"
-                        style={{
-                          left: `${entry.x * 15}px`,
-                          top: `${entry.y * 15}px`,
-                          width: '12px',
-                          height: '12px',
-                          backgroundColor: getHeatColor(entry.value),
-                          border: '1px solid #1b1f23',
-                          borderRadius: '2px'
-                        }}
-                        title={`日期：${new Date(entry.date).toLocaleDateString()}
-熱力值：${entry.value.toFixed(1)}
-人力：${entry.totalWorkforce}人
-進度：${entry.progress}%
-效率：${entry.efficiency.toFixed(2)}`}
-                      />
-                    ))}
-                  </div>
-                </div>
               </div>
             </>
           ) : (
