@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useDocument } from "react-firebase-hooks/firestore";
+import { useDocument, useCollection } from "react-firebase-hooks/firestore";
 import { useState, useMemo } from "react";
 // 新增 DND 相關引入
 import {
@@ -30,6 +30,14 @@ import { TaiwanCityList } from "@/utils/taiwan-city.enum";
 import { Project, Workpackage } from "@/types/project";
 import { useAuth } from '@/hooks/useAuth';
 import ProjectExpensesPage from "./project-expenses/page";
+import { ROLE_HIERARCHY, ROLE_NAMES, type RoleKey } from "@/utils/roleHierarchy";
+import type { AppUser } from "@/types/user";
+
+// 在 handleUpdateProject 函數之前添加以下常數
+const COST_CONTROLLER_ROLES: RoleKey[] = ['finance'];
+const SUPERVISOR_ROLES: RoleKey[] = ['foreman'];
+const SAFETY_OFFICER_ROLES: RoleKey[] = ['safety'];
+const COORDINATOR_ROLES: RoleKey[] = ['manager'];
 
 function getWorkpackageProgress(wp: Workpackage): number {
     if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) return 0;
@@ -93,10 +101,11 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
 }
 
 export default function ProjectDetailPage() {
-    const { db, doc, updateDoc, Timestamp } = useAuth();
+    const { db, doc, updateDoc, Timestamp, collection } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
+    const [usersSnapshot] = useCollection(collection(db, "users"));
     const [tab, setTab] = useState<
         "journal" | "materials" | "issues" | "info" | "calendar" | "subworkpackages" | "expenses"
     >("journal");
@@ -120,6 +129,25 @@ export default function ProjectDetailPage() {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    // 使用 useMemo 取得符合角色的使用者
+    const eligibleUsers = useMemo(() => {
+        if (!usersSnapshot) return {
+            costControllers: [],
+            supervisors: [],
+            safetyOfficers: [],
+            coordinators: []
+        };
+
+        const users = usersSnapshot.docs.map(doc => doc.data() as AppUser);
+        
+        return {
+            costControllers: users.filter(user => COST_CONTROLLER_ROLES.includes(user.role as RoleKey)),
+            supervisors: users.filter(user => SUPERVISOR_ROLES.includes(user.role as RoleKey)),
+            safetyOfficers: users.filter(user => SAFETY_OFFICER_ROLES.includes(user.role as RoleKey)),
+            coordinators: users.filter(user => COORDINATOR_ROLES.includes(user.role as RoleKey))
+        };
+    }, [usersSnapshot]);
 
     // 新增處理拖曳結束事件
     const handleDragEnd = async (event: DragEndEvent) => {
@@ -240,36 +268,64 @@ export default function ProjectDetailPage() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">協調者</label>
-                                                <input 
-                                                    name="coordinator" 
-                                                    defaultValue={project.coordinator} 
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
-                                                />
+                                                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">經理</label>
+                                                <select
+                                                    name="coordinator"
+                                                    defaultValue={project.coordinator || ""}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                                >
+                                                    <option value="">請選擇</option>
+                                                    {eligibleUsers.coordinators.map(user => (
+                                                        <option key={user.uid} value={user.uid}>
+                                                            {user.displayName} ({ROLE_NAMES[user.role as RoleKey]})
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">監工</label>
-                                                <input 
-                                                    name="supervisor" 
-                                                    defaultValue={project.supervisor} 
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
-                                                />
+                                                <select
+                                                    name="supervisor"
+                                                    defaultValue={project.supervisor || ""}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                                >
+                                                    <option value="">請選擇</option>
+                                                    {eligibleUsers.supervisors.map(user => (
+                                                        <option key={user.uid} value={user.uid}>
+                                                            {user.displayName} ({ROLE_NAMES[user.role as RoleKey]})
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">安全人員</label>
-                                                <input 
-                                                    name="safetyOfficer" 
-                                                    defaultValue={project.safetyOfficer} 
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
-                                                />
+                                                <select
+                                                    name="safetyOfficer"
+                                                    defaultValue={project.safetyOfficer || ""}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                                >
+                                                    <option value="">請選擇</option>
+                                                    {eligibleUsers.safetyOfficers.map(user => (
+                                                        <option key={user.uid} value={user.uid}>
+                                                            {user.displayName} ({ROLE_NAMES[user.role as RoleKey]})
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">成本控制員</label>
-                                                <input 
-                                                    name="costController" 
-                                                    defaultValue={project.costController} 
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
-                                                />
+                                                <select
+                                                    name="costController"
+                                                    defaultValue={project.costController || ""}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                                >
+                                                    <option value="">請選擇</option>
+                                                    {eligibleUsers.costControllers.map(user => (
+                                                        <option key={user.uid} value={user.uid}>
+                                                            {user.displayName} ({ROLE_NAMES[user.role as RoleKey]})
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">地區</label>
@@ -350,20 +406,36 @@ export default function ProjectDetailPage() {
                                     <div className="mt-1 text-gray-900 dark:text-gray-100">{project.contractId || '-'}</div>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">協調者</label>
-                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.coordinator || '-'}</div>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">經理</label>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">
+                                        {project.coordinator ? 
+                                            eligibleUsers.coordinators.find(u => u.uid === project.coordinator)?.displayName || '-' 
+                                            : '-'}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">監工</label>
-                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.supervisor || '-'}</div>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">
+                                        {project.supervisor ? 
+                                            eligibleUsers.supervisors.find(u => u.uid === project.supervisor)?.displayName || '-' 
+                                            : '-'}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">安全人員</label>
-                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.safetyOfficer || '-'}</div>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">
+                                        {project.safetyOfficer ? 
+                                            eligibleUsers.safetyOfficers.find(u => u.uid === project.safetyOfficer)?.displayName || '-' 
+                                            : '-'}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">成本控制員</label>
-                                    <div className="mt-1 text-gray-900 dark:text-gray-100">{project.costController || '-'}</div>
+                                    <div className="mt-1 text-gray-900 dark:text-gray-100">
+                                        {project.costController ? 
+                                            eligibleUsers.costControllers.find(u => u.uid === project.costController)?.displayName || '-' 
+                                            : '-'}
+                                    </div>
                                 </div>
                             </div>
                             <div className="space-y-4">
