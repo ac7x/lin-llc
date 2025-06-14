@@ -150,6 +150,7 @@ export default function DashboardPage() {
       dailyGrowth: number;
       efficiency: number;
       efficiencyStatus: string;
+      averageWorkforce: number;
     }> = [];
 
     projectsSnapshot.docs.forEach(doc => {
@@ -166,6 +167,14 @@ export default function DashboardPage() {
           a.date.toDate().getTime() - b.date.toDate().getTime()
         );
 
+        // 計算滾動人力均值（使用前3天的平均值）
+        const calculateRollingAverage = (index: number, windowSize: number = 3) => {
+          const startIndex = Math.max(0, index - windowSize + 1);
+          const windowReports = sortedReports.slice(startIndex, index + 1);
+          const totalWorkforce = windowReports.reduce((sum, report) => sum + (report.workforceCount || 0), 0);
+          return windowReports.length > 0 ? totalWorkforce / windowReports.length : 0;
+        };
+
         sortedReports.forEach((report, index) => {
           if (report.date && report.projectProgress !== undefined && report.workforceCount !== undefined) {
             const dailyGrowth = index > 0 && sortedReports[index - 1]?.projectProgress !== undefined
@@ -173,10 +182,12 @@ export default function DashboardPage() {
               : 0;
             
             // 計算效率：每日進度增長 / 人力數量
-            // 如果效率 > 5% 表示勤勞，< 2% 表示偷懶
             const efficiency = report.workforceCount > 0 
               ? Number((dailyGrowth / report.workforceCount).toFixed(2))
               : 0;
+
+            // 計算滾動人力均值
+            const rollingAverageWorkforce = calculateRollingAverage(index);
 
             progressData.push({
               date: report.date.toDate().toISOString().split('T')[0],
@@ -185,8 +196,8 @@ export default function DashboardPage() {
               projectName: projectData.projectName,
               dailyGrowth: Number(dailyGrowth.toFixed(2)),
               efficiency: efficiency,
-              // 添加效率狀態標記
-              efficiencyStatus: efficiency > 5 ? '勤勞' : efficiency < 2 ? '偷懶' : '一般'
+              efficiencyStatus: efficiency > 5 ? '勤勞' : efficiency < 2 ? '偷懶' : '一般',
+              averageWorkforce: Number(rollingAverageWorkforce.toFixed(1))
             });
           }
         });
@@ -315,7 +326,22 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={300}>
               <ComposedChart data={projectProgressData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis {...chartConfig.dateAxis} dataKey="date" />
+                {/* 上方 X 軸 */}
+                <XAxis 
+                  {...chartConfig.dateAxis} 
+                  dataKey="date" 
+                  position="top"
+                  height={60}
+                  tick={{ fontSize: 12, dy: -10 }}
+                />
+                {/* 下方 X 軸 */}
+                <XAxis 
+                  {...chartConfig.dateAxis} 
+                  dataKey="date" 
+                  position="bottom"
+                  height={60}
+                  tick={{ fontSize: 12, dy: 10 }}
+                />
                 {/* 進度軸 */}
                 <YAxis 
                   yAxisId="progress"
@@ -456,6 +482,17 @@ export default function DashboardPage() {
                       efficiency: efficiencyPerPerson
                     };
                   })}
+                />
+                {/* 人力均值線 */}
+                <Line
+                  type="monotone"
+                  dataKey="averageWorkforce"
+                  name="人力均值"
+                  stroke="#FF69B4"
+                  strokeWidth={2}
+                  dot={false}
+                  yAxisId="workforce"
+                  strokeDasharray="5 5"
                 />
               </ComposedChart>
             </ResponsiveContainer>
