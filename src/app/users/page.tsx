@@ -9,22 +9,28 @@ import { collection, doc, updateDoc } from "firebase/firestore";
 
 // 提取角色選項組件
 const RoleSelect = ({ value, onChange }: { value: string[]; onChange: (value: string[]) => void }) => (
-  <div className="flex flex-wrap gap-2">
+  <div className="flex flex-wrap gap-1">
     {Object.keys(ROLE_HIERARCHY).map((role) => (
-      <label key={role} className="inline-flex items-center">
-        <input
-          type="checkbox"
-          checked={value.includes(role)}
-          onChange={(e) => {
-            const newRoles = e.target.checked
-              ? [...value, role]
-              : value.filter(r => r !== role);
-            onChange(newRoles);
-          }}
-          className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 dark:border-gray-700"
-        />
-        <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{role}</span>
-      </label>
+      <button
+        key={role}
+        onClick={() => {
+          const newRoles = value.includes(role)
+            ? value.filter(r => r !== role)
+            : [...value, role];
+          onChange(newRoles);
+        }}
+        className={`
+          px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap
+          ${value.includes(role)
+            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 ring-1 ring-blue-500 dark:ring-blue-400'
+            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }
+          focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-blue-500 dark:focus:ring-offset-gray-800
+          transform hover:scale-105 active:scale-95
+        `}
+      >
+        {role}
+      </button>
     ))}
   </div>
 );
@@ -74,27 +80,32 @@ export default function AdminUsersPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-900">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Email</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">名稱</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">建立時間</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">最後登入</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">狀態</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">角色</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Email</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">建立時間</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">最後登入</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">狀態</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">角色</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {users.map((user) => (
                   <tr key={user.uid} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200">
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{user.email || "—"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{user.displayName || "—"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                    <td className="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">
+                      <div className="flex flex-col">
+                        <span>{user.email || "—"}</span>
+                        {user.displayName && (
+                          <span className="text-gray-500 dark:text-gray-400 text-[10px]">({user.displayName})</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">
                       {user.metadata?.creationTime?.slice(0, 10) || "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                    <td className="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">
                       {user.metadata?.lastSignInTime?.slice(0, 10) || "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    <td className="px-3 py-2 text-xs">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
                         user.disabled 
                           ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" 
                           : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
@@ -102,7 +113,7 @@ export default function AdminUsersPage() {
                         {user.disabled ? "停用" : "啟用"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-3 py-2 text-xs">
                       <RoleSelect
                         value={user.roles || []}
                         onChange={(value) => updateUserRole(user.uid, value)}
