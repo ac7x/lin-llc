@@ -30,7 +30,7 @@ import { TaiwanCityList } from "@/utils/taiwan-city.enum";
 import { Project, Workpackage } from "@/types/project";
 import { useAuth } from '@/hooks/useAuth';
 import ProjectExpensesPage from "./project-expenses/page";
-import { ROLE_HIERARCHY, ROLE_NAMES, type RoleKey } from "@/utils/roleHierarchy";
+import { ROLE_NAMES, type RoleKey } from "@/utils/roleHierarchy";
 import type { AppUser } from "@/types/user";
 
 // 在 handleUpdateProject 函數之前添加以下常數
