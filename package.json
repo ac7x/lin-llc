@@ -29,6 +29,7 @@
     "colord": "^2.9.3",
     "date-fns": "^4.1.0",
     "firebase": "^11.8.1",
+    "firebase-admin": "^13.4.0",
     "nanoid": "^5.1.5",
     "next": "15.3.2",
     "qrcode": "^1.5.4",
