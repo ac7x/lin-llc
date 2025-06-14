@@ -2,7 +2,25 @@
 
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Bar, ComposedChart, Line as ComposedLine } from 'recharts';
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  Tooltip, 
+  ResponsiveContainer, 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis, 
+  Radar, 
+  ComposedChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Legend, 
+  Bar 
+} from 'recharts';
 import { Workpackage, Project } from '@/types/project';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 import { db } from '@/lib/firebase-client';
@@ -131,6 +149,7 @@ export default function DashboardPage() {
       projectName: string;
       dailyGrowth: number;
       efficiency: number;
+      efficiencyStatus: string;
     }> = [];
 
     projectsSnapshot.docs.forEach(doc => {
@@ -150,9 +169,11 @@ export default function DashboardPage() {
         sortedReports.forEach((report, index) => {
           if (report.date && report.projectProgress !== undefined && report.workforceCount !== undefined) {
             const dailyGrowth = index > 0 && sortedReports[index - 1]?.projectProgress !== undefined
-              ? report.projectProgress - (sortedReports[index - 1]?.projectProgress ?? 0)
+              ? ((report.projectProgress - (sortedReports[index - 1]?.projectProgress ?? 0)) / (sortedReports[index - 1]?.projectProgress ?? 1)) * 100
               : 0;
             
+            // 計算效率：每日進度增長 / 人力數量
+            // 如果效率 > 5% 表示勤勞，< 2% 表示偷懶
             const efficiency = report.workforceCount > 0 
               ? Number((dailyGrowth / report.workforceCount).toFixed(2))
               : 0;
@@ -162,8 +183,10 @@ export default function DashboardPage() {
               progress: report.projectProgress,
               workforce: report.workforceCount,
               projectName: projectData.projectName,
-              dailyGrowth: dailyGrowth,
-              efficiency: efficiency
+              dailyGrowth: Number(dailyGrowth.toFixed(2)),
+              efficiency: efficiency,
+              // 添加效率狀態標記
+              efficiencyStatus: efficiency > 5 ? '勤勞' : efficiency < 2 ? '偷懶' : '一般'
             });
           }
         });
@@ -184,7 +207,7 @@ export default function DashboardPage() {
         const formatters: Record<string, (value: number) => string> = {
           '進度': (v) => `${v}%`,
           '每日增長': (v) => `${v > 0 ? '+' : ''}${v}%`,
-          '每人力效率': (v) => `${v > 0 ? '+' : ''}${v}%`,
+          '人力效率': (v) => `${v > 0 ? '+' : ''}${v}%`,
           '人力': (v) => `${v}人`,
           '人力趨勢': (v) => `${v}人`
         };
@@ -289,97 +312,153 @@ export default function DashboardPage() {
             </select>
           </div>
           {projectProgressData.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={projectProgressData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis {...chartConfig.dateAxis} dataKey="date" />
-                  <YAxis 
-                    label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
-                    domain={[0, 100]}
-                  />
-                  <Tooltip {...chartConfig.tooltip} />
-                  <Legend 
-                    verticalAlign="top" 
-                    align="left"
-                    wrapperStyle={{
-                      paddingLeft: '20px',
-                      paddingBottom: '10px'
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="progress"
-                    name="進度"
-                    stroke={CHART_COLORS.primary}
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="dailyGrowth"
-                    name="每日增長"
-                    stroke={CHART_COLORS.secondary}
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="efficiency"
-                    name="每人力效率"
-                    stroke={CHART_COLORS.tertiary}
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-
-              {/* 人力變化小區塊 */}
-              <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-                <ResponsiveContainer width="100%" height={100}>
-                  <ComposedChart data={projectProgressData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis {...chartConfig.dateAxis} dataKey="date" />
-                    <YAxis 
-                      tick={{ fontSize: 10 }}
-                      label={{ value: '人力 (人)', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }}
-                    />
-                    <Tooltip {...chartConfig.tooltip} />
-                    <Legend 
-                      verticalAlign="top" 
-                      align="left"
-                      wrapperStyle={{
-                        paddingLeft: '20px',
-                        paddingBottom: '5px'
-                      }}
-                    />
-                    <Bar 
-                      dataKey="workforce" 
-                      name="人力" 
-                      fill={CHART_COLORS.bar} 
-                      barSize={20}
-                      label={{ 
-                        position: 'center',
-                        fill: '#fff',
-                        fontSize: 10,
-                        formatter: (value: number) => `${value}人`
-                      }}
-                    />
-                    <ComposedLine
-                      type="monotone"
-                      dataKey="workforce"
-                      name="人力趨勢"
-                      stroke={CHART_COLORS.trend}
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </>
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart data={projectProgressData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                <XAxis {...chartConfig.dateAxis} dataKey="date" />
+                {/* 進度軸 */}
+                <YAxis 
+                  yAxisId="progress"
+                  label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
+                  domain={[0, 100]}
+                  ticks={[0, 25, 50, 75, 100]}
+                />
+                {/* 每日增長軸 */}
+                <YAxis 
+                  yAxisId="growth"
+                  orientation="right"
+                  label={{ value: '每日增長 (%)', angle: 90, position: 'insideRight' }}
+                  domain={[-50, 50]}
+                  ticks={[-50, -25, 0, 25, 50]}
+                />
+                {/* 人力軸 */}
+                <YAxis 
+                  yAxisId="workforce"
+                  orientation="right"
+                  label={{ value: '人力 (人)', angle: 90, position: 'insideRight', style: { fontSize: 10 } }}
+                  tick={{ fontSize: 10 }}
+                  domain={[0, 20]}
+                  allowDataOverflow={true}
+                />
+                {/* 效率軸 */}
+                <YAxis 
+                  yAxisId="efficiency"
+                  orientation="right"
+                  label={{ value: '效率 (%)', angle: 90, position: 'insideRight', style: { fontSize: 10 } }}
+                  tick={{ fontSize: 10 }}
+                  ticks={[0, 25, 50, 75, 100]}
+                />
+                <Tooltip 
+                  {...chartConfig.tooltip}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                          <p className="text-sm font-medium">{formatFullDate(label)}</p>
+                          <p className="text-sm">進度: {data.progress}%</p>
+                          <p className="text-sm">每日增長: {data.dailyGrowth}%</p>
+                          <p className="text-sm">人力: {data.workforce}人</p>
+                          <p className="text-sm">效率: {data.efficiency}%</p>
+                          <p className={`text-sm font-medium ${
+                            data.efficiencyStatus === '勤勞' ? 'text-green-600' : 
+                            data.efficiencyStatus === '偷懶' ? 'text-red-600' : 
+                            'text-yellow-600'
+                          }`}>
+                            狀態: {data.efficiencyStatus}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend 
+                  verticalAlign="top" 
+                  align="left"
+                  wrapperStyle={{
+                    paddingLeft: '20px',
+                    paddingBottom: '10px'
+                  }}
+                />
+                {/* 進度線 */}
+                <Line
+                  type="monotone"
+                  dataKey="progress"
+                  name="進度"
+                  stroke={CHART_COLORS.primary}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                  yAxisId="progress"
+                />
+                {/* 每日增長線 */}
+                <Line
+                  type="monotone"
+                  dataKey="dailyGrowth"
+                  name="每日增長"
+                  stroke={CHART_COLORS.secondary}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                  yAxisId="growth"
+                />
+                {/* 人力柱狀圖 */}
+                <Bar 
+                  dataKey="workforce" 
+                  name="人力" 
+                  fill={CHART_COLORS.bar} 
+                  barSize={12}
+                  yAxisId="workforce"
+                  label={{ 
+                    position: 'center',
+                    fill: '#fff',
+                    fontSize: 10,
+                    formatter: (value: number) => `${value}人`
+                  }}
+                />
+                {/* 人力趨勢線 */}
+                <Line
+                  type="monotone"
+                  dataKey="workforce"
+                  name="人力趨勢"
+                  stroke={CHART_COLORS.trend}
+                  strokeWidth={2}
+                  dot={false}
+                  yAxisId="workforce"
+                />
+                {/* 效率線 */}
+                <Line
+                  type="monotone"
+                  dataKey="efficiency"
+                  name="人力效率"
+                  stroke={CHART_COLORS.tertiary}
+                  strokeWidth={2}
+                  dot={false}
+                  yAxisId="efficiency"
+                />
+                {/* 效率均值線 */}
+                <Line
+                  type="monotone"
+                  dataKey="efficiency"
+                  name="效率均值"
+                  stroke="#FFD700"
+                  strokeWidth={2}
+                  dot={false}
+                  yAxisId="efficiency"
+                  strokeDasharray="5 5"
+                  data={projectProgressData.map((item) => {
+                    const efficiencyPerPerson = item.workforce > 0 
+                      ? Number((item.efficiency / item.workforce).toFixed(2))
+                      : 0;
+                    return {
+                      ...item,
+                      efficiency: efficiencyPerPerson
+                    };
+                  })}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
           ) : (
             <div className="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">
               無可用數據
