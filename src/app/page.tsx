@@ -49,6 +49,9 @@ export default function SignIn() {
         // 用戶存在則只更新登入時間
         await setDoc(userRef, userData, { merge: true });
       }
+
+      // 強制重新獲取 token 以更新 custom claims
+      await user.getIdToken(true);
     } catch (error) {
       console.error("儲存用戶資料失敗:", error);
     }

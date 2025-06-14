@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { User } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
 import { useDocument } from 'react-firebase-hooks/firestore';
-import type { AppUser } from '@/types/user';
+import type { AppUser, ExtendedUser } from '@/types/user';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 import {
   initializeFirebaseAppCheck,
@@ -121,7 +121,7 @@ interface AuthReturn extends FirebaseAuthReturn, UseUserRoleReturn {
 }
 
 export function useAuth(): AuthReturn {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<(User & ExtendedUser) | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [appCheckError, setAppCheckError] = useState<Error | null>(null);
@@ -133,15 +133,27 @@ export function useAuth(): AuthReturn {
   );
 
   const userRole = useMemo(() => {
+    // 優先從 custom claims 獲取角色
+    const claims = user?.customClaims;
+    if (claims?.role) {
+      return claims.role;
+    }
+    // 如果沒有 custom claims，則從 Firestore 獲取
     const userData = userDoc?.data() as AppUser | undefined;
     return userData?.role;
-  }, [userDoc]);
+  }, [user, userDoc]);
 
   const userRoles = useMemo(() => {
+    // 優先從 custom claims 獲取角色列表
+    const claims = user?.customClaims;
+    if (claims?.roles) {
+      return claims.roles;
+    }
+    // 如果沒有 custom claims，則從 Firestore 獲取
     const userData = userDoc?.data() as AppUser | undefined;
     return (userData?.roles || [userData?.role])
       .filter((role): role is string => role !== undefined);
-  }, [userDoc]);
+  }, [user, userDoc]);
 
   const hasRole = useMemo(() => (role: string): boolean => {
     return userRole === role;

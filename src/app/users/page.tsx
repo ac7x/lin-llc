@@ -49,8 +49,44 @@ export default function AdminUsersPage() {
   // 更新用戶角色
   const updateUserRole = async (uid: string, newRoles: string[]): Promise<void> => {
     try {
+      // 更新 Firestore 中的角色
       const userDoc = doc(usersCollection, uid);
       await updateDoc(userDoc, { roles: newRoles });
+
+      // 更新 Custom Claims
+      const currentRoles = users.find(u => u.uid === uid)?.roles || [];
+      const addedRoles = newRoles.filter(role => !currentRoles.includes(role));
+      const removedRoles = currentRoles.filter(role => !newRoles.includes(role));
+
+      // 設定新增的角色
+      for (const role of addedRoles) {
+        await fetch('/api/auth/role', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid,
+            role,
+            action: 'set'
+          })
+        });
+      }
+
+      // 移除被刪除的角色
+      for (const role of removedRoles) {
+        await fetch('/api/auth/role', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid,
+            role,
+            action: 'remove'
+          })
+        });
+      }
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "角色更新失敗");
     }

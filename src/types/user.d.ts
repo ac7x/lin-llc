@@ -18,6 +18,15 @@ export type AppUser = {
     notificationSettings?: NotificationSettings;
 };
 
+// 擴展 Firebase User 型別
+export interface ExtendedUser {
+    customClaims?: {
+        role?: string;
+        roles?: string[];
+        [key: string]: unknown;
+    };
+}
+
 // 用戶裝置資訊
 export type UserDevice = {
     deviceId: string; // Firebase Installation ID
