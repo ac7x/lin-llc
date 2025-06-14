@@ -25,7 +25,7 @@ const UserPanelPage = () => {
   const handleSignOut = useCallback(async () => {
     try {
       await signOut(auth)
-      router.push('/shared/signin')
+      router.push('/')
     } catch (error) {
       console.error('登出失敗:', error)
     }

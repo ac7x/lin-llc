@@ -10,6 +10,7 @@ export function usePermissions(userId: string | undefined) {
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
   const [navPermissions, setNavPermissions] = useState<NavPermission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
 
   const initializePermissions = useCallback(async () => {
     try {
@@ -53,21 +54,22 @@ export function usePermissions(userId: string | undefined) {
       const rolePermissionsRef = doc(db, 'settings', 'rolePermissions');
       const rolePermissionsSnapshot = await getDoc(rolePermissionsRef);
       
+      let currentRolePermissions: RolePermission[] = [];
+      
       if (!rolePermissionsSnapshot.exists()) {
-        const initialRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
+        currentRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
           role,
           permissions: getDefaultPermissionsForRole(role)
         }));
         await setDoc(rolePermissionsRef, { 
-          roles: initialRolePermissions,
+          roles: currentRolePermissions,
           lastUpdatedBy: userId || 'system',
           lastUpdatedAt: new Date().toISOString()
         });
-        setRolePermissions(initialRolePermissions);
       } else {
-        const loadedRolePermissions = rolePermissionsSnapshot.data().roles || [];
-        setRolePermissions(loadedRolePermissions);
+        currentRolePermissions = rolePermissionsSnapshot.data().roles || [];
       }
+      setRolePermissions(currentRolePermissions);
 
       // 初始化導航權限
       const navPermissionsRef = doc(db, 'settings', 'navPermissions');
@@ -83,6 +85,24 @@ export function usePermissions(userId: string | undefined) {
       } else {
         const loadedNavPermissions = navPermissionsSnapshot.data().permissions || [];
         setNavPermissions(loadedNavPermissions);
+      }
+
+      // 獲取用戶角色和權限
+      if (userId) {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const userRole = userData.role;
+          
+          // 從角色權限中獲取用戶的權限
+          const rolePerms = currentRolePermissions.find((rp: RolePermission) => rp.role === userRole);
+          if (rolePerms) {
+            setUserPermissions(rolePerms.permissions);
+          } else {
+            // 如果找不到角色權限，使用預設權限
+            setUserPermissions(getDefaultPermissionsForRole(userRole));
+          }
+        }
       }
     } catch (error) {
       console.error('初始化權限設定失敗:', error);
@@ -160,6 +180,7 @@ export function usePermissions(userId: string | undefined) {
     rolePermissions,
     navPermissions,
     loading,
-    updatePermissions
+    updatePermissions,
+    userPermissions
   };
 } 
