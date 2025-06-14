@@ -20,7 +20,7 @@ export default function OwnerSettingsPage() {
     const [tempRetentionDays, setTempRetentionDays] = useState<number | null>(null);
     
     // 權限管理相關狀態
-    const [selectedRoleForPermission, setSelectedRoleForPermission] = useState<string>("");
+    const [selectedRolesForPermission, setSelectedRolesForPermission] = useState<string[]>([]);
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -125,18 +125,18 @@ export default function OwnerSettingsPage() {
 
     // 處理權限更新
     const handlePermissionUpdate = async () => {
-        if (!selectedRoleForPermission || !user) return;
+        if (selectedRolesForPermission.length === 0 || !user) return;
         
         try {
             setUpdating(true);
             const success = await updatePermissions(
-                selectedRoleForPermission,
+                selectedRolesForPermission,
                 selectedPermissions,
                 selectedNavPermissions
             );
             
             if (success) {
-                alert(`已更新 ${selectedRoleForPermission} 的權限設定`);
+                alert(`已更新 ${selectedRolesForPermission.join(', ')} 的權限設定`);
                 router.refresh();
             } else {
                 alert('更新權限失敗，請稍後再試');
@@ -150,16 +150,23 @@ export default function OwnerSettingsPage() {
     };
 
     // 處理角色選擇
-    const handleRoleSelect = (role: string) => {
-        setSelectedRoleForPermission(role);
-        const rolePermission = rolePermissions.find(rp => rp.role === role);
-        setSelectedPermissions(rolePermission?.permissions || []);
+    const handleRoleSelect = (roles: string[]) => {
+        setSelectedRolesForPermission(roles);
         
-        // 更新選中的導航權限
-        const roleNavPermissions = navPermissions
-            .filter(np => np.defaultRoles.includes(role))
-            .map(np => np.id);
-        setSelectedNavPermissions(roleNavPermissions);
+        // 合併所有選中角色的權限
+        const combinedPermissions = roles.flatMap(role => {
+            const rolePermission = rolePermissions.find(rp => rp.role === role);
+            return rolePermission?.permissions || [];
+        });
+        setSelectedPermissions([...new Set(combinedPermissions)]);
+        
+        // 合併所有選中角色的導航權限
+        const combinedNavPermissions = roles.flatMap(role => 
+            navPermissions
+                .filter(np => np.defaultRoles.includes(role))
+                .map(np => np.id)
+        );
+        setSelectedNavPermissions([...new Set(combinedNavPermissions)]);
     };
 
     // 初始化時展開所有類別
@@ -250,30 +257,38 @@ export default function OwnerSettingsPage() {
                             </svg>
                             選擇角色
                         </h2>
-                        <select
-                            className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700"
-                            value={selectedRoleForPermission}
-                            onChange={(e) => handleRoleSelect(e.target.value)}
-                        >
-                            <option value="">請選擇角色</option>
+                        <div className="space-y-2">
                             {Object.entries(ROLE_HIERARCHY)
                                 .sort(([,a], [,b]) => b - a)
                                 .map(([role, level]) => {
                                     const roleKey = role as RoleKey;
                                     return (
-                                        <option key={role} value={role}>
-                                            {ROLE_NAMES[roleKey]} ({role}) - 權限等級: {level}
-                                        </option>
+                                        <div key={role} className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                id={`role-${role}`}
+                                                checked={selectedRolesForPermission.includes(role)}
+                                                onChange={(e) => {
+                                                    const newRoles = e.target.checked
+                                                        ? [...selectedRolesForPermission, role]
+                                                        : selectedRolesForPermission.filter(r => r !== role);
+                                                    handleRoleSelect(newRoles);
+                                                }}
+                                                className="mr-2"
+                                            />
+                                            <label htmlFor={`role-${role}`} className="text-sm">
+                                                {ROLE_NAMES[roleKey]} ({role}) - 權限等級: {level}
+                                            </label>
+                                        </div>
                                     );
-                                })
-                            }
-                        </select>
+                                })}
+                        </div>
                     </div>
                 </div>
 
                 {/* 中間：系統權限設定區塊 */}
                 <div className="lg:col-span-5">
-                    {selectedRoleForPermission ? (
+                    {selectedRolesForPermission.length > 0 ? (
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,7 +332,7 @@ export default function OwnerSettingsPage() {
                                 <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                 </svg>
-                                <p className="text-lg">請從左側選擇一個角色來管理權限</p>
+                                <p className="text-lg">請從左側選擇一個或多個角色來管理權限</p>
                             </div>
                         </div>
                     )}
@@ -325,7 +340,7 @@ export default function OwnerSettingsPage() {
 
                 {/* 右側：導航權限設定區塊 */}
                 <div className="lg:col-span-4">
-                    {selectedRoleForPermission ? (
+                    {selectedRolesForPermission.length > 0 ? (
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,7 +421,7 @@ export default function OwnerSettingsPage() {
                                 <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
-                                <p className="text-lg">請從左側選擇一個角色來管理導航權限</p>
+                                <p className="text-lg">請從左側選擇一個或多個角色來管理導航權限</p>
                             </div>
                         </div>
                     )}
