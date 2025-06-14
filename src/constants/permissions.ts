@@ -141,7 +141,7 @@ export const DEFAULT_NAV_PERMISSIONS: NavPermission[] = [
 ];
 
 export function getDefaultPermissionsForRole(role: string): string[] {
-  const basePermissions = ['project.view', 'workpackage.view'];
+  const basePermissions = ['project.view', 'workpackage.view', 'dashboard.view'];
   const notificationBasePermissions = [
     'notification.view',
     'notification.settings',
@@ -173,6 +173,8 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         'finance.view', 
         'finance.create', 
         'finance.edit',
+        'dashboard.analytics',
+        'dashboard.export',
         ...notificationBasePermissions,
         'notification.target',
         'notification.schedule',
@@ -183,6 +185,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         ...basePermissions, 
         'workpackage.create', 
         'workpackage.edit',
+        'dashboard.analytics',
         ...notificationBasePermissions,
         'notification.create',
         'notification.target',
@@ -194,6 +197,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         ...basePermissions, 
         'workpackage.create', 
         'workpackage.edit',
+        'dashboard.analytics',
         ...notificationBasePermissions,
         'notification.create',
         'notification.target',
@@ -204,6 +208,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
       return [
         ...basePermissions, 
         'workpackage.view',
+        'dashboard.analytics',
         ...notificationBasePermissions,
         'notification.create',
         'notification.emergency',

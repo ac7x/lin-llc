@@ -37,7 +37,7 @@ export default function OwnerSettingsPage() {
 
     // 確保所有預設類別都存在
     const defaultCategories = useMemo(() => 
-        ['專案管理', '工作包管理', '財務管理', '用戶管理', '系統管理', '通知管理'],
+        ['儀表板管理', '專案管理', '工作包管理', '財務管理', '用戶管理', '系統管理', '通知管理'],
         []
     );
 
@@ -177,7 +177,7 @@ export default function OwnerSettingsPage() {
     // 檢查用戶權限
     useEffect(() => {
         if (!loading && !isOwner) {
-            router.push('/shared/signin');
+            router.push('/');
         }
     }, [loading, isOwner, router]);
 

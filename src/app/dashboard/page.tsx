@@ -1,7 +1,10 @@
 "use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useCollection } from 'react-firebase-hooks/firestore';
+import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 import { 
   PieChart, 
   Pie, 
@@ -66,21 +69,38 @@ const ErrorMessage = ({ message }: { message: string }) => (
 );
 
 export default function DashboardPage() {
-  // 取得 users 和 projects 集合的 snapshot
-  const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
-  const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
-  // 新增：取得 orders 與 quotes 集合的 snapshot（改為 finance/default 子集合）
-  const [ordersSnapshot, ordersLoading, ordersError] = useCollection(collection(db, 'finance', 'default', 'orders'));
-  const [quotesSnapshot, quotesLoading, quotesError] = useCollection(collection(db, 'finance', 'default', 'quotes'));
-  // 新增：取得 contracts 集合的 snapshot（改為 finance/default 子集合）
-  const [contractsSnapshot, contractsLoading, contractsError] = useCollection(collection(db, 'finance', 'default', 'contracts'));
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const { permissions, loading: permissionsLoading } = usePermissions(user?.uid);
 
-  // 工作包和子工作包統計
+  // 2. 狀態管理 Hooks
+  const [selectedProject, setSelectedProject] = React.useState<string>('');
   const [workpackagesCount, setWorkpackagesCount] = React.useState<number>(0);
   const [subWorkpackagesCount, setSubWorkpackagesCount] = React.useState<number>(0);
   const [statsLoading, setStatsLoading] = React.useState<boolean>(true);
 
-  // 計算工作包和子工作包數量
+  // 3. Firestore 數據 Hooks
+  const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
+  const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
+  const [ordersSnapshot, ordersLoading, ordersError] = useCollection(collection(db, 'finance', 'default', 'orders'));
+  const [quotesSnapshot, quotesLoading, quotesError] = useCollection(collection(db, 'finance', 'default', 'quotes'));
+  const [contractsSnapshot, contractsLoading, contractsError] = useCollection(collection(db, 'finance', 'default', 'contracts'));
+
+  // 檢查用戶是否已登入
+  React.useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/');
+    }
+  }, [authLoading, user, router]);
+
+  // 檢查用戶是否有權限
+  React.useEffect(() => {
+    if (!permissionsLoading && user && !permissions.some(p => p.id === 'dashboard.view')) {
+      router.push('/');
+    }
+  }, [permissions, permissionsLoading, user, router]);
+
+  // 5. 工作包統計 Effect
   React.useEffect(() => {
     if (projectsSnapshot && !projectsLoading && !projectsError) {
       setStatsLoading(true);
@@ -106,7 +126,7 @@ export default function DashboardPage() {
     }
   }, [projectsSnapshot, projectsLoading, projectsError]);
 
-  // 統計各角色人數
+  // 6. 統計各角色人數
   const roleCounts: Record<string, number> = Object.keys(ROLE_HIERARCHY).reduce((acc, role) => {
     acc[role] = 0;
     return acc;
@@ -120,10 +140,12 @@ export default function DashboardPage() {
     });
   }
 
-  // 將 roleCounts 轉為陣列格式供圖表使用
-  const roleData = Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count }));
+  // 7. 數據轉換 Memos
+  const roleData = React.useMemo(() => 
+    Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count })),
+    [roleCounts]
+  );
 
-  // 工作包進度分析數據
   const workpackageProgressData = React.useMemo(() => {
     if (!projectsSnapshot) return [];
     return projectsSnapshot.docs.map(doc => {
@@ -136,9 +158,6 @@ export default function DashboardPage() {
     });
   }, [projectsSnapshot]);
 
-  const [selectedProject, setSelectedProject] = React.useState<string>('');
-
-  // 專案進度變化和使用人力數據
   const projectProgressData = React.useMemo(() => {
     if (!projectsSnapshot) return [];
     
@@ -155,19 +174,15 @@ export default function DashboardPage() {
 
     projectsSnapshot.docs.forEach(doc => {
       const projectData = doc.data() as Project;
-      // 如果沒有選擇專案，預設顯示第一個專案
       if (!selectedProject && projectsSnapshot.docs.length > 0) {
         setSelectedProject(projectsSnapshot.docs[0].data().projectName);
       }
       
-      // 只處理選定的專案數據
       if (projectData.projectName === selectedProject && projectData.reports && Array.isArray(projectData.reports)) {
-        // 按日期排序報告
         const sortedReports = [...projectData.reports].sort((a, b) => 
           a.date.toDate().getTime() - b.date.toDate().getTime()
         );
 
-        // 計算滾動人力均值（使用前3天的平均值）
         const calculateRollingAverage = (index: number, windowSize: number = 3) => {
           const startIndex = Math.max(0, index - windowSize + 1);
           const windowReports = sortedReports.slice(startIndex, index + 1);
@@ -181,12 +196,10 @@ export default function DashboardPage() {
               ? ((report.projectProgress - (sortedReports[index - 1]?.projectProgress ?? 0)) / (sortedReports[index - 1]?.projectProgress ?? 1)) * 100
               : 0;
             
-            // 計算效率：每日進度增長 / 人力數量
             const efficiency = report.workforceCount > 0 
               ? Number((dailyGrowth / report.workforceCount).toFixed(2))
               : 0;
 
-            // 計算滾動人力均值
             const rollingAverageWorkforce = calculateRollingAverage(index);
 
             progressData.push({
@@ -207,8 +220,8 @@ export default function DashboardPage() {
     return progressData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [projectsSnapshot, selectedProject]);
 
-  // 優化圖表配置
-  const chartConfig = {
+  // 8. 圖表配置
+  const chartConfig = React.useMemo(() => ({
     dateAxis: {
       tick: { fontSize: 12 },
       tickFormatter: formatDate
@@ -226,8 +239,19 @@ export default function DashboardPage() {
       },
       labelFormatter: formatFullDate
     }
-  };
+  }), []);
 
+  // 如果正在載入認證或權限，顯示載入中
+  if (authLoading || permissionsLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // 如果未登入或沒有權限，不渲染內容
+  if (!user || !permissions.some(p => p.id === 'dashboard.view')) {
+    return null;
+  }
+
+  // 渲染儀表板內容
   return (
     <main className="max-w-4xl mx-auto mb-20">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
