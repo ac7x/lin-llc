@@ -98,16 +98,16 @@ export function usePermissions(userId: string | undefined) {
   }, [userId]);
 
   const updatePermissions = useCallback(async (
-    selectedRole: string,
+    selectedRoles: string[],
     selectedPermissions: string[],
     selectedNavPermissions: string[]
   ) => {
-    if (!selectedRole || !userId) return;
+    if (selectedRoles.length === 0 || !userId) return false;
     
     try {
       const rolePermissionsRef = doc(db, 'settings', 'rolePermissions');
       const updatedRoles = rolePermissions.map(rp => 
-        rp.role === selectedRole 
+        selectedRoles.includes(rp.role)
           ? { ...rp, permissions: selectedPermissions }
           : rp
       );
@@ -123,8 +123,8 @@ export function usePermissions(userId: string | undefined) {
       const updatedNavPermissions = navPermissions.map(np => ({
         ...np,
         defaultRoles: selectedNavPermissions.includes(np.id) 
-          ? [...(np.defaultRoles || []), selectedRole]
-          : (np.defaultRoles || []).filter(role => role !== selectedRole)
+          ? [...new Set([...(np.defaultRoles || []), ...selectedRoles])]
+          : (np.defaultRoles || []).filter(role => !selectedRoles.includes(role))
       }));
       
       await setDoc(navPermissionsRef, { 

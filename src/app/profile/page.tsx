@@ -19,7 +19,7 @@ const roleDisplayNames: Record<string, string> = {
 } as const;
 
 const UserPanelPage = () => {
-  const { user, loading, auth, userRole } = useAuth()
+  const { user, loading, auth, userRoles } = useAuth()
   const router = useRouter()
 
   const handleSignOut = useCallback(async () => {
@@ -60,10 +60,15 @@ const UserPanelPage = () => {
                   <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">{user.displayName}</p>
                   <p className="text-gray-600 dark:text-gray-300">{user.email}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">UID: {user.uid}</p>
-                  <div className="mt-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900 dark:to-blue-800 dark:text-blue-200">
-                      {roleDisplayNames[userRole || 'user'] || '一般用戶'}
-                    </span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {userRoles.map((role) => (
+                      <span
+                        key={role}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900 dark:to-blue-800 dark:text-blue-200"
+                      >
+                        {roleDisplayNames[role] || '一般用戶'}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
