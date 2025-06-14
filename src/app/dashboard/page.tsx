@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Bar, ComposedChart, Line as ComposedLine } from 'recharts';
 import { Workpackage, Project } from '@/types/project';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 import { db } from '@/lib/firebase-client';
@@ -81,6 +81,8 @@ export default function DashboardPage() {
     });
   }, [projectsSnapshot]);
 
+  const [selectedProject, setSelectedProject] = React.useState<string>('');
+
   // 專案進度變化和使用人力數據
   const projectProgressData = React.useMemo(() => {
     if (!projectsSnapshot) return [];
@@ -90,30 +92,52 @@ export default function DashboardPage() {
       progress: number;
       workforce: number;
       projectName: string;
+      dailyGrowth: number;
+      efficiency: number;
     }> = [];
 
     projectsSnapshot.docs.forEach(doc => {
       const projectData = doc.data() as Project;
-      if (projectData.reports && Array.isArray(projectData.reports)) {
-        projectData.reports.forEach(report => {
+      // 如果沒有選擇專案，預設顯示第一個專案
+      if (!selectedProject && projectsSnapshot.docs.length > 0) {
+        setSelectedProject(projectsSnapshot.docs[0].data().projectName);
+      }
+      
+      // 只處理選定的專案數據
+      if (projectData.projectName === selectedProject && projectData.reports && Array.isArray(projectData.reports)) {
+        // 按日期排序報告
+        const sortedReports = [...projectData.reports].sort((a, b) => 
+          a.date.toDate().getTime() - b.date.toDate().getTime()
+        );
+
+        sortedReports.forEach((report, index) => {
           if (report.date && report.projectProgress !== undefined && report.workforceCount !== undefined) {
+            const dailyGrowth = index > 0 && sortedReports[index - 1]?.projectProgress !== undefined
+              ? report.projectProgress - (sortedReports[index - 1]?.projectProgress ?? 0)
+              : 0;
+            
+            const efficiency = report.workforceCount > 0 
+              ? Number((dailyGrowth / report.workforceCount).toFixed(2))
+              : 0;
+
             progressData.push({
               date: report.date.toDate().toISOString().split('T')[0],
               progress: report.projectProgress,
               workforce: report.workforceCount,
-              projectName: projectData.projectName
+              projectName: projectData.projectName,
+              dailyGrowth: dailyGrowth,
+              efficiency: efficiency
             });
           }
         });
       }
     });
 
-    // 按日期排序
     return progressData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [projectsSnapshot]);
+  }, [projectsSnapshot, selectedProject]);
 
   return (
-    <main className="max-w-4xl mx-auto">
+    <main className="max-w-4xl mx-auto mb-20">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">業主管理儀表板</h1>
         
@@ -250,63 +274,154 @@ export default function DashboardPage() {
 
         {/* 專案進度變化和使用人力圖表 */}
         <section className="mt-8 bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-          <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案進度與人力變化</h3>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={projectProgressData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="date" 
-                tick={{ fontSize: 12 }}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return `${date.getMonth() + 1}/${date.getDate()}`;
-                }}
-              />
-              <YAxis 
-                yAxisId="left"
-                orientation="left"
-                label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
-                domain={[0, 100]}
-              />
-              <YAxis 
-                yAxisId="right"
-                orientation="right"
-                label={{ value: '人力 (人)', angle: 90, position: 'insideRight' }}
-              />
-              <Tooltip 
-                formatter={(value: number, name: string) => {
-                  if (name === '進度') return [`${value}%`, name];
-                  if (name === '人力') return [`${value}人`, name];
-                  return [value, name];
-                }}
-                labelFormatter={(label) => {
-                  const date = new Date(label);
-                  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-                }}
-              />
-              <Legend />
-              <Line
-                yAxisId="left"
-                type="monotone"
-                dataKey="progress"
-                name="進度"
-                stroke="#8884d8"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="workforce"
-                name="人力"
-                stroke="#82ca9d"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="flex justify-end items-center mb-2">
+            <select
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {projectsSnapshot?.docs.map((doc) => {
+                const projectData = doc.data() as Project;
+                return (
+                  <option key={projectData.projectName} value={projectData.projectName}>
+                    {projectData.projectName}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          {projectProgressData.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={projectProgressData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return `${date.getMonth() + 1}/${date.getDate()}`;
+                    }}
+                  />
+                  <YAxis 
+                    label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
+                    domain={[0, 100]}
+                  />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => {
+                      if (name === '進度') return [`${value}%`, name];
+                      if (name === '每日增長') return [`${value > 0 ? '+' : ''}${value}%`, name];
+                      if (name === '每人力效率') return [`${value > 0 ? '+' : ''}${value}%`, name];
+                      return [value, name];
+                    }}
+                    labelFormatter={(label) => {
+                      const date = new Date(label);
+                      return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="top" 
+                    align="left"
+                    wrapperStyle={{
+                      paddingLeft: '20px',
+                      paddingBottom: '10px'
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="progress"
+                    name="進度"
+                    stroke="#8884d8"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="dailyGrowth"
+                    name="每日增長"
+                    stroke="#ff7300"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="efficiency"
+                    name="每人力效率"
+                    stroke="#ff0000"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+
+              {/* 人力變化小區塊 */}
+              <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                <ResponsiveContainer width="100%" height={100}>
+                  <ComposedChart data={projectProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                      }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10 }}
+                      label={{ value: '人力 (人)', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }}
+                    />
+                    <Tooltip 
+                      formatter={(value: number, name: string) => {
+                        if (name === '人力') return [`${value}人`, name];
+                        if (name === '人力趨勢') return [`${value}人`, name];
+                        return [value, name];
+                      }}
+                      labelFormatter={(label) => {
+                        const date = new Date(label);
+                        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+                      }}
+                    />
+                    <Legend 
+                      verticalAlign="top" 
+                      align="left"
+                      wrapperStyle={{
+                        paddingLeft: '20px',
+                        paddingBottom: '5px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="workforce" 
+                      name="人力" 
+                      fill="#82ca9d" 
+                      barSize={20}
+                      label={{ 
+                        position: 'center',
+                        fill: '#fff',
+                        fontSize: 10,
+                        formatter: (value: number) => `${value}人`
+                      }}
+                    />
+                    <ComposedLine
+                      type="monotone"
+                      dataKey="workforce"
+                      name="人力趨勢"
+                      stroke="#2a8f4d"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">
+              無可用數據
+            </div>
+          )}
         </section>
       </div>
     </main>
