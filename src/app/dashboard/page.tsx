@@ -71,7 +71,7 @@ const ErrorMessage = ({ message }: { message: string }) => (
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { permissions, loading: permissionsLoading } = usePermissions(user?.uid);
+  const { userPermissions, loading: permissionsLoading } = usePermissions(user?.uid);
 
   // 2. 狀態管理 Hooks
   const [selectedProject, setSelectedProject] = React.useState<string>('');
@@ -95,10 +95,10 @@ export default function DashboardPage() {
 
   // 檢查用戶是否有權限
   React.useEffect(() => {
-    if (!permissionsLoading && user && !permissions.some(p => p.id === 'dashboard.view')) {
+    if (!permissionsLoading && user && !userPermissions.includes('dashboard.view')) {
       router.push('/');
     }
-  }, [permissions, permissionsLoading, user, router]);
+  }, [userPermissions, permissionsLoading, user, router]);
 
   // 5. 工作包統計 Effect
   React.useEffect(() => {
@@ -247,7 +247,7 @@ export default function DashboardPage() {
   }
 
   // 如果未登入或沒有權限，不渲染內容
-  if (!user || !permissions.some(p => p.id === 'dashboard.view')) {
+  if (!user || !userPermissions.includes('dashboard.view')) {
     return null;
   }
 
