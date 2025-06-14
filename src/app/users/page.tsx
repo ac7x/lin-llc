@@ -8,19 +8,25 @@ import { db } from "@/lib/firebase-client";
 import { collection, doc, updateDoc } from "firebase/firestore";
 
 // 提取角色選項組件
-const RoleSelect = ({ value, onChange, className = "" }: { value: string; onChange: (value: string) => void; className?: string }) => (
-  <select
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className={`border rounded px-1 py-0.5 bg-white dark:bg-gray-800 ${className}`}
-  >
-    <option value="">—</option>
+const RoleSelect = ({ value, onChange }: { value: string[]; onChange: (value: string[]) => void }) => (
+  <div className="flex flex-wrap gap-2">
     {Object.keys(ROLE_HIERARCHY).map((role) => (
-      <option key={role} value={role}>
-        {role}
-      </option>
+      <label key={role} className="inline-flex items-center">
+        <input
+          type="checkbox"
+          checked={value.includes(role)}
+          onChange={(e) => {
+            const newRoles = e.target.checked
+              ? [...value, role]
+              : value.filter(r => r !== role);
+            onChange(newRoles);
+          }}
+          className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 dark:border-gray-700"
+        />
+        <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{role}</span>
+      </label>
     ))}
-  </select>
+  </div>
 );
 
 export default function AdminUsersPage() {
@@ -35,10 +41,10 @@ export default function AdminUsersPage() {
   );
 
   // 更新用戶角色
-  const updateUserRole = async (uid: string, newRole: string): Promise<void> => {
+  const updateUserRole = async (uid: string, newRoles: string[]): Promise<void> => {
     try {
       const userDoc = doc(usersCollection, uid);
-      await updateDoc(userDoc, { role: newRole });
+      await updateDoc(userDoc, { roles: newRoles });
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "角色更新失敗");
     }
@@ -98,9 +104,8 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <RoleSelect
-                        value={user.role || ""}
+                        value={user.roles || []}
                         onChange={(value) => updateUserRole(user.uid, value)}
-                        className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                       />
                     </td>
                   </tr>

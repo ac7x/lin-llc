@@ -42,7 +42,7 @@ export default function SignIn() {
       if (!userSnapshot.exists()) {
         await setDoc(userRef, {
           ...userData,
-          role: "user", // 預設角色
+          roles: ["user"], // 預設角色改為陣列
           createdAt: new Date().toISOString(),
         });
       } else {
