@@ -9,6 +9,44 @@ import { db } from '@/lib/firebase-client';
 import { collection } from 'firebase/firestore';
 import { calculateProjectProgress } from '@/utils/projectProgress';
 
+// 抽取共用樣式
+const cardStyles = "bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700";
+const titleStyles = "text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent";
+const loadingSpinner = "animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500";
+
+// 抽取圖表顏色配置
+const CHART_COLORS = {
+  primary: '#8884d8',
+  secondary: '#ff7300',
+  tertiary: '#ff0000',
+  bar: '#82ca9d',
+  trend: '#2a8f4d',
+  pie: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#2a8f4d', '#8f6b2a']
+};
+
+// 日期格式化函數
+const formatDate = (date: Date | string) => {
+  const d = new Date(date);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+};
+
+const formatFullDate = (date: Date | string) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+};
+
+// 載入狀態組件
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-8">
+    <div className={loadingSpinner}></div>
+  </div>
+);
+
+// 錯誤狀態組件
+const ErrorMessage = ({ message }: { message: string }) => (
+  <div className="text-red-500 text-center py-4">錯誤: {message}</div>
+);
+
 export default function DashboardPage() {
   // 取得 users 和 projects 集合的 snapshot
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
@@ -66,7 +104,6 @@ export default function DashboardPage() {
 
   // 將 roleCounts 轉為陣列格式供圖表使用
   const roleData = Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count }));
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#2a8f4d', '#8f6b2a'];
 
   // 工作包進度分析數據
   const workpackageProgressData = React.useMemo(() => {
@@ -136,6 +173,27 @@ export default function DashboardPage() {
     return progressData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [projectsSnapshot, selectedProject]);
 
+  // 優化圖表配置
+  const chartConfig = {
+    dateAxis: {
+      tick: { fontSize: 12 },
+      tickFormatter: formatDate
+    },
+    tooltip: {
+      formatter: (value: number, name: string) => {
+        const formatters: Record<string, (value: number) => string> = {
+          '進度': (v) => `${v}%`,
+          '每日增長': (v) => `${v > 0 ? '+' : ''}${v}%`,
+          '每人力效率': (v) => `${v > 0 ? '+' : ''}${v}%`,
+          '人力': (v) => `${v}人`,
+          '人力趨勢': (v) => `${v}人`
+        };
+        return [formatters[name]?.(value) ?? value, name];
+      },
+      labelFormatter: formatFullDate
+    }
+  };
+
   return (
     <main className="max-w-4xl mx-auto mb-20">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -143,20 +201,18 @@ export default function DashboardPage() {
         
         <div className="flex gap-6 flex-col md:flex-row">
           {/* 人員統計區塊 */}
-          <section className="flex-1 min-w-[320px] bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-            <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">人員分布</h3>
+          <section className={`flex-1 min-w-[320px] ${cardStyles}`}>
+            <h3 className={titleStyles}>人員分布</h3>
             {usersLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              </div>
+              <LoadingSpinner />
             ) : usersError ? (
-              <div className="text-red-500 text-center py-4">錯誤: {usersError.message}</div>
+              <ErrorMessage message={usersError.message} />
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie data={roleData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, value }) => `${value} ${name}`} labelLine={false}>
                     {roleData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS.pie[index % CHART_COLORS.pie.length]} />
                     ))}
                   </Pie>
                   <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="28" fontWeight="bold" fill="#2a4d8f">
@@ -170,91 +226,33 @@ export default function DashboardPage() {
 
           {/* 小型統計卡片區塊 */}
           <div className="flex gap-3 flex-wrap">
-            {/* 專案總數卡片 */}
-            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">專案總數</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {projectsLoading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
-                ) : projectsError ? (
-                  <span className="text-red-500">錯誤</span>
-                ) : (
-                  projectsSnapshot?.size ?? 0
-                )}
-              </div>
-            </section>
-
-            {/* 合約總數卡片 */}
-            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">合約總數</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {contractsLoading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
-                ) : contractsError ? (
-                  <span className="text-red-500">錯誤</span>
-                ) : (
-                  contractsSnapshot?.size ?? 0
-                )}
-              </div>
-            </section>
-
-            {/* 訂單總數卡片 */}
-            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">訂單總數</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {ordersLoading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
-                ) : ordersError ? (
-                  <span className="text-red-500">錯誤</span>
-                ) : (
-                  ordersSnapshot?.size ?? 0
-                )}
-              </div>
-            </section>
-
-            {/* 估價單總數卡片 */}
-            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">估價單總數</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {quotesLoading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
-                ) : quotesError ? (
-                  <span className="text-red-500">錯誤</span>
-                ) : (
-                  quotesSnapshot?.size ?? 0
-                )}
-              </div>
-            </section>
-
-            {/* 工作包總數卡片 */}
-            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">工作包總數</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {statsLoading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
-                ) : (
-                  workpackagesCount
-                )}
-              </div>
-            </section>
-
-            {/* 子工作包總數卡片 */}
-            <section className="flex-1 min-w-[120px] bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700 text-center">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">子工作包總數</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {statsLoading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
-                ) : (
-                  subWorkpackagesCount
-                )}
-              </div>
-            </section>
+            {[
+              { title: '專案總數', loading: projectsLoading, error: projectsError, value: projectsSnapshot?.size },
+              { title: '合約總數', loading: contractsLoading, error: contractsError, value: contractsSnapshot?.size },
+              { title: '訂單總數', loading: ordersLoading, error: ordersError, value: ordersSnapshot?.size },
+              { title: '估價單總數', loading: quotesLoading, error: quotesError, value: quotesSnapshot?.size },
+              { title: '工作包總數', loading: statsLoading, value: workpackagesCount },
+              { title: '子工作包總數', loading: statsLoading, value: subWorkpackagesCount }
+            ].map(({ title, loading, error, value }) => (
+              <section key={title} className={`flex-1 min-w-[120px] ${cardStyles} text-center`}>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{title}</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {loading ? (
+                    <div className={loadingSpinner}></div>
+                  ) : error ? (
+                    <span className="text-red-500">錯誤</span>
+                  ) : (
+                    value ?? 0
+                  )}
+                </div>
+              </section>
+            ))}
           </div>
         </div>
 
         {/* 工作包進度分析圖 */}
-        <section className="mt-8 bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-          <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">工作包進度分析</h3>
+        <section className={`mt-8 ${cardStyles}`}>
+          <h3 className={titleStyles}>工作包進度分析</h3>
           <ResponsiveContainer width="100%" height={300}>
             <RadarChart data={workpackageProgressData}>
               <PolarGrid />
@@ -263,8 +261,8 @@ export default function DashboardPage() {
               <Radar
                 name="進度"
                 dataKey="progress"
-                stroke="#8884d8"
-                fill="#8884d8"
+                stroke={CHART_COLORS.primary}
+                fill={CHART_COLORS.primary}
                 fillOpacity={0.6}
               />
               <Tooltip />
@@ -273,7 +271,7 @@ export default function DashboardPage() {
         </section>
 
         {/* 專案進度變化和使用人力圖表 */}
-        <section className="mt-8 bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+        <section className={`mt-8 ${cardStyles}`}>
           <div className="flex justify-end items-center mb-2">
             <select
               value={selectedProject}
@@ -295,30 +293,12 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={projectProgressData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => {
-                      const date = new Date(value);
-                      return `${date.getMonth() + 1}/${date.getDate()}`;
-                    }}
-                  />
+                  <XAxis {...chartConfig.dateAxis} dataKey="date" />
                   <YAxis 
                     label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
                     domain={[0, 100]}
                   />
-                  <Tooltip 
-                    formatter={(value: number, name: string) => {
-                      if (name === '進度') return [`${value}%`, name];
-                      if (name === '每日增長') return [`${value > 0 ? '+' : ''}${value}%`, name];
-                      if (name === '每人力效率') return [`${value > 0 ? '+' : ''}${value}%`, name];
-                      return [value, name];
-                    }}
-                    labelFormatter={(label) => {
-                      const date = new Date(label);
-                      return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-                    }}
-                  />
+                  <Tooltip {...chartConfig.tooltip} />
                   <Legend 
                     verticalAlign="top" 
                     align="left"
@@ -331,7 +311,7 @@ export default function DashboardPage() {
                     type="monotone"
                     dataKey="progress"
                     name="進度"
-                    stroke="#8884d8"
+                    stroke={CHART_COLORS.primary}
                     strokeWidth={2}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
@@ -340,7 +320,7 @@ export default function DashboardPage() {
                     type="monotone"
                     dataKey="dailyGrowth"
                     name="每日增長"
-                    stroke="#ff7300"
+                    stroke={CHART_COLORS.secondary}
                     strokeWidth={2}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
@@ -349,7 +329,7 @@ export default function DashboardPage() {
                     type="monotone"
                     dataKey="efficiency"
                     name="每人力效率"
-                    stroke="#ff0000"
+                    stroke={CHART_COLORS.tertiary}
                     strokeWidth={2}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
@@ -362,29 +342,12 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height={100}>
                   <ComposedChart data={projectProgressData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 10 }}
-                      tickFormatter={(value) => {
-                        const date = new Date(value);
-                        return `${date.getMonth() + 1}/${date.getDate()}`;
-                      }}
-                    />
+                    <XAxis {...chartConfig.dateAxis} dataKey="date" />
                     <YAxis 
                       tick={{ fontSize: 10 }}
                       label={{ value: '人力 (人)', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }}
                     />
-                    <Tooltip 
-                      formatter={(value: number, name: string) => {
-                        if (name === '人力') return [`${value}人`, name];
-                        if (name === '人力趨勢') return [`${value}人`, name];
-                        return [value, name];
-                      }}
-                      labelFormatter={(label) => {
-                        const date = new Date(label);
-                        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-                      }}
-                    />
+                    <Tooltip {...chartConfig.tooltip} />
                     <Legend 
                       verticalAlign="top" 
                       align="left"
@@ -396,7 +359,7 @@ export default function DashboardPage() {
                     <Bar 
                       dataKey="workforce" 
                       name="人力" 
-                      fill="#82ca9d" 
+                      fill={CHART_COLORS.bar} 
                       barSize={20}
                       label={{ 
                         position: 'center',
@@ -409,7 +372,7 @@ export default function DashboardPage() {
                       type="monotone"
                       dataKey="workforce"
                       name="人力趨勢"
-                      stroke="#2a8f4d"
+                      stroke={CHART_COLORS.trend}
                       strokeWidth={2}
                       dot={false}
                     />
