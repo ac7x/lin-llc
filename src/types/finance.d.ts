@@ -40,6 +40,7 @@ export interface OrderItem {
  * 合約主體資料
  */
 export interface ContractData {
+    contractId: string; // 合約唯一識別碼
     contractName: string; // 合約名稱
     contractPrice: number; // 合約總價
     contractItems: ContractItem[]; // 合約項目清單
@@ -52,6 +53,10 @@ export interface ContractData {
     sourceType: 'order' | 'quote'; // 來源型態（訂單或報價）
     sourceId: string; // 來源單號
     contractContent: string; // 合約內容
+    status: 'draft' | 'issued' | 'cancelled'; // 合約狀態
+    notes?: string; // 備註（可選）
+    projectId?: string; // 關聯專案（可選）
+    type?: '請款' | '支出'; // 合約性質（可選）
 }
 
 /**

@@ -245,3 +245,24 @@ export interface ExpenseData {
     expenseName?: string; // 支出名稱（對應專案名稱，可選）
     expenses?: Expense[]; // 支出紀錄（可選）
 }
+
+export interface ContractData {
+    contractId: string; // 合約唯一識別碼
+    contractNumber: string; // 合約編號
+    contractDate: Timestamp; // 合約日期
+    clientName: string; // 客戶名稱
+    clientContact: string; // 客戶聯絡人
+    clientPhone: string; // 客戶電話
+    clientEmail: string; // 客戶 Email
+    projectId: string; // 關聯專案
+    type: '請款' | '支出'; // 合約性質
+    items: ContractItem[]; // 合約項目清單
+    totalAmount: number; // 總金額
+    relatedOrderId?: string; // 相關訂單編號（可選）
+    createdAt: Timestamp; // 建立時間
+    updatedAt: Timestamp; // 更新時間
+    status: 'draft' | 'issued' | 'cancelled'; // 合約狀態
+    notes?: string; // 備註（可選）
+    contractName?: string; // 合約名稱（對應專案名稱，可選）
+    contracts?: Contract[]; // 合約紀錄（可選）
+}

@@ -14,10 +14,11 @@
 import Link from "next/link";
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import type { Timestamp } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
 // 嚴格型別：只接受 Timestamp | null | undefined
 type TimestampInput = Timestamp | null | undefined;
@@ -35,9 +36,54 @@ const formatDate = (timestamp: TimestampInput, formatStr = "yyyy-MM-dd"): string
 };
 
 export default function ProjectsPage() {
-    const { db, collection } = useAuth();
+    const { db, collection, user, userRoles } = useAuth();
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
     const [search, setSearch] = useState("");
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+    const [isLoadingPermission, setIsLoadingPermission] = useState(true);
+
+    // 檢查導航權限
+    useEffect(() => {
+        async function checkNavPermission() {
+            if (!user || !userRoles) {
+                setHasPermission(false);
+                setIsLoadingPermission(false);
+                return;
+            }
+
+            try {
+                const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
+                if (!navPermissionsDoc.exists()) {
+                    setHasPermission(false);
+                    setIsLoadingPermission(false);
+                    return;
+                }
+
+                const data = navPermissionsDoc.data();
+                const projectsNav = data.items?.find((item: any) => item.id === 'projects');
+                
+                if (!projectsNav) {
+                    setHasPermission(false);
+                    setIsLoadingPermission(false);
+                    return;
+                }
+
+                // 檢查用戶角色是否有權限
+                const hasAccess = userRoles.some(role => 
+                    projectsNav.defaultRoles.includes(role)
+                );
+
+                setHasPermission(hasAccess);
+            } catch (error) {
+                console.error('檢查導航權限失敗:', error);
+                setHasPermission(false);
+            } finally {
+                setIsLoadingPermission(false);
+            }
+        }
+
+        checkNavPermission();
+    }, [user, userRoles, db]);
 
     const rows = useMemo(() => {
         if (!projectsSnapshot) return [];
@@ -63,7 +109,35 @@ export default function ProjectsPage() {
         return arr;
     }, [projectsSnapshot, search]);
 
-    // 如果正在載入，顯示載入中
+    // 如果正在載入權限，顯示載入中
+    if (isLoadingPermission) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+
+    // 如果沒有權限，顯示無權限訊息
+    if (!hasPermission) {
+        return (
+            <main className="max-w-4xl mx-auto p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <div className="text-center">
+                        <svg className="w-16 h-16 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <h1 className="text-2xl font-bold mb-2">存取被拒絕</h1>
+                        <p className="text-gray-600 dark:text-gray-400">
+                            您沒有權限訪問專案頁面。請聯繫系統管理員以獲取存取權限。
+                        </p>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    // 如果正在載入專案資料，顯示載入中
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
