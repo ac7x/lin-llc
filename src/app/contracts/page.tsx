@@ -20,12 +20,18 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { ContractData } from "@/types/finance";
 import { doc, getDoc } from "firebase/firestore";
 
+// 定義導航權限項目的型別
+interface NavPermissionItem {
+    id: string;
+    defaultRoles: string[];
+}
+
 export default function ContractsPage() {
     const { db, collection, user, userRoles } = useAuth();
     const [contractsSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "contracts")
     );
-    const [hasPermission, setHasPermission] = useState(false);
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [isLoadingPermission, setIsLoadingPermission] = useState(true);
     // 搜尋與排序狀態
     const [search, setSearch] = useState("");
@@ -34,8 +40,8 @@ export default function ContractsPage() {
 
     // 檢查導航權限
     useEffect(() => {
-        const checkPermission = async () => {
-            if (!user) {
+        async function checkNavPermission() {
+            if (!user || !userRoles) {
                 setHasPermission(false);
                 setIsLoadingPermission(false);
                 return;
@@ -50,21 +56,30 @@ export default function ContractsPage() {
                     return;
                 }
 
-                const navPermissions = navPermissionsDoc.data();
+                const data = navPermissionsDoc.data();
+                const contractsNav = data.items?.find((item: NavPermissionItem) => item.id === 'contracts');
+                
+                if (!contractsNav) {
+                    setHasPermission(false);
+                    setIsLoadingPermission(false);
+                    return;
+                }
+
+                // 檢查用戶角色是否有權限
                 const hasAccess = userRoles.some(role => 
-                    navPermissions[role]?.includes('contracts')
+                    contractsNav.defaultRoles.includes(role)
                 );
 
                 setHasPermission(hasAccess);
             } catch (error) {
-                console.error("檢查權限時發生錯誤:", error);
+                console.error('檢查導航權限失敗:', error);
                 setHasPermission(false);
             } finally {
                 setIsLoadingPermission(false);
             }
-        };
+        }
 
-        checkPermission();
+        checkNavPermission();
     }, [user, userRoles, db]);
 
     // 處理後的資料

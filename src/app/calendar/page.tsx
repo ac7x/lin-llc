@@ -22,6 +22,12 @@ import { doc, getDoc } from "firebase/firestore";
 import { Workpackage } from "@/types/project";
 import { ProgressColorScale } from "@/utils/colorScales";
 
+// 定義導航權限項目的型別
+interface NavPermissionItem {
+    id: string;
+    defaultRoles: string[];
+}
+
 const localizer = dateFnsLocalizer({
     format,
     parse,
@@ -53,41 +59,50 @@ export default function ProjectCalendarPage() {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const calendarContainerRef = useRef<HTMLDivElement>(null);
-    const [hasPermission, setHasPermission] = useState(false);
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [isLoadingPermission, setIsLoadingPermission] = useState(true);
 
     // 檢查導航權限
     useEffect(() => {
-        const checkPermission = async () => {
-            if (!user) {
+        async function checkNavPermission() {
+            if (!user || !userRoles) {
                 setHasPermission(false);
                 setIsLoadingPermission(false);
                 return;
             }
 
             try {
-                const navPermissionsDoc = await getDoc(doc(db, "settings", "navPermissions"));
+                const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
                 if (!navPermissionsDoc.exists()) {
                     setHasPermission(false);
                     setIsLoadingPermission(false);
                     return;
                 }
 
-                const navPermissions = navPermissionsDoc.data();
+                const data = navPermissionsDoc.data();
+                const calendarNav = data.items?.find((item: NavPermissionItem) => item.id === 'calendar');
+                
+                if (!calendarNav) {
+                    setHasPermission(false);
+                    setIsLoadingPermission(false);
+                    return;
+                }
+
+                // 檢查用戶角色是否有權限
                 const hasAccess = userRoles.some(role => 
-                    navPermissions[role]?.includes('calendar')
+                    calendarNav.defaultRoles.includes(role)
                 );
 
                 setHasPermission(hasAccess);
             } catch (error) {
-                console.error("檢查權限時發生錯誤:", error);
+                console.error('檢查導航權限失敗:', error);
                 setHasPermission(false);
             } finally {
                 setIsLoadingPermission(false);
             }
-        };
+        }
 
-        checkPermission();
+        checkNavPermission();
     }, [user, userRoles, db]);
 
     useEffect(() => {

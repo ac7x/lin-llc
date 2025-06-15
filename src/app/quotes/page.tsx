@@ -20,12 +20,18 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { QuoteData } from "@/types/finance";
 import { doc, getDoc, collection } from "firebase/firestore";
 
+// 定義導航權限項目的型別
+interface NavPermissionItem {
+    id: string;
+    defaultRoles: string[];
+}
+
 export default function QuotesPage() {
     const { db, user, userRoles } = useAuth();
     const [quotesSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "quotes")
     );
-    const [hasPermission, setHasPermission] = useState(false);
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [isLoadingPermission, setIsLoadingPermission] = useState(true);
     // 搜尋與排序狀態
     const [search, setSearch] = useState("");
@@ -34,36 +40,45 @@ export default function QuotesPage() {
 
     // 檢查導航權限
     useEffect(() => {
-        const checkPermission = async () => {
-            if (!user) {
+        async function checkNavPermission() {
+            if (!user || !userRoles) {
                 setHasPermission(false);
                 setIsLoadingPermission(false);
                 return;
             }
 
             try {
-                const navPermissionsDoc = await getDoc(doc(db, "settings", "navPermissions"));
+                const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
                 if (!navPermissionsDoc.exists()) {
                     setHasPermission(false);
                     setIsLoadingPermission(false);
                     return;
                 }
 
-                const navPermissions = navPermissionsDoc.data();
+                const data = navPermissionsDoc.data();
+                const quotesNav = data.items?.find((item: NavPermissionItem) => item.id === 'quotes');
+                
+                if (!quotesNav) {
+                    setHasPermission(false);
+                    setIsLoadingPermission(false);
+                    return;
+                }
+
+                // 檢查用戶角色是否有權限
                 const hasAccess = userRoles.some(role => 
-                    navPermissions[role]?.includes('quotes')
+                    quotesNav.defaultRoles.includes(role)
                 );
 
                 setHasPermission(hasAccess);
             } catch (error) {
-                console.error("檢查權限時發生錯誤:", error);
+                console.error('檢查導航權限失敗:', error);
                 setHasPermission(false);
             } finally {
                 setIsLoadingPermission(false);
             }
-        };
+        }
 
-        checkPermission();
+        checkNavPermission();
     }, [user, userRoles, db]);
 
     // 處理後的資料

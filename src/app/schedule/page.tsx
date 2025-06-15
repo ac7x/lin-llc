@@ -18,6 +18,12 @@ import { SubWorkpackage, Workpackage } from "@/types/project";
 import { Timestamp } from "firebase/firestore";
 import { useAuth } from '@/hooks/useAuth';
 
+// 定義導航權限項目的型別
+interface NavPermissionItem {
+    id: string;
+    defaultRoles: string[];
+}
+
 interface Group extends TimelineGroup {
     id: string;
     content: string;
@@ -64,43 +70,52 @@ export default function ProjectsPage() {
     const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const timelineRef = useRef<HTMLDivElement>(null);
-    const [hasPermission, setHasPermission] = useState(false);
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [isLoadingPermission, setIsLoadingPermission] = useState(true);
 
     const quickKeywords = ["搬運", "定位", "清潔", "測試"];
 
     // 檢查導航權限
     useEffect(() => {
-        const checkPermission = async () => {
-            if (!user) {
+        async function checkNavPermission() {
+            if (!user || !userRoles) {
                 setHasPermission(false);
                 setIsLoadingPermission(false);
                 return;
             }
 
             try {
-                const navPermissionsDoc = await getDoc(doc(db, "settings", "navPermissions"));
+                const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
                 if (!navPermissionsDoc.exists()) {
                     setHasPermission(false);
                     setIsLoadingPermission(false);
                     return;
                 }
 
-                const navPermissions = navPermissionsDoc.data();
+                const data = navPermissionsDoc.data();
+                const scheduleNav = data.items?.find((item: NavPermissionItem) => item.id === 'schedule');
+                
+                if (!scheduleNav) {
+                    setHasPermission(false);
+                    setIsLoadingPermission(false);
+                    return;
+                }
+
+                // 檢查用戶角色是否有權限
                 const hasAccess = userRoles.some(role => 
-                    navPermissions[role]?.includes('schedule')
+                    scheduleNav.defaultRoles.includes(role)
                 );
 
                 setHasPermission(hasAccess);
             } catch (error) {
-                console.error("檢查權限時發生錯誤:", error);
+                console.error('檢查導航權限失敗:', error);
                 setHasPermission(false);
             } finally {
                 setIsLoadingPermission(false);
             }
-        };
+        }
 
-        checkPermission();
+        checkNavPermission();
     }, [user, userRoles]);
 
     const handleItemMove = useCallback(async (itemId: string, newStart: DateType, newEnd: DateType) => {
