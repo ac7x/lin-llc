@@ -17,6 +17,7 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import "@/styles/react-big-calendar.css";
+import { useRouter } from "next/navigation";
 
 import { Workpackage } from "@/types/project";
 import { ProgressColorScale } from "@/utils/colorScales";
@@ -44,7 +45,8 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { db, collection, getDocs } = useAuth();
+    const { db, collection, getDocs, userRoles } = useAuth();
+    const router = useRouter();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
     const [loading, setLoading] = useState(true);
@@ -52,6 +54,16 @@ export default function ProjectCalendarPage() {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const calendarContainerRef = useRef<HTMLDivElement>(null);
+
+    // 檢查用戶是否有權限訪問此頁面
+    useEffect(() => {
+        const allowedRoles = ['admin', 'owner', 'foreman', 'coord'];
+        const hasPermission = userRoles?.some(role => allowedRoles.includes(role)) || false;
+        
+        if (!loading && !hasPermission) {
+            router.push('/');
+        }
+    }, [userRoles, loading, router]);
 
     useEffect(() => {
         async function fetchAllWorkpackages() {
@@ -240,6 +252,23 @@ ${estimatedDateRange}${actualDateRange}
             </div>
         </main>
     );
+
+    // 檢查用戶是否有權限訪問此頁面
+    const allowedRoles = ['admin', 'owner', 'foreman', 'coord'];
+    const hasPermission = userRoles?.some(role => allowedRoles.includes(role)) || false;
+
+    if (!hasPermission) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">無權限訪問</h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                        您沒有權限訪問此頁面。請聯繫系統管理員以獲取適當的權限。
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <main className="max-w-4xl mx-auto">

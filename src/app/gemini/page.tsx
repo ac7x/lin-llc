@@ -77,7 +77,7 @@ export default function GeminiChatPage() {
   // 檢查認證狀態
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push('/');
     }
   }, [authLoading, isAuthenticated, router]);
 

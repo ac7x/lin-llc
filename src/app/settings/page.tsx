@@ -12,7 +12,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLE_HIERARCHY, ROLE_NAMES, RoleKey } from "@/utils/roleHierarchy";
@@ -49,9 +49,76 @@ export default function OwnerSettingsPage() {
 
     // 確保所有預設類別都存在
     const defaultCategories = useMemo(() => 
-        ['儀表板管理', '專案管理', '工作包管理', '財務管理', '用戶管理', '系統管理', '通知管理'],
+        [
+            '儀表板管理',
+            '專案管理',
+            '工作包管理',
+            '財務管理',
+            '用戶管理',
+            '系統管理',
+            '通知管理',
+            '行程管理',
+            '日曆管理',
+            '估價單管理',
+            '合約管理',
+            '訂單管理',
+            '支出管理',
+            'Gemini管理',
+            '封存管理'
+        ],
         []
     );
+
+    // 在 DEFAULT_PERMISSIONS 中添加缺少的權限
+    const additionalPermissions: Permission[] = [
+        // 行程管理權限
+        { id: 'schedule.view', name: '查看行程', description: '允許查看行程列表和詳情', category: '行程管理' },
+        { id: 'schedule.create', name: '建立行程', description: '允許建立新行程', category: '行程管理' },
+        { id: 'schedule.edit', name: '編輯行程', description: '允許編輯行程資訊', category: '行程管理' },
+        { id: 'schedule.delete', name: '刪除行程', description: '允許刪除行程', category: '行程管理' },
+
+        // 日曆管理權限
+        { id: 'calendar.view', name: '查看日曆', description: '允許查看日曆視圖', category: '日曆管理' },
+        { id: 'calendar.create', name: '建立日曆事件', description: '允許建立新日曆事件', category: '日曆管理' },
+        { id: 'calendar.edit', name: '編輯日曆事件', description: '允許編輯日曆事件', category: '日曆管理' },
+        { id: 'calendar.delete', name: '刪除日曆事件', description: '允許刪除日曆事件', category: '日曆管理' },
+
+        // 估價單管理權限
+        { id: 'quotes.view', name: '查看估價單', description: '允許查看估價單列表和詳情', category: '估價單管理' },
+        { id: 'quotes.create', name: '建立估價單', description: '允許建立新估價單', category: '估價單管理' },
+        { id: 'quotes.edit', name: '編輯估價單', description: '允許編輯估價單資訊', category: '估價單管理' },
+        { id: 'quotes.delete', name: '刪除估價單', description: '允許刪除估價單', category: '估價單管理' },
+
+        // 合約管理權限
+        { id: 'contracts.view', name: '查看合約', description: '允許查看合約列表和詳情', category: '合約管理' },
+        { id: 'contracts.create', name: '建立合約', description: '允許建立新合約', category: '合約管理' },
+        { id: 'contracts.edit', name: '編輯合約', description: '允許編輯合約資訊', category: '合約管理' },
+        { id: 'contracts.delete', name: '刪除合約', description: '允許刪除合約', category: '合約管理' },
+
+        // 訂單管理權限
+        { id: 'orders.view', name: '查看訂單', description: '允許查看訂單列表和詳情', category: '訂單管理' },
+        { id: 'orders.create', name: '建立訂單', description: '允許建立新訂單', category: '訂單管理' },
+        { id: 'orders.edit', name: '編輯訂單', description: '允許編輯訂單資訊', category: '訂單管理' },
+        { id: 'orders.delete', name: '刪除訂單', description: '允許刪除訂單', category: '訂單管理' },
+
+        // 支出管理權限
+        { id: 'expenses.view', name: '查看支出', description: '允許查看支出列表和詳情', category: '支出管理' },
+        { id: 'expenses.create', name: '建立支出', description: '允許建立新支出記錄', category: '支出管理' },
+        { id: 'expenses.edit', name: '編輯支出', description: '允許編輯支出資訊', category: '支出管理' },
+        { id: 'expenses.delete', name: '刪除支出', description: '允許刪除支出記錄', category: '支出管理' },
+
+        // Gemini管理權限
+        { id: 'gemini.view', name: '使用Gemini', description: '允許使用Gemini功能', category: 'Gemini管理' },
+        { id: 'gemini.create', name: '建立Gemini對話', description: '允許建立新的Gemini對話', category: 'Gemini管理' },
+        { id: 'gemini.edit', name: '編輯Gemini對話', description: '允許編輯Gemini對話', category: 'Gemini管理' },
+        { id: 'gemini.delete', name: '刪除Gemini對話', description: '允許刪除Gemini對話', category: 'Gemini管理' },
+
+        // 封存管理權限
+        { id: 'archive.view', name: '查看封存', description: '允許查看封存列表和詳情', category: '封存管理' },
+        { id: 'archive.create', name: '建立封存', description: '允許建立新封存', category: '封存管理' },
+        { id: 'archive.edit', name: '編輯封存', description: '允許編輯封存資訊', category: '封存管理' },
+        { id: 'archive.delete', name: '刪除封存', description: '允許刪除封存', category: '封存管理' },
+    ];
 
     // 載入現有設定
     useEffect(() => {

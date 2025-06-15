@@ -14,10 +14,11 @@
 import Link from "next/link";
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import type { Timestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 
 // 嚴格型別：只接受 Timestamp | null | undefined
 type TimestampInput = Timestamp | null | undefined;
@@ -35,9 +36,20 @@ const formatDate = (timestamp: TimestampInput, formatStr = "yyyy-MM-dd"): string
 };
 
 export default function ProjectsPage() {
-    const { db, collection } = useAuth();
+    const { db, collection, userRole, userRoles } = useAuth();
+    const router = useRouter();
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
     const [search, setSearch] = useState("");
+
+    // 檢查用戶是否有權限訪問此頁面
+    useEffect(() => {
+        const allowedRoles = ['admin', 'owner', 'foreman', 'coord'];
+        const hasPermission = userRoles?.some(role => allowedRoles.includes(role)) || false;
+        
+        if (!loading && !hasPermission) {
+            router.push('/');
+        }
+    }, [userRole, userRoles, loading, router]);
 
     const rows = useMemo(() => {
         if (!projectsSnapshot) return [];
@@ -62,6 +74,32 @@ export default function ProjectsPage() {
         }
         return arr;
     }, [projectsSnapshot, search]);
+
+    // 如果正在載入或沒有權限，顯示載入中
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+
+    // 檢查用戶是否有權限訪問此頁面
+    const allowedRoles = ['admin', 'owner', 'foreman', 'coord'];
+    const hasPermission = userRoles?.some(role => allowedRoles.includes(role)) || false;
+
+    if (!hasPermission) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">無權限訪問</h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                        您沒有權限訪問此頁面。請聯繫系統管理員以獲取適當的權限。
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <main className="max-w-4xl mx-auto">
