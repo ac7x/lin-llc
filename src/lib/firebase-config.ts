@@ -1,3 +1,10 @@
+/**
+ * Firebase 應用程式配置檔案
+ * 定義 Firebase 專案的基本設定和常數
+ * 包含 API 金鑰、專案 ID、集合名稱等配置
+ * 管理 reCAPTCHA 和 App Check 相關設定
+ */
+
 // Firebase 應用程式配置
 export const firebaseConfig = {
   apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",

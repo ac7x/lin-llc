@@ -1,3 +1,14 @@
+/**
+ * 專案日誌頁面
+ * 
+ * 提供專案進度記錄和日誌功能，包含：
+ * - 日誌記錄
+ * - 照片上傳
+ * - 天氣資訊整合
+ * - 進度追蹤
+ * - 歷史記錄
+ */
+
 "use client";
 
 import { useParams } from "next/navigation";

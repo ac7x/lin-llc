@@ -1,3 +1,10 @@
+/**
+ * 合約 PDF 文件組件
+ * 生成合約的 PDF 文件格式
+ * 支援合約基本資訊和項目明細的顯示
+ * 整合 QR Code 和合約條款內容
+ */
+
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { Timestamp } from "firebase/firestore";
 

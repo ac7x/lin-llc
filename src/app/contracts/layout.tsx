@@ -1,4 +1,12 @@
-// src/modules/contract/interfaces/layout/contract-layout.tsx
+/**
+ * 合約模組布局
+ * 
+ * 提供合約相關頁面的共用布局，包含：
+ * - 合約側邊導航選單
+ * - 動態合約列表
+ * - 合約相關功能連結
+ * - 響應式設計
+ */
 
 "use client";
 

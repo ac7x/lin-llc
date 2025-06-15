@@ -1,3 +1,11 @@
+/**
+ * 工作包進度顯示模組
+ * 提供工作包進度計算與進度條顯示功能
+ * 功能：
+ * - calculateWorkpackageProgress: 根據實際完成數量計算工作包進度
+ * - WorkpackageProgressBar: 顯示工作包進度條與百分比的 React 元件
+ */
+
 import React from "react";
 import type { Workpackage } from "@/types/project";
 

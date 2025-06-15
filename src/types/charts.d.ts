@@ -1,3 +1,9 @@
+/**
+ * 圖表相關型別定義
+ * 包含日曆事件、時間軸項目、時間軸群組等資料結構
+ * 用於支援專案中的圖表視覺化功能
+ */
+
 import { Timestamp } from 'firebase/firestore';
 
 /**

@@ -1,3 +1,11 @@
+/**
+ * 專案進度計算與顯示模組
+ * 提供專案進度計算功能與進度顯示元件
+ * 功能：
+ * - calculateProjectProgress: 根據工作包估算數量計算整體專案進度
+ * - ProjectProgressPercent: 顯示專案進度百分比的 React 元件
+ */
+
 import { Project } from "@/types/project";
 
 /**

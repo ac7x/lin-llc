@@ -1,3 +1,14 @@
+/**
+ * 合約詳細頁面
+ * 
+ * 顯示單一合約的詳細資訊，提供以下功能：
+ * - 合約資訊編輯
+ * - 合約條款管理
+ * - 合約狀態追蹤
+ * - 合約文件管理
+ * - PDF 匯出
+ */
+
 "use client";
 
 import { useParams, useRouter } from "next/navigation";

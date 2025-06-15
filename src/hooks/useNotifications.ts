@@ -1,3 +1,10 @@
+/**
+ * 通知系統 Hook
+ * 提供通知的讀取、更新和狀態管理功能
+ * 支援通知的即時更新和本地快取
+ * 包含未讀通知計數和批量處理功能
+ */
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import {

@@ -1,3 +1,10 @@
+/**
+ * 身份驗證 Hook
+ * 提供用戶認證和授權相關功能
+ * 管理用戶登入狀態和角色權限
+ * 整合 Firebase Auth 和 App Check 功能
+ */
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';

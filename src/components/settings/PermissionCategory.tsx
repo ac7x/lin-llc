@@ -1,3 +1,10 @@
+/**
+ * 權限類別組件
+ * 顯示和管理特定類別的權限設定
+ * 提供權限的展開/收合功能
+ * 支援權限的勾選和更新操作
+ */
+
 import type { Permission } from '@/types/settings';
 
 interface PermissionCategoryProps {

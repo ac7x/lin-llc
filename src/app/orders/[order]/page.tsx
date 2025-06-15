@@ -1,3 +1,14 @@
+/**
+ * 訂單詳細頁面
+ * 
+ * 顯示單一訂單的詳細資訊，提供以下功能：
+ * - 訂單資訊編輯
+ * - 訂單項目管理
+ * - 價格計算
+ * - 訂單狀態追蹤
+ * - PDF 匯出
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";

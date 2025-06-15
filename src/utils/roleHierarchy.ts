@@ -1,3 +1,11 @@
+/**
+ * 角色階層定義模組
+ * 定義系統中所有角色的階層關係與顯示名稱
+ * 包含：
+ * - ROLE_HIERARCHY: 角色權限等級定義（1-11）
+ * - ROLE_NAMES: 角色中文顯示名稱對照表
+ */
+
 export const ROLE_HIERARCHY: Record<string, number> = {
   temporary: 1,      // 臨時員工
   helper: 2,         // 助理

@@ -1,3 +1,12 @@
+/**
+ * 日期格式化 React 元件
+ * 提供統一的日期顯示格式，支援多種日期輸入型別
+ * 特點：
+ * - 支援 Date、string、number 和 Firestore Timestamp 等輸入型別
+ * - 提供本地化支援
+ * - 包含錯誤處理與預設值顯示
+ */
+
 import React from "react";
 import { format, isValid, parseISO } from "date-fns";
 import type { Locale } from "date-fns";

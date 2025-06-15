@@ -1,9 +1,17 @@
+/**
+ * 權限管理 Hook
+ * 提供系統權限的初始化、更新和檢查功能
+ * 管理用戶角色權限和導航權限
+ * 支援權限的動態更新和快取
+ */
+
 import { useState, useCallback, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { Permission, RolePermission, NavPermission } from '@/types/settings';
+import type { Permission, RolePermission, NavPermission, Role } from '@/types/permission';
 import { DEFAULT_PERMISSIONS, DEFAULT_NAV_PERMISSIONS, getDefaultPermissionsForRole } from '@/constants/permissions';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
+import { mergeRolePermissions, filterNavPermissions } from '@/utils/permission';
 
 export function usePermissions(userId: string | undefined) {
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -58,8 +66,8 @@ export function usePermissions(userId: string | undefined) {
       
       if (!rolePermissionsSnapshot.exists()) {
         currentRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
-          role,
-          permissions: getDefaultPermissionsForRole(role)
+          role: role as Role,
+          permissions: getDefaultPermissionsForRole(role as Role)
         }));
         await setDoc(rolePermissionsRef, { 
           roles: currentRolePermissions,
@@ -92,7 +100,7 @@ export function usePermissions(userId: string | undefined) {
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          const userRole = userData.role;
+          const userRole = userData.role as Role;
           
           // 從角色權限中獲取用戶的權限
           const rolePerms = currentRolePermissions.find((rp: RolePermission) => rp.role === userRole);
@@ -109,8 +117,8 @@ export function usePermissions(userId: string | undefined) {
       // 如果初始化失敗，使用預設值
       setPermissions(DEFAULT_PERMISSIONS);
       const initialRolePermissions = Object.keys(ROLE_HIERARCHY).map(role => ({
-        role,
-        permissions: getDefaultPermissionsForRole(role)
+        role: role as Role,
+        permissions: getDefaultPermissionsForRole(role as Role)
       }));
       setRolePermissions(initialRolePermissions);
       setNavPermissions(DEFAULT_NAV_PERMISSIONS);
@@ -118,7 +126,7 @@ export function usePermissions(userId: string | undefined) {
   }, [userId]);
 
   const updatePermissions = useCallback(async (
-    selectedRoles: string[],
+    selectedRoles: Role[],
     selectedPermissions: string[],
     selectedNavPermissions: string[]
   ) => {

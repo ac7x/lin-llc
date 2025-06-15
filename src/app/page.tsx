@@ -1,3 +1,14 @@
+/**
+ * 登入頁面
+ * 
+ * 提供 Google 登入功能，並在登入後顯示用戶資訊。
+ * 包含以下功能：
+ * - Google 帳號登入
+ * - 用戶資料儲存到 Firestore
+ * - 登出功能
+ * - 響應式設計的登入介面
+ */
+
 "use client";
 
 import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";

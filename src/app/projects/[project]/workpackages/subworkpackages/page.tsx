@@ -1,3 +1,14 @@
+/**
+ * 子工作包排序頁面
+ * 
+ * 提供子工作包的管理和排序功能，包含：
+ * - 子工作包拖曳排序
+ * - 子工作包編輯
+ * - 進度追蹤
+ * - 數量管理
+ * - 即時更新
+ */
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";

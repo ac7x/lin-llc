@@ -1,3 +1,14 @@
+/**
+ * Gemini AI 聊天頁面
+ * 
+ * 提供與 Google Gemini AI 的互動介面，功能包含：
+ * - 文字對話
+ * - 檔案上傳與分析
+ * - 對話歷史記錄
+ * - 自動捲動
+ * - 對話清除
+ */
+
 "use client";
 
 import { useState, useRef, useEffect, FormEvent, ChangeEvent } from "react";
