@@ -12,18 +12,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, doc, getDoc } from "firebase/firestore";
 import { QuoteData } from "@/types/finance";
-import { useRouter } from "next/navigation";
 
 export default function QuotesPage() {
-    const { db, isReady, userRoles } = useAuth();
-    const router = useRouter();
+    const { db, isReady } = useAuth();
     const [quotesSnapshot, loading, error] = useCollection(
         isReady ? collection(db, "finance", "default", "quotes") : null
     );
@@ -31,16 +29,6 @@ export default function QuotesPage() {
     const [search, setSearch] = useState("");
     const [sortKey, setSortKey] = useState<null | string>(null);
     const [sortAsc, setSortAsc] = useState(true);
-
-    // 檢查用戶是否有權限訪問此頁面
-    useEffect(() => {
-        const allowedRoles = ['admin', 'owner', 'foreman'];
-        const hasPermission = userRoles?.some(role => allowedRoles.includes(role)) || false;
-        
-        if (!loading && !hasPermission) {
-            router.push('/');
-        }
-    }, [userRoles, loading, router]);
 
     // 處理後的資料
     const rows = useMemo(() => {
@@ -125,23 +113,6 @@ export default function QuotesPage() {
             </div>
         </main>
     );
-
-    // 檢查用戶是否有權限訪問此頁面
-    const allowedRoles = ['admin', 'owner', 'foreman'];
-    const hasPermission = userRoles?.some(role => allowedRoles.includes(role)) || false;
-
-    if (!hasPermission) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">無權限訪問</h2>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        您沒有權限訪問此頁面。請聯繫系統管理員以獲取適當的權限。
-                    </p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <main className="max-w-6xl mx-auto">

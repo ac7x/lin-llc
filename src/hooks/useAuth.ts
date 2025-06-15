@@ -44,7 +44,9 @@ import {
   getAuth, 
   onAuthStateChanged, 
   signInWithEmailAndPassword,
-  signOut as firebaseSignOut
+  signOut as firebaseSignOut,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 
 // 導出 react-firebase-hooks
@@ -100,6 +102,7 @@ interface FirebaseAuthReturn {
 interface UseUserRoleReturn {
   userRole: string | undefined;
   userRoles: string[];
+  userPermissions: string[];
   loading: boolean;
   error: Error | undefined;
   hasRole: (role: string) => boolean;
@@ -125,6 +128,7 @@ interface AuthReturn extends FirebaseAuthReturn, UseUserRoleReturn {
   };
   signIn: (email: string, password: string) => Promise<User>;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<User>;
 }
 
 export function useAuth(): AuthReturn {
@@ -160,6 +164,17 @@ export function useAuth(): AuthReturn {
     const userData = userDoc?.data() as AppUser | undefined;
     return (userData?.roles || [userData?.role])
       .filter((role): role is string => role !== undefined);
+  }, [user, userDoc]);
+
+  const userPermissions = useMemo(() => {
+    // 從 custom claims 獲取權限
+    const claims = user?.customClaims;
+    if (claims?.permissions) {
+      return claims.permissions;
+    }
+    // 如果沒有 custom claims，則從 Firestore 獲取
+    const userData = userDoc?.data() as AppUser | undefined;
+    return userData?.permissions || [];
   }, [user, userDoc]);
 
   const hasRole = useMemo(() => (role: string): boolean => {
@@ -242,6 +257,34 @@ export function useAuth(): AuthReturn {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      // 儲存用戶資料到 Firestore
+      const userData = {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL,
+        emailVerified: result.user.emailVerified,
+        role: 'user', // 預設角色
+        roles: ['user'], // 預設角色列表
+        permissions: [], // 預設權限列表
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp()
+      };
+
+      await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
+      
+      return result.user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return {
     user,
     loading: loading || !initialized || roleLoading,
@@ -273,6 +316,7 @@ export function useAuth(): AuthReturn {
     // User Role 功能
     userRole,
     userRoles,
+    userPermissions,
     error: roleError,
     hasRole,
     hasAnyRole,
@@ -285,7 +329,8 @@ export function useAuth(): AuthReturn {
       isInitializing: false
     },
     signIn,
-    signOut
+    signOut,
+    signInWithGoogle
   };
 }
 

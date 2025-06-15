@@ -35,6 +35,13 @@ const RoleSelect = ({ value, onChange }: { value: string[]; onChange: (value: st
   </div>
 );
 
+// 載入狀態組件
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  </div>
+);
+
 export default function AdminUsersPage() {
   const usersCollection = collection(db, "users");
   const [formError, setFormError] = useState<string | null>(null);
@@ -104,9 +111,7 @@ export default function AdminUsersPage() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
+          <LoadingSpinner />
         ) : error ? (
           <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/50 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800">
             {error.message}
@@ -135,10 +140,10 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">
-                      {user.metadata?.creationTime?.slice(0, 10) || "—"}
+                      {user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">
-                      {user.metadata?.lastSignInTime?.slice(0, 10) || "—"}
+                      {user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-3 py-2 text-xs">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${

@@ -17,8 +17,6 @@ interface NavItem {
     icon: ReactNode;
     label: string;
     active: boolean;
-    requiredRoles?: string[];
-    minRole?: string;
 }
 
 interface OwnerBottomNavProps {
@@ -39,14 +37,12 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '🙍‍♂️', 
         label: '個人檔案', 
         active: false,
-        minRole: 'user',
     },
     { 
         href: '/dashboard', 
         icon: '📊', 
         label: '儀表板', 
         active: false,
-        requiredRoles: ['owner'],
     },
 
     // 專案管理
@@ -55,21 +51,18 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '📁', 
         label: '專案', 
         active: false,
-        requiredRoles: ['admin', 'owner', 'foreman', 'coord'],
     },
     { 
         href: '/schedule', 
         icon: '📅', 
         label: '行程', 
         active: false,
-        requiredRoles: ['admin', 'owner', 'foreman', 'coord'],
     },
     { 
         href: '/calendar', 
         icon: '🗓️', 
         label: '日曆', 
         active: false,
-        requiredRoles: ['admin', 'owner', 'foreman', 'coord'],
     },
 
     // 財務管理
@@ -78,21 +71,18 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '📄', 
         label: '估價單', 
         active: false,
-        requiredRoles: ['owner', 'finance'],
     },
     { 
         href: '/contracts', 
         icon: '📑', 
         label: '合約', 
         active: false,
-        requiredRoles: ['owner', 'finance'],
     },
     { 
         href: '/orders', 
         icon: '🧾', 
         label: '訂單', 
         active: false,
-        requiredRoles: ['owner', 'finance'],
     },
 
     // 系統功能
@@ -101,48 +91,42 @@ const defaultOwnerNavItems: NavItem[] = [
         icon: '🤖', 
         label: 'Gemini', 
         active: false,
-        minRole: 'user',
     },
     { 
         href: '/notifications', 
         icon: '🔔', 
         label: '通知', 
         active: false,
-        minRole: 'user',
     },
     { 
         href: '/send-notification', 
         icon: '📨', 
         label: '發送通知', 
         active: false,
-        requiredRoles: ['owner', 'admin'],
     },
     { 
         href: '/users', 
         icon: '👤', 
         label: '用戶管理', 
         active: false,
-        requiredRoles: ['owner'],
     },
     { 
         href: '/settings', 
         icon: '⚙️', 
         label: '設定', 
         active: false,
-        requiredRoles: ['owner'],
     },
     { 
         href: '/archive', 
         icon: '🗄️', 
         label: '封存', 
         active: false,
-        requiredRoles: ['owner'],
     },
 ];
 
 export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavProps) {
     const pathname = usePathname();
-    const { hasAnyRole, hasMinRole, loading, userRoles, db, doc, getDoc } = useAuth();
+    const { loading, userRoles, db, doc, getDoc } = useAuth();
     const [navPermissions, setNavPermissions] = useState<NavPermission[]>([]);
 
     // 載入導航權限設定
@@ -176,22 +160,13 @@ export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavP
                     return userRoles.some((role: string) => navPermission.defaultRoles.includes(role));
                 }
                 
-                // 如果沒有自定義設定，使用預設的權限檢查
-                if (item.requiredRoles && item.requiredRoles.length > 0) {
-                    return hasAnyRole(item.requiredRoles);
-                }
-                
-                if (item.minRole) {
-                    return hasMinRole(item.minRole);
-                }
-                
                 return true;
             })
             .map(item => ({
                 ...item,
                 active: pathname === item.href,
             }));
-    }, [items, hasAnyRole, hasMinRole, pathname, navPermissions, userRoles]);
+    }, [items, pathname, navPermissions, userRoles]);
 
     // 載入中或沒有可顯示項目時不渲染
     if (loading || filteredNavItems.length === 0) {
