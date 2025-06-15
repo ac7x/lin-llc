@@ -1,4 +1,3 @@
-.
 ├── app
 │   ├── archive
 │   │   ├── layout.tsx
@@ -15,13 +14,6 @@
 │   │   ├── layout.tsx
 │   │   └── page.tsx
 │   ├── dashboard
-│   │   └── page.tsx
-│   ├── expenses
-│   │   ├── create
-│   │   │   └── page.tsx
-│   │   ├── [expense]
-│   │   │   └── page.tsx
-│   │   ├── layout.tsx
 │   │   └── page.tsx
 │   ├── gemini
 │   │   └── page.tsx
@@ -49,6 +41,8 @@
 │   │   ├── [project]
 │   │   │   ├── page.tsx
 │   │   │   ├── project-calendar
+│   │   │   │   └── page.tsx
+│   │   │   ├── project-expenses
 │   │   │   │   └── page.tsx
 │   │   │   ├── project-issues
 │   │   │   │   └── page.tsx
@@ -82,15 +76,21 @@
 │   ├── bottom
 │   │   ├── owner-nav.tsx
 │   │   └── owner-nav-wrapper.tsx
-│   └── pdf
-│       ├── ContractPdfDocument.tsx
-│       ├── ExpensePdfDocument.tsx
-│       ├── OrderPdfDocument.tsx
-│       ├── pdfExport.ts
-│       └── QuotePdfDocument.tsx
+│   ├── layouts
+│   │   └── PageLayout.tsx
+│   ├── pdf
+│   │   ├── ContractPdfDocument.tsx
+│   │   ├── OrderPdfDocument.tsx
+│   │   ├── pdfExport.ts
+│   │   └── QuotePdfDocument.tsx
+│   └── settings
+│       └── PermissionCategory.tsx
+├── constants
+│   └── permissions.ts
 ├── hooks
 │   ├── useAuth.ts
-│   └── useNotifications.ts
+│   ├── useNotifications.ts
+│   └── usePermissions.ts
 ├── lib
 │   ├── firebase-client.ts
 │   ├── firebase-config.ts
@@ -102,11 +102,14 @@
 │   ├── charts.d.ts
 │   ├── env.d.ts
 │   ├── finance.d.ts
+│   ├── permission.ts
 │   ├── project.d.ts
+│   ├── settings.d.ts
 │   └── user.d.ts
 └── utils
     ├── colorScales.ts
     ├── date-format.tsx
+    ├── permission.ts
     ├── projectProgress.tsx
     ├── roleHierarchy.ts
     ├── taiwan-city.enum.ts

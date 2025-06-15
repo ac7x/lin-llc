@@ -1,21 +1,6 @@
-export interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
+import type { Role, Permission, RolePermission, NavPermission } from '@/types/permission';
 
-export interface RolePermission {
-  role: string;
-  permissions: string[];
-}
-
-export interface NavPermission {
-  id: string;
-  name: string;
-  description: string;
-  defaultRoles: string[];
-}
+export type { Role, Permission, RolePermission, NavPermission };
 
 export interface SettingsState {
   archiveRetentionDays: number | null;
@@ -25,7 +10,7 @@ export interface SettingsState {
   tempRetentionDays: number | null;
   permissions: Permission[];
   rolePermissions: RolePermission[];
-  selectedRoleForPermission: string;
+  selectedRoleForPermission: Role;
   selectedPermissions: string[];
   searchTerm: string;
   expandedCategories: Set<string>;

@@ -8,7 +8,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import { usePermissions } from '@/hooks/usePermissions';
 import { PermissionCategory } from '@/components/settings/PermissionCategory';
-import type { Permission } from '@/types/settings';
+import type { Permission, Role } from '@/types/permission';
 
 export default function OwnerSettingsPage() {
     const { user, isOwner } = useAuth();
@@ -20,7 +20,7 @@ export default function OwnerSettingsPage() {
     const [tempRetentionDays, setTempRetentionDays] = useState<number | null>(null);
     
     // 權限管理相關狀態
-    const [selectedRolesForPermission, setSelectedRolesForPermission] = useState<string[]>([]);
+    const [selectedRolesForPermission, setSelectedRolesForPermission] = useState<Role[]>([]);
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -150,7 +150,7 @@ export default function OwnerSettingsPage() {
     };
 
     // 處理角色選擇
-    const handleRoleSelect = (roles: string[]) => {
+    const handleRoleSelect = (roles: Role[]) => {
         setSelectedRolesForPermission(roles);
         
         // 合併所有選中角色的權限
@@ -267,11 +267,12 @@ export default function OwnerSettingsPage() {
                                             <input
                                                 type="checkbox"
                                                 id={`role-${role}`}
-                                                checked={selectedRolesForPermission.includes(role)}
+                                                checked={selectedRolesForPermission.includes(role as Role)}
                                                 onChange={(e) => {
+                                                    const roleKey = role as Role;
                                                     const newRoles = e.target.checked
-                                                        ? [...selectedRolesForPermission, role]
-                                                        : selectedRolesForPermission.filter(r => r !== role);
+                                                        ? [...selectedRolesForPermission, roleKey]
+                                                        : selectedRolesForPermission.filter(r => r !== roleKey);
                                                     handleRoleSelect(newRoles);
                                                 }}
                                                 className="mr-2"
