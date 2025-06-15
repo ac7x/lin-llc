@@ -237,6 +237,56 @@ export default function OwnerSettingsPage() {
         }
     };
 
+    // 處理導航權限更新
+    const handleNavPermissionUpdate = async () => {
+        if (!user || selectedRoles.length === 0) return;
+        
+        try {
+            setIsUpdating(true);
+            const updatedItems = navItems.map(item => ({
+                ...item,
+                defaultRoles: selectedNavPermissions.includes(item.id) 
+                    ? [...new Set([...item.defaultRoles, ...selectedRoles as Role[]])]
+                    : item.defaultRoles.filter(role => !selectedRoles.includes(role as Role))
+            }));
+
+            // 更新 Firestore 中的導航權限設定
+            await setDoc(doc(db, 'settings', 'navPermissions'), {
+                items: updatedItems,
+                lastUpdatedBy: user.uid,
+                lastUpdatedAt: new Date().toISOString()
+            }, { merge: true });
+            
+            // 更新本地狀態
+            setNavItems(updatedItems);
+
+            // 更新 Custom Claims
+            for (const role of selectedRoles) {
+                await fetch('/api/auth/role', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        uid: user.uid,
+                        role: role as Role,
+                        action: 'set'
+                    })
+                });
+            }
+
+            // 強制重新獲取 token 以更新 custom claims
+            await user.getIdToken(true);
+            
+            alert('導航權限設定已更新');
+        } catch (error) {
+            console.error('更新導航權限失敗:', error);
+            alert('更新導航權限失敗，請稍後再試');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     // 處理角色選擇
     const handleRoleSelect = (roles: Role[]) => {
         setSelectedRoles(roles);
@@ -250,11 +300,11 @@ export default function OwnerSettingsPage() {
         });
         setSelectedPermissions([...new Set(combinedPermissions)]);
         
-        // 合併所有選中角色的導航權限
+        // 更新導航權限
         const combinedNavPermissions = roles.flatMap(role => 
-            permissions
-                .filter(p => p.roles?.includes(role))
-                .map(p => p.id)
+            navItems
+                .filter(item => item.defaultRoles.includes(role as Role))
+                .map(item => item.id)
         );
         setSelectedNavPermissions([...new Set(combinedNavPermissions)]);
     };
@@ -263,36 +313,6 @@ export default function OwnerSettingsPage() {
     useEffect(() => {
         setExpandedCategories(new Set(defaultCategories));
     }, [defaultCategories]);
-
-    // 處理導航權限更新
-    const handleNavPermissionUpdate = async () => {
-        if (!user) return;
-        
-        try {
-            setIsUpdating(true);
-            await setDoc(doc(db, 'settings', 'navPermissions'), {
-                items: navItems,
-                lastUpdatedBy: user.uid,
-                lastUpdatedAt: new Date().toISOString()
-            }, { merge: true });
-            
-            alert('導航權限設定已更新');
-        } catch (error) {
-            console.error('更新導航權限失敗:', error);
-            alert('更新導航權限失敗，請稍後再試');
-        } finally {
-            setIsUpdating(false);
-        }
-    };
-
-    // 更新導航項目的角色權限
-    const updateNavItemRoles = (itemId: string, roles: Role[]) => {
-        setNavItems(prev => prev.map(item => 
-            item.id === itemId 
-                ? { ...item, defaultRoles: roles }
-                : item
-        ));
-    };
 
     // 處理權限更新
     const handlePermissionUpdate = async () => {
@@ -559,23 +579,6 @@ export default function OwnerSettingsPage() {
                                                             </span>
                                                         </label>
                                                     </div>
-                                                    <select
-                                                        multiple
-                                                        value={item.defaultRoles}
-                                                        onChange={(e) => {
-                                                            const selectedRoles = Array.from(e.target.selectedOptions, option => option.value as Role);
-                                                            updateNavItemRoles(item.id, selectedRoles);
-                                                        }}
-                                                        className="border rounded px-2 py-1 text-sm"
-                                                    >
-                                                        {Object.entries(ROLE_HIERARCHY)
-                                                            .sort(([,a], [,b]) => b - a)
-                                                            .map(([role]) => (
-                                                                <option key={role} value={role}>
-                                                                    {ROLE_NAMES[role as Role]}
-                                                                </option>
-                                                            ))}
-                                                    </select>
                                                 </div>
                                             ))}
                                     </div>
