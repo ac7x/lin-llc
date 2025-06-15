@@ -23,6 +23,12 @@ import { doc, getDoc } from "firebase/firestore";
 // 嚴格型別：只接受 Timestamp | null | undefined
 type TimestampInput = Timestamp | null | undefined;
 
+// 定義導航權限項目的型別
+interface NavPermissionItem {
+    id: string;
+    defaultRoles: string[];
+}
+
 /**
  * 將 Firestore Timestamp 轉為 yyyy-MM-dd 格式字串
  */
@@ -60,7 +66,7 @@ export default function ProjectsPage() {
                 }
 
                 const data = navPermissionsDoc.data();
-                const projectsNav = data.items?.find((item: any) => item.id === 'projects');
+                const projectsNav = data.items?.find((item: NavPermissionItem) => item.id === 'projects');
                 
                 if (!projectsNav) {
                     setHasPermission(false);

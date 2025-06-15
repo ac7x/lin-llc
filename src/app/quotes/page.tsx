@@ -18,10 +18,10 @@ import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { QuoteData } from "@/types/finance";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection } from "firebase/firestore";
 
 export default function QuotesPage() {
-    const { db, collection, doc: getDocRef, getDoc, user, userRoles } = useAuth();
+    const { db, user, userRoles } = useAuth();
     const [quotesSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "quotes")
     );

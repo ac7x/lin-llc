@@ -21,7 +21,7 @@ import { ContractData } from "@/types/finance";
 import { doc, getDoc } from "firebase/firestore";
 
 export default function ContractsPage() {
-    const { db, collection, doc: getDocRef, getDoc, user, userRoles } = useAuth();
+    const { db, collection, user, userRoles } = useAuth();
     const [contractsSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "contracts")
     );
@@ -42,7 +42,8 @@ export default function ContractsPage() {
             }
 
             try {
-                const navPermissionsDoc = await getDoc(doc(db, "settings", "navPermissions"));
+                const navPermissionsRef = doc(db, "settings", "navPermissions");
+                const navPermissionsDoc = await getDoc(navPermissionsRef);
                 if (!navPermissionsDoc.exists()) {
                     setHasPermission(false);
                     setIsLoadingPermission(false);

@@ -18,7 +18,6 @@ import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
-import { doc, getDoc } from "firebase/firestore";
 
 export default function OrdersPage() {
     const { db, collection, doc: getDocRef, getDoc, user, userRoles } = useAuth();
@@ -42,7 +41,8 @@ export default function OrdersPage() {
             }
 
             try {
-                const navPermissionsDoc = await getDoc(doc(db, "settings", "navPermissions"));
+                const navPermissionsRef = getDocRef(db, "settings", "navPermissions");
+                const navPermissionsDoc = await getDoc(navPermissionsRef);
                 if (!navPermissionsDoc.exists()) {
                     setHasPermission(false);
                     setIsLoadingPermission(false);
@@ -64,7 +64,7 @@ export default function OrdersPage() {
         };
 
         checkPermission();
-    }, [user, userRoles, db]);
+    }, [user, userRoles, db, getDocRef, getDoc]);
 
     // 處理後的資料
     const rows = useMemo(() => {
@@ -126,7 +126,7 @@ export default function OrdersPage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        const docRef = doc(db, "finance", "default", "orders", String(row.orderId));
+        const docRef = getDocRef(db, "finance", "default", "orders", String(row.orderId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
             alert("找不到該訂單");
