@@ -11,8 +11,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useMemo, useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { usePermissions } from '@/hooks/usePermissions';
 import type { Role } from '@/types/permission';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface NavItem {
     href: string;
@@ -30,7 +30,7 @@ interface NavPermission {
     id: string;
     name: string;
     description: string;
-    defaultRoles: string[];
+    defaultRoles: Role[];
 }
 
 const defaultOwnerNavItems: NavItem[] = [
@@ -189,40 +189,50 @@ const defaultOwnerNavItems: NavItem[] = [
 
 export function OwnerBottomNav({ items = defaultOwnerNavItems }: OwnerBottomNavProps) {
     const pathname = usePathname();
-    const { loading, user, userRoles, db, doc, getDoc } = useAuth();
-    const { permissions } = usePermissions(user?.uid);
-    const [navPermissions, setNavPermissions] = useState<NavPermission[]>([]);
+    const { loading, user, userRoles, db } = useAuth();
     const [navItems, setNavItems] = useState<NavItem[]>([]);
 
     // 載入導航權限設定
     useEffect(() => {
         async function fetchNavPermissions() {
+            if (!user) return;
+            
             try {
                 const navPermissionsDoc = doc(db, 'settings', 'navPermissions');
                 const navPermissionsSnapshot = await getDoc(navPermissionsDoc);
                 
                 if (navPermissionsSnapshot.exists()) {
-                    const loadedNavPermissions = navPermissionsSnapshot.data().permissions || [];
-                    setNavPermissions(loadedNavPermissions);
+                    const data = navPermissionsSnapshot.data();
+                    const loadedNavItems = data.items || [];
+                    
+                    // 根據用戶角色過濾導航項目
+                    const filteredItems = items.filter(item => {
+                        const navItem = loadedNavItems.find((ni: NavPermission) => ni.id === item.href.slice(1));
+                        if (!navItem) return false;
+                        return navItem.defaultRoles.some((role: Role) => userRoles?.includes(role));
+                    });
+                    
+                    setNavItems(filteredItems);
+                } else {
+                    // 如果沒有設定，使用預設權限
+                    const filteredItems = items.filter(item => {
+                        if (!item.requiredRoles) return true;
+                        return item.requiredRoles.some(role => userRoles?.includes(role));
+                    });
+                    setNavItems(filteredItems);
                 }
             } catch (error) {
                 console.error('載入導航權限設定失敗:', error);
+                // 發生錯誤時使用預設權限
+                const filteredItems = items.filter(item => {
+                    if (!item.requiredRoles) return true;
+                    return item.requiredRoles.some(role => userRoles?.includes(role));
+                });
+                setNavItems(filteredItems);
             }
         }
         fetchNavPermissions();
-    }, [db, doc, getDoc]);
-
-    // 根據用戶角色過濾導航項目
-    useEffect(() => {
-        if (!userRoles) return;
-
-        const filteredItems = items.filter(item => {
-            if (!item.requiredRoles) return true;
-            return item.requiredRoles.some(role => userRoles.includes(role));
-        });
-
-        setNavItems(filteredItems);
-    }, [items, userRoles]);
+    }, [user, userRoles, items, db]);
 
     // 更新活動狀態
     const updatedItems = useMemo(() => 

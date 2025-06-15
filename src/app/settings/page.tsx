@@ -231,27 +231,6 @@ export default function OwnerSettingsPage() {
         }
     };
 
-    // 處理權限更新
-    const handlePermissionUpdate = async () => {
-        if (selectedRoles.length === 0) return;
-        
-        try {
-            setIsUpdating(true);
-            const success = await updatePermissions(selectedRoles, selectedPermissions);
-            
-            if (success) {
-                alert(`已更新 ${selectedRoles.join(', ')} 的權限設定`);
-            } else {
-                alert('更新權限失敗，請稍後再試');
-            }
-        } catch (error) {
-            console.error('更新權限失敗:', error);
-            alert('更新權限失敗，請稍後再試');
-        } finally {
-            setIsUpdating(false);
-        }
-    };
-
     // 處理角色選擇
     const handleRoleSelect = (roles: Role[]) => {
         setSelectedRoles(roles);
@@ -307,6 +286,27 @@ export default function OwnerSettingsPage() {
                 ? { ...item, defaultRoles: roles }
                 : item
         ));
+    };
+
+    // 處理權限更新
+    const handlePermissionUpdate = async () => {
+        if (selectedRoles.length === 0) return;
+        
+        try {
+            setIsUpdating(true);
+            const success = await updatePermissions(selectedRoles, selectedPermissions);
+            
+            if (success) {
+                alert(`已更新 ${selectedRoles.join(', ')} 的權限設定`);
+            } else {
+                alert('更新權限失敗，請稍後再試');
+            }
+        } catch (error) {
+            console.error('更新權限失敗:', error);
+            alert('更新權限失敗，請稍後再試');
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
     if (isLoading || permissionsLoading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
@@ -453,6 +453,28 @@ export default function OwnerSettingsPage() {
                                     />
                                 ))}
                             </div>
+                            <button
+                                onClick={handlePermissionUpdate}
+                                disabled={isUpdating}
+                                className="mt-6 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full flex items-center justify-center"
+                            >
+                                {isUpdating ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        更新中...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        更新權限設定
+                                    </>
+                                )}
+                            </button>
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-center h-[calc(100vh-300px)]">
@@ -494,26 +516,45 @@ export default function OwnerSettingsPage() {
                                                 item.description.toLowerCase().includes(navSearchTerm.toLowerCase())
                                             )
                                             .map(item => (
-                                                <div key={item.id} className="flex items-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`nav-${item.id}`}
-                                                        checked={selectedNavPermissions.includes(item.id)}
+                                                <div key={item.id} className="flex items-center justify-between">
+                                                    <div className="flex items-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            id={`nav-${item.id}`}
+                                                            checked={selectedNavPermissions.includes(item.id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedNavPermissions([...selectedNavPermissions, item.id]);
+                                                                } else {
+                                                                    setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== item.id));
+                                                                }
+                                                            }}
+                                                            className="mr-2"
+                                                        />
+                                                        <label htmlFor={`nav-${item.id}`} className="text-sm">
+                                                            {item.name}
+                                                            <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
+                                                                ({item.description})
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                    <select
+                                                        multiple
+                                                        value={item.defaultRoles}
                                                         onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setSelectedNavPermissions([...selectedNavPermissions, item.id]);
-                                                            } else {
-                                                                setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== item.id));
-                                                            }
+                                                            const selectedRoles = Array.from(e.target.selectedOptions, option => option.value as Role);
+                                                            updateNavItemRoles(item.id, selectedRoles);
                                                         }}
-                                                        className="mr-2"
-                                                    />
-                                                    <label htmlFor={`nav-${item.id}`} className="text-sm">
-                                                        {item.name}
-                                                        <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
-                                                            ({item.description})
-                                                        </span>
-                                                    </label>
+                                                        className="border rounded px-2 py-1 text-sm"
+                                                    >
+                                                        {Object.entries(ROLE_HIERARCHY)
+                                                            .sort(([,a], [,b]) => b - a)
+                                                            .map(([role]) => (
+                                                                <option key={role} value={role}>
+                                                                    {ROLE_NAMES[role as Role]}
+                                                                </option>
+                                                            ))}
+                                                    </select>
                                                 </div>
                                             ))}
                                     </div>
