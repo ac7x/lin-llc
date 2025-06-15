@@ -110,7 +110,6 @@
     ├── colorScales.ts
     ├── date-format.tsx
     ├── permission.ts
-    ├── projectProgress.tsx
+    ├── progressUtils.tsx
     ├── roleHierarchy.ts
-    ├── taiwan-city.enum.ts
-    └── workpackageProgressBar.tsx
+    └── taiwan-city.enum.ts

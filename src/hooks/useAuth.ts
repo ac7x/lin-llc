@@ -12,7 +12,7 @@ import { User } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
 import { useDocument } from 'react-firebase-hooks/firestore';
 import type { AppUser, ExtendedUser } from '@/types/user';
-import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
+import { ROLE_HIERARCHY } from '@/utils/authUtils';
 import {
   initializeFirebaseAppCheck,
   auth,

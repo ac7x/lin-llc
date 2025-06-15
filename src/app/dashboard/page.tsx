@@ -35,7 +35,7 @@ import {
   Bar 
 } from 'recharts';
 import { Workpackage, Project } from '@/types/project';
-import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
+import { ROLE_HIERARCHY } from '@/utils/authUtils';
 import { db } from '@/lib/firebase-client';
 import { collection } from 'firebase/firestore';
 import { calculateProjectProgress } from '@/utils/progressUtils';

@@ -14,7 +14,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from "@/hooks/useAuth";
-import { ROLE_HIERARCHY, ROLE_NAMES } from "@/utils/roleHierarchy";
+import { ROLE_HIERARCHY, ROLE_NAMES } from "@/utils/authUtils";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import { usePermissions } from '@/hooks/usePermissions';

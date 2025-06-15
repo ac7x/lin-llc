@@ -1,11 +1,48 @@
 /**
- * 權限管理工具模組
- * 提供統一的權限管理功能
+ * 權限與角色管理工具模組
+ * 提供統一的權限和角色管理功能
  */
 
 import type { Role, UnifiedPermission, PermissionCheckResult } from '@/types/permission';
-import { ROLE_HIERARCHY } from './roleHierarchy';
 
+/**
+ * 角色階層定義
+ * 定義系統中所有角色的階層關係與顯示名稱
+ */
+export const ROLE_HIERARCHY: Record<string, number> = {
+  temporary: 1,      // 臨時員工
+  helper: 2,         // 助理
+  user: 3,           // 一般員工
+  coord: 4,          // 協調員
+  safety: 5,         // 安全主管
+  foreman: 6,        // 工頭
+  vendor: 7,         // 供應商
+  finance: 8,        // 財務（會計）
+  manager: 9,        // 經理（專案經理／工地經理）
+  admin: 10,         // 系統管理員
+  owner: 11,         // 擁有者
+} as const;
+
+export type RoleKey = keyof typeof ROLE_HIERARCHY;
+
+export const ROLE_NAMES: Record<RoleKey, string> = {
+  temporary: '臨時員工',
+  helper: '助理',
+  user: '一般員工',
+  coord: '協調員',
+  safety: '安全主管',
+  foreman: '工頭',
+  vendor: '供應商',
+  finance: '財務',
+  manager: '經理',
+  admin: '系統管理員',
+  owner: '擁有者',
+} as const;
+
+/**
+ * 權限管理類別
+ * 提供權限檢查和管理功能
+ */
 export class PermissionManager {
   private static instance: PermissionManager;
   private permissions: Map<string, UnifiedPermission>;
@@ -86,4 +123,7 @@ export class PermissionManager {
   formatPermissionError(result: PermissionCheckResult): string {
     return result.message || '權限檢查失敗';
   }
-} 
+}
+
+// 導出單例實例
+export const permissionManager = PermissionManager.getInstance(); 
