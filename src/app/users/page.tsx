@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import type { AppUser } from "@/types/user";
-import { ROLE_HIERARCHY } from "@/utils/roleHierarchy";
+import { ROLE_HIERARCHY } from "@/utils/authUtils";
 import { db } from "@/lib/firebase-client";
 import { collection, doc, updateDoc } from "firebase/firestore";
 

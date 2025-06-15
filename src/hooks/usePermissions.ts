@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import type { Role, UnifiedPermission, PermissionState } from '@/types/permission';
-import { PermissionManager } from '@/utils/permission';
+import { permissionManager } from '@/utils/authUtils';
 
 export function usePermissions(userId: string | undefined) {
   const [state, setState] = useState<PermissionState>({
@@ -16,7 +16,7 @@ export function usePermissions(userId: string | undefined) {
     error: null
   });
 
-  const permissionManagerRef = useRef(PermissionManager.getInstance());
+  const permissionManagerRef = useRef(permissionManager);
 
   // 載入權限
   useEffect(() => {
