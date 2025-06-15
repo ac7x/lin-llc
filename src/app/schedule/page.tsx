@@ -62,7 +62,7 @@ function toDate(dateInput: DateType): Date {
 }
 
 export default function ProjectsPage() {
-    const { user, userRoles } = useAuth();
+    const { user, userRoles, loading: authLoading } = useAuth();
     const [groups, setGroups] = useState<Group[]>([]);
     const [allItems, setAllItems] = useState<TimelineSubWorkpackage[]>([]);
     const [items, setItems] = useState<TimelineSubWorkpackage[]>([]);
@@ -70,25 +70,39 @@ export default function ProjectsPage() {
     const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const timelineRef = useRef<HTMLDivElement>(null);
-    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-    const [isLoadingPermission, setIsLoadingPermission] = useState(true);
+    const [authState, setAuthState] = useState<{
+        hasPermission: boolean | null;
+        isLoading: boolean;
+    }>({
+        hasPermission: null,
+        isLoading: true
+    });
 
     const quickKeywords = ["搬運", "定位", "清潔", "測試"];
 
     // 檢查導航權限
     useEffect(() => {
         async function checkNavPermission() {
+            // 如果 auth 還在載入中，不進行權限檢查
+            if (authLoading) {
+                return;
+            }
+
             if (!user || !userRoles) {
-                setHasPermission(false);
-                setIsLoadingPermission(false);
+                setAuthState({
+                    hasPermission: false,
+                    isLoading: false
+                });
                 return;
             }
 
             try {
                 const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
                 if (!navPermissionsDoc.exists()) {
-                    setHasPermission(false);
-                    setIsLoadingPermission(false);
+                    setAuthState({
+                        hasPermission: false,
+                        isLoading: false
+                    });
                     return;
                 }
 
@@ -96,8 +110,10 @@ export default function ProjectsPage() {
                 const scheduleNav = data.items?.find((item: NavPermissionItem) => item.id === 'schedule');
                 
                 if (!scheduleNav) {
-                    setHasPermission(false);
-                    setIsLoadingPermission(false);
+                    setAuthState({
+                        hasPermission: false,
+                        isLoading: false
+                    });
                     return;
                 }
 
@@ -106,17 +122,21 @@ export default function ProjectsPage() {
                     scheduleNav.defaultRoles.includes(role)
                 );
 
-                setHasPermission(hasAccess);
+                setAuthState({
+                    hasPermission: hasAccess,
+                    isLoading: false
+                });
             } catch (error) {
                 console.error('檢查導航權限失敗:', error);
-                setHasPermission(false);
-            } finally {
-                setIsLoadingPermission(false);
+                setAuthState({
+                    hasPermission: false,
+                    isLoading: false
+                });
             }
         }
 
         checkNavPermission();
-    }, [user, userRoles]);
+    }, [user, userRoles, authLoading]);
 
     const handleItemMove = useCallback(async (itemId: string, newStart: DateType, newEnd: DateType) => {
         const item = items.find(i => i.id === itemId);
@@ -252,7 +272,7 @@ export default function ProjectsPage() {
     }, []);
 
     // 如果正在載入權限，顯示載入中
-    if (isLoadingPermission) {
+    if (authState.isLoading) {
         return (
             <main className="max-w-4xl mx-auto">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -265,7 +285,7 @@ export default function ProjectsPage() {
     }
 
     // 如果沒有權限，顯示拒絕存取訊息
-    if (!hasPermission) {
+    if (!authState.hasPermission) {
         return (
             <main className="max-w-4xl mx-auto">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">

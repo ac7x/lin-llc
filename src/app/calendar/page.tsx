@@ -51,7 +51,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { db, collection, getDocs, user, userRoles } = useAuth();
+    const { db, collection, getDocs, user, userRoles, loading: authLoading } = useAuth();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
     const [loading, setLoading] = useState(true);
@@ -59,23 +59,37 @@ export default function ProjectCalendarPage() {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const calendarContainerRef = useRef<HTMLDivElement>(null);
-    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-    const [isLoadingPermission, setIsLoadingPermission] = useState(true);
+    const [authState, setAuthState] = useState<{
+        hasPermission: boolean | null;
+        isLoading: boolean;
+    }>({
+        hasPermission: null,
+        isLoading: true
+    });
 
     // 檢查導航權限
     useEffect(() => {
         async function checkNavPermission() {
+            // 如果 auth 還在載入中，不進行權限檢查
+            if (authLoading) {
+                return;
+            }
+
             if (!user || !userRoles) {
-                setHasPermission(false);
-                setIsLoadingPermission(false);
+                setAuthState({
+                    hasPermission: false,
+                    isLoading: false
+                });
                 return;
             }
 
             try {
                 const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
                 if (!navPermissionsDoc.exists()) {
-                    setHasPermission(false);
-                    setIsLoadingPermission(false);
+                    setAuthState({
+                        hasPermission: false,
+                        isLoading: false
+                    });
                     return;
                 }
 
@@ -83,8 +97,10 @@ export default function ProjectCalendarPage() {
                 const calendarNav = data.items?.find((item: NavPermissionItem) => item.id === 'calendar');
                 
                 if (!calendarNav) {
-                    setHasPermission(false);
-                    setIsLoadingPermission(false);
+                    setAuthState({
+                        hasPermission: false,
+                        isLoading: false
+                    });
                     return;
                 }
 
@@ -93,17 +109,21 @@ export default function ProjectCalendarPage() {
                     calendarNav.defaultRoles.includes(role)
                 );
 
-                setHasPermission(hasAccess);
+                setAuthState({
+                    hasPermission: hasAccess,
+                    isLoading: false
+                });
             } catch (error) {
                 console.error('檢查導航權限失敗:', error);
-                setHasPermission(false);
-            } finally {
-                setIsLoadingPermission(false);
+                setAuthState({
+                    hasPermission: false,
+                    isLoading: false
+                });
             }
         }
 
         checkNavPermission();
-    }, [user, userRoles, db]);
+    }, [user, userRoles, db, authLoading]);
 
     useEffect(() => {
         async function fetchAllWorkpackages() {
@@ -276,7 +296,7 @@ ${estimatedDateRange}${actualDateRange}
     });
 
     // 如果正在載入權限，顯示載入中
-    if (isLoadingPermission) {
+    if (authState.isLoading) {
         return (
             <main className="max-w-4xl mx-auto">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -289,7 +309,7 @@ ${estimatedDateRange}${actualDateRange}
     }
 
     // 如果沒有權限，顯示拒絕存取訊息
-    if (!hasPermission) {
+    if (!authState.hasPermission) {
         return (
             <main className="max-w-4xl mx-auto">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
