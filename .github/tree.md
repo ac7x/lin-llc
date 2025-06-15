@@ -1,3 +1,4 @@
+.
 ├── app
 │   ├── archive
 │   │   ├── layout.tsx
@@ -107,9 +108,8 @@
 │   ├── settings.d.ts
 │   └── user.d.ts
 └── utils
+    ├── authUtils.ts
     ├── colorScales.ts
-    ├── date-format.tsx
-    ├── permission.ts
+    ├── dateUtils.ts
     ├── progressUtils.tsx
-    ├── roleHierarchy.ts
     └── taiwan-city.enum.ts

@@ -21,6 +21,94 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { PermissionCategory } from '@/components/settings/PermissionCategory';
 import type { Role, UnifiedPermission } from '@/types/permission';
 
+// 預設導航項目
+const defaultNavItems = [
+    {
+        id: 'profile',
+        name: '個人檔案',
+        description: '個人資料管理',
+        defaultRoles: ['owner', 'admin', 'finance', 'user', 'helper', 'temporary', 'coord', 'safety', 'foreman', 'vendor']
+    },
+    {
+        id: 'dashboard',
+        name: '儀表板',
+        description: '顯示系統儀表板',
+        defaultRoles: ['owner', 'admin', 'finance', 'user', 'helper', 'temporary', 'coord', 'safety', 'foreman', 'vendor']
+    },
+    {
+        id: 'projects',
+        name: '專案',
+        description: '專案管理功能',
+        defaultRoles: ['owner', 'admin', 'coord', 'foreman']
+    },
+    {
+        id: 'schedule',
+        name: '行程',
+        description: '行程管理功能',
+        defaultRoles: ['owner', 'admin', 'coord', 'foreman', 'safety']
+    },
+    {
+        id: 'calendar',
+        name: '日曆',
+        description: '日曆管理功能',
+        defaultRoles: ['owner', 'admin', 'coord', 'foreman', 'safety']
+    },
+    {
+        id: 'quotes',
+        name: '估價單',
+        description: '估價單管理功能',
+        defaultRoles: ['owner', 'admin', 'finance']
+    },
+    {
+        id: 'contracts',
+        name: '合約',
+        description: '合約管理功能',
+        defaultRoles: ['owner', 'admin', 'finance']
+    },
+    {
+        id: 'orders',
+        name: '訂單',
+        description: '訂單管理功能',
+        defaultRoles: ['owner', 'admin', 'finance']
+    },
+    {
+        id: 'gemini',
+        name: 'Gemini',
+        description: 'AI 助手功能',
+        defaultRoles: ['owner', 'admin']
+    },
+    {
+        id: 'notifications',
+        name: '通知',
+        description: '通知管理功能',
+        defaultRoles: ['owner', 'admin', 'finance', 'user', 'helper', 'temporary', 'coord', 'safety', 'foreman', 'vendor']
+    },
+    {
+        id: 'send-notification',
+        name: '發送通知',
+        description: '發送通知功能',
+        defaultRoles: ['owner', 'admin', 'coord', 'safety']
+    },
+    {
+        id: 'users',
+        name: '用戶管理',
+        description: '用戶管理功能',
+        defaultRoles: ['owner', 'admin']
+    },
+    {
+        id: 'settings',
+        name: '設定',
+        description: '系統設定功能',
+        defaultRoles: ['owner', 'admin']
+    },
+    {
+        id: 'archive',
+        name: '封存',
+        description: '封存管理功能',
+        defaultRoles: ['owner', 'admin']
+    }
+];
+
 export default function OwnerSettingsPage() {
     const { user } = useAuth();
     const { permissions, loading: permissionsLoading, error, updatePermissions } = usePermissions(user?.uid);
@@ -35,6 +123,7 @@ export default function OwnerSettingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedNavPermissions, setSelectedNavPermissions] = useState<string[]>([]);
     const [navSearchTerm, setNavSearchTerm] = useState<string>("");
+    const [navItems, setNavItems] = useState(defaultNavItems);
 
     // 確保所有預設類別都存在
     const defaultCategories = useMemo(() => 
@@ -74,6 +163,26 @@ export default function OwnerSettingsPage() {
             setIsLoading(false);
         }
         fetchRetentionDays();
+    }, [user]);
+
+    // 載入導航權限設定
+    useEffect(() => {
+        async function fetchNavPermissions() {
+            if (!user) return;
+            
+            try {
+                const navPermissionsDoc = doc(db, 'settings', 'navPermissions');
+                const snapshot = await getDoc(navPermissionsDoc);
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    setNavItems(data.items || defaultNavItems);
+                }
+            } catch (error) {
+                console.error('載入導航權限設定失敗:', error);
+            }
+        }
+        fetchNavPermissions();
     }, [user]);
 
     // 根據類別分組權限
@@ -147,9 +256,11 @@ export default function OwnerSettingsPage() {
     const handleRoleSelect = (roles: Role[]) => {
         setSelectedRoles(roles);
         
+        if (!permissions) return;
+        
         // 合併所有選中角色的權限
         const combinedPermissions = roles.flatMap(role => {
-            const rolePermissions = permissions.filter(p => p.roles.includes(role));
+            const rolePermissions = permissions.filter(p => p.roles?.includes(role));
             return rolePermissions.map(p => p.id);
         });
         setSelectedPermissions([...new Set(combinedPermissions)]);
@@ -157,7 +268,7 @@ export default function OwnerSettingsPage() {
         // 合併所有選中角色的導航權限
         const combinedNavPermissions = roles.flatMap(role => 
             permissions
-                .filter(p => p.roles.includes(role))
+                .filter(p => p.roles?.includes(role))
                 .map(p => p.id)
         );
         setSelectedNavPermissions([...new Set(combinedNavPermissions)]);
@@ -167,6 +278,36 @@ export default function OwnerSettingsPage() {
     useEffect(() => {
         setExpandedCategories(new Set(defaultCategories));
     }, [defaultCategories]);
+
+    // 處理導航權限更新
+    const handleNavPermissionUpdate = async () => {
+        if (!user) return;
+        
+        try {
+            setIsUpdating(true);
+            await setDoc(doc(db, 'settings', 'navPermissions'), {
+                items: navItems,
+                lastUpdatedBy: user.uid,
+                lastUpdatedAt: new Date().toISOString()
+            }, { merge: true });
+            
+            alert('導航權限設定已更新');
+        } catch (error) {
+            console.error('更新導航權限失敗:', error);
+            alert('更新導航權限失敗，請稍後再試');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    // 更新導航項目的角色權限
+    const updateNavItemRoles = (itemId: string, roles: Role[]) => {
+        setNavItems(prev => prev.map(item => 
+            item.id === itemId 
+                ? { ...item, defaultRoles: roles }
+                : item
+        ));
+    };
 
     if (isLoading || permissionsLoading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
     if (error) return <main className="p-6 text-red-500">錯誤：{error.message}</main>;
@@ -347,30 +488,30 @@ export default function OwnerSettingsPage() {
                             <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
                                 <div className="border rounded-lg overflow-hidden">
                                     <div className="p-4 space-y-2">
-                                        {permissions
-                                            .filter(p => 
-                                                p.name.toLowerCase().includes(navSearchTerm.toLowerCase()) ||
-                                                p.description.toLowerCase().includes(navSearchTerm.toLowerCase())
+                                        {navItems
+                                            .filter(item => 
+                                                item.name.toLowerCase().includes(navSearchTerm.toLowerCase()) ||
+                                                item.description.toLowerCase().includes(navSearchTerm.toLowerCase())
                                             )
-                                            .map(p => (
-                                                <div key={p.id} className="flex items-center">
+                                            .map(item => (
+                                                <div key={item.id} className="flex items-center">
                                                     <input
                                                         type="checkbox"
-                                                        id={`nav-${p.id}`}
-                                                        checked={selectedNavPermissions.includes(p.id)}
+                                                        id={`nav-${item.id}`}
+                                                        checked={selectedNavPermissions.includes(item.id)}
                                                         onChange={(e) => {
                                                             if (e.target.checked) {
-                                                                setSelectedNavPermissions([...selectedNavPermissions, p.id]);
+                                                                setSelectedNavPermissions([...selectedNavPermissions, item.id]);
                                                             } else {
-                                                                setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== p.id));
+                                                                setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== item.id));
                                                             }
                                                         }}
                                                         className="mr-2"
                                                     />
-                                                    <label htmlFor={`nav-${p.id}`} className="text-sm">
-                                                        {p.name}
+                                                    <label htmlFor={`nav-${item.id}`} className="text-sm">
+                                                        {item.name}
                                                         <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
-                                                            ({p.description})
+                                                            ({item.description})
                                                         </span>
                                                     </label>
                                                 </div>
@@ -380,7 +521,7 @@ export default function OwnerSettingsPage() {
                             </div>
 
                             <button
-                                onClick={handlePermissionUpdate}
+                                onClick={handleNavPermissionUpdate}
                                 disabled={isUpdating}
                                 className="mt-6 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full flex items-center justify-center"
                             >
@@ -397,7 +538,7 @@ export default function OwnerSettingsPage() {
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                         </svg>
-                                        更新權限設定
+                                        更新導航權限設定
                                     </>
                                 )}
                             </button>
