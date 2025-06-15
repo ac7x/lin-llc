@@ -14,36 +14,27 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from "@/hooks/useAuth";
-import { ROLE_HIERARCHY, ROLE_NAMES, RoleKey } from "@/utils/roleHierarchy";
+import { ROLE_HIERARCHY, ROLE_NAMES } from "@/utils/roleHierarchy";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import { usePermissions } from '@/hooks/usePermissions';
 import { PermissionCategory } from '@/components/settings/PermissionCategory';
-import type { Permission, Role } from '@/types/permission';
+import type { Role, UnifiedPermission } from '@/types/permission';
 
 export default function OwnerSettingsPage() {
     const { user } = useAuth();
+    const { permissions, loading: permissionsLoading, error, updatePermissions } = usePermissions(user?.uid);
+    const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+    const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+    const [isUpdating, setIsUpdating] = useState(false);
     const [archiveRetentionDays, setArchiveRetentionDays] = useState<number | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [updating, setUpdating] = useState(false);
     const [isEditingRetentionDays, setIsEditingRetentionDays] = useState(false);
     const [tempRetentionDays, setTempRetentionDays] = useState<number | null>(null);
-    
-    // 權限管理相關狀態
-    const [selectedRolesForPermission, setSelectedRolesForPermission] = useState<Role[]>([]);
-    const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-    const [searchTerm, setSearchTerm] = useState<string>("");
-    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+    const [isLoading, setIsLoading] = useState(true);
     const [selectedNavPermissions, setSelectedNavPermissions] = useState<string[]>([]);
     const [navSearchTerm, setNavSearchTerm] = useState<string>("");
-
-    const {
-        permissions,
-        rolePermissions,
-        navPermissions,
-        loading: permissionsLoading,
-        updatePermissions
-    } = usePermissions(user?.uid);
 
     // 確保所有預設類別都存在
     const defaultCategories = useMemo(() => 
@@ -80,40 +71,22 @@ export default function OwnerSettingsPage() {
             } else {
                 setArchiveRetentionDays(null);
             }
-            setLoading(false);
+            setIsLoading(false);
         }
         fetchRetentionDays();
     }, [user]);
 
-    // 根據搜尋條件過濾權限
-    const filteredPermissions = useMemo(() => 
-        permissions.filter(permission => 
-            permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            permission.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            permission.category.toLowerCase().includes(searchTerm.toLowerCase())
-        ),
-        [permissions, searchTerm]
-    );
-
-    // 按類別分組權限
+    // 根據類別分組權限
     const groupedPermissions = useMemo(() => {
-        const groups = filteredPermissions.reduce((acc, permission) => {
-            if (!acc[permission.category]) {
-                acc[permission.category] = [];
-            }
-            acc[permission.category].push(permission);
-            return acc;
-        }, {} as Record<string, Permission[]>);
-
-        // 確保所有預設類別都存在，即使沒有權限
-        defaultCategories.forEach(category => {
+        return permissions.reduce((groups, permission) => {
+            const category = permission.category;
             if (!groups[category]) {
                 groups[category] = [];
             }
-        });
-
-        return groups;
-    }, [filteredPermissions, defaultCategories]);
+            groups[category].push(permission);
+            return groups;
+        }, {} as Record<string, UnifiedPermission[]>);
+    }, [permissions]);
 
     // 切換類別展開狀態
     const toggleCategory = (category: string) => {
@@ -133,7 +106,7 @@ export default function OwnerSettingsPage() {
         if (!tempRetentionDays || tempRetentionDays <= 0 || !user) return;
         
         try {
-            setUpdating(true);
+            setIsUpdating(true);
             await setDoc(doc(db, 'settings', 'archive'), { 
                 retentionDays: tempRetentionDays,
                 lastUpdatedBy: user.uid,
@@ -145,24 +118,20 @@ export default function OwnerSettingsPage() {
             console.error('更新封存天數失敗:', error);
             alert('更新封存天數失敗，請稍後再試');
         } finally {
-            setUpdating(false);
+            setIsUpdating(false);
         }
     };
 
     // 處理權限更新
     const handlePermissionUpdate = async () => {
-        if (selectedRolesForPermission.length === 0 || !user) return;
+        if (selectedRoles.length === 0) return;
         
         try {
-            setUpdating(true);
-            const success = await updatePermissions(
-                selectedRolesForPermission,
-                selectedPermissions,
-                selectedNavPermissions
-            );
+            setIsUpdating(true);
+            const success = await updatePermissions(selectedRoles, selectedPermissions);
             
             if (success) {
-                alert(`已更新 ${selectedRolesForPermission.join(', ')} 的權限設定`);
+                alert(`已更新 ${selectedRoles.join(', ')} 的權限設定`);
             } else {
                 alert('更新權限失敗，請稍後再試');
             }
@@ -170,26 +139,26 @@ export default function OwnerSettingsPage() {
             console.error('更新權限失敗:', error);
             alert('更新權限失敗，請稍後再試');
         } finally {
-            setUpdating(false);
+            setIsUpdating(false);
         }
     };
 
     // 處理角色選擇
     const handleRoleSelect = (roles: Role[]) => {
-        setSelectedRolesForPermission(roles);
+        setSelectedRoles(roles);
         
         // 合併所有選中角色的權限
         const combinedPermissions = roles.flatMap(role => {
-            const rolePermission = rolePermissions.find(rp => rp.role === role);
-            return rolePermission?.permissions || [];
+            const rolePermissions = permissions.filter(p => p.roles.includes(role));
+            return rolePermissions.map(p => p.id);
         });
         setSelectedPermissions([...new Set(combinedPermissions)]);
         
         // 合併所有選中角色的導航權限
         const combinedNavPermissions = roles.flatMap(role => 
-            navPermissions
-                .filter(np => np.defaultRoles.includes(role))
-                .map(np => np.id)
+            permissions
+                .filter(p => p.roles.includes(role))
+                .map(p => p.id)
         );
         setSelectedNavPermissions([...new Set(combinedNavPermissions)]);
     };
@@ -199,7 +168,8 @@ export default function OwnerSettingsPage() {
         setExpandedCategories(new Set(defaultCategories));
     }, [defaultCategories]);
 
-    if (loading || permissionsLoading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
+    if (isLoading || permissionsLoading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
+    if (error) return <main className="p-6 text-red-500">錯誤：{error.message}</main>;
 
     return (
         <main className="p-6 pb-24 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
@@ -233,14 +203,14 @@ export default function OwnerSettingsPage() {
                                         <span className="text-gray-500 dark:text-gray-400">天</span>
                                         <button
                                             onClick={handleRetentionDaysUpdate}
-                                            disabled={updating}
+                                            disabled={isUpdating}
                                             className="text-green-600 hover:text-green-700 disabled:text-gray-400"
                                         >
-                                            {updating ? '儲存中...' : '✓'}
+                                            {isUpdating ? '儲存中...' : '✓'}
                                         </button>
                                         <button
                                             onClick={() => setIsEditingRetentionDays(false)}
-                                            disabled={updating}
+                                            disabled={isUpdating}
                                             className="text-red-600 hover:text-red-700 disabled:text-gray-400"
                                         >
                                             ✕
@@ -278,18 +248,17 @@ export default function OwnerSettingsPage() {
                             {Object.entries(ROLE_HIERARCHY)
                                 .sort(([,a], [,b]) => b - a)
                                 .map(([role, level]) => {
-                                    const roleKey = role as RoleKey;
+                                    const roleKey = role as Role;
                                     return (
                                         <div key={role} className="flex items-center">
                                             <input
                                                 type="checkbox"
                                                 id={`role-${role}`}
-                                                checked={selectedRolesForPermission.includes(role as Role)}
+                                                checked={selectedRoles.includes(roleKey)}
                                                 onChange={(e) => {
-                                                    const roleKey = role as Role;
                                                     const newRoles = e.target.checked
-                                                        ? [...selectedRolesForPermission, roleKey]
-                                                        : selectedRolesForPermission.filter(r => r !== roleKey);
+                                                        ? [...selectedRoles, roleKey]
+                                                        : selectedRoles.filter(r => r !== roleKey);
                                                     handleRoleSelect(newRoles);
                                                 }}
                                                 className="mr-2"
@@ -306,7 +275,7 @@ export default function OwnerSettingsPage() {
 
                 {/* 中間：系統權限設定區塊 */}
                 <div className="lg:col-span-5">
-                    {selectedRolesForPermission.length > 0 ? (
+                    {selectedRoles.length > 0 ? (
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +327,7 @@ export default function OwnerSettingsPage() {
 
                 {/* 右側：導航權限設定區塊 */}
                 <div className="lg:col-span-4">
-                    {selectedRolesForPermission.length > 0 ? (
+                    {selectedRoles.length > 0 ? (
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,30 +347,30 @@ export default function OwnerSettingsPage() {
                             <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
                                 <div className="border rounded-lg overflow-hidden">
                                     <div className="p-4 space-y-2">
-                                        {navPermissions
-                                            .filter(np => 
-                                                np.name.toLowerCase().includes(navSearchTerm.toLowerCase()) ||
-                                                np.description.toLowerCase().includes(navSearchTerm.toLowerCase())
+                                        {permissions
+                                            .filter(p => 
+                                                p.name.toLowerCase().includes(navSearchTerm.toLowerCase()) ||
+                                                p.description.toLowerCase().includes(navSearchTerm.toLowerCase())
                                             )
-                                            .map(navPermission => (
-                                                <div key={navPermission.id} className="flex items-center">
+                                            .map(p => (
+                                                <div key={p.id} className="flex items-center">
                                                     <input
                                                         type="checkbox"
-                                                        id={`nav-${navPermission.id}`}
-                                                        checked={selectedNavPermissions.includes(navPermission.id)}
+                                                        id={`nav-${p.id}`}
+                                                        checked={selectedNavPermissions.includes(p.id)}
                                                         onChange={(e) => {
                                                             if (e.target.checked) {
-                                                                setSelectedNavPermissions([...selectedNavPermissions, navPermission.id]);
+                                                                setSelectedNavPermissions([...selectedNavPermissions, p.id]);
                                                             } else {
-                                                                setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== navPermission.id));
+                                                                setSelectedNavPermissions(selectedNavPermissions.filter(id => id !== p.id));
                                                             }
                                                         }}
                                                         className="mr-2"
                                                     />
-                                                    <label htmlFor={`nav-${navPermission.id}`} className="text-sm">
-                                                        {navPermission.name}
+                                                    <label htmlFor={`nav-${p.id}`} className="text-sm">
+                                                        {p.name}
                                                         <span className="text-gray-500 dark:text-gray-400 text-xs ml-1">
-                                                            ({navPermission.description})
+                                                            ({p.description})
                                                         </span>
                                                     </label>
                                                 </div>
@@ -412,10 +381,10 @@ export default function OwnerSettingsPage() {
 
                             <button
                                 onClick={handlePermissionUpdate}
-                                disabled={updating}
+                                disabled={isUpdating}
                                 className="mt-6 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full flex items-center justify-center"
                             >
-                                {updating ? (
+                                {isUpdating ? (
                                     <>
                                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
