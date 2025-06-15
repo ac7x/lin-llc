@@ -21,7 +21,7 @@ import { Project } from "@/types/project";
 import { ActivityLog, PhotoRecord, PhotoType, IssueRecord } from "@/types/project";
 import Image from 'next/image';
 import { TaiwanCityList } from '@/utils/taiwan-city.enum';
-import { calculateProjectProgress } from '@/utils/projectProgress';
+import { calculateProjectProgress } from '@/utils/progressUtils';
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 

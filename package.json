@@ -15,7 +15,8 @@
     "fdb": "firebase deploy --only hosting",
     "pfm": "git push origin main --force",
     "rb": "git fetch origin && git reset --hard origin/main",
-    "script": "bash script/script.sh"
+    "script": "bash script/script.sh",
+    "reset": "bash script/reset.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

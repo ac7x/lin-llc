@@ -11,13 +11,25 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from "next/navigation";
 
 export default function ArchivedPage() {
-    const { db, collection, getDocs, deleteDoc, doc } = useAuth();
+    const { db, collection, getDocs, deleteDoc, doc, userRoles } = useAuth();
+    const router = useRouter();
     const [clickCount, setClickCount] = useState(0);
     const [lastClickTime, setLastClickTime] = useState<number>(0);
+
+    // 檢查用戶是否有權限訪問此頁面
+    useEffect(() => {
+        const allowedRoles = ['admin', 'owner'];
+        const hasPermission = userRoles?.some(role => allowedRoles.includes(role)) || false;
+        
+        if (!hasPermission) {
+            router.push('/');
+        }
+    }, [userRoles, router]);
 
     // 連點5次觸發移除所有封存資料
     const handleRemoveAll = async () => {
@@ -45,6 +57,23 @@ export default function ArchivedPage() {
             }
         }
     };
+
+    // 檢查用戶是否有權限訪問此頁面
+    const allowedRoles = ['admin', 'owner'];
+    const hasPermission = userRoles?.some(role => allowedRoles.includes(role)) || false;
+
+    if (!hasPermission) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">無權限訪問</h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                        您沒有權限訪問此頁面。請聯繫系統管理員以獲取適當的權限。
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <main className="max-w-4xl mx-auto">
