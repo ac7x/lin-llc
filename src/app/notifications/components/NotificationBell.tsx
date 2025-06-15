@@ -1,5 +1,17 @@
+/**
+ * 通知鈴鐺組件
+ * 
+ * 提供系統通知的視覺指示器，功能包含：
+ * - 未讀通知計數顯示
+ * - 通知下拉選單
+ * - 多尺寸支援
+ * - 通知摘要顯示
+ * - 通知快速操作
+ */
+
 "use client";
 
+import React from 'react';
 import { BellIcon } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolidIcon } from '@heroicons/react/24/solid';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';

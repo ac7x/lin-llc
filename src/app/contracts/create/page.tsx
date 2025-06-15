@@ -1,3 +1,14 @@
+/**
+ * 建立合約頁面
+ * 
+ * 提供從訂單或報價單建立合約的功能，包含：
+ * - 訂單/報價單選擇
+ * - 合約資訊設定
+ * - 合約條款管理
+ * - 合約範本應用
+ * - 合約預覽
+ */
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";

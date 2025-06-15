@@ -1,6 +1,17 @@
+/**
+ * 通知測試工具組件
+ * 
+ * 提供系統通知的測試功能，包含：
+ * - 自訂通知內容
+ * - 通知類型選擇
+ * - 快速測試模板
+ * - 通知預覽
+ * - 通知發送測試
+ */
+
 "use client";
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from "@/hooks/useAuth";
 import { createNotification } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';

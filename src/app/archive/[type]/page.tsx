@@ -1,3 +1,14 @@
+/**
+ * 封存資料類型頁面
+ * 
+ * 顯示特定類型的封存資料，提供以下功能：
+ * - 封存資料列表
+ * - 資料搜尋和篩選
+ * - 資料還原
+ * - 資料刪除
+ * - 封存期限管理
+ */
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
