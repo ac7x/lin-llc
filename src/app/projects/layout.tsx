@@ -16,8 +16,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { ProjectProgressPercent } from "@/utils/projectProgress";
-import { WorkpackageProgressBar } from "@/utils/workpackageProgressBar";
+import { ProjectProgressPercent, WorkpackageProgressBar } from "@/utils/progressUtils";
 import type { Project } from "@/types/project";
 import { PageLayout, PageContent, Sidebar } from "@/components/layouts/PageLayout";
 

@@ -39,7 +39,7 @@ import { Workpackage, Project } from '@/types/project';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
 import { db } from '@/lib/firebase-client';
 import { collection } from 'firebase/firestore';
-import { calculateProjectProgress } from '@/utils/projectProgress';
+import { calculateProjectProgress } from '@/utils/progressUtils';
 
 // 抽取共用樣式
 const cardStyles = "bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700";

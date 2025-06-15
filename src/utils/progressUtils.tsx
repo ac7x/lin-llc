@@ -1,12 +1,15 @@
 /**
- * 專案進度計算與顯示模組
- * 提供專案進度計算功能與進度顯示元件
+ * 進度計算與顯示模組
+ * 提供專案與工作包進度計算功能與進度顯示元件
  * 功能：
  * - calculateProjectProgress: 根據工作包估算數量計算整體專案進度
+ * - calculateWorkpackageProgress: 計算工作包進度
  * - ProjectProgressPercent: 顯示專案進度百分比的 React 元件
+ * - WorkpackageProgressBar: 顯示工作包進度條的 React 元件
  */
 
-import { Project } from "@/types/project";
+import React from "react";
+import { Project, Workpackage } from "@/types/project";
 
 /**
  * 計算專案進度百分比（根據所有 subWorkpackages 的 estimatedQuantity 與 progress 欄位加權平均）
@@ -34,10 +37,20 @@ export function calculateProjectProgress(project: Project): number {
 }
 
 /**
+ * 計算工作包進度百分比（根據所有 subWorkpackages 的進度平均）
+ */
+export function calculateWorkpackageProgress(wp: Workpackage): number {
+  if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) return 0;
+  const totalProgress = wp.subWorkpackages.reduce((sum, sub) => {
+    const progress = typeof sub.progress === "number" ? sub.progress : 0;
+    return sum + progress;
+  }, 0);
+  return Math.round(totalProgress / wp.subWorkpackages.length);
+}
+
+/**
  * React 組件：顯示專案進度百分比
  */
-import React from "react";
-
 export const ProjectProgressPercent: React.FC<{ project: Project }> = ({ project }) => {
   const percent = calculateProjectProgress(project);
   return (
@@ -49,3 +62,19 @@ export const ProjectProgressPercent: React.FC<{ project: Project }> = ({ project
     </span>
   );
 };
+
+/**
+ * React 組件：顯示工作包進度條
+ */
+export const WorkpackageProgressBar: React.FC<{ wp: Workpackage }> = ({ wp }) => {
+  const percent = calculateWorkpackageProgress(wp);
+  return (
+    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+      <div
+        className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
+        style={{ width: `${percent}%` }}
+        title={`進度：${percent}%`}
+      />
+    </div>
+  );
+}; 
