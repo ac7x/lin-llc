@@ -5,31 +5,47 @@
  */
 
 // 定義自訂的 AppUser 型別，專門用於描述我們的用戶資料結構
-export type AppUser = {
+export interface AppUser {
     uid: string;
-    email: string;
-    displayName: string;
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
     emailVerified: boolean;
-    photoURL: string;
-    disabled: boolean;
     role: string;
-    roles?: string[]; // 用戶擁有的所有角色
-    metadata: {
-        creationTime: string;
-        lastSignInTime: string;
+    roles: string[];
+    permissions: string[];
+    createdAt: string | Date;
+    updatedAt: string | Date;
+    lastLoginAt: string | Date;
+    disabled?: boolean;
+    metadata?: {
+        creationTime?: string;
+        lastSignInTime?: string;
     };
-    // 裝置識別相關
-    devices?: UserDevice[];
-    // 通知設定
-    notificationSettings?: NotificationSettings;
-};
+    notificationSettings?: {
+        enablePushNotifications: boolean;
+        enableEmailNotifications: boolean;
+        notificationTypes: {
+            projectUpdates: boolean;
+            scheduleChanges: boolean;
+            systemAlerts: boolean;
+            workProgress: boolean;
+            emergencyAlerts: boolean;
+        };
+        quietHours?: {
+            enabled: boolean;
+            startTime: string; // HH:mm format
+            endTime: string; // HH:mm format
+        };
+    };
+}
 
 // 擴展 Firebase User 型別
 export interface ExtendedUser {
     customClaims?: {
         role?: string;
         roles?: string[];
-        [key: string]: unknown;
+        permissions?: string[];
     };
 }
 

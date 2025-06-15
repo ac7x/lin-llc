@@ -135,10 +135,10 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">
-                      {user.metadata?.creationTime?.slice(0, 10) || "—"}
+                      {user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-3 py-2 text-xs text-gray-900 dark:text-gray-100">
-                      {user.metadata?.lastSignInTime?.slice(0, 10) || "—"}
+                      {user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-3 py-2 text-xs">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
