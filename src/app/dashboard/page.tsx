@@ -15,7 +15,6 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuth } from '@/hooks/useAuth';
-import { usePermissions } from '@/hooks/usePermissions';
 import { 
   PieChart, 
   Pie, 
@@ -82,7 +81,6 @@ const ErrorMessage = ({ message }: { message: string }) => (
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { userPermissions, loading: permissionsLoading } = usePermissions(user?.uid);
 
   // 2. 狀態管理 Hooks
   const [selectedProject, setSelectedProject] = React.useState<string>('');
@@ -103,13 +101,6 @@ export default function DashboardPage() {
       router.push('/');
     }
   }, [authLoading, user, router]);
-
-  // 檢查用戶是否有權限
-  React.useEffect(() => {
-    if (!permissionsLoading && user && !userPermissions.includes('dashboard.view')) {
-      router.push('/');
-    }
-  }, [userPermissions, permissionsLoading, user, router]);
 
   // 5. 工作包統計 Effect
   React.useEffect(() => {
@@ -252,13 +243,13 @@ export default function DashboardPage() {
     }
   }), []);
 
-  // 如果正在載入認證或權限，顯示載入中
-  if (authLoading || permissionsLoading) {
+  // 如果正在載入認證，顯示載入中
+  if (authLoading) {
     return <LoadingSpinner />;
   }
 
-  // 如果未登入或沒有權限，不渲染內容
-  if (!user || !userPermissions.includes('dashboard.view')) {
+  // 如果未登入，不渲染內容
+  if (!user) {
     return null;
   }
 

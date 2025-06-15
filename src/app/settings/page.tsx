@@ -13,7 +13,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLE_HIERARCHY, ROLE_NAMES, RoleKey } from "@/utils/roleHierarchy";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -23,8 +22,7 @@ import { PermissionCategory } from '@/components/settings/PermissionCategory';
 import type { Permission, Role } from '@/types/permission';
 
 export default function OwnerSettingsPage() {
-    const { user, isOwner } = useAuth();
-    const router = useRouter();
+    const { user } = useAuth();
     const [archiveRetentionDays, setArchiveRetentionDays] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -165,7 +163,6 @@ export default function OwnerSettingsPage() {
             
             if (success) {
                 alert(`已更新 ${selectedRolesForPermission.join(', ')} 的權限設定`);
-                router.refresh();
             } else {
                 alert('更新權限失敗，請稍後再試');
             }
@@ -202,15 +199,7 @@ export default function OwnerSettingsPage() {
         setExpandedCategories(new Set(defaultCategories));
     }, [defaultCategories]);
 
-    // 檢查用戶權限
-    useEffect(() => {
-        if (!loading && !isOwner) {
-            router.push('/');
-        }
-    }, [loading, isOwner, router]);
-
     if (loading || permissionsLoading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
-    if (!isOwner) return null;
 
     return (
         <main className="p-6 pb-24 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
