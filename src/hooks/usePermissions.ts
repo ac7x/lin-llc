@@ -11,7 +11,6 @@ import { db } from '@/lib/firebase-client';
 import type { Permission, RolePermission, NavPermission, Role } from '@/types/permission';
 import { DEFAULT_PERMISSIONS, DEFAULT_NAV_PERMISSIONS, getDefaultPermissionsForRole } from '@/constants/permissions';
 import { ROLE_HIERARCHY } from '@/utils/roleHierarchy';
-import { mergeRolePermissions, filterNavPermissions } from '@/utils/permission';
 
 export function usePermissions(userId: string | undefined) {
   const [permissions, setPermissions] = useState<Permission[]>([]);
