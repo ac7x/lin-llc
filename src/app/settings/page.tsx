@@ -110,7 +110,7 @@ const defaultNavItems = [
 ];
 
 export default function OwnerSettingsPage() {
-    const { user } = useAuth();
+    const { user, userRoles } = useAuth();
     const { permissions, loading: permissionsLoading, error, updatePermissions } = usePermissions(user?.uid);
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
@@ -124,6 +124,12 @@ export default function OwnerSettingsPage() {
     const [selectedNavPermissions, setSelectedNavPermissions] = useState<string[]>([]);
     const [navSearchTerm, setNavSearchTerm] = useState<string>("");
     const [navItems, setNavItems] = useState(defaultNavItems);
+
+    // 檢查用戶是否有權限訪問設定頁面
+    const hasSettingsPermission = useMemo(() => {
+        if (!userRoles) return false;
+        return userRoles.some(role => ['owner', 'admin'].includes(role));
+    }, [userRoles]);
 
     // 確保所有預設類別都存在
     const defaultCategories = useMemo(() => 
@@ -311,6 +317,21 @@ export default function OwnerSettingsPage() {
 
     if (isLoading || permissionsLoading) return <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">載入中...</main>;
     if (error) return <main className="p-6 text-red-500">錯誤：{error.message}</main>;
+    if (!hasSettingsPermission) {
+        return (
+            <main className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <svg className="w-16 h-16 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <h1 className="text-2xl font-bold mb-2">存取被拒絕</h1>
+                    <p className="text-gray-600 dark:text-gray-400">
+                        您沒有權限訪問此頁面。此頁面僅供系統管理員使用。
+                    </p>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="p-6 pb-24 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
