@@ -27,12 +27,17 @@ interface NavPermissionItem {
 }
 
 export default function QuotesPage() {
-    const { db, user, userRoles } = useAuth();
+    const { db, user, userRoles, loading: authLoading } = useAuth();
     const [quotesSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "quotes")
     );
-    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-    const [isLoadingPermission, setIsLoadingPermission] = useState(true);
+    const [authState, setAuthState] = useState<{
+        hasPermission: boolean | null;
+        isLoading: boolean;
+    }>({
+        hasPermission: null,
+        isLoading: true
+    });
     // 搜尋與排序狀態
     const [search, setSearch] = useState("");
     const [sortKey, setSortKey] = useState<null | string>(null);
@@ -41,17 +46,26 @@ export default function QuotesPage() {
     // 檢查導航權限
     useEffect(() => {
         async function checkNavPermission() {
+            // 如果 auth 還在載入中，不進行權限檢查
+            if (authLoading) {
+                return;
+            }
+
             if (!user || !userRoles) {
-                setHasPermission(false);
-                setIsLoadingPermission(false);
+                setAuthState({
+                    hasPermission: false,
+                    isLoading: false
+                });
                 return;
             }
 
             try {
                 const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
                 if (!navPermissionsDoc.exists()) {
-                    setHasPermission(false);
-                    setIsLoadingPermission(false);
+                    setAuthState({
+                        hasPermission: false,
+                        isLoading: false
+                    });
                     return;
                 }
 
@@ -59,8 +73,10 @@ export default function QuotesPage() {
                 const quotesNav = data.items?.find((item: NavPermissionItem) => item.id === 'quotes');
                 
                 if (!quotesNav) {
-                    setHasPermission(false);
-                    setIsLoadingPermission(false);
+                    setAuthState({
+                        hasPermission: false,
+                        isLoading: false
+                    });
                     return;
                 }
 
@@ -69,17 +85,21 @@ export default function QuotesPage() {
                     quotesNav.defaultRoles.includes(role)
                 );
 
-                setHasPermission(hasAccess);
+                setAuthState({
+                    hasPermission: hasAccess,
+                    isLoading: false
+                });
             } catch (error) {
                 console.error('檢查導航權限失敗:', error);
-                setHasPermission(false);
-            } finally {
-                setIsLoadingPermission(false);
+                setAuthState({
+                    hasPermission: false,
+                    isLoading: false
+                });
             }
         }
 
         checkNavPermission();
-    }, [user, userRoles, db]);
+    }, [user, userRoles, authLoading, db]);
 
     // 處理後的資料
     const rows = useMemo(() => {
@@ -156,10 +176,10 @@ export default function QuotesPage() {
     };
 
     // 如果正在載入權限，顯示載入中
-    if (isLoadingPermission) {
+    if (authState.isLoading) {
         return (
-            <main className="max-w-6xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <main className="max-w-4xl mx-auto">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                     <div className="flex items-center justify-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                     </div>
@@ -169,10 +189,10 @@ export default function QuotesPage() {
     }
 
     // 如果沒有權限，顯示拒絕存取訊息
-    if (!hasPermission) {
+    if (!authState.hasPermission) {
         return (
-            <main className="max-w-6xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <main className="max-w-4xl mx-auto">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                     <div className="flex flex-col items-center justify-center py-12">
                         <svg className="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
