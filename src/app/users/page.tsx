@@ -35,6 +35,13 @@ const RoleSelect = ({ value, onChange }: { value: string[]; onChange: (value: st
   </div>
 );
 
+// 載入狀態組件
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  </div>
+);
+
 export default function AdminUsersPage() {
   const usersCollection = collection(db, "users");
   const [formError, setFormError] = useState<string | null>(null);
@@ -104,9 +111,7 @@ export default function AdminUsersPage() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
+          <LoadingSpinner />
         ) : error ? (
           <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/50 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800">
             {error.message}

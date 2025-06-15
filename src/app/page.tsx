@@ -25,6 +25,13 @@ import {
   useAuth
 } from "@/hooks/useAuth";
 
+// 載入狀態組件
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  </div>
+);
+
 export default function SignIn() {
   const { user: authUser, loading, isReady } = useAuth();
   const [user, setUser] = useState<User | null>(null);
@@ -97,7 +104,7 @@ export default function SignIn() {
   if (!isReady || loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <LoadingSpinner />
       </div>
     );
   }
