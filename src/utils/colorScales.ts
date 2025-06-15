@@ -1,3 +1,10 @@
+/**
+ * 顏色工具模組
+ * 提供進度條顏色漸變與顏色混合功能
+ * - ProgressColorScale: 定義進度條的顏色刻度（0-100%）
+ * - getGradientColorByPercent: 根據百分比計算兩個顏色之間的漸變色
+ */
+
 import { colord, extend } from "colord";
 import mixPlugin from "colord/plugins/mix";
 

@@ -1,3 +1,14 @@
+/**
+ * 專案行事曆頁面
+ * 
+ * 提供專案排程的日曆視圖，功能包含：
+ * - 工作包排程顯示
+ * - 進度追蹤
+ * - 日期範圍管理
+ * - 全螢幕模式
+ * - 事件詳細資訊
+ */
+
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";

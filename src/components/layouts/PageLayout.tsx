@@ -1,3 +1,10 @@
+/**
+ * 頁面布局組件
+ * 提供系統頁面的基本布局結構
+ * 支援側邊欄和主要內容區域的配置
+ * 管理頁面的響應式布局
+ */
+
 import { ReactNode } from 'react';
 
 interface PageLayoutProps {

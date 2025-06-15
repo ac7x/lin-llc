@@ -1,3 +1,9 @@
+/**
+ * 專案管理相關型別定義
+ * 包含工作包、任務、日報、區域等資料結構
+ * 用於管理專案生命週期中的各項活動和資源
+ */
+
 import { Timestamp } from 'firebase/firestore';
 
 // ===== Workpackage/Project 型別合併區 =====

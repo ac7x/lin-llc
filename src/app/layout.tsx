@@ -1,3 +1,13 @@
+/**
+ * 根布局組件
+ * 
+ * 提供整個應用程式的基本布局結構，包含：
+ * - 字體設定（Geist Sans 和 Geist Mono）
+ * - 深色模式支援
+ * - reCAPTCHA 整合
+ * - 底部導航列（僅登入用戶可見）
+ */
+
 import React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";

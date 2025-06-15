@@ -1,3 +1,14 @@
+/**
+ * 專案排程頁面
+ * 
+ * 使用 vis-timeline 實現的專案排程視覺化介面，功能包含：
+ * - 專案時間軸顯示
+ * - 子工作包拖曳調整時間
+ * - 關鍵字快速篩選
+ * - 全螢幕模式
+ * - 即時更新排程
+ */
+
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, DateType } from "vis-timeline/standalone";

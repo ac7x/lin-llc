@@ -1,3 +1,10 @@
+/**
+ * 權限管理 Hook
+ * 提供系統權限的初始化、更新和檢查功能
+ * 管理用戶角色權限和導航權限
+ * 支援權限的動態更新和快取
+ */
+
 import { useState, useCallback, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';

@@ -1,3 +1,13 @@
+/**
+ * 台灣縣市資料模組
+ * 提供台灣縣市相關的枚舉定義與輔助功能
+ * 功能：
+ * - TaiwanCity: 縣市枚舉定義
+ * - TaiwanCityInfo: 縣市詳細資訊介面
+ * - TaiwanCityList: 完整的縣市資料列表
+ * - getWeatherInfo: 取得縣市天氣查詢資訊的輔助函式
+ */
+
 // 台灣縣市枚舉與相關資訊，適用於下拉選單與天氣查詢
 
 export enum TaiwanCity {

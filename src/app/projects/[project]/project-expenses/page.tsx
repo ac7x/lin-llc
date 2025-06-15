@@ -1,3 +1,14 @@
+/**
+ * 專案支出管理頁面
+ * 
+ * 提供專案支出的管理功能，包含：
+ * - 支出記錄
+ * - 支出分類
+ * - 支出審核
+ * - 支出報表
+ * - 預算追蹤
+ */
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";

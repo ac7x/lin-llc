@@ -1,3 +1,10 @@
+/**
+ * 報價單 PDF 文件組件
+ * 生成報價單的 PDF 文件格式
+ * 顯示報價單基本資訊和項目明細
+ * 支援報價單資料的格式化輸出
+ */
+
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { Timestamp } from "firebase/firestore";
 

@@ -1,3 +1,10 @@
+/**
+ * PDF 匯出工具
+ * 提供 PDF 文件的生成和下載功能
+ * 支援 React 組件轉換為 PDF
+ * 管理 PDF 文件的暫存和清理
+ */
+
 import { ReactElement } from 'react';
 import { pdf } from '@react-pdf/renderer';
 

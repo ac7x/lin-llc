@@ -1,3 +1,14 @@
+/**
+ * 權限管理工具模組
+ * 提供完整的權限檢查與管理功能
+ * 主要功能：
+ * - 角色權限檢查（hasRole, hasAnyRole, hasMinRole）
+ * - 權限驗證（checkPermission, checkAllPermissions, checkAnyPermission）
+ * - 角色權限管理（getDefaultPermissionsForRole, mergeRolePermissions）
+ * - 導航權限控制（filterNavPermissions, canAccessNav）
+ * - 特殊權限檢查（hasSystemAdminPermission, hasFinancePermission, hasProjectPermission）
+ */
+
 import type { Role, Permission, RolePermission, NavPermission, PermissionCheckResult } from '@/types/permission';
 import { ROLE_HIERARCHY } from './roleHierarchy';
 

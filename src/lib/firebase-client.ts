@@ -1,3 +1,10 @@
+/**
+ * Firebase 客戶端初始化與核心功能
+ * 提供 Firebase 服務的初始化設定
+ * 包含身份驗證、資料庫操作和 App Check 功能
+ * 管理 Firebase 實例和狀態監聽
+ */
+
 // firebase.ts
 import { initializeApp } from "firebase/app";
 import { 

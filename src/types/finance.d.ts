@@ -1,3 +1,9 @@
+/**
+ * 財務相關型別定義
+ * 包含合約、報價單、訂單等財務相關資料結構
+ * 用於管理專案中的財務文件和交易記錄
+ */
+
 import { Timestamp } from 'firebase/firestore';
 
 /**

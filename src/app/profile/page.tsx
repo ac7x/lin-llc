@@ -1,3 +1,14 @@
+/**
+ * 用戶個人資料頁面
+ * 
+ * 提供用戶個人資料管理功能，包含：
+ * - 個人資訊編輯
+ * - 帳號設定
+ * - 通知偏好設定
+ * - 權限查看
+ * - 活動記錄
+ */
+
 'use client'
 
 import { useAuth, signOut } from '@/hooks/useAuth'

@@ -1,5 +1,15 @@
+/**
+ * 報價單模組布局
+ * 
+ * 提供報價單相關頁面的共用布局，包含：
+ * - 側邊導航選單
+ * - 報價單相關功能連結
+ * - 響應式設計
+ */
+
 "use client";
 
+import React from "react";
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

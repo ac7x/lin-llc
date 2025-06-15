@@ -1,3 +1,10 @@
+/**
+ * 訂單 PDF 文件組件
+ * 生成訂單的 PDF 文件格式
+ * 顯示訂單基本資訊和項目明細
+ * 支援訂單資料的格式化輸出
+ */
+
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { Timestamp } from "firebase/firestore";
 

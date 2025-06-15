@@ -1,3 +1,10 @@
+/**
+ * 系統權限常數定義
+ * 定義預設權限和導航權限配置
+ * 提供角色權限的預設值設定
+ * 管理權限的層級結構和預設值
+ */
+
 import type { Permission, NavPermission } from '@/types/settings';
 
 export const DEFAULT_PERMISSIONS: Permission[] = [
