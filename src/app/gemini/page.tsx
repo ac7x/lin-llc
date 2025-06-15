@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { initializeFirebaseAppCheck } from "@/lib/firebase-client";
 import Image from "next/image";
+import { doc, getDoc } from "firebase/firestore";
 
 // 初始化 Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -62,7 +63,7 @@ async function fileToGenerativePart(file: File) {
 
 export default function GeminiChatPage() {
   const router = useRouter();
-  const { user, loading: authLoading, isAuthenticated, appCheck } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, appCheck, db, userRoles } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -73,6 +74,8 @@ export default function GeminiChatPage() {
   const chatRef = useRef<ReturnType<GenerativeModel['startChat']> | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [hasPermission, setHasPermission] = useState(false);
+  const [isLoadingPermission, setIsLoadingPermission] = useState(true);
 
   // 檢查認證狀態
   useEffect(() => {
@@ -93,6 +96,40 @@ export default function GeminiChatPage() {
       setError(null);
     }
   }, [appCheck]);
+
+  // 檢查導航權限
+  useEffect(() => {
+    const checkPermission = async () => {
+      if (!user) {
+        setHasPermission(false);
+        setIsLoadingPermission(false);
+        return;
+      }
+
+      try {
+        const navPermissionsDoc = await getDoc(doc(db, "settings", "navPermissions"));
+        if (!navPermissionsDoc.exists()) {
+          setHasPermission(false);
+          setIsLoadingPermission(false);
+          return;
+        }
+
+        const navPermissions = navPermissionsDoc.data();
+        const hasAccess = userRoles.some(role => 
+          navPermissions[role]?.includes('gemini')
+        );
+
+        setHasPermission(hasAccess);
+      } catch (error) {
+        console.error("檢查權限時發生錯誤:", error);
+        setHasPermission(false);
+      } finally {
+        setIsLoadingPermission(false);
+      }
+    };
+
+    checkPermission();
+  }, [user, userRoles, db]);
 
   // 獲取模型實例
   const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
@@ -242,6 +279,34 @@ export default function GeminiChatPage() {
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  if (isLoadingPermission) {
+    return (
+      <main className="max-w-6xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!hasPermission) {
+    return (
+      <main className="max-w-6xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col items-center justify-center py-12">
+            <svg className="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">存取被拒絕</h2>
+            <p className="text-gray-600 dark:text-gray-400">您沒有權限存取此頁面</p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
