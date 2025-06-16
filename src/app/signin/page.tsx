@@ -2,26 +2,40 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from './hooks/useAuth';
+import { type ReactElement } from 'react';
 
-export default function SignInPage() {
+interface SignInError {
+  message: string;
+}
+
+export default function SignInPage(): ReactElement {
   const router = useRouter();
   const { user, loading, error, signInWithGoogle } = useAuth();
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (): Promise<void> => {
     try {
       await signInWithGoogle();
       router.push('/');
     } catch (err) {
-      console.error('登入失敗:', err);
+      const error = err as SignInError;
+      console.error('登入失敗:', error.message);
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">載入中...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        載入中...
+      </div>
+    );
   }
 
   if (user) {
-    return <div className="flex justify-center items-center min-h-screen">您已經登入</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        您已經登入
+      </div>
+    );
   }
 
   return (
