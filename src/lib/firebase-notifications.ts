@@ -18,12 +18,11 @@ import {
   onSnapshot,
   serverTimestamp,
   writeBatch,
-  db,
-  getDoc
-} from '@/lib/firebase-client';
-import { Firestore } from 'firebase/firestore';
-import { COLLECTIONS } from '../../../lib/firebase-config';
-import type { NotificationMessage, PushNotificationPayload } from '@/types/notification';
+  db // 直接從 firebase-client 匯入 db
+} from '@/lib/firebase-client'; // 直接從 lib 匯入
+import { Firestore } from 'firebase/firestore'; // Firestore 型別正確來源
+import { COLLECTIONS } from './firebase-config';
+import type { NotificationMessage } from '@/types/notification';
 import type { AppUser } from '@/types/user';
 
 const { NOTIFICATIONS, USERS } = COLLECTIONS;
@@ -61,7 +60,7 @@ function setCachedNotifications(userId: string, notifications: NotificationMessa
  * 建立新通知
  */
 export async function createNotification(
-  db: Firestore,
+  db: Firestore, // 直接傳入 db
   userId: string,
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<string> {
@@ -81,16 +80,16 @@ export async function createNotification(
 
     return docRef.id;
   } catch (error) {
-    console.error('建立通知失敗:', error);
+    console.error('Failed to create notification:', error);
     throw error;
   }
 }
 
 /**
- * 批量建立通知
+ * 批量建立通知（例如系統廣播）
  */
 export async function createBulkNotifications(
-  db: Firestore,
+  db: Firestore, // 直接傳入 db
   userIds: string[],
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<void> {
@@ -116,7 +115,7 @@ export async function createBulkNotifications(
 
     await batch.commit();
   } catch (error) {
-    console.error('批量建立通知失敗:', error);
+    console.error('Failed to create bulk notifications:', error);
     throw error;
   }
 }
@@ -413,137 +412,6 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
 }
 
 /**
- * 發送推播通知
- */
-export async function sendPushNotification(
-  userId: string,
-  payload: PushNotificationPayload
-): Promise<void> {
-  try {
-    const userRef = doc(db, USERS, userId);
-    const userSnap = await getDoc(userRef);
-    const userData = userSnap.data() as AppUser;
-
-    if (!userData?.notificationSettings?.enablePushNotifications) {
-      console.log('用戶已停用推播通知');
-      return;
-    }
-
-    // 檢查靜音時段
-    const settings = userData.notificationSettings;
-    if (settings.quietHours?.enabled) {
-      const now = new Date();
-      const [startHour, startMinute] = settings.quietHours.startTime.split(':').map(Number);
-      const [endHour, endMinute] = settings.quietHours.endTime.split(':').map(Number);
-      
-      const startTime = new Date();
-      startTime.setHours(startHour, startMinute, 0);
-      
-      const endTime = new Date();
-      endTime.setHours(endHour, endMinute, 0);
-      
-      if (now >= startTime && now <= endTime) {
-        console.log('目前處於靜音時段');
-        return;
-      }
-    }
-
-    // 檢查用戶是否有 FCM Token
-    if (!userData.fcmTokens?.length) {
-      throw new Error('用戶沒有註冊的 FCM Token');
-    }
-
-    // 建立通知記錄
-    const notificationId = await createNotification(db, userId, {
-      title: payload.title,
-      message: payload.body,
-      type: 'info',
-      category: 'system',
-      data: payload.data,
-      actionUrl: payload.clickAction,
-      priority: payload.priority || 'normal',
-    });
-
-    // 發送 FCM 推播
-    if (userData.fcmTokens?.length > 0) {
-      const message = {
-        notification: {
-          title: payload.title,
-          body: payload.body,
-          icon: payload.icon,
-          badge: payload.badge,
-          image: payload.image,
-        },
-        data: {
-          ...payload.data,
-          notificationId,
-          clickAction: payload.clickAction,
-          groupId: payload.tag,
-        },
-        android: {
-          priority: payload.priority || 'normal',
-          ttl: payload.ttl || 24 * 60 * 60 * 1000, // 24小時
-          notification: {
-            channelId: 'default',
-            priority: payload.priority || 'normal',
-            defaultSound: true,
-            defaultVibrateTimings: true,
-            defaultLightSettings: true,
-          },
-        },
-        apns: {
-          payload: {
-            aps: {
-              sound: 'default',
-              badge: 1,
-              contentAvailable: true,
-              mutableContent: true,
-            },
-          },
-          headers: {
-            'apns-priority': payload.priority === 'high' ? '10' : '5',
-            'apns-expiration': payload.ttl ? String(Math.floor(Date.now() / 1000) + payload.ttl) : undefined,
-          },
-        },
-        webpush: {
-          headers: {
-            Urgency: payload.priority || 'normal',
-            TTL: payload.ttl ? String(payload.ttl / 1000) : '86400',
-          },
-          notification: {
-            requireInteraction: payload.requireInteraction ?? true,
-            silent: payload.silent ?? false,
-            vibrate: payload.vibrate || [200, 100, 200],
-            tag: payload.tag,
-            renotify: true,
-            actions: payload.clickAction ? [
-              {
-                action: 'open',
-                title: '開啟'
-              }
-            ] : [],
-          },
-        },
-        tokens: userData.fcmTokens,
-      };
-
-      // 使用 Firebase Admin SDK 發送推播
-      // 注意：這需要在後端實作
-      await fetch('/api/notifications/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(message),
-      });
-    }
-  } catch (error) {
-    console.error('發送推播通知失敗:', error);
-    throw error;
-  }
-}
-
-/**
  * 更新用戶通知設定
  */
 export async function updateUserNotificationSettings(
@@ -551,13 +419,14 @@ export async function updateUserNotificationSettings(
   settings: Partial<AppUser['notificationSettings']>
 ): Promise<void> {
   try {
+    // 直接使用 db
     const userRef = doc(db, USERS, userId);
     await updateDoc(userRef, {
       'notificationSettings': settings,
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('更新通知設定失敗:', error);
+    console.error('Failed to update notification settings:', error);
     throw error;
   }
 }

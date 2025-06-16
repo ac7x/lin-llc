@@ -90,4 +90,19 @@ export type NotificationPreferences = {
   vibration: boolean;
   priority: 'high' | 'normal';
   categories: string[];
+};
+
+/**
+ * 用戶裝置資訊型別
+ */
+export type UserDevice = {
+  deviceId: string; // Firebase Installation ID
+  fcmToken?: string; // FCM Token
+  deviceType: 'web' | 'mobile' | 'tablet';
+  browser?: string;
+  os?: string;
+  lastActive: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }; 

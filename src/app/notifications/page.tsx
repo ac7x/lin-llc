@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useNotifications } from '@/app/notifications/hooks/useNotifications';
+import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { 

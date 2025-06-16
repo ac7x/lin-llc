@@ -20,37 +20,26 @@ const messaging = firebase.messaging();
 
 // 處理背景通知
 messaging.onBackgroundMessage((payload) => {
-  const { title, body, icon, badge, image, data, clickAction } = payload.notification;
-
+  console.log('收到背景通知:', payload);
+  
+  const notificationTitle = payload.notification.title;
   const notificationOptions = {
-    body,
-    icon: icon || '/icons/notification-icon.png',
-    badge: badge || '/icons/notification-badge.png',
-    image,
-    data,
-    actions: clickAction ? [
-      {
-        action: 'open',
-        title: '開啟'
-      }
-    ] : [],
-    requireInteraction: true,
-    vibrate: [200, 100, 200],
-    tag: data?.groupId || 'default',
-    renotify: true,
-    silent: false
+    body: payload.notification.body,
+    icon: '/icons/notification-icon.png'
   };
 
-  return self.registration.showNotification(title, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // 處理通知點擊
 self.addEventListener('notificationclick', (event) => {
+  console.log('通知被點擊:', event);
+
   event.notification.close();
-
-  const { data } = event.notification;
-  const urlToOpen = data?.clickAction || '/';
-
+  
+  // 如果有點擊動作 URL，則開啟該頁面
+  const urlToOpen = event.notification.data?.clickAction || '/';
+  
   event.waitUntil(
     clients.matchAll({
       type: 'window',
