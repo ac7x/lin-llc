@@ -1,0 +1,68 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+  minInstances: 0
+  # maxInstances: 100
+  # concurrency: 80
+  # cpu: 1
+  # memoryMiB: 512
+
+# Environment variables and secrets.
+env:
+  # Configure environment variables.
+  # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "lin-llc.firebaseapp.com"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "lin-llc"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "lin-llc.firebasestorage.app"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "394023041902"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:394023041902:web:f9874be5d0d192557b1f7f"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: "G-62JEHK00G8"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_OPENWEATHERMAP_API_KEY
+    value: "75d07b2345362f4603a113aee9c6747c"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_USE_FIREBASE_EMULATOR
+    value: "true"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+    value: "6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: RECAPTCHA_SECRET_KEY
+    value: "6LepxlYrAAAAABPi52vTvGsVP4BpZh4UPPu_WNLQ"
+    availability:
+      - BUILD
+      - RUNTIME
