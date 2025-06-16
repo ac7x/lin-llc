@@ -2,18 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from './hooks/useAuth';
-import { ROLE_NAMES } from '@/constants/roles';
 
 export default function SignInPage() {
   const router = useRouter();
-  const { user, userData, loading, error, signInWithGoogle } = useAuth();
+  const { user, loading, error, signInWithGoogle } = useAuth();
 
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
       router.push('/');
     } catch (err) {
-      // 錯誤已在 useAuth 中處理
       console.error('登入失敗:', err);
     }
   };
@@ -22,31 +20,8 @@ export default function SignInPage() {
     return <div className="flex justify-center items-center min-h-screen">載入中...</div>;
   }
 
-  if (user && userData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md p-8 space-y-4 bg-white rounded-lg shadow-md">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">您已經登入</h1>
-            <p className="mt-2 text-gray-600">歡迎回來，{userData.displayName}</p>
-          </div>
-          
-          <div className="mt-4">
-            <h2 className="text-lg font-semibold mb-2">您的角色：</h2>
-            <div className="space-y-2">
-              {Object.entries(userData.roles).map(([role, hasRole]) => (
-                hasRole && (
-                  <div key={role} className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    <span>{ROLE_NAMES[role as keyof typeof ROLE_NAMES]}</span>
-                  </div>
-                )
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  if (user) {
+    return <div className="flex justify-center items-center min-h-screen">您已經登入</div>;
   }
 
   return (
