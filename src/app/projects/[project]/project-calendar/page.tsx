@@ -20,7 +20,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import "@/styles/react-big-calendar.css";
 import { Workpackage, SubWorkpackage } from "@/types/project";
-import { ProgressColorScale } from "@/utils/colorScales";
+import { ProgressColorScale } from "@/utils/colorUtils";
 
 const localizer = dateFnsLocalizer({
     format,
