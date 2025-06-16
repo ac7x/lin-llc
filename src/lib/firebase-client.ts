@@ -18,7 +18,9 @@ import {
   setPersistence,
   browserLocalPersistence,
   getRedirectResult,
-  User
+  User,
+  signInWithPopup,
+  getIdToken
 } from "firebase/auth";
 import {
   getFirestore,
@@ -181,6 +183,9 @@ export {
   setPersistence,
   browserLocalPersistence,
   getRedirectResult,
+  signInWithPopup,
+  getIdToken,
+  type User,
   // Firestore
   collection,
   doc,
