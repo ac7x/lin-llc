@@ -11,128 +11,108 @@ interface RolePermissionsProps {
   onUpdate: () => Promise<void>;
 }
 
-interface Permission {
+interface PagePermission {
   id: string;
   name: string;
   description: string;
+  path: string;
 }
 
 interface RolePermissionData {
   role: RoleKey;
-  permissions: Permission[];
+  pagePermissions: PagePermission[];
   updatedAt: string;
 }
 
-const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
-  guest: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-  ],
-  temporary: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-  ],
-  helper: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-  ],
-  user: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-  ],
-  coord: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-    { id: 'assign_tasks', name: '分配任務', description: '可以分配任務給其他用戶' },
-  ],
-  safety: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-    { id: 'assign_tasks', name: '分配任務', description: '可以分配任務給其他用戶' },
-    { id: 'manage_safety', name: '管理安全事項', description: '可以管理安全相關的事項' },
-  ],
-  foreman: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-    { id: 'assign_tasks', name: '分配任務', description: '可以分配任務給其他用戶' },
-    { id: 'manage_safety', name: '管理安全事項', description: '可以管理安全相關的事項' },
-    { id: 'manage_workers', name: '管理工人', description: '可以管理工人相關事項' },
-  ],
-  vendor: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-    { id: 'manage_inventory', name: '管理庫存', description: '可以管理庫存相關事項' },
-  ],
-  finance: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-    { id: 'manage_finance', name: '管理財務', description: '可以管理財務相關事項' },
-  ],
-  manager: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-    { id: 'assign_tasks', name: '分配任務', description: '可以分配任務給其他用戶' },
-    { id: 'manage_safety', name: '管理安全事項', description: '可以管理安全相關的事項' },
-    { id: 'manage_workers', name: '管理工人', description: '可以管理工人相關事項' },
-    { id: 'manage_projects', name: '管理專案', description: '可以管理專案相關事項' },
-  ],
-  admin: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-    { id: 'assign_tasks', name: '分配任務', description: '可以分配任務給其他用戶' },
-    { id: 'manage_safety', name: '管理安全事項', description: '可以管理安全相關的事項' },
-    { id: 'manage_workers', name: '管理工人', description: '可以管理工人相關事項' },
-    { id: 'manage_projects', name: '管理專案', description: '可以管理專案相關事項' },
-    { id: 'manage_users', name: '管理用戶', description: '可以管理所有用戶' },
-    { id: 'manage_roles', name: '管理角色', description: '可以管理角色權限' },
-  ],
-  owner: [
-    { id: 'view_public', name: '查看公開資訊', description: '可以查看公開的專案資訊' },
-    { id: 'view_own_tasks', name: '查看個人任務', description: '可以查看分配給自己的任務' },
-    { id: 'create_tasks', name: '創建任務', description: '可以創建新的任務' },
-    { id: 'edit_own_tasks', name: '編輯個人任務', description: '可以編輯自己的任務' },
-    { id: 'assign_tasks', name: '分配任務', description: '可以分配任務給其他用戶' },
-    { id: 'manage_safety', name: '管理安全事項', description: '可以管理安全相關的事項' },
-    { id: 'manage_workers', name: '管理工人', description: '可以管理工人相關事項' },
-    { id: 'manage_projects', name: '管理專案', description: '可以管理專案相關事項' },
-    { id: 'manage_users', name: '管理用戶', description: '可以管理所有用戶' },
-    { id: 'manage_roles', name: '管理角色', description: '可以管理角色權限' },
-    { id: 'manage_system', name: '管理系統', description: '可以管理系統設置' },
-  ],
+const PAGE_PERMISSIONS: PagePermission[] = [
+  {
+    id: 'dashboard',
+    name: '儀表板',
+    description: '查看系統儀表板',
+    path: '/dashboard',
+  },
+  {
+    id: 'projects',
+    name: '專案管理',
+    description: '管理專案相關功能',
+    path: '/projects',
+  },
+  {
+    id: 'tasks',
+    name: '任務管理',
+    description: '管理任務相關功能',
+    path: '/tasks',
+  },
+  {
+    id: 'safety',
+    name: '安全管理',
+    description: '管理安全相關功能',
+    path: '/safety',
+  },
+  {
+    id: 'finance',
+    name: '財務管理',
+    description: '管理財務相關功能',
+    path: '/finance',
+  },
+  {
+    id: 'inventory',
+    name: '庫存管理',
+    description: '管理庫存相關功能',
+    path: '/inventory',
+  },
+  {
+    id: 'workers',
+    name: '工人管理',
+    description: '管理工人相關功能',
+    path: '/workers',
+  },
+  {
+    id: 'reports',
+    name: '報表管理',
+    description: '查看和管理報表',
+    path: '/reports',
+  },
+  {
+    id: 'settings',
+    name: '系統設置',
+    description: '管理系統設置',
+    path: '/settings',
+  },
+];
+
+const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
+  guest: ['dashboard'],
+  temporary: ['dashboard', 'tasks'],
+  helper: ['dashboard', 'tasks', 'inventory'],
+  user: ['dashboard', 'tasks', 'inventory', 'reports'],
+  coord: ['dashboard', 'tasks', 'inventory', 'reports', 'workers'],
+  safety: ['dashboard', 'tasks', 'safety', 'reports'],
+  foreman: ['dashboard', 'tasks', 'safety', 'workers', 'inventory'],
+  vendor: ['dashboard', 'tasks', 'inventory'],
+  finance: ['dashboard', 'finance', 'reports'],
+  manager: ['dashboard', 'projects', 'tasks', 'safety', 'workers', 'reports'],
+  admin: ['dashboard', 'projects', 'tasks', 'safety', 'finance', 'inventory', 'workers', 'reports', 'settings'],
+  owner: ['dashboard', 'projects', 'tasks', 'safety', 'finance', 'inventory', 'workers', 'reports', 'settings'],
 };
 
 export default function RolePermissions({ user, onUpdate }: RolePermissionsProps): React.ReactElement {
   const [selectedRole, setSelectedRole] = useState<RoleKey>((user.roles?.[0] as RoleKey) || 'guest');
   const [loading, setLoading] = useState(false);
-  const [rolePermissions, setRolePermissions] = useState<Record<RoleKey, Permission[]>>(ROLE_PERMISSIONS);
+  const [rolePermissions, setRolePermissions] = useState<Record<RoleKey, string[]>>(DEFAULT_ROLE_PERMISSIONS);
+  const [activeTab, setActiveTab] = useState<string>('page');
 
   useEffect(() => {
     const fetchRolePermissions = async (): Promise<void> => {
       try {
         const managementRef = collection(db, 'management');
         const snapshot = await getDocs(managementRef);
-        const permissions: Record<RoleKey, Permission[]> = { ...ROLE_PERMISSIONS };
+        const permissions: Record<RoleKey, string[]> = { ...DEFAULT_ROLE_PERMISSIONS };
 
         snapshot.docs.forEach((doc) => {
           const data = doc.data() as RolePermissionData;
-          if (data.role && data.permissions) {
-            permissions[data.role] = data.permissions;
+          if (data.role && data.pagePermissions) {
+            permissions[data.role] = data.pagePermissions.map(p => p.id);
           }
         });
 
@@ -145,30 +125,38 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
     void fetchRolePermissions();
   }, []);
 
-  const handleRoleChange = async (role: RoleKey): Promise<void> => {
+  const handlePermissionChange = async (permissionId: string, checked: boolean): Promise<void> => {
     try {
       setLoading(true);
+      const currentPermissions = rolePermissions[selectedRole];
+      const newPermissions = checked
+        ? [...currentPermissions, permissionId]
+        : currentPermissions.filter(id => id !== permissionId);
+
       const userRef = doc(db, 'members', user.uid);
-      const rolePermissionsRef = doc(db, 'management', role);
+      const rolePermissionsRef = doc(db, 'management', selectedRole);
 
-      // 更新用戶角色
+      // 更新用戶權限
       await updateDoc(userRef, {
-        roles: [role],
-        permissions: rolePermissions[role].map(p => p.id),
+        permissions: newPermissions,
         updatedAt: new Date().toISOString(),
       });
 
-      // 更新角色權限
+      // 更新角色權限配置
       await setDoc(rolePermissionsRef, {
-        role,
-        permissions: rolePermissions[role],
+        role: selectedRole,
+        pagePermissions: PAGE_PERMISSIONS.filter(p => newPermissions.includes(p.id)),
         updatedAt: new Date().toISOString(),
       });
 
-      setSelectedRole(role);
+      setRolePermissions(prev => ({
+        ...prev,
+        [selectedRole]: newPermissions,
+      }));
+
       await onUpdate();
     } catch (error) {
-      console.error('更新角色失敗:', error);
+      console.error('更新權限失敗:', error);
     } finally {
       setLoading(false);
     }
@@ -184,7 +172,7 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
         </label>
         <select
           value={selectedRole}
-          onChange={(e) => handleRoleChange(e.target.value as RoleKey)}
+          onChange={(e) => setSelectedRole(e.target.value as RoleKey)}
           disabled={loading}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
         >
@@ -196,22 +184,49 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
         </select>
       </div>
 
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('page')}
+            className={`${
+              activeTab === 'page'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            頁面權限
+          </button>
+        </nav>
+      </div>
+
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-          {ROLE_NAMES[selectedRole]} 權限列表
+          {ROLE_NAMES[selectedRole]} 頁面權限設置
         </h3>
         <div className="grid gap-4">
-          {rolePermissions[selectedRole].map((permission) => (
+          {PAGE_PERMISSIONS.map((permission) => (
             <div
               key={permission.id}
-              className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+              className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between"
             >
-              <h4 className="font-medium text-gray-900 dark:text-white">
-                {permission.name}
-              </h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {permission.description}
-              </p>
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white">
+                  {permission.name}
+                </h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {permission.description}
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={rolePermissions[selectedRole].includes(permission.id)}
+                  onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
+                  disabled={loading}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+              </label>
             </div>
           ))}
         </div>
