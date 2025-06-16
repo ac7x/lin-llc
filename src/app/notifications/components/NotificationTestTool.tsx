@@ -14,7 +14,7 @@
 import React, { useState } from 'react';
 import { useAuth } from "@/hooks/useAuth";
 import { createNotification } from '@/app/notifications/lib/firebase-notifications';
-import type { NotificationMessage } from '@/types/user';
+import type { NotificationMessage } from '@/app/notifications/types/notifications';
 import { db } from '@/lib/firebase-client';
 
 const NOTIFICATION_TYPES: NotificationMessage['type'][] = ['info', 'success', 'warning', 'error'];

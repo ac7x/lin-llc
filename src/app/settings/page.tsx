@@ -18,7 +18,7 @@ import { ROLE_NAMES } from "@/utils/authUtils";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import { usePermissions } from '@/hooks/usePermissions';
-import { PermissionCategory } from '@/components/settings/PermissionCategory';
+import { PermissionCategory } from '@/app/settings/components/PermissionCategory';
 import type { Role, UnifiedPermission } from '@/types/permission';
 
 // 預設導航項目

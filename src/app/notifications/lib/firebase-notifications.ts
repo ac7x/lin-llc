@@ -22,7 +22,8 @@ import {
 } from '@/lib/firebase-client'; // 直接從 lib 匯入
 import { Firestore } from 'firebase/firestore'; // Firestore 型別正確來源
 import { COLLECTIONS } from '../../../lib/firebase-config';
-import type { NotificationMessage, AppUser } from '@/types/user';
+import type { NotificationMessage } from '@/app/notifications/types/notifications';
+import type { AppUser } from '@/types/user';
 
 const { NOTIFICATIONS, USERS } = COLLECTIONS;
 
