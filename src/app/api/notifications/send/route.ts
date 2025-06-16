@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
 import { adminMessaging, adminAuth } from '@/lib/firebase-admin';
-import type { NotificationMessage } from '@/types/notification';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
 import type { MulticastMessage, SendResponse } from 'firebase-admin/messaging';
 
 // 通知發送限制

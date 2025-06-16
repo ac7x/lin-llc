@@ -20,15 +20,11 @@ import { NOTIFICATION_TYPES, NOTIFICATION_CATEGORIES } from '../notifications/co
 import { sendPushNotification } from '../notifications/lib/firebase-notifications';
 import type { PushNotificationPayload } from '@/types/notification';
 import { 
-  BellIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   CheckCircleIcon,
   XCircleIcon,
-  PaperAirplaneIcon,
-  UserGroupIcon,
-  ClockIcon,
-  AdjustmentsHorizontalIcon
+  PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 
 interface NotificationFormData {
@@ -67,8 +63,6 @@ export default function SendNotificationPage() {
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
 
   // 檢查權限
   const hasPermission = permissions?.some(p => p.id === 'notification.send');

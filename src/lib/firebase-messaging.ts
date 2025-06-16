@@ -3,10 +3,9 @@
  * 提供 Web Push 通知相關功能
  */
 
-import { getMessaging, getToken, onMessage, deleteToken, Messaging } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, deleteToken, MessagePayload } from 'firebase/messaging';
 import { firebaseApp } from './firebase-client';
 import { db, doc, updateDoc, arrayUnion, arrayRemove } from './firebase-client';
-import type { AppUser } from '@/types/user';
 
 const messaging = getMessaging(firebaseApp);
 
@@ -88,7 +87,7 @@ export async function removeUserFCMToken(userId: string, token: string): Promise
 }
 
 // 監聽 FCM 訊息
-export function onFCMMessage(callback: (payload: any) => void): () => void {
+export function onFCMMessage(callback: (payload: MessagePayload) => void): () => void {
   return onMessage(messaging, (payload) => {
     callback(payload);
   });
