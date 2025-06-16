@@ -13,7 +13,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from "@/hooks/useAuth";
-import { createNotification } from '@/lib/firebase-notifications';
+import { createNotification } from '@/app/notifications/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';
 import { db } from '@/lib/firebase-client';
 

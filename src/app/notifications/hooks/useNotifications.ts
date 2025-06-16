@@ -14,7 +14,7 @@ import {
   markAllNotificationsAsRead,
   getUnreadNotificationCount,
   archiveNotification,
-} from '@/lib/firebase-notifications';
+} from '@/app/notifications/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/user';
 
 interface UseNotificationsReturn {
