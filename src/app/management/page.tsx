@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import Image from 'next/image';
 import { db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/user';
-import type { Role } from '@/types/permission';
-import { getDefaultPermissionsForRole } from '@/constants/permissions';
 import RolePermissions from './components/RolePermissions';
 
 interface UserManagementState {
@@ -49,26 +47,6 @@ export default function ManagementPage(): React.ReactElement {
         ...prev,
         error: '載入用戶資料失敗',
         loading: false,
-      }));
-    }
-  };
-
-  const handleRoleChange = async (userId: string, newRoles: Role[]): Promise<void> => {
-    try {
-      const userRef = doc(db, 'members', userId);
-      const permissions = newRoles.flatMap(role => getDefaultPermissionsForRole(role));
-      
-      await updateDoc(userRef, {
-        roles: newRoles,
-        permissions: [...new Set(permissions)],
-        updatedAt: new Date().toISOString(),
-      });
-
-      await fetchUsers();
-    } catch {
-      setState(prev => ({
-        ...prev,
-        error: '更新用戶角色失敗',
       }));
     }
   };
