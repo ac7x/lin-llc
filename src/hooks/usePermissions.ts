@@ -59,7 +59,10 @@ export function usePermissions(userId: string | undefined) {
 
   // 檢查權限
   const hasPermission = useCallback((permissionId: string, userRoles: Role[]) => {
-    return permissionManagerRef.current.checkPermission(userRoles, permissionId).hasPermission;
+    console.log('檢查權限:', { permissionId, userRoles });
+    const result = permissionManagerRef.current.checkPermission(userRoles, permissionId);
+    console.log('權限檢查結果:', result);
+    return result.hasPermission;
   }, []);
 
   // 更新權限

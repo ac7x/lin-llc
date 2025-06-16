@@ -71,7 +71,7 @@ export default function SendNotificationPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // 檢查權限
-  const hasPermission = permissions?.some(p => p.id === 'send_notifications');
+  const hasPermission = permissions?.some(p => p.id === 'notification.send');
 
   useEffect(() => {
     if (sendStatus) {
