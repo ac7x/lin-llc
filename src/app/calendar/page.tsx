@@ -20,7 +20,7 @@ import "@/styles/react-big-calendar.css";
 import { doc, getDoc } from "firebase/firestore";
 
 import { Workpackage } from "@/types/project";
-import { ProgressColorScale } from "@/utils/colorScales";
+import { ProgressColorScale } from "@/utils/colorUtils";
 
 // 定義導航權限項目的型別
 interface NavPermissionItem {
