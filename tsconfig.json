@@ -47,10 +47,11 @@
       "charts",
       "env",
       "finance",
+      "notification",
+      "permission",
       "project",
       "settings",
-      "user",
-      "notification"
+      "user"
     ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

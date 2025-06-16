@@ -3,8 +3,9 @@
  * 包含角色階層、角色名稱和角色檢查等常數
  */
 
-// 角色階層定義
+// 角色階層定義，給訪客一個最低的階層數字，比如 0 或 0.5
 export const ROLE_HIERARCHY = {
+  guest: 0,          // 訪客
   temporary: 1,      // 臨時員工
   helper: 2,         // 助理
   user: 3,           // 一般員工
@@ -20,8 +21,8 @@ export const ROLE_HIERARCHY = {
 
 export type RoleKey = keyof typeof ROLE_HIERARCHY;
 
-// 角色顯示名稱
 export const ROLE_NAMES: Record<RoleKey, string> = {
+  guest: '訪客',
   temporary: '臨時員工',
   helper: '助理',
   user: '一般員工',
@@ -35,8 +36,8 @@ export const ROLE_NAMES: Record<RoleKey, string> = {
   owner: '擁有者',
 } as const;
 
-// 角色檢查常數
 export const ROLE_CHECKS = {
+  guest: 'isGuest',
   owner: 'isOwner',
   admin: 'isAdmin',
   finance: 'isFinance',
@@ -49,5 +50,4 @@ export const ROLE_CHECKS = {
   vendor: 'isVendor'
 } as const;
 
-// 角色型別定義
 export type Role = RoleKey;
