@@ -1,8 +1,10 @@
 /**
  * 用戶相關型別定義
- * 包含用戶資料、裝置資訊、通知設定等資料結構
+ * 包含用戶資料、裝置資訊等資料結構
  * 用於管理系統中的用戶資料和相關功能
  */
+
+import type { NotificationSettings } from '@/app/notifications/types/notifications';
 
 // 定義自訂的 AppUser 型別，專門用於描述我們的用戶資料結構
 export interface AppUser {
@@ -22,22 +24,8 @@ export interface AppUser {
         creationTime?: string;
         lastSignInTime?: string;
     };
-    notificationSettings?: {
-        enablePushNotifications: boolean;
-        enableEmailNotifications: boolean;
-        notificationTypes: {
-            projectUpdates: boolean;
-            scheduleChanges: boolean;
-            systemAlerts: boolean;
-            workProgress: boolean;
-            emergencyAlerts: boolean;
-        };
-        quietHours?: {
-            enabled: boolean;
-            startTime: string; // HH:mm format
-            endTime: string; // HH:mm format
-        };
-    };
+    notificationSettings?: NotificationSettings;
+    fcmTokens?: string[]; // FCM Token 列表
 }
 
 // 擴展 Firebase User 型別
@@ -60,49 +48,4 @@ export type UserDevice = {
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
-};
-
-// 通知設定
-export type NotificationSettings = {
-    enablePushNotifications: boolean;
-    enableEmailNotifications: boolean;
-    notificationTypes: {
-        projectUpdates: boolean;
-        scheduleChanges: boolean;
-        systemAlerts: boolean;
-        workProgress: boolean;
-        emergencyAlerts: boolean;
-    };
-    quietHours?: {
-        enabled: boolean;
-        startTime: string; // HH:mm format
-        endTime: string; // HH:mm format
-    };
-};
-
-// 通知消息型別
-export type NotificationMessage = {
-    id: string;
-    userId: string;
-    title: string;
-    message: string;
-    type: 'info' | 'warning' | 'error' | 'success';
-    category: 'project' | 'schedule' | 'system' | 'work' | 'emergency';
-    isRead: boolean;
-    isArchived: boolean;
-    createdAt: string;
-    readAt?: string;
-    data?: Record<string, unknown>; // 額外的數據，如相關的專案ID等
-    actionUrl?: string; // 點擊通知後跳轉的URL
-};
-
-// 推播通知負載
-export type PushNotificationPayload = {
-    title: string;
-    body: string;
-    icon?: string;
-    badge?: string;
-    image?: string;
-    data?: Record<string, unknown>;
-    clickAction?: string;
 };

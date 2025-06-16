@@ -49,8 +49,8 @@
       "finance",
       "project",
       "settings",
-      "user"
-
+      "user",
+      "notification"
     ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

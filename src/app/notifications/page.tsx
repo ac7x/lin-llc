@@ -17,7 +17,7 @@ import {
   BellIcon as BellSolidIcon,
   CheckIcon as CheckSolidIcon
 } from '@heroicons/react/24/solid';
-import type { NotificationMessage } from '@/types/user';
+import type { NotificationMessage } from '@/types/notification';
 
 // 通知類型圖標映射
 const getNotificationIcon = (type: NotificationMessage['type']) => {
