@@ -171,6 +171,9 @@ export default function BottomNavigation(): React.ReactElement {
 
   const filteredNavigationItems = navigationItems.filter(item => {
     if (!user?.currentRole) return false;
+    if (item.id === 'archive') {
+      return permissions.includes('archive');
+    }
     return permissions.includes(item.id);
   });
 
