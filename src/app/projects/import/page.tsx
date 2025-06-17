@@ -11,15 +11,14 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Timestamp } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { nanoid } from "nanoid";
 import { Workpackage } from "@/types/project";
 import { ContractItem } from "@/types/finance";
 import { db } from "@/lib/firebase-client";
-import { collection, addDoc, doc, getDoc } from "firebase/firestore";
-import { useAuth } from "@/hooks/useAuth";
+import { collection, addDoc } from "firebase/firestore";
 
 // 定義合約列型別
 interface ContractRow {
@@ -31,44 +30,6 @@ interface ContractRow {
 }
 
 export default function ImportProjectPage() {
-    const { user, userRoles } = useAuth();
-    const [hasPermission, setHasPermission] = useState(false);
-    const [isLoadingPermission, setIsLoadingPermission] = useState(true);
-
-    // 檢查導航權限
-    useEffect(() => {
-        const checkPermission = async () => {
-            if (!user) {
-                setHasPermission(false);
-                setIsLoadingPermission(false);
-                return;
-            }
-
-            try {
-                const navPermissionsDoc = await getDoc(doc(db, "settings", "navPermissions"));
-                if (!navPermissionsDoc.exists()) {
-                    setHasPermission(false);
-                    setIsLoadingPermission(false);
-                    return;
-                }
-
-                const navPermissions = navPermissionsDoc.data();
-                const hasAccess = userRoles.some(role => 
-                    navPermissions[role]?.includes('projects')
-                );
-
-                setHasPermission(hasAccess);
-            } catch (error) {
-                console.error("檢查權限時發生錯誤:", error);
-                setHasPermission(false);
-            } finally {
-                setIsLoadingPermission(false);
-            }
-        };
-
-        checkPermission();
-    }, [user, userRoles]);
-
     // 取得所有已建立專案的 contractId 清單，避免重複建立
     const [projectsSnapshot] = useCollection(collection(db, "projects"));
 
@@ -176,36 +137,6 @@ export default function ImportProjectPage() {
             setImportingId(null);
         }
     };
-
-    // 如果正在載入權限，顯示載入中
-    if (isLoadingPermission) {
-        return (
-            <main className="max-w-4xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                    <div className="flex justify-center items-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    </div>
-                </div>
-            </main>
-        );
-    }
-
-    // 如果沒有權限，顯示拒絕存取訊息
-    if (!hasPermission) {
-        return (
-            <main className="max-w-4xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                    <div className="flex flex-col items-center justify-center h-64">
-                        <svg className="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">存取被拒絕</h2>
-                        <p className="text-gray-600 dark:text-gray-400">您沒有權限存取此頁面</p>
-                    </div>
-                </div>
-            </main>
-        );
-    }
 
     return (
         <main className="max-w-4xl mx-auto">
