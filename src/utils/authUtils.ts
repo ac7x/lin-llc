@@ -3,7 +3,7 @@
  * 提供統一的權限和角色管理功能
  */
 
-import type { Role, UnifiedPermission, PermissionCheckResult } from '@/types/permission';
+import type { Role, UnifiedPermission, PermissionCheckResult } from '@/types/auth';
 
 /**
  * 角色階層定義

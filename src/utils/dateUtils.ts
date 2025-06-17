@@ -7,11 +7,8 @@ import React from "react";
 import { format, isValid, parseISO, differenceInDays, addDays, isBefore, isAfter, isSameDay } from "date-fns";
 import type { Locale } from "date-fns";
 import { Timestamp } from 'firebase/firestore';
-
-/**
- * 明確定義可接受的日期型別
- */
-export type DateInput = Date | string | number | Timestamp | { toDate: () => Date };
+import { DateInput } from '@/types/common';
+import { zhTW } from 'date-fns/locale';
 
 /**
  * 支援多種日期型別的通用日期格式化元件（所有 props 為必填）
@@ -29,21 +26,20 @@ export interface DateFormatProps {
 export function parseToDate(value: DateInput): Date {
     if (value instanceof Date) return value;
     if (value instanceof Timestamp) return value.toDate();
-    if (typeof value === "string") return parseISO(value);
-    if (typeof value === "number") return new Date(value);
-    return value.toDate(); // Firestore Timestamp-like object
+    if (typeof value === 'string') return parseISO(value);
+    if (typeof value === 'number') return new Date(value);
+    throw new Error('無效的日期輸入');
 }
 
 /**
  * 將各種日期格式轉換為 Timestamp
  */
-export function toTimestamp(date: DateInput): Timestamp | null {
-    if (!date) return null;
-    if (date instanceof Timestamp) return date;
-    if (date instanceof Date) return Timestamp.fromDate(date);
-    if (typeof date === 'string') return Timestamp.fromDate(new Date(date));
-    if (typeof date === 'number') return Timestamp.fromMillis(date);
-    return null;
+export function toTimestamp(value: DateInput): Timestamp {
+    if (value instanceof Timestamp) return value;
+    if (value instanceof Date) return Timestamp.fromDate(value);
+    if (typeof value === 'string') return Timestamp.fromDate(parseISO(value));
+    if (typeof value === 'number') return Timestamp.fromMillis(value);
+    throw new Error('無效的日期輸入');
 }
 
 /**
@@ -86,7 +82,7 @@ export function isDateInRange(date: DateInput, startDate: DateInput, endDate: Da
 /**
  * 格式化日期為本地化字串
  */
-export function formatLocalDate(date: DateInput, locale: Locale): string {
+export function formatLocalDate(date: DateInput, locale: Locale = zhTW): string {
     const parsedDate = parseToDate(date);
     if (!isValid(parsedDate)) return '';
     return format(parsedDate, 'PPP', { locale });
@@ -95,7 +91,7 @@ export function formatLocalDate(date: DateInput, locale: Locale): string {
 /**
  * 格式化時間為本地化字串
  */
-export function formatLocalTime(date: DateInput, locale: Locale): string {
+export function formatLocalTime(date: DateInput, locale: Locale = zhTW): string {
     const parsedDate = parseToDate(date);
     if (!isValid(parsedDate)) return '';
     return format(parsedDate, 'p', { locale });
@@ -104,7 +100,7 @@ export function formatLocalTime(date: DateInput, locale: Locale): string {
 /**
  * 格式化日期時間為本地化字串
  */
-export function formatLocalDateTime(date: DateInput, locale: Locale): string {
+export function formatLocalDateTime(date: DateInput, locale: Locale = zhTW): string {
     const parsedDate = parseToDate(date);
     if (!isValid(parsedDate)) return '';
     return format(parsedDate, 'PPP p', { locale });
@@ -113,7 +109,7 @@ export function formatLocalDateTime(date: DateInput, locale: Locale): string {
 /**
  * 獲取相對時間描述（例如：3天前、2小時後）
  */
-export function getRelativeTimeDescription(date: DateInput, locale: Locale): string {
+export function getRelativeTimeDescription(date: DateInput, locale: Locale = zhTW): string {
     const parsedDate = parseToDate(date);
     if (!isValid(parsedDate)) return '';
     return format(parsedDate, 'PPp', { locale });

@@ -46,9 +46,9 @@
     "types": [
       "finance",
       "notification",
-      "permission",
       "project",
-      "auth"
+      "auth",
+      "common"
     ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
