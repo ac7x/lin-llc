@@ -13,7 +13,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useAuth, useCollection } from '@/hooks/useAuth';
-import Link from "next/link";
 import { useParams } from "next/navigation";
 
 // 定義封存類型
@@ -189,9 +188,11 @@ function validateData(data: ArchiveData, type: ArchiveType): boolean {
 
 export default function ArchivePage() {
     const { type } = useParams<{ type: ArchiveType }>();
-    const { db, collection, doc, getDoc } = useAuth();
+    const { db, collection, doc, getDoc, setDoc, deleteDoc, Timestamp } = useAuth();
     const [archiveRetentionDays, setArchiveRetentionDays] = useState<number>(3650);
     const [search, setSearch] = useState("");
+    const [restoringId, setRestoringId] = useState<string | null>(null);
+    const [restoreMessage, setRestoreMessage] = useState<string>("");
 
     // 獲取封存保留天數
     useEffect(() => {
@@ -210,6 +211,85 @@ export default function ArchivePage() {
     const [dataSnapshot, loading, error] = useCollection(
         collection(db, `archived/default/${type}`)
     );
+
+    // 還原封存資料
+    const handleRestore = async (row: ArchiveData) => {
+        if (!window.confirm(`確定要還原此${PAGE_TITLES[type].replace('封存', '')}嗎？`)) {
+            return;
+        }
+
+        setRestoringId(row.id);
+        setRestoreMessage("");
+        
+        try {
+            // 獲取完整的封存資料
+            const archiveDocRef = doc(db, `archived/default/${type}`, row.id);
+            const archiveSnapshot = await getDoc(archiveDocRef);
+            
+            if (!archiveSnapshot.exists()) {
+                throw new Error('封存資料不存在');
+            }
+
+            const archiveData = archiveSnapshot.data();
+            
+            // 根據類型還原到對應的集合
+            switch (type) {
+                case 'contracts':
+                    // 還原到 finance/default/contracts
+                    await setDoc(doc(db, 'finance', 'default', 'contracts', row.id), {
+                        ...archiveData,
+                        archivedAt: null, // 移除封存標記
+                        updatedAt: Timestamp.now(),
+                    });
+                    break;
+                    
+                case 'orders':
+                    // 還原到 finance/default/orders
+                    await setDoc(doc(db, 'finance', 'default', 'orders', row.id), {
+                        ...archiveData,
+                        archivedAt: null, // 移除封存標記
+                        updatedAt: Timestamp.now(),
+                    });
+                    break;
+                    
+                case 'quotes':
+                    // 還原到 finance/default/quotes
+                    await setDoc(doc(db, 'finance', 'default', 'quotes', row.id), {
+                        ...archiveData,
+                        archivedAt: null, // 移除封存標記
+                        updatedAt: Timestamp.now(),
+                    });
+                    break;
+                    
+                case 'projects':
+                    // 還原到 projects
+                    await setDoc(doc(db, 'projects', row.id), {
+                        ...archiveData,
+                        archivedAt: null, // 移除封存標記
+                        updatedAt: Timestamp.now(),
+                    });
+                    break;
+                    
+                default:
+                    throw new Error(`不支援的還原類型: ${type}`);
+            }
+            
+            // 刪除封存資料
+            await deleteDoc(archiveDocRef);
+            
+            setRestoreMessage(`已成功還原${PAGE_TITLES[type].replace('封存', '')}`);
+            
+            // 3秒後清除訊息
+            setTimeout(() => {
+                setRestoreMessage("");
+            }, 3000);
+            
+        } catch (err) {
+            setRestoreMessage(`還原失敗: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setRestoringId(null);
+        }
+    };
 
     // 處理資料
     const rows = useMemo(() => {
@@ -254,6 +334,17 @@ export default function ArchivePage() {
                     {Math.round(archiveRetentionDays / 365)} 年）後自動刪除。
                 </div>
 
+                {/* 還原訊息 */}
+                {restoreMessage && (
+                    <div className={`mb-6 p-4 rounded-lg text-sm ${
+                        restoreMessage.includes('成功') 
+                            ? 'bg-green-50 dark:bg-green-900/50 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+                            : 'bg-red-50 dark:bg-red-900/50 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+                    }`}>
+                        {restoreMessage}
+                    </div>
+                )}
+
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
                         {PAGE_TITLES[type]}
@@ -284,15 +375,13 @@ export default function ArchivePage() {
                                     </th>
                                 ))}
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">封存日期</th>
-                                {type === 'projects' && (
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">操作</th>
-                                )}
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">操作</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={TABLE_COLUMNS[type].length + (type === 'projects' ? 3 : 2)} className="px-4 py-8 text-center">
+                                    <td colSpan={TABLE_COLUMNS[type].length + 3} className="px-4 py-8 text-center">
                                         <div className="flex items-center justify-center">
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                                         </div>
@@ -300,13 +389,13 @@ export default function ArchivePage() {
                                 </tr>
                             ) : error ? (
                                 <tr>
-                                    <td colSpan={TABLE_COLUMNS[type].length + (type === 'projects' ? 3 : 2)} className="px-4 py-4 text-center text-red-500 dark:text-red-400">
+                                    <td colSpan={TABLE_COLUMNS[type].length + 3} className="px-4 py-4 text-center text-red-500 dark:text-red-400">
                                         {String(error)}
                                     </td>
                                 </tr>
                             ) : rows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={TABLE_COLUMNS[type].length + (type === 'projects' ? 3 : 2)} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan={TABLE_COLUMNS[type].length + 3} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                         尚無封存資料
                                     </td>
                                 </tr>
@@ -322,19 +411,31 @@ export default function ArchivePage() {
                                         <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                                             {formatColumnValue(row.archivedAt, 'date')}
                                         </td>
-                                        {type === 'projects' && (
-                                            <td className="px-4 py-3 text-sm">
-                                                <Link 
-                                                    href={`/projects/${row.id}`}
-                                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-                                                >
-                                                    查看
-                                                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                </Link>
-                                            </td>
-                                        )}
+                                        <td className="px-4 py-3 text-sm">
+                                            <button
+                                                onClick={() => handleRestore(row)}
+                                                disabled={restoringId === row.id}
+                                                className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                                                    restoringId === row.id
+                                                        ? 'text-gray-400 cursor-not-allowed'
+                                                        : 'text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300'
+                                                }`}
+                                            >
+                                                {restoringId === row.id ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500 mr-1"></div>
+                                                        還原中...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        還原
+                                                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                        </svg>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, updateDoc, collection, getDocs, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
 import type { AppUser } from '@/types/user';
@@ -24,12 +24,50 @@ interface RolePermissionData {
   updatedAt: string;
 }
 
-const PAGE_PERMISSIONS: PagePermission[] = [
+export const PAGE_PERMISSIONS = [
+  // 基本權限
   {
     id: 'dashboard',
     name: '儀表板',
-    description: '查看系統儀表板',
+    description: '查看儀表板',
     path: '/dashboard',
+  },
+  {
+    id: 'profile',
+    name: '個人資料',
+    description: '管理個人資料',
+    path: '/profile',
+  },
+  // 封存功能
+  {
+    id: 'archive',
+    name: '封存功能',
+    description: '封存功能開關',
+    path: '/archive',
+  },
+  {
+    id: 'archive-orders',
+    name: '封存訂單',
+    description: '查看和管理封存訂單',
+    path: '/archive/orders',
+  },
+  {
+    id: 'archive-quotes',
+    name: '封存估價單',
+    description: '查看和管理封存估價單',
+    path: '/archive/quotes',
+  },
+  {
+    id: 'archive-contracts',
+    name: '封存合約',
+    description: '查看和管理封存合約',
+    path: '/archive/contracts',
+  },
+  {
+    id: 'archive-projects',
+    name: '封存專案',
+    description: '查看和管理封存專案',
+    path: '/archive/projects',
   },
   {
     id: 'projects',
@@ -38,69 +76,129 @@ const PAGE_PERMISSIONS: PagePermission[] = [
     path: '/projects',
   },
   {
-    id: 'tasks',
-    name: '任務管理',
-    description: '管理任務相關功能',
-    path: '/tasks',
+    id: 'schedule',
+    name: '排程管理',
+    description: '管理排程相關功能',
+    path: '/schedule',
   },
   {
-    id: 'safety',
-    name: '安全管理',
-    description: '管理安全相關功能',
-    path: '/safety',
+    id: 'orders',
+    name: '訂單管理',
+    description: '管理訂單相關功能',
+    path: '/orders',
   },
   {
-    id: 'finance',
-    name: '財務管理',
-    description: '管理財務相關功能',
-    path: '/finance',
+    id: 'quotes',
+    name: '報價管理',
+    description: '管理報價相關功能',
+    path: '/quotes',
   },
   {
-    id: 'inventory',
-    name: '庫存管理',
-    description: '管理庫存相關功能',
-    path: '/inventory',
+    id: 'contracts',
+    name: '合約管理',
+    description: '管理合約相關功能',
+    path: '/contracts',
   },
   {
-    id: 'workers',
-    name: '工人管理',
-    description: '管理工人相關功能',
-    path: '/workers',
+    id: 'notifications',
+    name: '通知管理',
+    description: '管理通知相關功能',
+    path: '/notifications',
   },
   {
-    id: 'reports',
-    name: '報表管理',
-    description: '查看和管理報表',
-    path: '/reports',
+    id: 'send-notification',
+    name: '發送通知',
+    description: '發送系統通知',
+    path: '/send-notification',
   },
   {
-    id: 'settings',
-    name: '系統設置',
-    description: '管理系統設置',
-    path: '/settings',
+    id: 'management',
+    name: '系統管理',
+    description: '管理系統設置和權限',
+    path: '/management',
   },
-];
+] as const;
 
-const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
-  guest: ['dashboard'],
-  temporary: ['dashboard', 'tasks'],
-  helper: ['dashboard', 'tasks', 'inventory'],
-  user: ['dashboard', 'tasks', 'inventory', 'reports'],
-  coord: ['dashboard', 'tasks', 'inventory', 'reports', 'workers'],
-  safety: ['dashboard', 'tasks', 'safety', 'reports'],
-  foreman: ['dashboard', 'tasks', 'safety', 'workers', 'inventory'],
-  vendor: ['dashboard', 'tasks', 'inventory'],
-  finance: ['dashboard', 'finance', 'reports'],
-  manager: ['dashboard', 'projects', 'tasks', 'safety', 'workers', 'reports'],
-  admin: ['dashboard', 'projects', 'tasks', 'safety', 'finance', 'inventory', 'workers', 'reports', 'settings'],
-  owner: ['dashboard', 'projects', 'tasks', 'safety', 'finance', 'inventory', 'workers', 'reports', 'settings'],
+export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
+  guest: ['dashboard', 'profile'],
+  temporary: ['dashboard', 'schedule', 'profile'],
+  helper: ['dashboard', 'schedule', 'orders', 'profile'],
+  user: ['dashboard', 'schedule', 'orders', 'quotes', 'profile'],
+  coord: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
+  safety: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
+  foreman: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
+  vendor: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
+  finance: ['dashboard', 'orders', 'quotes', 'contracts', 'profile'],
+  manager: [
+    'dashboard',
+    'profile',
+    'archive',
+    'archive-orders',
+    'archive-quotes',
+    'archive-contracts',
+    'archive-projects',
+    'projects',
+    'schedule',
+    'orders',
+    'quotes',
+    'contracts',
+    'notifications',
+    'send-notification',
+    'management'
+  ],
+  admin: [
+    'dashboard',
+    'profile',
+    'archive',
+    'archive-orders',
+    'archive-quotes',
+    'archive-contracts',
+    'archive-projects',
+    'projects',
+    'schedule',
+    'orders',
+    'quotes',
+    'contracts',
+    'notifications',
+    'send-notification',
+    'management'
+  ],
+  owner: [
+    'dashboard',
+    'profile',
+    'archive',
+    'archive-orders',
+    'archive-quotes',
+    'archive-contracts',
+    'archive-projects',
+    'projects',
+    'schedule',
+    'orders',
+    'quotes',
+    'contracts',
+    'notifications',
+    'send-notification',
+    'management'
+  ],
 };
 
-export default function RolePermissions({ user, onUpdate }: RolePermissionsProps): React.ReactElement {
-  const [selectedRole, setSelectedRole] = useState<RoleKey>((user.roles?.[0] as RoleKey) || 'guest');
+export default function RolePermissions({ onUpdate }: RolePermissionsProps): React.ReactElement {
+  const [selectedRole, setSelectedRole] = useState<RoleKey>('guest');
   const [loading, setLoading] = useState(false);
   const [rolePermissions, setRolePermissions] = useState<Record<RoleKey, string[]>>(DEFAULT_ROLE_PERMISSIONS);
-  const [activeTab, setActiveTab] = useState<string>('page');
+
+  // 檢查是否啟用封存功能
+  const isArchiveEnabled = rolePermissions[selectedRole].includes('archive');
+
+  // 獲取封存相關的權限
+  const archivePermissions = PAGE_PERMISSIONS.filter(p => 
+    p.id.startsWith('archive-') && p.id !== 'archive'
+  );
+
+  // 獲取非封存相關的權限
+  const nonArchivePermissions = PAGE_PERMISSIONS.filter(p => 
+    !p.id.startsWith('archive-')
+  );
 
   useEffect(() => {
     const fetchRolePermissions = async (): Promise<void> => {
@@ -128,21 +226,17 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
   const handlePermissionChange = async (permissionId: string, checked: boolean): Promise<void> => {
     try {
       setLoading(true);
-      const currentPermissions = rolePermissions[selectedRole];
-      const newPermissions = checked
-        ? [...currentPermissions, permissionId]
-        : currentPermissions.filter(id => id !== permissionId);
+      let newPermissions = checked
+        ? [...rolePermissions[selectedRole], permissionId]
+        : rolePermissions[selectedRole].filter(id => id !== permissionId);
 
-      const userRef = doc(db, 'members', user.uid);
-      const rolePermissionsRef = doc(db, 'management', selectedRole);
-
-      // 更新用戶權限
-      await updateDoc(userRef, {
-        permissions: newPermissions,
-        updatedAt: new Date().toISOString(),
-      });
+      // 如果關閉封存功能，同時移除所有封存相關的權限
+      if (permissionId === 'archive' && !checked) {
+        newPermissions = newPermissions.filter(id => !id.startsWith('archive-'));
+      }
 
       // 更新角色權限配置
+      const rolePermissionsRef = doc(db, 'management', selectedRole);
       await setDoc(rolePermissionsRef, {
         role: selectedRole,
         pagePermissions: PAGE_PERMISSIONS.filter(p => newPermissions.includes(p.id)),
@@ -164,8 +258,6 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">角色權限設置</h2>
-      
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           選擇角色
@@ -184,27 +276,13 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
         </select>
       </div>
 
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('page')}
-            className={`${
-              activeTab === 'page'
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            頁面權限
-          </button>
-        </nav>
-      </div>
-
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-          {ROLE_NAMES[selectedRole]} 頁面權限設置
+          {ROLE_NAMES[selectedRole]} 角色權限設置
         </h3>
         <div className="grid gap-4">
-          {PAGE_PERMISSIONS.map((permission) => (
+          {/* 非封存相關的權限 */}
+          {nonArchivePermissions.map((permission) => (
             <div
               key={permission.id}
               className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between"
@@ -229,6 +307,61 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
               </label>
             </div>
           ))}
+
+          {/* 封存功能開關 */}
+          <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">
+                封存功能
+              </h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                啟用/停用封存功能
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={isArchiveEnabled}
+                onChange={(e) => handlePermissionChange('archive', e.target.checked)}
+                disabled={loading}
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          {/* 封存相關的原子權限（只在封存功能開啟時顯示） */}
+          {isArchiveEnabled && (
+            <div className="mt-4 space-y-2">
+              <h4 className="font-medium text-gray-900 dark:text-white mb-4">
+                封存權限設置
+              </h4>
+              {archivePermissions.map((permission) => (
+                <div
+                  key={permission.id}
+                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between"
+                >
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      {permission.name}
+                    </h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {permission.description}
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      checked={rolePermissions[selectedRole].includes(permission.id)}
+                      onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
+                      disabled={loading}
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

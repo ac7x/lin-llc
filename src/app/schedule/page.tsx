@@ -13,16 +13,9 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, DateType } from "vis-timeline/standalone";
 import { db } from "@/lib/firebase-client";
-import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { SubWorkpackage, Workpackage } from "@/types/project";
 import { Timestamp } from "firebase/firestore";
-import { useAuth } from '@/hooks/useAuth';
-
-// 定義導航權限項目的型別
-interface NavPermissionItem {
-    id: string;
-    defaultRoles: string[];
-}
 
 interface Group extends TimelineGroup {
     id: string;
@@ -62,7 +55,6 @@ function toDate(dateInput: DateType): Date {
 }
 
 export default function ProjectsPage() {
-    const { user, userRoles, loading: authLoading } = useAuth();
     const [groups, setGroups] = useState<Group[]>([]);
     const [allItems, setAllItems] = useState<TimelineSubWorkpackage[]>([]);
     const [items, setItems] = useState<TimelineSubWorkpackage[]>([]);
@@ -70,73 +62,8 @@ export default function ProjectsPage() {
     const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const timelineRef = useRef<HTMLDivElement>(null);
-    const [authState, setAuthState] = useState<{
-        hasPermission: boolean | null;
-        isLoading: boolean;
-    }>({
-        hasPermission: null,
-        isLoading: true
-    });
 
     const quickKeywords = ["搬運", "定位", "清潔", "測試"];
-
-    // 檢查導航權限
-    useEffect(() => {
-        async function checkNavPermission() {
-            // 如果 auth 還在載入中，不進行權限檢查
-            if (authLoading) {
-                return;
-            }
-
-            if (!user || !userRoles) {
-                setAuthState({
-                    hasPermission: false,
-                    isLoading: false
-                });
-                return;
-            }
-
-            try {
-                const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
-                if (!navPermissionsDoc.exists()) {
-                    setAuthState({
-                        hasPermission: false,
-                        isLoading: false
-                    });
-                    return;
-                }
-
-                const data = navPermissionsDoc.data();
-                const scheduleNav = data.items?.find((item: NavPermissionItem) => item.id === 'schedule');
-                
-                if (!scheduleNav) {
-                    setAuthState({
-                        hasPermission: false,
-                        isLoading: false
-                    });
-                    return;
-                }
-
-                // 檢查用戶角色是否有權限
-                const hasAccess = userRoles.some(role => 
-                    scheduleNav.defaultRoles.includes(role)
-                );
-
-                setAuthState({
-                    hasPermission: hasAccess,
-                    isLoading: false
-                });
-            } catch (error) {
-                console.error('檢查導航權限失敗:', error);
-                setAuthState({
-                    hasPermission: false,
-                    isLoading: false
-                });
-            }
-        }
-
-        checkNavPermission();
-    }, [user, userRoles, authLoading]);
 
     const handleItemMove = useCallback(async (itemId: string, newStart: DateType, newEnd: DateType) => {
         const item = items.find(i => i.id === itemId);
@@ -270,36 +197,6 @@ export default function ProjectsPage() {
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
-
-    // 如果正在載入權限，顯示載入中
-    if (authState.isLoading) {
-        return (
-            <main className="max-w-4xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                    <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                    </div>
-                </div>
-            </main>
-        );
-    }
-
-    // 如果沒有權限，顯示拒絕存取訊息
-    if (!authState.hasPermission) {
-        return (
-            <main className="max-w-4xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <svg className="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">存取被拒絕</h2>
-                        <p className="text-gray-600 dark:text-gray-400">您沒有權限存取此頁面</p>
-                    </div>
-                </div>
-            </main>
-        );
-    }
 
     return (
         <main className="max-w-4xl mx-auto">

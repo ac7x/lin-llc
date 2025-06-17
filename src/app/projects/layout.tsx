@@ -21,7 +21,7 @@ import type { Project } from "@/types/project";
 import { PageLayout, PageContent, Sidebar } from "@/components/layouts/PageLayout";
 
 function SidebarContent() {
-    const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp, userRole } = useAuth();
+    const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
     const pathname = usePathname();
     const navs = [
         { label: "專案列表", href: "/projects", icon: "📋" },
@@ -95,18 +95,7 @@ function SidebarContent() {
         .map(doc => ({
             id: doc.id,
             ...doc.data()
-        }))
-        .filter(project => {
-            // admin 和 owner 可以看到所有專案
-            if (userRole === 'admin' || userRole === 'owner') {
-                return true;
-            }
-            
-            // 其他角色只能看到有設置角色的專案
-            const projectData = project as unknown as Project;
-            const projectRoles = projectData.roles || [];
-            return userRole ? projectRoles.includes(userRole) : false;
-        }) as (Project & { id: string })[] || [];
+        })) as (Project & { id: string })[] || [];
 
     return (
         <>
@@ -131,6 +120,12 @@ function SidebarContent() {
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                ) : projects.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <div className="text-gray-400 text-6xl mb-4">📋</div>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">目前沒有專案</p>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs">請先建立專案或從合約匯入</p>
                     </div>
                 ) : (
                     <ul className="space-y-2">

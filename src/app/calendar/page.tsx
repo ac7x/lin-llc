@@ -17,16 +17,9 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import "@/styles/react-big-calendar.css";
-import { doc, getDoc } from "firebase/firestore";
 
 import { Workpackage } from "@/types/project";
 import { ProgressColorScale } from "@/utils/colorUtils";
-
-// 定義導航權限項目的型別
-interface NavPermissionItem {
-    id: string;
-    defaultRoles: string[];
-}
 
 const localizer = dateFnsLocalizer({
     format,
@@ -51,7 +44,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { db, collection, getDocs, user, userRoles, loading: authLoading } = useAuth();
+    const { db, collection, getDocs } = useAuth();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
     const [loading, setLoading] = useState(true);
@@ -59,71 +52,6 @@ export default function ProjectCalendarPage() {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const calendarContainerRef = useRef<HTMLDivElement>(null);
-    const [authState, setAuthState] = useState<{
-        hasPermission: boolean | null;
-        isLoading: boolean;
-    }>({
-        hasPermission: null,
-        isLoading: true
-    });
-
-    // 檢查導航權限
-    useEffect(() => {
-        async function checkNavPermission() {
-            // 如果 auth 還在載入中，不進行權限檢查
-            if (authLoading) {
-                return;
-            }
-
-            if (!user || !userRoles) {
-                setAuthState({
-                    hasPermission: false,
-                    isLoading: false
-                });
-                return;
-            }
-
-            try {
-                const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
-                if (!navPermissionsDoc.exists()) {
-                    setAuthState({
-                        hasPermission: false,
-                        isLoading: false
-                    });
-                    return;
-                }
-
-                const data = navPermissionsDoc.data();
-                const calendarNav = data.items?.find((item: NavPermissionItem) => item.id === 'calendar');
-                
-                if (!calendarNav) {
-                    setAuthState({
-                        hasPermission: false,
-                        isLoading: false
-                    });
-                    return;
-                }
-
-                // 檢查用戶角色是否有權限
-                const hasAccess = userRoles.some(role => 
-                    calendarNav.defaultRoles.includes(role)
-                );
-
-                setAuthState({
-                    hasPermission: hasAccess,
-                    isLoading: false
-                });
-            } catch (error) {
-                console.error('檢查導航權限失敗:', error);
-                setAuthState({
-                    hasPermission: false,
-                    isLoading: false
-                });
-            }
-        }
-
-        checkNavPermission();
-    }, [user, userRoles, db, authLoading]);
 
     useEffect(() => {
         async function fetchAllWorkpackages() {
@@ -135,7 +63,6 @@ export default function ProjectCalendarPage() {
                 projectsSnapshot.forEach(docSnap => {
                     const project = docSnap.data();
                     project.workpackages?.forEach((wp: Workpackage) => {
-                        // 修正：Timestamp 需轉 Date
                         if (wp.estimatedStartDate && wp.estimatedEndDate && typeof wp.estimatedStartDate.toDate === "function" && typeof wp.estimatedEndDate.toDate === "function") {
                             const startDate = wp.estimatedStartDate.toDate();
                             const endDate = wp.estimatedEndDate.toDate();
@@ -154,7 +81,6 @@ export default function ProjectCalendarPage() {
                             });
                         }
 
-                        // 加入子工作包
                         wp.subWorkpackages?.forEach(sub => {
                             if (sub.estimatedStartDate && sub.estimatedEndDate && typeof sub.estimatedStartDate.toDate === "function" && typeof sub.estimatedEndDate.toDate === "function") {
                                 const startDate = sub.estimatedStartDate.toDate();
@@ -186,14 +112,13 @@ export default function ProjectCalendarPage() {
             }
         }
         fetchAllWorkpackages();
-    }, [collection, db, getDocs]); // <-- 只在 mount 時執行
+    }, [collection, db, getDocs]);
 
     const eventStyleGetter = (event: CalendarEvent) => {
         let backgroundColor = "#3174ad";
         let borderColor = "transparent";
         let borderStyle = "solid";
 
-        // 使用 ProgressColorScale 決定顏色
         if (event.progress !== undefined) {
             const scale = ProgressColorScale.find(
                 s => event.progress! >= s.min && event.progress! <= s.max
@@ -201,7 +126,6 @@ export default function ProjectCalendarPage() {
             if (scale) backgroundColor = scale.color;
         }
 
-        // 如果有實際日期，使用不同的邊框樣式
         if (event.actualStartDate || event.actualEndDate) {
             borderColor = "#ffffff";
             borderStyle = "dashed";
@@ -224,7 +148,6 @@ export default function ProjectCalendarPage() {
     const EventComponent = ({ event }: { event: CalendarEvent }) => {
         const isDelayed = event.actualEndDate && event.end && event.actualEndDate > event.end;
 
-        // 參考 project-calendar/page.tsx，將預計/實際時間合併顯示，條件顏色一致
         return (
             <div className="p-1">
                 <div className="text-xs text-gray-600">
@@ -254,7 +177,6 @@ ${estimatedDateRange}${actualDateRange}
 進度: ${event.progress}%`);
     };
 
-    // 新增 formats 讓月曆標題與週標題顯示中文
     const formats = {
         monthHeaderFormat: (date: Date) => format(date, "yyyy年M月", { locale: zhTW }),
         weekdayFormat: (date: Date) => "週" + "日一二三四五六".charAt(getDay(date)),
@@ -282,48 +204,14 @@ ${estimatedDateRange}${actualDateRange}
         return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
     }, []);
 
-    // chips + 搜尋框多關鍵字 OR 過濾
     const filteredEvents = events.filter(event => {
-        // 準備搜尋框多關鍵字（空白、逗號、分號分隔）
         const s = searchTerm.trim().toLowerCase();
         const searchKeywords = s ? s.split(/\s+|,|;/).filter(Boolean) : [];
-        // 若都沒填，顯示全部
         if (searchKeywords.length === 0) return true;
-        // 事件可被搜尋框任一命中就顯示
         const fields = [event.title, event.projectName, typeof event.progress === "number" ? `${event.progress}` : ""];
         const matchSearch = searchKeywords.length > 0 && searchKeywords.some(kw => fields.some(f => f?.toLowerCase().includes(kw)));
         return matchSearch;
     });
-
-    // 如果正在載入權限，顯示載入中
-    if (authState.isLoading) {
-        return (
-            <main className="max-w-4xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                    <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                    </div>
-                </div>
-            </main>
-        );
-    }
-
-    // 如果沒有權限，顯示拒絕存取訊息
-    if (!authState.hasPermission) {
-        return (
-            <main className="max-w-4xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <svg className="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">存取被拒絕</h2>
-                        <p className="text-gray-600 dark:text-gray-400">您沒有權限存取此頁面</p>
-                    </div>
-                </div>
-            </main>
-        );
-    }
 
     if (loading) return (
         <main className="max-w-4xl mx-auto">
@@ -433,7 +321,6 @@ ${estimatedDateRange}${actualDateRange}
                     <h2 className="text-lg font-medium mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">圖例說明</h2>
                     <div className="flex flex-col md:flex-row gap-4">
                         <div className="flex flex-wrap gap-4 items-center">
-                            {/* 進度狀態 */}
                             {ProgressColorScale.map((s, i) => (
                                 <span className="flex items-center" key={i}>
                                     <div className="w-4 h-3 mr-1 rounded" style={{ background: s.color }}></div>
@@ -444,7 +331,6 @@ ${estimatedDateRange}${actualDateRange}
                                     </span>
                                 </span>
                             ))}
-                            {/* 時間狀態 */}
                             <span className="flex items-center">
                                 <div className="w-10 h-2.5 bg-blue-500 mr-1 rounded"></div>
                                 <span className="text-sm mr-2">預計時間</span>
@@ -453,7 +339,6 @@ ${estimatedDateRange}${actualDateRange}
                                 <div className="w-10 h-2.5 border-l-4 border-blue-500 bg-blue-100 mr-1 rounded"></div>
                                 <span className="text-sm mr-4">實際時間</span>
                             </span>
-                            {/* 圖示說明 */}
                             <span className="flex items-center">
                                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

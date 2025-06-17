@@ -26,7 +26,7 @@ interface MemberData {
 }
 
 interface AuthState {
-  user: User | null;
+  user: (User & { currentRole?: RoleKey }) | null;
   loading: boolean;
   error: string | null;
 }
@@ -51,12 +51,27 @@ export const useAuth = (): UseAuthReturn => {
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setAuthState(prev => ({
-        ...prev,
-        user: currentUser,
-        loading: false
-      }));
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        const memberRef = doc(db, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        const memberData = memberDoc.data() as MemberData | undefined;
+        
+        setAuthState(prev => ({
+          ...prev,
+          user: {
+            ...currentUser,
+            currentRole: memberData?.currentRole || 'guest'
+          },
+          loading: false
+        }));
+      } else {
+        setAuthState(prev => ({
+          ...prev,
+          user: null,
+          loading: false
+        }));
+      }
     });
 
     return () => unsubscribe();
