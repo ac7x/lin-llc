@@ -4,24 +4,25 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   getIdToken,
-  onAuthStateChanged,
-  type User
+  onAuthStateChanged
 } from '@/lib/firebase-client';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { type RoleKey, ROLE_HIERARCHY } from '@/constants/roles';
 import type { 
-  AppUser, 
   AuthState, 
   UseAuthReturn, 
   PermissionCheckOptions,
   AuthError 
 } from '@/types/auth';
 
-const createInitialRolePermissions = (): Record<RoleKey, boolean> => {
-  const permissions = {} as Record<RoleKey, boolean>;
+const createInitialRolePermissions = (): Record<RoleKey, Record<string, boolean>> => {
+  const permissions = {} as Record<RoleKey, Record<string, boolean>>;
   (Object.keys(ROLE_HIERARCHY) as RoleKey[]).forEach((role) => {
-    permissions[role] = role === 'guest';
+    permissions[role] = {
+      dashboard: role === 'guest',
+      profile: role === 'guest'
+    };
   });
   return permissions;
 };
@@ -119,11 +120,11 @@ export const useAuth = (): UseAuthReturn => {
     if (requiredPermissions && requiredPermissions.length > 0) {
       if (checkAll) {
         return requiredPermissions.every(permission => 
-          user.rolePermissions?.[user.currentRole as RoleKey]
+          user.rolePermissions?.[user.currentRole as RoleKey]?.[permission]
         );
       }
       return requiredPermissions.some(permission => 
-        user.rolePermissions?.[user.currentRole as RoleKey]
+        user.rolePermissions?.[user.currentRole as RoleKey]?.[permission]
       );
     }
 
@@ -133,14 +134,14 @@ export const useAuth = (): UseAuthReturn => {
   const hasPermission = (permissionId: string): boolean => {
     const user = authState.user;
     if (!user || !user.currentRole) return false;
-    return user.rolePermissions?.[user.currentRole] || false;
+    return Boolean(user.rolePermissions?.[user.currentRole]?.[permissionId]);
   };
 
   const getCurrentRole = (): RoleKey | undefined => {
     return authState.user?.currentRole;
   };
 
-  const getRolePermissions = (): Record<RoleKey, boolean> | undefined => {
+  const getRolePermissions = (): Record<RoleKey, Record<string, boolean>> | undefined => {
     return authState.user?.rolePermissions;
   };
 

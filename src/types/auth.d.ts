@@ -19,7 +19,7 @@ export interface RolePermission {
 // 擴展 Firebase User 型別
 export interface AppUser extends User {
   currentRole?: RoleKey;
-  rolePermissions?: Record<RoleKey, boolean>;
+  rolePermissions?: Record<RoleKey, Record<string, boolean>>;
 }
 
 // 權限驗證結果介面
@@ -60,7 +60,7 @@ export interface UseAuthReturn {
   checkPermission: (options: PermissionCheckOptions) => Promise<boolean>;
   hasPermission: (permissionId: string) => boolean;
   getCurrentRole: () => RoleKey | undefined;
-  getRolePermissions: () => Record<RoleKey, boolean> | undefined;
+  getRolePermissions: () => Record<RoleKey, Record<string, boolean>> | undefined;
 }
 
 // 權限驗證上下文型別
