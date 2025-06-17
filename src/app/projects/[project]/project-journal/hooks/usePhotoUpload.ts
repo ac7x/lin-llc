@@ -96,7 +96,7 @@ export function usePhotoUpload({
       onUploadError?.(error instanceof Error ? error : new Error('上傳失敗'));
       resetUpload();
     }
-  }, [acceptedFileTypes, maxFileSize, onUploadComplete, onUploadError, storagePath, validateFile, resetUpload]);
+  }, [onUploadComplete, onUploadError, storagePath, validateFile, resetUpload]);
 
   return {
     isUploading,
