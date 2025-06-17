@@ -6,7 +6,7 @@ interface UnauthorizedProps {
   showBackButton?: boolean;
 }
 
-export default function Unauthorized({ 
+export function Unauthorized({ 
   message = '您沒有權限訪問此頁面', 
   showBackButton = true 
 }: UnauthorizedProps): ReactElement {

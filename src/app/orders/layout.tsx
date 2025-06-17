@@ -17,7 +17,7 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection, getDocs } from "firebase/firestore";
 import { useAuth } from "@/hooks/useAuth";
-import Unauthorized from "@/components/common/Unauthorized";
+import { Unauthorized } from '@/components/common/Unauthorized';
 import type { User } from "firebase/auth";
 import type { RoleKey } from "@/constants/roles";
 

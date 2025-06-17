@@ -15,7 +15,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuth } from '@/app/signin/hooks/useAuth';
-import Unauthorized from '@/components/common/Unauthorized';
+import { Unauthorized }from '@/components/common/Unauthorized';
 import { 
   PieChart, 
   Pie, 
