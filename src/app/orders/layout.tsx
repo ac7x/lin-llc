@@ -15,7 +15,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/app/signin/hooks/useAuth";
 import { Unauthorized } from '@/components/common/Unauthorized';
 import type { User } from "firebase/auth";
