@@ -63,9 +63,33 @@ const PAGE_PERMISSIONS: PagePermission[] = [
   },
   {
     id: 'archive',
-    name: '檔案管理',
-    description: '管理檔案相關功能',
+    name: '封存管理',
+    description: '管理封存資料',
     path: '/archive',
+  },
+  {
+    id: 'archive-orders',
+    name: '封存訂單',
+    description: '管理封存訂單',
+    path: '/archive/orders',
+  },
+  {
+    id: 'archive-quotes',
+    name: '封存估價單',
+    description: '管理封存估價單',
+    path: '/archive/quotes',
+  },
+  {
+    id: 'archive-contracts',
+    name: '封存合約',
+    description: '管理封存合約',
+    path: '/archive/contracts',
+  },
+  {
+    id: 'archive-projects',
+    name: '封存專案',
+    description: '管理封存專案',
+    path: '/archive/projects',
   },
   {
     id: 'notifications',
@@ -103,9 +127,9 @@ const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
   foreman: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
   vendor: ['dashboard', 'orders', 'quotes', 'contracts', 'profile'],
   finance: ['dashboard', 'orders', 'quotes', 'contracts', 'profile'],
-  manager: ['dashboard', 'projects', 'schedule', 'orders', 'quotes', 'contracts', 'archive', 'profile'],
-  admin: ['dashboard', 'projects', 'schedule', 'orders', 'quotes', 'contracts', 'archive', 'notifications', 'send-notification', 'management', 'profile'],
-  owner: ['dashboard', 'projects', 'schedule', 'orders', 'quotes', 'contracts', 'archive', 'notifications', 'send-notification', 'management', 'profile'],
+  manager: ['dashboard', 'projects', 'schedule', 'orders', 'quotes', 'contracts', 'archive', 'archive-orders', 'archive-quotes', 'archive-contracts', 'archive-projects', 'profile'],
+  admin: ['dashboard', 'projects', 'schedule', 'orders', 'quotes', 'contracts', 'archive', 'archive-orders', 'archive-quotes', 'archive-contracts', 'archive-projects', 'notifications', 'send-notification', 'management', 'profile'],
+  owner: ['dashboard', 'projects', 'schedule', 'orders', 'quotes', 'contracts', 'archive', 'archive-orders', 'archive-quotes', 'archive-contracts', 'archive-projects', 'notifications', 'send-notification', 'management', 'profile'],
 };
 
 export default function RolePermissions({ onUpdate }: RolePermissionsProps): React.ReactElement {
