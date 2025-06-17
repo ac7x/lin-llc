@@ -6,11 +6,12 @@
 import React from "react";
 import { format, isValid, parseISO, differenceInDays, addDays, isBefore, isAfter, isSameDay } from "date-fns";
 import type { Locale } from "date-fns";
+import { Timestamp } from 'firebase/firestore';
 
 /**
  * 明確定義可接受的日期型別
  */
-export type DateInput = Date | string | number | { toDate: () => Date };
+export type DateInput = Date | string | number | Timestamp | { toDate: () => Date };
 
 /**
  * 支援多種日期型別的通用日期格式化元件（所有 props 為必填）
@@ -27,9 +28,22 @@ export interface DateFormatProps {
  */
 export function parseToDate(value: DateInput): Date {
     if (value instanceof Date) return value;
+    if (value instanceof Timestamp) return value.toDate();
     if (typeof value === "string") return parseISO(value);
     if (typeof value === "number") return new Date(value);
     return value.toDate(); // Firestore Timestamp-like object
+}
+
+/**
+ * 將各種日期格式轉換為 Timestamp
+ */
+export function toTimestamp(date: DateInput): Timestamp | null {
+    if (!date) return null;
+    if (date instanceof Timestamp) return date;
+    if (date instanceof Date) return Timestamp.fromDate(date);
+    if (typeof date === 'string') return Timestamp.fromDate(new Date(date));
+    if (typeof date === 'number') return Timestamp.fromMillis(date);
+    return null;
 }
 
 /**
