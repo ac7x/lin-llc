@@ -35,31 +35,58 @@ export const useAuth = (): UseAuthReturn => {
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!isMounted) return;
+
       if (currentUser) {
-        const memberRef = doc(db, 'members', currentUser.uid);
-        const memberDoc = await getDoc(memberRef);
-        const memberData = memberDoc.data();
-        
-        setAuthState(prev => ({
-          ...prev,
-          user: {
-            ...currentUser,
-            currentRole: memberData?.currentRole || 'guest',
-            rolePermissions: memberData?.rolePermissions || createInitialRolePermissions()
-          },
-          loading: false
-        }));
+        try {
+          const memberRef = doc(db, 'members', currentUser.uid);
+          const memberDoc = await getDoc(memberRef);
+          const memberData = memberDoc.data();
+          
+          if (isMounted) {
+            setAuthState(prev => ({
+              ...prev,
+              user: {
+                ...currentUser,
+                currentRole: memberData?.currentRole || 'guest',
+                rolePermissions: memberData?.rolePermissions || createInitialRolePermissions()
+              },
+              loading: false,
+              error: null
+            }));
+          }
+        } catch (error) {
+          if (isMounted) {
+            setAuthState(prev => ({
+              ...prev,
+              loading: false,
+              error: {
+                code: 'auth/error',
+                message: '載入用戶資料時發生錯誤',
+                details: error
+              }
+            }));
+          }
+        }
       } else {
-        setAuthState(prev => ({
-          ...prev,
-          user: null,
-          loading: false
-        }));
+        if (isMounted) {
+          setAuthState(prev => ({
+            ...prev,
+            user: null,
+            loading: false,
+            error: null
+          }));
+        }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async (): Promise<void> => {
