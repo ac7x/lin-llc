@@ -68,6 +68,7 @@
 │   │   │   ├── import
 │   │   │   │   └── page.tsx
 │   │   │   ├── layout.tsx
+│   │   │   ├── PageLayout.tsx
 │   │   │   ├── page.tsx
 │   │   │   ├── [project]
 │   │   │   │   ├── page.tsx
@@ -109,8 +110,6 @@
 │   │   ├── common
 │   │   │   ├── PermissionCheck.tsx
 │   │   │   └── Unauthorized.tsx
-│   │   ├── layouts
-│   │   │   └── PageLayout.tsx
 │   │   ├── pdf
 │   │   │   ├── ContractPdfDocument.tsx
 │   │   │   ├── OrderPdfDocument.tsx
@@ -119,20 +118,10 @@
 │   │   └── tabs
 │   │       └── BottomNavigation.tsx
 │   ├── constants
-│   │   ├── archive.ts
-│   │   ├── env.ts
-│   │   ├── error-messages.ts
-│   │   ├── firebase.ts
-│   │   ├── locations.ts
-│   │   ├── notification-icons.ts
-│   │   ├── notifications.ts
-│   │   ├── project.ts
 │   │   └── roles.ts
 │   ├── hooks
-│   │   ├── useAuthentication.ts
 │   │   ├── useAuth.ts
-│   │   ├── useNotifications.ts
-│   │   └── usePermissions.ts
+│   │   └── useNotifications.ts
 │   ├── lib
 │   │   ├── firebase-client.ts
 │   │   ├── firebase-config.ts
@@ -145,8 +134,7 @@
 │   │   ├── finance.d.ts
 │   │   ├── notification.d.ts
 │   │   ├── permission.d.ts
-│   │   ├── project.d.ts
-│   │   └── user.d.ts
+│   │   └── project.d.ts
 │   └── utils
 │       ├── authUtils.ts
 │       ├── colorUtils.ts
@@ -155,3 +143,6 @@
 │       └── taiwanCityUtils.ts
 ├── storage.rules
 └── tsconfig.json
+
+全部檔案
+@page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @NotificationBell.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @PageLayout.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @useAuth.ts @page.tsx @layout.tsx @page.tsx @PermissionCheck.tsx @Unauthorized.tsx @ContractPdfDocument.tsx @OrderPdfDocument.tsx @pdfExport.ts @QuotePdfDocument.tsx @BottomNavigation.tsx @roles.ts @useAuth.ts @useNotifications.ts @firebase-client.ts @firebase-config.ts @firebase-notifications.ts @auth.d.ts @finance.d.ts @notification.d.ts @permission.d.ts @project.d.ts @authUtils.ts @colorUtils.ts @taiwanCityUtils.ts @dateUtils.ts @progressUtils.tsx @RolePermissions.tsx 
