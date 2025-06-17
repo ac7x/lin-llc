@@ -17,7 +17,7 @@ import { useDocument } from "react-firebase-hooks/firestore";
 import { useAuth } from '@/hooks/useAuth';
 import { Project } from "@/types/project";
 import { SubWorkpackage, Workpackage } from "@/types/project";
-import { Template, SubWorkpackageTemplateItem, TemplateToSubWorkpackageOptions, Task } from "@/types/project";
+import { Template, SubWorkpackageTemplateItem, TemplateToSubWorkpackageOptions } from "@/types/project";
 import { nanoid } from "nanoid";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 
@@ -35,16 +35,6 @@ function templateItemToSubWorkpackage(
     const now = Timestamp.now();
     const { estimatedStartDate, estimatedEndDate } = options || {};
 
-    // 創建任務
-    const tasks: Task[] = (templateItem.tasks || []).map(task => ({
-        id: nanoid(8),
-        name: task.name,
-        description: task.description || '',
-        status: 'pending',
-        completed: false,
-        createdAt: now
-    }));
-
     // 建立子工作包物件，日期欄位可為 undefined
     return {
         id: nanoid(8),
@@ -55,8 +45,8 @@ function templateItemToSubWorkpackage(
         unit: templateItem.unit,
         progress: 0,
         status: 'pending',
-        tasks: tasks,
         createdAt: now,
+        updatedAt: now,
         // 日期欄位為選填，可為 undefined
         estimatedStartDate: estimatedStartDate || undefined,
         estimatedEndDate: estimatedEndDate || undefined,
@@ -131,7 +121,6 @@ export default function WorkpackageDetailPage() {
     const [loadingTemplates, setLoadingTemplates] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
     const [templateQuantities, setTemplateQuantities] = useState<{ [id: string]: number }>({});
-    const [tasks, setTasks] = useState<Task[]>([]);
 
     useEffect(() => {
         const selected = getSelectedTemplateFromStorage();
@@ -161,23 +150,6 @@ export default function WorkpackageDetailPage() {
         };
         if (showTemplateModal && templates.length === 0) loadTemplates();
     }, [showTemplateModal, templates.length, db]);
-
-    useEffect(() => {
-        const fetchTasks = async () => {
-            try {
-                const tasksRef = collection(db, "tasks");
-                const tasksSnapshot = await getDocs(tasksRef);
-                const tasksData = tasksSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })) as Task[];
-                setTasks(tasksData);
-            } catch (error) {
-                console.error("Error fetching tasks:", error);
-            }
-        };
-        if (showTemplateModal && tasks.length === 0) fetchTasks();
-    }, [showTemplateModal, tasks.length, db]);
 
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;
@@ -246,7 +218,7 @@ export default function WorkpackageDetailPage() {
                 status: "新建立",
                 progress: 0,
                 createdAt: Timestamp.now(),
-                tasks: [],
+                updatedAt: Timestamp.now(),
                 ...dateFields,
             };
             const updatedWorkpackages = project.workpackages.map(wp =>

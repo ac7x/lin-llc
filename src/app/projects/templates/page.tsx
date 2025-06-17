@@ -57,7 +57,13 @@ export default function TemplatesAdminPage() {
 
   const handleAddItem = () => {
     if (!newItem.name) return;
-    setTemplateItems([...templateItems, { id: nanoid(8), ...newItem }]);
+    const now = Timestamp.now();
+    setTemplateItems([...templateItems, { 
+      id: nanoid(8), 
+      ...newItem,
+      createdAt: now,
+      updatedAt: now
+    }]);
     setNewItem({ name: "", description: "", unit: "項" });
   };
 

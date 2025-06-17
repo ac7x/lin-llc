@@ -13,15 +13,18 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { Timestamp, arrayUnion } from "firebase/firestore";
+import { Timestamp, arrayUnion, doc, updateDoc } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { ActivityLog, PhotoRecord, PhotoType, IssueRecord } from "@/types/project";
 import Image from 'next/image';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 import { calculateProjectProgress } from '@/utils/progressUtils';
+import { db } from '@/lib/firebase-client';
+import { toTimestamp } from '@/utils/dateUtils';
+import { format } from 'date-fns';
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
@@ -43,7 +46,7 @@ async function fetchWeather(region: string) {
 }
 
 export default function ProjectJournalPage() {
-    const { db, doc, updateDoc } = useAuth();
+    const { user } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -145,8 +148,9 @@ export default function ProjectJournalPage() {
                     type: photoTypes[i],
                     description: photoDescriptions[i],
                     reportId,
-                    createdAt: Timestamp.now(), // 修正: 應為 Timestamp
-                    createdBy: "current-user",
+                    createdAt: Timestamp.now(),
+                    updatedAt: Timestamp.now(),
+                    createdBy: user?.uid || 'anonymous',
                 });
             }).catch(error => { throw error; });
         }
@@ -169,8 +173,8 @@ export default function ProjectJournalPage() {
         }
         try {
             const now = new Date();
-            const nowTimestamp = Timestamp.fromDate(now);
-            const reportId = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+            const nowTimestamp = toTimestamp(now);
+            const reportId = format(now, 'yyyyMMdd');
             let photoRecords: PhotoRecord[] = [];
             if (photoFiles.some(file => file !== null)) {
                 photoRecords = await uploadPhotos(reportId);
@@ -197,6 +201,8 @@ export default function ProjectJournalPage() {
                                 workforce: newReport.workforceCount || 0,
                                 progress: percent,
                                 notes: '',
+                                createdAt: nowTimestamp,
+                                updatedAt: nowTimestamp,
                             });
                         }
                     }
@@ -214,7 +220,7 @@ export default function ProjectJournalPage() {
                     temperature,
                     activities,
                     date: nowTimestamp,
-                    projectProgress, // 新增專案進度記錄
+                    projectProgress,
                 }),
                 photos: arrayUnion(...photoRecords),
             });

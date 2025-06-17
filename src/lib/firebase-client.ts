@@ -49,6 +49,7 @@ import {
   arrayRemove,
   serverTimestamp,
 } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'firebase/app-check';
 import { firebaseConfig, APP_CHECK_CONFIG } from './firebase-config';
 
@@ -56,6 +57,7 @@ const app = initializeApp(firebaseConfig);
 export const firebaseApp = app;
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
 let appCheckInitialized = false;

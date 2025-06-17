@@ -16,10 +16,10 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Timestamp } from "firebase/firestore";
-import { format } from "date-fns";
-import { zhTW } from "date-fns/locale";
+import { formatLocalDate } from "@/utils/dateUtils";
 import { nanoid } from "nanoid";
 import { ExpenseData, ExpenseItem, Workpackage } from "@/types/project";
+import { BaseWithDates } from "@/types/common";
 
 export default function ProjectExpensesPage() {
     const params = useParams();
@@ -33,7 +33,7 @@ export default function ProjectExpensesPage() {
     const [expenses, setExpenses] = useState<ExpenseData[]>([]);
 
     const [newExpense, setNewExpense] = useState<Partial<ExpenseData>>({
-        expenseNumber: `EXP-${format(new Date(), "yyyyMMdd")}-${nanoid(4)}`,
+        expenseNumber: `EXP-${formatLocalDate(new Date())}-${nanoid(4)}`,
         expenseDate: Timestamp.now(),
         type: "支出",
         items: [],
@@ -75,13 +75,16 @@ export default function ProjectExpensesPage() {
         }
 
         const amount = (newExpenseItem.quantity || 0) * (newExpenseItem.unitPrice || 0);
-        const item: ExpenseItem = {
+        const now = Timestamp.now();
+        const item: ExpenseItem & BaseWithDates = {
             expenseItemId: nanoid(8),
             description: newExpenseItem.description || "",
             quantity: newExpenseItem.quantity || 0,
             unitPrice: newExpenseItem.unitPrice || 0,
             amount: amount,
             workpackageId: newExpenseItem.workpackageId || "",
+            createdAt: now,
+            updatedAt: now
         };
 
         setNewExpense(prev => ({
@@ -127,20 +130,16 @@ export default function ProjectExpensesPage() {
             const now = Timestamp.now();
             const projectData = projectDoc.data();
             
-            // 確保所有項目都有正確的 workpackageId
+            // 確保所有項目都有正確的 workpackageId 和時間戳
             const validatedItems = newExpense.items.map(item => ({
-                expenseItemId: item.expenseItemId,
-                description: item.description || "",
-                quantity: item.quantity || 0,
-                unitPrice: item.unitPrice || 0,
-                amount: item.amount || 0,
-                workpackageId: item.workpackageId || "",
-                subWorkpackageId: item.subWorkpackageId || ""
+                ...item,
+                createdAt: item.createdAt || now,
+                updatedAt: now
             }));
 
             const expenseData: ExpenseData = {
                 expenseId: editingExpense?.expenseId || nanoid(8),
-                expenseNumber: newExpense.expenseNumber || `EXP-${format(now.toDate(), "yyyyMMdd")}-${nanoid(4)}`,
+                expenseNumber: newExpense.expenseNumber || `EXP-${formatLocalDate(now)}-${nanoid(4)}`,
                 expenseDate: newExpense.expenseDate || now,
                 clientName: projectData?.clientName || "",
                 clientContact: projectData?.clientContact || "",
@@ -223,7 +222,7 @@ export default function ProjectExpensesPage() {
 
     const resetForm = () => {
         setNewExpense({
-            expenseNumber: `EXP-${format(new Date(), "yyyyMMdd")}-${nanoid(4)}`,
+            expenseNumber: `EXP-${formatLocalDate(new Date())}-${nanoid(4)}`,
             expenseDate: Timestamp.now(),
             type: "支出",
             items: [],
@@ -327,7 +326,7 @@ export default function ProjectExpensesPage() {
                                 <tr key={expense.expenseId} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200">
                                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{expense.expenseNumber}</td>
                                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                                        {expense.expenseDate ? format(expense.expenseDate.toDate(), "yyyy-MM-dd", { locale: zhTW }) : "-"}
+                                        {expense.expenseDate ? formatLocalDate(expense.expenseDate) : "-"}
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{expense.type}</td>
                                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{expense.status}</td>
@@ -382,7 +381,7 @@ export default function ProjectExpensesPage() {
                                     <input
                                         type="date"
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                        value={newExpense.expenseDate ? format(newExpense.expenseDate.toDate(), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
+                                        value={newExpense.expenseDate ? formatLocalDate(newExpense.expenseDate) : formatLocalDate(new Date())}
                                         onChange={e => setNewExpense({ ...newExpense, expenseDate: Timestamp.fromDate(new Date(e.target.value)) })}
                                         required
                                     />

@@ -146,3 +146,11 @@
 
 全部檔案
 @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @NotificationBell.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @PageLayout.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @useAuth.ts @page.tsx @layout.tsx @page.tsx @PermissionCheck.tsx @Unauthorized.tsx @ContractPdfDocument.tsx @OrderPdfDocument.tsx @pdfExport.ts @QuotePdfDocument.tsx @BottomNavigation.tsx @roles.ts @useAuth.ts @useNotifications.ts @firebase-client.ts @firebase-config.ts @firebase-notifications.ts @auth.d.ts @finance.d.ts @notification.d.ts @project.d.ts @authUtils.ts @colorUtils.ts @taiwanCityUtils.ts @dateUtils.ts @progressUtils.tsx @RolePermissions.tsx @common.d.ts 
+
+逐一使用
+src/utils/dateUtils.ts
+src/types/common.d.ts
+來實現時間代碼一致性
+
+專案
+@page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @PageLayout.tsx 

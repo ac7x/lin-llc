@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
+import { parseToDate } from '@/utils/dateUtils';
 import { 
   BellIcon, 
   CheckIcon, 
@@ -134,7 +135,7 @@ function NotificationItem({ notification, onMarkAsRead, onArchive }: Notificatio
             
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500 dark:text-gray-500">
-                {formatDistanceToNow(new Date(notification.createdAt), { 
+                {formatDistanceToNow(parseToDate(notification.createdAt), { 
                   addSuffix: true, 
                   locale: zhTW 
                 })}
@@ -142,7 +143,7 @@ function NotificationItem({ notification, onMarkAsRead, onArchive }: Notificatio
               
               {notification.readAt && (
                 <span className="text-xs text-gray-400 dark:text-gray-500">
-                  已讀於 {formatDistanceToNow(new Date(notification.readAt), { 
+                  已讀於 {formatDistanceToNow(parseToDate(notification.readAt), { 
                     addSuffix: true, 
                     locale: zhTW 
                   })}

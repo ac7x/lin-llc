@@ -16,6 +16,7 @@ import {
   archiveNotification,
 } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/notification';
+import { Timestamp } from 'firebase/firestore';
 
 interface UseNotificationsReturn {
   notifications: NotificationMessage[];
@@ -144,7 +145,7 @@ export function useNotifications(options: {
       setNotifications(prev => 
         prev.map(notification => 
           batch.includes(notification.id)
-            ? { ...notification, isRead: true, readAt: new Date().toISOString() }
+            ? { ...notification, isRead: true, readAt: Timestamp.now() }
             : notification
         )
       );
@@ -233,7 +234,7 @@ export function useNotifications(options: {
       setNotifications(prev => 
         prev.map(notification => 
           !notification.isRead 
-            ? { ...notification, isRead: true, readAt: new Date().toISOString() }
+            ? { ...notification, isRead: true, readAt: Timestamp.now() }
             : notification
         )
       );

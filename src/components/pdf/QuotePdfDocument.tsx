@@ -7,6 +7,7 @@
 
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { Timestamp } from "firebase/firestore";
+import { formatLocalDate } from '@/utils/dateUtils';
 
 Font.register({
     family: 'NotoSerifTC',
@@ -15,11 +16,7 @@ Font.register({
 
 const formatDate = (timestamp: Timestamp | null | undefined): string => {
     if (!timestamp) return "";
-    try {
-        return timestamp.toDate().toLocaleDateString();
-    } catch {
-        return "";
-    }
+    return formatLocalDate(timestamp);
 };
 
 export function QuotePdfDocument({ quote }: { quote: Record<string, unknown> }) {

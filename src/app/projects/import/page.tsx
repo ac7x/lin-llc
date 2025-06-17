@@ -87,6 +87,7 @@ export default function ImportProjectPage() {
                 status: "待開始",
                 progress: 0,
                 createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
                 budget: item.contractItemPrice, // 只取 contractItemPrice，避免重複計算
                 category: "合約項目",
                 priority: "medium",
