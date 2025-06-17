@@ -25,6 +25,7 @@ import { calculateProjectProgress } from '@/utils/progressUtils';
 import { db } from '@/lib/firebase-client';
 import { toTimestamp } from '@/utils/dateUtils';
 import { format } from 'date-fns';
+import { uploadFileWithProgress, getFileDownloadURL } from '@/lib/firebase-storage';
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
@@ -118,43 +119,108 @@ export default function ProjectJournalPage() {
         setPhotoTypes(photoTypes.filter((_, i) => i !== index));
     };
 
-    const uploadPhotos = async (reportId: string) => {
-        const storage = getStorage();
+    const uploadPhotos = async (reportId: string): Promise<PhotoRecord[]> => {
+        setUploading(true);
+        setUploadProgress(0);
         const photoRecords: PhotoRecord[] = [];
-        for (let i = 0; i < photoFiles.length; i++) {
-            if (!photoFiles[i]) continue;
-            const file = photoFiles[i];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `projects/${projectId}/photos/${Date.now()}_${i}.${fileExt}`;
-            const storageRef = ref(storage, fileName);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-            await new Promise<string>((resolve, reject) => {
-                uploadTask.on('state_changed',
-                    (snapshot) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
-                    (error) => reject(error),
-                    async () => {
-                        try {
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            resolve(downloadURL);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    }
-                );
-            }).then(downloadURL => {
-                photoRecords.push({
-                    id: `${Date.now()}_${i}`,
-                    url: downloadURL as string,
-                    type: photoTypes[i],
-                    description: photoDescriptions[i],
-                    reportId,
-                    createdAt: Timestamp.now(),
-                    updatedAt: Timestamp.now(),
-                    createdBy: user?.uid || 'anonymous',
-                });
-            }).catch(error => { throw error; });
+        
+        try {
+            for (let i = 0; i < photoFiles.length; i++) {
+                if (!photoFiles[i]) continue;
+                const file = photoFiles[i];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `projects/${projectId}/photos/${Date.now()}_${i}.${fileExt}`;
+                
+                try {
+                    console.log('[PhotoUpload] 開始上傳檔案:', {
+                        fileName,
+                        fileSize: file.size,
+                        fileType: file.type
+                    });
+
+                    const storageRef = ref(getStorage(), fileName);
+                    const uploadTask = uploadBytesResumable(storageRef, file, {
+                        contentType: file.type,
+                        customMetadata: {
+                            projectId,
+                            reportId,
+                            type: photoTypes[i],
+                            description: photoDescriptions[i],
+                            uploadedBy: user?.uid || 'anonymous',
+                            uploadedAt: new Date().toISOString(),
+                        },
+                    });
+
+                    await new Promise<void>((resolve, reject) => {
+                        uploadTask.on('state_changed',
+                            (snapshot) => {
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                const totalProgress = Math.round(((i + progress / 100) / photoFiles.length) * 100);
+                                setUploadProgress(totalProgress);
+                                console.log('[PhotoUpload] 上傳進度:', {
+                                    fileName,
+                                    progress,
+                                    totalProgress,
+                                    state: snapshot.state
+                                });
+                            },
+                            (error) => {
+                                console.error('[PhotoUpload] 上傳錯誤:', {
+                                    error,
+                                    fileName,
+                                    errorCode: error.code,
+                                    errorMessage: error.message
+                                });
+                                reject(error);
+                            },
+                            async () => {
+                                try {
+                                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                    console.log('[PhotoUpload] 上傳完成，取得下載網址:', {
+                                        fileName,
+                                        downloadURL
+                                    });
+                                    
+                                    photoRecords.push({
+                                        id: `${Date.now()}_${i}`,
+                                        url: downloadURL,
+                                        type: photoTypes[i],
+                                        description: photoDescriptions[i],
+                                        reportId,
+                                        createdAt: Timestamp.now(),
+                                        updatedAt: Timestamp.now(),
+                                        createdBy: user?.uid || 'anonymous',
+                                    });
+
+                                    resolve();
+                                } catch (error) {
+                                    console.error('[PhotoUpload] 取得下載網址失敗:', {
+                                        error,
+                                        fileName,
+                                        errorMessage: error instanceof Error ? error.message : '未知錯誤'
+                                    });
+                                    reject(error);
+                                }
+                            }
+                        );
+                    });
+                } catch (error) {
+                    console.error('[PhotoUpload] 檔案上傳失敗:', {
+                        error,
+                        fileName,
+                        errorMessage: error instanceof Error ? error.message : '未知錯誤'
+                    });
+                    throw error;
+                }
+            }
+            return photoRecords;
+        } catch (error) {
+            console.error('[PhotoUpload] 上傳過程發生錯誤:', error);
+            throw error;
+        } finally {
+            setUploading(false);
+            setUploadProgress(0);
         }
-        return photoRecords;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -234,8 +300,6 @@ export default function ProjectJournalPage() {
             alert("保存工作日誌時出錯：" + error);
         } finally {
             setSaving(false);
-            setUploading(false);
-            setUploadProgress(0);
         }
     };
 
