@@ -58,7 +58,7 @@ export interface UseAuthReturn {
   error: string | null;
   signInWithGoogle: () => Promise<void>;
   checkPermission: (options: PermissionCheckOptions) => Promise<boolean>;
-  hasPermission: (permissionId: string) => boolean;
+  hasPermission: (permissionId: string) => Promise<boolean>;
   getCurrentRole: () => RoleKey | undefined;
   getRolePermissions: () => Record<RoleKey, Record<string, boolean>> | undefined;
 }
