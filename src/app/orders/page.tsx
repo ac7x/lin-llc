@@ -21,7 +21,6 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
 import { doc, collection, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
-import type { User } from "firebase/auth";
 
 export default function OrdersPage() {
     const router = useRouter();
