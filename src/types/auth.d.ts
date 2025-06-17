@@ -4,7 +4,7 @@
  * 用於管理系統中的用戶資料和相關功能
  */
 
-import { type User, type UserMetadata, type UserInfo } from 'firebase/auth';
+import { type User, type UserMetadata } from 'firebase/auth';
 import { type RoleKey } from '@/constants/roles';
 import type { NotificationSettings } from '@/types/notification';
 import { type FieldValue } from 'firebase/firestore';
