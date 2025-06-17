@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, updateDoc, collection, getDocs, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
 import type { AppUser } from '@/types/user';
@@ -96,11 +96,10 @@ const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
   owner: ['dashboard', 'projects', 'tasks', 'safety', 'finance', 'inventory', 'workers', 'reports', 'settings'],
 };
 
-export default function RolePermissions({ user, onUpdate }: RolePermissionsProps): React.ReactElement {
-  const [selectedRole, setSelectedRole] = useState<RoleKey>((user.roles?.[0] as RoleKey) || 'guest');
+export default function RolePermissions({ onUpdate }: RolePermissionsProps): React.ReactElement {
+  const [selectedRole, setSelectedRole] = useState<RoleKey>('guest');
   const [loading, setLoading] = useState(false);
   const [rolePermissions, setRolePermissions] = useState<Record<RoleKey, string[]>>(DEFAULT_ROLE_PERMISSIONS);
-  const [activeTab, setActiveTab] = useState<string>('page');
 
   useEffect(() => {
     const fetchRolePermissions = async (): Promise<void> => {
@@ -133,16 +132,8 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
         ? [...currentPermissions, permissionId]
         : currentPermissions.filter(id => id !== permissionId);
 
-      const userRef = doc(db, 'members', user.uid);
-      const rolePermissionsRef = doc(db, 'management', selectedRole);
-
-      // 更新用戶權限
-      await updateDoc(userRef, {
-        permissions: newPermissions,
-        updatedAt: new Date().toISOString(),
-      });
-
       // 更新角色權限配置
+      const rolePermissionsRef = doc(db, 'management', selectedRole);
       await setDoc(rolePermissionsRef, {
         role: selectedRole,
         pagePermissions: PAGE_PERMISSIONS.filter(p => newPermissions.includes(p.id)),
@@ -164,8 +155,6 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">角色權限設置</h2>
-      
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           選擇角色
@@ -184,24 +173,9 @@ export default function RolePermissions({ user, onUpdate }: RolePermissionsProps
         </select>
       </div>
 
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('page')}
-            className={`${
-              activeTab === 'page'
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            頁面權限
-          </button>
-        </nav>
-      </div>
-
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-          {ROLE_NAMES[selectedRole]} 頁面權限設置
+          {ROLE_NAMES[selectedRole]} 角色權限設置
         </h3>
         <div className="grid gap-4">
           {PAGE_PERMISSIONS.map((permission) => (
