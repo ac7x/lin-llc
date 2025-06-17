@@ -6,6 +6,7 @@
  * - 深色模式支援
  * - reCAPTCHA 整合
  * - 底部導航列（僅登入用戶可見）
+ * - 全局驗證狀態
  */
 
 'use client';
@@ -15,6 +16,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import Script from "next/script";
 import BottomNavigation from '@/components/tabs/BottomNavigation';
+import { useAuth } from '@/app/signin/hooks/useAuth';
+import { Unauthorized } from '@/components/common/Unauthorized';
+import { usePathname } from 'next/navigation';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,11 +32,44 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// 不需要驗證的路徑
+const PUBLIC_PATHS = ['/signin', '/signup', '/forgot-password'];
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
+  const { user, loading } = useAuth();
+  const pathname = usePathname();
+
+  // 檢查當前路徑是否需要驗證
+  const isPublicPath = PUBLIC_PATHS.includes(pathname);
+
+  // 如果正在載入，顯示載入中狀態
+  if (loading) {
+    return (
+      <html lang="zh-TW">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <div className="flex justify-center items-center min-h-screen">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          </div>
+        </body>
+      </html>
+    );
+  }
+
+  // 如果不是公開路徑且用戶未登入，顯示未授權頁面
+  if (!isPublicPath && !user) {
+    return (
+      <html lang="zh-TW">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <Unauthorized message="請先登入以訪問此頁面" />
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="zh-TW">
       <head>
@@ -45,7 +82,7 @@ export default function RootLayout({
         <main className="pb-16">
           {children}
         </main>
-        <BottomNavigation />
+        {user && <BottomNavigation />}
       </body>
     </html>
   );
