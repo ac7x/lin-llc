@@ -12,12 +12,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import "@/styles/react-big-calendar.css";
-
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
 import { Workpackage } from "@/types/project";
 import { ProgressColorScale } from "@/utils/colorUtils";
 
@@ -44,7 +45,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { db, collection, getDocs } = useAuth();
+    const { user } = useAuth();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
     const [loading, setLoading] = useState(true);
@@ -112,7 +113,7 @@ export default function ProjectCalendarPage() {
             }
         }
         fetchAllWorkpackages();
-    }, [collection, db, getDocs]);
+    }, []);
 
     const eventStyleGetter = (event: CalendarEvent) => {
         let backgroundColor = "#3174ad";
