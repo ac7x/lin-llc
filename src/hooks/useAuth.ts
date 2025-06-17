@@ -19,6 +19,7 @@ import {
   signOut,
   db,
   firebaseApp,
+  storage,
   // Firestore core
   collection,
   doc,
@@ -77,6 +78,7 @@ interface FirebaseAuthReturn {
   isReady: boolean;
   db: Firestore;
   auth: typeof auth;
+  storage: typeof storage;
   // Firestore 功能
   collection: typeof collection;
   doc: typeof doc;
@@ -299,6 +301,7 @@ export function useAuth(): AuthReturn {
     isReady: initialized && !loading && !roleLoading,
     db,
     auth,
+    storage,
     // Firestore 功能
     collection,
     doc,

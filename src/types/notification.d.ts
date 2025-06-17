@@ -1,3 +1,5 @@
+import { DateField } from './common';
+
 /**
  * 通知相關型別定義
  * 包含通知設定、通知消息、推播負載等資料結構
@@ -36,12 +38,12 @@ export type NotificationMessage = {
   category: 'project' | 'schedule' | 'system' | 'work' | 'emergency';
   isRead: boolean;
   isArchived: boolean;
-  createdAt: string;
-  readAt?: string;
+  createdAt: DateField;
+  readAt?: DateField;
   data?: Record<string, unknown>;
   actionUrl?: string;
   priority?: 'high' | 'normal' | 'low';
-  expiresAt?: string;
+  expiresAt?: DateField;
   groupId?: string;
 };
 
@@ -76,8 +78,8 @@ export type NotificationRecord = {
   data?: Record<string, string>;
   priority: 'high' | 'normal';
   status: 'pending' | 'sent' | 'failed';
-  createdAt: Date;
-  sentAt?: Date;
+  createdAt: DateField;
+  sentAt?: DateField;
   error?: string;
 };
 

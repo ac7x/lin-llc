@@ -62,7 +62,9 @@ export default function ProjectMaterialsPage() {
                 quantity: newMaterial.quantity,
                 unit: newMaterial.unit,
                 supplier: newMaterial.supplier,
-                notes: newMaterial.notes
+                notes: newMaterial.notes,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
             };
 
             // 如果專案尚未有材料陣列，初始化一個

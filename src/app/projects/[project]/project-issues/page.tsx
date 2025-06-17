@@ -18,6 +18,7 @@ import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { IssueRecord } from "@/types/project";
 import { arrayUnion } from "firebase/firestore";
+import { formatLocalDate } from "@/utils/dateUtils";
 
 export default function ProjectIssuesPage() {
     const { db, doc, updateDoc, Timestamp } = useAuth();
@@ -81,7 +82,9 @@ export default function ProjectIssuesPage() {
                 dueDate: newIssue.dueDate
                     ? Timestamp.fromDate(new Date(newIssue.dueDate))
                     : Timestamp.now(),
-                resolved: false
+                resolved: false,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
             };
             if (!projectDoc?.data()?.issues) {
                 await updateDoc(doc(db, "projects", projectId), {
@@ -326,9 +329,7 @@ export default function ProjectIssuesPage() {
                                             </td>
                                             <td className="px-4 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">{issue.assignedTo || "-"}</td>
                                             <td className="px-4 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">
-                                                {issue.dueDate && typeof issue.dueDate.toDate === "function"
-                                                    ? issue.dueDate.toDate().toLocaleDateString()
-                                                    : "-"}
+                                                {issue.dueDate ? formatLocalDate(issue.dueDate) : "-"}
                                             </td>
                                             <td className="px-4 py-4 whitespace-nowrap">
                                                 <div className="flex space-x-2">

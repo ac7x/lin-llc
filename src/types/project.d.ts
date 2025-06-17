@@ -4,71 +4,68 @@
  * 用於管理專案生命週期中的各項活動和資源
  */
 
-import { Timestamp } from 'firebase/firestore';
+import { DateField, BaseWithDates } from './common';
 
 // ===== Workpackage/Project 型別合併區 =====
 
 export type PhotoType = 'progress' | 'issue' | 'material' | 'safety' | 'other'; // 照片類型
 
-export interface Task {
+export interface Task extends BaseWithDates {
     id: string; // 任務唯一識別碼
     name: string; // 任務名稱
     description?: string; // 任務描述（可選）
     status?: 'pending' | 'in-progress' | 'completed'; // 任務狀態（可選）
-    dueDate?: Timestamp; // 任務截止日期（可選）
+    dueDate?: DateField; // 任務截止日期（可選）
     assignedTo?: string; // 任務分配對象（可選）
     completed: boolean; // 任務是否完成
-    createdAt: Timestamp; // 任務建立時間
 }
 
 export interface ProgressHistoryRecord {
-    date: Timestamp;
+    date: DateField;
     doneCount: number;
     percent: number;
 }
 
-export interface SubWorkpackage {
+export interface SubWorkpackage extends BaseWithDates {
     id: string;
     name: string;
     description?: string;
-    actualStartDate?: Timestamp;
-    actualEndDate?: Timestamp;
+    actualStartDate?: DateField;
+    actualEndDate?: DateField;
     status?: string;
     progress?: number;
     assignedTo?: string;
-    createdAt: Timestamp;
-    tasks: Task[];
     priority?: number;
     estimatedQuantity?: number;
     actualQuantity?: number;
     unit?: string;
     budget?: number;
-    estimatedStartDate?: Timestamp;
-    estimatedEndDate?: Timestamp;
+    estimatedStartDate?: DateField;
+    estimatedEndDate?: DateField;
     progressHistory?: ProgressHistoryRecord[];
+    tasks?: Task[];
 }
 
-export interface Workpackage {
+export interface Workpackage extends BaseWithDates {
     id: string;
     name: string;
     description?: string;
-    actualStartDate?: Timestamp;
-    actualEndDate?: Timestamp;
-    estimatedStartDate?: Timestamp;
-    estimatedEndDate?: Timestamp;
+    actualStartDate?: DateField;
+    actualEndDate?: DateField;
+    estimatedStartDate?: DateField;
+    estimatedEndDate?: DateField;
     status?: string;
     progress?: number;
     assignedTo?: string;
-    createdAt: Timestamp;
     budget?: number;
     category?: string;
     priority?: 'low' | 'medium' | 'high';
     subWorkpackages: SubWorkpackage[];
 }
 
-export interface DailyReport {
+export interface DailyReport extends BaseWithDates {
     id: string;
-    date: Timestamp;
+    date: DateField;
     weather: string;
     temperature: number;
     rainfall: number;
@@ -78,23 +75,22 @@ export interface DailyReport {
     issues?: IssueRecord[] | string;
     photos: PhotoRecord[];
     createdBy: string;
-    createdAt: Timestamp;
     description?: string; // 新增，對應 UI 的工作描述
     projectProgress?: number; // 新增，記錄當日專案總進度
 }
 
-export interface ActivityLog {
+export interface ActivityLog extends BaseWithDates {
     id: string;
     workpackageId: string;
     description: string;
-    startTime: Timestamp;
-    endTime: Timestamp;
+    startTime: DateField;
+    endTime: DateField;
     workforce: number;
     progress: number;
     notes: string;
 }
 
-export interface MaterialEntry {
+export interface MaterialEntry extends BaseWithDates {
     materialId: string;
     name: string;
     quantity: number;
@@ -103,19 +99,19 @@ export interface MaterialEntry {
     notes: string;
 }
 
-export interface IssueRecord {
+export interface IssueRecord extends BaseWithDates {
     id: string;
     type: 'quality' | 'safety' | 'progress' | 'other';
     description: string;
     severity: 'low' | 'medium' | 'high';
     status: 'open' | 'in-progress' | 'resolved';
     assignedTo: string;
-    dueDate: Timestamp;
+    dueDate: DateField;
     resolution?: string;
     resolved?: boolean; // 允許 resolved 屬性，與現有程式一致
 }
 
-export interface PhotoRecord {
+export interface PhotoRecord extends BaseWithDates {
     id: string;
     url: string;
     type: PhotoType;
@@ -123,31 +119,27 @@ export interface PhotoRecord {
     workpackageId?: string;
     zoneId?: string;
     reportId?: string;
-    createdAt: Timestamp;
     createdBy: string;
 }
 
-export interface Zone {
+export interface Zone extends BaseWithDates {
     zoneId: string;
     zoneName: string;
     desc?: string;
     order?: number;
-    createdAt: Timestamp;
 }
 
-export interface Expense {
+export interface Expense extends BaseWithDates {
     id: string;
     description: string;
     amount: number;
-    date: Timestamp;
+    date: DateField;
     category: string;
-    createdAt: Timestamp;
     createdBy: string;
-    updatedAt: Timestamp;
     updatedBy: string;
 }
 
-export interface Project {
+export interface Project extends BaseWithDates {
     projectId?: string; // 專案唯一識別碼（可選）
     projectName: string; // 專案名稱
     contractId?: string; // 合約 ID（可選）
@@ -157,11 +149,9 @@ export interface Project {
     safety?: string; // 專案安全負責人（可選）
     area?: string; // 專案區域（可選）
     address?: string; // 專案地址（可選）
-    startDate?: Timestamp; // 專案開始日期（可選）
-    estimatedEndDate?: Timestamp; // 預計結束日期（可選）
+    startDate?: DateField; // 專案開始日期（可選）
+    estimatedEndDate?: DateField; // 預計結束日期（可選）
     owner?: string; // 專案擁有者（可選）
-    createdAt: Timestamp; // 專案建立時間
-    updatedAt: Timestamp; // 專案更新時間
     zones?: Zone[]; // 專案區域清單（可選）
     supervisor?: string; // 專案監督人（可選）
     safetyOfficer?: string; // 專案安全官（可選）
@@ -179,7 +169,7 @@ export interface Project {
 
 // ===== Template 型別區 =====
 
-export interface SubWorkpackageTemplateItem {
+export interface SubWorkpackageTemplateItem extends BaseWithDates {
     id: string;
     name: string;
     description?: string;
@@ -191,15 +181,13 @@ export interface SubWorkpackageTemplateItem {
     }[];
 }
 
-export interface Template {
+export interface Template extends BaseWithDates {
     id: string;
     name: string;
     description: string;
     category: string;
     subWorkpackages: SubWorkpackageTemplateItem[];
     createdBy: string;
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
 }
 
 /**
@@ -210,11 +198,11 @@ export interface Template {
  */
 export type TemplateToSubWorkpackageOptions = {
     workpackageId?: string;
-    estimatedStartDate?: Timestamp;
-    estimatedEndDate?: Timestamp;
+    estimatedStartDate?: DateField;
+    estimatedEndDate?: DateField;
 };
 
-export interface ExpenseItem {
+export interface ExpenseItem extends BaseWithDates {
     expenseItemId: string; // 項目唯一識別碼
     description: string; // 項目描述
     quantity: number; // 項目數量
@@ -224,10 +212,10 @@ export interface ExpenseItem {
     subWorkpackageId?: string; // 可選：關聯子工作包
 }
 
-export interface ExpenseData {
+export interface ExpenseData extends BaseWithDates {
     expenseId: string; // 支出編號
     expenseNumber: string; // 支出號碼
-    expenseDate: Timestamp; // 支出日期
+    expenseDate: DateField; // 支出日期
     clientName: string; // 客戶名稱
     clientContact: string; // 客戶聯絡人
     clientPhone: string; // 客戶電話
@@ -238,18 +226,16 @@ export interface ExpenseData {
     totalAmount: number; // 總金額
     relatedOrderId?: string; // 相關訂單編號（可選）
     relatedContractId?: string; // 相關合約編號（可選）
-    createdAt: Timestamp; // 建立時間
-    updatedAt: Timestamp; // 更新時間
     status: 'draft' | 'issued' | 'cancelled'; // 支出狀態
     notes?: string; // 備註（可選）
     expenseName?: string; // 支出名稱（對應專案名稱，可選）
     expenses?: Expense[]; // 支出紀錄（可選）
 }
 
-export interface ContractData {
+export interface ContractData extends BaseWithDates {
     contractId: string; // 合約唯一識別碼
     contractNumber: string; // 合約編號
-    contractDate: Timestamp; // 合約日期
+    contractDate: DateField; // 合約日期
     clientName: string; // 客戶名稱
     clientContact: string; // 客戶聯絡人
     clientPhone: string; // 客戶電話
@@ -259,8 +245,6 @@ export interface ContractData {
     items: ContractItem[]; // 合約項目清單
     totalAmount: number; // 總金額
     relatedOrderId?: string; // 相關訂單編號（可選）
-    createdAt: Timestamp; // 建立時間
-    updatedAt: Timestamp; // 更新時間
     status: 'draft' | 'issued' | 'cancelled'; // 合約狀態
     notes?: string; // 備註（可選）
     contractName?: string; // 合約名稱（對應專案名稱，可選）

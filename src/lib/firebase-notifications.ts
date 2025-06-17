@@ -20,7 +20,7 @@ import {
   writeBatch,
   db // 直接從 firebase-client 匯入 db
 } from '@/lib/firebase-client'; // 直接從 lib 匯入
-import { Firestore } from 'firebase/firestore'; // Firestore 型別正確來源
+import { Firestore, Timestamp } from 'firebase/firestore'; // Firestore 型別正確來源
 import { COLLECTIONS } from './firebase-config';
 import type { NotificationMessage } from '@/types/notification';
 import type { AppUser } from '@/types/auth';
@@ -70,7 +70,7 @@ export async function createNotification(
       userId,
       isRead: false,
       isArchived: false,
-      createdAt: new Date().toISOString(),
+      createdAt: Timestamp.now(),
     };
 
     const docRef = await addDoc(collection(db, NOTIFICATIONS), {
@@ -95,7 +95,7 @@ export async function createBulkNotifications(
 ): Promise<void> {
   try {
     const batch = writeBatch(db);
-    const now = new Date().toISOString();
+    const now = Timestamp.now();
 
     userIds.forEach((userId) => {
       const notificationRef = doc(collection(db, NOTIFICATIONS));
@@ -212,7 +212,11 @@ async function getBasicNotifications(
   })) as NotificationMessage[];
 
   notifications = notifications
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a, b) => {
+      const aTime = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
+      const bTime = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
+      return bTime - aTime;
+    })
     .filter(n => {
       if (!includeArchived && n.isArchived) return false;
       if (onlyUnread && n.isRead) return false;
@@ -253,9 +257,11 @@ export function subscribeToUserNotifications(
     })) as NotificationMessage[];
 
     // 在記憶體中進行排序和過濾
-    notifications = notifications.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    notifications = notifications.sort((a, b) => {
+      const aTime = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
+      const bTime = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
+      return bTime - aTime;
+    });
 
     if (!includeArchived) {
       notifications = notifications.filter(n => !n.isArchived);

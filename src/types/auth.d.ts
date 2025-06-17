@@ -116,3 +116,36 @@ export interface AuthContextType extends UseAuthReturn {
   updateUserRole: (role: RoleKey) => Promise<void>;
   updateUserPermissions: (permissions: Record<RoleKey, boolean>) => Promise<void>;
 }
+
+// 所有角色定義
+export type Role =
+  | 'owner'
+  | 'admin'
+  | 'finance'
+  | 'user'
+  | 'helper'
+  | 'temporary'
+  | 'coord'
+  | 'safety'
+  | 'foreman'
+  | 'vendor';
+
+// 統一權限定義
+export interface UnifiedPermission {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  type: 'system' | 'navigation' | 'feature';
+  roles: Role[];
+  parentId?: string;
+  children?: string[];
+  icon?: string;
+  path?: string;
+}
+
+// 權限檢查結果型別
+export interface PermissionCheckResult {
+  hasPermission: boolean;
+  message?: string;
+}

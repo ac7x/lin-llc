@@ -4,7 +4,7 @@
  * 用於管理專案中的財務文件和交易記錄
  */
 
-import { Timestamp } from 'firebase/firestore';
+import { DateField, BaseWithDates } from './common';
 
 /**
  * 合約項目資料
@@ -39,7 +39,7 @@ export interface OrderItem {
 /**
  * 合約主體資料
  */
-export interface ContractData {
+export interface ContractData extends BaseWithDates {
     contractId: string; // 合約唯一識別碼
     contractName: string; // 合約名稱
     contractPrice: number; // 合約總價
@@ -48,8 +48,6 @@ export interface ContractData {
     clientContact: string; // 客戶聯絡人
     clientPhone: string; // 客戶電話
     clientEmail: string; // 客戶 Email
-    createdAt: Timestamp; // 建立時間
-    updatedAt: Timestamp; // 更新時間
     sourceType: 'order' | 'quote'; // 來源型態（訂單或報價）
     sourceId: string; // 來源單號
     contractContent: string; // 合約內容
@@ -62,7 +60,7 @@ export interface ContractData {
 /**
  * 訂單主體資料
  */
-export interface OrderData {
+export interface OrderData extends BaseWithDates {
     orderId: string; // 訂單編號
     orderName: string; // 訂單名稱
     orderPrice: number; // 訂單總價
@@ -72,15 +70,13 @@ export interface OrderData {
     clientContact: string; // 客戶聯絡人
     clientPhone: string; // 客戶電話
     clientEmail: string; // 客戶 Email
-    createdAt: Timestamp; // 建立時間
-    updatedAt: Timestamp; // 更新時間
-    archivedAt?: Timestamp; // 封存日期（可選）
+    archivedAt?: DateField; // 封存日期（可選）
 }
 
 /**
  * 報價單主體資料
  */
-export interface QuoteData {
+export interface QuoteData extends BaseWithDates {
     quoteId: string; // 報價單編號
     quoteName: string; // 報價單名稱
     quotePrice: number; // 報價單總價
@@ -90,6 +86,4 @@ export interface QuoteData {
     clientContact: string; // 客戶聯絡人
     clientPhone: string; // 客戶電話
     clientEmail: string; // 客戶 Email
-    createdAt: Timestamp; // 建立時間
-    updatedAt: Timestamp; // 更新時間
 }
