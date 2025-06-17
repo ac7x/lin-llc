@@ -26,18 +26,16 @@ const ContractNav: React.FC = () => {
 
     const [contractsSnapshot] = useCollection(collection(db, 'finance', 'default', 'contracts'));
 
-    // 從數據庫獲取合約列表
     const contractNavs = contractsSnapshot?.docs.map(doc => ({
         label: doc.data().contractName || `合約 ${doc.id}`,
         href: `/contracts/${doc.id}`,
         icon: "📄"
     })) || [];
 
-    // 合併基礎導航和動態合約導航，確保合約列表在最上方，新增合約在最下方
     const navs = [
-        baseNavs[0],  // 合約列表
-        ...contractNavs,  // 動態合約列表
-        baseNavs[1]   // 新增合約
+        baseNavs[0],
+        ...contractNavs,
+        baseNavs[1]
     ];
 
     return (

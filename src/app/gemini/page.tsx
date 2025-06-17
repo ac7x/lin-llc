@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { initializeFirebaseAppCheck } from "@/lib/firebase-client";
 import Image from "next/image";
-import { doc, getDoc } from "firebase/firestore";
+
 
 // 初始化 Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -40,12 +40,6 @@ interface ChatMessage {
     type: string;
     data: string;
   };
-}
-
-// 定義導航權限項目的型別
-interface NavPermissionItem {
-    id: string;
-    defaultRoles: string[];
 }
 
 // 將檔案轉換為 GenerativePart
@@ -69,7 +63,7 @@ async function fileToGenerativePart(file: File) {
 
 export default function GeminiChatPage() {
   const router = useRouter();
-  const { user, loading: authLoading, isAuthenticated, appCheck, db, userRoles } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, appCheck } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -80,13 +74,6 @@ export default function GeminiChatPage() {
   const chatRef = useRef<ReturnType<GenerativeModel['startChat']> | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
-  const [authState, setAuthState] = useState<{
-    hasPermission: boolean | null;
-    isLoading: boolean;
-  }>({
-    hasPermission: null,
-    isLoading: true
-  });
 
   // 檢查認證狀態
   useEffect(() => {
@@ -108,70 +95,11 @@ export default function GeminiChatPage() {
     }
   }, [appCheck]);
 
-  // 檢查導航權限
-  useEffect(() => {
-    async function checkNavPermission() {
-      // 如果 auth 還在載入中，不進行權限檢查
-      if (authLoading) {
-        return;
-      }
-
-      if (!user || !userRoles) {
-        setAuthState({
-          hasPermission: false,
-          isLoading: false
-        });
-        return;
-      }
-
-      try {
-        const navPermissionsDoc = await getDoc(doc(db, 'settings', 'navPermissions'));
-        if (!navPermissionsDoc.exists()) {
-          setAuthState({
-            hasPermission: false,
-            isLoading: false
-          });
-          return;
-        }
-
-        const data = navPermissionsDoc.data();
-        const geminiNav = data.items?.find((item: NavPermissionItem) => item.id === 'gemini');
-        
-        if (!geminiNav) {
-          setAuthState({
-            hasPermission: false,
-            isLoading: false
-          });
-          return;
-        }
-
-        // 檢查用戶角色是否有權限
-        const hasAccess = userRoles.some(role => 
-          geminiNav.defaultRoles.includes(role)
-        );
-
-        setAuthState({
-          hasPermission: hasAccess,
-          isLoading: false
-        });
-      } catch (error) {
-        console.error('檢查導航權限失敗:', error);
-        setAuthState({
-          hasPermission: false,
-          isLoading: false
-        });
-      }
-    }
-
-    checkNavPermission();
-  }, [user, userRoles, authLoading, db]);
-
   // 獲取模型實例
   const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
   useEffect(() => {
     if (!isAuthenticated || !appCheck.initialized || appCheck.isInitializing) return;
-
     // 初始化聊天
     chatRef.current = model.startChat({
       generationConfig: {
@@ -184,7 +112,7 @@ export default function GeminiChatPage() {
   const checkIfNearBottom = () => {
     if (!chatContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-    const threshold = 100; // 距離底部 100px 以內視為接近底部
+    const threshold = 100;
     setIsNearBottom(scrollHeight - scrollTop - clientHeight < threshold);
   };
 
@@ -256,7 +184,7 @@ export default function GeminiChatPage() {
         if (!chatRef.current) {
           throw new Error("聊天實例未初始化");
         }
-        const prompt = `你是一位在台灣具備十年以上工地管理經驗的專案經理，熟悉工地作業流程、施工進度與品質控制，擅長成本預算管控與安全規劃，並精通《建築法》、《建築技術規則》、《職業安全衛生法》、《施工安全衛生設施標準》、《政府採購法》、《公共工程施工契約範本》、《噪音管制法》。請使用繁體中文回答以下問題，並依照法規與現場實務提供明確、可落實的建議：${trimmed}`;
+        const prompt = `你是一位在台灣具備十年以上工地管理經驗的專案經理，熟悉工地作業流程、施工進度與品質控制，擅長成本預算管控與安全規劃[...]`;
         result = await chatRef.current.sendMessage(prompt);
       }
 
@@ -314,34 +242,6 @@ export default function GeminiChatPage() {
 
   if (!isAuthenticated) {
     return null;
-  }
-
-  if (authState.isLoading) {
-    return (
-      <main className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!authState.hasPermission) {
-    return (
-      <main className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-          <div className="flex flex-col items-center justify-center py-12">
-            <svg className="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">存取被拒絕</h2>
-            <p className="text-gray-600 dark:text-gray-400">您沒有權限存取此頁面</p>
-          </div>
-        </div>
-      </main>
-    );
   }
 
   return (
@@ -423,12 +323,12 @@ export default function GeminiChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="請輸入您的問題..."
-                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
@@ -446,7 +346,7 @@ export default function GeminiChatPage() {
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/50 dark:file:text-blue-300"
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
               {selectedFile && (
                 <span className="text-sm text-gray-600 dark:text-gray-400">
