@@ -12,7 +12,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from '@/app/signin/hooks/useAuth';
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { zhTW } from "date-fns/locale";
@@ -45,7 +44,6 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { user } = useAuth();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
     const [loading, setLoading] = useState(true);

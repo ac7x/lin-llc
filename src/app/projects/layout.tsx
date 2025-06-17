@@ -6,6 +6,7 @@
  * - 工作包管理功能
  * - 專案快速操作
  * - 響應式設計
+ * - 權限驗證
  */
 
 "use client";
@@ -19,6 +20,7 @@ import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent, WorkpackageProgressBar } from "@/utils/progressUtils";
 import type { Project } from "@/types/project";
 import { PageLayout, PageContent, Sidebar } from "@/components/layouts/PageLayout";
+import { PermissionCheck } from "@/components/common/PermissionCheck";
 
 function SidebarContent() {
     const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
@@ -295,13 +297,15 @@ function SidebarContent() {
 
 export default function ProjectsLayout({ children }: { children: ReactNode }) {
     return (
-        <PageLayout withSidebar>
-            <Sidebar>
-                <SidebarContent />
-            </Sidebar>
-            <PageContent>
-                {children}
-            </PageContent>
-        </PageLayout>
+        <PermissionCheck requiredPermission="projects">
+            <PageLayout withSidebar>
+                <Sidebar>
+                    <SidebarContent />
+                </Sidebar>
+                <PageContent>
+                    {children}
+                </PageContent>
+            </PageLayout>
+        </PermissionCheck>
     );
 }
