@@ -6,9 +6,10 @@ import {
   getIdToken,
   onAuthStateChanged
 } from '@/lib/firebase-client';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { type RoleKey, ROLE_HIERARCHY } from '@/constants/roles';
+import { DEFAULT_ROLE_PERMISSIONS } from '@/app/management/components/RolePermissions';
 import type { 
   AuthState, 
   UseAuthReturn, 
@@ -158,10 +159,31 @@ export const useAuth = (): UseAuthReturn => {
     return true;
   };
 
-  const hasPermission = (permissionId: string): boolean => {
+  const hasPermission = async (permissionId: string): Promise<boolean> => {
     const user = authState.user;
-    if (!user || !user.currentRole) return false;
-    return Boolean(user.rolePermissions?.[user.currentRole]?.[permissionId]);
+    if (!user?.currentRole) return false;
+
+    try {
+      const managementRef = collection(db, 'management');
+      const snapshot = await getDocs(managementRef);
+      const roleData = snapshot.docs.find(doc => {
+        const data = doc.data();
+        return data.role === user.currentRole;
+      });
+
+      if (roleData) {
+        const data = roleData.data();
+        const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
+        return permissions.includes(permissionId);
+      } else {
+        // 如果找不到角色配置，使用預設權限
+        const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
+        return defaultPermissions.includes(permissionId);
+      }
+    } catch (error) {
+      console.error('檢查權限失敗:', error);
+      return false;
+    }
   };
 
   const getCurrentRole = (): RoleKey | undefined => {
