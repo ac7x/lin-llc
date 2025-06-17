@@ -225,3 +225,48 @@ export function getAppCheckStatus(): {
     isInitializing: !!appCheckPromise, // 檢查是否有正在進行的初始化 Promise
   };
 }
+
+// 匯出需要的 Firebase 函數和類別
+export {
+  GoogleAuthProvider,
+  signInWithPopup,
+  getIdToken,
+  onAuthStateChanged,
+  signInWithRedirect,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+  getRedirectResult,
+};
+
+export type { User };
+
+// 匯出 Firestore 相關函數
+export {
+  collection,
+  doc,
+  getDoc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAt,
+  startAfter,
+  endAt,
+  endBefore,
+  onSnapshot,
+  writeBatch,
+  runTransaction,
+  Timestamp,
+  increment,
+  arrayUnion,
+  arrayRemove,
+  serverTimestamp,
+};

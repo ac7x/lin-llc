@@ -4,7 +4,8 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   getIdToken,
-  onAuthStateChanged
+  onAuthStateChanged,
+  User
 } from '@/lib/firebase-client';
 import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
@@ -38,7 +39,7 @@ export const useAuth = (): UseAuthReturn => {
   useEffect(() => {
     let isMounted = true;
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser: User | null) => {
       if (!isMounted) return;
 
       if (currentUser) {

@@ -16,6 +16,7 @@ import { nanoid } from "nanoid";
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData, QuoteData, OrderItem, QuoteItem } from "@/types/finance";
+import { QueryDocumentSnapshot } from "firebase/firestore";
 
 // Tab 類型
 type SourceTab = "order" | "quote";
@@ -48,7 +49,7 @@ export default function ImportContractPage() {
             const contractsSnap = await getDocs(contractsRef);
             const orderIds = new Set<string>();
             const quoteIds = new Set<string>();
-            contractsSnap.forEach(doc => {
+            contractsSnap.forEach((doc: QueryDocumentSnapshot) => {
                 const data = doc.data();
                 if (data.sourceType === "order" && data.sourceId) orderIds.add(data.sourceId);
                 if (data.sourceType === "quote" && data.sourceId) quoteIds.add(data.sourceId);
