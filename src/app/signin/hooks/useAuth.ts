@@ -10,33 +10,16 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { type RoleKey, ROLE_HIERARCHY } from '@/constants/roles';
+import type { 
+  AppUser, 
+  AuthState, 
+  UseAuthReturn, 
+  PermissionCheckOptions,
+  AuthError 
+} from '@/types/auth';
 
-type RolePermissions = {
-  [K in RoleKey]: boolean;
-};
-
-interface MemberData {
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  createdAt: string;
-  lastLoginAt: string;
-  rolePermissions: RolePermissions;
-  currentRole: RoleKey;
-}
-
-interface AuthState {
-  user: (User & { currentRole?: RoleKey }) | null;
-  loading: boolean;
-  error: string | null;
-}
-
-interface UseAuthReturn extends AuthState {
-  signInWithGoogle: () => Promise<void>;
-}
-
-const createInitialRolePermissions = (): RolePermissions => {
-  const permissions = {} as RolePermissions;
+const createInitialRolePermissions = (): Record<RoleKey, boolean> => {
+  const permissions = {} as Record<RoleKey, boolean>;
   (Object.keys(ROLE_HIERARCHY) as RoleKey[]).forEach((role) => {
     permissions[role] = role === 'guest';
   });
@@ -55,13 +38,14 @@ export const useAuth = (): UseAuthReturn => {
       if (currentUser) {
         const memberRef = doc(db, 'members', currentUser.uid);
         const memberDoc = await getDoc(memberRef);
-        const memberData = memberDoc.data() as MemberData | undefined;
+        const memberData = memberDoc.data();
         
         setAuthState(prev => ({
           ...prev,
           user: {
             ...currentUser,
-            currentRole: memberData?.currentRole || 'guest'
+            currentRole: memberData?.currentRole || 'guest',
+            rolePermissions: memberData?.rolePermissions || createInitialRolePermissions()
           },
           loading: false
         }));
@@ -88,7 +72,7 @@ export const useAuth = (): UseAuthReturn => {
       const memberDoc = await getDoc(memberRef);
 
       if (!memberDoc.exists()) {
-        const memberData: MemberData = {
+        const memberData = {
           email: result.user.email,
           displayName: result.user.displayName,
           photoURL: result.user.photoURL,
@@ -106,17 +90,68 @@ export const useAuth = (): UseAuthReturn => {
 
       console.log('登入成功，ID Token:', idToken);
     } catch (err) {
-      console.error('登入失敗:', err);
+      const error = err as AuthError;
+      console.error('登入失敗:', error);
       setAuthState(prev => ({
         ...prev,
-        error: '登入過程中發生錯誤，請稍後再試'
+        error: {
+          code: error.code || 'unknown',
+          message: error.message || '登入過程中發生錯誤，請稍後再試',
+          details: error.details
+        }
       }));
-      throw err;
+      throw error;
     }
   };
 
+  const checkPermission = async (options: PermissionCheckOptions): Promise<boolean> => {
+    const { requiredRole, requiredPermissions, checkAll = false } = options;
+    const user = authState.user;
+
+    if (!user) return false;
+
+    // 檢查角色
+    if (requiredRole && user.currentRole !== requiredRole) {
+      return false;
+    }
+
+    // 檢查權限
+    if (requiredPermissions && requiredPermissions.length > 0) {
+      if (checkAll) {
+        return requiredPermissions.every(permission => 
+          user.rolePermissions?.[user.currentRole as RoleKey]
+        );
+      }
+      return requiredPermissions.some(permission => 
+        user.rolePermissions?.[user.currentRole as RoleKey]
+      );
+    }
+
+    return true;
+  };
+
+  const hasPermission = (permissionId: string): boolean => {
+    const user = authState.user;
+    if (!user || !user.currentRole) return false;
+    return user.rolePermissions?.[user.currentRole] || false;
+  };
+
+  const getCurrentRole = (): RoleKey | undefined => {
+    return authState.user?.currentRole;
+  };
+
+  const getRolePermissions = (): Record<RoleKey, boolean> | undefined => {
+    return authState.user?.rolePermissions;
+  };
+
   return {
-    ...authState,
+    user: authState.user,
+    loading: authState.loading,
+    error: authState.error?.message || null,
     signInWithGoogle,
+    checkPermission,
+    hasPermission,
+    getCurrentRole,
+    getRolePermissions,
   };
 };
