@@ -11,7 +11,6 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { useAuth } from '@/app/signin/hooks/useAuth';
 import { arrayUnion, doc, updateDoc } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
@@ -20,7 +19,6 @@ import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 import { db } from '@/lib/firebase-client';
 import { toTimestamp } from '@/utils/dateUtils';
-import { format } from 'date-fns';
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
