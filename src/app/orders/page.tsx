@@ -11,20 +11,16 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
 import { doc, collection, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 
 export default function OrdersPage() {
-    const router = useRouter();
-    const { user } = useAuth();
     const [ordersSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "orders")
     );
@@ -33,13 +29,6 @@ export default function OrdersPage() {
     const [search, setSearch] = useState("");
     const [sortKey, setSortKey] = useState<null | string>(null);
     const [sortAsc, setSortAsc] = useState(true);
-
-    // 檢查用戶是否已登入
-    useEffect(() => {
-        if (!user) {
-            router.push('/');
-        }
-    }, [user, router]);
 
     // 處理後的資料
     const rows = useMemo(() => {

@@ -5,25 +5,16 @@
  * - 訂單側邊導航選單
  * - 訂單相關功能連結
  * - 響應式設計
- * - 權限控制
  */
 
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
-import { collection, doc, getDoc } from "firebase/firestore";
-import { useAuth } from "@/app/signin/hooks/useAuth";
-import { Unauthorized } from '@/components/common/Unauthorized';
-import type { User } from "firebase/auth";
-import type { RoleKey } from "@/constants/roles";
-
-interface ExtendedUser extends User {
-    currentRole?: RoleKey;
-}
+import { collection } from "firebase/firestore";
 
 const OrderSideNav: React.FC = () => {
     const pathname = usePathname();
@@ -69,55 +60,6 @@ const OrderSideNav: React.FC = () => {
 };
 
 export default function OrdersLayout({ children }: { children: ReactNode }) {
-    const { user } = useAuth();
-    const [hasPermission, setHasPermission] = useState<boolean>(false);
-    const [checkingPermission, setCheckingPermission] = useState<boolean>(true);
-
-    useEffect(() => {
-        const checkPermission = async (): Promise<void> => {
-            const extendedUser = user as ExtendedUser;
-            if (!extendedUser?.currentRole) {
-                setHasPermission(false);
-                setCheckingPermission(false);
-                return;
-            }
-
-            try {
-                // 從 members 集合獲取用戶資料
-                const memberRef = doc(db, 'members', extendedUser.uid);
-                const memberDoc = await getDoc(memberRef);
-                const memberData = memberDoc.data();
-
-                if (memberData?.rolePermissions?.[extendedUser.currentRole]) {
-                    setHasPermission(true);
-                } else {
-                    setHasPermission(false);
-                }
-            } catch (error) {
-                console.error('檢查權限失敗:', error);
-                setHasPermission(false);
-            } finally {
-                setCheckingPermission(false);
-            }
-        };
-
-        void checkPermission();
-    }, [user]);
-
-    // 如果正在檢查權限，顯示載入中
-    if (checkingPermission) {
-        return (
-            <div className="flex justify-center items-center min-h-screen bg-white dark:bg-gray-900">
-                <div className="text-gray-600 dark:text-gray-300">載入中...</div>
-            </div>
-        );
-    }
-
-    // 如果沒有權限，顯示未授權頁面
-    if (!hasPermission) {
-        return <Unauthorized message="您沒有權限訪問訂單頁面" />;
-    }
-
     return (
         <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
             <div className="w-72 p-6 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm">
