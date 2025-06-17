@@ -48,7 +48,6 @@
       "notification",
       "permission",
       "project",
-      "user",
       "auth"
     ]
   },

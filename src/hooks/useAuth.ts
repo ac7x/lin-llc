@@ -11,7 +11,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { User } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
 import { useDocument } from 'react-firebase-hooks/firestore';
-import type { AppUser, ExtendedUser } from '@/types/user';
+import type { AppUser, UserWithClaims } from '@/types/auth';
 import { ROLE_HIERARCHY } from '@/utils/authUtils';
 import {
   initializeFirebaseAppCheck,
@@ -132,7 +132,7 @@ interface AuthReturn extends FirebaseAuthReturn, UseUserRoleReturn {
 }
 
 export function useAuth(): AuthReturn {
-  const [user, setUser] = useState<(User & ExtendedUser) | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [appCheckError, setAppCheckError] = useState<Error | null>(null);
@@ -182,7 +182,7 @@ export function useAuth(): AuthReturn {
   }, [userRole]);
 
   const hasAnyRole = useMemo(() => (roles: string[]): boolean => {
-    return userRoles.some(role => role !== undefined && roles.includes(role));
+    return userRoles.some((role: string) => role !== undefined && roles.includes(role));
   }, [userRoles]);
 
   const hasMinRole = useMemo(() => (minRole: string): boolean => {
@@ -233,7 +233,13 @@ export function useAuth(): AuthReturn {
     if (!initialized) return;
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+      if (user) {
+        // 將 User 轉換為 AppUser
+        const appUser = user as UserWithClaims;
+        setUser(appUser as AppUser);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 

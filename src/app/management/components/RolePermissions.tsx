@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
-import type { AppUser } from '@/types/user';
+import type { AppUser } from '@/types/auth';
 
 interface RolePermissionsProps {
   user: AppUser;
