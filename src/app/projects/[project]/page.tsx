@@ -42,7 +42,7 @@ import { Project, Workpackage } from "@/types/project";
 import { useAuth } from '@/hooks/useAuth';
 import ProjectExpensesPage from "./project-expenses/page";
 import { ROLE_NAMES, type RoleKey } from "@/utils/authUtils";
-import type { AppUser } from "@/types/user";
+import type { AppUser } from "@/types/auth";
 
 // 在 handleUpdateProject 函數之前添加以下常數
 const COST_CONTROLLER_ROLES: RoleKey[] = ['finance'];
