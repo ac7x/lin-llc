@@ -127,7 +127,6 @@ export default function ImportProjectPage() {
                 status: "新建立",
                 decomposition, // 專案分解資料
                 workpackages, // 將合約項目轉換後的工作包列表
-                roles: ['admin', 'owner'], // 預設只有 admin 和 owner 可以訪問
             };
             await addDoc(collection(db, "projects"), projectData);
             setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
