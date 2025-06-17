@@ -14,7 +14,6 @@
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from '@/app/signin/hooks/useAuth';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { Timestamp, arrayUnion, doc, updateDoc } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
@@ -138,44 +137,39 @@ export default function ProjectJournalPage() {
                         fileType: file.type
                     });
 
-                    const storageRef = ref(getStorage(), fileName);
-                    const uploadTask = uploadBytesResumable(storageRef, file, {
-                        contentType: file.type,
-                        customMetadata: {
-                            projectId,
-                            reportId,
-                            type: photoTypes[i],
-                            description: photoDescriptions[i],
-                            uploadedBy: user?.uid || 'anonymous',
-                            uploadedAt: new Date().toISOString(),
+                    const uploadTask = uploadFileWithProgress(
+                        fileName,
+                        file,
+                        {
+                            contentType: file.type,
+                            customMetadata: {
+                                projectId,
+                                reportId,
+                                type: photoTypes[i],
+                                description: photoDescriptions[i],
+                                uploadedBy: user?.uid || 'anonymous',
+                                uploadedAt: new Date().toISOString(),
+                            }
                         },
-                    });
+                        (progress) => {
+                            const totalProgress = Math.round(((i + progress / 100) / photoFiles.length) * 100);
+                            setUploadProgress(totalProgress);
+                            console.log('[PhotoUpload] 上傳進度:', {
+                                fileName,
+                                progress,
+                                totalProgress
+                            });
+                        }
+                    );
 
+                    // 等待上傳完成
                     await new Promise<void>((resolve, reject) => {
                         uploadTask.on('state_changed',
-                            (snapshot) => {
-                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                const totalProgress = Math.round(((i + progress / 100) / photoFiles.length) * 100);
-                                setUploadProgress(totalProgress);
-                                console.log('[PhotoUpload] 上傳進度:', {
-                                    fileName,
-                                    progress,
-                                    totalProgress,
-                                    state: snapshot.state
-                                });
-                            },
-                            (error) => {
-                                console.error('[PhotoUpload] 上傳錯誤:', {
-                                    error,
-                                    fileName,
-                                    errorCode: error.code,
-                                    errorMessage: error.message
-                                });
-                                reject(error);
-                            },
+                            null,
+                            (error) => reject(error),
                             async () => {
                                 try {
-                                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                    const downloadURL = await getFileDownloadURL(fileName);
                                     console.log('[PhotoUpload] 上傳完成，取得下載網址:', {
                                         fileName,
                                         downloadURL
@@ -191,19 +185,14 @@ export default function ProjectJournalPage() {
                                         updatedAt: Timestamp.now(),
                                         createdBy: user?.uid || 'anonymous',
                                     });
-
                                     resolve();
                                 } catch (error) {
-                                    console.error('[PhotoUpload] 取得下載網址失敗:', {
-                                        error,
-                                        fileName,
-                                        errorMessage: error instanceof Error ? error.message : '未知錯誤'
-                                    });
                                     reject(error);
                                 }
                             }
                         );
                     });
+
                 } catch (error) {
                     console.error('[PhotoUpload] 檔案上傳失敗:', {
                         error,

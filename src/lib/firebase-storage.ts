@@ -17,6 +17,7 @@ import {
   list,
   listAll,
   connectStorageEmulator,
+  getStorage,
   type StorageReference,
   type UploadMetadata,
   type SettableMetadata,
@@ -333,3 +334,6 @@ export type {
   UploadTaskSnapshot,
   StorageError
 };
+
+// Re-export 需要的函數
+export { getStorage };
