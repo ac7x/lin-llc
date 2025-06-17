@@ -8,12 +8,13 @@
  * - 底部導航列（僅登入用戶可見）
  */
 
+'use client';
+
 import React from "react";
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import Script from "next/script";
-import { OwnerBottomNavWrapper } from "@/components/bottom/owner-nav-wrapper";
+import BottomNavigation from '@/components/tabs/BottomNavigation';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,18 +28,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Lin.LLC",
-  description: "Lin.LLC - 提供專業的軟體開發與 AI 解決方案",
-};
-
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>): React.JSX.Element {
+}): React.ReactElement {
   return (
-    <html lang="zh-Hant" className="dark">
+    <html lang="zh-TW">
       <head>
         <Script
           src={`https://www.google.com/recaptcha/api.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
@@ -46,9 +42,10 @@ export default function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
-        {/* 僅用戶登入時顯示底部導覽列 */}
-        <OwnerBottomNavWrapper />
+        <main className="pb-16">
+          {children}
+        </main>
+        <BottomNavigation />
       </body>
     </html>
   );
