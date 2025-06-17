@@ -19,6 +19,7 @@ import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 import { db } from '@/lib/firebase-client';
 import { toTimestamp } from '@/utils/dateUtils';
+import { PhotoUploader } from "./components/PhotoUploader";
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
@@ -47,6 +48,7 @@ export default function ProjectJournalPage() {
     const [saving, setSaving] = useState(false);
     const [progressInputs, setProgressInputs] = useState([{ workpackageId: '', subWorkpackageId: '', actualQuantity: 0 }]);
     const [weatherDisplay, setWeatherDisplay] = useState<{ weather: string; temperature: number } | null>(null);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
     const reports = useMemo(() => {
         if (!projectDoc?.exists()) return [];
@@ -151,6 +153,16 @@ export default function ProjectJournalPage() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleUploadComplete = (url: string) => {
+        console.log('圖片上傳完成，URL:', url);
+        setUploadedImageUrl(url);
+    };
+
+    const handleUploadError = (error: Error) => {
+        console.error('圖片上傳失敗:', error);
+        alert(`上傳失敗: ${error.message}`);
     };
 
     if (loading) return <div className="p-4">載入中...</div>;
@@ -391,6 +403,32 @@ export default function ProjectJournalPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             暫無工作日誌
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-6">
+                    <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                        圖片上傳測試
+                    </h2>
+                    
+                    <PhotoUploader
+                        onUploadComplete={handleUploadComplete}
+                        onUploadError={handleUploadError}
+                        maxFileSize={2 * 1024 * 1024} // 2MB
+                        acceptedFileTypes={['image/jpeg', 'image/png', 'image/webp']}
+                        storagePath={`projects/${projectId}/journal/images`}
+                        className="w-full max-w-xl mx-auto"
+                    />
+
+                    {uploadedImageUrl && (
+                        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                上傳成功
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 break-all">
+                                {uploadedImageUrl}
+                            </p>
                         </div>
                     )}
                 </div>

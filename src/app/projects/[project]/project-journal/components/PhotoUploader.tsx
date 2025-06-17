@@ -11,14 +11,14 @@ interface PhotoUploaderProps {
   className?: string;
 }
 
-export default function PhotoUploader({
+export const PhotoUploader = ({
   onUploadComplete,
   onUploadError,
   maxFileSize,
   acceptedFileTypes,
   storagePath,
   className = '',
-}: PhotoUploaderProps) {
+}: PhotoUploaderProps) => {
   const {
     isUploading,
     uploadProgress,
@@ -121,4 +121,4 @@ export default function PhotoUploader({
       )}
     </div>
   );
-}
+};
