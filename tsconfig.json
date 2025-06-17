@@ -44,8 +44,6 @@
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": [
-      "charts",
-      "env",
       "finance",
       "notification",
       "permission",
