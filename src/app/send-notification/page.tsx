@@ -12,43 +12,14 @@
 
 import React from 'react';
 import { NotificationBell } from '@/app/notifications/components/NotificationBell';
-import { useAuth } from "@/hooks/useAuth";
 
-export default function SendNotificationPage() {
-  const { user } = useAuth();
-
-  if (!user) {
-    return (
-      <main className="p-6 bg-white dark:bg-neutral-900 min-h-screen">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-gray-600 dark:text-gray-400">載入中...</span>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
+export default function SendNotificationPage(): React.ReactElement {
   return (
     <main className="p-6 bg-white dark:bg-neutral-900 min-h-screen">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">發送通知</h1>
           <NotificationBell size="md" />
-        </div>
-
-        {/* 用戶狀態 */}
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">用戶狀態</h2>
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              <strong>用戶 UID:</strong> {user.uid}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              <strong>顯示名稱:</strong> {user.displayName || '未設定'}
-            </p>
-          </div>
         </div>
 
         {/* 功能說明 */}

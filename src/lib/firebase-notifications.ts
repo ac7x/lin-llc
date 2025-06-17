@@ -23,7 +23,7 @@ import {
 import { Firestore } from 'firebase/firestore'; // Firestore 型別正確來源
 import { COLLECTIONS } from './firebase-config';
 import type { NotificationMessage } from '@/types/notification';
-import type { AppUser } from '@/types/user';
+import type { AppUser } from '@/types/auth';
 
 const { NOTIFICATIONS, USERS } = COLLECTIONS;
 

@@ -21,16 +21,13 @@
 │   └── uninstall.sh
 ├── src
 │   ├── app
-│   │   ├── api
-│   │   │   └── notifications
-│   │   │       └── send
-│   │   │           └── route.ts
 │   │   ├── archive
 │   │   │   ├── layout.tsx
 │   │   │   ├── page.tsx
 │   │   │   └── [type]
 │   │   │       └── page.tsx
 │   │   ├── calendar
+│   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── contracts
 │   │   │   ├── [contract]
@@ -40,20 +37,21 @@
 │   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── dashboard
+│   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── gemini
+│   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── layout.tsx
+│   │   ├── management
+│   │   │   ├── components
+│   │   │   │   └── RolePermissions.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
 │   │   ├── notifications
 │   │   │   ├── components
 │   │   │   │   └── NotificationBell.tsx
-│   │   │   ├── constants
-│   │   │   │   ├── notification-icons.ts
-│   │   │   │   └── notifications.ts
-│   │   │   ├── hooks
-│   │   │   │   └── useNotifications.ts
-│   │   │   ├── lib
-│   │   │   │   └── firebase-notifications.ts
+│   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── orders
 │   │   │   ├── add
@@ -64,6 +62,7 @@
 │   │   │   └── page.tsx
 │   │   ├── page.tsx
 │   │   ├── profile
+│   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── projects
 │   │   │   ├── import
@@ -97,60 +96,62 @@
 │   │   │   └── [quote]
 │   │   │       └── page.tsx
 │   │   ├── schedule
+│   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── send-notification
+│   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
-│   │   ├── settings
-│   │   │   ├── components
-│   │   │   │   └── PermissionCategory.tsx
-│   │   │   └── page.tsx
-│   │   └── users
+│   │   └── signin
+│   │       ├── hooks
+│   │       │   └── useAuth.ts
 │   │       └── page.tsx
 │   ├── components
-│   │   ├── bottom
-│   │   │   ├── owner-nav.tsx
-│   │   │   └── owner-nav-wrapper.tsx
+│   │   ├── common
+│   │   │   ├── PermissionCheck.tsx
+│   │   │   └── Unauthorized.tsx
 │   │   ├── layouts
 │   │   │   └── PageLayout.tsx
-│   │   └── pdf
-│   │       ├── ContractPdfDocument.tsx
-│   │       ├── OrderPdfDocument.tsx
-│   │       ├── pdfExport.ts
-│   │       └── QuotePdfDocument.tsx
+│   │   ├── pdf
+│   │   │   ├── ContractPdfDocument.tsx
+│   │   │   ├── OrderPdfDocument.tsx
+│   │   │   ├── pdfExport.ts
+│   │   │   └── QuotePdfDocument.tsx
+│   │   └── tabs
+│   │       └── BottomNavigation.tsx
 │   ├── constants
 │   │   ├── archive.ts
 │   │   ├── env.ts
 │   │   ├── error-messages.ts
 │   │   ├── firebase.ts
 │   │   ├── locations.ts
-│   │   ├── permissions.ts
+│   │   ├── notification-icons.ts
+│   │   ├── notifications.ts
 │   │   ├── project.ts
 │   │   └── roles.ts
 │   ├── hooks
+│   │   ├── useAuthentication.ts
 │   │   ├── useAuth.ts
+│   │   ├── useNotifications.ts
 │   │   └── usePermissions.ts
 │   ├── lib
-│   │   ├── firebase-admin.ts
 │   │   ├── firebase-client.ts
 │   │   ├── firebase-config.ts
-│   │   └── firebase-messaging.ts
+│   │   └── firebase-notifications.ts
 │   ├── styles
 │   │   ├── globals.css
 │   │   └── react-big-calendar.css
 │   ├── types
-│   │   ├── charts.d.ts
-│   │   ├── env.d.ts
+│   │   ├── auth.d.ts
 │   │   ├── finance.d.ts
 │   │   ├── notification.d.ts
-│   │   ├── permission.ts
+│   │   ├── permission.d.ts
 │   │   ├── project.d.ts
-│   │   ├── settings.d.ts
 │   │   └── user.d.ts
 │   └── utils
 │       ├── authUtils.ts
-│       ├── colorScales.ts
+│       ├── colorUtils.ts
 │       ├── dateUtils.ts
 │       ├── progressUtils.tsx
-│       └── taiwan-city.enum.ts
+│       └── taiwanCityUtils.ts
 ├── storage.rules
 └── tsconfig.json

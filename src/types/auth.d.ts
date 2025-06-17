@@ -1,5 +1,13 @@
-import { type User } from 'firebase/auth';
+/**
+ * 身份驗證和用戶相關型別定義
+ * 包含用戶資料、裝置資訊、權限管理等資料結構
+ * 用於管理系統中的用戶資料和相關功能
+ */
+
+import { type User, type UserMetadata } from 'firebase/auth';
 import { type RoleKey } from '@/constants/roles';
+import type { NotificationSettings } from '@/types/notification';
+import { type FieldValue } from 'firebase/firestore';
 
 // 基本權限介面
 export interface Permission {
@@ -16,11 +24,50 @@ export interface RolePermission {
   updatedAt: string;
 }
 
+// 用戶裝置資訊
+export type UserDevice = {
+  deviceId: string; // Firebase Installation ID
+  fcmToken?: string; // FCM Token
+  deviceType: 'web' | 'mobile' | 'tablet';
+  browser?: string;
+  os?: string;
+  lastActive: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// 擴展 Firebase User 型別，包含自定義聲明
+export interface UserWithClaims extends User {
+  customClaims?: {
+    role?: string;
+    roles?: string[];
+    permissions?: string[];
+  };
+}
+
 // 擴展 Firebase User 型別
-export interface AppUser extends User {
+export interface AppUser extends UserWithClaims {
+  role?: string;
+  roles?: string[];
+  permissions?: string[];
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  lastLoginAt?: string | Date;
+  disabled?: boolean;
+  metadata: UserMetadata;
+  notificationSettings?: NotificationSettings;
+  fcmTokens?: string[];
   currentRole?: RoleKey;
   rolePermissions?: Record<RoleKey, Record<string, boolean>>;
 }
+
+// 用於寫入的 AppUser 型別
+export type AppUserWrite = Omit<AppUser, 'createdAt' | 'updatedAt' | 'lastLoginAt'> & {
+  createdAt: FieldValue;
+  updatedAt: FieldValue;
+  lastLoginAt: FieldValue;
+};
 
 // 權限驗證結果介面
 export interface AuthResult {

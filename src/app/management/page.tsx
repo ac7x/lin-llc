@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import Image from 'next/image';
 import { db } from '@/lib/firebase-client';
-import type { AppUser } from '@/types/user';
+import type { AppUser } from '@/types/auth';
 import RolePermissions from './components/RolePermissions';
 import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
 
