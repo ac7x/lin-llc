@@ -15,8 +15,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
-import { collection, getDocs } from "firebase/firestore";
-import { useAuth } from "@/hooks/useAuth";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { useAuth } from "@/app/signin/hooks/useAuth";
 import { Unauthorized } from '@/components/common/Unauthorized';
 import type { User } from "firebase/auth";
 import type { RoleKey } from "@/constants/roles";
@@ -83,17 +83,13 @@ export default function OrdersLayout({ children }: { children: ReactNode }) {
             }
 
             try {
-                const managementRef = collection(db, 'management');
-                const snapshot = await getDocs(managementRef);
-                const roleData = snapshot.docs.find(doc => {
-                    const data = doc.data();
-                    return data.role === extendedUser.currentRole;
-                });
+                // 從 members 集合獲取用戶資料
+                const memberRef = doc(db, 'members', extendedUser.uid);
+                const memberDoc = await getDoc(memberRef);
+                const memberData = memberDoc.data();
 
-                if (roleData) {
-                    const data = roleData.data();
-                    const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
-                    setHasPermission(permissions.includes('orders'));
+                if (memberData?.rolePermissions?.[extendedUser.currentRole]) {
+                    setHasPermission(true);
                 } else {
                     setHasPermission(false);
                 }
