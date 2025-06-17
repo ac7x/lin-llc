@@ -4,7 +4,7 @@
  * 用於管理系統中的用戶資料和相關功能
  */
 
-import { type User, type UserMetadata } from 'firebase/auth';
+import { type User, type UserMetadata, type UserInfo } from 'firebase/auth';
 import { type RoleKey } from '@/constants/roles';
 import type { NotificationSettings } from '@/types/notification';
 import { type FieldValue } from 'firebase/firestore';
@@ -48,12 +48,12 @@ export interface UserWithClaims extends User {
 
 // 擴展 Firebase User 型別
 export interface AppUser extends UserWithClaims {
-  role: string;
-  roles: string[];
-  permissions: string[];
-  createdAt: string | Date;
-  updatedAt: string | Date;
-  lastLoginAt: string | Date;
+  role?: string;
+  roles?: string[];
+  permissions?: string[];
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  lastLoginAt?: string | Date;
   disabled?: boolean;
   metadata: UserMetadata;
   notificationSettings?: NotificationSettings;
