@@ -11,17 +11,28 @@
 
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
-import { doc } from "firebase/firestore";
+import { doc, collection, getDocs, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase-client";
+import Unauthorized from "@/components/common/Unauthorized";
+import type { User } from "firebase/auth";
+
+interface ExtendedUser extends User {
+  currentRole?: string;
+}
 
 export default function OrdersPage() {
-    const { db, collection, doc: getDocRef, getDoc } = useAuth();
+    const router = useRouter();
+    const { user, loading: authLoading } = useAuth();
+    const [hasPermission, setHasPermission] = useState<boolean>(false);
+    const [checkingPermission, setCheckingPermission] = useState<boolean>(true);
     const [ordersSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "orders")
     );
@@ -30,6 +41,49 @@ export default function OrdersPage() {
     const [search, setSearch] = useState("");
     const [sortKey, setSortKey] = useState<null | string>(null);
     const [sortAsc, setSortAsc] = useState(true);
+
+    // 檢查用戶權限
+    useEffect(() => {
+        const checkPermission = async (): Promise<void> => {
+            const extendedUser = user as ExtendedUser;
+            if (!extendedUser?.currentRole) {
+                setHasPermission(false);
+                setCheckingPermission(false);
+                return;
+            }
+
+            try {
+                const managementRef = collection(db, 'management');
+                const snapshot = await getDocs(managementRef);
+                const roleData = snapshot.docs.find(doc => {
+                    const data = doc.data();
+                    return data.role === extendedUser.currentRole;
+                });
+
+                if (roleData) {
+                    const data = roleData.data();
+                    const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
+                    setHasPermission(permissions.includes('orders'));
+                } else {
+                    setHasPermission(false);
+                }
+            } catch (error) {
+                console.error('檢查權限失敗:', error);
+                setHasPermission(false);
+            } finally {
+                setCheckingPermission(false);
+            }
+        };
+
+        void checkPermission();
+    }, [user]);
+
+    // 檢查用戶是否已登入
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/');
+        }
+    }, [authLoading, user, router]);
 
     // 處理後的資料
     const rows = useMemo(() => {
@@ -91,7 +145,7 @@ export default function OrdersPage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        const docRef = getDocRef(db, "finance", "default", "orders", String(row.orderId));
+        const docRef = doc(db, "finance", "default", "orders", String(row.orderId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
             alert("找不到該訂單");
@@ -104,6 +158,29 @@ export default function OrdersPage() {
             `${data.orderName || data.orderId || '訂單'}.pdf`
         );
     };
+
+    // 如果正在載入認證或檢查權限，顯示載入中
+    if (authLoading || checkingPermission) {
+        return (
+            <main className="max-w-4xl mx-auto">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    // 如果未登入，不渲染內容
+    if (!user) {
+        return null;
+    }
+
+    // 檢查用戶是否有訂單權限
+    if (!hasPermission) {
+        return <Unauthorized message="您沒有權限訪問訂單頁面" />;
+    }
 
     if (loading) {
         return (
