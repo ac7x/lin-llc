@@ -38,6 +38,13 @@ export const PAGE_PERMISSIONS = [
     description: '管理個人資料',
     path: '/profile',
   },
+  // 行事曆功能
+  {
+    id: 'calendar',
+    name: '行事曆',
+    description: '查看和管理行事曆',
+    path: '/calendar',
+  },
   // 封存功能
   {
     id: 'archive',
@@ -121,14 +128,14 @@ export const PAGE_PERMISSIONS = [
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
   guest: ['dashboard', 'profile'],
-  temporary: ['dashboard', 'schedule', 'profile'],
-  helper: ['dashboard', 'schedule', 'orders', 'profile'],
-  user: ['dashboard', 'schedule', 'orders', 'quotes', 'profile'],
-  coord: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
-  safety: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
-  foreman: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
-  vendor: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile'],
-  finance: ['dashboard', 'orders', 'quotes', 'contracts', 'profile'],
+  temporary: ['dashboard', 'schedule', 'profile', 'calendar'],
+  helper: ['dashboard', 'schedule', 'orders', 'profile', 'calendar'],
+  user: ['dashboard', 'schedule', 'orders', 'quotes', 'profile', 'calendar'],
+  coord: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
+  safety: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
+  foreman: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
+  vendor: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
+  finance: ['dashboard', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
   manager: [
     'dashboard',
     'profile',
@@ -144,7 +151,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     'contracts',
     'notifications',
     'send-notification',
-    'management'
+    'management',
+    'calendar'
   ],
   admin: [
     'dashboard',
@@ -161,7 +169,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     'contracts',
     'notifications',
     'send-notification',
-    'management'
+    'management',
+    'calendar'
   ],
   owner: [
     'dashboard',
@@ -178,7 +187,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     'contracts',
     'notifications',
     'send-notification',
-    'management'
+    'management',
+    'calendar'
   ],
 };
 

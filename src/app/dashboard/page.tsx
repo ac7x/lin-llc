@@ -14,7 +14,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
+import { Unauthorized }from '@/components/common/Unauthorized';
 import { 
   PieChart, 
   Pie, 
@@ -35,9 +36,10 @@ import {
   Bar 
 } from 'recharts';
 import { Workpackage, Project } from '@/types/project';
-import { ROLE_HIERARCHY } from '@/utils/authUtils';
+import { ROLE_HIERARCHY, ROLE_NAMES } from '@/constants/roles';
+import { DEFAULT_ROLE_PERMISSIONS } from '@/app/management/components/RolePermissions';
 import { db } from '@/lib/firebase-client';
-import { collection } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 
 // 抽取共用樣式
@@ -81,6 +83,8 @@ const ErrorMessage = ({ message }: { message: string }) => (
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const [hasPermission, setHasPermission] = React.useState<boolean>(false);
+  const [checkingPermission, setCheckingPermission] = React.useState<boolean>(true);
 
   // 2. 狀態管理 Hooks
   const [selectedProject, setSelectedProject] = React.useState<string>('');
@@ -95,10 +99,47 @@ export default function DashboardPage() {
   const [quotesSnapshot, quotesLoading, quotesError] = useCollection(collection(db, 'finance', 'default', 'quotes'));
   const [contractsSnapshot, contractsLoading, contractsError] = useCollection(collection(db, 'finance', 'default', 'contracts'));
 
+  // 檢查用戶權限
+  React.useEffect(() => {
+    const checkPermission = async (): Promise<void> => {
+      if (!user?.currentRole) {
+        setHasPermission(false);
+        setCheckingPermission(false);
+        return;
+      }
+
+      try {
+        const managementRef = collection(db, 'management');
+        const snapshot = await getDocs(managementRef);
+        const roleData = snapshot.docs.find(doc => {
+          const data = doc.data();
+          return data.role === user.currentRole;
+        });
+
+        if (roleData) {
+          const data = roleData.data();
+          const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
+          setHasPermission(permissions.includes('dashboard'));
+        } else {
+          // 如果找不到角色配置，使用預設權限
+          const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
+          setHasPermission(defaultPermissions.includes('dashboard'));
+        }
+      } catch (error) {
+        console.error('檢查權限失敗:', error);
+        setHasPermission(false);
+      } finally {
+        setCheckingPermission(false);
+      }
+    };
+
+    void checkPermission();
+  }, [user?.currentRole]);
+
   // 檢查用戶是否已登入
   React.useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/');
+      router.push('/signin');
     }
   }, [authLoading, user, router]);
 
@@ -243,14 +284,20 @@ export default function DashboardPage() {
     }
   }), []);
 
-  // 如果正在載入認證，顯示載入中
-  if (authLoading) {
+  // 如果正在載入認證或檢查權限，顯示載入中
+  if (authLoading || checkingPermission) {
     return <LoadingSpinner />;
   }
 
   // 如果未登入，不渲染內容
   if (!user) {
     return null;
+  }
+
+  // 檢查用戶是否有儀表板權限
+  if (!hasPermission) {
+    const roleName = user.currentRole ? ROLE_NAMES[user.currentRole] : '未知角色';
+    return <Unauthorized message={`您目前的角色 (${roleName}) 沒有權限訪問儀表板`} />;
   }
 
   // 渲染儀表板內容

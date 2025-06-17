@@ -12,16 +12,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
-import { doc } from "firebase/firestore";
+import { doc, collection, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase-client";
 
 export default function OrdersPage() {
-    const { db, collection, doc: getDocRef, getDoc } = useAuth();
     const [ordersSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "orders")
     );
@@ -91,7 +90,7 @@ export default function OrdersPage() {
 
     // 匯出 PDF
     const handleExportPdf = async (row: Record<string, unknown>) => {
-        const docRef = getDocRef(db, "finance", "default", "orders", String(row.orderId));
+        const docRef = doc(db, "finance", "default", "orders", String(row.orderId));
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) {
             alert("找不到該訂單");

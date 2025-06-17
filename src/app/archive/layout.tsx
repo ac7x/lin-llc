@@ -1,8 +1,19 @@
+/**
+ * 封存功能布局組件
+ * 
+ * 提供封存功能的基本布局結構，包含：
+ * - 權限驗證
+ * - 子路由渲染
+ * - 錯誤處理
+ */
+
 "use client";
 
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from '@/app/signin/hooks/useAuth';
+import { Unauthorized } from '@/components/common/Unauthorized';
 
 const ArchivedNav = () => {
     const pathname = usePathname();
@@ -35,11 +46,26 @@ const ArchivedNav = () => {
     );
 };
 
-export default function ArchivedLayout({ children }: { children: ReactNode }) {
+interface ArchiveLayoutProps {
+  children: ReactNode;
+}
+
+export default function ArchiveLayout({ children }: ArchiveLayoutProps): React.ReactElement {
+  const { user, hasPermission } = useAuth();
+
+  // 檢查用戶是否有封存功能的權限
+  if (!user || !hasPermission('archive')) {
     return (
-        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-            <ArchivedNav />
-            <div className="flex-1 p-6">{children}</div>
-        </div>
+      <Unauthorized 
+        message="您沒有權限訪問封存功能，請聯繫管理員以獲取訪問權限" 
+      />
     );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      <ArchivedNav />
+      <div className="flex-1 p-6">{children}</div>
+    </div>
+  );
 }

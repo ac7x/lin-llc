@@ -5,6 +5,7 @@
  * - 訂單側邊導航選單
  * - 訂單相關功能連結
  * - 響應式設計
+ * - 權限驗證
  */
 
 "use client";
@@ -15,6 +16,7 @@ import { usePathname } from "next/navigation";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { db } from "@/lib/firebase-client";
 import { collection } from "firebase/firestore";
+import { PermissionCheck } from "@/components/common/PermissionCheck";
 
 const OrderSideNav: React.FC = () => {
     const pathname = usePathname();
@@ -61,12 +63,14 @@ const OrderSideNav: React.FC = () => {
 
 export default function OrdersLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="w-72 p-6 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm">
-                <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-gray-100">訂單管理</h2>
-                <OrderSideNav />
+        <PermissionCheck requiredPermission="orders">
+            <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+                <div className="w-72 p-6 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm">
+                    <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-gray-100">訂單管理</h2>
+                    <OrderSideNav />
+                </div>
+                <div className="flex-1 p-6">{children}</div>
             </div>
-            <div className="flex-1 p-6">{children}</div>
-        </div>
+        </PermissionCheck>
     );
 }
