@@ -70,7 +70,6 @@ const OrderSideNav: React.FC = () => {
 
 export default function OrdersLayout({ children }: { children: ReactNode }) {
     const { user } = useAuth();
-    const router = useRouter();
     const [hasPermission, setHasPermission] = useState<boolean>(false);
     const [checkingPermission, setCheckingPermission] = useState<boolean>(true);
 

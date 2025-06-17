@@ -19,14 +19,9 @@ import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
-import { doc, collection, getDocs, getDoc } from "firebase/firestore";
+import { doc, collection, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
-import Unauthorized from "@/components/common/Unauthorized";
 import type { User } from "firebase/auth";
-
-interface ExtendedUser extends User {
-  currentRole?: string;
-}
 
 export default function OrdersPage() {
     const router = useRouter();
