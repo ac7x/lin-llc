@@ -35,7 +35,7 @@ function templateItemToSubWorkpackage(
     options?: TemplateToSubWorkpackageOptions
 ): SubWorkpackage {
     const now = Timestamp.now();
-    const { estimatedStartDate, estimatedEndDate } = options || {};
+    const { estimatedStartDate, estimatedEndDate, assignedTo } = options || {};
 
     // 建立子工作包物件，日期欄位可為 undefined
     return {
@@ -52,6 +52,7 @@ function templateItemToSubWorkpackage(
         // 日期欄位為選填，可為 undefined
         estimatedStartDate: estimatedStartDate || undefined,
         estimatedEndDate: estimatedEndDate || undefined,
+        assignedTo: assignedTo || undefined, // 新增負責人欄位
         priority: 0
     };
 }
@@ -115,7 +116,8 @@ export default function WorkpackageDetailPage() {
         unit: "項",
         budget: 0,
         estimatedStartDate: "", // string
-        estimatedEndDate: ""   // string
+        estimatedEndDate: "",   // string
+        assignedTo: "" // 新增負責人欄位
     });
     const [subSaving, setSubSaving] = useState(false);
     const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -130,6 +132,34 @@ export default function WorkpackageDetailPage() {
         
         // 檢查是否為專案的 coordinator 或 costController
         return project.coordinator === currentUser.uid || project.costController === currentUser.uid;
+    };
+
+    // 新增：檢查是否為子工作包負責人的函數
+    const canManageSubWorkpackage = (subWp: SubWorkpackage, currentUser: AppUser | null): boolean => {
+        if (!currentUser?.uid) return false;
+        return subWp.assignedTo === currentUser.uid;
+    };
+
+    // 新增：計算耗時的函數
+    const calculateDuration = (startDate: Timestamp, endDate: Timestamp): string => {
+        const start = startDate.toDate();
+        const end = endDate.toDate();
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+            return '1天';
+        } else if (diffDays < 30) {
+            return `${diffDays}天`;
+        } else {
+            const months = Math.floor(diffDays / 30);
+            const remainingDays = diffDays % 30;
+            if (remainingDays === 0) {
+                return `${months}個月`;
+            } else {
+                return `${months}個月${remainingDays}天`;
+            }
+        }
     };
 
     // 新增：取得用戶清單
@@ -238,6 +268,7 @@ export default function WorkpackageDetailPage() {
                 progress: 0,
                 createdAt: Timestamp.now(),
                 updatedAt: Timestamp.now(),
+                assignedTo: newSubWorkpackage.assignedTo || undefined, // 新增負責人
                 ...dateFields,
             };
             const updatedWorkpackages = project.workpackages.map(wp =>
@@ -253,7 +284,8 @@ export default function WorkpackageDetailPage() {
                 unit: "項",
                 budget: 0,
                 estimatedStartDate: "",
-                estimatedEndDate: ""
+                estimatedEndDate: "",
+                assignedTo: "" // 重置負責人欄位
             });
         } finally {
             setSubSaving(false);
@@ -268,7 +300,8 @@ export default function WorkpackageDetailPage() {
                 workpackageId: workpackageId,
                 // 確保只有在有日期的情況下傳遞日期參數，否則為 undefined
                 estimatedStartDate: workpackage.estimatedStartDate || undefined,
-                estimatedEndDate: workpackage.estimatedEndDate || undefined
+                estimatedEndDate: workpackage.estimatedEndDate || undefined,
+                assignedTo: workpackage.assignedTo || undefined // 傳遞工作包的負責人作為預設值
             };
             
             const subWorkpackages = templateToSubWorkpackages(template, templateOptions)
@@ -408,111 +441,135 @@ export default function WorkpackageDetailPage() {
 
                     {workpackage.subWorkpackages && workpackage.subWorkpackages.length > 0 ? (
                         <div className="space-y-4">
-                            {workpackage.subWorkpackages.map(subWp => (
-                                <div key={subWp.id} className="bg-white dark:bg-gray-700 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow duration-200">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <div className="font-medium text-gray-900 dark:text-gray-100">{subWp.name}</div>
-                                            {subWp.description && (
-                                                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{subWp.description}</div>
+                            {workpackage.subWorkpackages.map(subWp => {
+                                const canManage = canManageSubWorkpackage(subWp, user);
+                                const duration = subWp.actualStartDate && subWp.actualEndDate 
+                                    ? calculateDuration(subWp.actualStartDate, subWp.actualEndDate)
+                                    : null;
+                                
+                                return (
+                                    <div key={subWp.id} className="bg-white dark:bg-gray-700 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow duration-200">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <div className="font-medium text-gray-900 dark:text-gray-100">{subWp.name}</div>
+                                                {subWp.description && (
+                                                    <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">{subWp.description}</div>
+                                                )}
+                                                {subWp.assignedTo && (
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        負責人: {users.find(u => u.uid === subWp.assignedTo)?.displayName || subWp.assignedTo}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                                                        subWp.actualStartDate 
+                                                            ? 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300 cursor-not-allowed' 
+                                                            : !canManage
+                                                            ? 'bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-500 cursor-not-allowed'
+                                                            : 'bg-green-600 text-white hover:bg-green-700'
+                                                    }`}
+                                                    disabled={!!subWp.actualStartDate || !canManage}
+                                                    onClick={async () => {
+                                                        if (subWp.actualStartDate || !canManage) return;
+                                                        const updatedSubWps = workpackage.subWorkpackages.map(wp =>
+                                                            wp.id === subWp.id ? { ...wp, actualStartDate: Timestamp.now() } : wp
+                                                        );
+                                                        const updatedWorkpackages = project.workpackages.map(wp =>
+                                                            wp.id === workpackageId ? { ...wp, subWorkpackages: updatedSubWps } : wp
+                                                        );
+                                                        await updateDoc(doc(db, "projects", projectId), { workpackages: updatedWorkpackages });
+                                                    }}
+                                                    title={!canManage ? '只有負責人才能開工' : ''}
+                                                >
+                                                    {subWp.actualStartDate ? (
+                                                        <>
+                                                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                            已開工 ({subWp.actualStartDate.toDate().toLocaleDateString()})
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            開工
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                                                        subWp.actualEndDate || !subWp.actualStartDate
+                                                            ? 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300 cursor-not-allowed'
+                                                            : !canManage
+                                                            ? 'bg-gray-100 text-gray-400 dark:bg-gray-600 dark:text-gray-500 cursor-not-allowed'
+                                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                    }`}
+                                                    disabled={!!subWp.actualEndDate || !subWp.actualStartDate || !canManage}
+                                                    onClick={async () => {
+                                                        if (subWp.actualEndDate || !subWp.actualStartDate || !canManage) return;
+                                                        const updatedSubWps = workpackage.subWorkpackages.map(wp =>
+                                                            wp.id === subWp.id ? { ...wp, actualEndDate: Timestamp.now() } : wp
+                                                        );
+                                                        const updatedWorkpackages = project.workpackages.map(wp =>
+                                                            wp.id === workpackageId ? { ...wp, subWorkpackages: updatedSubWps } : wp
+                                                        );
+                                                        await updateDoc(doc(db, "projects", projectId), { workpackages: updatedWorkpackages });
+                                                    }}
+                                                    title={!canManage ? '只有負責人才能完工' : !subWp.actualStartDate ? '需要先開工' : ''}
+                                                >
+                                                    {subWp.actualEndDate ? (
+                                                        <>
+                                                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                            已完工 ({subWp.actualEndDate.toDate().toLocaleDateString()})
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                            完工
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                            <div>
+                                                <span className="text-gray-500 dark:text-gray-400">狀態：</span>
+                                                <span className="text-gray-900 dark:text-gray-100">{subWp.status || '新建立'}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500 dark:text-gray-400">進度：</span>
+                                                <span className="text-gray-900 dark:text-gray-100">{subWp.progress ?? 0}%</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500 dark:text-gray-400">數量：</span>
+                                                <span className="text-gray-900 dark:text-gray-100">
+                                                    {subWp.estimatedQuantity ?? '-'} {subWp.unit ?? ''}
+                                                </span>
+                                            </div>
+                                            {hasBudgetPermission && (
+                                                <div>
+                                                    <span className="text-gray-500 dark:text-gray-400">預算：</span>
+                                                    <span className="text-gray-900 dark:text-gray-100">{subWp.budget ?? '-'}</span>
+                                                </div>
                                             )}
                                         </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                                                    subWp.actualStartDate 
-                                                        ? 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300 cursor-not-allowed' 
-                                                        : 'bg-green-600 text-white hover:bg-green-700'
-                                                }`}
-                                                disabled={!!subWp.actualStartDate}
-                                                onClick={async () => {
-                                                    if (subWp.actualStartDate) return;
-                                                    const updatedSubWps = workpackage.subWorkpackages.map(wp =>
-                                                        wp.id === subWp.id ? { ...wp, actualStartDate: Timestamp.now() } : wp
-                                                    );
-                                                    const updatedWorkpackages = project.workpackages.map(wp =>
-                                                        wp.id === workpackageId ? { ...wp, subWorkpackages: updatedSubWps } : wp
-                                                    );
-                                                    await updateDoc(doc(db, "projects", projectId), { workpackages: updatedWorkpackages });
-                                                }}
-                                            >
-                                                {subWp.actualStartDate ? (
-                                                    <>
-                                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        已開工 ({subWp.actualStartDate.toDate().toLocaleDateString()})
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        開工
-                                                    </>
-                                                )}
-                                            </button>
-                                            <button
-                                                className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                                                    subWp.actualEndDate || !subWp.actualStartDate
-                                                        ? 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300 cursor-not-allowed'
-                                                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                                                }`}
-                                                disabled={!!subWp.actualEndDate || !subWp.actualStartDate}
-                                                onClick={async () => {
-                                                    if (subWp.actualEndDate || !subWp.actualStartDate) return;
-                                                    const updatedSubWps = workpackage.subWorkpackages.map(wp =>
-                                                        wp.id === subWp.id ? { ...wp, actualEndDate: Timestamp.now() } : wp
-                                                    );
-                                                    const updatedWorkpackages = project.workpackages.map(wp =>
-                                                        wp.id === workpackageId ? { ...wp, subWorkpackages: updatedSubWps } : wp
-                                                    );
-                                                    await updateDoc(doc(db, "projects", projectId), { workpackages: updatedWorkpackages });
-                                                }}
-                                            >
-                                                {subWp.actualEndDate ? (
-                                                    <>
-                                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        已完工 ({subWp.actualEndDate.toDate().toLocaleDateString()})
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        完工
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                        <div>
-                                            <span className="text-gray-500 dark:text-gray-400">狀態：</span>
-                                            <span className="text-gray-900 dark:text-gray-100">{subWp.status || '新建立'}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-500 dark:text-gray-400">進度：</span>
-                                            <span className="text-gray-900 dark:text-gray-100">{subWp.progress ?? 0}%</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-500 dark:text-gray-400">數量：</span>
-                                            <span className="text-gray-900 dark:text-gray-100">
-                                                {subWp.estimatedQuantity ?? '-'} {subWp.unit ?? ''}
-                                            </span>
-                                        </div>
-                                        {hasBudgetPermission && (
-                                            <div>
-                                                <span className="text-gray-500 dark:text-gray-400">預算：</span>
-                                                <span className="text-gray-900 dark:text-gray-100">{subWp.budget ?? '-'}</span>
+                                        {duration && (
+                                            <div className="mt-2 text-sm">
+                                                <span className="text-gray-500 dark:text-gray-400">耗時：</span>
+                                                <span className="text-green-600 dark:text-green-400 font-medium">{duration}</span>
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -589,6 +646,21 @@ export default function WorkpackageDetailPage() {
                                             value={newSubWorkpackage.unit} 
                                             onChange={e => setNewSubWorkpackage(prev => ({ ...prev, unit: e.target.value }))} 
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">負責人 (選填)</label>
+                                        <select 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                            value={newSubWorkpackage.assignedTo} 
+                                            onChange={e => setNewSubWorkpackage(prev => ({ ...prev, assignedTo: e.target.value }))} 
+                                        >
+                                            <option value="">請選擇負責人</option>
+                                            {users.map((userItem) => (
+                                                <option key={userItem.uid} value={userItem.uid}>
+                                                    {userItem.displayName || userItem.email}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                     {hasBudgetPermission && (
                                         <div>

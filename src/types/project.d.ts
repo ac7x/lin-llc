@@ -195,11 +195,13 @@ export interface Template extends BaseWithDates {
  * - workpackageId: 指定要套用的工作包 ID（可選）
  * - estimatedStartDate: 預計開始日期（可選，ISO 字串）
  * - estimatedEndDate: 預計結束日期（可選，ISO 字串）
+ * - assignedTo: 負責人（可選）
  */
 export type TemplateToSubWorkpackageOptions = {
     workpackageId?: string;
     estimatedStartDate?: DateField;
     estimatedEndDate?: DateField;
+    assignedTo?: string;
 };
 
 export interface ExpenseItem extends BaseWithDates {
