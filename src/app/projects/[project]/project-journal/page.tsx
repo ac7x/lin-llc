@@ -54,12 +54,6 @@ export default function ProjectJournalPage() {
         return project.reports || [];
     }, [projectDoc]);
 
-    const photos = useMemo(() => {
-        if (!projectDoc?.exists()) return [];
-        const project = projectDoc.data() as Project;
-        return project.photos || [];
-    }, [projectDoc]);
-
     const workpackages = useMemo(() => {
         if (!projectDoc?.exists()) return [];
         const project = projectDoc.data() as Project;
@@ -201,13 +195,14 @@ export default function ProjectJournalPage() {
             await updateDoc(doc(db, "projects", projectId), {
                 reports: arrayUnion({
                     ...newReport,
+                    id: reportId,
                     weather,
                     temperature,
                     activities,
                     date: nowTimestamp,
-                    projectProgress, // 新增專案進度記錄
+                    projectProgress,
+                    photos: photoRecords, // 直接將照片陣列寫入 report
                 }),
-                photos: arrayUnion(...photoRecords),
             });
             setNewReport({ workforceCount: 0, description: "", issues: "" });
             setPhotoFiles([]);
@@ -223,8 +218,6 @@ export default function ProjectJournalPage() {
             setUploadProgress(0);
         }
     };
-
-    const getReportPhotos = (reportId: string) => photos.filter(photo => photo.reportId === reportId);
 
     if (loading) return <div className="p-4">載入中...</div>;
     if (error) return <div className="p-4 text-red-500">錯誤: {error.message}</div>;
@@ -511,7 +504,7 @@ export default function ProjectJournalPage() {
                                             <div className="mt-4">
                                                 <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">照片記錄</h4>
                                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                                    {getReportPhotos(report.id).map((photo) => (
+                                                    {report.photos.map((photo) => (
                                                         <div key={photo.id} className="border rounded-lg overflow-hidden bg-white dark:bg-gray-900">
                                                             <Image
                                                                 src={photo.url}
@@ -546,9 +539,9 @@ export default function ProjectJournalPage() {
                         </div>
                     ) : (
                         <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                            <svg className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                            <div className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500 text-4xl">
+                                📄
+                            </div>
                             暫無工作日誌
                         </div>
                     )}
