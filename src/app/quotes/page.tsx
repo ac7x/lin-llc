@@ -15,7 +15,6 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { useAuth } from "@/app/signin/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { QuoteData } from "@/types/finance";
 import { doc, getDoc, collection } from "firebase/firestore";
