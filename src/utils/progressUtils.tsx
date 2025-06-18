@@ -12,40 +12,54 @@ import React from "react";
 import { Project, Workpackage } from "@/types/project";
 
 /**
- * 計算專案進度百分比（根據所有 subWorkpackages 的 estimatedQuantity 與 progress 欄位加權平均）
+ * 計算專案進度百分比（根據所有 subWorkpackages 的實際完成數量計算）
+ * 使用 actualQuantity 總和除以 estimatedQuantity 總和
  * 若 estimatedQuantity 為 0 或未填，則不納入計算。
  * 若所有 estimatedQuantity 為 0，則回傳 0。
  */
 export function calculateProjectProgress(project: Project): number {
   if (!project.workpackages || project.workpackages.length === 0) return 0;
   let totalEstimated = 0;
-  let totalProgress = 0;
+  let totalActual = 0;
 
   for (const wp of project.workpackages) {
     if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) continue;
     for (const sub of wp.subWorkpackages) {
       const estimated = typeof sub.estimatedQuantity === "number" ? sub.estimatedQuantity : 0;
-      const progress = typeof sub.progress === "number" ? sub.progress : 0;
       if (estimated > 0) {
+        const actual = typeof sub.actualQuantity === "number" ? sub.actualQuantity : 0;
         totalEstimated += estimated;
-        totalProgress += (progress / 100) * estimated;
+        totalActual += actual;
       }
     }
   }
+  
   if (totalEstimated === 0) return 0;
-  return Math.round((totalProgress / totalEstimated) * 100);
+  return Math.round((totalActual / totalEstimated) * 100);
 }
 
 /**
- * 計算工作包進度百分比（根據所有 subWorkpackages 的進度平均）
+ * 計算工作包進度百分比（根據所有 subWorkpackages 的實際完成數量計算）
+ * 使用 actualQuantity 總和除以 estimatedQuantity 總和
+ * 若 estimatedQuantity 為 0 或未填，則不納入計算。
+ * 若所有 estimatedQuantity 為 0，則回傳 0。
  */
 export function calculateWorkpackageProgress(wp: Workpackage): number {
   if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) return 0;
-  const totalProgress = wp.subWorkpackages.reduce((sum, sub) => {
-    const progress = typeof sub.progress === "number" ? sub.progress : 0;
-    return sum + progress;
-  }, 0);
-  return Math.round(totalProgress / wp.subWorkpackages.length);
+  let totalEstimated = 0;
+  let totalActual = 0;
+
+  for (const sub of wp.subWorkpackages) {
+    const estimated = typeof sub.estimatedQuantity === "number" ? sub.estimatedQuantity : 0;
+    if (estimated > 0) {
+      const actual = typeof sub.actualQuantity === "number" ? sub.actualQuantity : 0;
+      totalEstimated += estimated;
+      totalActual += actual;
+    }
+  }
+  
+  if (totalEstimated === 0) return 0;
+  return Math.round((totalActual / totalEstimated) * 100);
 }
 
 /**

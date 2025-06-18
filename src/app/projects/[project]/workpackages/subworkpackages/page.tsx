@@ -69,70 +69,81 @@ function SortableSubWorkpackage({
             style={style}
             className="bg-white dark:bg-gray-700 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200"
         >
-            <div
-                {...attributes}
-                {...listeners}
-                className="cursor-grab"
-            >
-                <div className="flex justify-between items-start">
-                    <div>
-                        <div className="font-medium text-gray-900 dark:text-gray-100">{subWp.name}</div>
-                        {subWp.description && (
-                            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                                {subWp.description}
-                            </div>
-                        )}
-                    </div>
-                    <button
-                        onClick={() => onEdit(subWp)}
-                        className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                        title="編輯"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                    </button>
+            <div className="flex items-start gap-3">
+                {/* 拖曳區域 */}
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200"
+                    title="拖曳排序"
+                >
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
                 </div>
-                <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">優先級：</span>
-                        <span className="text-gray-900 dark:text-gray-100">{index + 1}</span>
+
+                {/* 內容區域 */}
+                <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <div className="font-medium text-gray-900 dark:text-gray-100">{subWp.name}</div>
+                            {subWp.description && (
+                                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                    {subWp.description}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">所屬：</span>
-                        <span className="text-gray-900 dark:text-gray-100">{subWp.workpackageName}</span>
-                    </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">進度：</span>
-                        <span className="text-gray-900 dark:text-gray-100">{subWp.progress ?? 0}%</span>
-                    </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">預估數量：</span>
-                        <span className="text-gray-900 dark:text-gray-100">{subWp.estimatedQuantity ?? '-'}</span>
-                    </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">實際完成：</span>
-                        <span className="text-gray-900 dark:text-gray-100">{subWp.actualQuantity ?? '-'}</span>
-                    </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">開始日期：</span>
-                        <span className="text-gray-900 dark:text-gray-100">
-                            {subWp.actualStartDate 
-                                ? (typeof subWp.actualStartDate === "string" 
-                                    ? subWp.actualStartDate 
-                                    : subWp.actualStartDate.toDate().toLocaleDateString())
-                                : '-'}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">完成日期：</span>
-                        <span className="text-gray-900 dark:text-gray-100">
-                            {subWp.actualEndDate 
-                                ? (typeof subWp.actualEndDate === "string" 
-                                    ? subWp.actualEndDate 
-                                    : subWp.actualEndDate.toDate().toLocaleDateString())
-                                : '-'}
-                        </span>
+                    <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span className="text-gray-500 dark:text-gray-400">優先級：</span>
+                            <span className="text-gray-900 dark:text-gray-100">{index + 1}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 dark:text-gray-400">所屬：</span>
+                            <span className="text-gray-900 dark:text-gray-100">{subWp.workpackageName}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 dark:text-gray-400">進度：</span>
+                            <span className="text-gray-900 dark:text-gray-100">{subWp.progress ?? 0}%</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 dark:text-gray-400">預估數量：</span>
+                            <span className="text-gray-900 dark:text-gray-100">{subWp.estimatedQuantity ?? '-'}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 dark:text-gray-400">實際完成：</span>
+                            <span className="text-gray-900 dark:text-gray-100">{subWp.actualQuantity ?? '-'}</span>
+                        </div>
+                        {/* 可點擊的日期區域 */}
+                        <div 
+                            className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1 rounded transition-colors duration-200"
+                            onClick={() => onEdit(subWp)}
+                            title="點擊編輯日期"
+                        >
+                            <span className="text-gray-500 dark:text-gray-400">開始日期：</span>
+                            <span className="text-gray-900 dark:text-gray-100">
+                                {subWp.plannedStartDate 
+                                    ? (typeof subWp.plannedStartDate === "string" 
+                                        ? subWp.plannedStartDate 
+                                        : subWp.plannedStartDate.toDate().toLocaleDateString())
+                                    : '-'}
+                            </span>
+                        </div>
+                        <div 
+                            className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1 rounded transition-colors duration-200"
+                            onClick={() => onEdit(subWp)}
+                            title="點擊編輯日期"
+                        >
+                            <span className="text-gray-500 dark:text-gray-400">完成日期：</span>
+                            <span className="text-gray-900 dark:text-gray-100">
+                                {subWp.plannedEndDate 
+                                    ? (typeof subWp.plannedEndDate === "string" 
+                                        ? subWp.plannedEndDate 
+                                        : subWp.plannedEndDate.toDate().toLocaleDateString())
+                                    : '-'}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -150,17 +161,11 @@ export default function SubWorkpackageSortingPage() {
     const [editingSubWp, setEditingSubWp] = useState<EnhancedSubWorkpackage | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<{
-        actualStartDate: string;
-        actualEndDate: string;
-        estimatedQuantity: number;
-        actualQuantity: number;
-        progress: number;
+        plannedStartDate: string;
+        plannedEndDate: string;
     }>({
-        actualStartDate: "",
-        actualEndDate: "",
-        estimatedQuantity: 0,
-        actualQuantity: 0,
-        progress: 0
+        plannedStartDate: "",
+        plannedEndDate: ""
     });
 
     const project = useMemo(() => {
@@ -239,19 +244,16 @@ export default function SubWorkpackageSortingPage() {
     const startEditSubWorkpackage = (subWp: EnhancedSubWorkpackage) => {
         setEditingSubWp(subWp);
         setFormData({
-            actualStartDate: subWp.actualStartDate
-                ? (typeof subWp.actualStartDate === "string"
-                    ? subWp.actualStartDate
-                    : subWp.actualStartDate.toDate().toISOString().split('T')[0])
+            plannedStartDate: subWp.plannedStartDate
+                ? (typeof subWp.plannedStartDate === "string"
+                    ? subWp.plannedStartDate
+                    : subWp.plannedStartDate.toDate().toISOString().split('T')[0])
                 : "",
-            actualEndDate: subWp.actualEndDate
-                ? (typeof subWp.actualEndDate === "string"
-                    ? subWp.actualEndDate
-                    : subWp.actualEndDate.toDate().toISOString().split('T')[0])
-                : "",
-            estimatedQuantity: subWp.estimatedQuantity || 0,
-            actualQuantity: subWp.actualQuantity || 0,
-            progress: subWp.progress || 0
+            plannedEndDate: subWp.plannedEndDate
+                ? (typeof subWp.plannedEndDate === "string"
+                    ? subWp.plannedEndDate
+                    : subWp.plannedEndDate.toDate().toISOString().split('T')[0])
+                : ""
         });
         setIsEditing(true);
     };
@@ -272,13 +274,14 @@ export default function SubWorkpackageSortingPage() {
     const submitEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingSubWp) return;
-        // 修正：空字串不轉 Timestamp，僅有值時才轉
-        const actualStartDate = formData.actualStartDate && formData.actualStartDate.trim()
-            ? Timestamp.fromDate(new Date(formData.actualStartDate))
-            : undefined;
-        const actualEndDate = formData.actualEndDate && formData.actualEndDate.trim()
-            ? Timestamp.fromDate(new Date(formData.actualEndDate))
-            : undefined;
+        // 只組裝有值的日期欄位
+        const updateFields: Partial<SubWorkpackage> = {};
+        if (formData.plannedStartDate && formData.plannedStartDate.trim()) {
+            updateFields.plannedStartDate = Timestamp.fromDate(new Date(formData.plannedStartDate));
+        }
+        if (formData.plannedEndDate && formData.plannedEndDate.trim()) {
+            updateFields.plannedEndDate = Timestamp.fromDate(new Date(formData.plannedEndDate));
+        }
         const workpackageId = editingSubWp.workpackageId;
         setSaving(true);
         try {
@@ -289,11 +292,7 @@ export default function SubWorkpackageSortingPage() {
                         subWorkpackages: wp.subWorkpackages.map(sub =>
                             sub.id === editingSubWp.id ? {
                                 ...sub,
-                                actualStartDate,
-                                actualEndDate,
-                                estimatedQuantity: formData.estimatedQuantity,
-                                actualQuantity: formData.actualQuantity,
-                                progress: formData.progress
+                                ...updateFields
                             } : sub
                         )
                     };
@@ -304,11 +303,7 @@ export default function SubWorkpackageSortingPage() {
             const newAllSubWorkpackages = allSubWorkpackages.map(subWp =>
                 subWp.id === editingSubWp.id ? {
                     ...subWp,
-                    actualStartDate,
-                    actualEndDate,
-                    estimatedQuantity: formData.estimatedQuantity,
-                    actualQuantity: formData.actualQuantity,
-                    progress: formData.progress
+                    ...updateFields
                 } : subWp
             );
             setAllSubWorkpackages(newAllSubWorkpackages);
@@ -396,11 +391,11 @@ export default function SubWorkpackageSortingPage() {
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{editingSubWp.name}</p>
                             <form onSubmit={submitEdit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">實際開始日期</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">預計開始日期</label>
                                     <input
                                         type="date"
-                                        name="actualStartDate"
-                                        value={formData.actualStartDate}
+                                        name="plannedStartDate"
+                                        value={formData.plannedStartDate}
                                         onChange={handleFormChange}
                                         className="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200
                                                    [&::-webkit-calendar-picker-indicator]:invert-0
@@ -408,51 +403,15 @@ export default function SubWorkpackageSortingPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">實際結束日期</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">預計結束日期</label>
                                     <input
                                         type="date"
-                                        name="actualEndDate"
-                                        value={formData.actualEndDate}
+                                        name="plannedEndDate"
+                                        value={formData.plannedEndDate}
                                         onChange={handleFormChange}
                                         className="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200
                                                    [&::-webkit-calendar-picker-indicator]:invert-0
                                                    dark:[&::-webkit-calendar-picker-indicator]:invert"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">預估數量</label>
-                                    <input
-                                        type="number"
-                                        name="estimatedQuantity"
-                                        value={formData.estimatedQuantity}
-                                        onChange={handleFormChange}
-                                        min="0"
-                                        step="0.01"
-                                        className="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">實際完成數量</label>
-                                    <input
-                                        type="number"
-                                        name="actualQuantity"
-                                        value={formData.actualQuantity}
-                                        onChange={handleFormChange}
-                                        min="0"
-                                        step="0.01"
-                                        className="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">進度 (%)</label>
-                                    <input
-                                        type="number"
-                                        name="progress"
-                                        value={formData.progress}
-                                        onChange={handleFormChange}
-                                        min="0"
-                                        max="100"
-                                        className="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                     />
                                 </div>
                                 <div className="flex justify-end space-x-3 pt-4">

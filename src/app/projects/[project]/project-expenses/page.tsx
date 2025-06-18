@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { db, doc, updateDoc } from "@/lib/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Timestamp } from "firebase/firestore";
-import { formatLocalDate } from "@/utils/dateUtils";
+import { formatLocalDate, formatDateForInput } from "@/utils/dateUtils";
 import { nanoid } from "nanoid";
 import { ExpenseData, ExpenseItem, Workpackage } from "@/types/project";
 import { BaseWithDates } from "@/types/common";
@@ -34,13 +34,15 @@ export default function ProjectExpensesPage() {
     const [expenses, setExpenses] = useState<ExpenseData[]>([]);
 
     const [newExpense, setNewExpense] = useState<Partial<ExpenseData>>({
-        expenseNumber: `EXP-${formatLocalDate(new Date())}-${nanoid(4)}`,
+        expenseNumber: `EXP-${formatDateForInput(new Date())}-${nanoid(4)}`,
         expenseDate: Timestamp.now(),
         type: "支出",
         items: [],
         totalAmount: 0,
         status: "draft",
         notes: "",
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
     });
 
     const [newExpenseItem, setNewExpenseItem] = useState<Partial<ExpenseItem>>({
@@ -49,6 +51,8 @@ export default function ProjectExpensesPage() {
         unitPrice: 0,
         amount: 0,
         workpackageId: "",
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
     });
 
     // 初始化或更新 expenses 陣列
@@ -88,11 +92,18 @@ export default function ProjectExpensesPage() {
             updatedAt: now
         };
 
-        setNewExpense(prev => ({
-            ...prev,
-            items: [...(prev.items || []), item],
-            totalAmount: (prev.totalAmount || 0) + amount,
-        }));
+        setNewExpense(prev => {
+            const now = Timestamp.now();
+            return {
+                ...prev,
+                items: [...(prev.items || []), item].map(item => ({
+                    ...item,
+                    updatedAt: now
+                })),
+                totalAmount: (prev.totalAmount || 0) + amount,
+                updatedAt: now
+            };
+        });
 
         setNewExpenseItem({
             description: "",
@@ -100,6 +111,8 @@ export default function ProjectExpensesPage() {
             unitPrice: 0,
             amount: 0,
             workpackageId: "",
+            createdAt: now,
+            updatedAt: now
         });
     };
 
@@ -107,10 +120,16 @@ export default function ProjectExpensesPage() {
         setNewExpense(prev => {
             const items = prev.items || [];
             const itemToRemove = items.find(item => item.expenseItemId === itemId);
+            const now = Timestamp.now();
+            
             return {
                 ...prev,
-                items: items.filter(item => item.expenseItemId !== itemId),
+                items: items.filter(item => item.expenseItemId !== itemId).map(item => ({
+                    ...item,
+                    updatedAt: now
+                })),
                 totalAmount: (prev.totalAmount || 0) - (itemToRemove?.amount || 0),
+                updatedAt: now
             };
         });
     };
@@ -135,12 +154,19 @@ export default function ProjectExpensesPage() {
             const validatedItems = newExpense.items.map(item => ({
                 ...item,
                 createdAt: item.createdAt || now,
-                updatedAt: now
+                updatedAt: now,
+                // 確保其他必要欄位都有值
+                expenseItemId: item.expenseItemId,
+                description: item.description || "",
+                quantity: item.quantity || 0,
+                unitPrice: item.unitPrice || 0,
+                amount: item.amount || 0,
+                workpackageId: item.workpackageId || ""
             }));
 
             const expenseData: ExpenseData = {
                 expenseId: editingExpense?.expenseId || nanoid(8),
-                expenseNumber: newExpense.expenseNumber || `EXP-${formatLocalDate(now)}-${nanoid(4)}`,
+                expenseNumber: newExpense.expenseNumber || `EXP-${formatDateForInput(now)}-${nanoid(4)}`,
                 expenseDate: newExpense.expenseDate || now,
                 clientName: projectData?.clientName || "",
                 clientContact: projectData?.clientContact || "",
@@ -206,30 +232,38 @@ export default function ProjectExpensesPage() {
     };
 
     const handleEditExpense = (expense: ExpenseData) => {
+        const now = Timestamp.now();
         setEditingExpense(expense);
         setNewExpense({
             expenseNumber: expense.expenseNumber,
             expenseDate: expense.expenseDate,
             type: expense.type,
-            items: expense.items,
+            items: expense.items.map(item => ({
+                ...item,
+                updatedAt: now
+            })),
             totalAmount: expense.totalAmount,
             relatedOrderId: expense.relatedOrderId,
             relatedContractId: expense.relatedContractId,
             status: expense.status,
             notes: expense.notes,
+            updatedAt: now
         });
         setShowModal(true);
     };
 
     const resetForm = () => {
+        const now = Timestamp.now();
         setNewExpense({
-            expenseNumber: `EXP-${formatLocalDate(new Date())}-${nanoid(4)}`,
-            expenseDate: Timestamp.now(),
+            expenseNumber: `EXP-${formatDateForInput(new Date())}-${nanoid(4)}`,
+            expenseDate: now,
             type: "支出",
             items: [],
             totalAmount: 0,
             status: "draft",
             notes: "",
+            createdAt: now,
+            updatedAt: now
         });
         setNewExpenseItem({
             description: "",
@@ -237,6 +271,8 @@ export default function ProjectExpensesPage() {
             unitPrice: 0,
             amount: 0,
             workpackageId: "",
+            createdAt: now,
+            updatedAt: now
         });
         setEditingExpense(null);
     };
@@ -382,8 +418,14 @@ export default function ProjectExpensesPage() {
                                     <input
                                         type="date"
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-                                        value={newExpense.expenseDate ? formatLocalDate(newExpense.expenseDate) : formatLocalDate(new Date())}
-                                        onChange={e => setNewExpense({ ...newExpense, expenseDate: Timestamp.fromDate(new Date(e.target.value)) })}
+                                        value={newExpense.expenseDate ? formatDateForInput(newExpense.expenseDate) : formatDateForInput(new Date())}
+                                        onChange={e => {
+                                            const dateValue = e.target.value;
+                                            if (dateValue) {
+                                                const selectedDate = new Date(dateValue + 'T00:00:00');
+                                                setNewExpense({ ...newExpense, expenseDate: Timestamp.fromDate(selectedDate) });
+                                            }
+                                        }}
                                         required
                                     />
                                 </div>
