@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { OrderItem } from "@/types/finance";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
+import { db, doc, setDoc, Timestamp } from '@/lib/firebase-client';
 
 export default function OrderAddPage() {
     const router = useRouter();
-    const { db } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [clientName, setClientName] = useState("");
     const [clientContact, setClientContact] = useState("");
     const [clientPhone, setClientPhone] = useState("");

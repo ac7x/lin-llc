@@ -13,7 +13,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { 
   storage,
   arrayUnion,
@@ -22,6 +22,7 @@ import {
   getDownloadURL,
   doc,
   updateDoc,
+  db,
 } from '@/lib/firebase-client';
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
@@ -51,7 +52,7 @@ async function fetchWeather(region: string) {
 }
 
 export default function ProjectJournalPage() {
-    const { db } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));

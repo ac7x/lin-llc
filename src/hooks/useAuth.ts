@@ -27,6 +27,7 @@ import {
   signInWithPopup,
   // App Check 功能
   getAppCheckToken,
+  getAppCheckInstance,
 } from '@/lib/firebase-client';
 
 // 導出 react-firebase-hooks
@@ -96,6 +97,10 @@ export function useAuth(): AuthReturn {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [appCheckError, setAppCheckError] = useState<Error | null>(null);
+  const [appCheckInitializing, setAppCheckInitializing] = useState(false);
+
+  // 檢查是否在客戶端環境
+  const isClient = typeof window !== 'undefined';
 
   // 獲取用戶角色相關數據
   const [userDoc, roleLoading, roleError] = useDocument(
@@ -173,21 +178,34 @@ export function useAuth(): AuthReturn {
   }, [hasRole]);
 
   useEffect(() => {
-    // 簡化的 App Check 初始化
+    // 安全的 App Check 初始化
     const initAppCheck = async () => {
-      try {
-        // 嘗試獲取 App Check token 來初始化
-        await getAppCheckToken();
+      if (!isClient) {
         setInitialized(true);
+        return;
+      }
+
+      setAppCheckInitializing(true);
+      try {
+        // 檢查 App Check 實例是否可用
+        const appCheckInstance = getAppCheckInstance();
+        if (appCheckInstance) {
+          // 嘗試獲取 App Check token 來初始化
+          await getAppCheckToken();
+        }
+        setInitialized(true);
+        setAppCheckError(null);
       } catch (error) {
         console.error('App Check 初始化失敗:', error);
         setAppCheckError(error as Error);
         setInitialized(true); // 即使失敗也要繼續
+      } finally {
+        setAppCheckInitializing(false);
       }
     };
 
-    initAppCheck();
-  }, []);
+    void initAppCheck();
+  }, [isClient]);
 
   useEffect(() => {
     if (!initialized) return;
@@ -272,7 +290,7 @@ export function useAuth(): AuthReturn {
     appCheck: {
       initialized,
       error: appCheckError,
-      isInitializing: false
+      isInitializing: appCheckInitializing
     },
     signIn,
     signOut: signOutUser,

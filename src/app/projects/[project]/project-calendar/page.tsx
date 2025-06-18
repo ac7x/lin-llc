@@ -14,13 +14,14 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import "@/styles/react-big-calendar.css";
 import { Workpackage, SubWorkpackage } from "@/types/project";
 import { ProgressColorScale } from "@/utils/colorUtils";
+import { db, doc } from '@/lib/firebase-client';
 
 const localizer = dateFnsLocalizer({
     format,
@@ -45,7 +46,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { db, doc } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));

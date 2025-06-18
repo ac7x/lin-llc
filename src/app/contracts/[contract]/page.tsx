@@ -13,16 +13,17 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
+import { db, doc } from '@/lib/firebase-client';
 
 export default function ContractDetailPage() {
-    const { db, doc } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const params = useParams();
     const router = useRouter();
     const contractId = params?.contract as string;
     const [contractDoc, loading, error] = useDocument(contractId ? doc(db, "finance", "default", "contracts", contractId) : null);
 
-    if (loading) {
+    if (authLoading || loading) {
         return <main className="max-w-2xl mx-auto px-4 py-8 bg-white dark:bg-gray-900"><div>載入中...</div></main>;
     }
     if (error) {
