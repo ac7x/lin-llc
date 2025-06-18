@@ -31,7 +31,7 @@ import Image from 'next/image';
 import { Project, ActivityLog, PhotoRecord, PhotoType, IssueRecord } from '@/types/project';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 import { toTimestamp } from '@/utils/dateUtils';
-import WeatherDisplay, { fetchWeather } from '@/components/common/WeatherDisplay';
+import WeatherDisplay, { fetchWeather } from '@/app/projects/[project]/project-journal/components/WeatherDisplay';
 
 export default function ProjectJournalPage() {
     // 僅呼叫 useAuth()，不解構 user, authLoading
