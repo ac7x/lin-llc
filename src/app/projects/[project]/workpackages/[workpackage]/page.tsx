@@ -13,7 +13,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useDocument } from "react-firebase-hooks/firestore";
+import { useDocument, useCollection } from "react-firebase-hooks/firestore";
 import { useAuth } from '@/hooks/useAuth';
 import { Project } from "@/types/project";
 import { SubWorkpackage, Workpackage } from "@/types/project";
@@ -104,6 +104,7 @@ export default function WorkpackageDetailPage() {
     const projectId = params?.project as string;
     const workpackageId = params?.workpackage as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
+    const [usersSnapshot] = useCollection(collection(db, "members"));
     const [isEditing, setIsEditing] = useState(false);
     const [isAddingSubWP, setIsAddingSubWP] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -117,7 +118,6 @@ export default function WorkpackageDetailPage() {
         estimatedEndDate: ""   // string
     });
     const [subSaving, setSubSaving] = useState(false);
-    const [editProgress, setEditProgress] = useState(0);
     const [showTemplateModal, setShowTemplateModal] = useState(false);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -131,6 +131,12 @@ export default function WorkpackageDetailPage() {
         // 檢查是否為專案的 coordinator 或 costController
         return project.coordinator === currentUser.uid || project.costController === currentUser.uid;
     };
+
+    // 新增：取得用戶清單
+    const users = usersSnapshot?.docs.map(doc => ({
+        ...doc.data(),
+        uid: doc.id,
+    })) as AppUser[] || [];
 
     useEffect(() => {
         const selected = getSelectedTemplateFromStorage();
@@ -325,7 +331,11 @@ export default function WorkpackageDetailPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">負責人</label>
-                            <div className="text-gray-900 dark:text-gray-100">{workpackage.assignedTo || '-'}</div>
+                            <div className="text-gray-900 dark:text-gray-100">
+                                {workpackage.assignedTo ? 
+                                    users.find(u => u.uid === workpackage.assignedTo)?.displayName || workpackage.assignedTo 
+                                    : '-'}
+                            </div>
                         </div>
                     </div>
                     <div className="space-y-4">
@@ -517,43 +527,75 @@ export default function WorkpackageDetailPage() {
                 {isAddingSubWP && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
-                            <h2 className="text-xl font-bold mb-4">新增子工作包</h2>
+                            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">新增子工作包</h2>
                             <form onSubmit={async (e) => {
                                 e.preventDefault();
                                 await handleAddSubWorkpackage();
                                 setIsAddingSubWP(false);
                             }} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">名稱</label>
-                                    <input type="text" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.name} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, name: e.target.value }))} required />
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">名稱</label>
+                                    <input 
+                                        type="text" 
+                                        className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                        value={newSubWorkpackage.name} 
+                                        onChange={e => setNewSubWorkpackage(prev => ({ ...prev, name: e.target.value }))} 
+                                        required 
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">描述</label>
-                                    <textarea className="border rounded w-full px-3 py-2" value={newSubWorkpackage.description} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, description: e.target.value }))} rows={3} />
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">描述</label>
+                                    <textarea 
+                                        className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                        value={newSubWorkpackage.description} 
+                                        onChange={e => setNewSubWorkpackage(prev => ({ ...prev, description: e.target.value }))} 
+                                        rows={3} 
+                                    />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">預計開始日期 (選填)</label>
-                                        <input type="date" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.estimatedStartDate} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, estimatedStartDate: e.target.value }))} />
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預計開始日期 (選填)</label>
+                                        <input 
+                                            type="date" 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                            value={newSubWorkpackage.estimatedStartDate} 
+                                            onChange={e => setNewSubWorkpackage(prev => ({ ...prev, estimatedStartDate: e.target.value }))} 
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">預計結束日期 (選填)</label>
-                                        <input type="date" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.estimatedEndDate} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, estimatedEndDate: e.target.value }))} />
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預計結束日期 (選填)</label>
+                                        <input 
+                                            type="date" 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                            value={newSubWorkpackage.estimatedEndDate} 
+                                            onChange={e => setNewSubWorkpackage(prev => ({ ...prev, estimatedEndDate: e.target.value }))} 
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">預計數量</label>
-                                        <input type="number" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.estimatedQuantity} min={0} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, estimatedQuantity: Number(e.target.value) }))} />
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預計數量</label>
+                                        <input 
+                                            type="number" 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                            value={newSubWorkpackage.estimatedQuantity} 
+                                            min={0} 
+                                            onChange={e => setNewSubWorkpackage(prev => ({ ...prev, estimatedQuantity: Number(e.target.value) }))} 
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">單位</label>
-                                        <input type="text" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.unit} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, unit: e.target.value }))} />
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">單位</label>
+                                        <input 
+                                            type="text" 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                            value={newSubWorkpackage.unit} 
+                                            onChange={e => setNewSubWorkpackage(prev => ({ ...prev, unit: e.target.value }))} 
+                                        />
                                     </div>
                                     {hasBudgetPermission && (
                                         <div>
-                                            <label className="block text-sm font-medium mb-1">預算</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預算</label>
                                             <input 
                                                 type="number" 
-                                                className="border rounded w-full px-3 py-2" 
+                                                className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
                                                 value={newSubWorkpackage.budget} 
                                                 min={0} 
                                                 onChange={e => setNewSubWorkpackage(prev => ({ ...prev, budget: Number(e.target.value) }))}
@@ -562,8 +604,20 @@ export default function WorkpackageDetailPage() {
                                     )}
                                 </div>
                                 <div className="flex justify-end space-x-2">
-                                    <button type="button" onClick={() => setIsAddingSubWP(false)} className="px-4 py-2 border border-gray-300 rounded shadow hover:bg-gray-200 hover:text-gray-900">取消</button>
-                                    <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded" disabled={subSaving || !newSubWorkpackage.name.trim()}>{subSaving ? "建立中..." : "確認新增"}</button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsAddingSubWP(false)} 
+                                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
+                                    >
+                                        取消
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-200" 
+                                        disabled={subSaving || !newSubWorkpackage.name.trim()}
+                                    >
+                                        {subSaving ? "建立中..." : "確認新增"}
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -573,32 +627,51 @@ export default function WorkpackageDetailPage() {
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
                             <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold">選擇範本</h2>
-                                <button onClick={() => setShowTemplateModal(false)} className="text-gray-500 hover:text-gray-700">關閉</button>
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">選擇範本</h2>
+                                <button onClick={() => setShowTemplateModal(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">關閉</button>
                             </div>
                             {loadingTemplates ? (
-                                <div className="py-20 text-center">正在載入範本...</div>
+                                <div className="py-20 text-center text-gray-600 dark:text-gray-300">正在載入範本...</div>
                             ) : templates.length > 0 ? (
                                 <div>
                                     {selectedTemplate ? (
                                         <div className="mb-6">
                                             <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-4">
-                                                <h3 className="font-bold text-lg mb-2">{selectedTemplate.name}</h3>
+                                                <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-gray-100">{selectedTemplate.name}</h3>
                                                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{selectedTemplate.description}</p>
                                                 <div className="text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-2 mb-4">
-                                                    <p className="font-medium mb-1">請輸入每個子工作包的數量：</p>
+                                                    <p className="font-medium mb-1 text-gray-900 dark:text-gray-100">請輸入每個子工作包的數量：</p>
                                                     <form onSubmit={e => { e.preventDefault(); handleAddFromTemplate(selectedTemplate); }}>
                                                         <ul className="list-disc pl-6 space-y-2">
                                                             {selectedTemplate.subWorkpackages.map(item => (
                                                                 <li key={item.id} className="flex items-center gap-2">
-                                                                    <span className="flex-1">{item.name}（單位：{item.unit}）</span>
-                                                                    <input type="number" min={0} required className="border rounded px-2 py-1 w-24" value={templateQuantities[item.id] ?? ""} onChange={e => setTemplateQuantities(q => ({ ...q, [item.id]: Number(e.target.value) }))} />
+                                                                    <span className="flex-1 text-gray-900 dark:text-gray-100">{item.name}（單位：{item.unit}）</span>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        min={0} 
+                                                                        required 
+                                                                        className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-24 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                                                        value={templateQuantities[item.id] ?? ""} 
+                                                                        onChange={e => setTemplateQuantities(q => ({ ...q, [item.id]: Number(e.target.value) }))} 
+                                                                    />
                                                                 </li>
                                                             ))}
                                                         </ul>
                                                         <div className="flex justify-end gap-3 mt-4">
-                                                            <button type="button" onClick={() => setSelectedTemplate(null)} className="px-4 py-2 border border-gray-300 rounded shadow hover:bg-gray-100">返回選擇</button>
-                                                            <button type="submit" disabled={subSaving || selectedTemplate.subWorkpackages.some(item => !templateQuantities[item.id] && templateQuantities[item.id] !== 0)} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300">{subSaving ? '新增中...' : '確認使用此範本'}</button>
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={() => setSelectedTemplate(null)} 
+                                                                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
+                                                            >
+                                                                返回選擇
+                                                            </button>
+                                                            <button 
+                                                                type="submit" 
+                                                                disabled={subSaving || selectedTemplate.subWorkpackages.some(item => !templateQuantities[item.id] && templateQuantities[item.id] !== 0)} 
+                                                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 transition-colors duration-200"
+                                                            >
+                                                                {subSaving ? '新增中...' : '確認使用此範本'}
+                                                            </button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -608,10 +681,10 @@ export default function WorkpackageDetailPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                                             {templates.map(template => (
                                                 <div key={template.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition" onClick={() => setSelectedTemplate(template)}>
-                                                    <h3 className="font-bold mb-1">{template.name}</h3>
-                                                    <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">{template.category}</span>
+                                                    <h3 className="font-bold mb-1 text-gray-900 dark:text-gray-100">{template.name}</h3>
+                                                    <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-700 dark:text-gray-300">{template.category}</span>
                                                     <p className="text-sm mt-2 text-gray-600 dark:text-gray-400">{template.description}</p>
-                                                    <div className="mt-2 text-xs text-gray-500">包含 {template.subWorkpackages.length} 個子工作包項目</div>
+                                                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">包含 {template.subWorkpackages.length} 個子工作包項目</div>
                                                 </div>
                                             ))}
                                         </div>
@@ -619,8 +692,13 @@ export default function WorkpackageDetailPage() {
                                 </div>
                             ) : (
                                 <div className="py-10 text-center">
-                                    <p className="text-gray-500 mb-4">尚未建立任何範本</p>
-                                    <button onClick={() => { setShowTemplateModal(false); router.push('/templates'); }} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">前往建立範本</button>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-4">尚未建立任何範本</p>
+                                    <button 
+                                        onClick={() => { setShowTemplateModal(false); router.push('/templates'); }} 
+                                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-200"
+                                    >
+                                        前往建立範本
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -629,7 +707,7 @@ export default function WorkpackageDetailPage() {
                 {isEditing && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl">
-                            <h2 className="text-xl font-bold mb-4">編輯工作包資訊</h2>
+                            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">編輯工作包資訊</h2>
                             <form onSubmit={async (e) => {
                                 e.preventDefault();
                                 const formData = new FormData(e.target as HTMLFormElement);
@@ -647,7 +725,6 @@ export default function WorkpackageDetailPage() {
                                         : undefined,
                                     status: formData.get("status") as string,
                                     assignedTo: formData.get("assignedTo") as string,
-                                    progress: Number(editProgress),
                                     budget: Number(formData.get("budget")),
                                     category: formData.get("category") as string,
                                     priority: formData.get("priority") as 'low' | 'medium' | 'high',
@@ -656,16 +733,29 @@ export default function WorkpackageDetailPage() {
                             }} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">工作包名稱</label>
-                                        <input name="name" defaultValue={workpackage.name} className="border rounded w-full px-3 py-2" required />
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">工作包名稱</label>
+                                        <input 
+                                            name="name" 
+                                            defaultValue={workpackage.name} 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                            required 
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">類別</label>
-                                        <input name="category" defaultValue={workpackage.category} className="border rounded w-full px-3 py-2" />
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">類別</label>
+                                        <input 
+                                            name="category" 
+                                            defaultValue={workpackage.category} 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                        />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">狀態</label>
-                                        <select name="status" defaultValue={workpackage.status} className="border rounded w-full px-3 py-2">
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">狀態</label>
+                                        <select 
+                                            name="status" 
+                                            defaultValue={workpackage.status} 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                        >
                                             <option value="未開始">未開始</option>
                                             <option value="待開始">待開始</option>
                                             <option value="進行中">進行中</option>
@@ -674,68 +764,88 @@ export default function WorkpackageDetailPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">優先級</label>
-                                        <select name="priority" defaultValue={workpackage.priority || 'medium'} className="border rounded w-full px-3 py-2">
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">優先級</label>
+                                        <select 
+                                            name="priority" 
+                                            defaultValue={workpackage.priority || 'medium'} 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                        >
                                             <option value="low">低</option>
                                             <option value="medium">中</option>
                                             <option value="high">高</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">負責人</label>
-                                        <input name="assignedTo" defaultValue={workpackage.assignedTo} className="border rounded w-full px-3 py-2" />
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">負責人</label>
+                                        <select 
+                                            name="assignedTo" 
+                                            defaultValue={workpackage.assignedTo || ""} 
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                                        >
+                                            <option value="">請選擇負責人</option>
+                                            {users.map((userItem) => (
+                                                <option key={userItem.uid} value={userItem.uid}>
+                                                    {userItem.displayName || userItem.email}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                     {hasBudgetPermission && (
                                         <div>
-                                            <label className="block text-sm font-medium mb-1">預算</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預算</label>
                                             <input 
                                                 type="number" 
                                                 name="budget" 
                                                 defaultValue={workpackage.budget} 
-                                                className="border rounded w-full px-3 py-2" 
+                                                className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
                                             />
                                         </div>
                                     )}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">進度 (%)</label>
-                                        <input
-                                            type="number"
-                                            name="progress"
-                                            value={editProgress}
-                                            min="0"
-                                            max="100"
-                                            className="border rounded w-full px-3 py-2"
-                                            onChange={e => setEditProgress(Number(e.target.value))}
-                                        />
-                                    </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">預計開始日期</label>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預計開始日期</label>
                                         <input
                                             type="date"
                                             name="estimatedStartDate"
                                             defaultValue={workpackage.estimatedStartDate ? workpackage.estimatedStartDate.toDate().toISOString().split('T')[0] : ""}
-                                            className="border rounded w-full px-3 py-2"
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">預計結束日期</label>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">預計結束日期</label>
                                         <input
                                             type="date"
                                             name="estimatedEndDate"
                                             defaultValue={workpackage.estimatedEndDate ? workpackage.estimatedEndDate.toDate().toISOString().split('T')[0] : ""}
-                                            className="border rounded w-full px-3 py-2"
+                                            className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">描述</label>
-                                    <textarea name="description" defaultValue={workpackage.description} rows={3} className="border rounded w-full px-3 py-2" />
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">描述</label>
+                                    <textarea 
+                                        name="description" 
+                                        defaultValue={workpackage.description} 
+                                        rows={3} 
+                                        className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                    />
                                 </div>
                                 <div className="flex justify-end space-x-2 pt-4">
-                                    <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 border border-gray-300 rounded shadow hover:bg-gray-200 hover:text-gray-900">取消</button>
-                                    <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600" disabled={saving}>{saving ? "儲存中..." : "確認儲存"}</button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsEditing(false)} 
+                                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
+                                    >
+                                        取消
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition-colors duration-200" 
+                                        disabled={saving}
+                                    >
+                                        {saving ? "儲存中..." : "確認儲存"}
+                                    </button>
                                 </div>
                             </form>
                         </div>

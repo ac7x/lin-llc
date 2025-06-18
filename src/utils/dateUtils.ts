@@ -89,6 +89,15 @@ export function formatLocalDate(date: DateInput, locale: Locale = zhTW): string 
 }
 
 /**
+ * 格式化日期為 HTML date input 格式 (YYYY-MM-DD)
+ */
+export function formatDateForInput(date: DateInput): string {
+    const parsedDate = parseToDate(date);
+    if (!isValid(parsedDate)) return '';
+    return format(parsedDate, 'yyyy-MM-dd');
+}
+
+/**
  * 格式化時間為本地化字串
  */
 export function formatLocalTime(date: DateInput, locale: Locale = zhTW): string {
