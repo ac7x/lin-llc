@@ -55,6 +55,9 @@ import {
 import {
   getStorage,
   FirebaseStorage, // 保留型別定義
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
 } from "firebase/storage";
 import {
   getFunctions,
@@ -133,6 +136,10 @@ export {
   getRedirectResult,
   getMessagingToken,
   onMessage,
+  // Storage 相關函數
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
 };
 
 export type { User };

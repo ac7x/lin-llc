@@ -9,46 +9,25 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { User } from 'firebase/auth';
-import { Firestore } from 'firebase/firestore';
 import { useDocument } from 'react-firebase-hooks/firestore';
 import type { AppUser, UserWithClaims } from '@/types/auth';
 import { ROLE_HIERARCHY } from '@/utils/authUtils';
 import {
-  initializeFirebaseAppCheck,
   auth,
-  signOut,
   db,
-  firebaseApp,
-  storage,
-  // Firestore core
-  collection,
+  // Firestore 功能
   doc,
-  getDoc,
-  getDocs,
-  addDoc,
   setDoc,
-  updateDoc,
-  deleteDoc,
-  // Queries
-  query,
-  where,
-  orderBy,
-  limit,
-  // Utils
-  Timestamp,
   serverTimestamp,
-  // Array operations
-  arrayUnion,
-  arrayRemove,
-} from '@/lib/firebase-client';
-import { 
-  getAuth, 
-  onAuthStateChanged, 
+  // Auth 功能
+  onAuthStateChanged,
   signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
+  signOut,
   GoogleAuthProvider,
-  signInWithPopup
-} from 'firebase/auth';
+  signInWithPopup,
+  // App Check 功能
+  getAppCheckToken,
+} from '@/lib/firebase-client';
 
 // 導出 react-firebase-hooks
 export { 
@@ -76,29 +55,8 @@ interface FirebaseAuthReturn {
   isAuthenticated: boolean;
   isInitialized: boolean;
   isReady: boolean;
-  db: Firestore;
+  db: typeof db;
   auth: typeof auth;
-  storage: typeof storage;
-  // Firestore 功能
-  collection: typeof collection;
-  doc: typeof doc;
-  getDoc: typeof getDoc;
-  getDocs: typeof getDocs;
-  addDoc: typeof addDoc;
-  setDoc: typeof setDoc;
-  updateDoc: typeof updateDoc;
-  deleteDoc: typeof deleteDoc;
-  // Queries
-  query: typeof query;
-  where: typeof where;
-  orderBy: typeof orderBy;
-  limit: typeof limit;
-  // Utils
-  Timestamp: typeof Timestamp;
-  serverTimestamp: typeof serverTimestamp;
-  // Array operations
-  arrayUnion: typeof arrayUnion;
-  arrayRemove: typeof arrayRemove;
 }
 
 interface UseUserRoleReturn {
@@ -138,7 +96,6 @@ export function useAuth(): AuthReturn {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [appCheckError, setAppCheckError] = useState<Error | null>(null);
-  const auth = getAuth(firebaseApp);
 
   // 獲取用戶角色相關數據
   const [userDoc, roleLoading, roleError] = useDocument(
@@ -216,10 +173,11 @@ export function useAuth(): AuthReturn {
   }, [hasRole]);
 
   useEffect(() => {
-    // 初始化 App Check
+    // 簡化的 App Check 初始化
     const initAppCheck = async () => {
       try {
-        await initializeFirebaseAppCheck();
+        // 嘗試獲取 App Check token 來初始化
+        await getAppCheckToken();
         setInitialized(true);
       } catch (error) {
         console.error('App Check 初始化失敗:', error);
@@ -246,7 +204,7 @@ export function useAuth(): AuthReturn {
     });
 
     return () => unsubscribe();
-  }, [initialized, auth]);
+  }, [initialized]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -257,9 +215,9 @@ export function useAuth(): AuthReturn {
     }
   };
 
-  const signOut = async () => {
+  const signOutUser = async () => {
     try {
-      await firebaseSignOut(auth);
+      await signOut(auth);
     } catch (error) {
       throw error;
     }
@@ -301,27 +259,6 @@ export function useAuth(): AuthReturn {
     isReady: initialized && !loading && !roleLoading,
     db,
     auth,
-    storage,
-    // Firestore 功能
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    addDoc,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    // Queries
-    query,
-    where,
-    orderBy,
-    limit,
-    // Utils
-    Timestamp,
-    serverTimestamp,
-    // Array operations
-    arrayUnion,
-    arrayRemove,
     // User Role 功能
     userRole,
     userRoles,
@@ -338,30 +275,7 @@ export function useAuth(): AuthReturn {
       isInitializing: false
     },
     signIn,
-    signOut,
+    signOut: signOutUser,
     signInWithGoogle
   };
-}
-
-// 重新導出所需的 Firebase 功能
-export {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  addDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  Timestamp,
-  serverTimestamp,
-  arrayUnion,
-  arrayRemove,
-  db,
-  auth,
-  signOut
-}; 
+} 

@@ -11,9 +11,9 @@
 
 "use client";
 
-import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { User } from "firebase/auth";
 
 import {
   auth,
@@ -22,8 +22,10 @@ import {
   getDoc,
   setDoc,
   signOut,
-  useAuth
-} from "@/hooks/useAuth";
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "@/lib/firebase-client";
+import { useAuth } from "@/hooks/useAuth";
 
 // 載入狀態組件
 const LoadingSpinner = () => (

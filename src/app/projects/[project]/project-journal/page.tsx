@@ -14,8 +14,15 @@
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from '@/hooks/useAuth';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { arrayUnion } from "firebase/firestore";
+import { 
+  storage,
+  arrayUnion,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  doc,
+  updateDoc,
+} from '@/lib/firebase-client';
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { ActivityLog, PhotoRecord, PhotoType, IssueRecord } from "@/types/project";
@@ -44,7 +51,7 @@ async function fetchWeather(region: string) {
 }
 
 export default function ProjectJournalPage() {
-    const { db, doc, updateDoc } = useAuth();
+    const { db } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -117,7 +124,6 @@ export default function ProjectJournalPage() {
     };
 
     const uploadPhotos = async (reportId: string) => {
-        const storage = getStorage();
         const photoRecords: PhotoRecord[] = [];
         const now = new Date();
         const nowTimestamp = toTimestamp(now);
@@ -131,8 +137,8 @@ export default function ProjectJournalPage() {
             const uploadTask = uploadBytesResumable(storageRef, file);
             await new Promise<string>((resolve, reject) => {
                 uploadTask.on('state_changed',
-                    (snapshot) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
-                    (error) => reject(error),
+                    (snapshot: any) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
+                    (error: any) => reject(error),
                     async () => {
                         try {
                             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
