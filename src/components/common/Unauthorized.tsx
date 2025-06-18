@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation';
 import { type ReactElement } from 'react';
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UnauthorizedProps {
   message?: string;

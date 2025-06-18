@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Unauthorized } from './Unauthorized';
 import { ROLE_NAMES } from '@/constants/roles';
 import { collection, getDocs } from 'firebase/firestore';

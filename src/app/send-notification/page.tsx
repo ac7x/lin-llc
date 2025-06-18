@@ -11,7 +11,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { createNotification } from '@/lib/firebase-notifications';
 import { Timestamp } from '@/lib/firebase-client';
 import { NotificationBell } from '@/app/notifications/components/NotificationBell';

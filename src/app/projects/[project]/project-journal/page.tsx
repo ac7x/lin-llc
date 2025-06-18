@@ -13,7 +13,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { 
     useDocument 
 } from "react-firebase-hooks/firestore";

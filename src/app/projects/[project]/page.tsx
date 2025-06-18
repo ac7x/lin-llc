@@ -39,7 +39,7 @@ import SubWorkpackageSortingPage from "./workpackages/subworkpackages/page";
 import ProjectCalendarPage from "./project-calendar/page";
 import { TaiwanCityList } from "@/utils/taiwanCityUtils";
 import { Project, Workpackage } from "@/types/project";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import ProjectExpensesPage from "./project-expenses/page";
 import { ROLE_NAMES, type RoleKey } from "@/utils/authUtils";
 import type { AppUser } from "@/types/auth";

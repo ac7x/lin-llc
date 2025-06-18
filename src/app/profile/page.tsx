@@ -11,7 +11,7 @@
 
 'use client'
 
-import { useAuth } from '@/app/signin/hooks/useAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useCallback } from 'react'

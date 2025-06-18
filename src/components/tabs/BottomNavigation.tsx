@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { type RoleKey } from '@/constants/roles';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';

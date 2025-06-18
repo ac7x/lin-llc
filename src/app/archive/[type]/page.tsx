@@ -12,7 +12,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useParams } from "next/navigation";
 import { db, collection, doc, getDoc, setDoc, deleteDoc, Timestamp } from '@/lib/firebase-client';

@@ -16,7 +16,7 @@ import { useState, useMemo } from "react";
 import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
 import { db } from '@/lib/firebase-client';
-import { useAuth } from "@/app/signin/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ContractData } from "@/types/finance";
 import { doc, getDoc } from "firebase/firestore";

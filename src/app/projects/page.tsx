@@ -12,7 +12,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
