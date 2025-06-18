@@ -13,7 +13,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo } from "react";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Timestamp, arrayUnion } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";

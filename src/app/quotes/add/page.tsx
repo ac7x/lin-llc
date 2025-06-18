@@ -14,7 +14,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
-import { useAuth } from "@/app/signin/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { QuoteItem } from "@/types/finance";
 import { db } from "@/lib/firebase-client";
 import { doc, setDoc } from "firebase/firestore";

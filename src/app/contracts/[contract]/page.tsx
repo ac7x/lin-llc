@@ -13,7 +13,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { db, doc } from '@/lib/firebase-client';
 
 export default function ContractDetailPage() {

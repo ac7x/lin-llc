@@ -14,7 +14,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { zhTW } from 'date-fns/locale';

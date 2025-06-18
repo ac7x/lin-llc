@@ -14,7 +14,7 @@
 import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent, WorkpackageProgressBar, calculateWorkpackageProgress } from "@/utils/progressUtils";

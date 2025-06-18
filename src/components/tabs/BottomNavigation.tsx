@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { type RoleKey } from '@/constants/roles';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
+import { DEFAULT_ROLE_PERMISSIONS } from '@/app/management/components/RolePermissions';
 
 interface NavigationItem {
   id: string;
@@ -170,9 +171,16 @@ export default function BottomNavigation(): React.ReactElement {
         if (roleData) {
           const data = roleData.data() as RolePermissionData;
           setPermissions(data.pagePermissions.map(p => p.id));
+        } else {
+          // 如果找不到角色配置，使用預設權限
+          const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
+          setPermissions(defaultPermissions);
         }
       } catch (error) {
         console.error('載入權限失敗:', error);
+        // 發生錯誤時使用預設權限
+        const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
+        setPermissions(defaultPermissions);
       }
     };
 
@@ -181,9 +189,6 @@ export default function BottomNavigation(): React.ReactElement {
 
   const filteredNavigationItems = navigationItems.filter(item => {
     if (!user?.currentRole) return false;
-    if (item.id === 'archive') {
-      return permissions.includes('archive');
-    }
     return permissions.includes(item.id);
   });
 

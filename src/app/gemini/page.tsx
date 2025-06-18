@@ -15,7 +15,7 @@ import { useState, useRef, useEffect, FormEvent, ChangeEvent } from "react";
 import { initializeApp } from "firebase/app";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel } from "firebase/ai";
 import { firebaseConfig } from "@/lib/firebase-config";
-import { useAuth } from "@/app/signin/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 

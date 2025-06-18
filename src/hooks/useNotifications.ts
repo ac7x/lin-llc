@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import {
   getUserNotifications,
   subscribeToUserNotifications,

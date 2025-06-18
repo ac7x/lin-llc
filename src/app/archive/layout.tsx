@@ -12,7 +12,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Unauthorized } from '@/components/common/Unauthorized';
 
 const ArchivedNav = () => {

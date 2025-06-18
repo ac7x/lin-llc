@@ -1,299 +1,212 @@
-/**
- * 身份驗證 Hook
- * 提供用戶認證和授權相關功能
- * 管理用戶登入狀態和角色權限
- * 整合 Firebase Auth 和 App Check 功能
- */
-
-"use client";
-
-import { useState, useEffect, useMemo } from 'react';
-import { User } from 'firebase/auth';
-import { useDocument } from 'react-firebase-hooks/firestore';
-import type { AppUser, UserWithClaims } from '@/types/auth';
-import { ROLE_HIERARCHY } from '@/utils/authUtils';
-import {
-  auth,
+import { useState, useEffect } from 'react';
+import { 
+  auth, 
   db,
-  // Firestore 功能
-  doc,
-  setDoc,
-  serverTimestamp,
-  // Auth 功能
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  getIdToken,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-  GoogleAuthProvider,
-  signInWithPopup,
-  // App Check 功能
-  getAppCheckToken,
-  getAppCheckInstance,
+  User,
+  doc, 
+  getDoc, 
+  setDoc, 
+  collection, 
+  getDocs
 } from '@/lib/firebase-client';
+import { type RoleKey, ROLE_HIERARCHY } from '@/constants/roles';
+import { DEFAULT_ROLE_PERMISSIONS } from '@/app/management/components/RolePermissions';
+import type { 
+  AuthState, 
+  UseAuthReturn, 
+  PermissionCheckOptions,
+  AuthError 
+} from '@/types/auth';
 
-// 導出 react-firebase-hooks
-export { 
-  useCollection,
-  useDocument 
-} from 'react-firebase-hooks/firestore';
-
-const ROLE_CHECKS = {
-  owner: 'isOwner',
-  admin: 'isAdmin',
-  finance: 'isFinance',
-  user: 'isUser',
-  helper: 'isHelper',
-  temporary: 'isTemporary',
-  coord: 'isCoord',
-  safety: 'isSafety',
-  foreman: 'isForeman',
-  vendor: 'isVendor'
-} as const;
-
-// 定義 FirebaseAuth 回傳型別
-interface FirebaseAuthReturn {
-  user: User | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  isInitialized: boolean;
-  isReady: boolean;
-  db: typeof db;
-  auth: typeof auth;
-}
-
-interface UseUserRoleReturn {
-  userRole: string | undefined;
-  userRoles: string[];
-  userPermissions: string[];
-  loading: boolean;
-  error: Error | undefined;
-  hasRole: (role: string) => boolean;
-  hasAnyRole: (roles: string[]) => boolean;
-  hasMinRole: (minRole: string) => boolean;
-  isOwner: boolean;
-  isAdmin: boolean;
-  isFinance: boolean;
-  isUser: boolean;
-  isHelper: boolean;
-  isTemporary: boolean;
-  isCoord: boolean;
-  isSafety: boolean;
-  isForeman: boolean;
-  isVendor: boolean;
-}
-
-interface AuthReturn extends FirebaseAuthReturn, UseUserRoleReturn {
-  appCheck: {
-    initialized: boolean;
-    error: Error | null;
-    isInitializing: boolean;
-  };
-  signIn: (email: string, password: string) => Promise<User>;
-  signOut: () => Promise<void>;
-  signInWithGoogle: () => Promise<User>;
-}
-
-export function useAuth(): AuthReturn {
-  const [user, setUser] = useState<AppUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
-  const [appCheckError, setAppCheckError] = useState<Error | null>(null);
-  const [appCheckInitializing, setAppCheckInitializing] = useState(false);
-
-  // 檢查是否在客戶端環境
-  const isClient = typeof window !== 'undefined';
-
-  // 獲取用戶角色相關數據
-  const [userDoc, roleLoading, roleError] = useDocument(
-    user ? doc(db, 'users', user.uid) : null
-  );
-
-  const userRole = useMemo(() => {
-    // 優先從 custom claims 獲取角色
-    const claims = user?.customClaims;
-    if (claims?.role) {
-      return claims.role;
-    }
-    // 如果沒有 custom claims，則從 Firestore 獲取
-    const userData = userDoc?.data() as AppUser | undefined;
-    return userData?.role;
-  }, [user, userDoc]);
-
-  const userRoles = useMemo(() => {
-    // 優先從 custom claims 獲取角色列表
-    const claims = user?.customClaims;
-    if (claims?.roles) {
-      return claims.roles;
-    }
-    // 如果沒有 custom claims，則從 Firestore 獲取
-    const userData = userDoc?.data() as AppUser | undefined;
-    return (userData?.roles || [userData?.role])
-      .filter((role): role is string => role !== undefined);
-  }, [user, userDoc]);
-
-  const userPermissions = useMemo(() => {
-    // 從 custom claims 獲取權限
-    const claims = user?.customClaims;
-    if (claims?.permissions) {
-      return claims.permissions;
-    }
-    // 如果沒有 custom claims，則從 Firestore 獲取
-    const userData = userDoc?.data() as AppUser | undefined;
-    return userData?.permissions || [];
-  }, [user, userDoc]);
-
-  const hasRole = useMemo(() => (role: string): boolean => {
-    return userRole === role;
-  }, [userRole]);
-
-  const hasAnyRole = useMemo(() => (roles: string[]): boolean => {
-    return userRoles.some((role: string) => role !== undefined && roles.includes(role));
-  }, [userRoles]);
-
-  const hasMinRole = useMemo(() => (minRole: string): boolean => {
-    if (!userRole) return false;
-    const userLevel = ROLE_HIERARCHY[userRole] || 0;
-    const minLevel = ROLE_HIERARCHY[minRole] || 0;
-    return userLevel >= minLevel;
-  }, [userRole]);
-
-  const roleChecks = useMemo(() => {
-    const checks = {
-      isOwner: false,
-      isAdmin: false,
-      isFinance: false,
-      isUser: false,
-      isHelper: false,
-      isTemporary: false,
-      isCoord: false,
-      isSafety: false,
-      isForeman: false,
-      isVendor: false
+const createInitialRolePermissions = (): Record<RoleKey, Record<string, boolean>> => {
+  const permissions = {} as Record<RoleKey, Record<string, boolean>>;
+  (Object.keys(ROLE_HIERARCHY) as RoleKey[]).forEach((role) => {
+    permissions[role] = {
+      dashboard: role === 'guest',
+      profile: role === 'guest'
     };
-    
-    Object.entries(ROLE_CHECKS).forEach(([role, propertyName]) => {
-      checks[propertyName as keyof typeof checks] = hasRole(role);
-    });
-    
-    return checks;
-  }, [hasRole]);
+  });
+  return permissions;
+};
+
+export const useAuth = (): UseAuthReturn => {
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    loading: true,
+    error: null
+  });
 
   useEffect(() => {
-    // 安全的 App Check 初始化
-    const initAppCheck = async () => {
-      if (!isClient) {
-        setInitialized(true);
-        return;
-      }
+    let isMounted = true;
 
-      setAppCheckInitializing(true);
-      try {
-        // 檢查 App Check 實例是否可用
-        const appCheckInstance = getAppCheckInstance();
-        if (appCheckInstance) {
-          // 嘗試獲取 App Check token 來初始化
-          await getAppCheckToken();
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser: User | null) => {
+      if (!isMounted) return;
+
+      if (currentUser) {
+        try {
+          const memberRef = doc(db, 'members', currentUser.uid);
+          const memberDoc = await getDoc(memberRef);
+          const memberData = memberDoc.data();
+          
+          if (isMounted) {
+            setAuthState(prev => ({
+              ...prev,
+              user: {
+                ...currentUser,
+                currentRole: memberData?.currentRole || 'guest',
+                rolePermissions: memberData?.rolePermissions || createInitialRolePermissions()
+              },
+              loading: false,
+              error: null
+            }));
+          }
+        } catch (error) {
+          if (isMounted) {
+            setAuthState(prev => ({
+              ...prev,
+              loading: false,
+              error: {
+                code: 'auth/error',
+                message: '載入用戶資料時發生錯誤',
+                details: error
+              }
+            }));
+          }
         }
-        setInitialized(true);
-        setAppCheckError(null);
-      } catch (error) {
-        console.error('App Check 初始化失敗:', error);
-        setAppCheckError(error as Error);
-        setInitialized(true); // 即使失敗也要繼續
-      } finally {
-        setAppCheckInitializing(false);
-      }
-    };
-
-    void initAppCheck();
-  }, [isClient]);
-
-  useEffect(() => {
-    if (!initialized) return;
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // 將 User 轉換為 AppUser
-        const appUser = user as UserWithClaims;
-        setUser(appUser as AppUser);
       } else {
-        setUser(null);
+        if (isMounted) {
+          setAuthState(prev => ({
+            ...prev,
+            user: null,
+            loading: false,
+            error: null
+          }));
+        }
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [initialized]);
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signInWithGoogle = async (): Promise<void> => {
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return result.user;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const signOutUser = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    try {
+      setAuthState(prev => ({ ...prev, error: null }));
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
-      // 儲存用戶資料到 Firestore
-      const userData = {
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
-        emailVerified: result.user.emailVerified,
-        role: 'user', // 預設角色
-        roles: ['user'], // 預設角色列表
-        permissions: [], // 預設權限列表
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp()
-      };
+      const idToken = await getIdToken(result.user);
 
-      await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
-      
-      return result.user;
-    } catch (error) {
+      const memberRef = doc(db, 'members', result.user.uid);
+      const memberDoc = await getDoc(memberRef);
+
+      if (!memberDoc.exists()) {
+        const memberData = {
+          email: result.user.email,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          rolePermissions: createInitialRolePermissions(),
+          currentRole: 'guest',
+        };
+        await setDoc(memberRef, memberData);
+      } else {
+        await setDoc(memberRef, {
+          lastLoginAt: new Date().toISOString(),
+        }, { merge: true });
+      }
+
+      console.log('登入成功，ID Token:', idToken);
+    } catch (err) {
+      const error = err as AuthError;
+      console.error('登入失敗:', error);
+      setAuthState(prev => ({
+        ...prev,
+        error: {
+          code: error.code || 'unknown',
+          message: error.message || '登入過程中發生錯誤，請稍後再試',
+          details: error.details
+        }
+      }));
       throw error;
     }
+  };
+
+  const checkPermission = async (options: PermissionCheckOptions): Promise<boolean> => {
+    const { requiredRole, requiredPermissions, checkAll = false } = options;
+    const user = authState.user;
+
+    if (!user) return false;
+
+    // 檢查角色
+    if (requiredRole && user.currentRole !== requiredRole) {
+      return false;
+    }
+
+    // 檢查權限
+    if (requiredPermissions && requiredPermissions.length > 0) {
+      if (checkAll) {
+        return requiredPermissions.every(permission => 
+          user.rolePermissions?.[user.currentRole as RoleKey]?.[permission]
+        );
+      }
+      return requiredPermissions.some(permission => 
+        user.rolePermissions?.[user.currentRole as RoleKey]?.[permission]
+      );
+    }
+
+    return true;
+  };
+
+  const hasPermission = async (permissionId: string): Promise<boolean> => {
+    const user = authState.user;
+    if (!user?.currentRole) return false;
+
+    try {
+      const managementRef = collection(db, 'management');
+      const snapshot = await getDocs(managementRef);
+      const roleData = snapshot.docs.find(doc => {
+        const data = doc.data();
+        return data.role === user.currentRole;
+      });
+
+      if (roleData) {
+        const data = roleData.data();
+        const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
+        return permissions.includes(permissionId);
+      } else {
+        // 如果找不到角色配置，使用預設權限
+        const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
+        return defaultPermissions.includes(permissionId);
+      }
+    } catch (error) {
+      console.error('檢查權限失敗:', error);
+      return false;
+    }
+  };
+
+  const getCurrentRole = (): RoleKey | undefined => {
+    return authState.user?.currentRole;
+  };
+
+  const getRolePermissions = (): Record<RoleKey, Record<string, boolean>> | undefined => {
+    return authState.user?.rolePermissions;
   };
 
   return {
-    user,
-    loading: loading || !initialized || roleLoading,
-    isAuthenticated: !!user,
-    isInitialized: initialized,
-    isReady: initialized && !loading && !roleLoading,
-    db,
-    auth,
-    // User Role 功能
-    userRole,
-    userRoles,
-    userPermissions,
-    error: roleError,
-    hasRole,
-    hasAnyRole,
-    hasMinRole,
-    ...roleChecks,
-    // App Check
-    appCheck: {
-      initialized,
-      error: appCheckError,
-      isInitializing: appCheckInitializing
-    },
-    signIn,
-    signOut: signOutUser,
-    signInWithGoogle
+    user: authState.user,
+    loading: authState.loading,
+    error: authState.error?.message || null,
+    signInWithGoogle,
+    checkPermission,
+    hasPermission,
+    getCurrentRole,
+    getRolePermissions,
   };
-} 
+};

@@ -14,7 +14,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Project } from "@/types/project";
 import { SubWorkpackage, Workpackage } from "@/types/project";
 import { Template, SubWorkpackageTemplateItem, TemplateToSubWorkpackageOptions } from "@/types/project";
