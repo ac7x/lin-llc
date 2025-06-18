@@ -12,7 +12,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from '@/hooks/useAuth';
 import { 
     useDocument 
@@ -29,28 +29,9 @@ import {
 } from '@/lib/firebase-client';
 import Image from 'next/image';
 import { Project, ActivityLog, PhotoRecord, PhotoType, IssueRecord } from '@/types/project';
-import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 import { toTimestamp } from '@/utils/dateUtils';
-
-const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
-
-async function fetchWeather(region: string) {
-    const cityInfo = TaiwanCityList.find(c => c.label === region || c.value === region);
-    if (!cityInfo) return { weather: "未知", temperature: 0 };
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityInfo.owmQuery)}&appid=${OWM_API_KEY}&units=metric&lang=zh_tw`;
-    try {
-        const res = await fetch(url);
-        if (!res.ok) return { weather: "未知", temperature: 0 };
-        const data = await res.json();
-        return {
-            weather: data.weather?.[0]?.description || "未知",
-            temperature: Math.round(data.main?.temp ?? 0)
-        };
-    } catch {
-        return { weather: "未知", temperature: 0 };
-    }
-}
+import WeatherDisplay, { fetchWeather } from '@/components/common/WeatherDisplay';
 
 export default function ProjectJournalPage() {
     // 僅呼叫 useAuth()，不解構 user, authLoading
@@ -66,7 +47,6 @@ export default function ProjectJournalPage() {
     const [uploadProgress, setUploadProgress] = useState<number>(0);
     const [saving, setSaving] = useState(false);
     const [progressInputs, setProgressInputs] = useState([{ workpackageId: '', subWorkpackageId: '', actualQuantity: 0 }]);
-    const [weatherDisplay, setWeatherDisplay] = useState<{ weather: string; temperature: number } | null>(null);
 
     const reports = useMemo(() => {
         if (!projectDoc?.exists()) return [];
@@ -86,14 +66,10 @@ export default function ProjectJournalPage() {
         return project.workpackages || [];
     }, [projectDoc]);
 
-    useEffect(() => {
-        if (projectDoc?.exists()) {
-            const project = projectDoc.data();
-            const region = project.region;
-            if (region) {
-                fetchWeather(region).then(result => setWeatherDisplay(result));
-            }
-        }
+    const projectRegion = useMemo(() => {
+        if (!projectDoc?.exists()) return "";
+        const project = projectDoc.data();
+        return project.region || "";
     }, [projectDoc]);
 
     const handleAddPhotoField = () => {
@@ -170,17 +146,16 @@ export default function ProjectJournalPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
+        
+        // 獲取天氣資料
         let weather = "";
         let temperature = 0;
-        if (projectDoc?.exists()) {
-            const project = projectDoc.data();
-            const region = project.region;
-            if (region) {
-                const result = await fetchWeather(region);
-                weather = result.weather;
-                temperature = result.temperature;
-            }
+        if (projectRegion) {
+            const weatherResult = await fetchWeather(projectRegion);
+            weather = weatherResult.weather;
+            temperature = weatherResult.temperature;
         }
+        
         try {
             const now = new Date();
             const nowTimestamp = toTimestamp(now);
@@ -266,21 +241,7 @@ export default function ProjectJournalPage() {
                 </div>
 
                 <div className="mb-6">
-                    {weatherDisplay ? (
-                        <div className="inline-flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                            </svg>
-                            今日天氣：{weatherDisplay.weather}，溫度：{weatherDisplay.temperature}°C
-                        </div>
-                    ) : (
-                        <div className="inline-flex items-center px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg">
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            無法取得天氣資料,請設置專案地區
-                        </div>
-                    )}
+                    <WeatherDisplay region={projectRegion} />
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
@@ -525,9 +486,11 @@ export default function ProjectJournalPage() {
                                                         <span className="text-sm text-blue-600 dark:text-blue-400">{report.projectProgress}%</span>
                                                     </div>
                                                 )}
-                                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {report.weather} {report.temperature}°C
-                                                </span>
+                                                {report.weather && (
+                                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {report.weather} {report.temperature}°C
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="mb-2">
