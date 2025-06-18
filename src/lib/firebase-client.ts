@@ -57,6 +57,27 @@ import {
   FirebaseStorage, // 保留型別定義
 } from "firebase/storage";
 import {
+  getFunctions,
+  Functions,
+} from "firebase/functions";
+import {
+  getMessaging,
+  getToken as getMessagingToken,
+  onMessage,
+  Messaging,
+} from "firebase/messaging";
+import {
+  getAnalytics,
+  Analytics,
+} from "firebase/analytics";
+import {
+  getPerformance,
+} from "firebase/performance";
+import {
+  getRemoteConfig,
+  RemoteConfig,
+} from "firebase/remote-config";
+import {
   initializeAppCheck,
   ReCaptchaV3Provider,
   getToken,
@@ -72,137 +93,29 @@ const firebaseApp: FirebaseApp = app;
 const auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 const storage = getStorage(app);
+const functions = getFunctions(app);
+const messaging = getMessaging(app);
+const analytics = getAnalytics(app);
+const performance = getPerformance(app);
+const remoteConfig = getRemoteConfig(app);
 
 // --- App Check 初始化 ---
-let appCheckInstance: AppCheck | null = null; // 使用 AppCheck 型別
-let appCheckInitialized = false;
-let appCheckError: Error | null = null;
-let appCheckPromise: Promise<void> | null = null;
-
-/**
- * 初始化 Firebase App Check
- */
-export async function initializeFirebaseAppCheck(): Promise<void> {
-  // 僅在瀏覽器環境執行
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  // 如果已經有正在進行的初始化，返回該 Promise
-  if (appCheckPromise) {
-    console.log("App Check 正在初始化中，等待完成...");
-    return appCheckPromise;
-  }
-
-  // 如果已經初始化完成，直接返回 (無論成功或失敗，避免重複初始化)
-  if (appCheckInitialized) {
-    console.log("App Check 已經初始化完成。");
-    if (appCheckError) {
-       console.error("App Check 初始化曾失敗，再次拋出錯誤。");
-       throw appCheckError; // 如果之前失敗了，再次拋出錯誤
-    }
-    return;
-  }
-
-  // 創建新的初始化 Promise
-  appCheckPromise = (async () => {
-    try {
-      console.log("開始初始化 App Check...");
-      // 檢查是否有提供 SITE_KEY
-      if (!APP_CHECK_CONFIG.SITE_KEY) {
-         const error = new Error("Firebase App Check requires a ReCAPTCHA v3 site key. Please provide APP_CHECK_CONFIG.SITE_KEY.");
-         console.error(error.message);
-         throw error;
-      }
-
-      appCheckInstance = initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
-        isTokenAutoRefreshEnabled: true, // 啟用 token 自動刷新
-      });
-
-      // 在本地開發時，如果偵測到 localhost 並且有提供 debug token，可以設定
-      // 注意：debug token 需手動在 Firebase Console 中加入
-      if (
-        FIREBASE_EMULATOR.ENABLED &&
-        typeof (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN !== "undefined"
-      ) {
-         console.log("偵測到 DEBUG_TOKEN，設定 App Check 模擬器模式。");
-         // connectAppCheckEmulator(appCheckInstance, 'http://localhost:8081'); // 如果有運行 App Check 模擬器
-      }
-
-
-      appCheckInitialized = true;
-      appCheckError = null;
-      console.log("App Check 初始化成功！");
-
-    } catch (error) {
-      console.error("App Check 初始化失敗:", error);
-      appCheckError = error as Error; // 儲存錯誤狀態
-      throw error; // 拋出錯誤，讓外部可以捕獲
-    } finally {
-      appCheckPromise = null; // 初始化 Promise 完成，清除
-    }
-  })();
-
-  return appCheckPromise; // 返回 Promise，讓呼叫者可以 await
-}
+const appCheck = initializeAppCheck(firebaseApp, {
+  provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
+  isTokenAutoRefreshEnabled: true,
+});
 
 /**
  * 取得 App Check token
- * 會先嘗試初始化 App Check 如果尚未初始化
  */
 export async function getAppCheckToken(): Promise<string | null> {
-  if (!appCheckInitialized || appCheckError) {
-    console.log("嘗試在獲取 token 前初始化 App Check...");
-    try {
-      await initializeFirebaseAppCheck();
-    } catch (initError) {
-      console.error("App Check 初始化失敗，無法獲取 token。", initError);
-      throw initError; // 初始化失敗，拋出錯誤
-    }
-  }
-
-  // 如果初始化後仍有錯誤或實例為空，則無法獲取 token
-  if (!appCheckInstance || appCheckError) {
-     console.error("App Check 未成功初始化，無法獲取 token。");
-     throw new Error("App Check is not initialized."); // 確保拋出錯誤而不是返回 null
-  }
-
   try {
-    console.log("正在獲取 App Check token...");
-    const tokenResult = await getToken(appCheckInstance);
-    console.log("成功獲取 App Check token。");
+    const tokenResult = await getToken(appCheck);
     return tokenResult.token;
   } catch (error) {
     console.error("取得 App Check token 失敗:", error);
-    // 根據需要選擇拋出錯誤或返回 null
-    // 返回 null 可能是可以接受的，如果 App Check 不是必須的
-    // 如果是必須的，最好拋出錯誤
-    // 這裡選擇拋出錯誤，讓呼叫方處理
     throw error;
   }
-}
-
-/**
- * 檢查 App Check 是否已初始化成功
- */
-export function isAppCheckInitializedSuccessfully(): boolean {
-  return appCheckInitialized && appCheckError === null;
-}
-
-/**
- * 取得 App Check 狀態
- */
-export function getAppCheckStatus(): {
-  initialized: boolean;
-  error: Error | null;
-  isInitializing: boolean;
-} {
-  return {
-    initialized: appCheckInitialized,
-    error: appCheckError,
-    isInitializing: !!appCheckPromise, // 檢查是否有正在進行的初始化 Promise
-  };
 }
 
 // 匯出需要的 Firebase 函數和類別
@@ -218,6 +131,8 @@ export {
   setPersistence,
   browserLocalPersistence,
   getRedirectResult,
+  getMessagingToken,
+  onMessage,
 };
 
 export type { User };
@@ -251,4 +166,15 @@ export {
 };
 
 // 匯出 Firebase 服務實例
-export { firebaseApp, auth, db, storage };
+export { 
+  firebaseApp, 
+  auth, 
+  db, 
+  storage, 
+  appCheck,
+  functions,
+  messaging,
+  analytics,
+  performance,
+  remoteConfig,
+};
