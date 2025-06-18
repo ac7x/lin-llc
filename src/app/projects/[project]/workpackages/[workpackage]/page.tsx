@@ -125,6 +125,9 @@ export default function WorkpackageDetailPage() {
     const [loadingTemplates, setLoadingTemplates] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
     const [templateQuantities, setTemplateQuantities] = useState<{ [id: string]: number }>({});
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [selectedSubWorkpackage, setSelectedSubWorkpackage] = useState<SubWorkpackage | null>(null);
+    const [assigningUser, setAssigningUser] = useState("");
 
     // 新增：檢查預算權限的函數
     const canViewBudget = (project: Project, currentUser: AppUser | null): boolean => {
@@ -319,6 +322,25 @@ export default function WorkpackageDetailPage() {
             setShowTemplateModal(false);
             setSelectedTemplate(null);
             setTemplateQuantities({});
+        } finally {
+            setSubSaving(false);
+        }
+    };
+
+    // 新增：指派子工作包負責人的函數
+    const handleAssignSubWorkpackage = async (subWpId: string, assignedTo: string) => {
+        setSubSaving(true);
+        try {
+            const updatedSubWps = workpackage.subWorkpackages.map(wp =>
+                wp.id === subWpId ? { ...wp, assignedTo: assignedTo || undefined } : wp
+            );
+            const updatedWorkpackages = project.workpackages.map(wp =>
+                wp.id === workpackageId ? { ...wp, subWorkpackages: updatedSubWps } : wp
+            );
+            await updateDoc(doc(db, "projects", projectId), { workpackages: updatedWorkpackages });
+            setShowAssignModal(false);
+            setSelectedSubWorkpackage(null);
+            setAssigningUser("");
         } finally {
             setSubSaving(false);
         }
@@ -536,6 +558,20 @@ export default function WorkpackageDetailPage() {
                                                             完工
                                                         </>
                                                     )}
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedSubWorkpackage(subWp);
+                                                        setAssigningUser(subWp.assignedTo || "");
+                                                        setShowAssignModal(true);
+                                                    }}
+                                                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-200"
+                                                    title="指派負責人"
+                                                >
+                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    指派
                                                 </button>
                                             </div>
                                         </div>
@@ -773,6 +809,58 @@ export default function WorkpackageDetailPage() {
                                     </button>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+                {showAssignModal && selectedSubWorkpackage && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+                            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">指派負責人</h2>
+                            <div className="mb-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">子工作包：</p>
+                                <p className="font-medium text-gray-900 dark:text-gray-100">{selectedSubWorkpackage.name}</p>
+                            </div>
+                            <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                await handleAssignSubWorkpackage(selectedSubWorkpackage.id, assigningUser);
+                            }} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">選擇負責人</label>
+                                    <select 
+                                        className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                        value={assigningUser} 
+                                        onChange={e => setAssigningUser(e.target.value)} 
+                                        required
+                                    >
+                                        <option value="">請選擇負責人</option>
+                                        {users.map((userItem) => (
+                                            <option key={userItem.uid} value={userItem.uid}>
+                                                {userItem.displayName || userItem.email}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex justify-end space-x-2 pt-4">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => {
+                                            setShowAssignModal(false);
+                                            setSelectedSubWorkpackage(null);
+                                            setAssigningUser("");
+                                        }} 
+                                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
+                                    >
+                                        取消
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        className="px-4 py-2 bg-purple-500 text-white rounded shadow hover:bg-purple-600 transition-colors duration-200" 
+                                        disabled={subSaving || !assigningUser}
+                                    >
+                                        {subSaving ? "指派中..." : "確認指派"}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}
