@@ -21,6 +21,7 @@ import { Template, SubWorkpackageTemplateItem, TemplateToSubWorkpackageOptions }
 import { nanoid } from "nanoid";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { db, doc, updateDoc } from '@/lib/firebase-client';
+import type { AppUser } from '@/types/auth';
 
 // Template helper functions
 /**
@@ -97,7 +98,7 @@ function clearSelectedTemplate(): void {
 }
 
 export default function WorkpackageDetailPage() {
-    useAuth();
+    const { user } = useAuth();
     const params = useParams();
     const router = useRouter();
     const projectId = params?.project as string;
@@ -122,6 +123,14 @@ export default function WorkpackageDetailPage() {
     const [loadingTemplates, setLoadingTemplates] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
     const [templateQuantities, setTemplateQuantities] = useState<{ [id: string]: number }>({});
+
+    // 新增：檢查預算權限的函數
+    const canViewBudget = (project: Project, currentUser: AppUser | null): boolean => {
+        if (!currentUser?.uid) return false;
+        
+        // 檢查是否為專案的 coordinator 或 costController
+        return project.coordinator === currentUser.uid || project.costController === currentUser.uid;
+    };
 
     useEffect(() => {
         const selected = getSelectedTemplateFromStorage();
@@ -159,6 +168,9 @@ export default function WorkpackageDetailPage() {
     const project = projectDoc.data() as Project;
     const workpackage = project.workpackages?.find(wp => wp.id === workpackageId);
     if (!workpackage) return <div>找不到此工作包</div>;
+
+    // 檢查預算權限
+    const hasBudgetPermission = canViewBudget(project, user);
 
     let calculatedProgress = workpackage.progress ?? 0;
     if ((!workpackage.progress || workpackage.progress === 0) && workpackage.subWorkpackages && workpackage.subWorkpackages.length > 0) {
@@ -338,12 +350,14 @@ export default function WorkpackageDetailPage() {
                                 <span className="text-gray-900 dark:text-gray-100">{calculatedProgress}%</span>
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">預算</label>
-                            <div className="text-gray-900 dark:text-gray-100">
-                                {workpackage.budget ? `$${workpackage.budget.toLocaleString()}` : '-'}
+                        {hasBudgetPermission && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">預算</label>
+                                <div className="text-gray-900 dark:text-gray-100">
+                                    {workpackage.budget ? `$${workpackage.budget.toLocaleString()}` : '-'}
+                                </div>
                             </div>
-                        </div>
+                        )}
                         <div>
                             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">子工作包數量</label>
                             <div className="text-gray-900 dark:text-gray-100">{workpackage.subWorkpackages?.length || 0}個</div>
@@ -480,10 +494,12 @@ export default function WorkpackageDetailPage() {
                                                 {subWp.estimatedQuantity ?? '-'} {subWp.unit ?? ''}
                                             </span>
                                         </div>
-                                        <div>
-                                            <span className="text-gray-500 dark:text-gray-400">預算：</span>
-                                            <span className="text-gray-900 dark:text-gray-100">{subWp.budget ?? '-'}</span>
-                                        </div>
+                                        {hasBudgetPermission && (
+                                            <div>
+                                                <span className="text-gray-500 dark:text-gray-400">預算：</span>
+                                                <span className="text-gray-900 dark:text-gray-100">{subWp.budget ?? '-'}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -532,10 +548,18 @@ export default function WorkpackageDetailPage() {
                                         <label className="block text-sm font-medium mb-1">單位</label>
                                         <input type="text" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.unit} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, unit: e.target.value }))} />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">預算</label>
-                                        <input type="number" className="border rounded w-full px-3 py-2" value={newSubWorkpackage.budget} min={0} onChange={e => setNewSubWorkpackage(prev => ({ ...prev, budget: Number(e.target.value) }))} />
-                                    </div>
+                                    {hasBudgetPermission && (
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">預算</label>
+                                            <input 
+                                                type="number" 
+                                                className="border rounded w-full px-3 py-2" 
+                                                value={newSubWorkpackage.budget} 
+                                                min={0} 
+                                                onChange={e => setNewSubWorkpackage(prev => ({ ...prev, budget: Number(e.target.value) }))}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex justify-end space-x-2">
                                     <button type="button" onClick={() => setIsAddingSubWP(false)} className="px-4 py-2 border border-gray-300 rounded shadow hover:bg-gray-200 hover:text-gray-900">取消</button>
@@ -661,10 +685,17 @@ export default function WorkpackageDetailPage() {
                                         <label className="block text-sm font-medium mb-1">負責人</label>
                                         <input name="assignedTo" defaultValue={workpackage.assignedTo} className="border rounded w-full px-3 py-2" />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">預算</label>
-                                        <input type="number" name="budget" defaultValue={workpackage.budget} className="border rounded w-full px-3 py-2" />
-                                    </div>
+                                    {hasBudgetPermission && (
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">預算</label>
+                                            <input 
+                                                type="number" 
+                                                name="budget" 
+                                                defaultValue={workpackage.budget} 
+                                                className="border rounded w-full px-3 py-2" 
+                                            />
+                                        </div>
+                                    )}
                                     <div>
                                         <label className="block text-sm font-medium mb-1">進度 (%)</label>
                                         <input

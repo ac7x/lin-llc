@@ -5,6 +5,7 @@
  * - 專案名稱、合約ID
  * - 專案成員（經理、監工、安全人員、成本控制員）
  * - 專案地點和時間資訊
+ * - 預算權限控制（只有 coordinator 和 costController 可編輯）
  */
 
 "use client";
@@ -15,6 +16,7 @@ import { TaiwanCityList } from "@/utils/taiwanCityUtils";
 import { ROLE_NAMES, type RoleKey } from "@/constants/roles";
 import type { AppUser } from "@/types/auth";
 import type { Project } from "@/types/project";
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProjectEditModalProps {
     project: Project;
@@ -37,6 +39,17 @@ export default function ProjectEditModal({
     eligibleUsers
 }: ProjectEditModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { user } = useAuth();
+
+    // 檢查預算權限的函數
+    const canEditBudget = (): boolean => {
+        if (!user?.uid) return false;
+        
+        // 檢查是否為專案的 coordinator 或 costController
+        return project.coordinator === user.uid || project.costController === user.uid;
+    };
+
+    const hasBudgetPermission = canEditBudget();
 
     const handleUpdateProject = async (formData: FormData) => {
         try {
@@ -232,6 +245,21 @@ export default function ProjectEditModal({
                             />
                         </div>
                     </div>
+                    
+                    {/* 預算權限提示 */}
+                    {!hasBudgetPermission && (
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                            <div className="flex items-center">
+                                <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                <span className="text-sm text-yellow-800 dark:text-yellow-200">
+                                    只有專案經理和成本控制員可以編輯預算相關資訊
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="flex justify-end space-x-3 pt-6">
                         <button
                             type="button"
