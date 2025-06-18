@@ -17,7 +17,7 @@ import { useAuth } from '@/app/signin/hooks/useAuth';
 import { db, doc } from '@/lib/firebase-client';
 
 export default function ContractDetailPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { loading: authLoading } = useAuth();
     const params = useParams();
     const router = useRouter();
     const contractId = params?.contract as string;

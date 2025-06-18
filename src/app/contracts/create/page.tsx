@@ -13,7 +13,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { nanoid } from "nanoid";
-import { useAuth } from '@/app/signin/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData, QuoteData, OrderItem, QuoteItem } from "@/types/finance";
 import { QueryDocumentSnapshot } from "firebase/firestore";
@@ -31,7 +30,6 @@ interface RowBase {
 }
 
 export default function ImportContractPage() {
-    const { user, loading: authLoading } = useAuth();
     const [tab, setTab] = useState<SourceTab>("order");
     // 訂單與估價單快照
     const [ordersSnapshot] = useCollection(collection(db, "finance", "default", "orders"));
@@ -60,7 +58,7 @@ export default function ImportContractPage() {
         };
         
         loadContractIds();
-    }, [collection, db, getDocs]);
+    }, []);
 
     // 訂單 rows
     const orderRows: RowBase[] = useMemo(() => {

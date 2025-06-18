@@ -97,7 +97,7 @@ function clearSelectedTemplate(): void {
 }
 
 export default function WorkpackageDetailPage() {
-    const { user, loading: authLoading } = useAuth();
+    useAuth();
     const params = useParams();
     const router = useRouter();
     const projectId = params?.project as string;
@@ -150,7 +150,7 @@ export default function WorkpackageDetailPage() {
             }
         };
         if (showTemplateModal && templates.length === 0) loadTemplates();
-    }, [showTemplateModal, templates.length, db]);
+    }, [showTemplateModal, templates.length]);
 
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;

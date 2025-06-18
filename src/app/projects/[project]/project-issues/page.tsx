@@ -22,7 +22,7 @@ import { formatLocalDate } from "@/utils/dateUtils";
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 
 export default function ProjectIssuesPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { loading: authLoading } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(
@@ -126,6 +126,13 @@ export default function ProjectIssuesPage() {
         }
     };
 
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
     if (loading) return (
         <div className="p-4 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>

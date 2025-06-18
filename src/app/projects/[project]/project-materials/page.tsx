@@ -21,7 +21,7 @@ import { MaterialEntry } from "@/types/project";
 import { db, doc, updateDoc } from '@/lib/firebase-client';
 
 export default function ProjectMaterialsPage() {
-    const { user, loading: authLoading } = useAuth();
+    useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(

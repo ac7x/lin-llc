@@ -12,7 +12,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from '@/app/signin/hooks/useAuth';
 import { 
   db, 
   collection, 
@@ -22,7 +21,6 @@ import {
 } from '@/lib/firebase-client';
 
 export default function ArchivedPage() {
-    const { user, loading, error } = useAuth();
     const [clickCount, setClickCount] = useState(0);
     const [lastClickTime, setLastClickTime] = useState<number>(0);
 

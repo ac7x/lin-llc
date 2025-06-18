@@ -13,7 +13,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/app/signin/hooks/useAuth";
+import { db, doc, updateDoc } from "@/lib/firebase-client";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Timestamp } from "firebase/firestore";
 import { formatLocalDate } from "@/utils/dateUtils";
@@ -24,7 +25,7 @@ import { BaseWithDates } from "@/types/common";
 export default function ProjectExpensesPage() {
     const params = useParams();
     const projectId = params?.project as string;
-    const { db, doc, updateDoc, user } = useAuth();
+    const { user } = useAuth();
     const [projectDoc, loading] = useDocument(projectId ? doc(db, "projects", projectId) : null);
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState<ExpenseData | null>(null);
@@ -555,4 +556,4 @@ export default function ProjectExpensesPage() {
             )}
         </div>
     );
-} 
+}

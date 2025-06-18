@@ -154,3 +154,6 @@ src/types/common.d.ts
 
 專案
 @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @PageLayout.tsx 
+
+src/app/projects/[project]/page.tsx
+讀取代碼

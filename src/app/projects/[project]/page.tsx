@@ -113,7 +113,7 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
 }
 
 export default function ProjectDetailPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { loading: authLoading } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -209,6 +209,14 @@ export default function ProjectDetailPage() {
             alert("更新失敗，請重試");
         }
     };
+
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     if (loading) {
         return (

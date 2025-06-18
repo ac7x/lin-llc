@@ -46,7 +46,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { loading: authLoading } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -237,6 +237,13 @@ export default function ProjectCalendarPage() {
         };
     }, []);
 
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
     if (loading) return <div className="p-4">載入中...</div>;
     if (error) return <div className="p-4 text-red-500">錯誤: {error.message}</div>;
     if (!project) return <div className="p-4">找不到專案</div>;

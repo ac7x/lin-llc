@@ -24,7 +24,7 @@ import { PermissionCheck } from "@/components/common/PermissionCheck";
 import { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } from '@/lib/firebase-client';
 
 function SidebarContent() {
-    const { user, loading: authLoading } = useAuth();
+    useAuth();
     const pathname = usePathname();
     const navs = [
         { label: "專案列表", href: "/projects", icon: "📋" },
