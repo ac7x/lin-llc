@@ -92,26 +92,49 @@ import { firebaseConfig, APP_CHECK_CONFIG, FIREBASE_EMULATOR } from "./firebase-
 const app: FirebaseApp = initializeApp(firebaseConfig);
 const firebaseApp: FirebaseApp = app;
 
-// --- 服務實例初始化 ---
+// --- 服務實例初始化（伺服器端安全） ---
 const auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
-const messaging = getMessaging(app);
-const analytics = getAnalytics(app);
-const performance = getPerformance(app);
-const remoteConfig = getRemoteConfig(app);
 
-// --- App Check 初始化 ---
-const appCheck = initializeAppCheck(firebaseApp, {
-  provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
-  isTokenAutoRefreshEnabled: true,
-});
+// --- 客戶端專用服務初始化 ---
+let messaging: Messaging | null = null;
+let analytics: Analytics | null = null;
+let performance: any = null;
+let remoteConfig: RemoteConfig | null = null;
+let appCheck: AppCheck | null = null;
+
+// 檢查是否在瀏覽器環境中
+const isClient = typeof window !== 'undefined';
+
+// 只在客戶端初始化需要 navigator 的服務
+if (isClient) {
+  try {
+    messaging = getMessaging(app);
+    analytics = getAnalytics(app);
+    performance = getPerformance(app);
+    remoteConfig = getRemoteConfig(app);
+    
+    // App Check 初始化
+    appCheck = initializeAppCheck(firebaseApp, {
+      provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (error) {
+    console.warn('Firebase 客戶端服務初始化失敗:', error);
+  }
+}
 
 /**
- * 取得 App Check token
+ * 取得 App Check token（僅客戶端）
  */
 export async function getAppCheckToken(): Promise<string | null> {
+  if (!isClient || !appCheck) {
+    console.warn('App Check 僅在客戶端可用');
+    return null;
+  }
+  
   try {
     const tokenResult = await getToken(appCheck);
     return tokenResult.token;
@@ -119,6 +142,41 @@ export async function getAppCheckToken(): Promise<string | null> {
     console.error("取得 App Check token 失敗:", error);
     throw error;
   }
+}
+
+/**
+ * 取得 Messaging 實例（僅客戶端）
+ */
+export function getMessagingInstance(): Messaging | null {
+  return messaging;
+}
+
+/**
+ * 取得 Analytics 實例（僅客戶端）
+ */
+export function getAnalyticsInstance(): Analytics | null {
+  return analytics;
+}
+
+/**
+ * 取得 Performance 實例（僅客戶端）
+ */
+export function getPerformanceInstance(): any {
+  return performance;
+}
+
+/**
+ * 取得 Remote Config 實例（僅客戶端）
+ */
+export function getRemoteConfigInstance(): RemoteConfig | null {
+  return remoteConfig;
+}
+
+/**
+ * 取得 App Check 實例（僅客戶端）
+ */
+export function getAppCheckInstance(): AppCheck | null {
+  return appCheck;
 }
 
 // 匯出需要的 Firebase 函數和類別
@@ -178,10 +236,10 @@ export {
   auth, 
   db, 
   storage, 
-  appCheck,
   functions,
   messaging,
   analytics,
   performance,
   remoteConfig,
+  appCheck,
 };
