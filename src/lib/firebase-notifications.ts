@@ -18,9 +18,9 @@ import {
   onSnapshot,
   serverTimestamp,
   writeBatch,
-  db // 直接從 firebase-client 匯入 db
-} from '@/lib/firebase-client'; // 直接從 lib 匯入
-import { Firestore, Timestamp } from 'firebase/firestore'; // Firestore 型別正確來源
+  db,
+  Timestamp
+} from '@/lib/firebase-client';
 import { COLLECTIONS } from './firebase-config';
 import type { NotificationMessage } from '@/types/notification';
 import type { AppUser } from '@/types/auth';
@@ -60,7 +60,6 @@ function setCachedNotifications(userId: string, notifications: NotificationMessa
  * 建立新通知
  */
 export async function createNotification(
-  db: Firestore, // 直接傳入 db
   userId: string,
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<string> {
@@ -73,8 +72,13 @@ export async function createNotification(
       createdAt: Timestamp.now(),
     };
 
+    // 過濾掉 undefined 值，避免 Firestore 錯誤
+    const cleanData = Object.fromEntries(
+      Object.entries(notificationData).filter(([, value]) => value !== undefined)
+    );
+
     const docRef = await addDoc(collection(db, NOTIFICATIONS), {
-      ...notificationData,
+      ...cleanData,
       createdAt: serverTimestamp(),
     });
 
@@ -89,7 +93,6 @@ export async function createNotification(
  * 批量建立通知（例如系統廣播）
  */
 export async function createBulkNotifications(
-  db: Firestore, // 直接傳入 db
   userIds: string[],
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<void> {
@@ -107,8 +110,13 @@ export async function createBulkNotifications(
         createdAt: now,
       };
 
+      // 過濾掉 undefined 值，避免 Firestore 錯誤
+      const cleanData = Object.fromEntries(
+        Object.entries(notificationData).filter(([, value]) => value !== undefined)
+      );
+
       batch.set(notificationRef, {
-        ...notificationData,
+        ...cleanData,
         createdAt: serverTimestamp(),
       });
     });
@@ -281,7 +289,6 @@ export function subscribeToUserNotifications(
  */
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
   try {
-    // 直接使用 db
     const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isRead: true,
@@ -328,7 +335,6 @@ export async function markMultipleNotificationsAsRead(notificationIds: string[])
  */
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
   try {
-    // 直接使用 db
     const q = query(
       collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
@@ -357,7 +363,6 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
  */
 export async function archiveNotification(notificationId: string): Promise<void> {
   try {
-    // 直接使用 db
     const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isArchived: true,
@@ -373,7 +378,6 @@ export async function archiveNotification(notificationId: string): Promise<void>
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
   try {
-    // 直接使用 db
     const notificationRef = doc(db, NOTIFICATIONS, notificationId);
     await updateDoc(notificationRef, {
       isArchived: true, // 軟刪除，實際上是封存
@@ -425,7 +429,6 @@ export async function updateUserNotificationSettings(
   settings: Partial<AppUser['notificationSettings']>
 ): Promise<void> {
   try {
-    // 直接使用 db
     const userRef = doc(db, USERS, userId);
     await updateDoc(userRef, {
       'notificationSettings': settings,
