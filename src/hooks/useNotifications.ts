@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import {
   getUserNotifications,
   subscribeToUserNotifications,
@@ -55,8 +55,13 @@ export function useNotifications(options: {
   const batchQueue = useRef<Set<string>>(new Set());
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // 檢查是否在客戶端環境
+  const isClient = typeof window !== 'undefined';
+
   // 從本地緩存讀取數據
   const loadFromCache = useCallback(() => {
+    if (!isClient) return null;
+    
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
@@ -69,10 +74,12 @@ export function useNotifications(options: {
       console.error('Failed to load from cache:', err);
     }
     return null;
-  }, []);
+  }, [isClient]);
 
   // 保存到本地緩存
   const saveToCache = useCallback((data: NotificationMessage[]) => {
+    if (!isClient) return;
+    
     try {
       const cacheData: CacheData = {
         notifications: data,
@@ -82,7 +89,7 @@ export function useNotifications(options: {
     } catch (err) {
       console.error('Failed to save to cache:', err);
     }
-  }, []);
+  }, [isClient]);
 
   // 取得通知資料
   const loadNotifications = useCallback(async () => {
@@ -179,7 +186,7 @@ export function useNotifications(options: {
   useEffect(() => {
     if (!user?.uid || !realtime) {
       if (!realtime) {
-        loadNotifications();
+        void loadNotifications();
       }
       return;
     }

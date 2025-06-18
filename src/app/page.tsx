@@ -11,19 +11,15 @@
 
 "use client";
 
-import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { User } from "firebase/auth";
 
 import {
   auth,
-  db,
-  doc,
-  getDoc,
-  setDoc,
   signOut,
-  useAuth
-} from "@/hooks/useAuth";
+} from "@/lib/firebase-client";
+import { useAuth } from "@/app/signin/hooks/useAuth";
 
 // 載入狀態組件
 const LoadingSpinner = () => (
@@ -33,7 +29,7 @@ const LoadingSpinner = () => (
 );
 
 export default function SignIn() {
-  const { user: authUser, loading, isReady } = useAuth();
+  const { user: authUser, loading, signInWithGoogle } = useAuth();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -41,50 +37,10 @@ export default function SignIn() {
     setUser(authUser);
   }, [authUser]);
 
-  // 處理用戶資料儲存到 Firestore
-  const saveUserToFirestore = async (user: User): Promise<void> => {
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const userSnapshot = await getDoc(userRef);
-
-      // 建立基本用戶資料
-      const userData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        lastLogin: new Date().toISOString(),
-      };
-
-      // 如果用戶不存在，新建用戶並設定初始角色
-      if (!userSnapshot.exists()) {
-        await setDoc(userRef, {
-          ...userData,
-          roles: ["user"], // 預設角色改為陣列
-          createdAt: new Date().toISOString(),
-        });
-      } else {
-        // 用戶存在則只更新登入時間
-        await setDoc(userRef, userData, { merge: true });
-      }
-
-      // 強制重新獲取 token 以更新 custom claims
-      await user.getIdToken(true);
-    } catch (error) {
-      console.error("儲存用戶資料失敗:", error);
-    }
-  };
-
   // Google 登入處理
   async function handleGoogleSignIn() {
-    const provider = new GoogleAuthProvider();
-
     try {
-      const result = await signInWithPopup(auth, provider);
-      setUser(result.user);
-
-      // 儲存用戶資料到 Firestore
-      await saveUserToFirestore(result.user);
+      await signInWithGoogle();
     } catch (error) {
       console.error("登入失敗:", error);
     }
@@ -101,7 +57,7 @@ export default function SignIn() {
   }
 
   // 載入中狀態
-  if (!isReady || loading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
         <LoadingSpinner />

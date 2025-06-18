@@ -39,10 +39,11 @@ import SubWorkpackageSortingPage from "./workpackages/subworkpackages/page";
 import ProjectCalendarPage from "./project-calendar/page";
 import { TaiwanCityList } from "@/utils/taiwanCityUtils";
 import { Project, Workpackage } from "@/types/project";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import ProjectExpensesPage from "./project-expenses/page";
 import { ROLE_NAMES, type RoleKey } from "@/utils/authUtils";
 import type { AppUser } from "@/types/auth";
+import { db, doc, updateDoc, Timestamp, collection } from '@/lib/firebase-client';
 
 // 在 handleUpdateProject 函數之前添加以下常數
 const COST_CONTROLLER_ROLES: RoleKey[] = ['finance'];
@@ -112,7 +113,7 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
 }
 
 export default function ProjectDetailPage() {
-    const { db, doc, updateDoc, Timestamp, collection } = useAuth();
+    const { loading: authLoading } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -208,6 +209,14 @@ export default function ProjectDetailPage() {
             alert("更新失敗，請重試");
         }
     };
+
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     if (loading) {
         return (

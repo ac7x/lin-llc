@@ -12,12 +12,13 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import type { Timestamp } from "firebase/firestore";
+import { db, collection } from '@/lib/firebase-client';
 
 // 嚴格型別：只接受 Timestamp | null | undefined
 type TimestampInput = Timestamp | null | undefined;
@@ -35,10 +36,11 @@ const formatDate = (timestamp: TimestampInput, formatStr = "yyyy-MM-dd"): string
 };
 
 export default function ProjectsPage() {
-    const { db, collection } = useAuth();
+    const { loading: authLoading } = useAuth();
     const [projectsSnapshot, loading] = useCollection(collection(db, "projects"));
     const [search, setSearch] = useState("");
 
+    // hooks 必須全部宣告完畢後再 return loading 畫面，避免 hooks 順序錯誤
     const rows = useMemo(() => {
         if (!projectsSnapshot) return [];
         let arr = projectsSnapshot.docs.map((doc, idx) => {
@@ -63,7 +65,13 @@ export default function ProjectsPage() {
         return arr;
     }, [projectsSnapshot, search]);
 
-    // 如果正在載入專案資料，顯示載入中
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">

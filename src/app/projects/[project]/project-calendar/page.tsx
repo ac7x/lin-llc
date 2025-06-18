@@ -14,13 +14,14 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import "@/styles/react-big-calendar.css";
 import { Workpackage, SubWorkpackage } from "@/types/project";
 import { ProgressColorScale } from "@/utils/colorUtils";
+import { db, doc } from '@/lib/firebase-client';
 
 const localizer = dateFnsLocalizer({
     format,
@@ -45,7 +46,7 @@ interface CalendarEvent {
 }
 
 export default function ProjectCalendarPage() {
-    const { db, doc } = useAuth();
+    const { loading: authLoading } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -236,6 +237,13 @@ export default function ProjectCalendarPage() {
         };
     }, []);
 
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
     if (loading) return <div className="p-4">載入中...</div>;
     if (error) return <div className="p-4 text-red-500">錯誤: {error.message}</div>;
     if (!project) return <div className="p-4">找不到專案</div>;

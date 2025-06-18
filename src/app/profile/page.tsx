@@ -11,10 +11,11 @@
 
 'use client'
 
-import { useAuth, signOut } from '@/hooks/useAuth'
+import { useAuth } from '@/app/signin/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useCallback } from 'react'
+import { signOut, auth } from '@/lib/firebase-client'
 
 const roleDisplayNames: Record<string, string> = {
   owner: '擁有者',
@@ -30,7 +31,7 @@ const roleDisplayNames: Record<string, string> = {
 } as const;
 
 const UserPanelPage = () => {
-  const { user, loading, auth, userRoles } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   const handleSignOut = useCallback(async () => {
@@ -40,7 +41,7 @@ const UserPanelPage = () => {
     } catch (error) {
       console.error('登出失敗:', error)
     }
-  }, [auth, router])
+  }, [router])
 
   return (
     <main className="max-w-4xl mx-auto">
@@ -72,14 +73,11 @@ const UserPanelPage = () => {
                   <p className="text-gray-600 dark:text-gray-300">{user.email}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">UID: {user.uid}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {userRoles.map((role) => (
-                      <span
-                        key={role}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900 dark:to-blue-800 dark:text-blue-200"
-                      >
-                        {roleDisplayNames[role] || '一般用戶'}
-                      </span>
-                    ))}
+                    <span
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900 dark:to-blue-800 dark:text-blue-200"
+                    >
+                      {roleDisplayNames[user.currentRole || 'user'] || '一般用戶'}
+                    </span>
                   </div>
                 </div>
               </div>

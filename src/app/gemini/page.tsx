@@ -15,17 +15,13 @@ import { useState, useRef, useEffect, FormEvent, ChangeEvent } from "react";
 import { initializeApp } from "firebase/app";
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel } from "firebase/ai";
 import { firebaseConfig } from "@/lib/firebase-config";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/app/signin/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { initializeFirebaseAppCheck } from "@/lib/firebase-client";
 import Image from "next/image";
 
 
 // 初始化 Firebase
 const firebaseApp = initializeApp(firebaseConfig);
-
-// 初始化 App Check
-initializeFirebaseAppCheck().catch(console.error);
 
 // 初始化 Gemini API
 const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
@@ -63,7 +59,7 @@ async function fileToGenerativePart(file: File) {
 
 export default function GeminiChatPage() {
   const router = useRouter();
-  const { user, loading: authLoading, isAuthenticated, appCheck } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -77,36 +73,22 @@ export default function GeminiChatPage() {
 
   // 檢查認證狀態
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (!authLoading && !user) {
       router.push('/');
     }
-  }, [authLoading, isAuthenticated, router]);
-
-  // 檢查 App Check 狀態
-  useEffect(() => {
-    if (appCheck.isInitializing) {
-      setError('系統正在初始化安全驗證，請稍後再試。');
-    } else if (!appCheck.initialized) {
-      setError('安全驗證尚未初始化，請重新整理頁面。');
-    } else if (appCheck.error) {
-      setError('安全驗證失敗，請重新整理頁面。');
-    } else {
-      setError(null);
-    }
-  }, [appCheck]);
+  }, [authLoading, user, router]);
 
   // 獲取模型實例
   const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
   useEffect(() => {
-    if (!isAuthenticated || !appCheck.initialized || appCheck.isInitializing) return;
     // 初始化聊天
     chatRef.current = model.startChat({
       generationConfig: {
         maxOutputTokens: 1000,
       },
     });
-  }, [model, isAuthenticated, appCheck.initialized, appCheck.isInitializing]);
+  }, [model]);
 
   // 檢查是否接近底部
   const checkIfNearBottom = () => {
@@ -240,7 +222,7 @@ export default function GeminiChatPage() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return null;
   }
 

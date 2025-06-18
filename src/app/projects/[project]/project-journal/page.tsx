@@ -13,13 +13,22 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { useAuth } from '@/hooks/useAuth';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { arrayUnion } from "firebase/firestore";
-import { useDocument } from "react-firebase-hooks/firestore";
-import { Project } from "@/types/project";
-import { ActivityLog, PhotoRecord, PhotoType, IssueRecord } from "@/types/project";
+import { useAuth } from '@/app/signin/hooks/useAuth';
+import { 
+    useDocument 
+} from "react-firebase-hooks/firestore";
+import { 
+    db, 
+    storage, 
+    ref, 
+    uploadBytesResumable, 
+    getDownloadURL, 
+    updateDoc, 
+    arrayUnion, 
+    doc 
+} from '@/lib/firebase-client';
 import Image from 'next/image';
+import { Project, ActivityLog, PhotoRecord, PhotoType, IssueRecord } from '@/types/project';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 import { toTimestamp } from '@/utils/dateUtils';
@@ -44,7 +53,8 @@ async function fetchWeather(region: string) {
 }
 
 export default function ProjectJournalPage() {
-    const { db, doc, updateDoc } = useAuth();
+    // 僅呼叫 useAuth()，不解構 user, authLoading
+    useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
@@ -117,7 +127,6 @@ export default function ProjectJournalPage() {
     };
 
     const uploadPhotos = async (reportId: string) => {
-        const storage = getStorage();
         const photoRecords: PhotoRecord[] = [];
         const now = new Date();
         const nowTimestamp = toTimestamp(now);
@@ -131,8 +140,8 @@ export default function ProjectJournalPage() {
             const uploadTask = uploadBytesResumable(storageRef, file);
             await new Promise<string>((resolve, reject) => {
                 uploadTask.on('state_changed',
-                    (snapshot) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
-                    (error) => reject(error),
+                    (snapshot: import('firebase/storage').UploadTaskSnapshot) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
+                    (error: import('firebase/app').FirebaseError) => reject(error),
                     async () => {
                         try {
                             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);

@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { 
   auth, 
+  db,
   GoogleAuthProvider, 
   signInWithPopup, 
   getIdToken,
   onAuthStateChanged,
-  User
+  User,
+  doc, 
+  getDoc, 
+  setDoc, 
+  collection, 
+  getDocs
 } from '@/lib/firebase-client';
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase-client';
 import { type RoleKey, ROLE_HIERARCHY } from '@/constants/roles';
 import { DEFAULT_ROLE_PERMISSIONS } from '@/app/management/components/RolePermissions';
 import type { 

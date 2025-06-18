@@ -11,7 +11,7 @@
 
 'use client';
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import Script from "next/script";
@@ -19,6 +19,7 @@ import BottomNavigation from '@/components/tabs/BottomNavigation';
 import { useAuth } from '@/app/signin/hooks/useAuth';
 import { Unauthorized } from '@/components/common/Unauthorized';
 import { usePathname } from 'next/navigation';
+import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,12 @@ export default function RootLayout({
 }): React.ReactElement {
   const { user, loading } = useAuth();
   const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
+
+  // 檢查是否在客戶端環境
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // 檢查當前路徑是否需要驗證
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
@@ -73,10 +80,12 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <head>
-        <Script
-          src={`https://www.google.com/recaptcha/api.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
-          strategy="beforeInteractive"
-        />
+        {isClient && (
+          <Script
+            src={`https://www.google.com/recaptcha/api.js?render=${APP_CHECK_CONFIG.SITE_KEY}`}
+            strategy="beforeInteractive"
+          />
+        )}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <main className="pb-16">

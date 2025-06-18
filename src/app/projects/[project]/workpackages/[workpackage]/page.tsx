@@ -14,12 +14,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { Project } from "@/types/project";
 import { SubWorkpackage, Workpackage } from "@/types/project";
 import { Template, SubWorkpackageTemplateItem, TemplateToSubWorkpackageOptions } from "@/types/project";
 import { nanoid } from "nanoid";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
+import { db, doc, updateDoc } from '@/lib/firebase-client';
 
 // Template helper functions
 /**
@@ -96,7 +97,7 @@ function clearSelectedTemplate(): void {
 }
 
 export default function WorkpackageDetailPage() {
-    const { db, doc, updateDoc } = useAuth();
+    useAuth();
     const params = useParams();
     const router = useRouter();
     const projectId = params?.project as string;
@@ -149,7 +150,7 @@ export default function WorkpackageDetailPage() {
             }
         };
         if (showTemplateModal && templates.length === 0) loadTemplates();
-    }, [showTemplateModal, templates.length, db]);
+    }, [showTemplateModal, templates.length]);
 
     if (loading) return <div>載入中...</div>;
     if (error) return <div>錯誤: {error.message}</div>;

@@ -12,8 +12,11 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useAuth, useCollection } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
+import { useCollection } from 'react-firebase-hooks/firestore';
 import { useParams } from "next/navigation";
+import { db, collection, doc, getDoc, setDoc, deleteDoc, Timestamp } from '@/lib/firebase-client';
+import { Unauthorized } from '@/components/common/Unauthorized';
 
 // 定義封存類型
 type ArchiveType = 'contracts' | 'orders' | 'quotes' | 'projects';
@@ -188,11 +191,31 @@ function validateData(data: ArchiveData, type: ArchiveType): boolean {
 
 export default function ArchivePage() {
     const { type } = useParams<{ type: ArchiveType }>();
-    const { db, collection, doc, getDoc, setDoc, deleteDoc, Timestamp } = useAuth();
+    const { user, hasPermission } = useAuth();
     const [archiveRetentionDays, setArchiveRetentionDays] = useState<number>(3650);
     const [search, setSearch] = useState("");
     const [restoringId, setRestoringId] = useState<string | null>(null);
     const [restoreMessage, setRestoreMessage] = useState<string>("");
+
+    // 權限檢查：無 archive 權限時顯示未授權
+    const [permissionChecked, setPermissionChecked] = useState(false);
+    const [hasArchivePermission, setHasArchivePermission] = useState<boolean>(false);
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            if (!user) {
+                setHasArchivePermission(false);
+                setPermissionChecked(true);
+                return;
+            }
+            const ok = await hasPermission('archive');
+            if (mounted) {
+                setHasArchivePermission(ok);
+                setPermissionChecked(true);
+            }
+        })();
+        return () => { mounted = false; };
+    }, [user, hasPermission]);
 
     // 獲取封存保留天數
     useEffect(() => {
@@ -205,10 +228,10 @@ export default function ArchivePage() {
             }
         }
         fetchRetentionDays();
-    }, [db, doc, getDoc]);
+    }, []); // 僅在 mount 時執行
 
     // 獲取封存資料
-    const [dataSnapshot, loading, error] = useCollection(
+    const [dataSnapshot, dataLoading, dataError] = useCollection(
         collection(db, `archived/default/${type}`)
     );
 
@@ -325,6 +348,17 @@ export default function ArchivePage() {
         return arr;
     }, [dataSnapshot, search, type]);
 
+    if (dataLoading || !permissionChecked) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+    if (!hasArchivePermission) {
+        return <Unauthorized message="您沒有權限訪問封存功能，請聯繫管理員以獲取訪問權限" />;
+    }
+
     return (
         <main className="max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -379,7 +413,7 @@ export default function ArchivePage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {loading ? (
+                            {dataLoading ? (
                                 <tr>
                                     <td colSpan={TABLE_COLUMNS[type].length + 3} className="px-4 py-8 text-center">
                                         <div className="flex items-center justify-center">
@@ -387,10 +421,10 @@ export default function ArchivePage() {
                                         </div>
                                     </td>
                                 </tr>
-                            ) : error ? (
+                            ) : dataError ? (
                                 <tr>
                                     <td colSpan={TABLE_COLUMNS[type].length + 3} className="px-4 py-4 text-center text-red-500 dark:text-red-400">
-                                        {String(error)}
+                                        {String(dataError)}
                                     </td>
                                 </tr>
                             ) : rows.length === 0 ? (
@@ -445,4 +479,4 @@ export default function ArchivePage() {
             </div>
         </main>
     );
-} 
+}

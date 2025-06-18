@@ -14,16 +14,17 @@
 import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { ProjectProgressPercent, WorkpackageProgressBar, calculateWorkpackageProgress } from "@/utils/progressUtils";
 import type { Project } from "@/types/project";
 import { PageLayout, PageContent, Sidebar } from "@/app/projects/PageLayout";
 import { PermissionCheck } from "@/components/common/PermissionCheck";
+import { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } from '@/lib/firebase-client';
 
 function SidebarContent() {
-    const { db, collection, doc, updateDoc, setDoc, deleteDoc, Timestamp } = useAuth();
+    useAuth();
     const pathname = usePathname();
     const navs = [
         { label: "專案列表", href: "/projects", icon: "📋" },

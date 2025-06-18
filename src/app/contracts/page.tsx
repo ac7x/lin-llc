@@ -15,13 +15,15 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { useAuth } from "@/hooks/useAuth";
+import { db } from '@/lib/firebase-client';
+import { useAuth } from "@/app/signin/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ContractData } from "@/types/finance";
 import { doc, getDoc } from "firebase/firestore";
+import { collection } from '@/lib/firebase-client';
 
 export default function ContractsPage() {
-    const { db, collection } = useAuth();
+    useAuth(); // 僅用於權限與登入狀態，不再解構 db
     const [contractsSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "contracts")
     );

@@ -13,14 +13,15 @@
 
 import { useParams } from "next/navigation";
 import { useState, useMemo } from "react";
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/app/signin/hooks/useAuth';
 import { Timestamp, arrayUnion } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { Project } from "@/types/project";
 import { MaterialEntry } from "@/types/project";
+import { db, doc, updateDoc } from '@/lib/firebase-client';
 
 export default function ProjectMaterialsPage() {
-    const { db, doc, updateDoc } = useAuth();
+    useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(

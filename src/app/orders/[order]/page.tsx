@@ -14,14 +14,13 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
-import { useAuth } from '@/hooks/useAuth';
 import { OrderItem } from "@/types/finance";
+import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 
 export default function OrderDetailPage() {
     const router = useRouter();
     const params = useParams();
     const orderId = params?.order as string;
-    const { db, doc, updateDoc, Timestamp } = useAuth();
     const [orderName, setOrderName] = useState("");
     const [orderPrice, setOrderPrice] = useState(0);
     const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
