@@ -23,6 +23,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@firebase/remote-config": "^0.6.4",
+    "@googlemaps/js-api-loader": "^1.16.8",
     "@headlessui/react": "^2.2.4",
     "@hello-pangea/dnd": "^18.0.1",
     "@heroicons/react": "^2.2.0",
