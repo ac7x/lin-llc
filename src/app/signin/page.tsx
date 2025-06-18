@@ -15,7 +15,7 @@ export default function SignInPage(): ReactElement {
   const handleGoogleSignIn = async (): Promise<void> => {
     try {
       await signInWithGoogle();
-      router.push('/');
+      router.push('/profile');
     } catch (err) {
       const error = err as SignInError;
       console.error('登入失敗:', error.message);
