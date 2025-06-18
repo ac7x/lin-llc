@@ -32,6 +32,8 @@ export interface SubWorkpackage extends BaseWithDates {
     description?: string;
     actualStartDate?: DateField;
     actualEndDate?: DateField;
+    plannedStartDate?: DateField;
+    plannedEndDate?: DateField;
     status?: string;
     progress?: number;
     assignedTo?: string;
