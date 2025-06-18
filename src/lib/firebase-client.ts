@@ -54,12 +54,7 @@ import {
 } from "firebase/firestore";
 import {
   getStorage,
-  connectStorageEmulator,
-  ref, // 新增：引入 ref
-  uploadBytesResumable, // 新增：引入 uploadBytesResumable
-  getDownloadURL, // 新增：引入 getDownloadURL
-  UploadMetadata, // 新增：引入 UploadMetadata
-  FirebaseStorage, // 新增：引入 FirebaseStorage 型別
+  FirebaseStorage, // 保留型別定義
 } from "firebase/storage";
 import {
   initializeAppCheck,
@@ -71,28 +66,12 @@ import { firebaseConfig, APP_CHECK_CONFIG, FIREBASE_EMULATOR } from "./firebase-
 
 // --- Firebase 應用程式初始化 ---
 const app: FirebaseApp = initializeApp(firebaseConfig);
-export const firebaseApp: FirebaseApp = app;
+const firebaseApp: FirebaseApp = app;
 
 // --- 服務實例初始化 ---
-export const auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
-export const storage: FirebaseStorage = getStorage(app); // 使用 FirebaseStorage 型別
-
-// --- 模擬器連線 (僅在開發時使用) ---
-if (FIREBASE_EMULATOR.ENABLED) {
-  try {
-    // 假設 Firestore 模擬器運行在 8080，Auth 在 9099
-    // Cloud Functions 在 5001，Storage 在 9199
-    // App Check 在 8081 (如果需要)
-    // connectAuthEmulator(auth, `http://localhost:9099`);
-    // connectFirestoreEmulator(db, 'localhost', 8080);
-    connectStorageEmulator(storage, "localhost", 9199);
-    // connectFunctionsEmulator(getFunctions(app), 'localhost', 5001); // 如果使用 Functions
-    console.log("已連接到 Firebase 模擬器 (Storage)");
-  } catch (error) {
-    console.error("連接到 Firebase 模擬器失敗:", error);
-  }
-}
+const auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const storage = getStorage(app);
 
 // --- App Check 初始化 ---
 let appCheckInstance: AppCheck | null = null; // 使用 AppCheck 型別
@@ -270,3 +249,6 @@ export {
   arrayRemove,
   serverTimestamp,
 };
+
+// 匯出 Firebase 服務實例
+export { firebaseApp, auth, db, storage };
