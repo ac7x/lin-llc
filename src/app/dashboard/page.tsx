@@ -93,7 +93,7 @@ export default function DashboardPage() {
   const [statsLoading, setStatsLoading] = React.useState<boolean>(true);
 
   // 3. Firestore 數據 Hooks
-  const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'users'));
+  const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'members'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
   const [ordersSnapshot, ordersLoading, ordersError] = useCollection(collection(db, 'finance', 'default', 'orders'));
   const [quotesSnapshot, quotesLoading, quotesError] = useCollection(collection(db, 'finance', 'default', 'quotes'));
@@ -176,7 +176,8 @@ export default function DashboardPage() {
   }, {} as Record<string, number>);
   if (usersSnapshot && !usersLoading && !usersError) {
     usersSnapshot.docs.forEach(doc => {
-      const role = doc.data().role;
+      const userData = doc.data();
+      const role = userData.roles?.[0] || userData.currentRole || 'guest';
       if (roleCounts.hasOwnProperty(role)) {
         roleCounts[role] += 1;
       }

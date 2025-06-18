@@ -21,7 +21,7 @@ import SubWorkpackageSortingPage from "./workpackages/subworkpackages/page";
 import ProjectCalendarPage from "./project-calendar/page";
 import ProjectExpensesPage from "./project-expenses/page";
 import ProjectInfoPage from "./components/ProjectInfoPage";
-import { type RoleKey } from "@/utils/authUtils";
+import { type RoleKey } from "@/constants/roles";
 import type { AppUser } from "@/types/auth";
 import { collection, doc, db } from '@/lib/firebase-client';
 import { useAuth } from '@/hooks/useAuth';
@@ -38,7 +38,7 @@ export default function ProjectDetailPage() {
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
-    const [usersSnapshot] = useCollection(collection(db, "users"));
+    const [usersSnapshot] = useCollection(collection(db, "members"));
     const [tab, setTab] = useState<
         "journal" | "materials" | "issues" | "info" | "calendar" | "subworkpackages" | "expenses"
     >("journal");
@@ -60,11 +60,50 @@ export default function ProjectDetailPage() {
 
         const users = usersSnapshot.docs.map(doc => doc.data() as AppUser);
         
+        // 使用 Set 來追蹤已分配的使用者，避免重複
+        const assignedUsers = new Set<string>();
+        
+        const costControllers = users.filter(user => {
+            const hasRole = COST_CONTROLLER_ROLES.includes((user.roles?.[0] || user.currentRole) as RoleKey);
+            if (hasRole && !assignedUsers.has(user.uid)) {
+                assignedUsers.add(user.uid);
+                return true;
+            }
+            return false;
+        });
+        
+        const supervisors = users.filter(user => {
+            const hasRole = SUPERVISOR_ROLES.includes((user.roles?.[0] || user.currentRole) as RoleKey);
+            if (hasRole && !assignedUsers.has(user.uid)) {
+                assignedUsers.add(user.uid);
+                return true;
+            }
+            return false;
+        });
+        
+        const safetyOfficers = users.filter(user => {
+            const hasRole = SAFETY_OFFICER_ROLES.includes((user.roles?.[0] || user.currentRole) as RoleKey);
+            if (hasRole && !assignedUsers.has(user.uid)) {
+                assignedUsers.add(user.uid);
+                return true;
+            }
+            return false;
+        });
+        
+        const coordinators = users.filter(user => {
+            const hasRole = COORDINATOR_ROLES.includes((user.roles?.[0] || user.currentRole) as RoleKey);
+            if (hasRole && !assignedUsers.has(user.uid)) {
+                assignedUsers.add(user.uid);
+                return true;
+            }
+            return false;
+        });
+        
         return {
-            costControllers: users.filter(user => COST_CONTROLLER_ROLES.includes(user.role as RoleKey)),
-            supervisors: users.filter(user => SUPERVISOR_ROLES.includes(user.role as RoleKey)),
-            safetyOfficers: users.filter(user => SAFETY_OFFICER_ROLES.includes(user.role as RoleKey)),
-            coordinators: users.filter(user => COORDINATOR_ROLES.includes(user.role as RoleKey))
+            costControllers,
+            supervisors,
+            safetyOfficers,
+            coordinators
         };
     }, [usersSnapshot]);
 
@@ -138,6 +177,7 @@ export default function ProjectDetailPage() {
             <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
                 <nav className="flex flex-wrap gap-1 -mb-px">
                     <button
+                        key="journal"
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
                             tab === "journal"
                             ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
@@ -148,6 +188,7 @@ export default function ProjectDetailPage() {
                         工作日誌
                     </button>
                     <button
+                        key="calendar"
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
                             tab === "calendar"
                             ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
@@ -158,6 +199,7 @@ export default function ProjectDetailPage() {
                         行程
                     </button>
                     <button
+                        key="issues"
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
                             tab === "issues"
                             ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
@@ -168,6 +210,7 @@ export default function ProjectDetailPage() {
                         問題追蹤
                     </button>
                     <button
+                        key="subworkpackages"
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
                             tab === "subworkpackages"
                             ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
@@ -178,6 +221,7 @@ export default function ProjectDetailPage() {
                         子工作包排序
                     </button>
                     <button
+                        key="materials"
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
                             tab === "materials"
                             ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
@@ -188,6 +232,7 @@ export default function ProjectDetailPage() {
                         材料管理
                     </button>
                     <button
+                        key="expenses"
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
                             tab === "expenses"
                             ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
@@ -198,6 +243,7 @@ export default function ProjectDetailPage() {
                         費用管理
                     </button>
                     <button
+                        key="info"
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
                             tab === "info"
                             ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"

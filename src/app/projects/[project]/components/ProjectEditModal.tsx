@@ -12,7 +12,7 @@
 import { useState } from "react";
 import { doc, updateDoc, Timestamp, db } from '@/lib/firebase-client';
 import { TaiwanCityList } from "@/utils/taiwanCityUtils";
-import { ROLE_NAMES, type RoleKey } from "@/utils/authUtils";
+import { ROLE_NAMES, type RoleKey } from "@/constants/roles";
 import type { AppUser } from "@/types/auth";
 import type { Project } from "@/types/project";
 
@@ -113,10 +113,10 @@ export default function ProjectEditModal({
                                 defaultValue={project.coordinator || ""}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
-                                <option value="">請選擇</option>
-                                {eligibleUsers.coordinators.map(user => (
-                                    <option key={user.uid} value={user.uid}>
-                                        {user.displayName} ({ROLE_NAMES[user.role as RoleKey]})
+                                <option key="coordinator-empty" value="">請選擇</option>
+                                {eligibleUsers.coordinators.map((user, index) => (
+                                    <option key={`coordinator-${user.uid}-${index}`} value={user.uid}>
+                                        {user.displayName} ({ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
                                     </option>
                                 ))}
                             </select>
@@ -130,10 +130,10 @@ export default function ProjectEditModal({
                                 defaultValue={project.supervisor || ""}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
-                                <option value="">請選擇</option>
-                                {eligibleUsers.supervisors.map(user => (
-                                    <option key={user.uid} value={user.uid}>
-                                        {user.displayName} ({ROLE_NAMES[user.role as RoleKey]})
+                                <option key="supervisor-empty" value="">請選擇</option>
+                                {eligibleUsers.supervisors.map((user, index) => (
+                                    <option key={`supervisor-${user.uid}-${index}`} value={user.uid}>
+                                        {user.displayName} ({ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
                                     </option>
                                 ))}
                             </select>
@@ -147,10 +147,10 @@ export default function ProjectEditModal({
                                 defaultValue={project.safetyOfficer || ""}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
-                                <option value="">請選擇</option>
-                                {eligibleUsers.safetyOfficers.map(user => (
-                                    <option key={user.uid} value={user.uid}>
-                                        {user.displayName} ({ROLE_NAMES[user.role as RoleKey]})
+                                <option key="safety-empty" value="">請選擇</option>
+                                {eligibleUsers.safetyOfficers.map((user, index) => (
+                                    <option key={`safety-${user.uid}-${index}`} value={user.uid}>
+                                        {user.displayName} ({ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
                                     </option>
                                 ))}
                             </select>
@@ -164,10 +164,10 @@ export default function ProjectEditModal({
                                 defaultValue={project.costController || ""}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
-                                <option value="">請選擇</option>
-                                {eligibleUsers.costControllers.map(user => (
-                                    <option key={user.uid} value={user.uid}>
-                                        {user.displayName} ({ROLE_NAMES[user.role as RoleKey]})
+                                <option key="cost-empty" value="">請選擇</option>
+                                {eligibleUsers.costControllers.map((user, index) => (
+                                    <option key={`cost-${user.uid}-${index}`} value={user.uid}>
+                                        {user.displayName} ({ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
                                     </option>
                                 ))}
                             </select>
@@ -181,9 +181,9 @@ export default function ProjectEditModal({
                                 defaultValue={project.region || ""}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
-                                <option value="">請選擇</option>
-                                {TaiwanCityList.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                <option key="region-empty" value="">請選擇</option>
+                                {TaiwanCityList.map((opt, index) => (
+                                    <option key={`region-${opt.value}-${index}`} value={opt.value}>{opt.label}</option>
                                 ))}
                             </select>
                         </div>
@@ -212,6 +212,7 @@ export default function ProjectEditModal({
                                 起始日
                             </label>
                             <input 
+                                key="startDate"
                                 type="date" 
                                 name="startDate" 
                                 defaultValue={project.startDate?.toDate().toISOString().split('T')[0]} 
@@ -223,6 +224,7 @@ export default function ProjectEditModal({
                                 預估結束日
                             </label>
                             <input 
+                                key="estimatedEndDate"
                                 type="date" 
                                 name="estimatedEndDate" 
                                 defaultValue={project.estimatedEndDate?.toDate().toISOString().split('T')[0]} 
