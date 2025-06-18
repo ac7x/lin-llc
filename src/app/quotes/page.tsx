@@ -15,13 +15,13 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
 import { exportPdfToBlob } from '@/components/pdf/pdfExport';
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/app/signin/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { QuoteData } from "@/types/finance";
 import { doc, getDoc, collection } from "firebase/firestore";
+import { db } from "@/lib/firebase-client";
 
 export default function QuotesPage() {
-    const { db } = useAuth();
     const [quotesSnapshot, loading, error] = useCollection(
         collection(db, "finance", "default", "quotes")
     );
