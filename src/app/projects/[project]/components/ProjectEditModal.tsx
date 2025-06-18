@@ -17,6 +17,7 @@ import { ROLE_NAMES, type RoleKey } from "@/constants/roles";
 import type { AppUser } from "@/types/auth";
 import type { Project } from "@/types/project";
 import { useAuth } from '@/hooks/useAuth';
+import AddressSelector from '@/components/common/AddressSelector';
 
 interface ProjectEditModalProps {
     project: Project;
@@ -204,10 +205,23 @@ export default function ProjectEditModal({
                             <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                                 地址
                             </label>
+                            <AddressSelector
+                                value={project.address || ""}
+                                onChange={(address) => {
+                                    // 更新表單中的地址值
+                                    const addressInput = document.querySelector('input[name="address"]') as HTMLInputElement;
+                                    if (addressInput) {
+                                        addressInput.value = address;
+                                    }
+                                }}
+                                placeholder="請輸入或選擇地址"
+                                className="w-full"
+                            />
+                            {/* 隱藏的地址輸入框，用於表單提交 */}
                             <input 
                                 name="address" 
                                 defaultValue={project.address} 
-                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
+                                className="hidden"
                             />
                         </div>
                         <div>
