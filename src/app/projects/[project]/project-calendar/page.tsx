@@ -65,10 +65,10 @@ export default function ProjectCalendarPage() {
         project.workpackages.forEach((wp: Workpackage) => {
             if (wp.subWorkpackages?.length) {
                 wp.subWorkpackages.forEach((sub: SubWorkpackage) => {
-                    if (sub.estimatedStartDate && sub.estimatedEndDate) {
+                    if (sub.plannedStartDate && sub.plannedEndDate) {
                         // Timestamp 轉 Date
-                        const startDate = sub.estimatedStartDate.toDate();
-                        const endDate = sub.estimatedEndDate.toDate();
+                        const startDate = sub.plannedStartDate.toDate();
+                        const endDate = sub.plannedEndDate.toDate();
                         endDate.setDate(endDate.getDate() + 1);
 
                         // 處理實際日期
@@ -157,7 +157,7 @@ export default function ProjectCalendarPage() {
                 {event.title}
                 {typeof event.progress === "number" && ` | 進度: ${event.progress}%`}
                 {event.quantity !== undefined && ` | 數量: ${event.quantity}`}
-                {` | 預計: ${format(event.start, 'MM/dd')}-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}`}
+                {` | 計劃: ${format(event.start, 'MM/dd')}-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}`}
                 {event.actualStartDate && (
                     <>
                         {` | 實際: ${format(event.actualStartDate, 'MM/dd')}`}
@@ -174,7 +174,7 @@ export default function ProjectCalendarPage() {
         alert(`
             工作項目: ${event.title}
             所屬工作包: ${event.workpackageName}
-            預計時間: ${format(event.start, 'yyyy-MM-dd', { locale: zhTW })} 至 ${format(endDate, 'yyyy-MM-dd', { locale: zhTW })}
+            計劃時間: ${format(event.start, 'yyyy-MM-dd', { locale: zhTW })} 至 ${format(endDate, 'yyyy-MM-dd', { locale: zhTW })}
             ${event.actualStartDate ? `實際開始: ${format(event.actualStartDate, 'yyyy-MM-dd', { locale: zhTW })}` : ''}
             ${event.actualEndDate ? `實際結束: ${format(event.actualEndDate, 'yyyy-MM-dd', { locale: zhTW })}` : ''}
             進度: ${event.progress}%
@@ -360,7 +360,7 @@ export default function ProjectCalendarPage() {
                             {/* 時間狀態 */}
                             <span className="flex items-center">
                                 <div className="w-10 h-2.5 bg-blue-500 mr-1 rounded"></div>
-                                <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">預計時間</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">計劃時間</span>
                             </span>
                             <span className="flex items-center">
                                 <div className="w-10 h-2.5 border-l-4 border-blue-500 bg-blue-100 mr-1 rounded"></div>
@@ -371,7 +371,7 @@ export default function ProjectCalendarPage() {
                                 <svg className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
-                                <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">預計日期</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">計劃日期</span>
                             </span>
                             <span className="flex items-center">
                                 <svg className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

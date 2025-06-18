@@ -84,8 +84,8 @@ export default function ProjectsPage() {
                     sw.id === item.id
                         ? {
                             ...sw,
-                            estimatedStartDate: dateToTimestamp(startDate),
-                            estimatedEndDate: dateToTimestamp(endDate)
+                            plannedStartDate: dateToTimestamp(startDate),
+                            plannedEndDate: dateToTimestamp(endDate)
                         }
                         : sw
                 ),
@@ -100,8 +100,8 @@ export default function ProjectsPage() {
                     ...i,
                     start: startDate,
                     end: endDate,
-                    estimatedStartDate: startTimestamp,
-                    estimatedEndDate: endTimestamp
+                    plannedStartDate: startTimestamp,
+                    plannedEndDate: endTimestamp
                 };
             }
             return i;
@@ -128,9 +128,16 @@ export default function ProjectsPage() {
                     const workpackageName = wp.name;
                     const subWorkpackages: SubWorkpackage[] = wp.subWorkpackages || [];
                     for (const sub of subWorkpackages) {
-                        const start = timestampToDate(sub.estimatedStartDate);
-                        const end = timestampToDate(sub.estimatedEndDate);
-                        if (start && end) {
+                        const plannedStart = timestampToDate(sub.plannedStartDate);
+                        const plannedEnd = timestampToDate(sub.plannedEndDate);
+                        
+                        // 只要有其中一個日期就顯示數據
+                        if (plannedStart || plannedEnd) {
+                            // 如果只有開始日期，結束日期設為開始日期後一天
+                            const start = plannedStart || (plannedEnd ? new Date(plannedEnd.getTime() - 24 * 60 * 60 * 1000) : new Date());
+                            // 如果只有結束日期，開始日期設為結束日期前一天
+                            const end = plannedEnd || (plannedStart ? new Date(plannedStart.getTime() + 24 * 60 * 60 * 1000) : new Date());
+                            
                             all.push({
                                 ...sub,
                                 projectId,

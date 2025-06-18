@@ -274,13 +274,14 @@ export default function SubWorkpackageSortingPage() {
     const submitEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingSubWp) return;
-        // 修正：空字串不轉 Timestamp，僅有值時才轉
-        const plannedStartDate = formData.plannedStartDate && formData.plannedStartDate.trim()
-            ? Timestamp.fromDate(new Date(formData.plannedStartDate))
-            : undefined;
-        const plannedEndDate = formData.plannedEndDate && formData.plannedEndDate.trim()
-            ? Timestamp.fromDate(new Date(formData.plannedEndDate))
-            : undefined;
+        // 只組裝有值的日期欄位
+        const updateFields: Partial<SubWorkpackage> = {};
+        if (formData.plannedStartDate && formData.plannedStartDate.trim()) {
+            updateFields.plannedStartDate = Timestamp.fromDate(new Date(formData.plannedStartDate));
+        }
+        if (formData.plannedEndDate && formData.plannedEndDate.trim()) {
+            updateFields.plannedEndDate = Timestamp.fromDate(new Date(formData.plannedEndDate));
+        }
         const workpackageId = editingSubWp.workpackageId;
         setSaving(true);
         try {
@@ -291,8 +292,7 @@ export default function SubWorkpackageSortingPage() {
                         subWorkpackages: wp.subWorkpackages.map(sub =>
                             sub.id === editingSubWp.id ? {
                                 ...sub,
-                                plannedStartDate,
-                                plannedEndDate,
+                                ...updateFields
                             } : sub
                         )
                     };
@@ -303,8 +303,7 @@ export default function SubWorkpackageSortingPage() {
             const newAllSubWorkpackages = allSubWorkpackages.map(subWp =>
                 subWp.id === editingSubWp.id ? {
                     ...subWp,
-                    plannedStartDate,
-                    plannedEndDate,
+                    ...updateFields
                 } : subWp
             );
             setAllSubWorkpackages(newAllSubWorkpackages);

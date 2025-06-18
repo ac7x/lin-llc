@@ -54,6 +54,8 @@ export interface Workpackage extends BaseWithDates {
     description?: string;
     actualStartDate?: DateField;
     actualEndDate?: DateField;
+    plannedStartDate?: DateField;
+    plannedEndDate?: DateField;
     estimatedStartDate?: DateField;
     estimatedEndDate?: DateField;
     status?: string;

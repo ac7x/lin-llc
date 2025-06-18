@@ -62,9 +62,9 @@ export default function ProjectCalendarPage() {
                 projectsSnapshot.forEach(docSnap => {
                     const project = docSnap.data();
                     project.workpackages?.forEach((wp: Workpackage) => {
-                        if (wp.estimatedStartDate && wp.estimatedEndDate && typeof wp.estimatedStartDate.toDate === "function" && typeof wp.estimatedEndDate.toDate === "function") {
-                            const startDate = wp.estimatedStartDate.toDate();
-                            const endDate = wp.estimatedEndDate.toDate();
+                        if (wp.plannedStartDate && wp.plannedEndDate && typeof wp.plannedStartDate.toDate === "function" && typeof wp.plannedEndDate.toDate === "function") {
+                            const startDate = wp.plannedStartDate.toDate();
+                            const endDate = wp.plannedEndDate.toDate();
                             endDate.setDate(endDate.getDate() + 1);
 
                             calendarEvents.push({
@@ -81,9 +81,9 @@ export default function ProjectCalendarPage() {
                         }
 
                         wp.subWorkpackages?.forEach(sub => {
-                            if (sub.estimatedStartDate && sub.estimatedEndDate && typeof sub.estimatedStartDate.toDate === "function" && typeof sub.estimatedEndDate.toDate === "function") {
-                                const startDate = sub.estimatedStartDate.toDate();
-                                const endDate = sub.estimatedEndDate.toDate();
+                            if (sub.plannedStartDate && sub.plannedEndDate && typeof sub.plannedStartDate.toDate === "function" && typeof sub.plannedEndDate.toDate === "function") {
+                                const startDate = sub.plannedStartDate.toDate();
+                                const endDate = sub.plannedEndDate.toDate();
                                 endDate.setDate(endDate.getDate() + 1);
 
                                 calendarEvents.push({
@@ -152,7 +152,7 @@ export default function ProjectCalendarPage() {
                 <div className="text-xs text-gray-600">
                     {event.title}
                     {typeof event.progress === "number" && ` | 進度: ${event.progress}%`}
-                    {` | 預計: ${format(event.start, 'MM/dd')}-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}`}
+                    {` | 計劃: ${format(event.start, 'MM/dd')}-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}`}
                     {event.actualStartDate && (
                         <>
                             {` | 實際: ${format(event.actualStartDate, 'MM/dd')}`}
@@ -166,13 +166,13 @@ export default function ProjectCalendarPage() {
     };
 
     const handleSelectEvent = (event: CalendarEvent) => {
-        const estimatedDateRange = `預計：${format(event.start, "yyyy-MM-dd")} 至 ${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), "yyyy-MM-dd")}`;
+        const plannedDateRange = `計劃：${format(event.start, "yyyy-MM-dd")} 至 ${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), "yyyy-MM-dd")}`;
         const actualDateRange = event.actualStartDate || event.actualEndDate ?
             `\n實際：${event.actualStartDate ? format(event.actualStartDate, "yyyy-MM-dd") : "尚未開始"} 至 ${event.actualEndDate ? format(event.actualEndDate, "yyyy-MM-dd") : "進行中"}` : "";
 
         alert(`工作包: ${event.title}
 所屬專案: ${event.projectName}
-${estimatedDateRange}${actualDateRange}
+${plannedDateRange}${actualDateRange}
 進度: ${event.progress}%`);
     };
 
@@ -332,7 +332,7 @@ ${estimatedDateRange}${actualDateRange}
                             ))}
                             <span className="flex items-center">
                                 <div className="w-10 h-2.5 bg-blue-500 mr-1 rounded"></div>
-                                <span className="text-sm mr-2">預計時間</span>
+                                <span className="text-sm mr-2">計劃時間</span>
                             </span>
                             <span className="flex items-center">
                                 <div className="w-10 h-2.5 border-l-4 border-blue-500 bg-blue-100 mr-1 rounded"></div>
@@ -342,7 +342,7 @@ ${estimatedDateRange}${actualDateRange}
                                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
-                                <span className="text-sm mr-2">預計日期</span>
+                                <span className="text-sm mr-2">計劃日期</span>
                             </span>
                             <span className="flex items-center">
                                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
