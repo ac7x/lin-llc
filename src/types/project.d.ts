@@ -16,7 +16,7 @@ export interface Task extends BaseWithDates {
     description?: string; // 任務描述（可選）
     status?: 'pending' | 'in-progress' | 'completed'; // 任務狀態（可選）
     dueDate?: DateField; // 任務截止日期（可選）
-    assignedTo?: string; // 任務分配對象（可選）
+    assignedTo?: string | null; // 任務分配對象（可選）
     completed: boolean; // 任務是否完成
 }
 
@@ -36,7 +36,7 @@ export interface SubWorkpackage extends BaseWithDates {
     plannedEndDate?: DateField;
     status?: string;
     progress?: number;
-    assignedTo?: string;
+    assignedTo?: string | null;
     priority?: number;
     estimatedQuantity?: number;
     actualQuantity?: number;
@@ -60,7 +60,7 @@ export interface Workpackage extends BaseWithDates {
     estimatedEndDate?: DateField;
     status?: string;
     progress?: number;
-    assignedTo?: string;
+    assignedTo?: string | null;
     budget?: number;
     category?: string;
     priority?: 'low' | 'medium' | 'high';
@@ -109,7 +109,7 @@ export interface IssueRecord extends BaseWithDates {
     description: string;
     severity: 'low' | 'medium' | 'high';
     status: 'open' | 'in-progress' | 'resolved';
-    assignedTo: string;
+    assignedTo: string | null;
     dueDate: DateField;
     resolution?: string;
     resolved?: boolean; // 允許 resolved 屬性，與現有程式一致
@@ -205,7 +205,7 @@ export type TemplateToSubWorkpackageOptions = {
     workpackageId?: string;
     estimatedStartDate?: DateField;
     estimatedEndDate?: DateField;
-    assignedTo?: string;
+    assignedTo?: string | null;
 };
 
 export interface ExpenseItem extends BaseWithDates {

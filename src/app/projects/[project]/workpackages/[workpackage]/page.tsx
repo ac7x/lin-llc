@@ -52,7 +52,7 @@ function templateItemToSubWorkpackage(
         // 日期欄位為選填，可為 undefined
         estimatedStartDate: estimatedStartDate || undefined,
         estimatedEndDate: estimatedEndDate || undefined,
-        assignedTo: assignedTo || undefined, // 新增負責人欄位
+        assignedTo: assignedTo || null, // 新增負責人欄位
         priority: 0
     };
 }
@@ -271,7 +271,7 @@ export default function WorkpackageDetailPage() {
                 progress: 0,
                 createdAt: Timestamp.now(),
                 updatedAt: Timestamp.now(),
-                assignedTo: newSubWorkpackage.assignedTo || undefined, // 新增負責人
+                assignedTo: newSubWorkpackage.assignedTo || null, // 新增負責人
                 ...dateFields,
             };
             const updatedWorkpackages = project.workpackages.map(wp =>
@@ -304,7 +304,7 @@ export default function WorkpackageDetailPage() {
                 // 確保只有在有日期的情況下傳遞日期參數，否則為 undefined
                 estimatedStartDate: workpackage.estimatedStartDate || undefined,
                 estimatedEndDate: workpackage.estimatedEndDate || undefined,
-                assignedTo: workpackage.assignedTo || undefined // 傳遞工作包的負責人作為預設值
+                assignedTo: workpackage.assignedTo || null // 傳遞工作包的負責人作為預設值
             };
             
             const subWorkpackages = templateToSubWorkpackages(template, templateOptions)
@@ -332,7 +332,7 @@ export default function WorkpackageDetailPage() {
         setSubSaving(true);
         try {
             const updatedSubWps = workpackage.subWorkpackages.map(wp =>
-                wp.id === subWpId ? { ...wp, assignedTo: assignedTo || undefined } : wp
+                wp.id === subWpId ? { ...wp, assignedTo: assignedTo || null } : wp
             );
             const updatedWorkpackages = project.workpackages.map(wp =>
                 wp.id === workpackageId ? { ...wp, subWorkpackages: updatedSubWps } : wp
@@ -830,14 +830,14 @@ export default function WorkpackageDetailPage() {
                                         className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
                                         value={assigningUser} 
                                         onChange={e => setAssigningUser(e.target.value)} 
-                                                                                >
-                                            <option value="">請選擇負責人</option>
-                                            {users.map((userItem) => (
-                                                <option key={userItem.uid} value={userItem.uid}>
-                                                    {userItem.displayName || userItem.email}
-                                                </option>
-                                            ))}
-                                        </select>
+                                    >
+                                        <option value="">請選擇負責人</option>
+                                        {users.map((userItem) => (
+                                            <option key={userItem.uid} value={userItem.uid}>
+                                                {userItem.displayName || userItem.email}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="flex justify-end space-x-2 pt-4">
                                     <button 
