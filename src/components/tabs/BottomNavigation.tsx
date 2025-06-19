@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
@@ -165,6 +165,11 @@ export default function BottomNavigation(): React.ReactElement {
   const pathname = usePathname();
   const { user } = useAuth();
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollStartX, setScrollStartX] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchPermissions = async (): Promise<void> => {
@@ -202,31 +207,113 @@ export default function BottomNavigation(): React.ReactElement {
     return permissions.includes(item.id);
   });
 
+  // 觸控事件處理
+  const handleTouchStart = useCallback((e: React.TouchEvent): void => {
+    setIsDragging(true);
+    setStartX(e.touches[0].clientX);
+    setScrollStartX(scrollLeft);
+  }, [scrollLeft]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent): void => {
+    if (!isDragging) return;
+    
+    e.preventDefault();
+    const currentX = e.touches[0].clientX;
+    const diff = startX - currentX;
+    const newScrollLeft = scrollStartX + diff;
+    
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = newScrollLeft;
+      setScrollLeft(newScrollLeft);
+    }
+  }, [isDragging, startX, scrollStartX]);
+
+  const handleTouchEnd = useCallback((): void => {
+    setIsDragging(false);
+  }, []);
+
+  // 滑動到指定項目
+  const scrollToItem = useCallback((index: number): void => {
+    if (scrollContainerRef.current) {
+      const itemWidth = scrollContainerRef.current.scrollWidth / filteredNavigationItems.length;
+      const targetScroll = index * itemWidth;
+      scrollContainerRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
+      setScrollLeft(targetScroll);
+    }
+  }, [filteredNavigationItems.length]);
+
+  // 自動滑動到當前活動項目
+  useEffect(() => {
+    const activeIndex = filteredNavigationItems.findIndex(item => item.path === pathname);
+    if (activeIndex !== -1) {
+      scrollToItem(activeIndex);
+    }
+  }, [pathname, filteredNavigationItems, scrollToItem]);
+
   if (!user) return <></>;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50">
       <div className="max-w-screen-xl mx-auto px-4">
-        <div className="flex justify-around">
+        {/* 滑動指示器 */}
+        <div className="flex justify-center space-x-1 py-1">
+          {filteredNavigationItems.map((_, index) => {
+            const isActive = pathname === filteredNavigationItems[index].path;
+            return (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                  isActive 
+                    ? 'bg-indigo-600 dark:bg-indigo-400' 
+                    : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              />
+            );
+          })}
+        </div>
+        
+        {/* 可滑動的導航容器 */}
+        <div
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {filteredNavigationItems.map((item) => {
             const isActive = pathname === item.path;
             return (
               <Link
                 key={item.id}
                 href={item.path}
-                className={`flex flex-col items-center py-2 px-3 ${
+                className={`flex flex-col items-center py-2 px-3 min-w-[80px] flex-shrink-0 ${
                   isActive
                     ? 'text-indigo-600 dark:text-indigo-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                }`}
+                } ${isDragging ? 'pointer-events-none' : ''}`}
               >
                 {item.icon}
-                <span className="text-xs mt-1">{item.name}</span>
+                <span className="text-xs mt-1 text-center">{item.name}</span>
               </Link>
             );
           })}
         </div>
       </div>
+      
+      {/* 自定義滾動條樣式 */}
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </nav>
   );
 } 
