@@ -59,7 +59,7 @@ async function fileToGenerativePart(file: File) {
 
 export default function GeminiChatPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, hasPermission } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -70,13 +70,30 @@ export default function GeminiChatPage() {
   const chatRef = useRef<ReturnType<GenerativeModel['startChat']> | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [permissionChecked, setPermissionChecked] = useState(false);
 
-  // 檢查認證狀態
+  // 檢查認證狀態和權限
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/signin');
-    }
-  }, [authLoading, user, router]);
+    const checkAuthAndPermission = async () => {
+      if (!authLoading) {
+        if (!user) {
+          router.push('/signin');
+          return;
+        }
+
+        // 檢查權限
+        const hasGeminiPermission = await hasPermission('gemini');
+        if (!hasGeminiPermission) {
+          router.push('/dashboard');
+          return;
+        }
+
+        setPermissionChecked(true);
+      }
+    };
+
+    void checkAuthAndPermission();
+  }, [authLoading, user, router, hasPermission]);
 
   // 獲取模型實例
   const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
@@ -214,7 +231,7 @@ export default function GeminiChatPage() {
     });
   };
 
-  if (authLoading) {
+  if (authLoading || !permissionChecked) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>

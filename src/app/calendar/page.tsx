@@ -2,7 +2,7 @@
  * 全域行事曆頁面
  * 
  * 提供所有專案和工作的行事曆視圖，功能包含：
- * - 跨專案排程顯示
+ * - 跨排程顯示
  * - 工作包進度追蹤
  * - 日期範圍管理
  * - 全螢幕模式
@@ -261,7 +261,7 @@ ${plannedDateRange}${actualDateRange}
         <main className="max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案行事曆</h1>
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">行事曆</h1>
                     <div className="flex items-center gap-2">
                         <select
                             value={view}

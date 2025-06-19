@@ -1,7 +1,7 @@
 /**
- * 專案排程頁面
+ * 排程頁面
  * 
- * 使用 vis-timeline 實現的專案排程視覺化介面，功能包含：
+ * 使用 vis-timeline 實現的排程視覺化介面，功能包含：
  * - 專案時間軸顯示
  * - 子工作包拖曳調整時間
  * - 關鍵字快速篩選
@@ -228,7 +228,7 @@ export default function ProjectsPage() {
         <main className="max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">專案排程</h1>
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">排程</h1>
                     <button
                         className="px-3 py-1.5 rounded-lg text-sm border bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-200 flex items-center gap-2"
                         onClick={() => {
