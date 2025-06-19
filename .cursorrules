@@ -2,20 +2,9 @@ exclude:
   - node_modules
   - .next
   - public
-  - coverage
   - .git
   - script
-  - **/*.test.ts
-  - **/*.test.tsx
-  - **/__mocks__/
-  - **/__tests__/
   - src/styles
 
 include:
   - src/**
-  - src/app/**
-  - src/components/**
-  - src/hooks/**
-  - src/lib/**
-  - src/utils/**
-  - src/constants/**
