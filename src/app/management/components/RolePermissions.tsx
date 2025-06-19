@@ -45,6 +45,13 @@ export const PAGE_PERMISSIONS = [
     description: '查看和管理行事曆',
     path: '/calendar',
   },
+  // AI 功能
+  {
+    id: 'gemini',
+    name: 'AI 助手',
+    description: '使用 Gemini AI 進行對話和檔案分析',
+    path: '/gemini',
+  },
   // 封存功能
   {
     id: 'archive',
@@ -129,13 +136,13 @@ export const PAGE_PERMISSIONS = [
 export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
   guest: ['dashboard', 'profile'],
   temporary: ['dashboard', 'schedule', 'profile', 'calendar'],
-  helper: ['dashboard', 'schedule', 'orders', 'profile', 'calendar'],
-  user: ['dashboard', 'schedule', 'orders', 'quotes', 'profile', 'calendar'],
-  coord: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
-  safety: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
-  foreman: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
-  vendor: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
-  finance: ['dashboard', 'orders', 'quotes', 'contracts', 'profile', 'calendar'],
+  helper: ['dashboard', 'schedule', 'orders', 'profile', 'calendar', 'gemini'],
+  user: ['dashboard', 'schedule', 'orders', 'quotes', 'profile', 'calendar', 'gemini'],
+  coord: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
+  safety: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
+  foreman: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
+  vendor: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
+  finance: ['dashboard', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
   manager: [
     'dashboard',
     'profile',
@@ -152,7 +159,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     'notifications',
     'send-notification',
     'management',
-    'calendar'
+    'calendar',
+    'gemini'
   ],
   admin: [
     'dashboard',
@@ -170,7 +178,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     'notifications',
     'send-notification',
     'management',
-    'calendar'
+    'calendar',
+    'gemini'
   ],
   owner: [
     'dashboard',
@@ -188,7 +197,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     'notifications',
     'send-notification',
     'management',
-    'calendar'
+    'calendar',
+    'gemini'
   ],
 };
 
