@@ -20,7 +20,7 @@ interface ProjectInfoDisplayProps {
         costControllers: AppUser[];
         supervisors: AppUser[];
         safetyOfficers: AppUser[];
-        coordinators: AppUser[];
+        managers: AppUser[];
     };
 }
 
@@ -28,8 +28,8 @@ export default function ProjectInfoDisplay({
     project,
     eligibleUsers
 }: ProjectInfoDisplayProps) {
-    const getUserDisplayName = (uid: string | null | undefined, userList: AppUser[]) => {
-        if (!uid) return '-';
+    const getUserDisplayName = (uid: string | null | undefined, userList: AppUser[] | undefined) => {
+        if (!uid || !userList) return '-';
         const user = userList.find(u => u.uid === uid);
         if (!user) return '-';
         return `${user.displayName} (${ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})`;
@@ -59,7 +59,7 @@ export default function ProjectInfoDisplay({
                         經理
                     </label>
                     <div className="mt-1 text-gray-900 dark:text-gray-100">
-                        {getUserDisplayName(project.coordinator, eligibleUsers.coordinators)}
+                        {getUserDisplayName(project.manager, eligibleUsers.managers)}
                     </div>
                 </div>
                 <div>

@@ -133,8 +133,8 @@ export default function WorkpackageDetailPage() {
     const canViewBudget = (project: Project, currentUser: AppUser | null): boolean => {
         if (!currentUser?.uid) return false;
         
-        // 檢查是否為專案的 coordinator 或 costController
-        return project.coordinator === currentUser.uid || project.costController === currentUser.uid;
+        // 檢查是否為專案的 manager 或 costController
+        return project.manager === currentUser.uid || project.costController === currentUser.uid;
     };
 
     // 新增：檢查是否為子工作包負責人的函數
