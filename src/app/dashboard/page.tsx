@@ -305,7 +305,7 @@ export default function DashboardPage() {
   return (
     <main className="max-w-4xl mx-auto mb-20">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">業主管理儀表板</h1>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">管理儀表板</h1>
         
         <div className="flex gap-6 flex-col md:flex-row">
           {/* 人員統計區塊 */}
