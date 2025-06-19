@@ -3,14 +3,16 @@
  * 
  * 顯示專案的基本資訊，包括：
  * - 專案名稱、合約ID
- * - 專案成員資訊
+ * - 專案成員（經理、監工、安全人員、成本控制員）
  * - 專案地點和時間資訊
+ * - 業主資訊
  */
 
 "use client";
 
 import type { AppUser } from "@/types/auth";
 import type { Project } from "@/types/project";
+import { ROLE_NAMES, type RoleKey } from "@/constants/roles";
 
 interface ProjectInfoDisplayProps {
     project: Project;
@@ -26,6 +28,13 @@ export default function ProjectInfoDisplay({
     project,
     eligibleUsers
 }: ProjectInfoDisplayProps) {
+    const getUserDisplayName = (uid: string | null | undefined, userList: AppUser[]) => {
+        if (!uid) return '-';
+        const user = userList.find(u => u.uid === uid);
+        if (!user) return '-';
+        return `${user.displayName} (${ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})`;
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -50,9 +59,7 @@ export default function ProjectInfoDisplay({
                         經理
                     </label>
                     <div className="mt-1 text-gray-900 dark:text-gray-100">
-                        {project.coordinator ? 
-                            eligibleUsers.coordinators.find(u => u.uid === project.coordinator)?.displayName || '-' 
-                            : '-'}
+                        {getUserDisplayName(project.coordinator, eligibleUsers.coordinators)}
                     </div>
                 </div>
                 <div>
@@ -60,9 +67,7 @@ export default function ProjectInfoDisplay({
                         監工
                     </label>
                     <div className="mt-1 text-gray-900 dark:text-gray-100">
-                        {project.supervisor ? 
-                            eligibleUsers.supervisors.find(u => u.uid === project.supervisor)?.displayName || '-' 
-                            : '-'}
+                        {getUserDisplayName(project.supervisor, eligibleUsers.supervisors)}
                     </div>
                 </div>
                 <div>
@@ -70,9 +75,7 @@ export default function ProjectInfoDisplay({
                         安全人員
                     </label>
                     <div className="mt-1 text-gray-900 dark:text-gray-100">
-                        {project.safetyOfficer ? 
-                            eligibleUsers.safetyOfficers.find(u => u.uid === project.safetyOfficer)?.displayName || '-' 
-                            : '-'}
+                        {getUserDisplayName(project.safetyOfficer, eligibleUsers.safetyOfficers)}
                     </div>
                 </div>
                 <div>
@@ -80,9 +83,7 @@ export default function ProjectInfoDisplay({
                         成本控制員
                     </label>
                     <div className="mt-1 text-gray-900 dark:text-gray-100">
-                        {project.costController ? 
-                            eligibleUsers.costControllers.find(u => u.uid === project.costController)?.displayName || '-' 
-                            : '-'}
+                        {getUserDisplayName(project.costController, eligibleUsers.costControllers)}
                     </div>
                 </div>
             </div>
