@@ -1,4 +1,7 @@
 exclude:
+  - .vscode
+  - .copilot
+  - .github
   - node_modules
   - .next
   - public
