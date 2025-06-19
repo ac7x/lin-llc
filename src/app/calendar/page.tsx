@@ -19,7 +19,7 @@ import "@/styles/react-big-calendar.css";
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { Workpackage } from "@/types/project";
-import { ProgressColorScale } from "@/utils/colorUtils";
+import { ProgressColorScale, getProgressInfo } from "@/utils/colorUtils";
 
 const localizer = dateFnsLocalizer({
     format,
@@ -140,10 +140,8 @@ export default function ProjectCalendarPage() {
         let borderStyle = "solid";
 
         if (event.progress !== undefined) {
-            const scale = ProgressColorScale.find(
-                s => event.progress! >= s.min && event.progress! <= s.max
-            );
-            if (scale) backgroundColor = scale.color;
+            const progressInfo = getProgressInfo(event.progress);
+            backgroundColor = progressInfo.color;
         }
 
         if (!event.hasEndDate) {
@@ -170,12 +168,17 @@ export default function ProjectCalendarPage() {
 
     const EventComponent = ({ event }: { event: CalendarEvent }) => {
         const isDelayed = event.actualEndDate && event.end && event.actualEndDate > event.end;
+        const progressInfo = event.progress !== undefined ? getProgressInfo(event.progress) : null;
 
         return (
             <div className="p-1">
                 <div className="text-xs text-gray-600">
                     {event.title}
-                    {typeof event.progress === "number" && ` | 進度: ${event.progress}%`}
+                    {progressInfo && (
+                        <span className="font-medium" style={{ color: progressInfo.color }}>
+                            {` | ${progressInfo.description} (${event.progress}%)`}
+                        </span>
+                    )}
                     {` | 計劃: ${format(event.start, 'MM/dd')}`}
                     {event.hasEndDate ? `-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}` : ' (結束日期未設置)'}
                     {event.actualStartDate && (
@@ -196,11 +199,14 @@ export default function ProjectCalendarPage() {
             : `計劃：${format(event.start, "yyyy-MM-dd")} (結束日期未設置)`;
         const actualDateRange = event.actualStartDate || event.actualEndDate ?
             `\n實際：${event.actualStartDate ? format(event.actualStartDate, "yyyy-MM-dd") : "尚未開始"} 至 ${event.actualEndDate ? format(event.actualEndDate, "yyyy-MM-dd") : "進行中"}` : "";
+        
+        const progressInfo = event.progress !== undefined ? getProgressInfo(event.progress) : null;
+        const progressText = progressInfo ? `進度階段: ${progressInfo.description} (${event.progress}%)` : `進度: ${event.progress}%`;
 
         alert(`工作包: ${event.title}
 所屬專案: ${event.projectName}
 ${plannedDateRange}${actualDateRange}
-進度: ${event.progress}%`);
+${progressText}`);
     };
 
     const formats = {
@@ -344,42 +350,44 @@ ${plannedDateRange}${actualDateRange}
                 </div>
 
                 <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
-                    <h2 className="text-lg font-medium mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">圖例說明</h2>
-                    <div className="flex flex-col md:flex-row gap-4">
+                    <h2 className="text-lg font-medium mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">進度階段圖例</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        {/* 進度階段 */}
+                        {ProgressColorScale.map((scale, i) => {
+                            const progressInfo = getProgressInfo(scale.min);
+                            return (
+                                <div key={i} className="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm">
+                                    <div 
+                                        className="w-6 h-4 rounded-md shadow-sm" 
+                                        style={{ backgroundColor: scale.color }}
+                                    ></div>
+                                    <div className="flex-1">
+                                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {progressInfo.description}
+                                        </div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            {scale.min}% - {scale.max}%
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+                        <h3 className="text-md font-medium mb-3 text-gray-900 dark:text-gray-100">時間狀態說明</h3>
                         <div className="flex flex-wrap gap-4 items-center">
-                            {ProgressColorScale.map((s, i) => (
-                                <span className="flex items-center" key={i}>
-                                    <div className="w-4 h-3 mr-1 rounded" style={{ background: s.color }}></div>
-                                    <span className="text-sm mr-2">
-                                        {s.min}%
-                                        {s.max !== s.min && `~${s.max}%`}
-                                        {s.max === 100 && " 完成"}
-                                    </span>
-                                </span>
-                            ))}
                             <span className="flex items-center">
-                                <div className="w-10 h-2.5 bg-blue-500 mr-1 rounded"></div>
-                                <span className="text-sm mr-2">計劃時間</span>
+                                <div className="w-10 h-2.5 bg-blue-500 mr-2 rounded"></div>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">計劃時間</span>
                             </span>
                             <span className="flex items-center">
-                                <div className="w-10 h-2.5 border-l-4 border-blue-500 bg-blue-100 mr-1 rounded"></div>
-                                <span className="text-sm mr-4">實際時間</span>
+                                <div className="w-10 h-2.5 border-l-4 border-blue-500 bg-blue-100 mr-2 rounded"></div>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">實際時間</span>
                             </span>
                             <span className="flex items-center">
-                                <div className="w-10 h-2.5 border-2 border-dashed border-red-400 bg-blue-500 mr-1 rounded"></div>
-                                <span className="text-sm mr-2">結束日期未設置</span>
-                            </span>
-                            <span className="flex items-center">
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span className="text-sm mr-2">計劃日期</span>
-                            </span>
-                            <span className="flex items-center">
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                                <span className="text-sm">實際日期</span>
+                                <div className="w-10 h-2.5 border-2 border-dashed border-red-400 bg-blue-500 mr-2 rounded"></div>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">結束日期未設置</span>
                             </span>
                         </div>
                     </div>
