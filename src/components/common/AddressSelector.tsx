@@ -46,7 +46,7 @@ export default function AddressSelector({
             setIsLoading(true);
             try {
                 const loader = new Loader({
-                    apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+                    apiKey: "AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o",
                     version: "weekly",
                     libraries: ["places"]
                 });
