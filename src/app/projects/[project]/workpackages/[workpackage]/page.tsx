@@ -830,15 +830,14 @@ export default function WorkpackageDetailPage() {
                                         className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200" 
                                         value={assigningUser} 
                                         onChange={e => setAssigningUser(e.target.value)} 
-                                        required
-                                    >
-                                        <option value="">請選擇負責人</option>
-                                        {users.map((userItem) => (
-                                            <option key={userItem.uid} value={userItem.uid}>
-                                                {userItem.displayName || userItem.email}
-                                            </option>
-                                        ))}
-                                    </select>
+                                                                                >
+                                            <option value="">請選擇負責人</option>
+                                            {users.map((userItem) => (
+                                                <option key={userItem.uid} value={userItem.uid}>
+                                                    {userItem.displayName || userItem.email}
+                                                </option>
+                                            ))}
+                                        </select>
                                 </div>
                                 <div className="flex justify-end space-x-2 pt-4">
                                     <button 
@@ -855,7 +854,7 @@ export default function WorkpackageDetailPage() {
                                     <button 
                                         type="submit" 
                                         className="px-4 py-2 bg-purple-500 text-white rounded shadow hover:bg-purple-600 transition-colors duration-200" 
-                                        disabled={subSaving || !assigningUser}
+                                        disabled={subSaving}
                                     >
                                         {subSaving ? "指派中..." : "確認指派"}
                                     </button>
