@@ -31,6 +31,7 @@ interface TimelineSubWorkpackage extends SubWorkpackage {
     content: string; // 顯示內容
     start: Date; // vis-timeline 需要使用 Date 物件
     end: Date; // vis-timeline 需要使用 Date 物件
+    hasEndDate?: boolean; // 新增：標記是否有結束日期
 }
 
 // Helper: Timestamp 轉 Date
@@ -92,16 +93,25 @@ export default function ProjectsPage() {
             };
         });
         await updateDoc(projectDocRef, { workpackages: updatedWorkpackages });
+        
+        // 更新本地狀態
         setItems(prev => prev.map(i => {
             if (i.id === itemId) {
                 const startTimestamp = dateToTimestamp(startDate);
                 const endTimestamp = dateToTimestamp(endDate);
+                const hasEndDate = !!endTimestamp;
+                const content = hasEndDate 
+                    ? `${item.workpackageName} - ${item.name}`
+                    : `${item.workpackageName} - ${item.name} (結束日期未設置)`;
+                
                 return {
                     ...i,
                     start: startDate,
                     end: endDate,
                     plannedStartDate: startTimestamp,
-                    plannedEndDate: endTimestamp
+                    plannedEndDate: endTimestamp,
+                    hasEndDate,
+                    content,
                 };
             }
             return i;
@@ -138,6 +148,14 @@ export default function ProjectsPage() {
                             // 如果只有結束日期，開始日期設為結束日期前一天
                             const end = plannedEnd || (plannedStart ? new Date(plannedStart.getTime() + 24 * 60 * 60 * 1000) : new Date());
                             
+                            // 檢查是否有結束日期
+                            const hasEndDate = !!plannedEnd;
+                            
+                            // 根據是否有結束日期調整顯示內容
+                            const content = hasEndDate 
+                                ? `${workpackageName} - ${sub.name}`
+                                : `${workpackageName} - ${sub.name} (結束日期未設置)`;
+                            
                             all.push({
                                 ...sub,
                                 projectId,
@@ -145,9 +163,10 @@ export default function ProjectsPage() {
                                 workpackageId,
                                 workpackageName,
                                 group: projectId,
-                                content: `${workpackageName} - ${sub.name}`,
+                                content,
                                 start,
                                 end,
+                                hasEndDate,
                             });
                         }
                     }
@@ -271,6 +290,15 @@ export default function ProjectsPage() {
                     </div>
                     <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                         可用「空白、逗號、分號」分隔多個關鍵字進行搜尋
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
+                    <h2 className="text-lg font-medium mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">說明</h2>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                        <p>• 標題中顯示「(結束日期未設置)」的項目表示只有開始日期，沒有設置結束日期</p>
+                        <p>• 您可以拖曳調整項目的開始和結束時間，系統會自動更新資料庫</p>
+                        <p>• 使用關鍵字按鈕或搜尋框可以快速篩選特定類型的工作包</p>
                     </div>
                 </div>
             </div>

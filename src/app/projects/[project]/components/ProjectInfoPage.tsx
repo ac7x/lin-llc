@@ -6,7 +6,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, query, getDocs, db } from '@/lib/firebase-client';
 import ProjectInfoDisplay from "./ProjectInfoDisplay";
 import ProjectEditModal from "./ProjectEditModal";
 import WorkpackageList from "./WorkpackageList";
@@ -16,20 +17,56 @@ import type { Project } from "@/types/project";
 interface ProjectInfoPageProps {
     project: Project;
     projectId: string;
-    eligibleUsers: {
-        costControllers: AppUser[];
-        supervisors: AppUser[];
-        safetyOfficers: AppUser[];
-        coordinators: AppUser[];
-    };
 }
 
 export default function ProjectInfoPage({
     project,
     projectId,
-    eligibleUsers
 }: ProjectInfoPageProps) {
     const [isEditing, setIsEditing] = useState(false);
+    const [eligibleUsers, setEligibleUsers] = useState<{
+        costControllers: AppUser[];
+        supervisors: AppUser[];
+        safetyOfficers: AppUser[];
+        managers: AppUser[];
+    }>({
+        costControllers: [],
+        supervisors: [],
+        safetyOfficers: [],
+        managers: []
+    });
+
+    useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                const membersRef = collection(db, 'members');
+                const membersSnap = await getDocs(query(membersRef));
+                
+                const users = membersSnap.docs.map(doc => ({
+                    uid: doc.id,
+                    ...doc.data()
+                })) as AppUser[];
+
+                // 根據角色分類用戶
+                const categorizedUsers = {
+                    costControllers: users.filter(user => 
+                        user.roles?.includes('finance') || user.currentRole === 'finance'),
+                    supervisors: users.filter(user => 
+                        user.roles?.includes('foreman') || user.currentRole === 'foreman'),
+                    safetyOfficers: users.filter(user => 
+                        user.roles?.includes('safety') || user.currentRole === 'safety'),
+                    managers: users.filter(user => 
+                        user.roles?.includes('manager') || user.currentRole === 'manager')
+                };
+
+                setEligibleUsers(categorizedUsers);
+            } catch (error) {
+                console.error('獲取成員資料失敗:', error);
+            }
+        };
+
+        fetchMembers();
+    }, []);
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">

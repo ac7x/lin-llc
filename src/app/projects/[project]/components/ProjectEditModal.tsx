@@ -5,7 +5,7 @@
  * - 專案名稱、合約ID
  * - 專案成員（經理、監工、安全人員、成本控制員）
  * - 專案地點和時間資訊
- * - 預算權限控制（只有 coordinator 和 costController 可編輯）
+ * - 預算權限控制（只有 manager 和 costController 可編輯）
  */
 
 "use client";
@@ -28,7 +28,7 @@ interface ProjectEditModalProps {
         costControllers: AppUser[];
         supervisors: AppUser[];
         safetyOfficers: AppUser[];
-        coordinators: AppUser[];
+        managers: AppUser[];
     };
 }
 
@@ -46,8 +46,8 @@ export default function ProjectEditModal({
     const canEditBudget = (): boolean => {
         if (!user?.uid) return false;
         
-        // 檢查是否為專案的 coordinator 或 costController
-        return project.coordinator === user.uid || project.costController === user.uid;
+        // 檢查是否為專案的 manager 或 costController
+        return project.manager === user.uid || project.costController === user.uid;
     };
 
     const hasBudgetPermission = canEditBudget();
@@ -61,7 +61,7 @@ export default function ProjectEditModal({
             const updates = {
                 projectName: formData.get("projectName"),
                 contractId: formData.get("contractId"),
-                coordinator: formData.get("coordinator"),
+                manager: formData.get("manager"),
                 supervisor: formData.get("supervisor"),
                 safetyOfficer: formData.get("safetyOfficer"),
                 costController: formData.get("costController"),
@@ -123,13 +123,13 @@ export default function ProjectEditModal({
                                 經理
                             </label>
                             <select
-                                name="coordinator"
-                                defaultValue={project.coordinator || ""}
+                                name="manager"
+                                defaultValue={project.manager || ""}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
-                                <option key="coordinator-empty" value="">請選擇</option>
-                                {eligibleUsers.coordinators.map((user, index) => (
-                                    <option key={`coordinator-${user.uid}-${index}`} value={user.uid}>
+                                <option key="manager-empty" value="">請選擇</option>
+                                {(eligibleUsers.managers || []).map((user, index) => (
+                                    <option key={`manager-${user.uid}-${index}`} value={user.uid}>
                                         {user.displayName} ({ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
                                     </option>
                                 ))}
@@ -145,7 +145,7 @@ export default function ProjectEditModal({
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
                                 <option key="supervisor-empty" value="">請選擇</option>
-                                {eligibleUsers.supervisors.map((user, index) => (
+                                {(eligibleUsers.supervisors || []).map((user, index) => (
                                     <option key={`supervisor-${user.uid}-${index}`} value={user.uid}>
                                         {user.displayName} ({ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
                                     </option>
@@ -162,7 +162,7 @@ export default function ProjectEditModal({
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
                                 <option key="safety-empty" value="">請選擇</option>
-                                {eligibleUsers.safetyOfficers.map((user, index) => (
+                                {(eligibleUsers.safetyOfficers || []).map((user, index) => (
                                     <option key={`safety-${user.uid}-${index}`} value={user.uid}>
                                         {user.displayName} ({ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
                                     </option>
@@ -179,7 +179,7 @@ export default function ProjectEditModal({
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             >
                                 <option key="cost-empty" value="">請選擇</option>
-                                {eligibleUsers.costControllers.map((user, index) => (
+                                {(eligibleUsers.costControllers || []).map((user, index) => (
                                     <option key={`cost-${user.uid}-${index}`} value={user.uid}>
                                         {user.displayName} ({ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
                                     </option>

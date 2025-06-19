@@ -12,7 +12,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useDocument, useCollection } from "react-firebase-hooks/firestore";
+import { useDocument } from "react-firebase-hooks/firestore";
 import { useState, useMemo } from "react";
 import ProjectJournalPage from "./project-journal/page";
 import ProjectMaterialsPage from "./project-materials/page";
@@ -21,24 +21,15 @@ import SubWorkpackageSortingPage from "./workpackages/subworkpackages/page";
 import ProjectCalendarPage from "./project-calendar/page";
 import ProjectExpensesPage from "./project-expenses/page";
 import ProjectInfoPage from "./components/ProjectInfoPage";
-import { type RoleKey } from "@/constants/roles";
-import type { AppUser } from "@/types/auth";
-import { collection, doc, db } from '@/lib/firebase-client';
+import { doc, db } from '@/lib/firebase-client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Project } from "@/types/project";
-
-// 角色常數
-const COST_CONTROLLER_ROLES: RoleKey[] = ['finance'];
-const SUPERVISOR_ROLES: RoleKey[] = ['foreman'];
-const SAFETY_OFFICER_ROLES: RoleKey[] = ['safety'];
-const COORDINATOR_ROLES: RoleKey[] = ['manager'];
 
 export default function ProjectDetailPage() {
     const { loading: authLoading } = useAuth();
     const params = useParams();
     const projectId = params?.project as string;
     const [projectDoc, loading, error] = useDocument(doc(db, "projects", projectId));
-    const [usersSnapshot] = useCollection(collection(db, "members"));
     const [tab, setTab] = useState<
         "journal" | "materials" | "issues" | "info" | "calendar" | "subworkpackages" | "expenses"
     >("journal");
@@ -48,64 +39,6 @@ export default function ProjectDetailPage() {
         if (!projectDoc?.exists()) return null;
         return projectDoc.data() as Project;
     }, [projectDoc]);
-
-    // 使用 useMemo 取得符合角色的使用者
-    const eligibleUsers = useMemo(() => {
-        if (!usersSnapshot) return {
-            costControllers: [],
-            supervisors: [],
-            safetyOfficers: [],
-            coordinators: []
-        };
-
-        const users = usersSnapshot.docs.map(doc => doc.data() as AppUser);
-        
-        // 使用 Set 來追蹤已分配的使用者，避免重複
-        const assignedUsers = new Set<string>();
-        
-        const costControllers = users.filter(user => {
-            const hasRole = COST_CONTROLLER_ROLES.includes((user.roles?.[0] || user.currentRole) as RoleKey);
-            if (hasRole && !assignedUsers.has(user.uid)) {
-                assignedUsers.add(user.uid);
-                return true;
-            }
-            return false;
-        });
-        
-        const supervisors = users.filter(user => {
-            const hasRole = SUPERVISOR_ROLES.includes((user.roles?.[0] || user.currentRole) as RoleKey);
-            if (hasRole && !assignedUsers.has(user.uid)) {
-                assignedUsers.add(user.uid);
-                return true;
-            }
-            return false;
-        });
-        
-        const safetyOfficers = users.filter(user => {
-            const hasRole = SAFETY_OFFICER_ROLES.includes((user.roles?.[0] || user.currentRole) as RoleKey);
-            if (hasRole && !assignedUsers.has(user.uid)) {
-                assignedUsers.add(user.uid);
-                return true;
-            }
-            return false;
-        });
-        
-        const coordinators = users.filter(user => {
-            const hasRole = COORDINATOR_ROLES.includes((user.roles?.[0] || user.currentRole) as RoleKey);
-            if (hasRole && !assignedUsers.has(user.uid)) {
-                assignedUsers.add(user.uid);
-                return true;
-            }
-            return false;
-        });
-        
-        return {
-            costControllers,
-            supervisors,
-            safetyOfficers,
-            coordinators
-        };
-    }, [usersSnapshot]);
 
     if (authLoading) {
         return (
@@ -146,7 +79,6 @@ export default function ProjectDetailPage() {
                     <ProjectInfoPage
                         project={project}
                         projectId={projectId}
-                        eligibleUsers={eligibleUsers}
                     />
                 );
             case "journal":

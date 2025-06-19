@@ -41,6 +41,7 @@ interface CalendarEvent {
     resourceId?: string;
     actualStartDate?: Date;
     actualEndDate?: Date;
+    hasEndDate?: boolean;
 }
 
 export default function ProjectCalendarPage() {
@@ -62,10 +63,19 @@ export default function ProjectCalendarPage() {
                 projectsSnapshot.forEach(docSnap => {
                     const project = docSnap.data();
                     project.workpackages?.forEach((wp: Workpackage) => {
-                        if (wp.plannedStartDate && wp.plannedEndDate && typeof wp.plannedStartDate.toDate === "function" && typeof wp.plannedEndDate.toDate === "function") {
+                        if (wp.plannedStartDate && typeof wp.plannedStartDate.toDate === "function") {
                             const startDate = wp.plannedStartDate.toDate();
-                            const endDate = wp.plannedEndDate.toDate();
-                            endDate.setDate(endDate.getDate() + 1);
+                            let endDate: Date;
+                            let hasEndDate = false;
+
+                            if (wp.plannedEndDate && typeof wp.plannedEndDate.toDate === "function") {
+                                endDate = wp.plannedEndDate.toDate();
+                                endDate.setDate(endDate.getDate() + 1);
+                                hasEndDate = true;
+                            } else {
+                                endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+                                hasEndDate = false;
+                            }
 
                             calendarEvents.push({
                                 id: wp.id,
@@ -76,15 +86,25 @@ export default function ProjectCalendarPage() {
                                 workpackageId: wp.id,
                                 progress: wp.progress,
                                 actualStartDate: wp.actualStartDate && typeof wp.actualStartDate.toDate === "function" ? wp.actualStartDate.toDate() : undefined,
-                                actualEndDate: wp.actualEndDate && typeof wp.actualEndDate.toDate === "function" ? wp.actualEndDate.toDate() : undefined
+                                actualEndDate: wp.actualEndDate && typeof wp.actualEndDate.toDate === "function" ? wp.actualEndDate.toDate() : undefined,
+                                hasEndDate
                             });
                         }
 
                         wp.subWorkpackages?.forEach(sub => {
-                            if (sub.plannedStartDate && sub.plannedEndDate && typeof sub.plannedStartDate.toDate === "function" && typeof sub.plannedEndDate.toDate === "function") {
+                            if (sub.plannedStartDate && typeof sub.plannedStartDate.toDate === "function") {
                                 const startDate = sub.plannedStartDate.toDate();
-                                const endDate = sub.plannedEndDate.toDate();
-                                endDate.setDate(endDate.getDate() + 1);
+                                let endDate: Date;
+                                let hasEndDate = false;
+
+                                if (sub.plannedEndDate && typeof sub.plannedEndDate.toDate === "function") {
+                                    endDate = sub.plannedEndDate.toDate();
+                                    endDate.setDate(endDate.getDate() + 1);
+                                    hasEndDate = true;
+                                } else {
+                                    endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+                                    hasEndDate = false;
+                                }
 
                                 calendarEvents.push({
                                     id: sub.id,
@@ -95,7 +115,8 @@ export default function ProjectCalendarPage() {
                                     workpackageId: wp.id,
                                     progress: sub.progress,
                                     actualStartDate: sub.actualStartDate && typeof sub.actualStartDate.toDate === "function" ? sub.actualStartDate.toDate() : undefined,
-                                    actualEndDate: sub.actualEndDate && typeof sub.actualEndDate.toDate === "function" ? sub.actualEndDate.toDate() : undefined
+                                    actualEndDate: sub.actualEndDate && typeof sub.actualEndDate.toDate === "function" ? sub.actualEndDate.toDate() : undefined,
+                                    hasEndDate
                                 });
                             }
                         });
@@ -125,7 +146,10 @@ export default function ProjectCalendarPage() {
             if (scale) backgroundColor = scale.color;
         }
 
-        if (event.actualStartDate || event.actualEndDate) {
+        if (!event.hasEndDate) {
+            borderColor = "#ff6b6b";
+            borderStyle = "dashed";
+        } else if (event.actualStartDate || event.actualEndDate) {
             borderColor = "#ffffff";
             borderStyle = "dashed";
         }
@@ -152,7 +176,8 @@ export default function ProjectCalendarPage() {
                 <div className="text-xs text-gray-600">
                     {event.title}
                     {typeof event.progress === "number" && ` | 進度: ${event.progress}%`}
-                    {` | 計劃: ${format(event.start, 'MM/dd')}-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}`}
+                    {` | 計劃: ${format(event.start, 'MM/dd')}`}
+                    {event.hasEndDate ? `-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}` : ' (結束日期未設置)'}
                     {event.actualStartDate && (
                         <>
                             {` | 實際: ${format(event.actualStartDate, 'MM/dd')}`}
@@ -166,7 +191,9 @@ export default function ProjectCalendarPage() {
     };
 
     const handleSelectEvent = (event: CalendarEvent) => {
-        const plannedDateRange = `計劃：${format(event.start, "yyyy-MM-dd")} 至 ${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), "yyyy-MM-dd")}`;
+        const plannedDateRange = event.hasEndDate 
+            ? `計劃：${format(event.start, "yyyy-MM-dd")} 至 ${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), "yyyy-MM-dd")}`
+            : `計劃：${format(event.start, "yyyy-MM-dd")} (結束日期未設置)`;
         const actualDateRange = event.actualStartDate || event.actualEndDate ?
             `\n實際：${event.actualStartDate ? format(event.actualStartDate, "yyyy-MM-dd") : "尚未開始"} 至 ${event.actualEndDate ? format(event.actualEndDate, "yyyy-MM-dd") : "進行中"}` : "";
 
@@ -337,6 +364,10 @@ ${plannedDateRange}${actualDateRange}
                             <span className="flex items-center">
                                 <div className="w-10 h-2.5 border-l-4 border-blue-500 bg-blue-100 mr-1 rounded"></div>
                                 <span className="text-sm mr-4">實際時間</span>
+                            </span>
+                            <span className="flex items-center">
+                                <div className="w-10 h-2.5 border-2 border-dashed border-red-400 bg-blue-500 mr-1 rounded"></div>
+                                <span className="text-sm mr-2">結束日期未設置</span>
                             </span>
                             <span className="flex items-center">
                                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
