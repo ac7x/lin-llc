@@ -12,7 +12,7 @@
 "use client";
 
 import { useAuth } from '@/hooks/useAuth';
-import { useFilteredProjects } from "./useFilteredProjects";
+import { useFilteredProjects } from "../../hooks/useFilteredProjects";
 import { ProjectsTable } from "./components/ProjectsTable";
 import { DataLoader } from "@/components/common/DataLoader";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
