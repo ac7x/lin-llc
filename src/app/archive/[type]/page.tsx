@@ -17,59 +17,19 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { useParams } from "next/navigation";
 import { db, collection, doc, getDoc, setDoc, deleteDoc, Timestamp } from '@/lib/firebase-client';
 import { Unauthorized } from '@/components/common/Unauthorized';
-
-// 定義封存類型
-type ArchiveType = 'contracts' | 'orders' | 'quotes' | 'projects';
+import type { 
+    ArchiveData, 
+    ArchiveType, 
+    ArchivedContract, 
+    ArchivedOrder, 
+    ArchivedQuote, 
+    ArchivedProject, 
+    FirestoreArchiveData,
+    BaseArchiveData
+} from '@/types/archive';
 
 // 定義欄位值類型
 type ColumnValue = string | number | Date | null;
-
-// 定義基礎資料型別
-interface BaseArchiveData {
-    id: string;
-    idx: number;
-    archivedAt: Date | null;
-    createdAt: Date | null;
-}
-
-// 定義各類型的特定欄位
-interface ContractData extends BaseArchiveData {
-    contractName: string;
-    contractPrice: number;
-}
-
-interface OrderData extends BaseArchiveData {
-    orderName: string;
-}
-
-interface QuoteData extends BaseArchiveData {
-    quoteName: string;
-    quotePrice: number;
-}
-
-interface ProjectData extends BaseArchiveData {
-    projectName: string;
-    contractId: string;
-}
-
-// 定義所有可能的封存資料類型
-type ArchiveData = ContractData | OrderData | QuoteData | ProjectData;
-
-// 定義 Firestore 原始資料型別
-interface FirestoreData {
-    id: string;
-    idx: number;
-    archivedAt: { toDate: () => Date } | Date | null;
-    createdAt: { toDate: () => Date } | Date | null;
-    contractName?: string;
-    contractPrice?: number;
-    orderName?: string;
-    quoteName?: string;
-    quotePrice?: number;
-    projectName?: string;
-    contractId?: string;
-    [key: string]: unknown;
-}
 
 // 定義表格欄位配置
 const TABLE_COLUMNS = {
@@ -103,30 +63,35 @@ const PAGE_TITLES = {
 const formatColumnValue = (value: ColumnValue, type: 'text' | 'number' | 'date'): string => {
     if (value == null) return '-';
     
+    let processedValue = value;
+    if (processedValue instanceof Timestamp) {
+        processedValue = processedValue.toDate();
+    }
+    
     switch (type) {
         case 'date':
-            return value instanceof Date ? value.toLocaleDateString() : '-';
+            return processedValue instanceof Date ? processedValue.toLocaleDateString() : '-';
         case 'number':
-            return typeof value === 'number' ? value.toLocaleString() : '-';
+            return typeof processedValue === 'number' ? processedValue.toLocaleString() : '-';
         default:
-            return String(value);
+            return String(processedValue);
     }
 };
 
 // 型別守衛函數
-function isContractData(data: ArchiveData): data is ContractData {
+function isArchivedContract(data: ArchiveData): data is ArchivedContract {
     return 'contractName' in data && 'contractPrice' in data;
 }
 
-function isOrderData(data: ArchiveData): data is OrderData {
+function isArchivedOrder(data: ArchiveData): data is ArchivedOrder {
     return 'orderName' in data;
 }
 
-function isQuoteData(data: ArchiveData): data is QuoteData {
+function isArchivedQuote(data: ArchiveData): data is ArchivedQuote {
     return 'quoteName' in data && 'quotePrice' in data;
 }
 
-function isProjectData(data: ArchiveData): data is ProjectData {
+function isArchivedProject(data: ArchiveData): data is ArchivedProject {
     return 'projectName' in data && 'contractId' in data;
 }
 
@@ -139,37 +104,40 @@ function processFirestoreDate(date: { toDate: () => Date } | Date | null): Date 
 }
 
 // 根據類型獲取特定資料
-function getTypedData(data: FirestoreData, type: ArchiveType): ArchiveData {
-    const baseData = {
-        id: data.id,
-        idx: data.idx,
-        archivedAt: processFirestoreDate(data.archivedAt),
-        createdAt: processFirestoreDate(data.createdAt),
+function getTypedData(data: FirestoreArchiveData, type: ArchiveType): ArchiveData {
+    const { id, idx, createdAt, archivedAt, ...specificData } = data;
+    
+    const baseData: BaseArchiveData = {
+        id,
+        idx,
+        archivedAt: processFirestoreDate(archivedAt),
+        createdAt: processFirestoreDate(createdAt),
     };
 
     switch (type) {
         case 'contracts':
-            if (typeof data.contractName !== 'string' || typeof data.contractPrice !== 'number') {
+            if (typeof specificData.contractName !== 'string' || typeof specificData.contractPrice !== 'number') {
                 throw new Error('Invalid contract data structure');
             }
-            return { ...baseData, contractName: data.contractName, contractPrice: data.contractPrice } as ContractData;
+            return { ...specificData, ...baseData } as ArchivedContract;
         case 'orders':
-            if (typeof data.orderName !== 'string') {
+            if (typeof specificData.orderName !== 'string') {
                 throw new Error('Invalid order data structure');
             }
-            return { ...baseData, orderName: data.orderName } as OrderData;
+            return { ...specificData, ...baseData } as ArchivedOrder;
         case 'quotes':
-            if (typeof data.quoteName !== 'string' || typeof data.quotePrice !== 'number') {
+            if (typeof specificData.quoteName !== 'string' || typeof specificData.quotePrice !== 'number') {
                 throw new Error('Invalid quote data structure');
             }
-            return { ...baseData, quoteName: data.quoteName, quotePrice: data.quotePrice } as QuoteData;
+            return { ...specificData, ...baseData } as ArchivedQuote;
         case 'projects':
-            if (typeof data.projectName !== 'string' || typeof data.contractId !== 'string') {
+            if (typeof specificData.projectName !== 'string' || typeof specificData.contractId !== 'string') {
                 throw new Error('Invalid project data structure');
             }
-            return { ...baseData, projectName: data.projectName, contractId: data.contractId } as ProjectData;
+            return { ...specificData, ...baseData } as ArchivedProject;
         default:
-            throw new Error(`Unknown archive type: ${type}`);
+            const exhaustiveCheck: never = type;
+            throw new Error(`Unknown archive type: ${exhaustiveCheck}`);
     }
 }
 
@@ -177,13 +145,13 @@ function getTypedData(data: FirestoreData, type: ArchiveType): ArchiveData {
 function validateData(data: ArchiveData, type: ArchiveType): boolean {
     switch (type) {
         case 'contracts':
-            return isContractData(data);
+            return isArchivedContract(data);
         case 'orders':
-            return isOrderData(data);
+            return isArchivedOrder(data);
         case 'quotes':
-            return isQuoteData(data);
+            return isArchivedQuote(data);
         case 'projects':
-            return isProjectData(data);
+            return isArchivedProject(data);
         default:
             return false;
     }
@@ -319,7 +287,7 @@ export default function ArchivePage() {
         if (!dataSnapshot) return [];
         let arr = dataSnapshot.docs.map((doc, idx) => {
             try {
-                const data = { ...doc.data(), id: doc.id, idx: idx + 1 } as FirestoreData;
+                const data = { ...doc.data(), id: doc.id, idx: idx + 1 } as FirestoreArchiveData;
                 const typedData = getTypedData(data, type);
                 
                 // 驗證資料完整性

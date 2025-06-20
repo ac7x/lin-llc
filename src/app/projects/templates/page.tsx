@@ -56,11 +56,12 @@ export default function TemplatesAdminPage() {
   ];
 
   const handleAddItem = () => {
-    if (!newItem.name) return;
+    if (!newItem.name || !user) return;
     const now = Timestamp.now();
-    setTemplateItems([...templateItems, { 
-      id: nanoid(8), 
+    setTemplateItems([...templateItems, {
+      id: nanoid(8),
       ...newItem,
+      createdBy: user.uid,
       createdAt: now,
       updatedAt: now
     }]);

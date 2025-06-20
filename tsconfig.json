@@ -38,6 +38,7 @@
       "project",
       "auth",
       "common",
+      "archive",
       "google-maps"
     ]
   },

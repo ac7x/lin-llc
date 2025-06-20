@@ -169,6 +169,7 @@ export interface Project extends BaseWithDates {
     issues?: IssueRecord[]; // 專案的問題清單（可選）
     expenses?: Expense[]; // 專案的費用清單（可選）
     roles?: string[]; // 專案的角色權限清單（可選）
+    archivedAt?: DateField | null; // 封存日期
 }
 
 // ===== Template 型別區 =====
@@ -183,6 +184,7 @@ export interface SubWorkpackageTemplateItem extends BaseWithDates {
         name: string;
         description?: string;
     }[];
+    createdBy: string;
 }
 
 export interface Template extends BaseWithDates {
@@ -208,56 +210,6 @@ export type TemplateToSubWorkpackageOptions = {
     assignedTo?: string | null;
 };
 
-export interface ExpenseItem extends BaseWithDates {
-    expenseItemId: string; // 項目唯一識別碼
-    description: string; // 項目描述
-    quantity: number; // 項目數量
-    unitPrice: number; // 單價
-    amount: number; // 總金額
-    workpackageId: string; // 關聯工作包 ID
-    subWorkpackageId?: string; // 可選：關聯子工作包
-}
-
-export interface ExpenseData extends BaseWithDates {
-    expenseId: string; // 支出編號
-    expenseNumber: string; // 支出號碼
-    expenseDate: DateField; // 支出日期
-    clientName: string; // 客戶名稱
-    clientContact: string; // 客戶聯絡人
-    clientPhone: string; // 客戶電話
-    clientEmail: string; // 客戶 Email
-    projectId: string; // 關聯專案
-    type: '請款' | '支出'; // 支出性質
-    items: ExpenseItem[]; // 支出項目清單
-    totalAmount: number; // 總金額
-    relatedOrderId?: string; // 相關訂單編號（可選）
-    relatedContractId?: string; // 相關合約編號（可選）
-    status: 'draft' | 'issued' | 'cancelled'; // 支出狀態
-    notes?: string; // 備註（可選）
-    expenseName?: string; // 支出名稱（對應專案名稱，可選）
-    expenses?: Expense[]; // 支出紀錄（可選）
-}
-
-export interface ContractData extends BaseWithDates {
-    contractId: string; // 合約唯一識別碼
-    contractNumber: string; // 合約編號
-    contractDate: DateField; // 合約日期
-    clientName: string; // 客戶名稱
-    clientContact: string; // 客戶聯絡人
-    clientPhone: string; // 客戶電話
-    clientEmail: string; // 客戶 Email
-    projectId: string; // 關聯專案
-    type: '請款' | '支出'; // 合約性質
-    items: ContractItem[]; // 合約項目清單
-    totalAmount: number; // 總金額
-    relatedOrderId?: string; // 相關訂單編號（可選）
-    status: 'draft' | 'issued' | 'cancelled'; // 合約狀態
-    notes?: string; // 備註（可選）
-    contractName?: string; // 合約名稱（對應專案名稱，可選）
-    contracts?: Contract[]; // 合約紀錄（可選）
-}
-
-// 用於專案列表頁面的資料結構
 export interface ProjectDocument extends Project {
     id: string;
     idx: number;

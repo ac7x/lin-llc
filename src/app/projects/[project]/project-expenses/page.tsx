@@ -19,7 +19,8 @@ import { useDocument } from "react-firebase-hooks/firestore";
 import { Timestamp } from "firebase/firestore";
 import { formatLocalDate, formatDateForInput } from "@/utils/dateUtils";
 import { nanoid } from "nanoid";
-import { ExpenseData, ExpenseItem, Workpackage } from "@/types/project";
+import { Workpackage } from "@/types/project";
+import { ExpenseData, ExpenseItem } from "@/types/finance";
 import { BaseWithDates } from "@/types/common";
 
 export default function ProjectExpensesPage() {

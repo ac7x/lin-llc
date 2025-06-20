@@ -1,6 +1,4 @@
 exclude:
-  - .vscode
-  - .copilot
   - .github
   - node_modules
   - .next
@@ -9,10 +7,6 @@ exclude:
   - script
   - coverage
   - src/styles
-  - **/*.test.ts
-  - **/*.test.tsx
-  - **/__tests__/
-  - **/__mocks__/
   - package-lock.json
   - postcss.config.mjs
   - eslint.config.mjs
