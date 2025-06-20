@@ -6,22 +6,23 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 
-interface WeatherData {
+export interface WeatherData {
     weather: string;
     temperature: number;
 }
 
 interface WeatherDisplayProps {
-    region: string;
+    weatherData: WeatherData | null;
+    loading: boolean;
+    error: boolean;
     className?: string;
 }
 
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
-async function fetchWeather(region: string): Promise<WeatherData> {
+export async function fetchWeather(region: string): Promise<WeatherData> {
     const cityInfo = TaiwanCityList.find(c => c.label === region || c.value === region);
     if (!cityInfo) return { weather: "未知", temperature: 0 };
     
@@ -41,33 +42,7 @@ async function fetchWeather(region: string): Promise<WeatherData> {
     }
 }
 
-export default function WeatherDisplay({ region, className = "" }: WeatherDisplayProps) {
-    const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (!region) {
-            setError(true);
-            setLoading(false);
-            return;
-        }
-
-        const loadWeather = async () => {
-            try {
-                setLoading(true);
-                setError(false);
-                const data = await fetchWeather(region);
-                setWeatherData(data);
-            } catch {
-                setError(true);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadWeather();
-    }, [region]);
+export default function WeatherDisplay({ weatherData, loading, error, className = "" }: WeatherDisplayProps) {
 
     if (loading) {
         return (
@@ -103,4 +78,4 @@ export default function WeatherDisplay({ region, className = "" }: WeatherDispla
 }
 
 // 導出 fetchWeather 函數供其他地方使用
-export { fetchWeather }; 
+// export { fetchWeather }; 
