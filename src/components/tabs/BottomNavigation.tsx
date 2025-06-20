@@ -33,7 +33,7 @@ export default function BottomNavigation(): React.ReactElement | null {
   return (
     <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-50 dark:bg-gray-800 dark:border-gray-700">
       <div
-        className="flex overflow-x-auto scrollbar-hide h-full items-center"
+        className="flex justify-center overflow-x-auto scrollbar-hide h-full items-center"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         <ul className="flex h-full">

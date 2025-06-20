@@ -1,3 +1,13 @@
+/**
+ * 未授權頁面組件 (Unauthorized)
+ * 
+ * 用於顯示權限不足或需要登入的頁面。
+ * 功能包括：
+ * - 顯示自訂的未授權訊息
+ * - 提供返回上一頁的按鈕
+ * - 提供前往登入頁面的按鈕
+ * - 在身份驗證狀態載入中時，顯示載入指示器
+ */
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { type ReactElement } from 'react';

@@ -1,3 +1,14 @@
+/**
+ * 資料載入器組件 (DataLoader)
+ * 
+ * 一個通用組件，用於處理非同步資料載入時的各種狀態。
+ * 功能包括：
+ * - 顯示載入中狀態 (loading)
+ * - 顯示錯誤訊息 (error)
+ * - 顯示資料為空時的狀態 (empty)
+ * - 在資料成功載入後，渲染子組件並傳入資料
+ * - 可自訂各種狀態下顯示的組件
+ */
 import { ReactNode } from 'react';
 
 type DataLoaderProps<T> = {

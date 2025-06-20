@@ -1,3 +1,13 @@
+/**
+ * 權限檢查組件 (PermissionCheck)
+ * 
+ * 用於包裝需要特定權限才能訪問的內容。
+ * 功能包括：
+ * - 檢查當前使用者是否擁有指定的權限
+ * - 在權限驗證中顯示載入狀態
+ * - 若無權限，則顯示「未授權」頁面
+ * - 若有權限，則正常渲染子組件
+ */
 import { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Unauthorized } from './Unauthorized';
