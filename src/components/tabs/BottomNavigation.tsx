@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { type RoleKey } from '@/constants/roles';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import { DEFAULT_ROLE_PERMISSIONS } from '@/app/management/components/RolePermissions';
+import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 
 interface NavigationItem {
   id: string;
@@ -174,43 +174,10 @@ const navigationItems: NavigationItem[] = [
 
 export default function BottomNavigation(): React.ReactElement {
   const pathname = usePathname();
-  const { user } = useAuth();
-  const [permissions, setPermissions] = useState<string[]>([]);
+  const { user, hasPermission } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const fetchPermissions = async (): Promise<void> => {
-      if (!user?.currentRole) return;
-
-      try {
-        const managementRef = collection(db, 'management');
-        const snapshot = await getDocs(managementRef);
-        const roleData = snapshot.docs.find(doc => {
-          const data = doc.data() as RolePermissionData;
-          return data.role === user.currentRole;
-        });
-
-        if (roleData) {
-          const data = roleData.data() as RolePermissionData;
-          setPermissions(data.pagePermissions.map(p => p.id));
-        } else {
-          const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
-          setPermissions(defaultPermissions);
-        }
-      } catch (error) {
-        console.error('載入權限失敗:', error);
-        const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
-        setPermissions(defaultPermissions);
-      }
-    };
-
-    void fetchPermissions();
-  }, [user?.currentRole]);
-
-  const filteredNavigationItems = navigationItems.filter(item => {
-    if (!user?.currentRole) return false;
-    return permissions.includes(item.id);
-  });
+  const filteredNavigationItems = navigationItems.filter(item => hasPermission(item.id));
 
   const scrollToItem = useCallback((index: number): void => {
     if (scrollContainerRef.current) {

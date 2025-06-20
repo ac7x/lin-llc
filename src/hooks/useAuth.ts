@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FirebaseError } from 'firebase/app';
 import { 
   auth, 
@@ -11,8 +11,11 @@ import {
   doc, 
   getDoc, 
   setDoc,
+  collection,
+  getDocs,
 } from '@/lib/firebase-client';
-import { type RoleKey, ROLE_HIERARCHY } from '@/constants/roles';
+import { type RoleKey } from '@/constants/roles';
+import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 import type { 
   AuthState, 
   UseAuthReturn, 
@@ -20,13 +23,30 @@ import type {
   AuthError 
 } from '@/types/auth';
 
+const arrayToPermissionRecord = (permissions: readonly string[]): Record<string, boolean> => {
+  return permissions.reduce((acc, permission) => {
+    acc[permission] = true;
+    return acc;
+  }, {} as Record<string, boolean>);
+};
+
+const arePermissionsEqual = (p1?: Record<string, boolean>, p2?: Record<string, boolean>): boolean => {
+    if (!p1 || !p2) return p1 === p2;
+    const keys1 = Object.keys(p1).sort();
+    const keys2 = Object.keys(p2).sort();
+    if (keys1.length !== keys2.length) return false;
+    for (let i = 0; i < keys1.length; i++) {
+        if (keys1[i] !== keys2[i] || p1[keys1[i]] !== p2[keys2[i]]) {
+            return false;
+        }
+    }
+    return true;
+};
+
 const createInitialRolePermissions = (): Record<RoleKey, Record<string, boolean>> => {
   const permissions = {} as Record<RoleKey, Record<string, boolean>>;
-  (Object.keys(ROLE_HIERARCHY) as RoleKey[]).forEach((role) => {
-    permissions[role] = {
-      dashboard: role === 'guest',
-      profile: role === 'guest'
-    };
+  (Object.keys(DEFAULT_ROLE_PERMISSIONS) as RoleKey[]).forEach((role) => {
+    permissions[role] = arrayToPermissionRecord(DEFAULT_ROLE_PERMISSIONS[role]);
   });
   return permissions;
 };
@@ -38,6 +58,30 @@ export const useAuth = (): UseAuthReturn => {
     error: null
   });
 
+  const getStandardPermissions = useCallback(async (): Promise<Record<RoleKey, Record<string, boolean>>> => {
+    const managementRef = collection(db, 'management');
+    const snapshot = await getDocs(managementRef);
+    
+    const standardPermissions: Record<RoleKey, string[]> = {} as Record<RoleKey, string[]>;
+     for (const role in DEFAULT_ROLE_PERMISSIONS) {
+      standardPermissions[role as RoleKey] = [...DEFAULT_ROLE_PERMISSIONS[role as RoleKey]];
+    }
+
+    snapshot.docs.forEach((doc) => {
+      const data = doc.data();
+      if (data.role && data.pagePermissions) {
+        standardPermissions[data.role as RoleKey] = data.pagePermissions.map((p: { id: string }) => p.id);
+      }
+    });
+
+    const permissionRecords: Record<RoleKey, Record<string, boolean>> = {} as Record<RoleKey, Record<string, boolean>>;
+    for(const role in standardPermissions) {
+      permissionRecords[role as RoleKey] = arrayToPermissionRecord(standardPermissions[role as RoleKey]);
+    }
+    
+    return permissionRecords;
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -46,9 +90,25 @@ export const useAuth = (): UseAuthReturn => {
 
       if (currentUser) {
         try {
+          const standardPermissions = await getStandardPermissions();
           const memberRef = doc(db, 'members', currentUser.uid);
           const memberDoc = await getDoc(memberRef);
           const memberData = memberDoc.data();
+
+          if (memberData) {
+            const userRole = memberData.currentRole as RoleKey;
+            const standardPermsForRole = standardPermissions[userRole];
+            const userPermsForRole = memberData.rolePermissions?.[userRole];
+
+            if (!arePermissionsEqual(standardPermsForRole, userPermsForRole)) {
+              const updatedRolePermissions = {
+                ...(memberData.rolePermissions || {}),
+                [userRole]: standardPermsForRole,
+              };
+              await setDoc(memberRef, { rolePermissions: updatedRolePermissions }, { merge: true });
+              memberData.rolePermissions = updatedRolePermissions; 
+            }
+          }
           
           if (isMounted) {
             setAuthState(prev => ({
@@ -69,7 +129,7 @@ export const useAuth = (): UseAuthReturn => {
               loading: false,
               error: {
                 code: 'auth/error',
-                message: '載入用戶資料時發生錯誤',
+                message: '載入用戶資料或同步權限時發生錯誤',
                 details: error
               }
             }));
@@ -91,7 +151,7 @@ export const useAuth = (): UseAuthReturn => {
       isMounted = false;
       unsubscribe();
     };
-  }, []);
+  }, [getStandardPermissions]);
 
   const signInWithGoogle = async (): Promise<void> => {
     try {
@@ -102,15 +162,17 @@ export const useAuth = (): UseAuthReturn => {
 
       const memberRef = doc(db, 'members', result.user.uid);
       const memberDoc = await getDoc(memberRef);
+      const standardPermissions = await getStandardPermissions();
 
       if (!memberDoc.exists()) {
+        const guestPermissions = standardPermissions['guest'] || {};
         const memberData = {
           email: result.user.email,
           displayName: result.user.displayName,
           photoURL: result.user.photoURL,
           createdAt: new Date().toISOString(),
           lastLoginAt: new Date().toISOString(),
-          rolePermissions: createInitialRolePermissions(),
+          rolePermissions: { guest: guestPermissions },
           currentRole: 'guest',
         };
         await setDoc(memberRef, memberData);
