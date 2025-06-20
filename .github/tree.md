@@ -60,7 +60,6 @@
 │   │   │   ├── [order]
 │   │   │   │   └── page.tsx
 │   │   │   └── page.tsx
-│   │   ├── page.tsx
 │   │   ├── profile
 │   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
@@ -71,6 +70,11 @@
 │   │   │   ├── PageLayout.tsx
 │   │   │   ├── page.tsx
 │   │   │   ├── [project]
+│   │   │   │   ├── components
+│   │   │   │   │   ├── ProjectEditModal.tsx
+│   │   │   │   │   ├── ProjectInfoDisplay.tsx
+│   │   │   │   │   ├── ProjectInfoPage.tsx
+│   │   │   │   │   └── WorkpackageList.tsx
 │   │   │   │   ├── page.tsx
 │   │   │   │   ├── project-calendar
 │   │   │   │   │   └── page.tsx
@@ -79,6 +83,8 @@
 │   │   │   │   ├── project-issues
 │   │   │   │   │   └── page.tsx
 │   │   │   │   ├── project-journal
+│   │   │   │   │   ├── components
+│   │   │   │   │   │   └── WeatherDisplay.tsx
 │   │   │   │   │   └── page.tsx
 │   │   │   │   ├── project-materials
 │   │   │   │   │   └── page.tsx
@@ -103,11 +109,10 @@
 │   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   └── signin
-│   │       ├── hooks
-│   │       │   └── useAuth.ts
 │   │       └── page.tsx
 │   ├── components
 │   │   ├── common
+│   │   │   ├── AddressSelector.tsx
 │   │   │   ├── PermissionCheck.tsx
 │   │   │   └── Unauthorized.tsx
 │   │   ├── pdf
@@ -121,6 +126,7 @@
 │   │   └── roles.ts
 │   ├── hooks
 │   │   ├── useAuth.ts
+│   │   ├── useFirebaseMessaging.ts
 │   │   └── useNotifications.ts
 │   ├── lib
 │   │   ├── firebase-client.ts
@@ -131,29 +137,16 @@
 │   │   └── react-big-calendar.css
 │   ├── types
 │   │   ├── auth.d.ts
-│   │   ├── finance.d.ts
-│   │   ├── notification.d.ts
 │   │   ├── common.d.ts
+│   │   ├── finance.d.ts
+│   │   ├── google-maps.d.ts
+│   │   ├── notification.d.ts
 │   │   └── project.d.ts
 │   └── utils
-│       ├── authUtils.ts
 │       ├── colorUtils.ts
 │       ├── dateUtils.ts
 │       ├── progressUtils.tsx
 │       └── taiwanCityUtils.ts
 ├── storage.rules
-└── tsconfig.json
-
-全部檔案
-@page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @NotificationBell.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @PageLayout.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @layout.tsx @page.tsx @useAuth.ts @page.tsx @layout.tsx @page.tsx @PermissionCheck.tsx @Unauthorized.tsx @ContractPdfDocument.tsx @OrderPdfDocument.tsx @pdfExport.ts @QuotePdfDocument.tsx @BottomNavigation.tsx @roles.ts @useAuth.ts @useNotifications.ts @firebase-client.ts @firebase-config.ts @firebase-notifications.ts @auth.d.ts @finance.d.ts @notification.d.ts @project.d.ts @authUtils.ts @colorUtils.ts @taiwanCityUtils.ts @dateUtils.ts @progressUtils.tsx @RolePermissions.tsx @common.d.ts 
-
-逐一使用
-src/utils/dateUtils.ts
-src/types/common.d.ts
-來實現時間代碼一致性
-
-專案
-@page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @layout.tsx @page.tsx @PageLayout.tsx 
-
-src/app/projects/[project]/page.tsx
-讀取代碼
+├── tsconfig.json
+└── tsconfig.tsbuildinfo
