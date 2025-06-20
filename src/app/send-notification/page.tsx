@@ -155,8 +155,7 @@ export default function SendNotificationPage(): React.ReactElement {
       setTimeout(() => {
         setSendStatus({ type: null, message: '' });
       }, 3000);
-    } catch (error) {
-      console.error('發送通知失敗:', error);
+    } catch (_error) {
       setSendStatus({
         type: 'error',
         message: error instanceof Error ? error.message : '發送通知失敗，請重試',
@@ -204,8 +203,7 @@ export default function SendNotificationPage(): React.ReactElement {
       setTimeout(() => {
         setSendStatus({ type: null, message: '' });
       }, 3000);
-    } catch (error) {
-      console.error('發送測試通知失敗:', error);
+    } catch (_error) {
       setSendStatus({
         type: 'error',
         message: '發送測試通知失敗，請重試',

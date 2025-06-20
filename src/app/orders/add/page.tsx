@@ -86,7 +86,7 @@ export default function OrderAddPage() {
         clientEmail,
       });
       router.push('/orders');
-    } catch (err) {
+    } catch (_err) {
       alert(`新增訂單失敗: ${  err instanceof Error ? err.message : String(err)}`);
     }
   };

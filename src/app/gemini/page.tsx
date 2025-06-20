@@ -198,8 +198,7 @@ export default function GeminiChatPage() {
         createdAt: new Date(),
       };
       setMessages(prev => [...prev, geminiMsg]);
-    } catch (error) {
-      console.error('Gemini API 錯誤:', error);
+    } catch (_error) {
       const errorMsg: ChatMessage = {
         id: `${Date.now()}-gemini`,
         role: 'gemini',

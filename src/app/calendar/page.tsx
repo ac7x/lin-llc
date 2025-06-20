@@ -12,10 +12,10 @@
 'use client';
 
 import { format, subDays } from 'date-fns';
+import { collection, getDocs } from 'firebase/firestore';
 import { useState, useEffect, useRef } from 'react';
 import { Calendar } from 'react-big-calendar';
 import '@/styles/react-big-calendar.css';
-import { collection, getDocs } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase-client';
 import { CalendarEvent } from '@/types/calendar';
@@ -74,7 +74,7 @@ export default function ProjectCalendarPage() {
 
         setEvents(calendarEvents);
         setError(null);
-      } catch (err) {
+      } catch (_err) {
         setError(err instanceof Error ? err.message : '發生錯誤');
       } finally {
         setLoading(false);

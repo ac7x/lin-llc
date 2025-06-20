@@ -99,8 +99,7 @@ export default function ProjectIssuesPage() {
         description: '',
       });
       alert('問題記錄已成功添加！');
-    } catch (error) {
-      console.error('無法保存問題記錄：', error);
+    } catch (_error) {
       alert(`保存問題記錄時出錯：${  error}`);
     } finally {
       setSaving(false);
@@ -121,8 +120,7 @@ export default function ProjectIssuesPage() {
       await updateDoc(doc(db, 'projects', projectId), {
         issues: updatedIssues,
       });
-    } catch (error) {
-      console.error('無法更新問題狀態：', error);
+    } catch (_error) {
       alert(`更新問題狀態時出錯：${  error}`);
     }
   };

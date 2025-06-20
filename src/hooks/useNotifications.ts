@@ -73,8 +73,7 @@ export function useNotifications(
           return cachedNotifications;
         }
       }
-    } catch (err) {
-      console.error('Failed to load from cache:', err);
+    } catch (_err) {
     }
     return null;
   }, [isClient]);
@@ -90,8 +89,7 @@ export function useNotifications(
           timestamp: Date.now(),
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-      } catch (err) {
-        console.error('Failed to save to cache:', err);
+      } catch (_err) {
       }
     },
     [isClient]
@@ -138,7 +136,6 @@ export function useNotifications(
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '載入通知失敗');
-      console.error('Failed to load notifications:', err);
     } finally {
       setLoading(false);
     }
@@ -165,9 +162,8 @@ export function useNotifications(
 
       // 更新未讀數量
       setUnreadCount(prev => Math.max(0, prev - batch.length));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to process batch');
-      console.error('Failed to process batch:', err);
+    } catch (_err: unknown) {
+      setError(_err instanceof Error ? _err.message : 'Failed to process batch');
     }
   }, []);
 
@@ -216,8 +212,7 @@ export function useNotifications(
     // 載入未讀數量
     getUnreadNotificationCount(user.uid)
       .then(setUnreadCount)
-      .catch((err: unknown) => {
-        console.error('Failed to load unread count:', err);
+      .catch((_err: unknown) => {
       });
 
     // 訂閱未讀數量更新
@@ -258,9 +253,9 @@ export function useNotifications(
       );
 
       setUnreadCount(0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to mark all notifications as read');
-      throw err;
+    } catch (_err) {
+      setError(_err instanceof Error ? _err.message : 'Failed to mark all notifications as read');
+      throw _err;
     }
   };
 
@@ -288,9 +283,9 @@ export function useNotifications(
       if (notification && !notification.isRead) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to archive notification');
-      throw err;
+    } catch (_err) {
+      setError(_err instanceof Error ? _err.message : 'Failed to archive notification');
+      throw _err;
     }
   };
 
@@ -343,8 +338,7 @@ export function useUnreadNotificationCount(): {
         setLoading(false);
         setError(null);
       })
-      .catch((err: unknown) => {
-        console.error('Failed to load unread count:', err);
+      .catch((_err: unknown) => {
         setError('無法載入未讀通知數量');
         setLoading(false);
       });

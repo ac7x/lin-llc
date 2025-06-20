@@ -70,8 +70,7 @@ export default function AddressSelector({
             }
           });
         }
-      } catch (error) {
-        console.error('Google Maps API 載入失敗:', error);
+      } catch (_error) {
       } finally {
         setIsLoading(false);
       }

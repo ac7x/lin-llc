@@ -77,8 +77,7 @@ export default function ProjectEditModal({
 
       await updateDoc(doc(db, 'projects', projectId), updates);
       onClose();
-    } catch (error) {
-      console.error('更新專案資訊失敗:', error);
+    } catch (_error) {
       alert('更新失敗，請重試');
     } finally {
       setIsSubmitting(false);

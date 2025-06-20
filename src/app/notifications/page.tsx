@@ -62,8 +62,7 @@ function NotificationItem({ notification, onMarkAsRead, onArchive }: Notificatio
     setIsProcessing(true);
     try {
       await onMarkAsRead(notification.id);
-    } catch (error) {
-      console.error('Failed to mark as read:', error);
+    } catch (_error) {
     } finally {
       setIsProcessing(false);
     }
@@ -75,8 +74,7 @@ function NotificationItem({ notification, onMarkAsRead, onArchive }: Notificatio
     setIsProcessing(true);
     try {
       await onArchive(notification.id);
-    } catch (error) {
-      console.error('Failed to archive:', error);
+    } catch (_error) {
     } finally {
       setIsProcessing(false);
     }
@@ -214,8 +212,7 @@ export default function NotificationsPage() {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead();
-    } catch (error) {
-      console.error('Failed to mark all as read:', error);
+    } catch (_error) {
     }
   };
 

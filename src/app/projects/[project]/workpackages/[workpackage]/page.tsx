@@ -86,8 +86,7 @@ function getSelectedTemplateFromStorage(): Template | null {
 
   try {
     return JSON.parse(stored) as Template;
-  } catch (e) {
-    console.error('解析儲存的範本時發生錯誤', e);
+  } catch (_e) {
     return null;
   }
 }
@@ -194,8 +193,7 @@ export default function WorkpackageDetailPage() {
           ...doc.data(),
         })) as Template[];
         setTemplates(templatesData);
-      } catch (error) {
-        console.error('Error fetching templates:', error);
+      } catch (_error) {
       } finally {
         setLoadingTemplates(false);
       }

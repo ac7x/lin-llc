@@ -217,8 +217,7 @@ export default function ProjectExpensesPage() {
       setShowModal(false);
       // 然後重置表單
       resetForm();
-    } catch (error) {
-      console.error('儲存失敗:', error);
+    } catch (_error) {
       setMessage(`儲存失敗: ${  error instanceof Error ? error.message : String(error)}`);
     } finally {
       setSaving(false);
@@ -234,7 +233,7 @@ export default function ProjectExpensesPage() {
         expenses: updatedExpenses,
       });
       setMessage('已刪除費用');
-    } catch (error) {
+    } catch (_error) {
       setMessage(`刪除失敗: ${  error instanceof Error ? error.message : String(error)}`);
     }
   };

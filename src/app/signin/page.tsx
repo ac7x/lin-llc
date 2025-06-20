@@ -13,11 +13,9 @@ export default function SignInPage(): ReactElement {
     try {
       await signInWithGoogle();
       router.push('/profile');
-    } catch (err) {
+    } catch (_err) {
       if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
-        console.error('登入失敗:', err.message);
       } else {
-        console.error('登入失敗: 未知的錯誤', err);
       }
     }
   };

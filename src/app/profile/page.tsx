@@ -39,8 +39,7 @@ const UserPanelPage = () => {
     try {
       await signOut(auth);
       router.push('/signin');
-    } catch (error) {
-      console.error('登出失敗:', error);
+    } catch (_error) {
     }
   }, [router]);
 

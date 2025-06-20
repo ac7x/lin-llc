@@ -134,7 +134,7 @@ export default function ImportProjectPage() {
       };
       await addDoc(collection(db, 'projects'), projectData);
       setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
-    } catch (err) {
+    } catch (_err) {
       setMessage(`建立失敗: ${  err instanceof Error ? err.message : String(err)}`);
     } finally {
       setImportingId(null);

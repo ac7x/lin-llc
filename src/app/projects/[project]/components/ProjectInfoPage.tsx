@@ -64,8 +64,7 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
         };
 
         setEligibleUsers(categorizedUsers);
-      } catch (error) {
-        console.error('獲取成員資料失敗:', error);
+      } catch (_error) {
       }
     };
 

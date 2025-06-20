@@ -12,16 +12,14 @@
 'use client';
 
 import { Geist, Geist_Mono } from 'next/font/google';
+import { usePathname } from 'next/navigation';
+import Script from 'next/script';
 import React, { useEffect, useState } from 'react';
 import '../styles/globals.css';
-import Script from 'next/script';
 
 import { Unauthorized } from '@/components/common/Unauthorized';
 import BottomNavigation from '@/components/tabs/BottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
-
-import { usePathname } from 'next/navigation';
-
 import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
 
 const geistSans = Geist({

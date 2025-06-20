@@ -19,8 +19,6 @@ import { Calendar } from 'react-big-calendar';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
 import { useAuth } from '@/hooks/useAuth';
-
-
 import '@/styles/react-big-calendar.css';
 import { db, doc } from '@/lib/firebase-client';
 import { CalendarEvent } from '@/types/calendar';

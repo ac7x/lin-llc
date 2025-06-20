@@ -94,8 +94,7 @@ export default function QuoteAddPage() {
         createdBy: user.uid,
       });
       router.push('/quotes');
-    } catch (error) {
-      console.error('Error creating quote:', error);
+    } catch (_error) {
     }
   };
 

@@ -102,8 +102,7 @@ if (isClient) {
       provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
       isTokenAutoRefreshEnabled: true,
     });
-  } catch (error) {
-    console.warn('Firebase 客戶端服務初始化失敗:', error);
+  } catch (_error) {
   }
 }
 
@@ -112,15 +111,13 @@ if (isClient) {
  */
 export async function getAppCheckToken(): Promise<string | null> {
   if (!isClient || !appCheck) {
-    console.warn('App Check 僅在客戶端可用');
     return null;
   }
 
   try {
     const tokenResult = await getToken(appCheck);
     return tokenResult.token;
-  } catch (error) {
-    console.error('取得 App Check token 失敗:', error);
+  } catch (_error) {
     throw error;
   }
 }

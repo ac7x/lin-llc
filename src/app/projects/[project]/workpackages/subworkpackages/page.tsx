@@ -312,8 +312,7 @@ export default function SubWorkpackageSortingPage() {
       });
       setIsEditing(false);
       setEditingSubWp(null);
-    } catch (error) {
-      console.error('更新子工作包時出錯:', error);
+    } catch (_error) {
       alert('更新子工作包時出錯，請重試。');
     } finally {
       setSaving(false);

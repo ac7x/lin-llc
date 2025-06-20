@@ -121,7 +121,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                 updatedAt: nowTimestamp,
                 createdBy: 'current-user', // TODO: Replace with actual user
               });
-            } catch (error) {
+            } catch (_error) {
               reject(error);
             }
           }
@@ -236,8 +236,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
       setPhotoTypes([]);
       setProgressInputs([{ workpackageId: '', subWorkpackageId: '', actualQuantity: 0 }]);
       alert('工作日誌已成功提交！');
-    } catch (error) {
-      console.error('保存工作日誌時出錯:', error);
+    } catch (_error) {
       alert(`保存工作日誌時出錯：${  error instanceof Error ? error.message : String(error)}`);
     } finally {
       setSaving(false);

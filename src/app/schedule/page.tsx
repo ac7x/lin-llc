@@ -54,7 +54,6 @@ export default function ProjectsPage() {
       const projectSnap = await getDocs(collection(db, 'projects'));
       const projectDoc = projectSnap.docs.find(d => d.id === movedItem.projectId);
       if (!projectDoc) {
-        console.error('Project not found');
         return false;
       }
 
@@ -98,8 +97,7 @@ export default function ProjectsPage() {
       );
 
       return true;
-    } catch (error) {
-      console.error('Error updating document: ', error);
+    } catch (_error) {
       return false;
     }
   }, []);

@@ -118,7 +118,7 @@ export default function OrderDetailPage() {
       setClientPhone(editClientPhone);
       setClientEmail(editClientEmail);
       setEditing(false);
-    } catch (err) {
+    } catch (_err) {
       alert(`儲存失敗: ${  err instanceof Error ? err.message : String(err)}`);
     }
   };

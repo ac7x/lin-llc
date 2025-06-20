@@ -229,8 +229,8 @@ export default function ArchivePage() {
       setTimeout(() => {
         setRestoreMessage('');
       }, 3000);
-    } catch (err) {
-      setRestoreMessage(`還原失敗: ${err instanceof Error ? err.message : String(err)}`);
+    } catch (_err) {
+      setRestoreMessage(`還原失敗: ${_err instanceof Error ? _err.message : String(_err)}`);
     } finally {
       setRestoringId(null);
     }
@@ -244,8 +244,7 @@ export default function ArchivePage() {
         try {
           const data = { ...doc.data(), id: doc.id, idx: idx + 1 } as FirestoreArchiveData;
           return getTypedData(data, type);
-        } catch (err) {
-          console.error(`Error processing document ${doc.id}:`, err);
+        } catch (_err) {
           return null;
         }
       })

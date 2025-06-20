@@ -99,8 +99,7 @@ function SidebarContent() {
       });
       setShowCreateModal(false);
       setSelectedProjectId('');
-    } catch (error) {
-      console.error('建立工作包失敗:', error);
+    } catch (_error) {
       alert('建立工作包失敗');
     } finally {
       setSaving(false);

@@ -5,7 +5,7 @@
  * 支援通知的已讀狀態管理和封存功能
  */
 
-import type { DocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
+import type { DocumentSnapshot, DocumentData } from 'firebase/firestore';
 
 import {
   collection,
@@ -113,9 +113,8 @@ export async function createNotification(
     };
     const docRef = await addDoc(collection(db, NOTIFICATIONS), cleanObject(notificationData));
     return docRef.id;
-  } catch (error) {
-    console.error('Failed to create notification:', error);
-    throw error;
+  } catch (_error) {
+    throw _error;
   }
 }
 
@@ -140,9 +139,8 @@ export async function createBulkNotifications(
       batch.set(notificationRef, cleanObject(notificationData));
     });
     await batch.commit();
-  } catch (error) {
-    console.error('Failed to create bulk notifications:', error);
-    throw error;
+  } catch (_error) {
+    throw _error;
   }
 }
 
@@ -178,16 +176,12 @@ export async function getUserNotifications(
     setCachedNotifications(userId, notifications);
 
     return processNotificationsInMemory(notifications, filterOptions);
-  } catch (error) {
-    const firebaseError = error as FirebaseError;
+  } catch (_error) {
+    const firebaseError = _error as FirebaseError;
     if (
       firebaseError.code === 'failed-precondition' &&
       firebaseError.message.includes('requires an index')
     ) {
-      console.warn(
-        'Firestore 索引未建立，將在客戶端進行排序。查詢效能可能受到影響。',
-        firebaseError.message
-      );
       // 當索引不存在時，改用不含排序的備用查詢
       const fallbackQuery = query(
         collection(db, NOTIFICATIONS),
@@ -199,8 +193,7 @@ export async function getUserNotifications(
       setCachedNotifications(userId, notifications);
       return processNotificationsInMemory(notifications, filterOptions);
     }
-    console.error('Failed to get user notifications:', error);
-    throw error;
+    throw _error;
   }
 }
 
@@ -237,7 +230,6 @@ export function subscribeToUserNotifications(
         firebaseError.code === 'failed-precondition' &&
         firebaseError.message.includes('requires an index')
       ) {
-        console.warn('Firestore 索引未建立，訂閱功能將在客戶端進行排序。', firebaseError.message);
 
         // 取消原本的監聽
         unsubscribe();
@@ -255,7 +247,6 @@ export function subscribeToUserNotifications(
         });
         return;
       }
-      console.error('Failed to subscribe to notifications:', error);
     }
   );
 
@@ -272,9 +263,8 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
       isRead: true,
       readAt: serverTimestamp(),
     });
-  } catch (error) {
-    console.error('Failed to mark notification as read:', error);
-    throw error;
+  } catch (_error) {
+    throw _error;
   }
 }
 
@@ -291,9 +281,8 @@ export async function markMultipleNotificationsAsRead(notificationIds: string[])
     });
     await batch.commit();
     notificationCache.clear();
-  } catch (error) {
-    console.error('Failed to mark multiple notifications as read:', error);
-    throw error;
+  } catch (_error) {
+    throw _error;
   }
 }
 
@@ -321,9 +310,8 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
 
     await batch.commit();
     notificationCache.clear();
-  } catch (error) {
-    console.error('Failed to mark all notifications as read:', error);
-    throw error;
+  } catch (_error) {
+    throw _error;
   }
 }
 
@@ -336,9 +324,8 @@ export async function archiveNotification(notificationId: string): Promise<void>
     await updateDoc(notificationRef, {
       isArchived: true,
     });
-  } catch (error) {
-    console.error('Failed to archive notification:', error);
-    throw error;
+  } catch (_error) {
+    throw _error;
   }
 }
 
@@ -362,19 +349,17 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
     );
     const snapshot = await getDocs(q);
     return snapshot.size;
-  } catch (error) {
-    const firebaseError = error as FirebaseError;
+  } catch (_error) {
+    const firebaseError = _error as FirebaseError;
     if (
       firebaseError.code === 'failed-precondition' &&
       firebaseError.message.includes('requires an index')
     ) {
-      console.warn('缺少索引，未讀計數將從客戶端計算，可能不準確。', firebaseError.message);
       const fallbackQuery = query(collection(db, NOTIFICATIONS), where('userId', '==', userId));
       const snapshot = await getDocs(fallbackQuery);
       const notifications = snapshot.docs.map(docToNotification);
       return notifications.filter(n => !n.isRead && !n.isArchived).length;
     }
-    console.error('Failed to get unread notification count:', error);
     return 0;
   }
 }
@@ -391,8 +376,7 @@ export async function updateUserNotificationSettings(
     await updateDoc(userRef, {
       notificationSettings: settings,
     });
-  } catch (error) {
-    console.error('Failed to update notification settings:', error);
-    throw error;
+  } catch (_error) {
+    throw _error;
   }
 }

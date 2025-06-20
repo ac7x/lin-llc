@@ -40,8 +40,7 @@ export default function RolePermissionsComponent(): React.ReactElement {
           }
         });
         setRolePermissions(newPermissions);
-      } catch (error) {
-        console.error('載入角色權限失敗:', error);
+      } catch (_error) {
       } finally {
         setIsLoading(false);
       }
@@ -97,8 +96,7 @@ export default function RolePermissionsComponent(): React.ReactElement {
         updatedAt: new Date().toISOString(),
       });
       alert('權限已儲存');
-    } catch (error) {
-      console.error('儲存權限失敗:', error);
+    } catch (_error) {
       alert('儲存失敗');
     } finally {
       setIsSaving(false);

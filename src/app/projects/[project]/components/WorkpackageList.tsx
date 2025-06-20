@@ -108,8 +108,7 @@ export default function WorkpackageList({ workpackages, projectId }: Workpackage
         await updateDoc(doc(db, 'projects', projectId), {
           workpackages: updatedWorkpackages,
         });
-      } catch (error) {
-        console.error('更新工作包順序失敗:', error);
+      } catch (_error) {
         alert('更新順序時出錯，請重試。');
       }
     }

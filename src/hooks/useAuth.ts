@@ -76,8 +76,7 @@ export const useAuth = (): UseAuthReturn => {
           permissionRecords[role] = arrayToPermissionRecord(permissions);
         }
       });
-    } catch (error) {
-      console.error('Failed to fetch role permissions from Firestore, using defaults.', error);
+    } catch (_error) {
     }
     return permissionRecords;
   }, []);
@@ -122,7 +121,7 @@ export const useAuth = (): UseAuthReturn => {
               error: null,
             }));
           }
-        } catch (error) {
+        } catch (_error) {
           if (isMounted) {
             setAuthState(prev => ({
               ...prev,
@@ -186,7 +185,7 @@ export const useAuth = (): UseAuthReturn => {
         );
       }
 
-    } catch (err) {
+    } catch (_err) {
       let authError: AuthError;
       if (err instanceof FirebaseError) {
         authError = { code: err.code, message: err.message, details: err };
@@ -203,7 +202,6 @@ export const useAuth = (): UseAuthReturn => {
           details: err,
         };
       }
-      console.error('登入失敗:', authError);
       setAuthState(prev => ({ ...prev, error: authError }));
       throw authError;
     }

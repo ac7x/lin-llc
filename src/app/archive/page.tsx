@@ -40,7 +40,7 @@ export default function ArchivePage() {
         }
         await deleteDoc(doc(db, 'archived', 'default'));
         setClickCount(0);
-      } catch (err) {
+      } catch (_err) {
         alert(`刪除失敗: ${  err instanceof Error ? err.message : String(err)}`);
       }
     }

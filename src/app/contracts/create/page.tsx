@@ -165,7 +165,7 @@ export default function ImportContractPage() {
       await setDoc(doc(db, 'finance', 'default', 'contracts', newContractId), contractData);
 
       setMessage(`已成功由${tab === 'order' ? '訂單' : '估價單'}建立合約，來源ID: ${row.id}`);
-    } catch (err) {
+    } catch (_err) {
       setMessage(`建立失敗: ${  err instanceof Error ? err.message : String(err)}`);
     } finally {
       setImportingId(null);

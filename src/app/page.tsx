@@ -95,8 +95,7 @@ export default function HomePage(): ReactElement {
         setDeveloperNote(foundDeveloperNote);
         setMessages(fetchedMessages);
       },
-      err => {
-        console.error('Error fetching messages:', err);
+      _err => {
         setError('無法載入留言，請稍後再試。');
       }
     );
@@ -124,8 +123,7 @@ export default function HomePage(): ReactElement {
       });
 
       setCanPost(recentUserMessages.length === 0);
-    } catch (err) {
-      console.error('Error checking post status:', err);
+    } catch (_err) {
       setCanPost(true);
     }
   }, []);
@@ -175,8 +173,7 @@ export default function HomePage(): ReactElement {
       });
       setNewMessage('');
       if (isDevSubmission) setVersion('');
-    } catch (err) {
-      console.error('Error sending message:', err);
+    } catch (_err) {
       setError('發送失敗，請稍後再試。');
     }
   };

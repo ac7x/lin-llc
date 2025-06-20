@@ -87,8 +87,7 @@ export default function ProjectMaterialsPage() {
       });
 
       alert('材料記錄已成功添加！');
-    } catch (error) {
-      console.error('無法保存材料記錄：', error);
+    } catch (_error) {
       alert(`保存材料記錄時出錯：${  error}`);
     } finally {
       setSaving(false);
