@@ -39,18 +39,18 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
         const messagingInstance = getMessaging(firebaseApp);
         setMessaging(messagingInstance);
 
-        const unsubscribe = onMessage(messagingInstance, (payload) => {
+        const unsubscribe = onMessage(messagingInstance, payload => {
           console.log('收到前台訊息:', payload);
           if (payload.notification) {
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification(payload.notification.title || '新通知', {
                 body: payload.notification.body,
-                icon: '/icons/notification-icon.png' // 假設您有此圖示
+                icon: '/icons/notification-icon.png', // 假設您有此圖示
               });
             }
           }
         });
-        
+
         return () => unsubscribe();
       } else {
         console.warn('Firebase Messaging is not supported in this browser context.');
@@ -66,7 +66,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
   useEffect(() => {
     initMessaging();
   }, [initMessaging]);
-  
+
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!isClient || !messaging) {
       return false;
@@ -77,13 +77,13 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       setError(null);
 
       const permission = await Notification.requestPermission();
-      
+
       if (permission === 'granted') {
         const { getToken } = await import('firebase/messaging');
         const token = await getToken(messaging, {
-          vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+          vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
         });
-        
+
         if (token) {
           setFcmToken(token);
           console.log('FCM Token:', token);
@@ -92,7 +92,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       } else {
         setError('通知權限被拒絕');
       }
-      
+
       return false;
     } catch (err) {
       console.error('請求通知權限失敗:', err);
@@ -111,13 +111,13 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
     try {
       const { getToken } = await import('firebase/messaging');
       const token = await getToken(messaging, {
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
       });
-      
+
       if (token) {
         setFcmToken(token);
       }
-      
+
       return token;
     } catch (err) {
       console.error('取得 FCM Token 失敗:', err);
@@ -132,6 +132,6 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
     loading,
     error,
     requestPermission,
-    getToken
+    getToken,
   };
-} 
+}

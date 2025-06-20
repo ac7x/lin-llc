@@ -5,18 +5,18 @@
 
 // 角色階層定義，給訪客一個最低的階層數字，比如 0 或 0.5
 export const ROLE_HIERARCHY = {
-  guest: 0,          // 訪客
-  temporary: 1,      // 臨時員工
-  helper: 2,         // 助理
-  user: 3,           // 一般員工
-  coord: 4,          // 協調員
-  safety: 5,         // 安全主管
-  foreman: 6,        // 工頭
-  vendor: 7,         // 供應商
-  finance: 8,        // 財務（會計）
-  manager: 9,        // 經理（專案經理／工地經理）
-  admin: 10,         // 系統管理員
-  owner: 11,         // 擁有者
+  guest: 0, // 訪客
+  temporary: 1, // 臨時員工
+  helper: 2, // 助理
+  user: 3, // 一般員工
+  coord: 4, // 協調員
+  safety: 5, // 安全主管
+  foreman: 6, // 工頭
+  vendor: 7, // 供應商
+  finance: 8, // 財務（會計）
+  manager: 9, // 經理（專案經理／工地經理）
+  admin: 10, // 系統管理員
+  owner: 11, // 擁有者
 } as const;
 
 export type RoleKey = keyof typeof ROLE_HIERARCHY;
@@ -47,7 +47,7 @@ export const ROLE_CHECKS = {
   coord: 'isCoord',
   safety: 'isSafety',
   foreman: 'isForeman',
-  vendor: 'isVendor'
+  vendor: 'isVendor',
 } as const;
 
 export type Role = RoleKey;

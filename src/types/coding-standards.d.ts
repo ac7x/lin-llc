@@ -1,6 +1,6 @@
 /**
  * 編碼標準類型定義
- * 
+ *
  * 定義專案中常用的類型約定和標準
  */
 
@@ -186,4 +186,4 @@ export type DeepPartial<T> = {
 // 深度必需類型
 export type DeepRequired<T> = {
   [P in keyof T]-?: T[P] extends object ? DeepRequired<T[P]> : T[P];
-}; 
+};

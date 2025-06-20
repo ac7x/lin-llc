@@ -1,15 +1,15 @@
-import { useMemo } from "react";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, db } from "@/lib/firebase-client";
-import { formatDate } from "@/utils/dateUtils";
-import type { ProjectDocument } from "@/types/project";
+import { useMemo } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { collection, db } from '@/lib/firebase-client';
+import { formatDate } from '@/utils/dateUtils';
+import type { ProjectDocument } from '@/types/project';
 
 export function useFilteredProjects(searchTerm: string) {
-  const [snapshot, loading, error] = useCollection(collection(db, "projects"));
+  const [snapshot, loading, error] = useCollection(collection(db, 'projects'));
 
   const projects = useMemo(() => {
     if (!snapshot) return [];
-    
+
     const mappedProjects = snapshot.docs.map((doc, idx) => {
       const data = doc.data();
       return {
@@ -35,4 +35,4 @@ export function useFilteredProjects(searchTerm: string) {
   }, [snapshot, searchTerm]);
 
   return { projects, loading, error };
-} 
+}

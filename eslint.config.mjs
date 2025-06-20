@@ -59,7 +59,6 @@ const eslintConfig = [
       // TypeScript 特定規則
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/prefer-const': 'error',
       '@typescript-eslint/no-var-requires': 'error',
       
       // 引號和分號規則

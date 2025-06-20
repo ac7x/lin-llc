@@ -1,6 +1,6 @@
 /**
  * 權限檢查組件 (PermissionCheck)
- * 
+ *
  * 用於包裝需要特定權限才能訪問的內容。
  * 功能包括：
  * - 檢查當前使用者是否擁有指定的權限
@@ -19,17 +19,17 @@ interface PermissionCheckProps {
   unauthorizedMessage?: string;
 }
 
-export function PermissionCheck({ 
-  children, 
+export function PermissionCheck({
+  children,
   requiredPermission,
-  unauthorizedMessage
+  unauthorizedMessage,
 }: PermissionCheckProps): React.ReactElement {
   const { user, loading, hasPermission } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
       </div>
     );
   }
@@ -37,11 +37,11 @@ export function PermissionCheck({
   if (!hasPermission(requiredPermission)) {
     const roleName = user?.currentRole ? ROLE_NAMES[user.currentRole] : '未知';
     return (
-      <Unauthorized 
+      <Unauthorized
         message={unauthorizedMessage || `您目前的角色 (${roleName}) 沒有權限訪問此功能。`}
       />
     );
   }
 
   return <>{children}</>;
-} 
+}

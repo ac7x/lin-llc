@@ -1,6 +1,6 @@
 /**
  * 發送通知頁面
- * 
+ *
  * 提供測試和發送系統通知的功能，包含：
  * - 通知類型選擇（資訊、成功、警告、錯誤）
  * - 通知分類選擇
@@ -8,22 +8,22 @@
  * - 通知中心連結
  */
 
-"use client";
+'use client';
 
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { createNotification } from '@/lib/firebase-notifications';
 import { Timestamp } from '@/lib/firebase-client';
 import { NotificationBell } from '@/app/notifications/components/NotificationBell';
-import { 
-  PaperAirplaneIcon, 
-  CheckCircleIcon, 
+import {
+  PaperAirplaneIcon,
+  CheckCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   XCircleIcon,
   ClockIcon,
   UserGroupIcon,
-  CogIcon
+  CogIcon,
 } from '@heroicons/react/24/outline';
 import type { NotificationMessage } from '@/types/notification';
 
@@ -78,22 +78,28 @@ export default function SendNotificationPage(): React.ReactElement {
   // 處理表單變更
   const handleFormChange = (
     field: keyof NotificationFormData,
-    value: string | NotificationMessage['type'] | NotificationMessage['category'] | 'high' | 'normal' | 'low'
+    value:
+      | string
+      | NotificationMessage['type']
+      | NotificationMessage['category']
+      | 'high'
+      | 'normal'
+      | 'low'
   ) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   // 發送通知
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user?.uid) {
       setSendStatus({
         type: 'error',
-        message: '請先登入後再發送通知'
+        message: '請先登入後再發送通知',
       });
       return;
     }
@@ -102,7 +108,7 @@ export default function SendNotificationPage(): React.ReactElement {
     if (!formData.title.trim()) {
       setSendStatus({
         type: 'error',
-        message: '請輸入通知標題'
+        message: '請輸入通知標題',
       });
       return;
     }
@@ -110,7 +116,7 @@ export default function SendNotificationPage(): React.ReactElement {
     if (!formData.message.trim()) {
       setSendStatus({
         type: 'error',
-        message: '請輸入通知內容'
+        message: '請輸入通知內容',
       });
       return;
     }
@@ -127,7 +133,9 @@ export default function SendNotificationPage(): React.ReactElement {
         category: formData.category,
         priority: formData.priority,
         actionUrl: formData.actionUrl.trim() || undefined,
-        expiresAt: formData.expiresAt ? Timestamp.fromDate(new Date(formData.expiresAt)) : undefined,
+        expiresAt: formData.expiresAt
+          ? Timestamp.fromDate(new Date(formData.expiresAt))
+          : undefined,
       };
 
       // 發送通知
@@ -136,7 +144,7 @@ export default function SendNotificationPage(): React.ReactElement {
       // 成功狀態
       setSendStatus({
         type: 'success',
-        message: '通知發送成功！'
+        message: '通知發送成功！',
       });
 
       // 重置表單
@@ -146,12 +154,11 @@ export default function SendNotificationPage(): React.ReactElement {
       setTimeout(() => {
         setSendStatus({ type: null, message: '' });
       }, 3000);
-
     } catch (error) {
       console.error('發送通知失敗:', error);
       setSendStatus({
         type: 'error',
-        message: error instanceof Error ? error.message : '發送通知失敗，請重試'
+        message: error instanceof Error ? error.message : '發送通知失敗，請重試',
       });
     } finally {
       setIsSending(false);
@@ -163,7 +170,7 @@ export default function SendNotificationPage(): React.ReactElement {
     if (!user?.uid) {
       setSendStatus({
         type: 'error',
-        message: '請先登入後再發送通知'
+        message: '請先登入後再發送通知',
       });
       return;
     }
@@ -190,18 +197,17 @@ export default function SendNotificationPage(): React.ReactElement {
 
       setSendStatus({
         type: 'success',
-        message: `${testData.title}發送成功！`
+        message: `${testData.title}發送成功！`,
       });
 
       setTimeout(() => {
         setSendStatus({ type: null, message: '' });
       }, 3000);
-
     } catch (error) {
       console.error('發送測試通知失敗:', error);
       setSendStatus({
         type: 'error',
-        message: '發送測試通知失敗，請重試'
+        message: '發送測試通知失敗，請重試',
       });
     } finally {
       setIsSending(false);
@@ -209,26 +215,28 @@ export default function SendNotificationPage(): React.ReactElement {
   };
 
   return (
-    <main className="p-6 bg-white dark:bg-neutral-900 min-h-screen">
-      <div className="max-w-4xl mx-auto">
+    <main className='p-6 bg-white dark:bg-neutral-900 min-h-screen'>
+      <div className='max-w-4xl mx-auto'>
         {/* 標題區域 */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">發送通知</h1>
-          <NotificationBell size="md" />
+        <div className='flex items-center justify-between mb-8'>
+          <h1 className='text-3xl font-bold text-gray-900 dark:text-gray-100'>發送通知</h1>
+          <NotificationBell size='md' />
         </div>
 
         {/* 狀態訊息 */}
         {sendStatus.type && (
-          <div className={`mb-6 p-4 rounded-lg border ${
-            sendStatus.type === 'success' 
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200'
-              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
-          }`}>
-            <div className="flex items-center space-x-2">
+          <div
+            className={`mb-6 p-4 rounded-lg border ${
+              sendStatus.type === 'success'
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200'
+                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+            }`}
+          >
+            <div className='flex items-center space-x-2'>
               {sendStatus.type === 'success' ? (
-                <CheckCircleIcon className="h-5 w-5" />
+                <CheckCircleIcon className='h-5 w-5' />
               ) : (
-                <XCircleIcon className="h-5 w-5" />
+                <XCircleIcon className='h-5 w-5' />
               )}
               <span>{sendStatus.message}</span>
             </div>
@@ -236,9 +244,9 @@ export default function SendNotificationPage(): React.ReactElement {
         )}
 
         {/* 快速測試區域 */}
-        <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">快速測試</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className='mb-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-xl'>
+          <h2 className='text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100'>快速測試</h2>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
             {NOTIFICATION_TYPES.map(({ value, label, icon: Icon, color }) => (
               <button
                 key={value}
@@ -251,7 +259,7 @@ export default function SendNotificationPage(): React.ReactElement {
                 }`}
               >
                 <Icon className={`h-5 w-5 ${color}`} />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   {label}
                 </span>
               </button>
@@ -260,23 +268,23 @@ export default function SendNotificationPage(): React.ReactElement {
         </div>
 
         {/* 發送表單 */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">發送自訂通知</h2>
+        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700'>
+          <div className='p-6 border-b border-gray-200 dark:border-gray-700'>
+            <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>發送自訂通知</h2>
           </div>
-          
-          <form onSubmit={handleSendNotification} className="p-6 space-y-6">
+
+          <form onSubmit={handleSendNotification} className='p-6 space-y-6'>
             {/* 通知標題 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 通知標題 *
               </label>
               <input
-                type="text"
+                type='text'
                 value={formData.title}
-                onChange={(e) => handleFormChange('title', e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                placeholder="輸入通知標題"
+                onChange={e => handleFormChange('title', e.target.value)}
+                className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                placeholder='輸入通知標題'
                 maxLength={100}
                 required
               />
@@ -284,28 +292,28 @@ export default function SendNotificationPage(): React.ReactElement {
 
             {/* 通知內容 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 通知內容 *
               </label>
               <textarea
                 value={formData.message}
-                onChange={(e) => handleFormChange('message', e.target.value)}
+                onChange={e => handleFormChange('message', e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
-                placeholder="輸入通知內容"
+                className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none'
+                placeholder='輸入通知內容'
                 maxLength={500}
                 required
               />
             </div>
 
             {/* 通知類型和分類 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               {/* 通知類型 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   通知類型
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className='grid grid-cols-2 gap-2'>
                   {NOTIFICATION_TYPES.map(({ value, label, icon: Icon, color }) => (
                     <label
                       key={value}
@@ -316,15 +324,17 @@ export default function SendNotificationPage(): React.ReactElement {
                       }`}
                     >
                       <input
-                        type="radio"
-                        name="type"
+                        type='radio'
+                        name='type'
                         value={value}
                         checked={formData.type === value}
-                        onChange={(e) => handleFormChange('type', e.target.value as NotificationMessage['type'])}
-                        className="sr-only"
+                        onChange={e =>
+                          handleFormChange('type', e.target.value as NotificationMessage['type'])
+                        }
+                        className='sr-only'
                       />
                       <Icon className={`h-5 w-5 ${color}`} />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                         {label}
                       </span>
                     </label>
@@ -334,13 +344,15 @@ export default function SendNotificationPage(): React.ReactElement {
 
               {/* 通知分類 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   通知分類
                 </label>
                 <select
                   value={formData.category}
-                  onChange={(e) => handleFormChange('category', e.target.value as NotificationMessage['category'])}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  onChange={e =>
+                    handleFormChange('category', e.target.value as NotificationMessage['category'])
+                  }
+                  className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
                 >
                   {NOTIFICATION_CATEGORIES.map(({ value, label }) => (
                     <option key={value} value={value}>
@@ -352,55 +364,57 @@ export default function SendNotificationPage(): React.ReactElement {
             </div>
 
             {/* 優先級和過期時間 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               {/* 優先級 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   優先級
                 </label>
                 <select
                   value={formData.priority}
-                  onChange={(e) => handleFormChange('priority', e.target.value as 'high' | 'normal' | 'low')}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  onChange={e =>
+                    handleFormChange('priority', e.target.value as 'high' | 'normal' | 'low')
+                  }
+                  className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
                 >
-                  <option value="low">低</option>
-                  <option value="normal">一般</option>
-                  <option value="high">高</option>
+                  <option value='low'>低</option>
+                  <option value='normal'>一般</option>
+                  <option value='high'>高</option>
                 </select>
               </div>
 
               {/* 過期時間 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   過期時間（可選）
                 </label>
                 <input
-                  type="datetime-local"
+                  type='datetime-local'
                   value={formData.expiresAt}
-                  onChange={(e) => handleFormChange('expiresAt', e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  onChange={e => handleFormChange('expiresAt', e.target.value)}
+                  className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
                 />
               </div>
             </div>
 
             {/* 動作連結 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 動作連結（可選）
               </label>
               <input
-                type="url"
+                type='url'
                 value={formData.actionUrl}
-                onChange={(e) => handleFormChange('actionUrl', e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                placeholder="https://example.com"
+                onChange={e => handleFormChange('actionUrl', e.target.value)}
+                className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                placeholder='https://example.com'
               />
             </div>
 
             {/* 發送按鈕 */}
-            <div className="flex justify-end">
+            <div className='flex justify-end'>
               <button
-                type="submit"
+                type='submit'
                 disabled={isSending}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
                   isSending
@@ -410,12 +424,12 @@ export default function SendNotificationPage(): React.ReactElement {
               >
                 {isSending ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
                     <span>發送中...</span>
                   </>
                 ) : (
                   <>
-                    <PaperAirplaneIcon className="h-5 w-5" />
+                    <PaperAirplaneIcon className='h-5 w-5' />
                     <span>發送通知</span>
                   </>
                 )}
@@ -425,32 +439,42 @@ export default function SendNotificationPage(): React.ReactElement {
         </div>
 
         {/* 功能說明 */}
-        <div className="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-          <h2 className="text-lg font-semibold mb-3 text-blue-900 dark:text-blue-100">功能說明</h2>
-          <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-            <p>• <strong>通知類型：</strong> 支援資訊、成功、警告、錯誤四種類型，每種類型都有不同的視覺樣式</p>
-            <p>• <strong>通知分類：</strong> 專案、排程、系統、工作、緊急五種分類，便於管理和篩選</p>
-            <p>• <strong>優先級：</strong> 高、一般、低三種優先級，影響通知的顯示順序</p>
-            <p>• <strong>過期時間：</strong> 可設定通知的自動過期時間</p>
-            <p>• <strong>動作連結：</strong> 點擊通知可跳轉到指定頁面</p>
-            <p>• <strong>即時通知：</strong> 發送後會立即顯示在通知中心</p>
+        <div className='mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl'>
+          <h2 className='text-lg font-semibold mb-3 text-blue-900 dark:text-blue-100'>功能說明</h2>
+          <div className='text-sm text-blue-800 dark:text-blue-200 space-y-2'>
+            <p>
+              • <strong>通知類型：</strong>{' '}
+              支援資訊、成功、警告、錯誤四種類型，每種類型都有不同的視覺樣式
+            </p>
+            <p>
+              • <strong>通知分類：</strong> 專案、排程、系統、工作、緊急五種分類，便於管理和篩選
+            </p>
+            <p>
+              • <strong>優先級：</strong> 高、一般、低三種優先級，影響通知的顯示順序
+            </p>
+            <p>
+              • <strong>過期時間：</strong> 可設定通知的自動過期時間
+            </p>
+            <p>
+              • <strong>動作連結：</strong> 點擊通知可跳轉到指定頁面
+            </p>
+            <p>
+              • <strong>即時通知：</strong> 發送後會立即顯示在通知中心
+            </p>
           </div>
         </div>
 
         {/* 相關連結 */}
-        <div className="mt-6 p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
-          <h2 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">相關頁面</h2>
-          <div className="space-y-2">
-            <a 
-              href="/notifications" 
-              className="block text-blue-600 dark:text-blue-400 hover:underline"
+        <div className='mt-6 p-6 bg-gray-50 dark:bg-gray-800 rounded-xl'>
+          <h2 className='text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100'>相關頁面</h2>
+          <div className='space-y-2'>
+            <a
+              href='/notifications'
+              className='block text-blue-600 dark:text-blue-400 hover:underline'
             >
               → 通知中心（查看所有通知）
             </a>
-            <a 
-              href="/profile" 
-              className="block text-blue-600 dark:text-blue-400 hover:underline"
-            >
+            <a href='/profile' className='block text-blue-600 dark:text-blue-400 hover:underline'>
               → 個人資料（管理通知偏好）
             </a>
           </div>
@@ -458,4 +482,4 @@ export default function SendNotificationPage(): React.ReactElement {
       </div>
     </main>
   );
-} 
+}

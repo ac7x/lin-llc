@@ -1,5 +1,5 @@
-import { Timestamp } from "firebase/firestore";
-import { DateType } from "vis-timeline/standalone";
+import { Timestamp } from 'firebase/firestore';
+import { DateType } from 'vis-timeline/standalone';
 
 /**
  * Converts a Firestore Timestamp to a JavaScript Date object.
@@ -30,8 +30,13 @@ export function toDate(dateInput: DateType): Date {
     return dateInput;
   }
   // Handle case where it might be a Firestore Timestamp-like object from callback
-  if (dateInput && typeof dateInput === 'object' && 'toDate' in dateInput && typeof (dateInput as { toDate: unknown }).toDate === 'function') {
+  if (
+    dateInput &&
+    typeof dateInput === 'object' &&
+    'toDate' in dateInput &&
+    typeof (dateInput as { toDate: unknown }).toDate === 'function'
+  ) {
     return (dateInput as { toDate: () => Date }).toDate();
   }
   return new Date(dateInput);
-} 
+}

@@ -1,6 +1,6 @@
 /**
  * 編碼標準工具函數
- * 
+ *
  * 提供專案中常用的驗證、格式化和工具函數
  */
 
@@ -19,7 +19,7 @@ export const validateEmail = (email: string): boolean => {
  */
 export const validatePassword = (password: string): ValidationResult => {
   const errors: ValidationError[] = [];
-  
+
   if (password.length < 8) {
     errors.push({
       field: 'password',
@@ -27,7 +27,7 @@ export const validatePassword = (password: string): ValidationResult => {
       value: password,
     });
   }
-  
+
   if (!/[A-Z]/.test(password)) {
     errors.push({
       field: 'password',
@@ -35,7 +35,7 @@ export const validatePassword = (password: string): ValidationResult => {
       value: password,
     });
   }
-  
+
   if (!/[a-z]/.test(password)) {
     errors.push({
       field: 'password',
@@ -43,7 +43,7 @@ export const validatePassword = (password: string): ValidationResult => {
       value: password,
     });
   }
-  
+
   if (!/\d/.test(password)) {
     errors.push({
       field: 'password',
@@ -51,7 +51,7 @@ export const validatePassword = (password: string): ValidationResult => {
       value: password,
     });
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -72,17 +72,24 @@ export const validatePhoneNumber = (phone: string): boolean => {
 export const validateTaiwanId = (id: string): boolean => {
   const idRegex = /^[A-Z][12]\d{8}$/;
   if (!idRegex.test(id)) return false;
-  
+
   const letters = 'ABCDEFGHJKLMNPQRSTUVXYWZIO';
   const letterValues = letters.split('');
   const letterValue = letterValues.indexOf(id.charAt(0).toUpperCase()) + 10;
-  
+
   const digits = id.substring(1).split('').map(Number);
-  const sum = Math.floor(letterValue / 10) + (letterValue % 10) * 9 + 
-              digits[0] * 8 + digits[1] * 7 + digits[2] * 6 + 
-              digits[3] * 5 + digits[4] * 4 + digits[5] * 3 + 
-              digits[6] * 2 + digits[7];
-  
+  const sum =
+    Math.floor(letterValue / 10) +
+    (letterValue % 10) * 9 +
+    digits[0] * 8 +
+    digits[1] * 7 +
+    digits[2] * 6 +
+    digits[3] * 5 +
+    digits[4] * 4 +
+    digits[5] * 3 +
+    digits[6] * 2 +
+    digits[7];
+
   return (sum + digits[8]) % 10 === 0;
 };
 
@@ -101,9 +108,12 @@ export const formatCurrency = (amount: number): string => {
 /**
  * 格式化日期
  */
-export const formatDate = (date: Date | string, format: 'short' | 'long' | 'time' = 'short'): string => {
+export const formatDate = (
+  date: Date | string,
+  format: 'short' | 'long' | 'time' = 'short'
+): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   switch (format) {
     case 'short':
       return new Intl.DateTimeFormat('zh-TW', {
@@ -146,7 +156,7 @@ export const debounce = <T extends (...args: unknown[]) => unknown>(
   wait: number
 ): ((...args: Parameters<T>) => void) => {
   let timeout: NodeJS.Timeout;
-  
+
   return (...args: Parameters<T>) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
@@ -161,7 +171,7 @@ export const throttle = <T extends (...args: unknown[]) => unknown>(
   limit: number
 ): ((...args: Parameters<T>) => void) => {
   let inThrottle: boolean;
-  
+
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);
@@ -207,14 +217,14 @@ export const isEmpty = (value: unknown): boolean => {
 export const get = (obj: unknown, path: string, defaultValue?: unknown): unknown => {
   const keys = path.split('.');
   let result = obj;
-  
+
   for (const key of keys) {
     if (result === null || result === undefined || typeof result !== 'object') {
       return defaultValue;
     }
     result = (result as Record<string, unknown>)[key];
   }
-  
+
   return result === undefined ? defaultValue : result;
 };
 
@@ -248,7 +258,7 @@ export const validateRequired = (value: unknown, fieldName: string): ValidationR
       ],
     };
   }
-  
+
   return {
     isValid: true,
     errors: [],
@@ -265,7 +275,7 @@ export const validateStringLength = (
   maxLength: number
 ): ValidationResult => {
   const errors: ValidationError[] = [];
-  
+
   if (value.length < minLength) {
     errors.push({
       field: fieldName,
@@ -273,7 +283,7 @@ export const validateStringLength = (
       value,
     });
   }
-  
+
   if (value.length > maxLength) {
     errors.push({
       field: fieldName,
@@ -281,7 +291,7 @@ export const validateStringLength = (
       value,
     });
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -293,11 +303,11 @@ export const validateStringLength = (
  */
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
@@ -319,10 +329,10 @@ export const isValidUrl = (url: string): boolean => {
 export const generateRandomString = (length: number): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
-  
+
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  
+
   return result;
-}; 
+};

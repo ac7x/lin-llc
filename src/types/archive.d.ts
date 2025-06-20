@@ -40,4 +40,4 @@ export type ArchivedProject = ProjectForArchive & BaseArchiveData;
 export type ArchiveData = ArchivedContract | ArchivedOrder | ArchivedQuote | ArchivedProject;
 
 // 封存類型字串枚舉
-export type ArchiveType = 'contracts' | 'orders' | 'quotes' | 'projects'; 
+export type ArchiveType = 'contracts' | 'orders' | 'quotes' | 'projects';

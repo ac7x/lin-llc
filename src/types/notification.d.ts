@@ -107,4 +107,4 @@ export type UserDevice = {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}; 
+};

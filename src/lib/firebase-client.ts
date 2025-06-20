@@ -6,7 +6,7 @@
  */
 
 // firebase.ts
-import { initializeApp, FirebaseApp } from "firebase/app"; // 引入 FirebaseApp 型別
+import { initializeApp, FirebaseApp } from 'firebase/app'; // 引入 FirebaseApp 型別
 import {
   getAuth,
   GoogleAuthProvider,
@@ -21,7 +21,7 @@ import {
   User,
   signInWithPopup,
   getIdToken,
-} from "firebase/auth";
+} from 'firebase/auth';
 import {
   getFirestore,
   collection,
@@ -51,36 +51,25 @@ import {
   Firestore, // 引入 Firestore 型別
   DocumentData, // 引入 DocumentData 型別
   DocumentReference, // 引入 DocumentReference 型別
-} from "firebase/firestore";
+} from 'firebase/firestore';
 import {
   getStorage,
   FirebaseStorage, // 保留型別定義
   ref,
   uploadBytesResumable,
   getDownloadURL,
-} from "firebase/storage";
-import {
-  getFunctions,
-  Functions,
-} from "firebase/functions";
-import {
-  getAnalytics,
-  Analytics,
-} from "firebase/analytics";
-import {
-  getPerformance,
-} from "firebase/performance";
-import {
-  getRemoteConfig,
-  RemoteConfig,
-} from "firebase/remote-config";
+} from 'firebase/storage';
+import { getFunctions, Functions } from 'firebase/functions';
+import { getAnalytics, Analytics } from 'firebase/analytics';
+import { getPerformance } from 'firebase/performance';
+import { getRemoteConfig, RemoteConfig } from 'firebase/remote-config';
 import {
   initializeAppCheck,
   ReCaptchaV3Provider,
   getToken,
   AppCheck, // 新增：引入 AppCheck 型別
-} from "firebase/app-check";
-import { firebaseConfig, APP_CHECK_CONFIG, FIREBASE_EMULATOR } from "./firebase-config"; // 假設這些配置存在
+} from 'firebase/app-check';
+import { firebaseConfig, APP_CHECK_CONFIG, FIREBASE_EMULATOR } from './firebase-config'; // 假設這些配置存在
 
 // --- Firebase 應用程式初始化 ---
 const app: FirebaseApp = initializeApp(firebaseConfig);
@@ -107,7 +96,7 @@ if (isClient) {
     analytics = getAnalytics(app);
     performance = getPerformance(app);
     remoteConfig = getRemoteConfig(app);
-    
+
     // App Check 初始化
     appCheck = initializeAppCheck(firebaseApp, {
       provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
@@ -126,12 +115,12 @@ export async function getAppCheckToken(): Promise<string | null> {
     console.warn('App Check 僅在客戶端可用');
     return null;
   }
-  
+
   try {
     const tokenResult = await getToken(appCheck);
     return tokenResult.token;
   } catch (error) {
-    console.error("取得 App Check token 失敗:", error);
+    console.error('取得 App Check token 失敗:', error);
     throw error;
   }
 }
@@ -214,11 +203,11 @@ export {
 };
 
 // 匯出 Firebase 服務實例
-export { 
-  firebaseApp, 
-  auth, 
-  db, 
-  storage, 
+export {
+  firebaseApp,
+  auth,
+  db,
+  storage,
   functions,
   analytics,
   performance,

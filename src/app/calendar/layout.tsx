@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { ReactNode } from "react";
-import { PermissionCheck } from "@/components/common/PermissionCheck";
+import { ReactNode } from 'react';
+import { PermissionCheck } from '@/components/common/PermissionCheck';
 
 interface CalendarLayoutProps {
   children: ReactNode;
@@ -9,9 +9,9 @@ interface CalendarLayoutProps {
 
 export default function CalendarLayout({ children }: CalendarLayoutProps): React.ReactElement {
   return (
-    <PermissionCheck requiredPermission="calendar">
-      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="flex-1 p-6">{children}</div>
+    <PermissionCheck requiredPermission='calendar'>
+      <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>
+        <div className='flex-1 p-6'>{children}</div>
       </div>
     </PermissionCheck>
   );

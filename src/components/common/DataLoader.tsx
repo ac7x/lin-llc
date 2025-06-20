@@ -1,6 +1,6 @@
 /**
  * 資料載入器組件 (DataLoader)
- * 
+ *
  * 一個通用組件，用於處理非同步資料載入時的各種狀態。
  * 功能包括：
  * - 顯示載入中狀態 (loading)
@@ -23,22 +23,22 @@ type DataLoaderProps<T> = {
 };
 
 const DefaultLoading = () => (
-  <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 dark:border-blue-400"></div>
+  <div className='flex items-center justify-center min-h-[50vh]'>
+    <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 dark:border-blue-400'></div>
   </div>
 );
 
 const DefaultError = ({ error }: { error: Error }) => (
-  <div className="bg-red-50 dark:bg-red-900/50 text-red-800 dark:text-red-200 p-4 rounded-lg">
+  <div className='bg-red-50 dark:bg-red-900/50 text-red-800 dark:text-red-200 p-4 rounded-lg'>
     錯誤: {error.message}
   </div>
 );
 
 const DefaultEmpty = () => (
-    <div className="bg-yellow-50 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 p-4 rounded-lg">
-      找不到資料
-    </div>
-  );
+  <div className='bg-yellow-50 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 p-4 rounded-lg'>
+    找不到資料
+  </div>
+);
 
 export function DataLoader<T>({
   loading,
@@ -63,4 +63,4 @@ export function DataLoader<T>({
   }
 
   return <>{children(data)}</>;
-} 
+}

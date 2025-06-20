@@ -22,4 +22,4 @@ export interface BaseWithDates {
 export interface BaseWithOptionalDates {
   createdAt?: DateField;
   updatedAt?: DateField;
-} 
+}

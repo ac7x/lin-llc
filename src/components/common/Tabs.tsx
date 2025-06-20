@@ -1,6 +1,6 @@
 /**
  * 頁籤組件 (Tabs)
- * 
+ *
  * 一個可重用的頁籤介面組件。
  * 功能包括：
  * - 顯示多個可切換的頁籤
@@ -28,8 +28,8 @@ export default function Tabs({ tabs, initialTab }: TabsProps) {
 
   return (
     <div>
-      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex flex-wrap gap-1 -mb-px">
+      <div className='mb-6 border-b border-gray-200 dark:border-gray-700'>
+        <nav className='flex flex-wrap gap-1 -mb-px'>
           {tabs.map(tab => (
             <button
               key={tab.key}
@@ -48,4 +48,4 @@ export default function Tabs({ tabs, initialTab }: TabsProps) {
       <div>{activeTabContent}</div>
     </div>
   );
-} 
+}

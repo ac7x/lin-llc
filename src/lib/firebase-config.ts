@@ -7,13 +7,13 @@
 
 // Firebase 應用程式配置
 export const firebaseConfig = {
-  apiKey: "AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro",
-  authDomain: "lin-llc.firebaseapp.com",
-  projectId: "lin-llc",
-  storageBucket: "lin-llc.firebasestorage.app",
-  messagingSenderId: "394023041902",
-  appId: "1:394023041902:web:f9874be5d0d192557b1f7f",
-  measurementId: "G-62JEHK00G8",
+  apiKey: 'AIzaSyCUDU4n6SvAQBT8qb1R0E_oWvSeJxYu-ro',
+  authDomain: 'lin-llc.firebaseapp.com',
+  projectId: 'lin-llc',
+  storageBucket: 'lin-llc.firebasestorage.app',
+  messagingSenderId: '394023041902',
+  appId: '1:394023041902:web:f9874be5d0d192557b1f7f',
+  measurementId: 'G-62JEHK00G8',
 };
 
 // Collection 名稱常數
@@ -36,6 +36,7 @@ export const FIREBASE_EMULATOR = {
 // App Check 配置
 export const APP_CHECK_CONFIG = {
   PROVIDER: 'recaptcha',
-  SITE_KEY: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg',
+  SITE_KEY:
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg',
   SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY || '6LepxlYrAAAAABPi52vTvGsVP4BpZh4UPPu_WNLQ',
 } as const;

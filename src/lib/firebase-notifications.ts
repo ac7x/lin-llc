@@ -34,10 +34,13 @@ interface FirebaseError extends Error {
 }
 
 // #region 快取機制
-const notificationCache = new Map<string, {
-  data: NotificationMessage[];
-  timestamp: number;
-}>();
+const notificationCache = new Map<
+  string,
+  {
+    data: NotificationMessage[];
+    timestamp: number;
+  }
+>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取
 
 function getCachedNotifications(userId: string): NotificationMessage[] | null {
@@ -51,7 +54,7 @@ function getCachedNotifications(userId: string): NotificationMessage[] | null {
 function setCachedNotifications(userId: string, notifications: NotificationMessage[]): void {
   notificationCache.set(userId, {
     data: notifications,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 }
 // #endregion
@@ -71,7 +74,7 @@ const docToNotification = (doc: DocumentSnapshot<DocumentData>): NotificationMes
     ...data,
     id: doc.id,
     createdAt: data.createdAt, // Should be a Timestamp
-    readAt: data.readAt,       // Should be a Timestamp or undefined
+    readAt: data.readAt, // Should be a Timestamp or undefined
   };
 };
 
@@ -123,7 +126,7 @@ export async function createBulkNotifications(
 ): Promise<void> {
   try {
     const batch = writeBatch(db);
-    userIds.forEach((userId) => {
+    userIds.forEach(userId => {
       const notificationRef = doc(collection(db, NOTIFICATIONS));
       const notificationData = {
         ...notification,
@@ -175,8 +178,14 @@ export async function getUserNotifications(
     return processNotificationsInMemory(notifications, filterOptions);
   } catch (error) {
     const firebaseError = error as FirebaseError;
-    if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
-       console.warn('Firestore 索引未建立，將在客戶端進行排序。查詢效能可能受到影響。', firebaseError.message);
+    if (
+      firebaseError.code === 'failed-precondition' &&
+      firebaseError.message.includes('requires an index')
+    ) {
+      console.warn(
+        'Firestore 索引未建立，將在客戶端進行排序。查詢效能可能受到影響。',
+        firebaseError.message
+      );
       // 當索引不存在時，改用不含排序的備用查詢
       const fallbackQuery = query(
         collection(db, NOTIFICATIONS),
@@ -214,32 +223,39 @@ export function subscribeToUserNotifications(
     limit(limitCount)
   );
 
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const notifications = snapshot.docs.map(docToNotification);
-    callback(processNotificationsInMemory(notifications, filterOptions));
-  }, (error) => {
-    const firebaseError = error as FirebaseError;
-    if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
-      console.warn('Firestore 索引未建立，訂閱功能將在客戶端進行排序。', firebaseError.message);
-      
-      // 取消原本的監聽
-      unsubscribe();
+  const unsubscribe = onSnapshot(
+    q,
+    snapshot => {
+      const notifications = snapshot.docs.map(docToNotification);
+      callback(processNotificationsInMemory(notifications, filterOptions));
+    },
+    error => {
+      const firebaseError = error as FirebaseError;
+      if (
+        firebaseError.code === 'failed-precondition' &&
+        firebaseError.message.includes('requires an index')
+      ) {
+        console.warn('Firestore 索引未建立，訂閱功能將在客戶端進行排序。', firebaseError.message);
 
-      // 索引不存在時，使用不含排序的查詢
-      const fallbackQuery = query(
-        collection(db, NOTIFICATIONS),
-        where('userId', '==', userId),
-        limit(limitCount)
-      );
-      
-      onSnapshot(fallbackQuery, (snapshot) => {
-        const notifications = snapshot.docs.map(docToNotification);
-        callback(processNotificationsInMemory(notifications, filterOptions));
-      });
-      return;
+        // 取消原本的監聽
+        unsubscribe();
+
+        // 索引不存在時，使用不含排序的查詢
+        const fallbackQuery = query(
+          collection(db, NOTIFICATIONS),
+          where('userId', '==', userId),
+          limit(limitCount)
+        );
+
+        onSnapshot(fallbackQuery, snapshot => {
+          const notifications = snapshot.docs.map(docToNotification);
+          callback(processNotificationsInMemory(notifications, filterOptions));
+        });
+        return;
+      }
+      console.error('Failed to subscribe to notifications:', error);
     }
-    console.error('Failed to subscribe to notifications:', error);
-  });
+  );
 
   return unsubscribe;
 }
@@ -267,7 +283,7 @@ export async function markMultipleNotificationsAsRead(notificationIds: string[])
   if (notificationIds.length === 0) return;
   try {
     const batch = writeBatch(db);
-    notificationIds.forEach((id) => {
+    notificationIds.forEach(id => {
       const ref = doc(db, NOTIFICATIONS, id);
       batch.update(ref, { isRead: true, readAt: serverTimestamp() });
     });
@@ -294,7 +310,7 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
     if (snapshot.empty) return;
 
     const batch = writeBatch(db);
-    snapshot.docs.forEach((docSnap) => {
+    snapshot.docs.forEach(docSnap => {
       batch.update(docSnap.ref, {
         isRead: true,
         readAt: serverTimestamp(),
@@ -346,7 +362,10 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
     return snapshot.size;
   } catch (error) {
     const firebaseError = error as FirebaseError;
-    if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
+    if (
+      firebaseError.code === 'failed-precondition' &&
+      firebaseError.message.includes('requires an index')
+    ) {
       console.warn('缺少索引，未讀計數將從客戶端計算，可能不準確。', firebaseError.message);
       const fallbackQuery = query(collection(db, NOTIFICATIONS), where('userId', '==', userId));
       const snapshot = await getDocs(fallbackQuery);
@@ -368,7 +387,7 @@ export async function updateUserNotificationSettings(
   try {
     const userRef = doc(db, USERS, userId);
     await updateDoc(userRef, {
-      'notificationSettings': settings,
+      notificationSettings: settings,
     });
   } catch (error) {
     console.error('Failed to update notification settings:', error);

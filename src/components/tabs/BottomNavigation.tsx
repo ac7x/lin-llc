@@ -31,20 +31,16 @@ export default function BottomNavigation(): React.ReactElement | null {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-50 dark:bg-gray-800 dark:border-gray-700">
+    <nav className='fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-50 dark:bg-gray-800 dark:border-gray-700'>
       <div
-        className="flex justify-center overflow-x-auto scrollbar-hide h-full items-center"
+        className='flex justify-center overflow-x-auto scrollbar-hide h-full items-center'
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        <ul className="flex h-full">
+        <ul className='flex h-full'>
           {filteredNavigationItems.map((item: NavigationItem) => {
             const isActive = pathname.startsWith(item.path);
             return (
-              <li
-                key={item.id}
-                ref={isActive ? activeItemRef : null}
-                className="flex-shrink-0"
-              >
+              <li key={item.id} ref={isActive ? activeItemRef : null} className='flex-shrink-0'>
                 <Link
                   href={item.path}
                   className={`flex flex-col items-center justify-center w-20 h-full transition-colors duration-200 ${
@@ -53,8 +49,8 @@ export default function BottomNavigation(): React.ReactElement | null {
                       : 'text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400'
                   }`}
                 >
-                  <span className="flex-shrink-0">{item.icon}</span>
-                  <span className="text-xs mt-1">{item.name}</span>
+                  <span className='flex-shrink-0'>{item.icon}</span>
+                  <span className='text-xs mt-1'>{item.name}</span>
                 </Link>
               </li>
             );
@@ -63,4 +59,4 @@ export default function BottomNavigation(): React.ReactElement | null {
       </div>
     </nav>
   );
-} 
+}

@@ -114,10 +114,46 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, readonly string[]> = {
   temporary: ['dashboard', 'schedule', 'profile', 'calendar'],
   helper: ['dashboard', 'schedule', 'orders', 'profile', 'calendar', 'gemini'],
   user: ['dashboard', 'schedule', 'orders', 'quotes', 'profile', 'calendar', 'gemini'],
-  coord: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
-  safety: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
-  foreman: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
-  vendor: ['dashboard', 'schedule', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
+  coord: [
+    'dashboard',
+    'schedule',
+    'orders',
+    'quotes',
+    'contracts',
+    'profile',
+    'calendar',
+    'gemini',
+  ],
+  safety: [
+    'dashboard',
+    'schedule',
+    'orders',
+    'quotes',
+    'contracts',
+    'profile',
+    'calendar',
+    'gemini',
+  ],
+  foreman: [
+    'dashboard',
+    'schedule',
+    'orders',
+    'quotes',
+    'contracts',
+    'profile',
+    'calendar',
+    'gemini',
+  ],
+  vendor: [
+    'dashboard',
+    'schedule',
+    'orders',
+    'quotes',
+    'contracts',
+    'profile',
+    'calendar',
+    'gemini',
+  ],
   finance: ['dashboard', 'orders', 'quotes', 'contracts', 'profile', 'calendar', 'gemini'],
   manager: [
     'dashboard',
@@ -136,7 +172,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, readonly string[]> = {
     'send-notification',
     'management',
     'calendar',
-    'gemini'
+    'gemini',
   ],
   admin: [
     'dashboard',
@@ -155,7 +191,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, readonly string[]> = {
     'send-notification',
     'management',
     'calendar',
-    'gemini'
+    'gemini',
   ],
   owner: [
     'dashboard',
@@ -174,6 +210,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleKey, readonly string[]> = {
     'send-notification',
     'management',
     'calendar',
-    'gemini'
+    'gemini',
   ],
-}; 
+};
