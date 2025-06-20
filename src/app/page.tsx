@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, type ReactElement } from 'react';
+import type { User } from 'firebase/auth';
 import Image from 'next/image';
+import { useState, useEffect, useCallback, type ReactElement } from 'react';
+
 import { useAuth } from '@/hooks/useAuth';
 import {
   db,
@@ -16,7 +18,7 @@ import {
   limit,
   getDocs,
 } from '@/lib/firebase-client';
-import type { User } from 'firebase/auth';
+
 
 // 定義留言訊息的結構
 interface FeedbackMessage {

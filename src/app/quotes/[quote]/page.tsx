@@ -11,12 +11,13 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { useDocument } from 'react-firebase-hooks/firestore';
-import { QuoteItem } from '@/types/finance';
-import { db } from '@/lib/firebase-client';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useDocument } from 'react-firebase-hooks/firestore';
+
+import { db } from '@/lib/firebase-client';
+import { QuoteItem } from '@/types/finance';
 
 export default function QuoteDetailPage() {
   const router = useRouter();
@@ -128,7 +129,7 @@ export default function QuoteDetailPage() {
       setClientEmail(editClientEmail);
       setEditing(false);
     } catch (err) {
-      alert('儲存失敗: ' + (err instanceof Error ? err.message : String(err)));
+      alert(`儲存失敗: ${  err instanceof Error ? err.message : String(err)}`);
     }
   };
 

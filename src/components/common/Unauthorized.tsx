@@ -8,9 +8,10 @@
  * - 提供前往登入頁面的按鈕
  * - 在身份驗證狀態載入中時，顯示載入指示器
  */
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { type ReactElement } from 'react';
+
 import { useAuth } from '@/hooks/useAuth';
 
 interface UnauthorizedProps {

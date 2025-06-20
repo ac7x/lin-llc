@@ -1,13 +1,14 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, ReactElement } from 'react';
+
 import { PermissionCheck } from '@/components/common/PermissionCheck';
 
 interface ScheduleLayoutProps {
   children: ReactNode;
 }
 
-export default function ScheduleLayout({ children }: ScheduleLayoutProps): React.ReactElement {
+export default function ScheduleLayout({ children }: ScheduleLayoutProps): ReactElement {
   return (
     <PermissionCheck requiredPermission='schedule'>
       <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>

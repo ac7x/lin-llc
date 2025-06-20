@@ -5,8 +5,8 @@
  * 管理 PDF 文件的暫存和清理
  */
 
-import { ReactElement } from 'react';
 import { pdf } from '@react-pdf/renderer';
+import { ReactElement } from 'react';
 
 export async function generatePdfBlob(DocumentComponent: ReactElement, fileName: string) {
   const asPdf = pdf();

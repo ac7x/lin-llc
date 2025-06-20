@@ -7,12 +7,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { collection, query, getDocs, db } from '@/lib/firebase-client';
-import ProjectInfoDisplay from './ProjectInfoDisplay';
-import ProjectEditModal from './ProjectEditModal';
-import WorkpackageList from './WorkpackageList';
 import type { AppUser } from '@/types/auth';
 import type { Project } from '@/types/project';
+
+import ProjectEditModal from './ProjectEditModal';
+import ProjectInfoDisplay from './ProjectInfoDisplay';
+import WorkpackageList from './WorkpackageList';
+
 
 interface ProjectInfoPageProps {
   project: Project;

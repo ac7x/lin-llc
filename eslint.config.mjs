@@ -53,11 +53,17 @@ const eslintConfig = [
       'no-var': 'error',
       'no-console': 'warn',
       'no-debugger': 'error',
-      'no-unused-vars': 'error',
-      'no-undef': 'error',
+      'no-unused-vars': 'off', // 關閉基本規則
       
       // TypeScript 特定規則
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-var-requires': 'error',
       

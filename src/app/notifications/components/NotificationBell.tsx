@@ -11,11 +11,12 @@
 
 'use client';
 
-import React from 'react';
 import { BellIcon } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolidIcon } from '@heroicons/react/24/solid';
-import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 import Link from 'next/link';
+import React from 'react';
+
+import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 
 interface NotificationBellProps {
   className?: string;

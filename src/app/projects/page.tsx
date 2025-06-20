@@ -11,12 +11,15 @@
 
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
-import { useFilteredProjects } from '../../hooks/useFilteredProjects';
-import { ProjectsTable } from './components/ProjectsTable';
-import { DataLoader } from '@/components/common/DataLoader';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
+
+import { DataLoader } from '@/components/common/DataLoader';
+import { useAuth } from '@/hooks/useAuth';
+
+import { useFilteredProjects } from '../../hooks/useFilteredProjects';
+
+import { ProjectsTable } from './components/ProjectsTable';
 
 export default function ProjectsPage() {
   const { loading: authLoading } = useAuth();

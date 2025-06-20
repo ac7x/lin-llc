@@ -11,11 +11,9 @@
 
 'use client';
 
-import React from 'react';
 import { useRouter } from 'next/navigation';
+import React from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { useAuth } from '@/hooks/useAuth';
-import { Unauthorized } from '@/components/common/Unauthorized';
 import {
   PieChart,
   Pie,
@@ -35,9 +33,12 @@ import {
   Legend,
   Bar,
 } from 'recharts';
-import { Workpackage, Project } from '@/types/project';
+
+import { Unauthorized } from '@/components/common/Unauthorized';
 import { ROLE_HIERARCHY, ROLE_NAMES } from '@/constants/roles';
+import { useAuth } from '@/hooks/useAuth';
 import { db, collection } from '@/lib/firebase-client';
+import { Workpackage, Project } from '@/types/project';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 
 // 抽取共用樣式
@@ -208,7 +209,7 @@ export default function DashboardPage() {
       const progress = calculateProjectProgress(projectData);
       return {
         name: projectData.projectName,
-        progress: progress,
+        progress,
       };
     });
   }, [projectsSnapshot]);
@@ -278,7 +279,7 @@ export default function DashboardPage() {
               workforce: report.workforceCount,
               projectName: projectData.projectName,
               dailyGrowth: Number(dailyGrowth.toFixed(2)),
-              efficiency: efficiency,
+              efficiency,
               efficiencyStatus: efficiency > 5 ? '勤勞' : efficiency < 2 ? '偷懶' : '一般',
               averageWorkforce: Number(rollingAverageWorkforce.toFixed(1)),
             });

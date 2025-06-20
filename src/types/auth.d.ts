@@ -5,9 +5,10 @@
  */
 
 import { type User, type UserMetadata } from 'firebase/auth';
+import { type FieldValue } from 'firebase/firestore';
+
 import { type RoleKey } from '@/constants/roles';
 import type { NotificationSettings } from '@/types/notification';
-import { type FieldValue } from 'firebase/firestore';
 
 // 基本權限介面
 export interface Permission {

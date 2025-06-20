@@ -9,9 +9,11 @@
  * - 若有權限，則正常渲染子組件
  */
 import { ReactNode } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Unauthorized } from './Unauthorized';
+
 import { ROLE_NAMES } from '@/constants/roles';
+import { useAuth } from '@/hooks/useAuth';
+
+import { Unauthorized } from './Unauthorized';
 
 interface PermissionCheckProps {
   children: ReactNode;

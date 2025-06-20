@@ -11,13 +11,15 @@
 
 'use client';
 
-import { useState, useRef, useEffect, FormEvent, ChangeEvent } from 'react';
-import { initializeApp } from 'firebase/app';
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel } from 'firebase/ai';
-import { firebaseConfig } from '@/lib/firebase-config';
-import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { initializeApp } from 'firebase/app';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect, FormEvent, ChangeEvent } from 'react';
+
+import { useAuth } from '@/hooks/useAuth';
+import { firebaseConfig } from '@/lib/firebase-config';
+
 
 // 初始化 Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -182,7 +184,7 @@ export default function GeminiChatPage() {
         if (!chatRef.current) {
           throw new Error('聊天實例未初始化');
         }
-        const prompt = `你是一位在台灣具備十年以上工地管理經驗的專案經理，熟悉工地作業流程、施工進度與品質控制，擅長成本預算管控與安全規劃[...]`;
+        const prompt = '你是一位在台灣具備十年以上工地管理經驗的專案經理，熟悉工地作業流程、施工進度與品質控制，擅長成本預算管控與安全規劃[...]';
         result = await chatRef.current.sendMessage(prompt);
       }
 

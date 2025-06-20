@@ -3,7 +3,6 @@
  * 提供統一的日期處理和格式化功能
  */
 
-import React from 'react';
 import {
   format,
   isValid,
@@ -15,9 +14,11 @@ import {
   isSameDay,
 } from 'date-fns';
 import type { Locale } from 'date-fns';
-import { Timestamp } from 'firebase/firestore';
-import { DateInput } from '@/types/common';
 import { zhTW } from 'date-fns/locale';
+import { Timestamp } from 'firebase/firestore';
+import React from 'react';
+
+import { DateInput } from '@/types/common';
 
 /**
  * 支援多種日期型別的通用日期格式化元件（所有 props 為必填）

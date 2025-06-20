@@ -12,20 +12,23 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useDocument } from 'react-firebase-hooks/firestore';
 import { useMemo } from 'react';
-import ProjectJournalPage from './project-journal/page';
-import ProjectMaterialsPage from './project-materials/page';
-import ProjectIssuesPage from './project-issues/page';
-import SubWorkpackageSortingPage from './workpackages/subworkpackages/page';
+import { useDocument } from 'react-firebase-hooks/firestore';
+
+import { DataLoader } from '@/components/common/DataLoader';
+import Tabs from '@/components/common/Tabs';
+import { useAuth } from '@/hooks/useAuth';
+import { doc, db } from '@/lib/firebase-client';
+import type { Project } from '@/types/project';
+
+import ProjectInfoPage from './components/ProjectInfoPage';
 import ProjectCalendarPage from './project-calendar/page';
 import ProjectExpensesPage from './project-expenses/page';
-import ProjectInfoPage from './components/ProjectInfoPage';
-import { doc, db } from '@/lib/firebase-client';
-import { useAuth } from '@/hooks/useAuth';
-import type { Project } from '@/types/project';
-import Tabs from '@/components/common/Tabs';
-import { DataLoader } from '@/components/common/DataLoader';
+import ProjectIssuesPage from './project-issues/page';
+import ProjectJournalPage from './project-journal/page';
+import ProjectMaterialsPage from './project-materials/page';
+import SubWorkpackageSortingPage from './workpackages/subworkpackages/page';
+
 
 export default function ProjectDetailPage() {
   const { loading: authLoading } = useAuth();

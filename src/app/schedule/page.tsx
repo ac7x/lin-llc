@@ -10,10 +10,11 @@
  */
 
 'use client';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+
 import VisTimeline from '@/components/common/VisTimeline';
 import { db } from '@/lib/firebase-client';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { SubWorkpackage, Workpackage } from '@/types/project';
 import { TimelineGroup, TimelineItem } from '@/types/timeline';
 import { timestampToDate, dateToTimestamp, toDate } from '@/utils/timelineUtils';

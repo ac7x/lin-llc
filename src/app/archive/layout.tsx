@@ -9,11 +9,12 @@
 
 'use client';
 
-import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { ReactNode, ReactElement } from 'react';
+
 import { Unauthorized } from '@/components/common/Unauthorized';
+import { useAuth } from '@/hooks/useAuth';
 
 const ArchivedNav = () => {
   const pathname = usePathname();
@@ -52,7 +53,7 @@ interface ArchiveLayoutProps {
   children: ReactNode;
 }
 
-export default function ArchiveLayout({ children }: ArchiveLayoutProps): React.ReactElement {
+export default function ArchiveLayout({ children }: ArchiveLayoutProps): ReactElement {
   const { user, hasPermission } = useAuth();
 
   // 檢查用戶是否有封存功能的權限

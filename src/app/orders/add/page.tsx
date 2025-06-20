@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { nanoid } from 'nanoid';
-import { OrderItem } from '@/types/finance';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
 import { db, doc, setDoc, Timestamp } from '@/lib/firebase-client';
+import { OrderItem } from '@/types/finance';
 
 export default function OrderAddPage() {
   const router = useRouter();
@@ -86,7 +87,7 @@ export default function OrderAddPage() {
       });
       router.push('/orders');
     } catch (err) {
-      alert('新增訂單失敗: ' + (err instanceof Error ? err.message : String(err)));
+      alert(`新增訂單失敗: ${  err instanceof Error ? err.message : String(err)}`);
     }
   };
 

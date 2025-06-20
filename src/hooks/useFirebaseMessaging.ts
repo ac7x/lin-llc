@@ -4,8 +4,9 @@
  * 確保只在客戶端環境中初始化和使用
  */
 
-import { useState, useEffect, useCallback } from 'react';
 import type { Messaging } from 'firebase/messaging';
+import { useState, useEffect, useCallback } from 'react';
+
 import { firebaseApp } from '@/lib/firebase-client';
 
 interface UseFirebaseMessagingReturn {
@@ -40,7 +41,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
         setMessaging(messagingInstance);
 
         const unsubscribe = onMessage(messagingInstance, payload => {
-          console.log('收到前台訊息:', payload);
+          // console.log('收到前台訊息:', payload);
           if (payload.notification) {
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification(payload.notification.title || '新通知', {
@@ -86,7 +87,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
 
         if (token) {
           setFcmToken(token);
-          console.log('FCM Token:', token);
+          // console.log('FCM Token:', token);
           return true;
         }
       } else {

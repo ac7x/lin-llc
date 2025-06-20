@@ -10,13 +10,14 @@
 
 'use client';
 
-import { ReactNode } from 'react';
+import { collection } from 'firebase/firestore';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ReactNode } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { db } from '@/lib/firebase-client';
-import { collection } from 'firebase/firestore';
+
 import { PermissionCheck } from '@/components/common/PermissionCheck';
+import { db } from '@/lib/firebase-client';
 
 const OrderSideNav: React.FC = () => {
   const pathname = usePathname();
@@ -62,7 +63,11 @@ const OrderSideNav: React.FC = () => {
   );
 };
 
-export default function OrdersLayout({ children }: { children: ReactNode }) {
+interface OrdersLayoutProps {
+  children: ReactNode;
+}
+
+export default function OrdersLayout({ children }: OrdersLayoutProps) {
   return (
     <PermissionCheck requiredPermission='orders'>
       <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>

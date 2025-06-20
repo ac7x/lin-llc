@@ -6,6 +6,7 @@
 'use client';
 
 import Image from 'next/image';
+
 import { ActivityLog, DailyReport, PhotoRecord } from '@/types/project';
 
 interface JournalHistoryProps {

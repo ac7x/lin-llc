@@ -11,10 +11,6 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'next/navigation';
-import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
-import { useDocument } from 'react-firebase-hooks/firestore';
 import {
   DndContext,
   closestCenter,
@@ -32,6 +28,11 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useParams } from 'next/navigation';
+import { useState, useEffect, useMemo } from 'react';
+import { useDocument } from 'react-firebase-hooks/firestore';
+
+import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 import { Workpackage, SubWorkpackage } from '@/types/project';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
 

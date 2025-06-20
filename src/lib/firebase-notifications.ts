@@ -5,6 +5,8 @@
  * 支援通知的已讀狀態管理和封存功能
  */
 
+import type { DocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
+
 import {
   collection,
   doc,
@@ -20,11 +22,11 @@ import {
   writeBatch,
   db,
 } from '@/lib/firebase-client';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { DocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
-import { COLLECTIONS } from './firebase-config';
-import type { NotificationMessage } from '@/types/notification';
 import type { AppUser } from '@/types/auth';
+import type { NotificationMessage } from '@/types/notification';
+
+import { COLLECTIONS } from './firebase-config';
+
 
 const { NOTIFICATIONS, USERS } = COLLECTIONS;
 

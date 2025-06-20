@@ -1,8 +1,9 @@
-import { dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addDays, isValid } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { getProgressInfo } from '@/utils/colorUtils';
+import { dateFnsLocalizer } from 'react-big-calendar';
+
 import { CalendarEvent, Schedulable } from '@/types/calendar';
+import { getProgressInfo } from '@/utils/colorUtils';
 import { parseToDate } from '@/utils/dateUtils';
 
 /**
@@ -123,6 +124,6 @@ export const messages = {
  */
 export const formats = {
   monthHeaderFormat: (date: Date) => format(date, 'yyyy年M月', { locale: zhTW }),
-  weekdayFormat: (date: Date) => '週' + '日一二三四五六'.charAt(getDay(date)),
-  dayFormat: (date: Date) => '週' + '日一二三四五六'.charAt(getDay(date)),
+  weekdayFormat: (date: Date) => `週${  '日一二三四五六'.charAt(getDay(date))}`,
+  dayFormat: (date: Date) => `週${  '日一二三四五六'.charAt(getDay(date))}`,
 };

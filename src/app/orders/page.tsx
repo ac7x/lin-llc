@@ -11,14 +11,15 @@
 
 'use client';
 
+import { doc, collection, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import React, { useState, useMemo } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
+
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { generatePdfBlob } from '@/components/pdf/pdfUtils';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { OrderData } from '@/types/finance';
-import { doc, collection, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
+import { OrderData } from '@/types/finance';
 
 export default function OrdersPage() {
   const [ordersSnapshot, loading, error] = useCollection(
@@ -35,19 +36,19 @@ export default function OrdersPage() {
     // 排序函數移到 useMemo 內部
     const sortFns: Record<
       string,
-      (a: Record<string, unknown>, b: Record<string, unknown>) => number
+      (_a: Record<string, unknown>, _b: Record<string, unknown>) => number
     > = {
-      idx: (a, b) => (a.idx as number) - (b.idx as number),
-      orderName: (a, b) =>
-        ((a.orderName as string) || '').localeCompare((b.orderName as string) || ''),
-      clientName: (a, b) =>
-        ((a.clientName as string) || '').localeCompare((b.clientName as string) || ''),
-      orderPrice: (a, b) => (Number(a.orderPrice) || 0) - (Number(b.orderPrice) || 0),
-      createdAt: (a, b) =>
-        ((a.createdAt as Date)?.getTime?.() || 0) - ((b.createdAt as Date)?.getTime?.() || 0),
-      updatedAt: (a, b) =>
-        ((a.updatedAt as Date)?.getTime?.() || 0) - ((b.updatedAt as Date)?.getTime?.() || 0),
-      daysAgo: (a, b) => ((a.daysAgo as number) || 0) - ((b.daysAgo as number) || 0),
+      idx: (_a, _b) => (_a.idx as number) - (_b.idx as number),
+      orderName: (_a, _b) =>
+        ((_a.orderName as string) || '').localeCompare((_b.orderName as string) || ''),
+      clientName: (_a, _b) =>
+        ((_a.clientName as string) || '').localeCompare((_b.clientName as string) || ''),
+      orderPrice: (_a, _b) => (Number(_a.orderPrice) || 0) - (Number(_b.orderPrice) || 0),
+      createdAt: (_a, _b) =>
+        ((_a.createdAt as Date)?.getTime?.() || 0) - ((_b.createdAt as Date)?.getTime?.() || 0),
+      updatedAt: (_a, _b) =>
+        ((_a.updatedAt as Date)?.getTime?.() || 0) - ((_b.updatedAt as Date)?.getTime?.() || 0),
+      daysAgo: (_a, _b) => ((_a.daysAgo as number) || 0) - ((_b.daysAgo as number) || 0),
     };
     if (!ordersSnapshot) return [];
     let arr = ordersSnapshot.docs.map((order, idx) => {

@@ -11,8 +11,8 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
+import { useState, useEffect, useRef } from 'react';
 
 interface AddressSelectorProps {
   value: string;
@@ -111,7 +111,7 @@ export default function AddressSelector({
         // 添加新標記
         markerRef.current = new window.google.maps.Marker({
           position: { lat, lng },
-          map: map,
+          map,
           draggable: true,
         });
 

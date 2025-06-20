@@ -10,12 +10,14 @@
 
 'use client';
 
-import { ReactNode } from 'react';
+import { collection } from 'firebase/firestore';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ReactNode } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
+
 import { db } from '@/lib/firebase-client';
-import { collection } from 'firebase/firestore';
+import { PermissionCheck } from '@/components/common/PermissionCheck';
 
 const ContractNav: React.FC = () => {
   const pathname = usePathname();
@@ -55,7 +57,11 @@ const ContractNav: React.FC = () => {
   );
 };
 
-export default function ContractLayout({ children }: { children: ReactNode }) {
+interface ContractsLayoutProps {
+  children: ReactNode;
+}
+
+export default function ContractsLayout({ children }: ContractsLayoutProps) {
   return (
     <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>
       <div className='w-72 p-6 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm'>

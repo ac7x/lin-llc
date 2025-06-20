@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
+import { usePathname } from 'next/navigation';
+import { useRef, useEffect } from 'react';
+
 import { navigationItems } from '@/constants/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import type { NavigationItem } from '@/types/navigation';
 
 export default function BottomNavigation(): React.ReactElement | null {

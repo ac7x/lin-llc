@@ -5,7 +5,9 @@
  */
 'use client';
 
+import { UpdateData } from 'firebase/firestore';
 import { useState } from 'react';
+
 // import Image from 'next/image';
 import {
   db,
@@ -18,7 +20,6 @@ import {
   doc,
   Timestamp,
 } from '@/lib/firebase-client';
-import { UpdateData } from 'firebase/firestore';
 import {
   Project,
   ActivityLog,
@@ -27,8 +28,9 @@ import {
   Workpackage,
   IssueRecord,
 } from '@/types/project';
-import { calculateProjectProgress } from '@/utils/progressUtils';
 import { toTimestamp } from '@/utils/dateUtils';
+import { calculateProjectProgress } from '@/utils/progressUtils';
+
 import { WeatherData } from './WeatherDisplay';
 
 interface JournalFormProps {
@@ -236,7 +238,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
       alert('工作日誌已成功提交！');
     } catch (error) {
       console.error('保存工作日誌時出錯:', error);
-      alert('保存工作日誌時出錯：' + (error instanceof Error ? error.message : String(error)));
+      alert(`保存工作日誌時出錯：${  error instanceof Error ? error.message : String(error)}`);
     } finally {
       setSaving(false);
       setUploadProgress(0);

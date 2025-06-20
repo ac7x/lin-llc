@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
 import { FirebaseError } from 'firebase/app';
+import { useState, useEffect, useCallback } from 'react';
+
+import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
+import { type RoleKey } from '@/constants/roles';
 import {
   auth,
   db,
@@ -14,8 +17,6 @@ import {
   collection,
   getDocs,
 } from '@/lib/firebase-client';
-import { type RoleKey } from '@/constants/roles';
-import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 import type { AuthState, UseAuthReturn, PermissionCheckOptions, AuthError } from '@/types/auth';
 
 const arrayToPermissionRecord = (permissions: readonly string[]): Record<string, boolean> => {
@@ -185,7 +186,7 @@ export const useAuth = (): UseAuthReturn => {
         );
       }
 
-      console.log('登入成功，ID Token:', idToken);
+      // console.log('登入成功，ID Token:', idToken);
     } catch (err) {
       let authError: AuthError;
       if (err instanceof FirebaseError) {

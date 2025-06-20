@@ -11,21 +11,20 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { collection, getDocs, Timestamp } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
+
 import { useAuth } from '@/hooks/useAuth';
-import { Project } from '@/types/project';
-import { SubWorkpackage, Workpackage } from '@/types/project';
-import {
+import { db, doc, updateDoc } from '@/lib/firebase-client';
+import type { AppUser } from '@/types/auth';
+import { Project , SubWorkpackage, Workpackage ,
   Template,
   SubWorkpackageTemplateItem,
   TemplateToSubWorkpackageOptions,
 } from '@/types/project';
-import { nanoid } from 'nanoid';
-import { collection, getDocs, Timestamp } from 'firebase/firestore';
-import { db, doc, updateDoc } from '@/lib/firebase-client';
-import type { AppUser } from '@/types/auth';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
 
 // Template helper functions
@@ -314,7 +313,7 @@ export default function WorkpackageDetailPage() {
     try {
       // 只有在工作包已有預計日期時才傳遞預設日期
       const templateOptions: TemplateToSubWorkpackageOptions = {
-        workpackageId: workpackageId,
+        workpackageId,
         // 確保只有在有日期的情況下傳遞日期參數，否則為 undefined
         estimatedStartDate: workpackage.estimatedStartDate || undefined,
         estimatedEndDate: workpackage.estimatedEndDate || undefined,

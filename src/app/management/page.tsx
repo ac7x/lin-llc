@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
+
 import RolePermissions from './components/RolePermissions';
 
 export default function ManagementPage() {

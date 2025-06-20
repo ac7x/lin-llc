@@ -11,14 +11,15 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Timestamp } from 'firebase/firestore';
-import { useCollection } from 'react-firebase-hooks/firestore';
+import { Timestamp , collection, addDoc } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
-import { Workpackage } from '@/types/project';
-import { ContractItem } from '@/types/finance';
+import { useState, useMemo } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
+
 import { db } from '@/lib/firebase-client';
-import { collection, addDoc } from 'firebase/firestore';
+import { ContractItem } from '@/types/finance';
+import { Workpackage } from '@/types/project';
+
 
 // 定義合約列型別
 interface ContractRow {
@@ -134,7 +135,7 @@ export default function ImportProjectPage() {
       await addDoc(collection(db, 'projects'), projectData);
       setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
     } catch (err) {
-      setMessage('建立失敗: ' + (err instanceof Error ? err.message : String(err)));
+      setMessage(`建立失敗: ${  err instanceof Error ? err.message : String(err)}`);
     } finally {
       setImportingId(null);
     }

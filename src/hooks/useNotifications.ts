@@ -5,7 +5,9 @@
  * 包含未讀通知計數和批量處理功能
  */
 
+import { Timestamp } from 'firebase/firestore';
 import { useState, useEffect, useCallback, useRef } from 'react';
+
 import { useAuth } from '@/hooks/useAuth';
 import {
   getUserNotifications,
@@ -16,7 +18,6 @@ import {
   archiveNotification,
 } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/notification';
-import { Timestamp } from 'firebase/firestore';
 
 interface UseNotificationsReturn {
   notifications: NotificationMessage[];

@@ -11,12 +11,13 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { nanoid } from 'nanoid';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { OrderData, QuoteData, OrderItem, QuoteItem } from '@/types/finance';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
+import { useState, useMemo, useEffect } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
+
 import { db, collection, setDoc, doc, getDocs, Timestamp } from '@/lib/firebase-client';
+import { OrderData, QuoteData, OrderItem, QuoteItem } from '@/types/finance';
 
 // Tab 類型
 type SourceTab = 'order' | 'quote';
@@ -165,7 +166,7 @@ export default function ImportContractPage() {
 
       setMessage(`已成功由${tab === 'order' ? '訂單' : '估價單'}建立合約，來源ID: ${row.id}`);
     } catch (err) {
-      setMessage('建立失敗: ' + (err instanceof Error ? err.message : String(err)));
+      setMessage(`建立失敗: ${  err instanceof Error ? err.message : String(err)}`);
     } finally {
       setImportingId(null);
     }

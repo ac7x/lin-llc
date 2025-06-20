@@ -10,9 +10,9 @@
 
 'use client';
 
+import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
 import type { Project } from '@/types/project';
-import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { formatLocalDate } from '@/utils/dateUtils';
 
 interface ProjectInfoDisplayProps {

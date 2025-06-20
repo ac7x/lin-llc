@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, ReactElement } from 'react';
+
 import { PermissionCheck } from '@/components/common/PermissionCheck';
 
 interface SendNotificationLayoutProps {
@@ -9,7 +10,7 @@ interface SendNotificationLayoutProps {
 
 export default function SendNotificationLayout({
   children,
-}: SendNotificationLayoutProps): React.ReactElement {
+}: SendNotificationLayoutProps): ReactElement {
   return (
     <PermissionCheck requiredPermission='send-notification'>
       <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>

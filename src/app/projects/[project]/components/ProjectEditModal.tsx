@@ -11,14 +11,15 @@
 'use client';
 
 import { useState } from 'react';
-import { doc, updateDoc, Timestamp, db } from '@/lib/firebase-client';
-import { TaiwanCityList } from '@/utils/taiwanCityUtils';
+
+import AddressSelector from '@/components/common/AddressSelector';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
+import { useAuth } from '@/hooks/useAuth';
+import { doc, updateDoc, Timestamp, db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
 import type { Project } from '@/types/project';
-import { useAuth } from '@/hooks/useAuth';
-import AddressSelector from '@/components/common/AddressSelector';
 import { formatDateForInput } from '@/utils/dateUtils';
+import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 
 interface ProjectEditModalProps {
   project: Project;

@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
+
 import { collection, db } from '@/lib/firebase-client';
-import { formatDate } from '@/utils/dateUtils';
 import type { ProjectDocument } from '@/types/project';
+import { formatDate } from '@/utils/dateUtils';
 
 export function useFilteredProjects(searchTerm: string) {
   const [snapshot, loading, error] = useCollection(collection(db, 'projects'));

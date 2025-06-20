@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../hooks/useAuth';
 import { type ReactElement } from 'react';
+
+import { useAuth } from '../../hooks/useAuth';
 
 export default function SignInPage(): ReactElement {
   const router = useRouter();

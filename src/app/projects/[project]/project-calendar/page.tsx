@@ -11,17 +11,20 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams } from 'next/navigation';
-import { useDocument } from 'react-firebase-hooks/firestore';
-import { useAuth } from '@/hooks/useAuth';
-import { Calendar } from 'react-big-calendar';
 import { format, subDays } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
+import { useParams } from 'next/navigation';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Calendar } from 'react-big-calendar';
+import { useDocument } from 'react-firebase-hooks/firestore';
+
+import { useAuth } from '@/hooks/useAuth';
+
+
 import '@/styles/react-big-calendar.css';
-import { Workpackage, SubWorkpackage } from '@/types/project';
-import { getProgressInfo, ProgressColorScale } from '@/utils/colorUtils';
 import { db, doc } from '@/lib/firebase-client';
+import { CalendarEvent } from '@/types/calendar';
+import { Workpackage, SubWorkpackage } from '@/types/project';
 import {
   localizer,
   createCalendarEvent,
@@ -29,7 +32,7 @@ import {
   messages,
   formats,
 } from '@/utils/calendarUtils';
-import { CalendarEvent } from '@/types/calendar';
+import { getProgressInfo, ProgressColorScale } from '@/utils/colorUtils';
 
 export default function ProjectCalendarPage() {
   const { loading: authLoading } = useAuth();

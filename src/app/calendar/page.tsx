@@ -11,14 +11,15 @@
 
 'use client';
 
+import { format, subDays } from 'date-fns';
 import { useState, useEffect, useRef } from 'react';
 import { Calendar } from 'react-big-calendar';
-import { format, subDays } from 'date-fns';
 import '@/styles/react-big-calendar.css';
 import { collection, getDocs } from 'firebase/firestore';
+
 import { db } from '@/lib/firebase-client';
+import { CalendarEvent } from '@/types/calendar';
 import { Workpackage, SubWorkpackage } from '@/types/project';
-import { getProgressInfo, ProgressColorScale } from '@/utils/colorUtils';
 import {
   localizer,
   createCalendarEvent,
@@ -26,7 +27,7 @@ import {
   messages,
   formats,
 } from '@/utils/calendarUtils';
-import { CalendarEvent } from '@/types/calendar';
+import { getProgressInfo, ProgressColorScale } from '@/utils/colorUtils';
 
 export default function ProjectCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);

@@ -11,14 +11,14 @@
 
 'use client';
 
+import { Timestamp, arrayUnion } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { useState, useMemo } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Timestamp, arrayUnion } from 'firebase/firestore';
 import { useDocument } from 'react-firebase-hooks/firestore';
-import { Project } from '@/types/project';
-import { MaterialEntry } from '@/types/project';
+
+import { useAuth } from '@/hooks/useAuth';
 import { db, doc, updateDoc } from '@/lib/firebase-client';
+import { Project , MaterialEntry } from '@/types/project';
 
 export default function ProjectMaterialsPage() {
   useAuth();
@@ -89,7 +89,7 @@ export default function ProjectMaterialsPage() {
       alert('材料記錄已成功添加！');
     } catch (error) {
       console.error('無法保存材料記錄：', error);
-      alert('保存材料記錄時出錯：' + error);
+      alert(`保存材料記錄時出錯：${  error}`);
     } finally {
       setSaving(false);
     }

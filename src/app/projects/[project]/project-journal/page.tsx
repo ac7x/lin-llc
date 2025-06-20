@@ -13,14 +13,16 @@
 
 import { useParams } from 'next/navigation';
 import { useState, useMemo, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { useDocument } from 'react-firebase-hooks/firestore';
-import { db, doc } from '@/lib/firebase-client';
-import { Project } from '@/types/project';
+
 import WeatherDisplay, {
   fetchWeather,
   WeatherData,
 } from '@/app/projects/[project]/project-journal/components/WeatherDisplay';
+import { useAuth } from '@/hooks/useAuth';
+import { db, doc } from '@/lib/firebase-client';
+import { Project } from '@/types/project';
+
 import JournalForm from './components/JournalForm';
 import JournalHistory from './components/JournalHistory';
 

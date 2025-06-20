@@ -10,11 +10,6 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { createNotification } from '@/lib/firebase-notifications';
-import { Timestamp } from '@/lib/firebase-client';
-import { NotificationBell } from '@/app/notifications/components/NotificationBell';
 import {
   PaperAirplaneIcon,
   CheckCircleIcon,
@@ -25,6 +20,12 @@ import {
   UserGroupIcon,
   CogIcon,
 } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+
+import { NotificationBell } from '@/app/notifications/components/NotificationBell';
+import { useAuth } from '@/hooks/useAuth';
+import { Timestamp } from '@/lib/firebase-client';
+import { createNotification } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/notification';
 
 // 通知類型選項

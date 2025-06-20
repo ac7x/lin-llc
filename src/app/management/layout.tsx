@@ -1,13 +1,14 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, ReactElement } from 'react';
+
 import { PermissionCheck } from '@/components/common/PermissionCheck';
 
 interface ManagementLayoutProps {
   children: ReactNode;
 }
 
-export default function ManagementLayout({ children }: ManagementLayoutProps): React.ReactElement {
+export default function ManagementLayout({ children }: ManagementLayoutProps): ReactElement {
   return (
     <PermissionCheck requiredPermission='management'>
       <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>

@@ -12,6 +12,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { db, collection, getDocs, deleteDoc, doc } from '@/lib/firebase-client';
 
 export default function ArchivePage() {
@@ -40,7 +41,7 @@ export default function ArchivePage() {
         await deleteDoc(doc(db, 'archived', 'default'));
         setClickCount(0);
       } catch (err) {
-        alert('刪除失敗: ' + (err instanceof Error ? err.message : String(err)));
+        alert(`刪除失敗: ${  err instanceof Error ? err.message : String(err)}`);
       }
     }
   };

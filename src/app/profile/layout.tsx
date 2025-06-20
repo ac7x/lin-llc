@@ -1,13 +1,14 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, ReactElement } from 'react';
+
 import { PermissionCheck } from '@/components/common/PermissionCheck';
 
 interface ProfileLayoutProps {
   children: ReactNode;
 }
 
-export default function ProfileLayout({ children }: ProfileLayoutProps): React.ReactElement {
+export default function ProfileLayout({ children }: ProfileLayoutProps): ReactElement {
   return (
     <PermissionCheck requiredPermission='profile'>
       <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>

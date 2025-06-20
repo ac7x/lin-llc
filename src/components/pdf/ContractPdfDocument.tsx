@@ -7,6 +7,7 @@
 
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { Timestamp } from 'firebase/firestore';
+
 import { formatLocalDate } from '@/utils/dateUtils';
 
 Font.register({

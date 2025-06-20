@@ -1,10 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useNotifications } from '@/hooks/useNotifications';
-import { formatDistanceToNow } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
-import { parseToDate } from '@/utils/dateUtils';
 import {
   BellIcon,
   CheckIcon,
@@ -15,7 +10,13 @@ import {
   XCircleIcon,
 } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolidIcon, CheckIcon as CheckSolidIcon } from '@heroicons/react/24/solid';
+import { formatDistanceToNow } from 'date-fns';
+import { zhTW } from 'date-fns/locale';
+import React, { useState } from 'react';
+
+import { useNotifications } from '@/hooks/useNotifications';
 import type { NotificationMessage } from '@/types/notification';
+import { parseToDate } from '@/utils/dateUtils';
 
 // 通知類型圖標映射
 const getNotificationIcon = (type: NotificationMessage['type']) => {

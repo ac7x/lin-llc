@@ -11,17 +11,18 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { Timestamp } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { useParams } from 'next/navigation';
+import { useState, useMemo, useEffect } from 'react';
+import { useDocument } from 'react-firebase-hooks/firestore';
+
 import { useAuth } from '@/hooks/useAuth';
 import { db, doc, updateDoc } from '@/lib/firebase-client';
-import { useDocument } from 'react-firebase-hooks/firestore';
-import { Timestamp } from 'firebase/firestore';
-import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
-import { nanoid } from 'nanoid';
-import { Workpackage } from '@/types/project';
-import { ExpenseData, ExpenseItem } from '@/types/finance';
 import { BaseWithDates } from '@/types/common';
+import { ExpenseData, ExpenseItem } from '@/types/finance';
+import { Workpackage } from '@/types/project';
+import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
 
 export default function ProjectExpensesPage() {
   const params = useParams();
@@ -91,7 +92,7 @@ export default function ProjectExpensesPage() {
       description: newExpenseItem.description || '',
       quantity: newExpenseItem.quantity || 0,
       unitPrice: newExpenseItem.unitPrice || 0,
-      amount: amount,
+      amount,
       workpackageId: newExpenseItem.workpackageId || '',
       createdAt: now,
       updatedAt: now,
@@ -179,7 +180,7 @@ export default function ProjectExpensesPage() {
         clientContact: projectData?.clientContact || '',
         clientPhone: projectData?.clientPhone || '',
         clientEmail: projectData?.clientEmail || '',
-        projectId: projectId,
+        projectId,
         type: newExpense.type || '支出',
         items: validatedItems,
         totalAmount: newExpense.totalAmount || 0,
@@ -218,7 +219,7 @@ export default function ProjectExpensesPage() {
       resetForm();
     } catch (error) {
       console.error('儲存失敗:', error);
-      setMessage('儲存失敗: ' + (error instanceof Error ? error.message : String(error)));
+      setMessage(`儲存失敗: ${  error instanceof Error ? error.message : String(error)}`);
     } finally {
       setSaving(false);
     }
@@ -234,7 +235,7 @@ export default function ProjectExpensesPage() {
       });
       setMessage('已刪除費用');
     } catch (error) {
-      setMessage('刪除失敗: ' + (error instanceof Error ? error.message : String(error)));
+      setMessage(`刪除失敗: ${  error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -501,7 +502,7 @@ export default function ProjectExpensesPage() {
                     onChange={e => {
                       const dateValue = e.target.value;
                       if (dateValue) {
-                        const selectedDate = new Date(dateValue + 'T00:00:00');
+                        const selectedDate = new Date(`${dateValue  }T00:00:00`);
                         setNewExpense({
                           ...newExpense,
                           expenseDate: Timestamp.fromDate(selectedDate),

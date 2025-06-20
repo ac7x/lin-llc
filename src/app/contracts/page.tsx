@@ -11,16 +11,16 @@
 
 'use client';
 
+import { doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
+
 import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
 import { generatePdfBlob } from '@/components/pdf/pdfUtils';
-import { db } from '@/lib/firebase-client';
 import { useAuth } from '@/hooks/useAuth';
-import { useCollection } from 'react-firebase-hooks/firestore';
+import { db , collection } from '@/lib/firebase-client';
 import { ContractData } from '@/types/finance';
-import { doc, getDoc } from 'firebase/firestore';
-import { collection } from '@/lib/firebase-client';
 
 export default function ContractsPage() {
   useAuth(); // 僅用於權限與登入狀態，不再解構 db
@@ -37,19 +37,19 @@ export default function ContractsPage() {
     // 排序函數移到 useMemo 內部
     const sortFns: Record<
       string,
-      (a: Record<string, unknown>, b: Record<string, unknown>) => number
+      (_a: Record<string, unknown>, _b: Record<string, unknown>) => number
     > = {
-      idx: (a, b) => (a.idx as number) - (b.idx as number),
-      contractName: (a, b) =>
-        ((a.contractName as string) || '').localeCompare((b.contractName as string) || ''),
-      clientName: (a, b) =>
-        ((a.clientName as string) || '').localeCompare((b.clientName as string) || ''),
-      contractPrice: (a, b) => (Number(a.contractPrice) || 0) - (Number(b.contractPrice) || 0),
-      createdAt: (a, b) =>
-        ((a.createdAt as Date)?.getTime?.() || 0) - ((b.createdAt as Date)?.getTime?.() || 0),
-      updatedAt: (a, b) =>
-        ((a.updatedAt as Date)?.getTime?.() || 0) - ((b.updatedAt as Date)?.getTime?.() || 0),
-      daysAgo: (a, b) => ((a.daysAgo as number) || 0) - ((b.daysAgo as number) || 0),
+      idx: (_a, _b) => (_a.idx as number) - (_b.idx as number),
+      contractName: (_a, _b) =>
+        ((_a.contractName as string) || '').localeCompare((_b.contractName as string) || ''),
+      clientName: (_a, _b) =>
+        ((_a.clientName as string) || '').localeCompare((_b.clientName as string) || ''),
+      contractPrice: (_a, _b) => (Number(_a.contractPrice) || 0) - (Number(_b.contractPrice) || 0),
+      createdAt: (_a, _b) =>
+        ((_a.createdAt as Date)?.getTime?.() || 0) - ((_b.createdAt as Date)?.getTime?.() || 0),
+      updatedAt: (_a, _b) =>
+        ((_a.updatedAt as Date)?.getTime?.() || 0) - ((_b.updatedAt as Date)?.getTime?.() || 0),
+      daysAgo: (_a, _b) => ((_a.daysAgo as number) || 0) - ((_b.daysAgo as number) || 0),
     };
     if (!contractsSnapshot) return [];
     let arr = contractsSnapshot.docs.map((contract, idx) => {

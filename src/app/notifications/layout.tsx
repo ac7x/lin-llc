@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, ReactElement } from 'react';
+
 import { PermissionCheck } from '@/components/common/PermissionCheck';
 
 interface NotificationsLayoutProps {
@@ -9,7 +10,7 @@ interface NotificationsLayoutProps {
 
 export default function NotificationsLayout({
   children,
-}: NotificationsLayoutProps): React.ReactElement {
+}: NotificationsLayoutProps): ReactElement {
   return (
     <PermissionCheck requiredPermission='notifications'>
       <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>

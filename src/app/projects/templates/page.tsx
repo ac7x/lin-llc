@@ -11,14 +11,15 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { db } from '@/lib/firebase-client';
-import { doc, collection, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { Template, SubWorkpackageTemplateItem } from '@/types/project';
+import { doc, collection, addDoc, updateDoc, deleteDoc , Timestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
-import { Timestamp } from 'firebase/firestore';
+import { useState, useMemo } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
+
+import { useAuth } from '@/hooks/useAuth';
+import { db } from '@/lib/firebase-client';
+import { Template, SubWorkpackageTemplateItem } from '@/types/project';
+
 
 export default function TemplatesPage() {
   const { user } = useAuth();

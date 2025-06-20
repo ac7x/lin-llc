@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase-client';
-import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
+import { useState, useEffect } from 'react';
+
 import { PAGE_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
+import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
+import { db } from '@/lib/firebase-client';
 
 interface RolePermissionData {
   role: RoleKey;

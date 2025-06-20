@@ -11,10 +11,11 @@
 
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
+
+import { useAuth } from '@/hooks/useAuth';
 import { signOut, auth } from '@/lib/firebase-client';
 
 const roleDisplayNames: Record<string, string> = {

@@ -11,15 +11,15 @@
 
 'use client';
 
+import { arrayUnion } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { useState, useMemo } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { useDocument } from 'react-firebase-hooks/firestore';
-import { Project } from '@/types/project';
-import { IssueRecord } from '@/types/project';
-import { arrayUnion } from 'firebase/firestore';
-import { formatLocalDate } from '@/utils/dateUtils';
+
+import { useAuth } from '@/hooks/useAuth';
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
+import { Project , IssueRecord } from '@/types/project';
+import { formatLocalDate } from '@/utils/dateUtils';
 
 export default function ProjectIssuesPage() {
   const { loading: authLoading } = useAuth();
@@ -101,7 +101,7 @@ export default function ProjectIssuesPage() {
       alert('問題記錄已成功添加！');
     } catch (error) {
       console.error('無法保存問題記錄：', error);
-      alert('保存問題記錄時出錯：' + error);
+      alert(`保存問題記錄時出錯：${  error}`);
     } finally {
       setSaving(false);
     }
@@ -123,7 +123,7 @@ export default function ProjectIssuesPage() {
       });
     } catch (error) {
       console.error('無法更新問題狀態：', error);
-      alert('更新問題狀態時出錯：' + error);
+      alert(`更新問題狀態時出錯：${  error}`);
     }
   };
 

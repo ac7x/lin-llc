@@ -1,4 +1,5 @@
 import Link from 'next/link';
+
 import type { ProjectDocument } from '@/types/project';
 
 const StatusBadge = ({ status }: { status?: string }) => {

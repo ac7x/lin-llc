@@ -1,13 +1,14 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, ReactElement } from 'react';
+
 import { PermissionCheck } from '@/components/common/PermissionCheck';
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps): React.ReactElement {
+export default function DashboardLayout({ children }: DashboardLayoutProps): ReactElement {
   return (
     <PermissionCheck requiredPermission='dashboard'>
       <div className='flex min-h-screen bg-gray-50 dark:bg-gray-900'>

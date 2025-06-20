@@ -11,11 +11,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState, FormEvent, ChangeEvent } from 'react';
 import { useDocument } from 'react-firebase-hooks/firestore';
-import { OrderItem } from '@/types/finance';
+
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
+import { OrderItem } from '@/types/finance';
 
 export default function OrderDetailPage() {
   const router = useRouter();
@@ -93,7 +94,7 @@ export default function OrderDetailPage() {
     setEditOrderItems(items => items.filter((_, i) => i !== idx));
 
   // 儲存編輯
-  const handleSaveEdit = async (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await updateDoc(doc(db, 'finance', 'default', 'orders', orderId), {
@@ -118,7 +119,7 @@ export default function OrderDetailPage() {
       setClientEmail(editClientEmail);
       setEditing(false);
     } catch (err) {
-      alert('儲存失敗: ' + (err instanceof Error ? err.message : String(err)));
+      alert(`儲存失敗: ${  err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -139,7 +140,7 @@ export default function OrderDetailPage() {
                 type='text'
                 className='border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700'
                 value={editOrderName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEditOrderName(e.target.value)
                 }
               />
@@ -160,7 +161,7 @@ export default function OrderDetailPage() {
                 type='text'
                 className='border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700'
                 value={editClientName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEditClientName(e.target.value)
                 }
               />
@@ -174,7 +175,7 @@ export default function OrderDetailPage() {
                 type='text'
                 className='border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700'
                 value={editClientContact}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEditClientContact(e.target.value)
                 }
               />
@@ -185,7 +186,7 @@ export default function OrderDetailPage() {
                 type='text'
                 className='border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700'
                 value={editClientPhone}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEditClientPhone(e.target.value)
                 }
               />
@@ -196,7 +197,7 @@ export default function OrderDetailPage() {
                 type='email'
                 className='border px-2 py-1 rounded w-full bg-white dark:bg-gray-800 text-black dark:text-gray-100 border-gray-300 dark:border-gray-700'
                 value={editClientEmail}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEditClientEmail(e.target.value)
                 }
               />

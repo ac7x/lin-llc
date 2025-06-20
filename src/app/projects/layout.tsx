@@ -11,20 +11,15 @@
 
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { ReactNode, useState } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import {
-  ProjectProgressPercent,
-  ProgressBar,
-  calculateWorkpackageProgress,
-} from '@/utils/progressUtils';
-import type { Project } from '@/types/project';
-import { PageLayout, PageContent, Sidebar } from '@/components/layout/PageLayout';
+
 import { PermissionCheck } from '@/components/common/PermissionCheck';
+import { PageLayout, PageContent, Sidebar } from '@/components/layout/PageLayout';
+import { useAuth } from '@/hooks/useAuth';
 import {
   db,
   collection,
@@ -34,6 +29,12 @@ import {
   deleteDoc,
   Timestamp,
 } from '@/lib/firebase-client';
+import type { Project } from '@/types/project';
+import {
+  ProjectProgressPercent,
+  ProgressBar,
+  calculateWorkpackageProgress,
+} from '@/utils/progressUtils';
 
 function SidebarContent() {
   useAuth();
