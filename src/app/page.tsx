@@ -100,18 +100,24 @@ export default function GuestbookPage(): ReactElement {
 
   // 檢查使用者是否可以發文
   const checkCanPost = useCallback(async (currentUser: User) => {
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const postQuery = query(
       collection(db, 'feedback'),
       where('userId', '==', currentUser.uid),
-      where('createdAt', '>=', twentyFourHoursAgo),
-      where('isDeveloperNote', '!=', true),
-      limit(1)
+      limit(50)
     );
 
     try {
       const snapshot = await getDocs(postQuery);
-      setCanPost(snapshot.empty);
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      
+      // 在客戶端過濾開發者日誌和時間
+      const recentUserMessages = snapshot.docs.filter(doc => {
+        const data = doc.data();
+        const createdAt = data.createdAt?.toDate();
+        return !data.isDeveloperNote && createdAt && createdAt >= twentyFourHoursAgo;
+      });
+      
+      setCanPost(recentUserMessages.length === 0);
     } catch (err) {
       console.error("Error checking post status:", err);
       setCanPost(true); 
