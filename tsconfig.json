@@ -33,6 +33,8 @@
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": [
+      "timeline",
+      "calendar",
       "navigation",
       "finance",
       "notification",

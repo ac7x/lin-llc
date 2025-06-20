@@ -12,85 +12,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
-import { zhTW } from "date-fns/locale";
+import { Calendar } from "react-big-calendar";
+import { format, subDays } from "date-fns";
 import "@/styles/react-big-calendar.css";
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { Workpackage, SubWorkpackage } from "@/types/project";
-import { ProgressColorScale, getProgressInfo } from "@/utils/colorUtils";
-
-const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek,
-    getDay,
-    locales: { "zh-TW": zhTW }
-});
-
-interface CalendarEvent {
-    id: string;
-    title: string;
-    start: Date;
-    end: Date;
-    projectName?: string;
-    workpackageId?: string;
-    allDay?: boolean;
-    progress?: number;
-    resourceId?: string;
-    actualStartDate?: Date;
-    actualEndDate?: Date;
-    hasEndDate?: boolean;
-}
-
-// 可排程項目的通用介面
-interface Schedulable {
-    id: string;
-    name: string;
-    plannedStartDate?: { toDate: () => Date };
-    plannedEndDate?: { toDate: () => Date };
-    actualStartDate?: { toDate: () => Date };
-    actualEndDate?: { toDate: () => Date };
-    progress?: number;
-}
-
-// 從可排程項目建立行事曆事件的輔助函數
-function createCalendarEvent(
-    item: Schedulable,
-    title: string,
-    projectName: string,
-    workpackageId?: string
-): CalendarEvent | null {
-    if (item.plannedStartDate?.toDate) {
-        const startDate = item.plannedStartDate.toDate();
-        let endDate: Date;
-        let hasEndDate = false;
-
-        if (item.plannedEndDate?.toDate) {
-            endDate = item.plannedEndDate.toDate();
-            endDate.setDate(endDate.getDate() + 1); // react-big-calendar 的結束日期是 exclusive
-            hasEndDate = true;
-        } else {
-            endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
-            hasEndDate = false;
-        }
-
-        return {
-            id: item.id,
-            title,
-            start: startDate,
-            end: endDate,
-            projectName,
-            workpackageId,
-            progress: item.progress,
-            actualStartDate: item.actualStartDate?.toDate(),
-            actualEndDate: item.actualEndDate?.toDate(),
-            hasEndDate,
-        };
-    }
-    return null;
-}
+import { getProgressInfo, ProgressColorScale } from "@/utils/colorUtils";
+import { localizer, createCalendarEvent, eventStyleGetter, messages, formats } from "@/utils/calendarUtils";
+import { CalendarEvent } from "@/types/calendar";
 
 export default function ProjectCalendarPage() {
     const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -115,8 +45,10 @@ export default function ProjectCalendarPage() {
                             const wpEvent = createCalendarEvent(
                                 wp,
                                 `${project.projectName} - ${wp.name}`,
-                                project.projectName,
-                                wp.id
+                                {
+                                    projectName: project.projectName,
+                                    workpackageId: wp.id
+                                }
                             );
                             if (wpEvent) calendarEvents.push(wpEvent);
 
@@ -125,8 +57,10 @@ export default function ProjectCalendarPage() {
                                     const subEvent = createCalendarEvent(
                                         sub,
                                         `${project.projectName} - ${wp.name} - ${sub.name}`,
-                                        project.projectName,
-                                        wp.id
+                                        {
+                                            projectName: project.projectName,
+                                            workpackageId: wp.id
+                                        }
                                     );
                                     if (subEvent) calendarEvents.push(subEvent);
                                 }
@@ -146,60 +80,28 @@ export default function ProjectCalendarPage() {
         fetchAllWorkpackages();
     }, []);
 
-    const eventStyleGetter = (event: CalendarEvent) => {
-        let backgroundColor = "#3174ad";
-        let borderColor = "transparent";
-        let borderStyle = "solid";
-
-        if (event.progress !== undefined) {
-            const progressInfo = getProgressInfo(event.progress);
-            backgroundColor = progressInfo.color;
-        }
-
-        if (!event.hasEndDate) {
-            borderColor = "#ff6b6b";
-            borderStyle = "dashed";
-        } else if (event.actualStartDate || event.actualEndDate) {
-            borderColor = "#ffffff";
-            borderStyle = "dashed";
-        }
-
-        return {
-            style: {
-                backgroundColor,
-                borderRadius: "4px",
-                opacity: 0.8,
-                color: "white",
-                border: `2px ${borderStyle} ${borderColor}`,
-                display: "block",
-                overflow: "hidden",
-                textOverflow: "ellipsis"
-            }
-        };
-    };
-
     const EventComponent = ({ event }: { event: CalendarEvent }) => {
         const isDelayed = event.actualEndDate && event.end && event.actualEndDate > event.end;
         const progressInfo = event.progress !== undefined ? getProgressInfo(event.progress) : null;
 
         return (
             <div className="p-1">
-                <div className="text-xs text-gray-600">
+                <div className="text-xs" style={{ color: event.actualStartDate ? '#333' : 'white' }}>
                     {event.title}
                     {progressInfo && (
-                        <span className="font-medium" style={{ color: progressInfo.color }}>
+                        <span className="font-medium">
                             {` | ${progressInfo.description} (${event.progress}%)`}
                         </span>
                     )}
                     {` | 計劃: ${format(event.start, 'MM/dd')}`}
-                    {event.hasEndDate ? `-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}` : ' (結束日期未設置)'}
+                    {event.hasEndDate ? `-${format(subDays(event.end, 1), 'MM/dd')}` : ' (結束日期未設置)'}
                     {event.actualStartDate && (
                         <>
                             {` | 實際: ${format(event.actualStartDate, 'MM/dd')}`}
                             {event.actualEndDate ? `-${format(event.actualEndDate, 'MM/dd')}` : ' (進行中)'}
                         </>
                     )}
-                    {isDelayed && <span className="ml-1 text-yellow-300">⚠️ 延遲</span>}
+                    {isDelayed && <span className="ml-1 text-yellow-500">⚠️ 延遲</span>}
                 </div>
             </div>
         );
@@ -207,24 +109,18 @@ export default function ProjectCalendarPage() {
 
     const handleSelectEvent = (event: CalendarEvent) => {
         const plannedDateRange = event.hasEndDate 
-            ? `計劃：${format(event.start, "yyyy-MM-dd")} 至 ${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), "yyyy-MM-dd")}`
+            ? `計劃：${format(event.start, "yyyy-MM-dd")} 至 ${format(subDays(event.end, 1), "yyyy-MM-dd")}`
             : `計劃：${format(event.start, "yyyy-MM-dd")} (結束日期未設置)`;
         const actualDateRange = event.actualStartDate || event.actualEndDate ?
             `\n實際：${event.actualStartDate ? format(event.actualStartDate, "yyyy-MM-dd") : "尚未開始"} 至 ${event.actualEndDate ? format(event.actualEndDate, "yyyy-MM-dd") : "進行中"}` : "";
         
         const progressInfo = event.progress !== undefined ? getProgressInfo(event.progress) : null;
-        const progressText = progressInfo ? `進度階段: ${progressInfo.description} (${event.progress}%)` : `進度: ${event.progress}%`;
+        const progressText = progressInfo ? `進度階段: ${progressInfo.description} (${event.progress}%)` : (event.progress !== undefined ? `進度: ${event.progress}%` : "進度未提供");
 
         alert(`工作包: ${event.title}
 所屬專案: ${event.projectName}
 ${plannedDateRange}${actualDateRange}
 ${progressText}`);
-    };
-
-    const formats = {
-        monthHeaderFormat: (date: Date) => format(date, "yyyy年M月", { locale: zhTW }),
-        weekdayFormat: (date: Date) => "週" + "日一二三四五六".charAt(getDay(date)),
-        dayFormat: (date: Date) => "週" + "日一二三四五六".charAt(getDay(date)),
     };
 
     const handleFullscreen = () => {
@@ -311,7 +207,7 @@ ${progressText}`);
                         >
                             {isFullscreen ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13H5v6h6v-4m4-4h4V5h-6v4" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             ) : (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -344,20 +240,7 @@ ${progressText}`);
                         components={{ event: EventComponent }}
                         onSelectEvent={handleSelectEvent}
                         formats={formats}
-                        messages={{
-                            allDay: "全天",
-                            previous: "上一個",
-                            next: "下一個",
-                            today: "今天",
-                            month: "月",
-                            week: "週",
-                            day: "日",
-                            agenda: "列表",
-                            date: "日期",
-                            time: "時間",
-                            event: "事件",
-                            noEventsInRange: "此範圍內沒有排程"
-                        }}
+                        messages={messages}
                     />
                 </div>
 

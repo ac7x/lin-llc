@@ -11,123 +11,104 @@
 
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Timeline, DataSet, TimelineItem, TimelineGroup, TimelineOptions, DateType } from "vis-timeline/standalone";
+import VisTimeline from "@/components/common/VisTimeline";
 import { db } from "@/lib/firebase-client";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { SubWorkpackage, Workpackage } from "@/types/project";
-import { Timestamp } from "firebase/firestore";
+import { TimelineGroup, TimelineItem } from "@/types/timeline";
+import { timestampToDate, dateToTimestamp, toDate } from "@/utils/timelineUtils";
 
-interface Group extends TimelineGroup {
-    id: string;
-    content: string;
-}
-
-interface TimelineSubWorkpackage extends SubWorkpackage {
+// 專案排程頁面使用的特定 item 類型，擴充通用 TimelineItem
+interface ScheduleTimelineItem extends TimelineItem {
     projectId: string;
     projectName: string;
     workpackageId: string;
     workpackageName: string;
-    group: string; // projectId
-    content: string; // 顯示內容
-    start: Date; // vis-timeline 需要使用 Date 物件
-    end: Date; // vis-timeline 需要使用 Date 物件
-    hasEndDate?: boolean; // 新增：標記是否有結束日期
-}
-
-// Helper: Timestamp 轉 Date
-function timestampToDate(ts?: Timestamp | null): Date | undefined {
-    return ts ? ts.toDate() : undefined;
-}
-
-// Helper: Date 轉 Timestamp
-function dateToTimestamp(date: Date | null | undefined): Timestamp | undefined {
-    return date ? Timestamp.fromDate(date) : undefined;
-}
-
-// Helper: DateType 轉 Date
-function toDate(dateInput: DateType): Date {
-    if (dateInput instanceof Date) {
-        return dateInput;
-    }
-    if (dateInput && typeof dateInput === 'object' && 'toDate' in dateInput) {
-        return (dateInput as unknown as Timestamp).toDate();
-    }
-    return new Date(dateInput);
+    description?: string;
+    name: string;
+    hasEndDate?: boolean;
 }
 
 export default function ProjectsPage() {
-    const [groups, setGroups] = useState<Group[]>([]);
-    const [allItems, setAllItems] = useState<TimelineSubWorkpackage[]>([]);
-    const [items, setItems] = useState<TimelineSubWorkpackage[]>([]);
+    const [groups, setGroups] = useState<TimelineGroup[]>([]);
+    const [allItems, setAllItems] = useState<ScheduleTimelineItem[]>([]);
+    const [items, setItems] = useState<ScheduleTimelineItem[]>([]);
     const [search, setSearch] = useState("");
     const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const timelineRef = useRef<HTMLDivElement>(null);
+    const timelineContainerRef = useRef<HTMLDivElement>(null);
 
     const quickKeywords = ["搬運", "定位", "清潔", "測試"];
 
-    const handleItemMove = useCallback(async (itemId: string, newStart: DateType, newEnd: DateType) => {
-        const item = items.find(i => i.id === itemId);
-        if (!item) return false;
-        const startDate = toDate(newStart);
-        const endDate = toDate(newEnd);
-        const projectDocRef = doc(db, "projects", item.projectId);
-        const projectSnap = await getDocs(collection(db, "projects"));
-        const projectDoc = projectSnap.docs.find(d => d.id === item.projectId);
-        if (!projectDoc) return false;
-        const projectData = projectDoc.data();
-        const workpackages: Workpackage[] = projectData.workpackages || [];
-        const updatedWorkpackages = workpackages.map(wp => {
-            if (wp.id !== item.workpackageId) return wp;
-            return {
-                ...wp,
-                subWorkpackages: wp.subWorkpackages.map(sw =>
-                    sw.id === item.id
-                        ? {
-                            ...sw,
-                            plannedStartDate: dateToTimestamp(startDate),
-                            plannedEndDate: dateToTimestamp(endDate)
-                        }
-                        : sw
-                ),
-            };
-        });
-        await updateDoc(projectDocRef, { workpackages: updatedWorkpackages });
+    const handleItemMove = useCallback(async (item: TimelineItem) => {
+        const movedItem = item as ScheduleTimelineItem;
+        if (!movedItem) return false;
+
+        const startDate = toDate(movedItem.start);
+        const endDate = toDate(movedItem.end!);
         
-        // 更新本地狀態
-        setItems(prev => prev.map(i => {
-            if (i.id === itemId) {
-                const startTimestamp = dateToTimestamp(startDate);
-                const endTimestamp = dateToTimestamp(endDate);
-                const hasEndDate = !!endTimestamp;
-                const content = hasEndDate 
-                    ? `${item.workpackageName} - ${item.name}`
-                    : `${item.workpackageName} - ${item.name} (結束日期未設置)`;
-                
-                return {
-                    ...i,
-                    start: startDate,
-                    end: endDate,
-                    plannedStartDate: startTimestamp,
-                    plannedEndDate: endTimestamp,
-                    hasEndDate,
-                    content,
-                };
+        try {
+            const projectDocRef = doc(db, "projects", movedItem.projectId);
+            // We need to read the doc to get the latest workpackages array
+            const projectSnap = await getDocs(collection(db, "projects"));
+            const projectDoc = projectSnap.docs.find(d => d.id === movedItem.projectId);
+            if (!projectDoc) {
+                console.error("Project not found");
+                return false;
             }
-            return i;
-        }));
-        return true;
-    }, [items]);
+            
+            const projectData = projectDoc.data();
+            const workpackages: Workpackage[] = projectData.workpackages || [];
+            
+            const updatedWorkpackages = workpackages.map(wp => {
+                if (wp.id !== movedItem.workpackageId) return wp;
+                return {
+                    ...wp,
+                    subWorkpackages: wp.subWorkpackages.map(sw =>
+                        sw.id === movedItem.id
+                            ? {
+                                ...sw,
+                                plannedStartDate: dateToTimestamp(startDate),
+                                plannedEndDate: dateToTimestamp(endDate)
+                            }
+                            : sw
+                    ),
+                };
+            });
+
+            await updateDoc(projectDocRef, { workpackages: updatedWorkpackages });
+            
+            // Optimistically update local state
+            setItems(prev => prev.map(i => {
+                if (i.id === movedItem.id) {
+                    return { ...i, start: startDate, end: endDate };
+                }
+                return i;
+            }));
+            setAllItems(prev => prev.map(i => {
+                if (i.id === movedItem.id) {
+                    return { ...i, start: startDate, end: endDate };
+                }
+                return i;
+            }));
+
+            return true;
+        } catch (error) {
+            console.error("Error updating document: ", error);
+            return false;
+        }
+    }, []);
 
     useEffect(() => {
         (async () => {
             const projects = await getDocs(collection(db, "projects"));
-            const groupList: Group[] = projects.docs.map((d): Group => ({
+            const groupList: TimelineGroup[] = projects.docs.map((d): TimelineGroup => ({
                 id: d.id,
                 content: (d.data().projectName as string) || d.id
             }));
             setGroups(groupList);
-            const all: TimelineSubWorkpackage[] = [];
+
+            const all: ScheduleTimelineItem[] = [];
             for (const project of projects.docs) {
                 const projectData = project.data();
                 const projectId = project.id;
@@ -141,32 +122,28 @@ export default function ProjectsPage() {
                         const plannedStart = timestampToDate(sub.plannedStartDate);
                         const plannedEnd = timestampToDate(sub.plannedEndDate);
                         
-                        // 只要有其中一個日期就顯示數據
                         if (plannedStart || plannedEnd) {
-                            // 如果只有開始日期，結束日期設為開始日期後一天
                             const start = plannedStart || (plannedEnd ? new Date(plannedEnd.getTime() - 24 * 60 * 60 * 1000) : new Date());
-                            // 如果只有結束日期，開始日期設為結束日期前一天
                             const end = plannedEnd || (plannedStart ? new Date(plannedStart.getTime() + 24 * 60 * 60 * 1000) : new Date());
-                            
-                            // 檢查是否有結束日期
                             const hasEndDate = !!plannedEnd;
-                            
-                            // 根據是否有結束日期調整顯示內容
                             const content = hasEndDate 
                                 ? `${workpackageName} - ${sub.name}`
                                 : `${workpackageName} - ${sub.name} (結束日期未設置)`;
                             
                             all.push({
                                 ...sub,
+                                id: sub.id,
+                                content,
+                                start,
+                                end,
+                                group: projectId,
                                 projectId,
                                 projectName,
                                 workpackageId,
                                 workpackageName,
-                                group: projectId,
-                                content,
-                                start,
-                                end,
                                 hasEndDate,
+                                name: sub.name,
+                                description: sub.description
                             });
                         }
                     }
@@ -195,26 +172,23 @@ export default function ProjectsPage() {
                 const desc = item.description?.toLowerCase() || "";
                 const matchKeyword = selectedKeywords.some(k => name.includes(k) || desc.includes(k));
                 const matchSearch = searchKeywords.some(kw => name.includes(kw) || desc.includes(kw));
-                return (selectedKeywords.length > 0 ? matchKeyword : false) || (searchKeywords.length > 0 ? matchSearch : false);
+                const hasSelectedKeywords = selectedKeywords.length > 0;
+                const hasSearchKeywords = searchKeywords.length > 0;
+
+                if (hasSelectedKeywords && hasSearchKeywords) {
+                    return matchKeyword && matchSearch;
+                }
+                if (hasSelectedKeywords) {
+                    return matchKeyword;
+                }
+                if (hasSearchKeywords) {
+                    return matchSearch;
+                }
+                return false;
             });
         }
         setItems(filtered);
     }, [search, selectedKeywords, allItems]);
-
-    useEffect(() => {
-        if (!timelineRef.current || groups.length === 0) return;
-        const groupsDataSet = new DataSet<Group>(groups);
-        const itemsDataSet = new DataSet<TimelineSubWorkpackage>(items);
-        const timelineOptions: TimelineOptions = {
-            editable: { add: false, remove: false, updateTime: true, updateGroup: false },
-            onMove: async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-                const success = await handleItemMove(String(item.id), item.start!, item.end!);
-                callback(success ? item : null);
-            },
-        };
-        const timeline = new Timeline(timelineRef.current, itemsDataSet, groupsDataSet, timelineOptions);
-        return () => timeline.destroy();
-    }, [groups, items, handleItemMove]);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -223,6 +197,11 @@ export default function ProjectsPage() {
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
+    
+    const onMoveHandler = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
+        const success = await handleItemMove(item);
+        callback(success ? item : null);
+    }
 
     return (
         <main className="max-w-4xl mx-auto">
@@ -232,11 +211,12 @@ export default function ProjectsPage() {
                     <button
                         className="px-3 py-1.5 rounded-lg text-sm border bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-200 flex items-center gap-2"
                         onClick={() => {
-                            if (timelineRef.current) {
+                            const container = timelineContainerRef.current;
+                            if (container) {
                                 if (document.fullscreenElement) {
                                     document.exitFullscreen();
                                 } else {
-                                    timelineRef.current.requestFullscreen();
+                                    container.requestFullscreen();
                                 }
                             }
                         }}
@@ -252,9 +232,11 @@ export default function ProjectsPage() {
                     </button>
                 </div>
 
-                <div
-                    ref={timelineRef}
-                    style={{ height: 600 }}
+                <VisTimeline
+                    ref={timelineContainerRef}
+                    items={items}
+                    groups={groups}
+                    onMove={onMoveHandler}
                     className="bg-white dark:bg-gray-900 rounded-lg shadow mb-6"
                 />
 

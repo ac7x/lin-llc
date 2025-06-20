@@ -15,35 +15,15 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { useAuth } from '@/hooks/useAuth';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { Calendar } from 'react-big-calendar';
+import { format, subDays } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import "@/styles/react-big-calendar.css";
 import { Workpackage, SubWorkpackage } from "@/types/project";
-import { ProgressColorScale, getProgressInfo } from "@/utils/colorUtils";
+import { getProgressInfo, ProgressColorScale } from "@/utils/colorUtils";
 import { db, doc } from '@/lib/firebase-client';
-
-const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek,
-    getDay,
-    locales: { "zh-TW": zhTW }
-});
-
-interface CalendarEvent {
-    id: string;
-    title: string;
-    start: Date;
-    end: Date;
-    workpackageId?: string;
-    workpackageName?: string;
-    allDay?: boolean;
-    progress?: number;
-    quantity?: number;
-    actualStartDate?: Date;  // 新增實際開始日期
-    actualEndDate?: Date;    // 新增實際結束日期
-}
+import { localizer, createCalendarEvent, eventStyleGetter, messages, formats } from "@/utils/calendarUtils";
+import { CalendarEvent } from "@/types/calendar";
 
 export default function ProjectCalendarPage() {
     const { loading: authLoading } = useAuth();
@@ -65,29 +45,17 @@ export default function ProjectCalendarPage() {
         project.workpackages.forEach((wp: Workpackage) => {
             if (wp.subWorkpackages?.length) {
                 wp.subWorkpackages.forEach((sub: SubWorkpackage) => {
-                    if (sub.plannedStartDate && sub.plannedEndDate) {
-                        // Timestamp 轉 Date
-                        const startDate = sub.plannedStartDate.toDate();
-                        const endDate = sub.plannedEndDate.toDate();
-                        endDate.setDate(endDate.getDate() + 1);
-
-                        // 處理實際日期
-                        const actualStartDate = sub.actualStartDate ? sub.actualStartDate.toDate() : undefined;
-                        const actualEndDate = sub.actualEndDate ? sub.actualEndDate.toDate() : undefined;
-
-                        calendarEvents.push({
-                            id: sub.id,
-                            title: sub.name,
-                            start: startDate,
-                            end: endDate,
+                    const event = createCalendarEvent(
+                        sub,
+                        sub.name,
+                        {
                             workpackageId: wp.id,
                             workpackageName: wp.name,
-                            allDay: true,
-                            progress: sub.progress || 0,
                             quantity: sub.actualQuantity,
-                            actualStartDate,
-                            actualEndDate
-                        });
+                        }
+                    );
+                    if (event) {
+                        calendarEvents.push(event);
                     }
                 });
             }
@@ -104,49 +72,6 @@ export default function ProjectCalendarPage() {
         return searchKeywords.some(kw => fields.some(f => f?.toLowerCase().includes(kw)));
     });
 
-    // 自定義事件樣式
-    const eventStyleGetter = (event: CalendarEvent) => {
-        let backgroundColor = '#3174ad';
-        const border = '0';
-        let style: {
-            background?: string;
-            borderLeft?: string;
-            boxShadow?: string;
-        } = {};
-
-        // 使用新的顏色配置
-        if (event.progress !== undefined) {
-            const progressInfo = getProgressInfo(event.progress);
-            backgroundColor = progressInfo.color;
-        }
-
-        // 如果有實際日期，創建漸層效果
-        if (event.actualStartDate) {
-            style = {
-                background: `linear-gradient(to right, 
-                    ${backgroundColor}66 0%, 
-                    ${backgroundColor}66 100%,
-                    ${backgroundColor}66 100%)`,
-                borderLeft: `4px solid ${backgroundColor}`,
-                boxShadow: '0 0 0 1px rgba(0,0,0,0.1)',
-            };
-        }
-
-        return {
-            style: {
-                backgroundColor: event.actualStartDate ? 'transparent' : backgroundColor,
-                borderRadius: '4px',
-                opacity: 0.9,
-                color: '#000',
-                border,
-                display: 'block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                ...style
-            }
-        };
-    };
-
     // 自定義事件渲染
     const EventComponent = ({ event }: { event: CalendarEvent }) => {
         const progressInfo = event.progress !== undefined ? getProgressInfo(event.progress) : null;
@@ -154,15 +79,15 @@ export default function ProjectCalendarPage() {
         return (
             <div className="p-1">
                 {/* 項目/進度/數量/日期全部合併成一行 */}
-                <div className="text-xs text-gray-600">
+                <div className="text-xs" style={{ color: event.actualStartDate ? '#333' : 'white' }}>
                     {event.title}
                     {progressInfo && (
-                        <span className="font-medium" style={{ color: progressInfo.color }}>
+                        <span className="font-medium">
                             {` | ${progressInfo.description} (${event.progress}%)`}
                         </span>
                     )}
                     {event.quantity !== undefined && ` | 數量: ${event.quantity}`}
-                    {` | 計劃: ${format(event.start, 'MM/dd')}-${format(new Date(event.end.getTime() - 24 * 60 * 60 * 1000), 'MM/dd')}`}
+                    {` | 計劃: ${format(event.start, 'MM/dd')}`}{event.hasEndDate ? `-${format(subDays(event.end, 1), 'MM/dd')}`: ''}
                     {event.actualStartDate && (
                         <>
                             {` | 實際: ${format(event.actualStartDate, 'MM/dd')}`}
@@ -176,25 +101,18 @@ export default function ProjectCalendarPage() {
 
     // 點擊事件處理
     const handleSelectEvent = (event: CalendarEvent) => {
-        const endDate = new Date(event.end.getTime() - 24 * 60 * 60 * 1000);
+        const endDate = subDays(event.end, 1);
         const progressInfo = event.progress !== undefined ? getProgressInfo(event.progress) : null;
         
         alert(`
             工作項目: ${event.title}
             所屬工作包: ${event.workpackageName}
-            計劃時間: ${format(event.start, 'yyyy-MM-dd', { locale: zhTW })} 至 ${format(endDate, 'yyyy-MM-dd', { locale: zhTW })}
-            ${event.actualStartDate ? `實際開始: ${format(event.actualStartDate, 'yyyy-MM-dd', { locale: zhTW })}` : ''}
-            ${event.actualEndDate ? `實際結束: ${format(event.actualEndDate, 'yyyy-MM-dd', { locale: zhTW })}` : ''}
+            計劃時間: ${format(event.start, 'yyyy-MM-dd', { locale: zhTW })}${event.hasEndDate ? ` 至 ${format(endDate, 'yyyy-MM-dd', { locale: zhTW })}` : ''}
+            ${event.actualStartDate ? `實際開始: ${format(event.actualStartDate, 'yyyy-MM-dd', { locale: zhTW })}` : '尚未開始'}
+            ${event.actualEndDate ? `實際結束: ${format(event.actualEndDate, 'yyyy-MM-dd', { locale: zhTW })}` : '進行中'}
             ${progressInfo ? `進度階段: ${progressInfo.description} (${event.progress}%)` : ''}
             ${event.quantity !== undefined ? `數量: ${event.quantity}` : ''}
         `);
-    };
-
-    // 新增 formats 讓月曆標題與週標題顯示中文
-    const formats = {
-        monthHeaderFormat: (date: Date) => format(date, "yyyy年M月", { locale: zhTW }),
-        weekdayFormat: (date: Date) => "週" + "日一二三四五六".charAt(getDay(date)),
-        dayFormat: (date: Date) => "週" + "日一二三四五六".charAt(getDay(date)),
     };
 
     // 全螢幕切換
@@ -332,20 +250,7 @@ export default function ProjectCalendarPage() {
                         }}
                         onSelectEvent={handleSelectEvent}
                         formats={formats}
-                        messages={{
-                            allDay: '全天',
-                            previous: '上一個',
-                            next: '下一個',
-                            today: '今天',
-                            month: '月',
-                            week: '週',
-                            day: '日',
-                            agenda: '列表',
-                            date: '日期',
-                            time: '時間',
-                            event: '事件',
-                            noEventsInRange: '此範圍內沒有排程'
-                        }}
+                        messages={messages}
                     />
                 </div>
 
