@@ -11,16 +11,34 @@
 
 "use client";
 
-import { useState } from "react";
 import { useAuth } from '@/hooks/useAuth';
 import { useFilteredProjects } from "./useFilteredProjects";
 import { ProjectsTable } from "./components/ProjectsTable";
 import { DataLoader } from "@/components/common/DataLoader";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 
 export default function ProjectsPage() {
     const { loading: authLoading } = useAuth();
-    const [search, setSearch] = useState("");
-    const { projects, loading, error } = useFilteredProjects(search);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const searchTerm = searchParams.get("q") ?? "";
+    const [isPending, startTransition] = useTransition();
+
+    const { projects, loading, error } = useFilteredProjects(searchTerm);
+
+    const handleSearch = (term: string) => {
+        const params = new URLSearchParams(window.location.search);
+        if (term) {
+            params.set("q", term);
+        } else {
+            params.delete("q");
+        }
+        startTransition(() => {
+            router.replace(`${pathname}?${params.toString()}`);
+        });
+    };
 
     return (
         <main className="max-w-4xl mx-auto">
@@ -32,8 +50,8 @@ export default function ProjectsPage() {
                             type="text"
                             className="w-full md:w-80 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                             placeholder="搜尋專案名稱或合約ID"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
+                            defaultValue={searchTerm}
+                            onChange={e => handleSearch(e.target.value)}
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                             🔍
@@ -42,7 +60,7 @@ export default function ProjectsPage() {
                 </div>
 
                 <DataLoader
-                    loading={loading}
+                    loading={loading || isPending}
                     authLoading={authLoading}
                     error={error ?? undefined}
                     data={projects}

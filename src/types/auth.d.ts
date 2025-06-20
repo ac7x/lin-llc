@@ -102,10 +102,10 @@ export type AuthState = {
 export interface UseAuthReturn {
   user: AppUser | null;
   loading: boolean;
-  error: string | null;
+  error: AuthError | null;
   signInWithGoogle: () => Promise<void>;
   checkPermission: (options: PermissionCheckOptions) => Promise<boolean>;
-  hasPermission: (permissionId: string) => Promise<boolean>;
+  hasPermission: (permissionId: string) => boolean;
   getCurrentRole: () => RoleKey | undefined;
   getRolePermissions: () => Record<RoleKey, Record<string, boolean>> | undefined;
 }

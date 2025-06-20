@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FirebaseError } from 'firebase/app';
 import { 
   auth, 
   db,
@@ -9,12 +10,9 @@ import {
   User,
   doc, 
   getDoc, 
-  setDoc, 
-  collection, 
-  getDocs
+  setDoc,
 } from '@/lib/firebase-client';
 import { type RoleKey, ROLE_HIERARCHY } from '@/constants/roles';
-import { DEFAULT_ROLE_PERMISSIONS } from '@/app/management/components/RolePermissions';
 import type { 
   AuthState, 
   UseAuthReturn, 
@@ -124,17 +122,25 @@ export const useAuth = (): UseAuthReturn => {
 
       console.log('登入成功，ID Token:', idToken);
     } catch (err) {
-      const error = err as AuthError;
-      console.error('登入失敗:', error);
-      setAuthState(prev => ({
-        ...prev,
-        error: {
-          code: error.code || 'unknown',
-          message: error.message || '登入過程中發生錯誤，請稍後再試',
-          details: error.details
-        }
-      }));
-      throw error;
+      let authError: AuthError;
+      if (err instanceof FirebaseError) {
+        authError = { code: err.code, message: err.message, details: err };
+      } else if (err instanceof Error) {
+        authError = {
+          code: 'unknown',
+          message: err.message,
+          details: err,
+        };
+      } else {
+        authError = {
+          code: 'unknown',
+          message: '登入過程中發生未知的錯誤',
+          details: err,
+        };
+      }
+      console.error('登入失敗:', authError);
+      setAuthState(prev => ({ ...prev, error: authError }));
+      throw authError;
     }
   };
 
@@ -164,31 +170,14 @@ export const useAuth = (): UseAuthReturn => {
     return true;
   };
 
-  const hasPermission = async (permissionId: string): Promise<boolean> => {
+  const hasPermission = (permissionId: string): boolean => {
     const user = authState.user;
-    if (!user?.currentRole) return false;
-
-    try {
-      const managementRef = collection(db, 'management');
-      const snapshot = await getDocs(managementRef);
-      const roleData = snapshot.docs.find(doc => {
-        const data = doc.data();
-        return data.role === user.currentRole;
-      });
-
-      if (roleData) {
-        const data = roleData.data();
-        const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
-        return permissions.includes(permissionId);
-      } else {
-        // 如果找不到角色配置，使用預設權限
-        const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
-        return defaultPermissions.includes(permissionId);
-      }
-    } catch (error) {
-      console.error('檢查權限失敗:', error);
+    if (!user?.currentRole || !user.rolePermissions) {
       return false;
     }
+
+    const permissionsForCurrentRole = user.rolePermissions[user.currentRole];
+    return !!permissionsForCurrentRole?.[permissionId];
   };
 
   const getCurrentRole = (): RoleKey | undefined => {
@@ -202,7 +191,7 @@ export const useAuth = (): UseAuthReturn => {
   return {
     user: authState.user,
     loading: authState.loading,
-    error: authState.error?.message || null,
+    error: authState.error,
     signInWithGoogle,
     checkPermission,
     hasPermission,

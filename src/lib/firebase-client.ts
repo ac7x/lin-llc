@@ -64,12 +64,6 @@ import {
   Functions,
 } from "firebase/functions";
 import {
-  getMessaging,
-  getToken as getMessagingToken,
-  onMessage,
-  Messaging,
-} from "firebase/messaging";
-import {
   getAnalytics,
   Analytics,
 } from "firebase/analytics";
@@ -99,7 +93,6 @@ const storage = getStorage(app);
 const functions = getFunctions(app);
 
 // --- 客戶端專用服務初始化 ---
-let messaging: Messaging | null = null;
 let analytics: Analytics | null = null;
 let performance: any = null;
 let remoteConfig: RemoteConfig | null = null;
@@ -111,7 +104,6 @@ const isClient = typeof window !== 'undefined';
 // 只在客戶端初始化需要 navigator 的服務
 if (isClient) {
   try {
-    messaging = getMessaging(app);
     analytics = getAnalytics(app);
     performance = getPerformance(app);
     remoteConfig = getRemoteConfig(app);
@@ -142,13 +134,6 @@ export async function getAppCheckToken(): Promise<string | null> {
     console.error("取得 App Check token 失敗:", error);
     throw error;
   }
-}
-
-/**
- * 取得 Messaging 實例（僅客戶端）
- */
-export function getMessagingInstance(): Messaging | null {
-  return messaging;
 }
 
 /**
@@ -192,8 +177,6 @@ export {
   setPersistence,
   browserLocalPersistence,
   getRedirectResult,
-  getMessagingToken,
-  onMessage,
   // Storage 相關函數
   ref,
   uploadBytesResumable,
@@ -237,7 +220,6 @@ export {
   db, 
   storage, 
   functions,
-  messaging,
   analytics,
   performance,
   remoteConfig,

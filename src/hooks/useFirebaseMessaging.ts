@@ -5,12 +5,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  getMessagingInstance, 
-  getMessagingToken, 
-  onMessage 
-} from '@/lib/firebase-client';
 import type { Messaging } from 'firebase/messaging';
+import { firebaseApp } from '@/lib/firebase-client';
 
 interface UseFirebaseMessagingReturn {
   messaging: Messaging | null;
@@ -27,39 +23,37 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 檢查是否在客戶端環境
   const isClient = typeof window !== 'undefined';
 
-  useEffect(() => {
+  const initMessaging = useCallback(async () => {
     if (!isClient) {
       setLoading(false);
       return;
     }
 
     try {
-      const messagingInstance = getMessagingInstance();
-      setMessaging(messagingInstance);
-      
-      if (messagingInstance) {
-        // 監聽前台訊息
+      const { isSupported, getMessaging, onMessage } = await import('firebase/messaging');
+      const supported = await isSupported();
+
+      if (supported) {
+        const messagingInstance = getMessaging(firebaseApp);
+        setMessaging(messagingInstance);
+
         const unsubscribe = onMessage(messagingInstance, (payload) => {
           console.log('收到前台訊息:', payload);
-          
-          // 可以在這裡處理前台通知顯示
           if (payload.notification) {
-            // 顯示自定義通知
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification(payload.notification.title || '新通知', {
                 body: payload.notification.body,
-                icon: '/icons/notification-icon.png'
+                icon: '/icons/notification-icon.png' // 假設您有此圖示
               });
             }
           }
         });
-
-        return () => {
-          unsubscribe();
-        };
+        
+        return () => unsubscribe();
+      } else {
+        console.warn('Firebase Messaging is not supported in this browser context.');
       }
     } catch (err) {
       console.error('Firebase Messaging 初始化失敗:', err);
@@ -69,6 +63,10 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
     }
   }, [isClient]);
 
+  useEffect(() => {
+    initMessaging();
+  }, [initMessaging]);
+  
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!isClient || !messaging) {
       return false;
@@ -78,12 +76,11 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       setLoading(true);
       setError(null);
 
-      // 請求通知權限
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
-        // 取得 FCM token
-        const token = await getMessagingToken(messaging, {
+        const { getToken } = await import('firebase/messaging');
+        const token = await getToken(messaging, {
           vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
         });
         
@@ -112,7 +109,8 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
     }
 
     try {
-      const token = await getMessagingToken(messaging, {
+      const { getToken } = await import('firebase/messaging');
+      const token = await getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
       });
       

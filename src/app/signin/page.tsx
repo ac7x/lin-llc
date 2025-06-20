@@ -4,10 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import { type ReactElement } from 'react';
 
-interface SignInError {
-  message: string;
-}
-
 export default function SignInPage(): ReactElement {
   const router = useRouter();
   const { user, loading, error, signInWithGoogle } = useAuth();
@@ -17,8 +13,11 @@ export default function SignInPage(): ReactElement {
       await signInWithGoogle();
       router.push('/profile');
     } catch (err) {
-      const error = err as SignInError;
-      console.error('登入失敗:', error.message);
+      if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
+        console.error('登入失敗:', err.message);
+      } else {
+        console.error('登入失敗: 未知的錯誤', err);
+      }
     }
   };
 
@@ -48,7 +47,7 @@ export default function SignInPage(): ReactElement {
 
         {error && (
           <div className="p-4 text-red-700 bg-red-100 rounded-md dark:bg-red-900/50 dark:text-red-300">
-            {error}
+            {error.message}
           </div>
         )}
 
