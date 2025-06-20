@@ -1,3 +1,26 @@
+exclude:
+  - .github
+  - node_modules
+  - .next
+  - .git
+  - public
+  - script
+  - coverage
+  - src/styles
+  - package-lock.json
+  - postcss.config.mjs
+  - eslint.config.mjs
+  - next-env.d.ts
+  - next.config.ts
+  - firebase.json
+  - firestore.rules
+  - storage.rules
+  - apphosting.yaml
+  - tsconfig.json
+
+include:
+  - src/**
+
 rules:
   - "Before generating any code snippet or solution, always read and understand the entire project's existing context. This includes all relevant files, configurations, dependencies, code style, and architectural patterns."
   - "Ensure all output aligns with the project's current style, conventions, and technologies."
