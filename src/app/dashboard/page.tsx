@@ -15,7 +15,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuth } from '@/hooks/useAuth';
-import { Unauthorized }from '@/components/common/Unauthorized';
+import { Unauthorized } from '@/components/common/Unauthorized';
 import { 
   PieChart, 
   Pie, 
@@ -37,15 +37,12 @@ import {
 } from 'recharts';
 import { Workpackage, Project } from '@/types/project';
 import { ROLE_HIERARCHY, ROLE_NAMES } from '@/constants/roles';
-import { DEFAULT_ROLE_PERMISSIONS } from '@/app/management/components/RolePermissions';
-import { db } from '@/lib/firebase-client';
-import { collection, getDocs } from 'firebase/firestore';
+import { db, collection } from '@/lib/firebase-client';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 
 // 抽取共用樣式
-const cardStyles = "bg-white dark:bg-gray-900 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700";
-const titleStyles = "text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent";
-const loadingSpinner = "animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500";
+const cardStyles = "bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6";
+const titleStyles = "text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-4";
 
 // 抽取圖表顏色配置
 const CHART_COLORS = {
@@ -70,8 +67,8 @@ const formatFullDate = (date: Date | string) => {
 
 // 載入狀態組件
 const LoadingSpinner = () => (
-  <div className="flex items-center justify-center py-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
   </div>
 );
 
@@ -82,68 +79,25 @@ const ErrorMessage = ({ message }: { message: string }) => (
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const [hasPermission, setHasPermission] = React.useState<boolean>(false);
-  const [checkingPermission, setCheckingPermission] = React.useState<boolean>(true);
-
-  // 2. 狀態管理 Hooks
+  const { user, loading, hasPermission } = useAuth();
+  
   const [selectedProject, setSelectedProject] = React.useState<string>('');
   const [workpackagesCount, setWorkpackagesCount] = React.useState<number>(0);
   const [subWorkpackagesCount, setSubWorkpackagesCount] = React.useState<number>(0);
   const [statsLoading, setStatsLoading] = React.useState<boolean>(true);
 
-  // 3. Firestore 數據 Hooks
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'members'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(collection(db, 'projects'));
   const [ordersSnapshot, ordersLoading, ordersError] = useCollection(collection(db, 'finance', 'default', 'orders'));
   const [quotesSnapshot, quotesLoading, quotesError] = useCollection(collection(db, 'finance', 'default', 'quotes'));
   const [contractsSnapshot, contractsLoading, contractsError] = useCollection(collection(db, 'finance', 'default', 'contracts'));
 
-  // 檢查用戶權限
   React.useEffect(() => {
-    const checkPermission = async (): Promise<void> => {
-      if (!user?.currentRole) {
-        setHasPermission(false);
-        setCheckingPermission(false);
-        return;
-      }
-
-      try {
-        const managementRef = collection(db, 'management');
-        const snapshot = await getDocs(managementRef);
-        const roleData = snapshot.docs.find(doc => {
-          const data = doc.data();
-          return data.role === user.currentRole;
-        });
-
-        if (roleData) {
-          const data = roleData.data();
-          const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
-          setHasPermission(permissions.includes('dashboard'));
-        } else {
-          // 如果找不到角色配置，使用預設權限
-          const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[user.currentRole] || [];
-          setHasPermission(defaultPermissions.includes('dashboard'));
-        }
-      } catch (error) {
-        console.error('檢查權限失敗:', error);
-        setHasPermission(false);
-      } finally {
-        setCheckingPermission(false);
-      }
-    };
-
-    void checkPermission();
-  }, [user?.currentRole]);
-
-  // 檢查用戶是否已登入
-  React.useEffect(() => {
-    if (!authLoading && !user) {
+    if (!loading && !user) {
       router.push('/signin');
     }
-  }, [authLoading, user, router]);
+  }, [loading, user, router]);
 
-  // 5. 工作包統計 Effect
   React.useEffect(() => {
     if (projectsSnapshot && !projectsLoading && !projectsError) {
       setStatsLoading(true);
@@ -169,7 +123,6 @@ export default function DashboardPage() {
     }
   }, [projectsSnapshot, projectsLoading, projectsError]);
 
-  // 6. 統計各角色人數
   const roleCounts: Record<string, number> = Object.keys(ROLE_HIERARCHY).reduce((acc, role) => {
     acc[role] = 0;
     return acc;
@@ -184,7 +137,6 @@ export default function DashboardPage() {
     });
   }
 
-  // 7. 數據轉換 Memos
   const roleData = React.useMemo(() => 
     Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count })),
     [roleCounts]
@@ -264,7 +216,6 @@ export default function DashboardPage() {
     return progressData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [projectsSnapshot, selectedProject]);
 
-  // 8. 圖表配置
   const chartConfig = React.useMemo(() => ({
     dateAxis: {
       tick: { fontSize: 12 },
@@ -285,30 +236,25 @@ export default function DashboardPage() {
     }
   }), []);
 
-  // 如果正在載入認證或檢查權限，顯示載入中
-  if (authLoading || checkingPermission) {
+  if (loading) {
     return <LoadingSpinner />;
   }
 
-  // 如果未登入，不渲染內容
   if (!user) {
     return null;
   }
 
-  // 檢查用戶是否有儀表板權限
-  if (!hasPermission) {
+  if (!hasPermission('dashboard')) {
     const roleName = user.currentRole ? ROLE_NAMES[user.currentRole] : '未知角色';
     return <Unauthorized message={`您目前的角色 (${roleName}) 沒有權限訪問儀表板`} />;
   }
 
-  // 渲染儀表板內容
   return (
     <main className="max-w-4xl mx-auto mb-20">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6">管理儀表板</h1>
         
         <div className="flex gap-6 flex-col md:flex-row">
-          {/* 人員統計區塊 */}
           <section className={`flex-1 min-w-[320px] ${cardStyles}`}>
             <h3 className={titleStyles}>人員分布</h3>
             {usersLoading ? (
@@ -332,7 +278,6 @@ export default function DashboardPage() {
             )}
           </section>
 
-          {/* 小型統計卡片區塊 */}
           <div className="flex gap-3 flex-wrap">
             {[
               { title: '專案總數', loading: projectsLoading, error: projectsError, value: projectsSnapshot?.size },
@@ -346,7 +291,7 @@ export default function DashboardPage() {
                 <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{title}</div>
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {loading ? (
-                    <div className={loadingSpinner}></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                   ) : error ? (
                     <span className="text-red-500">錯誤</span>
                   ) : (
@@ -358,7 +303,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 工作包進度分析圖 */}
         <section className={`mt-8 ${cardStyles}`}>
           <h3 className={titleStyles}>工作包進度分析</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -378,7 +322,6 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </section>
 
-        {/* 專案進度變化和使用人力圖表 */}
         <section className={`mt-8 ${cardStyles}`}>
           <div className="flex justify-between items-center mb-4">
             <h3 className={titleStyles}>專案進度與人力分析</h3>
@@ -400,7 +343,6 @@ export default function DashboardPage() {
           
           {projectProgressData.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 進度與每日增長圖表 */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                 <h4 className="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">進度與每日增長</h4>
                 <ResponsiveContainer width="100%" height={300}>
@@ -446,7 +388,6 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* 人力與效率圖表 */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                 <h4 className="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">人力與效率分析</h4>
                 <ResponsiveContainer width="100%" height={300}>
@@ -504,7 +445,6 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* 效率趨勢圖表 */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                 <h4 className="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">效率趨勢分析</h4>
                 <ResponsiveContainer width="100%" height={300}>
@@ -551,7 +491,6 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* 狀態分析圖表 */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                 <h4 className="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400">工作狀態分析</h4>
                 <ResponsiveContainer width="100%" height={300}>

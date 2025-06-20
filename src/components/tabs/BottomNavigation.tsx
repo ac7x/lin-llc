@@ -1,30 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { type RoleKey } from '@/constants/roles';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase-client';
-import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 
 interface NavigationItem {
   id: string;
   name: string;
   path: string;
   icon: React.ReactNode;
-}
-
-interface RolePermissionData {
-  role: RoleKey;
-  pagePermissions: Array<{
-    id: string;
-    name: string;
-    description: string;
-    path: string;
-  }>;
-  updatedAt: string;
 }
 
 const navigationItems: NavigationItem[] = [
