@@ -37,7 +37,7 @@ interface DeveloperNote {
   timestamp: string;
 }
 
-export default function GuestbookPage(): ReactElement {
+export default function HomePage(): ReactElement {
   const { user, loading } = useAuth();
   const [messages, setMessages] = useState<FeedbackMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');

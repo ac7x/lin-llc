@@ -12,7 +12,7 @@ interface RolePermissionData {
   updatedAt: string;
 }
 
-export default function RolePermissions(): React.ReactElement {
+export default function RolePermissionsComponent(): React.ReactElement {
   const [selectedRole, setSelectedRole] = useState<RoleKey>('guest');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

@@ -14,7 +14,7 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
-import { exportPdfToBlob } from '@/components/pdf/pdfExport';
+import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { QuoteData } from "@/types/finance";
 import { doc, getDoc, collection } from "firebase/firestore";
@@ -98,7 +98,7 @@ export default function QuotesPage() {
         }
         const data = docSnap.data();
         // 保持原始的 Timestamp 格式，PDF 元件將負責處理
-        exportPdfToBlob(
+        generatePdfBlob(
             <QuotePdfDocument quote={data} />,
             `${data.quoteName || data.quoteId || '報價單'}.pdf`
         );

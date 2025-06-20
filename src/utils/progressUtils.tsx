@@ -5,7 +5,7 @@
  * - calculateProjectProgress: 根據工作包估算數量計算整體專案進度
  * - calculateWorkpackageProgress: 計算工作包進度
  * - ProjectProgressPercent: 顯示專案進度百分比的 React 元件
- * - WorkpackageProgressBar: 顯示工作包進度條的 React 元件
+ * - ProgressBar: 顯示工作包進度條的 React 元件
  */
 
 import React from "react";
@@ -80,7 +80,7 @@ export const ProjectProgressPercent: React.FC<{ project: Project }> = ({ project
 /**
  * React 組件：顯示工作包進度條
  */
-export const WorkpackageProgressBar: React.FC<{ wp: Workpackage }> = ({ wp }) => {
+export const ProgressBar: React.FC<{ wp: Workpackage }> = ({ wp }) => {
   const percent = calculateWorkpackageProgress(wp);
   return (
     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">

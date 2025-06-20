@@ -14,7 +14,7 @@
 import Link from "next/link";
 import React, { useState, useMemo } from "react";
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
-import { exportPdfToBlob } from '@/components/pdf/pdfExport';
+import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { OrderData } from "@/types/finance";
 import { doc, collection, getDoc } from "firebase/firestore";
@@ -98,7 +98,7 @@ export default function OrdersPage() {
         }
         const data = docSnap.data();
         // 保持原始的 Timestamp 格式，PDF 元件將負責處理
-        exportPdfToBlob(
+        generatePdfBlob(
             <OrderPdfDocument order={data} />,
             `${data.orderName || data.orderId || '訂單'}.pdf`
         );

@@ -40,7 +40,7 @@ const RESTORE_PATHS: Record<ArchiveType, string[]> = {
 type ColumnValue = string | number | Date | null;
 
 // 定義表格欄位配置
-const TABLE_COLUMNS = {
+const ARCHIVE_TABLE_COLUMNS = {
     contracts: [
         { key: 'contractName', label: '合約名稱', type: 'text' },
         { key: 'contractPrice', label: '價格', type: 'number' },
@@ -60,7 +60,7 @@ const TABLE_COLUMNS = {
 } as const;
 
 // 定義頁面標題
-const PAGE_TITLES = {
+const ARCHIVE_PAGE_TITLES = {
     contracts: '封存合約',
     orders: '封存訂單',
     quotes: '封存估價單',
@@ -180,7 +180,7 @@ export default function ArchivePage() {
 
     // 還原封存資料
     const handleRestore = async (row: ArchiveData) => {
-        if (!window.confirm(`確定要還原此${PAGE_TITLES[type].replace('封存', '')}嗎？`)) {
+        if (!window.confirm(`確定要還原此${ARCHIVE_PAGE_TITLES[type].replace('封存', '')}嗎？`)) {
             return;
         }
 
@@ -213,7 +213,7 @@ export default function ArchivePage() {
             // 刪除封存資料
             await deleteDoc(archiveDocRef);
             
-            setRestoreMessage(`已成功還原${PAGE_TITLES[type].replace('封存', '')}`);
+            setRestoreMessage(`已成功還原${ARCHIVE_PAGE_TITLES[type].replace('封存', '')}`);
             
             // 3秒後清除訊息
             setTimeout(() => {
@@ -286,7 +286,7 @@ export default function ArchivePage() {
 
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                        {PAGE_TITLES[type]}
+                        {ARCHIVE_PAGE_TITLES[type]}
                     </h1>
                     <div className="relative">
                         <input
@@ -308,7 +308,7 @@ export default function ArchivePage() {
                         <thead>
                             <tr className="bg-gray-50 dark:bg-gray-900">
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">序號</th>
-                                {TABLE_COLUMNS[type].map(({ key, label }) => (
+                                {ARCHIVE_TABLE_COLUMNS[type].map(({ key, label }) => (
                                     <th key={key} className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                                         {label}
                                     </th>
@@ -320,7 +320,7 @@ export default function ArchivePage() {
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {dataLoading ? (
                                 <tr>
-                                    <td colSpan={TABLE_COLUMNS[type].length + 3} className="px-4 py-8 text-center">
+                                    <td colSpan={ARCHIVE_TABLE_COLUMNS[type].length + 3} className="px-4 py-8 text-center">
                                         <div className="flex items-center justify-center">
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                                         </div>
@@ -328,13 +328,13 @@ export default function ArchivePage() {
                                 </tr>
                             ) : dataError ? (
                                 <tr>
-                                    <td colSpan={TABLE_COLUMNS[type].length + 3} className="px-4 py-4 text-center text-red-500 dark:text-red-400">
+                                    <td colSpan={ARCHIVE_TABLE_COLUMNS[type].length + 3} className="px-4 py-4 text-center text-red-500 dark:text-red-400">
                                         {String(dataError)}
                                     </td>
                                 </tr>
                             ) : rows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={TABLE_COLUMNS[type].length + 3} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan={ARCHIVE_TABLE_COLUMNS[type].length + 3} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                         尚無封存資料
                                     </td>
                                 </tr>
@@ -342,7 +342,7 @@ export default function ArchivePage() {
                                 rows.map((row) => (
                                     <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200">
                                         <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{row.idx}</td>
-                                        {TABLE_COLUMNS[type].map(({ key, type: columnType }) => (
+                                        {ARCHIVE_TABLE_COLUMNS[type].map(({ key, type: columnType }) => (
                                             <td key={key} className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                                                 {formatColumnValue(row[key as keyof typeof row], columnType)}
                                             </td>

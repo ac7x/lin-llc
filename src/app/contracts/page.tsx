@@ -14,7 +14,7 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
-import { exportPdfToBlob } from '@/components/pdf/pdfExport';
+import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { db } from '@/lib/firebase-client';
 import { useAuth } from "@/hooks/useAuth";
 import { useCollection } from "react-firebase-hooks/firestore";
@@ -100,7 +100,7 @@ export default function ContractsPage() {
         }
         const data = docSnap.data();
         // 保持原始的 Timestamp 格式，PDF 元件將負責處理
-        exportPdfToBlob(
+        generatePdfBlob(
             <ContractPdfDocument contract={data} />,
             `${data.contractName || data.contractId || '合約'}.pdf`
         );

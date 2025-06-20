@@ -20,7 +20,7 @@ import { Template, SubWorkpackageTemplateItem } from "@/types/project";
 import { nanoid } from "nanoid";
 import { Timestamp } from 'firebase/firestore';
 
-export default function TemplatesAdminPage() {
+export default function TemplatesPage() {
   const { user } = useAuth();
   const [templatesSnapshot] = useCollection(collection(db, "templates"));
   const [showModal, setShowModal] = useState(false);

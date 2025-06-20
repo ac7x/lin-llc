@@ -17,7 +17,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from "react-firebase-hooks/firestore";
 import { ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { ProjectProgressPercent, WorkpackageProgressBar, calculateWorkpackageProgress } from "@/utils/progressUtils";
+import { ProjectProgressPercent, ProgressBar, calculateWorkpackageProgress } from "@/utils/progressUtils";
 import type { Project } from "@/types/project";
 import { PageLayout, PageContent, Sidebar } from "@/components/layout/PageLayout";
 import { PermissionCheck } from "@/components/common/PermissionCheck";
@@ -194,7 +194,7 @@ function SidebarContent() {
                                                         </span>
                                                     </div>
                                                     <div className="mt-1 flex items-center gap-2">
-                                                        <WorkpackageProgressBar wp={wp as import("@/types/project").Workpackage} />
+                                                        <ProgressBar wp={wp as import("@/types/project").Workpackage} />
                                                         <span className="text-xs text-gray-500">
                                                             {calculateWorkpackageProgress(wp as import("@/types/project").Workpackage)}%
                                                         </span>

@@ -1,5 +1,4 @@
 .github/codegen.md
-.github/tree.md
 .github/.copilot-pull-request-description-instructions.md
 .github/.copilot-commit-message-instructions.md
 .github/.copilot-codeGeneration-instructions.md
@@ -29,4 +28,3 @@ public
 firestore.rules
 storage.rules
 script
-.github

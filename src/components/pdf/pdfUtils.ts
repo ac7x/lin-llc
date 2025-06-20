@@ -8,7 +8,7 @@
 import { ReactElement } from 'react';
 import { pdf } from '@react-pdf/renderer';
 
-export async function exportPdfToBlob(DocumentComponent: ReactElement, fileName: string) {
+export async function generatePdfBlob(DocumentComponent: ReactElement, fileName: string) {
     const asPdf = pdf();
     asPdf.updateContainer(DocumentComponent);
     const blob = await asPdf.toBlob();

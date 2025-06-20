@@ -4,6 +4,7 @@
 ├── firebase.json
 ├── firestore.rules
 ├── next.config.ts
+├── next-env.d.ts
 ├── package.json
 ├── package-lock.json
 ├── postcss.config.mjs
@@ -59,6 +60,7 @@
 │   │   │   ├── [order]
 │   │   │   │   └── page.tsx
 │   │   │   └── page.tsx
+│   │   ├── page.tsx
 │   │   ├── profile
 │   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
@@ -68,7 +70,6 @@
 │   │   │   ├── import
 │   │   │   │   └── page.tsx
 │   │   │   ├── layout.tsx
-│   │   │   ├── PageLayout.tsx
 │   │   │   ├── page.tsx
 │   │   │   ├── [project]
 │   │   │   │   ├── components
@@ -85,6 +86,8 @@
 │   │   │   │   │   └── page.tsx
 │   │   │   │   ├── project-journal
 │   │   │   │   │   ├── components
+│   │   │   │   │   │   ├── JournalForm.tsx
+│   │   │   │   │   │   ├── JournalHistory.tsx
 │   │   │   │   │   │   └── WeatherDisplay.tsx
 │   │   │   │   │   └── page.tsx
 │   │   │   │   ├── project-materials
@@ -94,9 +97,8 @@
 │   │   │   │       │   └── page.tsx
 │   │   │   │       └── [workpackage]
 │   │   │   │           └── page.tsx
-│   │   │   ├── templates
-│   │   │   │   └── page.tsx
-│   │   │   └── useFilteredProjects.ts
+│   │   │   └── templates
+│   │   │       └── page.tsx
 │   │   ├── quotes
 │   │   │   ├── add
 │   │   │   │   └── page.tsx
@@ -118,7 +120,10 @@
 │   │   │   ├── DataLoader.tsx
 │   │   │   ├── PermissionCheck.tsx
 │   │   │   ├── Tabs.tsx
-│   │   │   └── Unauthorized.tsx
+│   │   │   ├── Unauthorized.tsx
+│   │   │   └── VisTimeline.tsx
+│   │   ├── layout
+│   │   │   └── PageLayout.tsx
 │   │   ├── pdf
 │   │   │   ├── ContractPdfDocument.tsx
 │   │   │   ├── OrderPdfDocument.tsx
@@ -127,9 +132,12 @@
 │   │   └── tabs
 │   │       └── BottomNavigation.tsx
 │   ├── constants
+│   │   ├── navigation.tsx
+│   │   ├── permissions.ts
 │   │   └── roles.ts
 │   ├── hooks
 │   │   ├── useAuth.ts
+│   │   ├── useFilteredProjects.ts
 │   │   ├── useFirebaseMessaging.ts
 │   │   └── useNotifications.ts
 │   ├── lib
@@ -140,16 +148,22 @@
 │   │   ├── globals.css
 │   │   └── react-big-calendar.css
 │   ├── types
+│   │   ├── archive.d.ts
 │   │   ├── auth.d.ts
+│   │   ├── calendar.d.ts
 │   │   ├── common.d.ts
 │   │   ├── finance.d.ts
 │   │   ├── google-maps.d.ts
+│   │   ├── navigation.d.ts
 │   │   ├── notification.d.ts
-│   │   └── project.d.ts
+│   │   ├── project.d.ts
+│   │   └── timeline.d.ts
 │   └── utils
+│       ├── calendarUtils.ts
 │       ├── colorUtils.ts
 │       ├── dateUtils.ts
 │       ├── progressUtils.tsx
-│       └── taiwanCityUtils.ts
+│       ├── taiwanCityUtils.ts
+│       └── timelineUtils.ts
 ├── storage.rules
 └── tsconfig.json

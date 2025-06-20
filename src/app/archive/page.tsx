@@ -20,7 +20,7 @@ import {
   doc 
 } from '@/lib/firebase-client';
 
-export default function ArchivedPage() {
+export default function ArchivePage() {
     const [clickCount, setClickCount] = useState(0);
     const [lastClickTime, setLastClickTime] = useState<number>(0);
 
