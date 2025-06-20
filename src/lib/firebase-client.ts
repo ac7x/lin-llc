@@ -103,6 +103,7 @@ if (isClient) {
       isTokenAutoRefreshEnabled: true,
     });
   } catch (_error) {
+    throw _error;
   }
 }
 
@@ -118,7 +119,7 @@ export async function getAppCheckToken(): Promise<string | null> {
     const tokenResult = await getToken(appCheck);
     return tokenResult.token;
   } catch (_error) {
-    throw error;
+    throw _error;
   }
 }
 

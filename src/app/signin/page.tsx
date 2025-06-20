@@ -14,8 +14,15 @@ export default function SignInPage(): ReactElement {
       await signInWithGoogle();
       router.push('/profile');
     } catch (_err) {
-      if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
+      if (
+        typeof _err === 'object' &&
+        _err !== null &&
+        'message' in _err &&
+        typeof (_err as { message?: unknown }).message === 'string'
+      ) {
+        // 可在此處理錯誤訊息
       } else {
+        // 其他型別錯誤處理
       }
     }
   };

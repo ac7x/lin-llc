@@ -129,7 +129,7 @@ export const useAuth = (): UseAuthReturn => {
               error: {
                 code: 'auth/error',
                 message: '載入用戶資料或同步權限時發生錯誤',
-                details: error,
+                details: _error,
               },
             }));
           }
@@ -187,19 +187,19 @@ export const useAuth = (): UseAuthReturn => {
 
     } catch (_err) {
       let authError: AuthError;
-      if (err instanceof FirebaseError) {
-        authError = { code: err.code, message: err.message, details: err };
-      } else if (err instanceof Error) {
+      if (_err instanceof FirebaseError) {
+        authError = { code: _err.code, message: _err.message, details: _err };
+      } else if (_err instanceof Error) {
         authError = {
           code: 'unknown',
-          message: err.message,
-          details: err,
+          message: _err.message,
+          details: _err,
         };
       } else {
         authError = {
           code: 'unknown',
           message: '登入過程中發生未知的錯誤',
-          details: err,
+          details: _err,
         };
       }
       setAuthState(prev => ({ ...prev, error: authError }));

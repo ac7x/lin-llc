@@ -158,7 +158,7 @@ export default function SendNotificationPage(): React.ReactElement {
     } catch (_error) {
       setSendStatus({
         type: 'error',
-        message: error instanceof Error ? error.message : '發送通知失敗，請重試',
+        message: _error instanceof Error ? _error.message : '發送通知失敗，請重試',
       });
     } finally {
       setIsSending(false);

@@ -87,7 +87,7 @@ export default function OrderAddPage() {
       });
       router.push('/orders');
     } catch (_err) {
-      alert(`新增訂單失敗: ${  err instanceof Error ? err.message : String(err)}`);
+      alert(`新增訂單失敗: ${_err instanceof Error ? _err.message : String(_err)}`);
     }
   };
 

@@ -119,7 +119,7 @@ export default function OrderDetailPage() {
       setClientEmail(editClientEmail);
       setEditing(false);
     } catch (_err) {
-      alert(`儲存失敗: ${  err instanceof Error ? err.message : String(err)}`);
+      alert(`儲存失敗: ${_err instanceof Error ? _err.message : String(_err)}`);
     }
   };
 

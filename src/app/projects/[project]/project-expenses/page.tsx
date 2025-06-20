@@ -218,7 +218,7 @@ export default function ProjectExpensesPage() {
       // 然後重置表單
       resetForm();
     } catch (_error) {
-      setMessage(`儲存失敗: ${  error instanceof Error ? error.message : String(error)}`);
+      setMessage(`儲存失敗: ${_error instanceof Error ? _error.message : String(_error)}`);
     } finally {
       setSaving(false);
     }
@@ -234,7 +234,7 @@ export default function ProjectExpensesPage() {
       });
       setMessage('已刪除費用');
     } catch (_error) {
-      setMessage(`刪除失敗: ${  error instanceof Error ? error.message : String(error)}`);
+      setMessage(`刪除失敗: ${_error instanceof Error ? _error.message : String(_error)}`);
     }
   };
 
