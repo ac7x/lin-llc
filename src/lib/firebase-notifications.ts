@@ -19,8 +19,9 @@ import {
   serverTimestamp,
   writeBatch,
   db,
-  Timestamp
 } from '@/lib/firebase-client';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { DocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
 import { COLLECTIONS } from './firebase-config';
 import type { NotificationMessage } from '@/types/notification';
 import type { AppUser } from '@/types/auth';
@@ -32,15 +33,13 @@ interface FirebaseError extends Error {
   message: string;
 }
 
-// 新增快取機制
+// #region 快取機制
 const notificationCache = new Map<string, {
   data: NotificationMessage[];
   timestamp: number;
 }>();
-
 const CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取
 
-// 快取管理函數
 function getCachedNotifications(userId: string): NotificationMessage[] | null {
   const cached = notificationCache.get(userId);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -55,6 +54,42 @@ function setCachedNotifications(userId: string, notifications: NotificationMessa
     timestamp: Date.now()
   });
 }
+// #endregion
+
+// #region 輔助函數
+/** 移除物件中的 undefined 屬性 */
+const cleanObject = <T extends object>(obj: T): Partial<T> => {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined)
+  ) as Partial<T>;
+};
+
+/** 將 Firestore 文件快照轉換為通知物件 */
+const docToNotification = (doc: DocumentSnapshot<DocumentData>): NotificationMessage => {
+  const data = doc.data() as Omit<NotificationMessage, 'id'>;
+  return {
+    ...data,
+    id: doc.id,
+    createdAt: data.createdAt, // Should be a Timestamp
+    readAt: data.readAt,       // Should be a Timestamp or undefined
+  };
+};
+
+/** 在記憶體中處理通知的排序和過濾 */
+const processNotificationsInMemory = (
+  notifications: NotificationMessage[],
+  options: { includeArchived?: boolean; onlyUnread?: boolean }
+): NotificationMessage[] => {
+  const { includeArchived, onlyUnread } = options;
+  return notifications
+    .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())
+    .filter(n => {
+      if (onlyUnread && n.isRead) return false;
+      if (!includeArchived && n.isArchived) return false;
+      return true;
+    });
+};
+// #endregion
 
 /**
  * 建立新通知
@@ -64,24 +99,14 @@ export async function createNotification(
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<string> {
   try {
-    const notificationData: Omit<NotificationMessage, 'id'> = {
+    const notificationData = {
       ...notification,
       userId,
       isRead: false,
       isArchived: false,
-      createdAt: Timestamp.now(),
-    };
-
-    // 過濾掉 undefined 值，避免 Firestore 錯誤
-    const cleanData = Object.fromEntries(
-      Object.entries(notificationData).filter(([, value]) => value !== undefined)
-    );
-
-    const docRef = await addDoc(collection(db, NOTIFICATIONS), {
-      ...cleanData,
       createdAt: serverTimestamp(),
-    });
-
+    };
+    const docRef = await addDoc(collection(db, NOTIFICATIONS), cleanObject(notificationData));
     return docRef.id;
   } catch (error) {
     console.error('Failed to create notification:', error);
@@ -98,29 +123,17 @@ export async function createBulkNotifications(
 ): Promise<void> {
   try {
     const batch = writeBatch(db);
-    const now = Timestamp.now();
-
     userIds.forEach((userId) => {
       const notificationRef = doc(collection(db, NOTIFICATIONS));
-      const notificationData: Omit<NotificationMessage, 'id'> = {
+      const notificationData = {
         ...notification,
         userId,
         isRead: false,
         isArchived: false,
-        createdAt: now,
-      };
-
-      // 過濾掉 undefined 值，避免 Firestore 錯誤
-      const cleanData = Object.fromEntries(
-        Object.entries(notificationData).filter(([, value]) => value !== undefined)
-      );
-
-      batch.set(notificationRef, {
-        ...cleanData,
         createdAt: serverTimestamp(),
-      });
+      };
+      batch.set(notificationRef, cleanObject(notificationData));
     });
-
     await batch.commit();
   } catch (error) {
     console.error('Failed to create bulk notifications:', error);
@@ -139,100 +152,45 @@ export async function getUserNotifications(
     onlyUnread?: boolean;
   } = {}
 ): Promise<NotificationMessage[]> {
-  try {
-    const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
+  const { limitCount = 50, ...filterOptions } = options;
 
-    // 檢查快取
+  try {
     const cached = getCachedNotifications(userId);
     if (cached) {
-      return cached.filter(n => {
-        if (!includeArchived && n.isArchived) return false;
-        if (onlyUnread && n.isRead) return false;
-        return true;
-      });
+      return processNotificationsInMemory(cached, filterOptions);
     }
 
-    // 優化查詢條件
-    const conditions = [
+    const q = query(
+      collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
-    ];
+    );
 
-    if (!includeArchived) {
-      conditions.push(where('isArchived', '==', false));
-    }
-    if (onlyUnread) {
-      conditions.push(where('isRead', '==', false));
-    }
+    const snapshot = await getDocs(q);
+    const notifications = snapshot.docs.map(docToNotification);
 
-    const q = query(collection(db, NOTIFICATIONS), ...conditions);
+    setCachedNotifications(userId, notifications);
 
-    try {
-      const snapshot = await getDocs(q);
-      const notifications = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-        readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
-      })) as NotificationMessage[];
-
-      // 更新快取
-      setCachedNotifications(userId, notifications);
-      return notifications;
-    } catch (error: unknown) {
-      const firebaseError = error as FirebaseError;
-      if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
-        console.warn('使用基本查詢...');
-        return await getBasicNotifications(userId, options);
-      }
-      throw error;
-    }
+    return processNotificationsInMemory(notifications, filterOptions);
   } catch (error) {
+    const firebaseError = error as FirebaseError;
+    if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
+       console.warn('Firestore 索引未建立，將在客戶端進行排序。查詢效能可能受到影響。', firebaseError.message);
+      // 當索引不存在時，改用不含排序的備用查詢
+      const fallbackQuery = query(
+        collection(db, NOTIFICATIONS),
+        where('userId', '==', userId),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(fallbackQuery);
+      const notifications = snapshot.docs.map(docToNotification);
+      setCachedNotifications(userId, notifications);
+      return processNotificationsInMemory(notifications, filterOptions);
+    }
     console.error('Failed to get user notifications:', error);
     throw error;
   }
-}
-
-// 基本查詢函數
-async function getBasicNotifications(
-  userId: string,
-  options: {
-    includeArchived?: boolean;
-    limitCount?: number;
-    onlyUnread?: boolean;
-  }
-): Promise<NotificationMessage[]> {
-  const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
-
-  const q = query(
-    collection(db, NOTIFICATIONS),
-    where('userId', '==', userId),
-    limit(limitCount)
-  );
-
-  const snapshot = await getDocs(q);
-  let notifications = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-    readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
-  })) as NotificationMessage[];
-
-  notifications = notifications
-    .sort((a, b) => {
-      const aTime = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
-      const bTime = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
-      return bTime - aTime;
-    })
-    .filter(n => {
-      if (!includeArchived && n.isArchived) return false;
-      if (onlyUnread && n.isRead) return false;
-      return true;
-    });
-
-  setCachedNotifications(userId, notifications);
-  return notifications;
 }
 
 /**
@@ -247,41 +205,43 @@ export function subscribeToUserNotifications(
     onlyUnread?: boolean;
   } = {}
 ): () => void {
-  const { includeArchived = false, limitCount = 50, onlyUnread = false } = options;
+  const { limitCount = 50, ...filterOptions } = options;
 
-  // 使用基本查詢
   const q = query(
     collection(db, NOTIFICATIONS),
     where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
     limit(limitCount)
   );
 
-  return onSnapshot(q, (snapshot) => {
-    let notifications = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-      readAt: doc.data().readAt?.toDate?.()?.toISOString() || doc.data().readAt,
-    })) as NotificationMessage[];
-
-    // 在記憶體中進行排序和過濾
-    notifications = notifications.sort((a, b) => {
-      const aTime = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
-      const bTime = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
-      return bTime - aTime;
-    });
-
-    if (!includeArchived) {
-      notifications = notifications.filter(n => !n.isArchived);
-    }
-    if (onlyUnread) {
-      notifications = notifications.filter(n => !n.isRead);
-    }
-
-    callback(notifications);
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const notifications = snapshot.docs.map(docToNotification);
+    callback(processNotificationsInMemory(notifications, filterOptions));
   }, (error) => {
+    const firebaseError = error as FirebaseError;
+    if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
+      console.warn('Firestore 索引未建立，訂閱功能將在客戶端進行排序。', firebaseError.message);
+      
+      // 取消原本的監聽
+      unsubscribe();
+
+      // 索引不存在時，使用不含排序的查詢
+      const fallbackQuery = query(
+        collection(db, NOTIFICATIONS),
+        where('userId', '==', userId),
+        limit(limitCount)
+      );
+      
+      onSnapshot(fallbackQuery, (snapshot) => {
+        const notifications = snapshot.docs.map(docToNotification);
+        callback(processNotificationsInMemory(notifications, filterOptions));
+      });
+      return;
+    }
     console.error('Failed to subscribe to notifications:', error);
   });
+
+  return unsubscribe;
 }
 
 /**
@@ -304,25 +264,14 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
  * 批量標記通知為已讀
  */
 export async function markMultipleNotificationsAsRead(notificationIds: string[]): Promise<void> {
+  if (notificationIds.length === 0) return;
   try {
     const batch = writeBatch(db);
-    const now = serverTimestamp();
-
-    // 分批處理，每批最多 500 個操作
-    const BATCH_SIZE = 500;
-    for (let i = 0; i < notificationIds.length; i += BATCH_SIZE) {
-      const batchIds = notificationIds.slice(i, i + BATCH_SIZE);
-      batchIds.forEach((notificationId) => {
-        const notificationRef = doc(db, NOTIFICATIONS, notificationId);
-        batch.update(notificationRef, {
-          isRead: true,
-          readAt: now,
-        });
-      });
-      await batch.commit();
-    }
-
-    // 清除相關快取
+    notificationIds.forEach((id) => {
+      const ref = doc(db, NOTIFICATIONS, id);
+      batch.update(ref, { isRead: true, readAt: serverTimestamp() });
+    });
+    await batch.commit();
     notificationCache.clear();
   } catch (error) {
     console.error('Failed to mark multiple notifications as read:', error);
@@ -342,8 +291,9 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
     );
 
     const snapshot = await getDocs(q);
-    const batch = writeBatch(db);
+    if (snapshot.empty) return;
 
+    const batch = writeBatch(db);
     snapshot.docs.forEach((docSnap) => {
       batch.update(docSnap.ref, {
         isRead: true,
@@ -352,6 +302,7 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
     });
 
     await batch.commit();
+    notificationCache.clear();
   } catch (error) {
     console.error('Failed to mark all notifications as read:', error);
     throw error;
@@ -374,18 +325,10 @@ export async function archiveNotification(notificationId: string): Promise<void>
 }
 
 /**
- * 刪除通知
+ * 刪除通知 (軟刪除)
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
-  try {
-    const notificationRef = doc(db, NOTIFICATIONS, notificationId);
-    await updateDoc(notificationRef, {
-      isArchived: true, // 軟刪除，實際上是封存
-    });
-  } catch (error) {
-    console.error('Failed to delete notification:', error);
-    throw error;
-  }
+  return archiveNotification(notificationId);
 }
 
 /**
@@ -393,29 +336,23 @@ export async function deleteNotification(notificationId: string): Promise<void> 
  */
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
   try {
-    // 使用基本查詢
     const q = query(
       collection(db, NOTIFICATIONS),
-      where('userId', '==', userId)
+      where('userId', '==', userId),
+      where('isRead', '==', false),
+      where('isArchived', '==', false)
     );
-
-    try {
-      const snapshot = await getDocs(q);
-      const notifications = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as NotificationMessage[];
-
-      return notifications.filter(n => !n.isRead && !n.isArchived).length;
-    } catch (error: unknown) {
-      const firebaseError = error as FirebaseError;
-      if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
-        console.warn('等待索引建立中，使用基本查詢...');
-        return 0; // 在索引建立期間返回 0
-      }
-      throw error;
-    }
+    const snapshot = await getDocs(q);
+    return snapshot.size;
   } catch (error) {
+    const firebaseError = error as FirebaseError;
+    if (firebaseError.code === 'failed-precondition' && firebaseError.message.includes('requires an index')) {
+      console.warn('缺少索引，未讀計數將從客戶端計算，可能不準確。', firebaseError.message);
+      const fallbackQuery = query(collection(db, NOTIFICATIONS), where('userId', '==', userId));
+      const snapshot = await getDocs(fallbackQuery);
+      const notifications = snapshot.docs.map(docToNotification);
+      return notifications.filter(n => !n.isRead && !n.isArchived).length;
+    }
     console.error('Failed to get unread notification count:', error);
     return 0;
   }
@@ -432,7 +369,6 @@ export async function updateUserNotificationSettings(
     const userRef = doc(db, USERS, userId);
     await updateDoc(userRef, {
       'notificationSettings': settings,
-      updatedAt: serverTimestamp(),
     });
   } catch (error) {
     console.error('Failed to update notification settings:', error);
