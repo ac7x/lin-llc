@@ -39,6 +39,7 @@ import { ROLE_HIERARCHY, ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db, collection } from '@/lib/firebase-client';
 import { Workpackage, Project } from '@/types/project';
+import { safeToDate } from '@/utils/dateUtils';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 
 // 抽取共用樣式
@@ -240,7 +241,11 @@ export default function DashboardPage() {
         Array.isArray(projectData.reports)
       ) {
         const sortedReports = [...projectData.reports].sort(
-          (a, b) => a.date.toDate().getTime() - b.date.toDate().getTime()
+          (a, b) => {
+            const dateA = safeToDate(a.date);
+            const dateB = safeToDate(b.date);
+            return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+          }
         );
 
         const calculateRollingAverage = (index: number, windowSize: number = 3) => {
@@ -274,7 +279,10 @@ export default function DashboardPage() {
             const rollingAverageWorkforce = calculateRollingAverage(index);
 
             progressData.push({
-              date: report.date.toDate().toISOString().split('T')[0],
+              date: (() => {
+                const date = safeToDate(report.date);
+                return date ? date.toISOString().split('T')[0] : '';
+              })(),
               progress: report.projectProgress,
               workforce: report.workforceCount,
               projectName: projectData.projectName,

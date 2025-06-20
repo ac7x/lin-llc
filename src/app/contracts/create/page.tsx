@@ -166,7 +166,7 @@ export default function ImportContractPage() {
 
       setMessage(`已成功由${tab === 'order' ? '訂單' : '估價單'}建立合約，來源ID: ${row.id}`);
     } catch (_err) {
-      setMessage(`建立失敗: ${  err instanceof Error ? err.message : String(err)}`);
+      setMessage(`建立失敗: ${_err instanceof Error ? _err.message : String(_err)}`);
     } finally {
       setImportingId(null);
     }

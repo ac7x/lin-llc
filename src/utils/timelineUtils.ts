@@ -1,13 +1,16 @@
 import { Timestamp } from 'firebase/firestore';
 import { DateType } from 'vis-timeline/standalone';
 
+import { safeToDate } from '@/utils/dateUtils';
+
 /**
  * Converts a Firestore Timestamp to a JavaScript Date object.
  * @param ts - The Firestore Timestamp or null/undefined.
  * @returns A Date object or undefined.
  */
 export function timestampToDate(ts?: Timestamp | null): Date | undefined {
-  return ts ? ts.toDate() : undefined;
+  const result = safeToDate(ts);
+  return result || undefined;
 }
 
 /**

@@ -8,6 +8,7 @@
 import Image from 'next/image';
 
 import { ActivityLog, DailyReport, PhotoRecord } from '@/types/project';
+import { safeToDate } from '@/utils/dateUtils';
 
 interface JournalHistoryProps {
   reports: DailyReport[];
@@ -31,12 +32,19 @@ export default function JournalHistory({ reports }: JournalHistoryProps) {
       <div className='divide-y divide-gray-200 dark:divide-gray-700'>
         {reports
           .slice() // 創建副本以避免直接修改 props
-          .sort((a, b) => b.date.toDate().getTime() - a.date.toDate().getTime()) //
+          .sort((a, b) => {
+            const dateA = safeToDate(b.date);
+            const dateB = safeToDate(a.date);
+            return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+          })
           .map(report => (
             <div key={report.id} className='p-6'>
-              <div className='flex justify-between mb-2'>
-                <h3 className='font-bold text-gray-900 dark:text-gray-100'>
-                  {report.date.toDate().toLocaleDateString()}
+              <div className='flex justify-between items-start mb-4'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                  工作日誌 - {(() => {
+                    const date = safeToDate(report.date);
+                    return date ? date.toLocaleDateString() : 'N/A';
+                  })()}
                 </h3>
                 <div className='flex items-center gap-4'>
                   {typeof report.projectProgress === 'number' && (

@@ -21,6 +21,7 @@ import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { useAuth } from '@/hooks/useAuth';
 import { db , collection } from '@/lib/firebase-client';
 import { ContractData } from '@/types/finance';
+import { safeToDate } from '@/utils/dateUtils';
 
 export default function ContractsPage() {
   useAuth(); // 僅用於權限與登入狀態，不再解構 db
@@ -55,8 +56,8 @@ export default function ContractsPage() {
     let arr = contractsSnapshot.docs.map((contract, idx) => {
       // 型別明確化
       const data = contract.data() as ContractData;
-      const createdAtDate = data.createdAt.toDate();
-      const updatedAtDate = data.updatedAt.toDate();
+      const createdAtDate = safeToDate(data.createdAt);
+      const updatedAtDate = safeToDate(data.updatedAt);
       const daysAgo = createdAtDate
         ? Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24))
         : '-';

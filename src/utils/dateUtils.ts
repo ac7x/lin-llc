@@ -31,6 +31,48 @@ export interface DateFormatProps {
 }
 
 /**
+ * 安全地將任何可能的 Timestamp 物件轉換為 Date
+ * 這個函數會處理各種可能的 Timestamp 型別，包括 Firestore Timestamp 和其他具有 toDate 方法的物件
+ */
+export function safeToDate(value: unknown): Date | null {
+  if (!value) return null;
+  
+  // 如果已經是 Date 物件
+  if (value instanceof Date) return value;
+  
+  // 如果是 Firestore Timestamp
+  if (value instanceof Timestamp) return value.toDate();
+  
+  // 如果是具有 toDate 方法的物件
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toDate' in value &&
+    typeof (value as { toDate: () => Date }).toDate === 'function'
+  ) {
+    try {
+      return (value as { toDate: () => Date }).toDate();
+    } catch {
+      return null;
+    }
+  }
+  
+  // 如果是字串，嘗試解析
+  if (typeof value === 'string') {
+    const parsed = parseISO(value);
+    if (isValid(parsed)) return parsed;
+  }
+  
+  // 如果是數字，嘗試轉換為 Date
+  if (typeof value === 'number') {
+    const date = new Date(value);
+    if (isValid(date)) return date;
+  }
+  
+  return null;
+}
+
+/**
  * 將輸入轉換為合法的 Date 物件
  */
 export function parseToDate(value: DateInput | null | undefined): Date {

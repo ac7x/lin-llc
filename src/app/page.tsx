@@ -18,6 +18,7 @@ import {
   limit,
   getDocs,
 } from '@/lib/firebase-client';
+import { safeToDate } from '@/utils/dateUtils';
 
 
 // 定義留言訊息的結構
@@ -83,10 +84,11 @@ export default function HomePage(): ReactElement {
           };
 
           if (message.isDeveloperNote && !foundDeveloperNote) {
+            const timestamp = safeToDate(message.createdAt);
             foundDeveloperNote = {
               message: message.message,
               version: message.version || 'N/A',
-              timestamp: message.createdAt?.toDate().toLocaleString() || 'N/A',
+              timestamp: timestamp ? timestamp.toLocaleString() : 'N/A',
             };
           }
           fetchedMessages.push(message);
@@ -118,7 +120,7 @@ export default function HomePage(): ReactElement {
       // 在客戶端過濾開發者日誌和時間
       const recentUserMessages = snapshot.docs.filter(doc => {
         const data = doc.data();
-        const createdAt = data.createdAt?.toDate();
+        const createdAt = safeToDate(data.createdAt);
         return !data.isDeveloperNote && createdAt && createdAt >= twentyFourHoursAgo;
       });
 
@@ -273,7 +275,10 @@ export default function HomePage(): ReactElement {
                     {msg.userName}
                   </span>
                   <span className='text-xs text-gray-500 dark:text-gray-400'>
-                    {msg.createdAt?.toDate().toLocaleString()}
+                    {(() => {
+                      const timestamp = safeToDate(msg.createdAt);
+                      return timestamp ? timestamp.toLocaleString() : 'N/A';
+                    })()}
                   </span>
                 </div>
                 <p className='mt-1 text-gray-700 dark:text-gray-300 whitespace-pre-wrap'>

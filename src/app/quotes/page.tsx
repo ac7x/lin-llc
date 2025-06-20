@@ -20,6 +20,7 @@ import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
 import { db } from '@/lib/firebase-client';
 import { QuoteData } from '@/types/finance';
+import { safeToDate } from '@/utils/dateUtils';
 
 export default function QuotesPage() {
   const [quotesSnapshot, loading, error] = useCollection(
@@ -54,8 +55,8 @@ export default function QuotesPage() {
     let arr = quotesSnapshot.docs.map((quote, idx) => {
       // 型別明確化
       const data = quote.data() as QuoteData;
-      const createdAtDate = data.createdAt.toDate();
-      const updatedAtDate = data.updatedAt.toDate();
+      const createdAtDate = safeToDate(data.createdAt);
+      const updatedAtDate = safeToDate(data.updatedAt);
       const daysAgo = createdAtDate
         ? Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24))
         : '-';

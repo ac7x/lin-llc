@@ -20,6 +20,7 @@ import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { db } from '@/lib/firebase-client';
 import { OrderData } from '@/types/finance';
+import { safeToDate } from '@/utils/dateUtils';
 
 export default function OrdersPage() {
   const [ordersSnapshot, loading, error] = useCollection(
@@ -54,8 +55,8 @@ export default function OrdersPage() {
     let arr = ordersSnapshot.docs.map((order, idx) => {
       // 型別明確化
       const data = order.data() as OrderData;
-      const createdAtDate = data.createdAt.toDate();
-      const updatedAtDate = data.updatedAt.toDate();
+      const createdAtDate = safeToDate(data.createdAt);
+      const updatedAtDate = safeToDate(data.updatedAt);
       const daysAgo = createdAtDate
         ? Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24))
         : '-';

@@ -75,7 +75,7 @@ export default function ProjectCalendarPage() {
         setEvents(calendarEvents);
         setError(null);
       } catch (_err) {
-        setError(err instanceof Error ? err.message : '發生錯誤');
+        setError(_err instanceof Error ? _err.message : '發生錯誤');
       } finally {
         setLoading(false);
       }
