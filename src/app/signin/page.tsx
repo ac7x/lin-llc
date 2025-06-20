@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { type ReactElement } from 'react';
 
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SignInPage(): ReactElement {
   const router = useRouter();

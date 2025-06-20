@@ -16,8 +16,7 @@ import { useTransition } from 'react';
 
 import { DataLoader } from '@/components/common/DataLoader';
 import { useAuth } from '@/hooks/useAuth';
-
-import { useFilteredProjects } from '../../hooks/useFilteredProjects';
+import { useFilteredProjects } from '@/hooks/useFilteredProjects';
 
 import { ProjectsTable } from './components/ProjectsTable';
 

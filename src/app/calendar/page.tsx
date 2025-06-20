@@ -39,7 +39,7 @@ export default function ProjectCalendarPage() {
   const calendarContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    async function fetchAllWorkpackages() {
+    const fetchAllWorkpackages = async () => {
       setLoading(true);
       try {
         const projectsSnapshot = await getDocs(collection(db, 'projects'));
@@ -79,7 +79,7 @@ export default function ProjectCalendarPage() {
       } finally {
         setLoading(false);
       }
-    }
+    };
     fetchAllWorkpackages();
   }, []);
 

@@ -32,7 +32,7 @@ interface WorkpackageListProps {
   projectId: string;
 }
 
-function getWorkpackageProgress(wp: Workpackage): number {
+const getWorkpackageProgress = (wp: Workpackage): number => {
   if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) return 0;
   let done = 0;
   let total = 0;
@@ -44,9 +44,9 @@ function getWorkpackageProgress(wp: Workpackage): number {
   }
   if (total === 0) return 0;
   return Math.round((done / total) * 100);
-}
+};
 
-function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: string }) {
+const SortableWorkpackage = ({ wp, projectId }: { wp: Workpackage; projectId: string }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: wp.id });
 
   const style = {
@@ -85,7 +85,7 @@ function SortableWorkpackage({ wp, projectId }: { wp: Workpackage; projectId: st
       </a>
     </div>
   );
-}
+};
 
 export default function WorkpackageList({ workpackages, projectId }: WorkpackageListProps) {
   const sensors = useSensors(

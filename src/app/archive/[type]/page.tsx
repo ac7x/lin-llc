@@ -86,15 +86,15 @@ const formatColumnValue = (value: ColumnValue, type: 'text' | 'number' | 'date')
 };
 
 // 處理 Firestore 日期
-function processFirestoreDate(date: { toDate: () => Date } | Date | null): Date | null {
+const processFirestoreDate = (date: { toDate: () => Date } | Date | null): Date | null => {
   if (!date) return null;
   if (date instanceof Date) return date;
   if (typeof date.toDate === 'function') return date.toDate();
   return null;
-}
+};
 
 // 根據類型獲取特定資料
-function getTypedData(data: FirestoreArchiveData, type: ArchiveType): ArchiveData {
+const getTypedData = (data: FirestoreArchiveData, type: ArchiveType): ArchiveData => {
   const { id, idx, createdAt, archivedAt, ...specificData } = data;
 
   const baseData: BaseArchiveData = {
@@ -138,7 +138,7 @@ function getTypedData(data: FirestoreArchiveData, type: ArchiveType): ArchiveDat
       const exhaustiveCheck: never = type;
       throw new Error(`Unknown archive type: ${exhaustiveCheck}`);
   }
-}
+};
 
 export default function ArchivePage() {
   const { type } = useParams<{ type: ArchiveType }>();
@@ -172,14 +172,14 @@ export default function ArchivePage() {
 
   // 獲取封存保留天數
   useEffect(() => {
-    async function fetchRetentionDays() {
+    const fetchRetentionDays = async () => {
       const docRef = doc(db, 'settings', 'archive');
       const snapshot = await getDoc(docRef);
       if (snapshot.exists()) {
         const data = snapshot.data();
         setArchiveRetentionDays(typeof data.retentionDays === 'number' ? data.retentionDays : 3650);
       }
-    }
+    };
     fetchRetentionDays();
   }, []); // 僅在 mount 時執行
 

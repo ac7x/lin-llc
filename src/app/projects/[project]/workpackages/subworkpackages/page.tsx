@@ -203,7 +203,7 @@ export default function SubWorkpackageSortingPage() {
     })
   );
 
-  function handleDragEnd(event: DragEndEvent) {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       const oldIndex = allSubWorkpackages.findIndex(item => item.id === active.id);
@@ -230,7 +230,7 @@ export default function SubWorkpackageSortingPage() {
       setWorkpackages(updatedWorkpackages);
       saveToFirestore(updatedWorkpackages);
     }
-  }
+  };
 
   const saveToFirestore = async (updatedWorkpackages: Workpackage[]) => {
     setSaving(true);

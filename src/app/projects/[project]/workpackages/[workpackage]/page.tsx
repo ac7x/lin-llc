@@ -78,7 +78,7 @@ function templateToSubWorkpackages(
  * 從 LocalStorage 取得使用者選擇的範本
  * @returns 範本或 null
  */
-function getSelectedTemplateFromStorage(): Template | null {
+const getSelectedTemplateFromStorage = (): Template | null => {
   if (typeof window === 'undefined') return null;
 
   const stored = localStorage.getItem('selectedTemplate');
@@ -89,15 +89,15 @@ function getSelectedTemplateFromStorage(): Template | null {
   } catch (_e) {
     return null;
   }
-}
+};
 
 /**
  * 清除 LocalStorage 中的範本選擇
  */
-function clearSelectedTemplate(): void {
+const clearSelectedTemplate = (): void => {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('selectedTemplate');
-}
+};
 
 export default function WorkpackageDetailPage() {
   const { user } = useAuth();
