@@ -18,7 +18,7 @@ import { zhTW } from "date-fns/locale";
 import "@/styles/react-big-calendar.css";
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import { Workpackage } from "@/types/project";
+import { Workpackage, SubWorkpackage } from "@/types/project";
 import { ProgressColorScale, getProgressInfo } from "@/utils/colorUtils";
 
 const localizer = dateFnsLocalizer({
@@ -44,6 +44,54 @@ interface CalendarEvent {
     hasEndDate?: boolean;
 }
 
+// 可排程項目的通用介面
+interface Schedulable {
+    id: string;
+    name: string;
+    plannedStartDate?: { toDate: () => Date };
+    plannedEndDate?: { toDate: () => Date };
+    actualStartDate?: { toDate: () => Date };
+    actualEndDate?: { toDate: () => Date };
+    progress?: number;
+}
+
+// 從可排程項目建立行事曆事件的輔助函數
+function createCalendarEvent(
+    item: Schedulable,
+    title: string,
+    projectName: string,
+    workpackageId?: string
+): CalendarEvent | null {
+    if (item.plannedStartDate?.toDate) {
+        const startDate = item.plannedStartDate.toDate();
+        let endDate: Date;
+        let hasEndDate = false;
+
+        if (item.plannedEndDate?.toDate) {
+            endDate = item.plannedEndDate.toDate();
+            endDate.setDate(endDate.getDate() + 1); // react-big-calendar 的結束日期是 exclusive
+            hasEndDate = true;
+        } else {
+            endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+            hasEndDate = false;
+        }
+
+        return {
+            id: item.id,
+            title,
+            start: startDate,
+            end: endDate,
+            projectName,
+            workpackageId,
+            progress: item.progress,
+            actualStartDate: item.actualStartDate?.toDate(),
+            actualEndDate: item.actualEndDate?.toDate(),
+            hasEndDate,
+        };
+    }
+    return null;
+}
+
 export default function ProjectCalendarPage() {
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
@@ -60,69 +108,33 @@ export default function ProjectCalendarPage() {
                 const projectsSnapshot = await getDocs(collection(db, "projects"));
                 const calendarEvents: CalendarEvent[] = [];
 
-                projectsSnapshot.forEach(docSnap => {
+                for (const docSnap of projectsSnapshot.docs) {
                     const project = docSnap.data();
-                    project.workpackages?.forEach((wp: Workpackage) => {
-                        if (wp.plannedStartDate && typeof wp.plannedStartDate.toDate === "function") {
-                            const startDate = wp.plannedStartDate.toDate();
-                            let endDate: Date;
-                            let hasEndDate = false;
+                    if (project.workpackages) {
+                        for (const wp of project.workpackages as Workpackage[]) {
+                            const wpEvent = createCalendarEvent(
+                                wp,
+                                `${project.projectName} - ${wp.name}`,
+                                project.projectName,
+                                wp.id
+                            );
+                            if (wpEvent) calendarEvents.push(wpEvent);
 
-                            if (wp.plannedEndDate && typeof wp.plannedEndDate.toDate === "function") {
-                                endDate = wp.plannedEndDate.toDate();
-                                endDate.setDate(endDate.getDate() + 1);
-                                hasEndDate = true;
-                            } else {
-                                endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
-                                hasEndDate = false;
-                            }
-
-                            calendarEvents.push({
-                                id: wp.id,
-                                title: `${project.projectName} - ${wp.name}`,
-                                start: startDate,
-                                end: endDate,
-                                projectName: project.projectName,
-                                workpackageId: wp.id,
-                                progress: wp.progress,
-                                actualStartDate: wp.actualStartDate && typeof wp.actualStartDate.toDate === "function" ? wp.actualStartDate.toDate() : undefined,
-                                actualEndDate: wp.actualEndDate && typeof wp.actualEndDate.toDate === "function" ? wp.actualEndDate.toDate() : undefined,
-                                hasEndDate
-                            });
-                        }
-
-                        wp.subWorkpackages?.forEach(sub => {
-                            if (sub.plannedStartDate && typeof sub.plannedStartDate.toDate === "function") {
-                                const startDate = sub.plannedStartDate.toDate();
-                                let endDate: Date;
-                                let hasEndDate = false;
-
-                                if (sub.plannedEndDate && typeof sub.plannedEndDate.toDate === "function") {
-                                    endDate = sub.plannedEndDate.toDate();
-                                    endDate.setDate(endDate.getDate() + 1);
-                                    hasEndDate = true;
-                                } else {
-                                    endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
-                                    hasEndDate = false;
+                            if (wp.subWorkpackages) {
+                                for (const sub of wp.subWorkpackages as SubWorkpackage[]) {
+                                    const subEvent = createCalendarEvent(
+                                        sub,
+                                        `${project.projectName} - ${wp.name} - ${sub.name}`,
+                                        project.projectName,
+                                        wp.id
+                                    );
+                                    if (subEvent) calendarEvents.push(subEvent);
                                 }
-
-                                calendarEvents.push({
-                                    id: sub.id,
-                                    title: `${project.projectName} - ${wp.name} - ${sub.name}`,
-                                    start: startDate,
-                                    end: endDate,
-                                    projectName: project.projectName,
-                                    workpackageId: wp.id,
-                                    progress: sub.progress,
-                                    actualStartDate: sub.actualStartDate && typeof sub.actualStartDate.toDate === "function" ? sub.actualStartDate.toDate() : undefined,
-                                    actualEndDate: sub.actualEndDate && typeof sub.actualEndDate.toDate === "function" ? sub.actualEndDate.toDate() : undefined,
-                                    hasEndDate
-                                });
                             }
-                        });
-                    });
-                });
-
+                        }
+                    }
+                }
+                
                 setEvents(calendarEvents);
                 setError(null);
             } catch (err) {

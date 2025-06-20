@@ -28,6 +28,14 @@ import type {
     BaseArchiveData
 } from '@/types/archive';
 
+// 定義還原路徑
+const RESTORE_PATHS: Record<ArchiveType, string[]> = {
+    contracts: ['finance', 'default', 'contracts'],
+    orders: ['finance', 'default', 'orders'],
+    quotes: ['finance', 'default', 'quotes'],
+    projects: ['projects'],
+};
+
 // 定義欄位值類型
 type ColumnValue = string | number | Date | null;
 
@@ -78,23 +86,6 @@ const formatColumnValue = (value: ColumnValue, type: 'text' | 'number' | 'date')
     }
 };
 
-// 型別守衛函數
-function isArchivedContract(data: ArchiveData): data is ArchivedContract {
-    return 'contractName' in data && 'contractPrice' in data;
-}
-
-function isArchivedOrder(data: ArchiveData): data is ArchivedOrder {
-    return 'orderName' in data;
-}
-
-function isArchivedQuote(data: ArchiveData): data is ArchivedQuote {
-    return 'quoteName' in data && 'quotePrice' in data;
-}
-
-function isArchivedProject(data: ArchiveData): data is ArchivedProject {
-    return 'projectName' in data && 'contractId' in data;
-}
-
 // 處理 Firestore 日期
 function processFirestoreDate(date: { toDate: () => Date } | Date | null): Date | null {
     if (!date) return null;
@@ -138,22 +129,6 @@ function getTypedData(data: FirestoreArchiveData, type: ArchiveType): ArchiveDat
         default:
             const exhaustiveCheck: never = type;
             throw new Error(`Unknown archive type: ${exhaustiveCheck}`);
-    }
-}
-
-// 驗證資料完整性
-function validateData(data: ArchiveData, type: ArchiveType): boolean {
-    switch (type) {
-        case 'contracts':
-            return isArchivedContract(data);
-        case 'orders':
-            return isArchivedOrder(data);
-        case 'quotes':
-            return isArchivedQuote(data);
-        case 'projects':
-            return isArchivedProject(data);
-        default:
-            return false;
     }
 }
 
@@ -224,46 +199,16 @@ export default function ArchivePage() {
             const archiveData = archiveSnapshot.data();
             
             // 根據類型還原到對應的集合
-            switch (type) {
-                case 'contracts':
-                    // 還原到 finance/default/contracts
-                    await setDoc(doc(db, 'finance', 'default', 'contracts', row.id), {
-                        ...archiveData,
-                        archivedAt: null, // 移除封存標記
-                        updatedAt: Timestamp.now(),
-                    });
-                    break;
-                    
-                case 'orders':
-                    // 還原到 finance/default/orders
-                    await setDoc(doc(db, 'finance', 'default', 'orders', row.id), {
-                        ...archiveData,
-                        archivedAt: null, // 移除封存標記
-                        updatedAt: Timestamp.now(),
-                    });
-                    break;
-                    
-                case 'quotes':
-                    // 還原到 finance/default/quotes
-                    await setDoc(doc(db, 'finance', 'default', 'quotes', row.id), {
-                        ...archiveData,
-                        archivedAt: null, // 移除封存標記
-                        updatedAt: Timestamp.now(),
-                    });
-                    break;
-                    
-                case 'projects':
-                    // 還原到 projects
-                    await setDoc(doc(db, 'projects', row.id), {
-                        ...archiveData,
-                        archivedAt: null, // 移除封存標記
-                        updatedAt: Timestamp.now(),
-                    });
-                    break;
-                    
-                default:
-                    throw new Error(`不支援的還原類型: ${type}`);
+            const restorePath = RESTORE_PATHS[type];
+            if (!restorePath) {
+                throw new Error(`不支援的還原類型: ${type}`);
             }
+
+            await setDoc(doc(db, restorePath.join('/'), row.id), {
+                ...archiveData,
+                archivedAt: null, // 移除封存標記
+                updatedAt: Timestamp.now(),
+            });
             
             // 刪除封存資料
             await deleteDoc(archiveDocRef);
@@ -288,15 +233,7 @@ export default function ArchivePage() {
         let arr = dataSnapshot.docs.map((doc, idx) => {
             try {
                 const data = { ...doc.data(), id: doc.id, idx: idx + 1 } as FirestoreArchiveData;
-                const typedData = getTypedData(data, type);
-                
-                // 驗證資料完整性
-                if (!validateData(typedData, type)) {
-                    console.warn(`Invalid data structure for type ${type}:`, data);
-                    return null;
-                }
-                
-                return typedData;
+                return getTypedData(data, type);
             } catch (err) {
                 console.error(`Error processing document ${doc.id}:`, err);
                 return null;

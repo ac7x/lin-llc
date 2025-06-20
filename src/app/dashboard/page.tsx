@@ -77,6 +77,29 @@ const ErrorMessage = ({ message }: { message: string }) => (
   <div className="text-red-500 text-center py-4">錯誤: {message}</div>
 );
 
+// 統計卡片元件
+interface StatCardProps {
+  title: string;
+  loading: boolean;
+  error?: { message: string } | null;
+  value: number | undefined;
+}
+
+const StatCard = ({ title, loading, error, value }: StatCardProps) => (
+  <section className={`flex-1 min-w-[120px] ${cardStyles} text-center`}>
+    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{title}</div>
+    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center justify-center h-10">
+      {loading ? (
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      ) : error ? (
+        <span className="text-red-500 text-sm">錯誤</span>
+      ) : (
+        value ?? 0
+      )}
+    </div>
+  </section>
+);
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading, hasPermission } = useAuth();
@@ -141,6 +164,15 @@ export default function DashboardPage() {
     Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count })),
     [roleCounts]
   );
+
+  const statsList = [
+    { title: '專案總數', loading: projectsLoading, error: projectsError, value: projectsSnapshot?.size },
+    { title: '合約總數', loading: contractsLoading, error: contractsError, value: contractsSnapshot?.size },
+    { title: '訂單總數', loading: ordersLoading, error: ordersError, value: ordersSnapshot?.size },
+    { title: '估價單總數', loading: quotesLoading, error: quotesError, value: quotesSnapshot?.size },
+    { title: '工作包總數', loading: statsLoading, value: workpackagesCount },
+    { title: '子工作包總數', loading: statsLoading, value: subWorkpackagesCount }
+  ];
 
   const workpackageProgressData = React.useMemo(() => {
     if (!projectsSnapshot) return [];
@@ -279,26 +311,8 @@ export default function DashboardPage() {
           </section>
 
           <div className="flex gap-3 flex-wrap">
-            {[
-              { title: '專案總數', loading: projectsLoading, error: projectsError, value: projectsSnapshot?.size },
-              { title: '合約總數', loading: contractsLoading, error: contractsError, value: contractsSnapshot?.size },
-              { title: '訂單總數', loading: ordersLoading, error: ordersError, value: ordersSnapshot?.size },
-              { title: '估價單總數', loading: quotesLoading, error: quotesError, value: quotesSnapshot?.size },
-              { title: '工作包總數', loading: statsLoading, value: workpackagesCount },
-              { title: '子工作包總數', loading: statsLoading, value: subWorkpackagesCount }
-            ].map(({ title, loading, error, value }) => (
-              <section key={title} className={`flex-1 min-w-[120px] ${cardStyles} text-center`}>
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{title}</div>
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                  ) : error ? (
-                    <span className="text-red-500">錯誤</span>
-                  ) : (
-                    value ?? 0
-                  )}
-                </div>
-              </section>
+            {statsList.map(({ title, loading, error, value }) => (
+              <StatCard key={title} title={title} loading={loading} error={error} value={value} />
             ))}
           </div>
         </div>

@@ -59,26 +59,22 @@ export const useAuth = (): UseAuthReturn => {
   });
 
   const getStandardPermissions = useCallback(async (): Promise<Record<RoleKey, Record<string, boolean>>> => {
-    const managementRef = collection(db, 'management');
-    const snapshot = await getDocs(managementRef);
-    
-    const standardPermissions: Record<RoleKey, string[]> = {} as Record<RoleKey, string[]>;
-     for (const role in DEFAULT_ROLE_PERMISSIONS) {
-      standardPermissions[role as RoleKey] = [...DEFAULT_ROLE_PERMISSIONS[role as RoleKey]];
-    }
+    const permissionRecords = createInitialRolePermissions();
+    try {
+      const managementRef = collection(db, 'management');
+      const snapshot = await getDocs(managementRef);
 
-    snapshot.docs.forEach((doc) => {
-      const data = doc.data();
-      if (data.role && data.pagePermissions) {
-        standardPermissions[data.role as RoleKey] = data.pagePermissions.map((p: { id: string }) => p.id);
-      }
-    });
-
-    const permissionRecords: Record<RoleKey, Record<string, boolean>> = {} as Record<RoleKey, Record<string, boolean>>;
-    for(const role in standardPermissions) {
-      permissionRecords[role as RoleKey] = arrayToPermissionRecord(standardPermissions[role as RoleKey]);
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.role && data.pagePermissions) {
+          const role = data.role as RoleKey;
+          const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
+          permissionRecords[role] = arrayToPermissionRecord(permissions);
+        }
+      });
+    } catch (error) {
+      console.error("Failed to fetch role permissions from Firestore, using defaults.", error);
     }
-    
     return permissionRecords;
   }, []);
 
