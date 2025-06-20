@@ -16,8 +16,8 @@ import {
 import type { Locale } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { Timestamp } from 'firebase/firestore';
+import { createElement } from 'react';
 import type { ReactElement } from 'react';
-import React from 'react';
 
 import { DateInput } from '@/types/common';
 
@@ -113,10 +113,10 @@ export const DateFormat = ({
   const date = parseToDate(value);
 
   if (!isValid(date)) {
-    return <span>{fallback}</span>;
+    return createElement('span', null, fallback);
   }
 
-  return <span>{format(date, formatPattern, { locale })}</span>;
+  return createElement('span', null, format(date, formatPattern, { locale }));
 };
 
 /**
