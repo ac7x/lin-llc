@@ -33,6 +33,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Workpackage, SubWorkpackage } from "@/types/project";
+import { formatLocalDate, formatDateForInput } from "@/utils/dateUtils";
 
 interface EnhancedSubWorkpackage extends SubWorkpackage {
     workpackageId: string;
@@ -123,11 +124,7 @@ function SortableSubWorkpackage({
                         >
                             <span className="text-gray-500 dark:text-gray-400">開始日期：</span>
                             <span className="text-gray-900 dark:text-gray-100">
-                                {subWp.plannedStartDate 
-                                    ? (typeof subWp.plannedStartDate === "string" 
-                                        ? subWp.plannedStartDate 
-                                        : subWp.plannedStartDate.toDate().toLocaleDateString())
-                                    : '-'}
+                                {formatLocalDate(subWp.plannedStartDate) || '-'}
                             </span>
                         </div>
                         <div 
@@ -137,11 +134,7 @@ function SortableSubWorkpackage({
                         >
                             <span className="text-gray-500 dark:text-gray-400">完成日期：</span>
                             <span className="text-gray-900 dark:text-gray-100">
-                                {subWp.plannedEndDate 
-                                    ? (typeof subWp.plannedEndDate === "string" 
-                                        ? subWp.plannedEndDate 
-                                        : subWp.plannedEndDate.toDate().toLocaleDateString())
-                                    : '-'}
+                                {formatLocalDate(subWp.plannedEndDate) || '-'}
                             </span>
                         </div>
                     </div>
@@ -244,16 +237,8 @@ export default function SubWorkpackageSortingPage() {
     const startEditSubWorkpackage = (subWp: EnhancedSubWorkpackage) => {
         setEditingSubWp(subWp);
         setFormData({
-            plannedStartDate: subWp.plannedStartDate
-                ? (typeof subWp.plannedStartDate === "string"
-                    ? subWp.plannedStartDate
-                    : subWp.plannedStartDate.toDate().toISOString().split('T')[0])
-                : "",
-            plannedEndDate: subWp.plannedEndDate
-                ? (typeof subWp.plannedEndDate === "string"
-                    ? subWp.plannedEndDate
-                    : subWp.plannedEndDate.toDate().toISOString().split('T')[0])
-                : ""
+            plannedStartDate: formatDateForInput(subWp.plannedStartDate),
+            plannedEndDate: formatDateForInput(subWp.plannedEndDate)
         });
         setIsEditing(true);
     };

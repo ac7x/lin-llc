@@ -148,6 +148,7 @@ export interface Project extends BaseWithDates {
     projectName: string; // 專案名稱
     contractId?: string; // 合約 ID（可選）
     status: string; // 專案狀態
+    progress?: number; // 專案進度
     manager?: string; // 專案經理（可選）
     inspector?: string; // 專案檢查員（可選）
     safety?: string; // 專案安全負責人（可選）

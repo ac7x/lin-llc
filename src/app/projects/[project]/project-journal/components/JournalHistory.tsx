@@ -6,7 +6,7 @@
 "use client";
 
 import Image from 'next/image';
-import { ActivityLog, IssueRecord, DailyReport, PhotoRecord } from '@/types/project';
+import { ActivityLog, DailyReport, PhotoRecord } from '@/types/project';
 
 interface JournalHistoryProps {
     reports: DailyReport[];
@@ -58,16 +58,6 @@ export default function JournalHistory({ reports }: JournalHistoryProps) {
                                 <span className="font-medium text-gray-700 dark:text-gray-300">工作內容:</span>
                                 <p className="text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
                                     {report.description}
-                                </p>
-                            </div>
-                            <div className="mb-2">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">問題與障礙:</span>
-                                <p className="text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
-                                {report.issues && Array.isArray(report.issues)
-                                    ? report.issues.map((i: IssueRecord) => i.description).join("; ")
-                                    : typeof report.issues === "string"
-                                        ? report.issues
-                                        : ""}
                                 </p>
                             </div>
                             {report.activities && report.activities.length > 0 && (

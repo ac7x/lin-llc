@@ -22,6 +22,7 @@ import { nanoid } from "nanoid";
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { db, doc, updateDoc } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
+import { formatLocalDate, formatDateForInput } from "@/utils/dateUtils";
 
 // Template helper functions
 /**
@@ -397,13 +398,13 @@ export default function WorkpackageDetailPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">預計開始日期</label>
                             <div className="text-gray-900 dark:text-gray-100">
-                                {workpackage.estimatedStartDate ? workpackage.estimatedStartDate.toDate().toLocaleDateString() : '-'}
+                                {workpackage.estimatedStartDate ? formatLocalDate(workpackage.estimatedStartDate) : '-'}
                             </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">預計結束日期</label>
                             <div className="text-gray-900 dark:text-gray-100">
-                                {workpackage.estimatedEndDate ? workpackage.estimatedEndDate.toDate().toLocaleDateString() : '-'}
+                                {workpackage.estimatedEndDate ? formatLocalDate(workpackage.estimatedEndDate) : '-'}
                             </div>
                         </div>
                         <div>
@@ -430,7 +431,7 @@ export default function WorkpackageDetailPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">建立日期</label>
                             <div className="text-gray-900 dark:text-gray-100">
-                                {workpackage.createdAt ? workpackage.createdAt.toDate().toLocaleDateString() : '-'}
+                                {workpackage.createdAt ? formatLocalDate(workpackage.createdAt) : '-'}
                             </div>
                         </div>
                     </div>
@@ -967,7 +968,7 @@ export default function WorkpackageDetailPage() {
                                         <input
                                             type="date"
                                             name="estimatedStartDate"
-                                            defaultValue={workpackage.estimatedStartDate ? workpackage.estimatedStartDate.toDate().toISOString().split('T')[0] : ""}
+                                            defaultValue={workpackage.estimatedStartDate ? formatDateForInput(workpackage.estimatedStartDate) : ""}
                                             className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                         />
                                     </div>
@@ -976,7 +977,7 @@ export default function WorkpackageDetailPage() {
                                         <input
                                             type="date"
                                             name="estimatedEndDate"
-                                            defaultValue={workpackage.estimatedEndDate ? workpackage.estimatedEndDate.toDate().toISOString().split('T')[0] : ""}
+                                            defaultValue={workpackage.estimatedEndDate ? formatDateForInput(workpackage.estimatedEndDate) : ""}
                                             className="border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                                         />
                                     </div>

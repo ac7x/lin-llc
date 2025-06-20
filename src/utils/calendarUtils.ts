@@ -1,5 +1,5 @@
 import { dateFnsLocalizer } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay, addDays } from "date-fns";
+import { format, parse, startOfWeek, getDay, addDays, isValid } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { getProgressInfo } from "@/utils/colorUtils";
 import { CalendarEvent, Schedulable } from "@/types/calendar";
@@ -28,30 +28,33 @@ export function createCalendarEvent(
     title: string,
     extras: Partial<CalendarEvent> = {}
 ): CalendarEvent | null {
-    if (!item.plannedStartDate) {
+    const sDate = item.plannedStartDate ? parseToDate(item.plannedStartDate) : null;
+    if (!sDate || !isValid(sDate)) {
         return null;
     }
 
-    const startDate = parseToDate(item.plannedStartDate);
+    const eDate = item.plannedEndDate ? parseToDate(item.plannedEndDate) : null;
+    const aStartDate = item.actualStartDate ? parseToDate(item.actualStartDate) : null;
+    const aEndDate = item.actualEndDate ? parseToDate(item.actualEndDate) : null;
+
     let endDate: Date;
     let hasEndDate = false;
 
-    if (item.plannedEndDate) {
-        endDate = addDays(parseToDate(item.plannedEndDate), 1);
+    if (eDate && isValid(eDate)) {
+        endDate = addDays(eDate, 1);
         hasEndDate = true;
     } else {
-        // 若無結束日期，預設為一天
-        endDate = addDays(startDate, 1);
+        endDate = addDays(sDate, 1);
     }
 
     return {
         id: item.id,
         title,
-        start: startDate,
+        start: sDate,
         end: endDate,
         progress: item.progress,
-        actualStartDate: item.actualStartDate ? parseToDate(item.actualStartDate) : undefined,
-        actualEndDate: item.actualEndDate ? parseToDate(item.actualEndDate) : undefined,
+        actualStartDate: aStartDate && isValid(aStartDate) ? aStartDate : undefined,
+        actualEndDate: aEndDate && isValid(aEndDate) ? aEndDate : undefined,
         hasEndDate,
         allDay: true,
         ...extras,

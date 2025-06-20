@@ -13,6 +13,7 @@
 import type { AppUser } from "@/types/auth";
 import type { Project } from "@/types/project";
 import { ROLE_NAMES, type RoleKey } from "@/constants/roles";
+import { formatLocalDate } from "@/utils/dateUtils";
 
 interface ProjectInfoDisplayProps {
     project: Project;
@@ -117,7 +118,7 @@ export default function ProjectInfoDisplay({
                         起始日
                     </label>
                     <div className="mt-1 text-gray-900 dark:text-gray-100">
-                        {project.startDate ? project.startDate.toDate().toLocaleDateString() : '-'}
+                        {project.startDate ? formatLocalDate(project.startDate) : '-'}
                     </div>
                 </div>
                 <div>
@@ -125,7 +126,7 @@ export default function ProjectInfoDisplay({
                         預估結束日
                     </label>
                     <div className="mt-1 text-gray-900 dark:text-gray-100">
-                        {project.estimatedEndDate ? project.estimatedEndDate.toDate().toLocaleDateString() : '-'}
+                        {project.estimatedEndDate ? formatLocalDate(project.estimatedEndDate) : '-'}
                     </div>
                 </div>
             </div>

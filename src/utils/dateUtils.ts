@@ -23,12 +23,18 @@ export interface DateFormatProps {
 /**
  * 將輸入轉換為合法的 Date 物件
  */
-export function parseToDate(value: DateInput): Date {
+export function parseToDate(value: DateInput | null | undefined): Date {
+    if (!value) return new Date(NaN); // 回傳無效日期
     if (value instanceof Date) return value;
     if (value instanceof Timestamp) return value.toDate();
-    if (typeof value === 'string') return parseISO(value);
+    if (typeof value === 'string') {
+        const parsed = parseISO(value);
+        if (isValid(parsed)) return parsed;
+    }
     if (typeof value === 'number') return new Date(value);
-    throw new Error('無效的日期輸入');
+    
+    // 如果所有轉換都失敗，回傳無效日期
+    return new Date(NaN);
 }
 
 /**
@@ -82,7 +88,7 @@ export function isDateInRange(date: DateInput, startDate: DateInput, endDate: Da
 /**
  * 格式化日期為本地化字串
  */
-export function formatLocalDate(date: DateInput, locale: Locale = zhTW): string {
+export function formatLocalDate(date: DateInput | null | undefined, locale: Locale = zhTW): string {
     const parsedDate = parseToDate(date);
     if (!isValid(parsedDate)) return '';
     return format(parsedDate, 'PPP', { locale });
@@ -91,7 +97,7 @@ export function formatLocalDate(date: DateInput, locale: Locale = zhTW): string 
 /**
  * 格式化日期為 HTML date input 格式 (YYYY-MM-DD)
  */
-export function formatDateForInput(date: DateInput): string {
+export function formatDateForInput(date: DateInput | null | undefined): string {
     const parsedDate = parseToDate(date);
     if (!isValid(parsedDate)) return '';
     return format(parsedDate, 'yyyy-MM-dd');

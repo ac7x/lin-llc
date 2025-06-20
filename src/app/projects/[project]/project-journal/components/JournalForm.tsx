@@ -15,9 +15,11 @@ import {
     getDownloadURL, 
     updateDoc, 
     arrayUnion, 
-    doc 
+    doc,
+    Timestamp
 } from '@/lib/firebase-client';
-import { Project, ActivityLog, PhotoRecord, PhotoType, Workpackage } from '@/types/project';
+import { UpdateData } from "firebase/firestore";
+import { Project, ActivityLog, PhotoRecord, PhotoType, Workpackage, IssueRecord } from '@/types/project';
 import { calculateProjectProgress } from '@/utils/progressUtils';
 import { toTimestamp } from '@/utils/dateUtils';
 import { WeatherData } from './WeatherDisplay';
@@ -177,7 +179,6 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                 temperature,
                 workforceCount: newReport.workforceCount,
                 description: newReport.description,
-                issues: newReport.issues,
                 activities,
                 projectProgress,
                 photos: photoRecords,
@@ -186,11 +187,29 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                 updatedAt: nowTimestamp,
             };
 
-            await updateDoc(projectRef, { 
+            const updatePayload: UpdateData<Project> = {
                 workpackages: updatedWorkpackages,
                 reports: arrayUnion(reportPayload),
                 progress: projectProgress,
-            });
+            };
+
+            if (newReport.issues.trim()) {
+                const issueRecord: Omit<IssueRecord, 'dueDate'> & { dueDate: Timestamp | null } = {
+                    id: Date.now().toString(),
+                    description: newReport.issues.trim(),
+                    type: 'progress',
+                    severity: 'medium',
+                    status: 'open',
+                    createdAt: nowTimestamp,
+                    updatedAt: nowTimestamp,
+                    assignedTo: '',
+                    dueDate: null,
+                    resolved: false,
+                };
+                updatePayload.issues = arrayUnion(issueRecord);
+            }
+
+            await updateDoc(projectRef, updatePayload);
 
             // Reset form
             setNewReport({ workforceCount: 0, description: "", issues: "" });
