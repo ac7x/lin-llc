@@ -9,7 +9,6 @@ script/uninstall.sh
 script/script.sh
 script/install.sh
 script/reset.sh
-storage.rules
 public/firebase-messaging-sw.js
 next.config.ts
 firebase.json
@@ -17,7 +16,6 @@ eslint.config.mjs
 postcss.config.mjs
 apphosting.yaml
 .nvmrc
-firestore.rules
 .cursor/environment.json
 .gitignore
 src/styles/react-big-calendar.css
