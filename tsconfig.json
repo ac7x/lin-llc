@@ -33,6 +33,7 @@
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": [
+      "coding-standards",
       "timeline",
       "calendar",
       "navigation",

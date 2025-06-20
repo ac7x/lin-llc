@@ -11,8 +11,6 @@ script/reset.sh
 public/firebase-messaging-sw.js
 next.config.ts
 firebase.json
-eslint.config.mjs
-postcss.config.mjs
 apphosting.yaml
 .nvmrc
 .cursor/environment.json
