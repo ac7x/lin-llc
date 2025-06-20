@@ -16,6 +16,7 @@ import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import React, { useEffect, useState } from 'react';
 import '../styles/globals.css';
+import type { ReactElement, ReactNode } from 'react';
 
 import { Unauthorized } from '@/components/common/Unauthorized';
 import BottomNavigation from '@/components/tabs/BottomNavigation';
@@ -40,8 +41,8 @@ const PUBLIC_PATHS = ['/signin', '/signup', '/forgot-password'];
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
-}): React.ReactElement {
+  children: ReactNode;
+}): ReactElement {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);

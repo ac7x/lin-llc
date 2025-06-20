@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRef, useEffect } from 'react';
+import type { ReactElement } from 'react';
 
 import { navigationItems } from '@/constants/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavigationItem } from '@/types/navigation';
 
-export default function BottomNavigation(): React.ReactElement | null {
+export default function BottomNavigation(): ReactElement | null {
   const pathname = usePathname();
   const { user, hasPermission } = useAuth();
   const activeItemRef = useRef<HTMLLIElement>(null);

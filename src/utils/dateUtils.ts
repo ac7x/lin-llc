@@ -16,6 +16,7 @@ import {
 import type { Locale } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
 import { Timestamp } from 'firebase/firestore';
+import type { ReactElement } from 'react';
 import React from 'react';
 
 import { DateInput } from '@/types/common';
@@ -103,12 +104,12 @@ export function toTimestamp(value: DateInput): Timestamp {
 /**
  * 日期格式化 React 元件
  */
-export const DateFormat: React.FC<DateFormatProps> = ({
+export const DateFormat = ({
   value,
   formatPattern,
   fallback,
   locale,
-}) => {
+}: DateFormatProps): ReactElement => {
   const date = parseToDate(value);
 
   if (!isValid(date)) {
@@ -211,5 +212,3 @@ export const formatDate = (timestamp: TimestampInput, formatStr = 'yyyy-MM-dd'):
     return '';
   }
 };
-
-export default DateFormat;

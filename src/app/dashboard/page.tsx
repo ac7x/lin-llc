@@ -12,7 +12,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import {
   PieChart,
@@ -107,10 +107,10 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, loading, hasPermission } = useAuth();
 
-  const [selectedProject, setSelectedProject] = React.useState<string>('');
-  const [workpackagesCount, setWorkpackagesCount] = React.useState<number>(0);
-  const [subWorkpackagesCount, setSubWorkpackagesCount] = React.useState<number>(0);
-  const [statsLoading, setStatsLoading] = React.useState<boolean>(true);
+  const [selectedProject, setSelectedProject] = useState<string>('');
+  const [workpackagesCount, setWorkpackagesCount] = useState<number>(0);
+  const [subWorkpackagesCount, setSubWorkpackagesCount] = useState<number>(0);
+  const [statsLoading, setStatsLoading] = useState<boolean>(true);
 
   const [usersSnapshot, usersLoading, usersError] = useCollection(collection(db, 'members'));
   const [projectsSnapshot, projectsLoading, projectsError] = useCollection(
@@ -126,13 +126,13 @@ export default function DashboardPage() {
     collection(db, 'finance', 'default', 'contracts')
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!loading && !user) {
       router.push('/signin');
     }
   }, [loading, user, router]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (projectsSnapshot && !projectsLoading && !projectsError) {
       setStatsLoading(true);
       let totalWorkpackages = 0;
@@ -174,7 +174,7 @@ export default function DashboardPage() {
     });
   }
 
-  const roleData = React.useMemo(
+  const roleData = useMemo(
     () => Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count })),
     [roleCounts]
   );
@@ -203,7 +203,7 @@ export default function DashboardPage() {
     { title: '子工作包總數', loading: statsLoading, value: subWorkpackagesCount },
   ];
 
-  const workpackageProgressData = React.useMemo(() => {
+  const workpackageProgressData = useMemo(() => {
     if (!projectsSnapshot) return [];
     return projectsSnapshot.docs.map(doc => {
       const projectData = doc.data() as Project;
@@ -215,7 +215,7 @@ export default function DashboardPage() {
     });
   }, [projectsSnapshot]);
 
-  const projectProgressData = React.useMemo(() => {
+  const projectProgressData = useMemo(() => {
     if (!projectsSnapshot) return [];
 
     const progressData: Array<{
@@ -299,7 +299,7 @@ export default function DashboardPage() {
     return progressData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [projectsSnapshot, selectedProject]);
 
-  const chartConfig = React.useMemo(
+  const chartConfig = useMemo(
     () => ({
       dateAxis: {
         tick: { fontSize: 12 },

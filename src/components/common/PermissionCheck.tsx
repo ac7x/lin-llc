@@ -8,7 +8,7 @@
  * - 若無權限，則顯示「未授權」頁面
  * - 若有權限，則正常渲染子組件
  */
-import { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 import { ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,7 +25,7 @@ export function PermissionCheck({
   children,
   requiredPermission,
   unauthorizedMessage,
-}: PermissionCheckProps): React.ReactElement {
+}: PermissionCheckProps): ReactElement {
   const { user, loading, hasPermission } = useAuth();
 
   if (loading) {

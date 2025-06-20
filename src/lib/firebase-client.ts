@@ -83,7 +83,7 @@ const functions = getFunctions(app);
 
 // --- 客戶端專用服務初始化 ---
 let analytics: Analytics | null = null;
-let performance: any = null;
+let performance: ReturnType<typeof getPerformance> | null = null;
 let remoteConfig: RemoteConfig | null = null;
 let appCheck: AppCheck | null = null;
 
@@ -133,7 +133,7 @@ export function getAnalyticsInstance(): Analytics | null {
 /**
  * 取得 Performance 實例（僅客戶端）
  */
-export function getPerformanceInstance(): any {
+export function getPerformanceInstance(): ReturnType<typeof getPerformance> | null {
   return performance;
 }
 

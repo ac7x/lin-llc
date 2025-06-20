@@ -8,7 +8,7 @@
  * - ProgressBar: 顯示工作包進度條的 React 元件
  */
 
-import React from 'react';
+import type { ReactElement } from 'react';
 
 import { Project, Workpackage } from '@/types/project';
 
@@ -66,7 +66,7 @@ export function calculateWorkpackageProgress(wp: Workpackage): number {
 /**
  * React 組件：顯示專案進度百分比
  */
-export const ProjectProgressPercent: React.FC<{ project: Project }> = ({ project }) => {
+export const ProjectProgressPercent = ({ project }: { project: Project }): ReactElement => {
   const percent = calculateProjectProgress(project);
   return (
     <span
@@ -81,7 +81,7 @@ export const ProjectProgressPercent: React.FC<{ project: Project }> = ({ project
 /**
  * React 組件：顯示工作包進度條
  */
-export const ProgressBar: React.FC<{ wp: Workpackage }> = ({ wp }) => {
+export const ProgressBar = ({ wp }: { wp: Workpackage }): ReactElement => {
   const percent = calculateWorkpackageProgress(wp);
   return (
     <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2'>

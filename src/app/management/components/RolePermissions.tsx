@@ -1,7 +1,7 @@
 'use client';
 
 import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactElement } from 'react';
 
 import { PAGE_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
@@ -13,7 +13,7 @@ interface RolePermissionData {
   updatedAt: string;
 }
 
-export default function RolePermissionsComponent(): React.ReactElement {
+export default function RolePermissionsComponent(): ReactElement {
   const [selectedRole, setSelectedRole] = useState<RoleKey>('guest');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,8 +1,8 @@
-import type React from 'react';
+import type { ReactNode } from 'react';
 
 export interface NavigationItem {
   id: string;
   name: string;
   path: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }

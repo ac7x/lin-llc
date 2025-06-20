@@ -20,7 +20,7 @@ import {
   UserGroupIcon,
   CogIcon,
 } from '@heroicons/react/24/outline';
-import React, { useState } from 'react';
+import React, { useState, ReactElement } from 'react';
 
 import { NotificationBell } from '@/app/notifications/components/NotificationBell';
 import { useAuth } from '@/hooks/useAuth';
@@ -67,7 +67,7 @@ const DEFAULT_FORM_DATA: NotificationFormData = {
   expiresAt: '',
 };
 
-export default function SendNotificationPage(): React.ReactElement {
+export default function SendNotificationPage(): ReactElement {
   const { user } = useAuth();
   const [formData, setFormData] = useState<NotificationFormData>(DEFAULT_FORM_DATA);
   const [isSending, setIsSending] = useState(false);
