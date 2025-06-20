@@ -41,7 +41,6 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
         setMessaging(messagingInstance);
 
         const unsubscribe = onMessage(messagingInstance, payload => {
-          // console.log('收到前台訊息:', payload);
           if (payload.notification) {
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification(payload.notification.title || '新通知', {
@@ -87,7 +86,6 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
 
         if (token) {
           setFcmToken(token);
-          // console.log('FCM Token:', token);
           return true;
         }
       } else {

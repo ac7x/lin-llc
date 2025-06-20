@@ -158,7 +158,7 @@ export const useAuth = (): UseAuthReturn => {
       setAuthState(prev => ({ ...prev, error: null }));
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      const idToken = await getIdToken(result.user);
+      const _idToken = await getIdToken(result.user);
 
       const memberRef = doc(db, 'members', result.user.uid);
       const memberDoc = await getDoc(memberRef);
@@ -186,7 +186,6 @@ export const useAuth = (): UseAuthReturn => {
         );
       }
 
-      // console.log('登入成功，ID Token:', idToken);
     } catch (err) {
       let authError: AuthError;
       if (err instanceof FirebaseError) {

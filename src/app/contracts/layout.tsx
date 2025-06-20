@@ -16,8 +16,8 @@ import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
-import { db } from '@/lib/firebase-client';
 import { PermissionCheck } from '@/components/common/PermissionCheck';
+import { db } from '@/lib/firebase-client';
 
 const ContractNav: React.FC = () => {
   const pathname = usePathname();
