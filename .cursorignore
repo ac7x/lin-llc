@@ -16,13 +16,9 @@ firebase.json
 eslint.config.mjs
 postcss.config.mjs
 apphosting.yaml
-package.json
 .nvmrc
 firestore.rules
 .cursor/environment.json
-src/types/archive.d.ts
 .gitignore
-tsconfig.json
-.firebaserc
 src/styles/react-big-calendar.css
 src/styles/globals.css
