@@ -113,10 +113,10 @@ export const DateFormat = ({
   const date = parseToDate(value);
 
   if (!isValid(date)) {
-    return React.createElement('span', null, fallback);
+    return <span>{fallback}</span>;
   }
 
-  return React.createElement('span', null, format(date, formatPattern, { locale }));
+  return <span>{format(date, formatPattern, { locale })}</span>;
 };
 
 /**
