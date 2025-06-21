@@ -37,8 +37,12 @@ export default function JournalHistory({ reports }: JournalHistoryProps) {
             const dateB = safeToDate(a.date);
             return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
           })
-          .map(report => (
-            <div key={report.id} className='p-6'>
+          .filter((report, index, self) => 
+            // 去重：確保每個 report.id 只出現一次
+            index === self.findIndex(r => r.id === report.id)
+          )
+          .map((report, index) => (
+            <div key={`report_${report.id}_${index}`} className='p-6'>
               <div className='flex justify-between items-start mb-4'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                   工作日誌 - {(() => {
@@ -81,7 +85,7 @@ export default function JournalHistory({ reports }: JournalHistoryProps) {
                   </span>
                   <ul className='text-gray-700 dark:text-gray-300 text-sm list-disc ml-6 mt-1'>
                     {report.activities.map((a: ActivityLog, i: number) => (
-                      <li key={a.id || i}>
+                      <li key={`${report.id}_activity_${a.id || i}`}>
                         {a.description}：{a.progress}%
                       </li>
                     ))}
@@ -94,7 +98,7 @@ export default function JournalHistory({ reports }: JournalHistoryProps) {
                   <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2'>
                     {report.photos.map((photo: PhotoRecord) => (
                       <div
-                        key={photo.id}
+                        key={`${report.id}_photo_${photo.id}`}
                         className='border rounded-lg overflow-hidden bg-white dark:bg-gray-900'
                       >
                         <Image
