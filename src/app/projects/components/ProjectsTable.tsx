@@ -10,8 +10,7 @@ import type {
   ProjectType, 
   IssueRecord 
 } from '@/app/projects/types/project';
-
-import { tableStyles, cn } from '@/utils/classNameUtils';
+import { cn, longClassName, tableStyles } from '@/utils/classNameUtils';
 
 // 狀態標籤組件
 const StatusBadge = ({ status }: { status?: ProjectStatus }) => {
@@ -49,8 +48,13 @@ const StatusBadge = ({ status }: { status?: ProjectStatus }) => {
   const config = status ? statusConfig[status] : statusConfig.planning;
   const defaultClass = 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
 
+  // 使用 longClassName 來避免 Firebase Performance 錯誤
+  const baseBadgeClass = longClassName([
+    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
+  ]);
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config?.className || defaultClass}`}>
+    <span className={cn(baseBadgeClass, config?.className || defaultClass)}>
       {config?.label || status || '-'}
     </span>
   );
@@ -77,11 +81,15 @@ const PriorityBadge = ({ priority }: { priority?: ProjectPriority }) => {
     },
   };
 
-  if (!priority) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  if (!priority) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
 
   const config = priorityConfig[priority];
+  const baseBadgeClass = longClassName([
+    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
+  ]);
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.className}`}>
+    <span className={cn(baseBadgeClass, config.className)}>
       {config.label}
     </span>
   );
@@ -108,11 +116,15 @@ const RiskBadge = ({ riskLevel }: { riskLevel?: ProjectRiskLevel }) => {
     },
   };
 
-  if (!riskLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  if (!riskLevel) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
 
   const config = riskConfig[riskLevel];
+  const baseBadgeClass = longClassName([
+    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
+  ]);
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.className}`}>
+    <span className={cn(baseBadgeClass, config.className)}>
       {config.label}
     </span>
   );
@@ -148,11 +160,15 @@ const HealthBadge = ({ healthLevel }: { healthLevel?: ProjectHealthLevel }) => {
     },
   };
 
-  if (!healthLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  if (!healthLevel) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
 
   const config = healthConfig[healthLevel];
+  const baseBadgeClass = longClassName([
+    'px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 whitespace-nowrap'
+  ]);
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 whitespace-nowrap ${config.className}`}>
+    <span className={cn(baseBadgeClass, config.className)}>
       <span>{config.icon}</span>
       <span>{config.label}</span>
     </span>
@@ -184,11 +200,15 @@ const PhaseBadge = ({ phase }: { phase?: ProjectPhase }) => {
     },
   };
 
-  if (!phase) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  if (!phase) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
 
   const config = phaseConfig[phase];
+  const baseBadgeClass = longClassName([
+    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
+  ]);
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.className}`}>
+    <span className={cn(baseBadgeClass, config.className)}>
       {config.label}
     </span>
   );
@@ -204,15 +224,19 @@ const ProgressBar = ({ progress }: { progress?: number }) => {
     return 'bg-red-500';
   };
 
+  const baseProgressClass = longClassName([
+    'h-2 rounded-full transition-all duration-300'
+  ]);
+
   return (
-    <div className='flex items-center space-x-2 whitespace-nowrap'>
-      <div className='w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
+    <div className={cn('flex items-center space-x-2 whitespace-nowrap')}>
+      <div className={cn('w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2')}>
         <div
-          className={`h-2 rounded-full transition-all duration-300 ${getColorClass(percentage)}`}
+          className={cn(baseProgressClass, getColorClass(percentage))}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className='text-xs text-gray-600 dark:text-gray-400 min-w-[2rem]'>
+      <span className={cn('text-xs text-gray-600 dark:text-gray-400 min-w-[2rem]')}>
         {percentage}%
       </span>
     </div>
@@ -221,7 +245,7 @@ const ProgressBar = ({ progress }: { progress?: number }) => {
 
 // 品質評分組件
 const QualityScore = ({ score }: { score?: number }) => {
-  if (!score) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  if (!score) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
   
   const getColorClass = (s: number) => {
     if (s >= 8) return 'text-green-600 dark:text-green-400';
@@ -230,7 +254,7 @@ const QualityScore = ({ score }: { score?: number }) => {
   };
 
   return (
-    <span className={`font-medium whitespace-nowrap ${getColorClass(score)}`}>
+    <span className={cn('font-medium whitespace-nowrap', getColorClass(score))}>
       {score}/10
     </span>
   );
@@ -238,10 +262,10 @@ const QualityScore = ({ score }: { score?: number }) => {
 
 // 預算顯示組件
 const BudgetDisplay = ({ budget }: { budget?: number }) => {
-  if (!budget) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  if (!budget) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
   
   return (
-    <span className='text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap'>
+    <span className={cn('text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap')}>
       ${budget.toLocaleString()}
     </span>
   );
@@ -264,11 +288,15 @@ const ProjectTypeBadge = ({ projectType }: { projectType?: ProjectType }) => {
     },
   };
 
-  if (!projectType) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  if (!projectType) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
 
   const config = typeConfig[projectType];
+  const baseBadgeClass = longClassName([
+    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
+  ]);
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.className}`}>
+    <span className={cn(baseBadgeClass, config.className)}>
       {config.label}
     </span>
   );
@@ -281,13 +309,13 @@ type ProjectsTableProps = {
 
 export function ProjectsTable({ projects, showAdvancedColumns = false }: ProjectsTableProps) {
   if (projects.length === 0) {
-    return <div className='px-4 py-8 text-center text-gray-500 dark:text-gray-400'>尚無專案</div>;
+    return <div className={cn('px-4 py-8 text-center text-gray-500 dark:text-gray-400')}>尚無專案</div>;
   }
 
   return (
-    <div className='overflow-x-auto'>
-      <table className={tableStyles.table}>
-        <thead className={tableStyles.thead}>
+    <div className={cn('overflow-x-auto')}>
+      <table className={cn(tableStyles.table)}>
+        <thead className={cn(tableStyles.thead)}>
           <tr>
             <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
               序號
@@ -340,16 +368,16 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
             </th>
           </tr>
         </thead>
-        <tbody className={tableStyles.tbody}>
+        <tbody className={cn(tableStyles.tbody)}>
           {projects.map((project) => (
-            <tr key={project.id} className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200'>
+            <tr key={project.id} className={cn('hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200')}>
               <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                 {project.idx}
               </td>
               <td className={cn(tableStyles.td, 'whitespace-normal')}>
                 <Link
                   href={`/projects/${project.id}`}
-                  className='font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200'
+                  className={cn('font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200')}
                 >
                   {project.projectName}
                 </Link>
@@ -394,11 +422,11 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
                         (issue.type === 'quality' || issue.type === 'progress') && issue.status !== 'resolved'
                       );
                       return qualityOrProgressIssues.length > 0 ? (
-                        <span className='text-orange-600 dark:text-orange-400 font-bold'>
+                        <span className={cn('text-orange-600 dark:text-orange-400 font-bold')}>
                           {qualityOrProgressIssues.length}
                         </span>
                       ) : (
-                        <span className='text-gray-400'>0</span>
+                        <span className={cn('text-gray-400')}>0</span>
                       );
                     })()}
                   </td>
@@ -408,10 +436,10 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
                 {project.createdAt}
               </td>
               <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
-                <div className='flex items-center space-x-2'>
+                <div className={cn('flex items-center space-x-2')}>
                   <Link
                     href={`/projects/${project.id}`}
-                    className='text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors duration-200'
+                    className={cn('text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors duration-200')}
                   >
                     查看
                   </Link>

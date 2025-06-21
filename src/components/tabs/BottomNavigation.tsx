@@ -8,6 +8,7 @@ import type { ReactElement } from 'react';
 import { navigationItems } from '@/constants/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavigationItem } from '@/types/navigation';
+import { cn, longClassName } from '@/utils/classNameUtils';
 
 export default function BottomNavigation(): ReactElement | null {
   const pathname = usePathname();
@@ -32,27 +33,41 @@ export default function BottomNavigation(): ReactElement | null {
     return null;
   }
 
+  // 使用 longClassName 來避免 Firebase Performance 錯誤
+  const baseLinkClass = longClassName([
+    'flex flex-col items-center justify-center w-20 h-full',
+    'transition-colors duration-200'
+  ]);
+
+  const activeLinkClass = longClassName([
+    'text-indigo-600 dark:text-indigo-400'
+  ]);
+
+  const inactiveLinkClass = longClassName([
+    'text-gray-500 dark:text-gray-400',
+    'hover:text-indigo-600 dark:hover:text-indigo-400'
+  ]);
+
   return (
-    <nav className='fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-50 dark:bg-gray-800 dark:border-gray-700'>
+    <nav className={cn('fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-50 dark:bg-gray-800 dark:border-gray-700')}>
       <div
-        className='flex justify-center overflow-x-auto scrollbar-hide h-full items-center'
+        className={cn('flex justify-center overflow-x-auto scrollbar-hide h-full items-center')}
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        <ul className='flex h-full'>
+        <ul className={cn('flex h-full')}>
           {filteredNavigationItems.map((item: NavigationItem) => {
             const isActive = pathname.startsWith(item.path);
             return (
-              <li key={item.id} ref={isActive ? activeItemRef : null} className='flex-shrink-0'>
+              <li key={item.id} ref={isActive ? activeItemRef : null} className={cn('flex-shrink-0')}>
                 <Link
                   href={item.path}
-                  className={`flex flex-col items-center justify-center w-20 h-full transition-colors duration-200 ${
-                    isActive
-                      ? 'text-indigo-600 dark:text-indigo-400'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400'
-                  }`}
+                  className={cn(
+                    baseLinkClass,
+                    isActive ? activeLinkClass : inactiveLinkClass
+                  )}
                 >
-                  <span className='flex-shrink-0'>{item.icon}</span>
-                  <span className='text-xs mt-1'>{item.name}</span>
+                  <span className={cn('flex-shrink-0')}>{item.icon}</span>
+                  <span className={cn('text-xs mt-1')}>{item.name}</span>
                 </Link>
               </li>
             );

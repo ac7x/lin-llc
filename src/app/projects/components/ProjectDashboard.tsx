@@ -16,6 +16,7 @@ import { useMemo } from 'react';
 
 import type { Project } from '@/app/projects/types/project';
 import { ProgressBarWithPercent, ProjectHealthIndicator } from '@/app/projects/utils/progressUtils';
+import { cn } from '@/utils/classNameUtils';
 import {
   calculateProjectProgress,
   calculateProjectQualityScore,
@@ -80,8 +81,8 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
               合約ID: {project.contractId || '未指定'}
             </p>
           </div>
-          <div className='flex items-center space-x-3'>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
+          <div className={cn('flex items-center space-x-3')}>
+            <span className={cn('px-3 py-1 rounded-full text-sm font-medium', getStatusColor(project.status))}>
               {project.status === 'planning' && '規劃中'}
               {project.status === 'approved' && '已核准'}
               {project.status === 'in-progress' && '執行中'}
@@ -95,9 +96,9 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
         </div>
 
         {/* 狀態趨勢 */}
-        <div className={`flex items-center space-x-2 text-sm ${getTrendColor(statusTrend.trend)}`}>
+        <div className={cn('flex items-center space-x-2 text-sm', getTrendColor(statusTrend.trend))}>
           <span>{getTrendIcon(statusTrend.trend)}</span>
-          <span className='font-medium'>
+          <span className={cn('font-medium')}>
             {statusTrend.trend === 'improving' && '專案狀態改善中'}
             {statusTrend.trend === 'declining' && '專案狀態需關注'}
             {statusTrend.trend === 'stable' && '專案狀態穩定'}
@@ -132,14 +133,15 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
               <span className='text-green-600 dark:text-green-400 text-xl'>⭐</span>
             </div>
           </div>
-          <div className='mt-4'>
-            <div className='flex space-x-1'>
+          <div className={cn('mt-4')}>
+            <div className={cn('flex space-x-1')}>
               {[...Array(10)].map((_, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-3 rounded-full ${
+                  className={cn(
+                    'w-3 h-3 rounded-full',
                     i < qualityScore ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
-                  }`}
+                  )}
                 />
               ))}
             </div>
