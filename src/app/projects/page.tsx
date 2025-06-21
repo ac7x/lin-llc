@@ -15,9 +15,9 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTransition, useState, useMemo } from 'react';
 
+import { DataLoader } from '@/app/projects/components/DataLoader';
 import { useFilteredProjects, useProjectStats, type ProjectFilters, type ProjectSortOption } from '@/app/projects/hooks/useFilteredProjects';
 import type { IssueRecord } from '@/app/projects/types/project';
-import { DataLoader } from '@/components/common/DataLoader';
 import { useAuth } from '@/hooks/useAuth';
 import { cn, layoutStyles, cardStyles, inputStyles, buttonStyles } from '@/utils/classNameUtils';
 
