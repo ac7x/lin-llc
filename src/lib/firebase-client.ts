@@ -224,3 +224,15 @@ export {
   remoteConfig,
   appCheck,
 };
+
+// 匯出型別定義
+export type {
+  Firestore,
+  DocumentData,
+  DocumentReference,
+  FirebaseStorage,
+  Functions,
+  Analytics,
+  RemoteConfig,
+  AppCheck,
+};

@@ -1,7 +1,6 @@
 exclude:
   - .github
   - node_modules
-  - .next
   - .git
   - public
   - coverage

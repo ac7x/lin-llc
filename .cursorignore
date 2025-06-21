@@ -19,7 +19,6 @@ src/styles/react-big-calendar.css
 src/styles/globals.css
 package-lock.json
 next-env.d.ts
-.next
 node_modules
 public
 .firebaserc

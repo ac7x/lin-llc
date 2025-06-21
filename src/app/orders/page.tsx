@@ -11,15 +11,14 @@
 
 'use client';
 
-import { doc, collection, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import React, { useState, useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { generatePdfBlob } from '@/components/pdf/pdfUtils';
-import { db } from '@/lib/firebase-client';
-import { OrderData } from '@/types/finance';
+import { db, doc, collection, getDoc } from '@/lib/firebase-client';
+import type { OrderData } from '@/types/finance';
 import { safeToDate } from '@/utils/dateUtils';
 
 export default function OrdersPage() {
