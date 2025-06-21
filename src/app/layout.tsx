@@ -1,14 +1,3 @@
-/**
- * 根布局組件
- *
- * 提供整個應用程式的基本布局結構，包含：
- * - 字體設定（Geist Sans 和 Geist Mono）
- * - 深色模式支援
- * - reCAPTCHA 整合
- * - 底部導航列（僅登入用戶可見）
- * - 全局驗證狀態
- */
-
 'use client';
 
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -22,6 +11,9 @@ import { Unauthorized } from '@/components/common/Unauthorized';
 import BottomNavigation from '@/components/tabs/BottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
 import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
+
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { firebaseApp } from '@/lib/firebase-client.ts'; // 你自己的 firebase 初始化檔案
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -47,15 +39,20 @@ export default function RootLayout({
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
 
-  // 檢查是否在客戶端環境
+  // 客戶端標誌與 App Check 初始化
   useEffect(() => {
     setIsClient(true);
+
+    if (typeof window !== 'undefined') {
+      initializeAppCheck(firebaseApp, {
+        provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
+        isTokenAutoRefreshEnabled: true,
+      });
+    }
   }, []);
 
-  // 檢查當前路徑是否需要驗證
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
 
-  // 如果正在載入，顯示載入中狀態
   if (loading) {
     return (
       <html lang='zh-TW'>
@@ -74,7 +71,6 @@ export default function RootLayout({
     );
   }
 
-  // 如果不是公開路徑且用戶未登入，顯示未授權頁面
   if (!isPublicPath && !user) {
     return (
       <html lang='zh-TW'>
