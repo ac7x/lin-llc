@@ -92,10 +92,16 @@ export class ProjectService {
     const result = await safeAsync(async () => {
       const querySnapshot = await retry(() => getDocs(collection(db, this.COLLECTION_NAME)), 3, 1000);
       
-      return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-      } as unknown as Project));
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          // 轉換 Firebase Timestamp 為字串
+          createdAt: data.createdAt?.toDate?.()?.toLocaleDateString() || '未知',
+          updatedAt: data.updatedAt?.toDate?.()?.toLocaleDateString() || '未知',
+        } as unknown as Project;
+      });
     }, (error) => {
       logError(error, { operation: 'get_all_projects' });
       throw error;

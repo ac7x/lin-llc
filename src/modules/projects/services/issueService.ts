@@ -32,17 +32,23 @@ export class IssueService {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
-        where('projectId', '==', projectId),
-        orderBy('createdAt', 'desc')
+        where('projectId', '==', projectId)
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
+      const issues = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
       })) as IssueRecord[];
+      
+      // 在客戶端排序
+      return issues.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
+        return dateB.getTime() - dateA.getTime(); // 降序排列
+      });
     } catch (error) {
       console.error('取得問題列表失敗:', error);
       throw new Error('取得問題列表失敗');
@@ -146,17 +152,23 @@ export class IssueService {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
-        where('status', '==', status),
-        orderBy('createdAt', 'desc')
+        where('status', '==', status)
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
+      const issues = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
       })) as IssueRecord[];
+      
+      // 在客戶端排序
+      return issues.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
+        return dateB.getTime() - dateA.getTime(); // 降序排列
+      });
     } catch (error) {
       console.error('根據狀態取得問題失敗:', error);
       throw new Error('根據狀態取得問題失敗');
@@ -170,17 +182,23 @@ export class IssueService {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
-        where('severity', '==', severity),
-        orderBy('createdAt', 'desc')
+        where('severity', '==', severity)
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
+      const issues = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
       })) as IssueRecord[];
+      
+      // 在客戶端排序
+      return issues.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
+        return dateB.getTime() - dateA.getTime(); // 降序排列
+      });
     } catch (error) {
       console.error('根據嚴重程度取得問題失敗:', error);
       throw new Error('根據嚴重程度取得問題失敗');

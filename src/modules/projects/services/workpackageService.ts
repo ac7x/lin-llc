@@ -32,17 +32,23 @@ export class WorkpackageService {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
-        where('projectId', '==', projectId),
-        orderBy('createdAt', 'asc')
+        where('projectId', '==', projectId)
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
+      const workpackages = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
       })) as Workpackage[];
+      
+      // 在客戶端排序
+      return workpackages.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
+        return dateA.getTime() - dateB.getTime();
+      });
     } catch (error) {
       console.error('取得工作包列表失敗:', error);
       throw new Error('取得工作包列表失敗');
@@ -162,17 +168,23 @@ export class WorkpackageService {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
-        where('status', '==', status),
-        orderBy('createdAt', 'desc')
+        where('status', '==', status)
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
+      const workpackages = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
       })) as Workpackage[];
+      
+      // 在客戶端排序
+      return workpackages.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
+        return dateB.getTime() - dateA.getTime(); // 降序排列
+      });
     } catch (error) {
       console.error('根據狀態取得工作包失敗:', error);
       throw new Error('根據狀態取得工作包失敗');

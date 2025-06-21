@@ -81,7 +81,9 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
                   <td className={projectStyles.table.td}>-</td>
                 </>
               )}
-              <td className={projectStyles.table.td}>{project.createdAt}</td>
+              <td className={projectStyles.table.td}>
+                {project.createdAt || '未知'}
+              </td>
               <td className={projectStyles.table.td}>
                 <div className="flex items-center space-x-2">
                   <Link
