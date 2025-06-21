@@ -1,4 +1,4 @@
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 
 // ============================================================================
 // 基礎型別定義
@@ -718,6 +718,7 @@ export const mapProjectFromFirestore = (raw: any): Project => {
 
   return {
     id: raw.id,
+    projectName: raw.projectName ?? raw.name ?? '',
     serialNumber: raw.serialNumber ?? '',
     name: raw.name ?? '',
     region: raw.region ?? '',
@@ -755,6 +756,19 @@ export const mapProjectFromFirestore = (raw: any): Project => {
     })),
 
     workPackages: (raw.workPackages ?? []).map((wp: any) => ({
+      id: wp.id,
+      budget: wp.budget,
+      quantity: wp.quantity,
+      subPackages: (wp.subPackages ?? []).map((sub: any) => ({
+        id: sub.id,
+        quantity: sub.quantity,
+        unitWeight: sub.unitWeight,
+        completedUnits: sub.completedUnits,
+        progress: calculateSubProgress(sub),
+        workers: sub.workers ?? [],
+      })),
+    })),
+    workpackages: (raw.workpackages ?? raw.workPackages ?? []).map((wp: any) => ({
       id: wp.id,
       budget: wp.budget,
       quantity: wp.quantity,
