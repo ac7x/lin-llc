@@ -556,6 +556,7 @@ export interface ProjectStats {
   onHoldProjects: number;
   overdueProjects: number;
   totalQualityIssues: number;
+  averageQualityScore: number;
 }
 
 // ============================================================================

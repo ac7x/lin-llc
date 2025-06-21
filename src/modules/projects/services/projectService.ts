@@ -248,7 +248,6 @@ export class ProjectService {
       
       const projects = querySnapshot.docs.map(doc => doc.data() as Project);
       const now = new Date();
-      const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
       const totalProjects = projects.length;
       const activeProjects = projects.filter(project => project.status === 'in-progress').length;
@@ -271,6 +270,15 @@ export class ProjectService {
         return sum + qualityOrProgressIssues.length;
       }, 0);
 
+      // 計算平均品質分數
+      const qualityScores = projects
+        .map(project => project.qualityScore || 0)
+        .filter(score => score > 0);
+      
+      const averageQualityScore = qualityScores.length > 0 
+        ? Math.round(qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length)
+        : 0;
+
       return {
         totalProjects,
         activeProjects,
@@ -278,6 +286,7 @@ export class ProjectService {
         onHoldProjects,
         overdueProjects,
         totalQualityIssues,
+        averageQualityScore,
       };
     }, (error) => {
       logError(error, { operation: 'get_project_stats' });

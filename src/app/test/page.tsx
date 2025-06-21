@@ -1,7 +1,7 @@
 /**
  * 專案模組測試頁面
  * 
- * 展示 src/modules/projects 模組的所有功能，包括：
+ * 展示 src/modules/projects 模組的所有功能，使用真實的 Firebase 服務串接
  * - 組件展示
  * - Hooks 測試
  * - 服務層測試
@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 // 導入專案模組的所有組件和功能
@@ -27,24 +27,29 @@ import {
   // 儀表板組件
   ProjectDashboard,
   ProjectsTable,
-  ProjectStats,
+  ProjectStatsComponent,
   
   // 工作包組件
   WorkpackageList,
   
+  // 問題組件
+  IssueForm,
+  IssueList,
+  
+  // 模板組件
+  TemplateCard,
+  TemplateForm,
+  
+  // 日曆組件
+  CalendarView,
+  
   // Hooks
-  useProjectActions,
-  useFilteredProjects,
-  useProjectStats,
-  useQualityScore,
-  useProjectState,
   useProjectForm,
   useProjectErrorHandler,
   
   // 服務
   ProjectService,
   WorkpackageService,
-  JournalService,
   IssueService,
   TemplateService,
   
@@ -53,8 +58,6 @@ import {
   calculateProjectQualityScore,
   calculateSchedulePerformanceIndex,
   calculateCostPerformanceIndex,
-  getUpcomingMilestones,
-  getOverdueMilestones,
   analyzeProjectStatusTrend,
   calculateProjectPriorityScore,
   
@@ -67,114 +70,47 @@ import {
   PROJECT_TYPE_OPTIONS,
   PROJECT_PRIORITY_OPTIONS,
   PROJECT_RISK_LEVEL_OPTIONS,
-  PROJECT_HEALTH_LEVEL_OPTIONS,
-  PROJECT_PHASE_OPTIONS,
   
   // 樣式
   projectStyles,
   
   // 型別
-  type Project,
   type Workpackage,
-  type SubWorkpackage,
-  type ProjectStatus,
-  type ProjectType,
-  type ProjectPriority,
-  type ProjectRiskLevel,
-  type ProjectHealthLevel,
-  type ProjectPhase,
   type IssueRecord,
-  type Expense,
-  type MaterialEntry,
   type Template,
+  type ProjectDocument,
+  type ProjectStats,
 } from '@/modules/projects';
-
-// 模擬資料
-const mockProject: Project & { id: string } = {
-  id: 'project-001',
-  projectName: '測試專案',
-  status: 'in-progress',
-  progress: 65,
-  contractId: 'CTR-2024-001',
-  manager: 'user1',
-  inspector: 'user2',
-  safety: 'user3',
-  supervisor: 'user4',
-  safetyOfficer: 'user5',
-  costController: 'user6',
-  area: '台北市',
-  address: '台北市信義區信義路五段7號',
-  region: '台北市',
-  startDate: new Date('2024-01-01'),
-  estimatedEndDate: new Date('2024-12-31'),
-  projectType: 'system',
-  priority: 'high',
-  riskLevel: 'medium',
-  healthLevel: 'good',
-  phase: 'execution',
-  estimatedBudget: 1000000,
-  actualBudget: 750000,
-  estimatedDuration: 365,
-  actualDuration: 200,
-  qualityScore: 8.5,
-  workpackages: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const mockWorkpackage: Workpackage = {
-  id: 'wp-001',
-  name: '測試工作包',
-  description: '這是一個測試工作包',
-  status: 'in-progress',
-  progress: 75,
-  plannedStartDate: new Date('2024-01-01'),
-  plannedEndDate: new Date('2024-06-30'),
-  estimatedStartDate: new Date('2024-01-01'),
-  estimatedEndDate: new Date('2024-06-30'),
-  assignedTo: 'user1',
-  budget: 500000,
-  category: '系統整合',
-  priority: 'high',
-  subWorkpackages: [],
-  estimatedHours: 800,
-  actualHours: 600,
-  costVariance: -50000,
-  scheduleVariance: -10,
-  riskLevel: 'medium',
-  phase: 'execution',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const mockIssue: IssueRecord = {
-  id: 'issue-001',
-  type: 'quality',
-  description: '測試問題描述',
-  severity: 'medium',
-  status: 'open',
-  assignedTo: 'user1',
-  dueDate: new Date('2024-12-31'),
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
 
 export default function TestPage() {
   const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('components');
-  const [testData, setTestData] = useState({
-    projects: [mockProject],
-    workpackages: [mockWorkpackage],
-    issues: [mockIssue],
-  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // 真實數據狀態
+  const [projects, setProjects] = useState<ProjectDocument[]>([]);
+  const [selectedProject, setSelectedProject] = useState<ProjectDocument | null>(null);
+  const [workpackages, setWorkpackages] = useState<Workpackage[]>([]);
+  const [issues, setIssues] = useState<IssueRecord[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [projectStats, setProjectStats] = useState<ProjectStats | null>(null);
+  
+  // 表單狀態
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  
+  // 編輯狀態
+  const [editingIssue, setEditingIssue] = useState<IssueRecord | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
   // 測試 hooks
-  const { updateProject, deleteProject } = useProjectActions();
-  const { formData, errors, setFieldValue, validateForm } = useProjectForm(mockProject);
+  const { formData, errors, setFieldValue, validateForm } = useProjectForm();
   const { handleError } = useProjectErrorHandler();
 
   const tabs = [
     { id: 'components', label: '組件展示' },
+    { id: 'data', label: '數據管理' },
     { id: 'hooks', label: 'Hooks 測試' },
     { id: 'services', label: '服務層測試' },
     { id: 'utils', label: '工具函數' },
@@ -182,6 +118,136 @@ export default function TestPage() {
     { id: 'constants', label: '常數' },
     { id: 'styles', label: '樣式' },
   ];
+
+  // 載入專案詳細資料
+  const loadProjectDetails = useCallback(async (projectId: string) => {
+    try {
+      const [workpackagesData, issuesData] = await Promise.all([
+        WorkpackageService.getWorkpackagesByProject(projectId),
+        IssueService.getIssuesByProject(projectId),
+      ]);
+      
+      setWorkpackages(workpackagesData);
+      setIssues(issuesData);
+    } catch (err) {
+      handleError(err as Error, 'load_project_details');
+    }
+  }, [handleError]);
+
+  // 載入專案數據
+  const loadProjects = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const projectsData = await ProjectService.getAllProjects();
+      const projectsWithId = projectsData as ProjectDocument[];
+      setProjects(projectsWithId);
+      
+      if (projectsWithId.length > 0) {
+        setSelectedProject(projectsWithId[0]);
+        await loadProjectDetails(projectsWithId[0].id);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '載入專案失敗';
+      setError(errorMessage);
+      handleError(err as Error, 'load_projects');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadProjectDetails, handleError]);
+
+  // 載入統計資料
+  const loadStats = useCallback(async () => {
+    try {
+      const stats = await ProjectService.getProjectStats();
+      setProjectStats(stats);
+    } catch (err) {
+      handleError(err as Error, 'load_stats');
+    }
+  }, [handleError]);
+
+  // 載入模板
+  const loadTemplates = useCallback(async () => {
+    try {
+      const templatesData = await TemplateService.getAllTemplates();
+      setTemplates(templatesData);
+    } catch (err) {
+      handleError(err as Error, 'load_templates');
+    }
+  }, [handleError]);
+
+  // 初始化數據
+  useEffect(() => {
+    if (user) {
+      loadProjects();
+      loadStats();
+      loadTemplates();
+    }
+  }, [user, loadProjects, loadStats, loadTemplates]);
+
+  // 處理新增問題
+  const handleCreateIssue = async (issueData: Omit<IssueRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!selectedProject) return;
+    
+    setLoading(true);
+    try {
+      await IssueService.createIssue(issueData);
+      await loadProjectDetails(selectedProject.id);
+      setShowIssueForm(false);
+      setEditingIssue(null);
+    } catch (err) {
+      handleError(err as Error, 'create_issue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理編輯問題
+  const handleEditIssue = async (issueData: Partial<IssueRecord>) => {
+    if (!editingIssue) return;
+    
+    setLoading(true);
+    try {
+      await IssueService.updateIssue(editingIssue.id, issueData);
+      await loadProjectDetails(selectedProject!.id);
+      setShowIssueForm(false);
+      setEditingIssue(null);
+    } catch (err) {
+      handleError(err as Error, 'update_issue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理刪除問題
+  const handleDeleteIssue = async (issueId: string) => {
+    if (!selectedProject) return;
+    
+    setLoading(true);
+    try {
+      await IssueService.deleteIssue(issueId);
+      await loadProjectDetails(selectedProject.id);
+    } catch (err) {
+      handleError(err as Error, 'delete_issue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 處理問題狀態變更
+  const handleIssueStatusChange = async (issueId: string, status: 'open' | 'in-progress' | 'resolved') => {
+    if (!selectedProject) return;
+    
+    setLoading(true);
+    try {
+      await IssueService.updateIssue(issueId, { status });
+      await loadProjectDetails(selectedProject.id);
+    } catch (err) {
+      handleError(err as Error, 'update_issue_status');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (authLoading) {
     return (
@@ -210,17 +276,34 @@ export default function TestPage() {
     <PageContainer>
       <PageHeader 
         title="專案模組測試頁面" 
-        subtitle="展示 src/modules/projects 模組的所有功能"
-      />
+        subtitle="使用真實 Firebase 服務串接的專案模組功能展示"
+      >
+        <div className="flex space-x-2">
+          <button
+            onClick={loadProjects}
+            disabled={loading}
+            className={projectStyles.button.outline}
+          >
+            {loading ? '載入中...' : '重新載入'}
+          </button>
+        </div>
+      </PageHeader>
+
+      {/* 錯誤顯示 */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
 
       {/* 標籤導航 */}
       <div className="mb-6">
-        <nav className="flex space-x-8">
+        <nav className="flex space-x-8 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -248,7 +331,9 @@ export default function TestPage() {
                 <h4 className="font-medium mb-2">AddressSelector</h4>
                 <AddressSelector 
                   value="台北市信義區信義路五段7號"
-                  onChange={(address) => console.log('選擇地址:', address)}
+                  onChange={(_address) => {
+                    // 處理地址變更
+                  }}
                 />
               </div>
               <div className="p-4 border rounded-lg">
@@ -267,55 +352,166 @@ export default function TestPage() {
               儀表板組件
             </h3>
             <div className="space-y-4">
-              <ProjectDashboard project={mockProject} />
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">專案統計</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">10</div>
-                    <div className="text-sm text-gray-600">總專案數</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">5</div>
-                    <div className="text-sm text-gray-600">執行中</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-600">3</div>
-                    <div className="text-sm text-gray-600">已完成</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">1</div>
-                    <div className="text-sm text-gray-600">逾期專案</div>
-                  </div>
-                </div>
-              </div>
+              {selectedProject && (
+                <ProjectDashboard project={selectedProject} />
+              )}
+              {projectStats && (
+                <ProjectStatsComponent stats={projectStats} />
+              )}
             </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              專案列表
+            </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={projects}
+            >
+              {(data) => (
+                <ProjectsTable 
+                  projects={data} 
+                  showAdvancedColumns={true}
+                />
+              )}
+            </DataLoader>
           </section>
 
           <section>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               工作包組件
             </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={workpackages}
+            >
+              {(data) => (
+                <WorkpackageList 
+                  workpackages={data} 
+                  projectId={selectedProject?.id || ''} 
+                />
+              )}
+            </DataLoader>
+          </section>
+
+          {selectedProject && (
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                日曆視圖
+              </h3>
+              <CalendarView
+                projectId={selectedProject.id}
+                milestones={selectedProject.milestones || []}
+                workpackages={workpackages}
+                onDateClick={(_date) => {
+                  // 處理日期點擊
+                }}
+                onMilestoneClick={(_milestone) => {
+                  // 處理里程碑點擊
+                }}
+                onWorkpackageClick={(_workpackage) => {
+                  // 處理工作包點擊
+                }}
+              />
+            </section>
+          )}
+        </div>
+      )}
+
+      {/* 數據管理 */}
+      {activeTab === 'data' && (
+        <div className="space-y-8">
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              問題管理
+            </h3>
             <div className="space-y-4">
-              <WorkpackageList workpackages={[mockWorkpackage]} projectId="test-project" />
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium">專案問題</h4>
+                <button
+                  onClick={() => setShowIssueForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  新增問題
+                </button>
+              </div>
+              
+              <DataLoader
+                loading={loading}
+                error={error ? new Error(error) : null}
+                data={issues}
+              >
+                {(data) => (
+                  <IssueList
+                    issues={data}
+                    projectId={selectedProject?.id || ''}
+                    onEdit={(issue) => {
+                      setEditingIssue(issue);
+                      setShowIssueForm(true);
+                    }}
+                    onDelete={handleDeleteIssue}
+                    onAdd={() => setShowIssueForm(true)}
+                    onStatusChange={handleIssueStatusChange}
+                    isLoading={loading}
+                  />
+                )}
+              </DataLoader>
             </div>
           </section>
 
           <section>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              資料載入組件
+              模板管理
             </h3>
-            <DataLoader
-              loading={false}
-              error={null}
-              data={[mockProject]}
-              children={(data) => (
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">載入的專案</h4>
-                  <p>{data[0]?.projectName}</p>
-                </div>
-              )}
-            />
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium">專案模板</h4>
+                <button
+                  onClick={() => setShowTemplateForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  新增模板
+                </button>
+              </div>
+              
+              <DataLoader
+                loading={loading}
+                error={error ? new Error(error) : null}
+                data={templates}
+              >
+                {(data) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.map((template) => (
+                      <TemplateCard
+                        key={template.id}
+                        template={template}
+                        onEdit={(templateId) => {
+                          const templateToEdit = data.find(t => t.id === templateId);
+                          if (templateToEdit) {
+                            setEditingTemplate(templateToEdit);
+                            setShowTemplateForm(true);
+                          }
+                        }}
+                        onDelete={async (templateId) => {
+                          try {
+                            await TemplateService.deleteTemplate(templateId);
+                            await loadTemplates();
+                          } catch (err) {
+                            handleError(err as Error, 'delete_template');
+                          }
+                        }}
+                        onApply={(_templateId) => {
+                          // 處理模板應用
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </DataLoader>
+            </div>
           </section>
         </div>
       )}
@@ -336,7 +532,7 @@ export default function TestPage() {
                   type="text"
                   value={formData.projectName || ''}
                   onChange={(e) => setFieldValue('projectName', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={projectStyles.form.input}
                 />
                 {errors.projectName && (
                   <p className="text-sm text-red-600 mt-1">{errors.projectName}</p>
@@ -345,12 +541,12 @@ export default function TestPage() {
               <button
                 onClick={() => {
                   if (validateForm()) {
-                    console.log('表單驗證通過:', formData);
+                    // 表單驗證通過
                   } else {
-                    console.log('表單驗證失敗:', errors);
+                    // 表單驗證失敗
                   }
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className={projectStyles.button.primary}
               >
                 驗證表單
               </button>
@@ -370,7 +566,7 @@ export default function TestPage() {
                     handleError(error as Error, 'test_operation');
                   }
                 }}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                className={projectStyles.button.danger}
               >
                 觸發測試錯誤
               </button>
@@ -391,15 +587,53 @@ export default function TestPage() {
                 onClick={async () => {
                   try {
                     const stats = await ProjectService.getProjectStats();
-                    console.log('專案統計:', stats);
                     alert(`總專案數: ${stats.totalProjects}`);
                   } catch (error) {
-                    console.error('取得統計失敗:', error);
+                    handleError(error as Error, 'get_project_stats');
                   }
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className={projectStyles.button.primary}
               >
                 取得專案統計
+              </button>
+              
+              <button
+                onClick={async () => {
+                  try {
+                    const allProjects = await ProjectService.getAllProjects();
+                    alert(`載入 ${allProjects.length} 個專案`);
+                  } catch (error) {
+                    handleError(error as Error, 'get_all_projects');
+                  }
+                }}
+                className={projectStyles.button.secondary}
+              >
+                取得所有專案
+              </button>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              工作包服務
+            </h3>
+            <div className="p-4 border rounded-lg space-y-4">
+              <button
+                onClick={async () => {
+                  if (!selectedProject) {
+                    alert('請先選擇專案');
+                    return;
+                  }
+                  try {
+                    const workpackages = await WorkpackageService.getWorkpackagesByProject(selectedProject.id);
+                    alert(`載入 ${workpackages.length} 個工作包`);
+                  } catch (error) {
+                    handleError(error as Error, 'get_workpackages');
+                  }
+                }}
+                className={projectStyles.button.primary}
+              >
+                取得專案工作包
               </button>
             </div>
           </section>
@@ -414,14 +648,18 @@ export default function TestPage() {
               進度計算
             </h3>
             <div className="p-4 border rounded-lg space-y-4">
-              <div>
-                <p>專案進度: {calculateProjectProgress(mockProject)}%</p>
-                <ProgressBarWithPercent percent={calculateProjectProgress(mockProject)} />
-              </div>
-              <div>
-                <p>品質分數: {calculateProjectQualityScore(mockProject)}</p>
-                <ProjectHealthIndicator project={mockProject} />
-              </div>
+              {selectedProject && (
+                <>
+                  <div>
+                    <p>專案進度: {calculateProjectProgress(selectedProject)}%</p>
+                    <ProgressBarWithPercent percent={calculateProjectProgress(selectedProject)} />
+                  </div>
+                  <div>
+                    <p>品質分數: {calculateProjectQualityScore(selectedProject)}</p>
+                    <ProjectHealthIndicator project={selectedProject} />
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
@@ -430,9 +668,14 @@ export default function TestPage() {
               專案分析
             </h3>
             <div className="p-4 border rounded-lg space-y-2">
-              <p>時程績效指數: {calculateSchedulePerformanceIndex(mockProject)}</p>
-              <p>成本績效指數: {calculateCostPerformanceIndex(mockProject)}</p>
-              <p>專案優先級分數: {calculateProjectPriorityScore(mockProject)}</p>
+              {selectedProject && (
+                <>
+                  <p>時程績效指數: {calculateSchedulePerformanceIndex(selectedProject)}</p>
+                  <p>成本績效指數: {calculateCostPerformanceIndex(selectedProject)}</p>
+                  <p>專案優先級分數: {calculateProjectPriorityScore(selectedProject)}</p>
+                  <p>狀態趨勢: {analyzeProjectStatusTrend(selectedProject).trend}</p>
+                </>
+              )}
             </div>
           </section>
         </div>
@@ -446,12 +689,9 @@ export default function TestPage() {
               專案型別
             </h3>
             <div className="p-4 border rounded-lg space-y-2">
-              <p><strong>Project:</strong> 專案主要型別</p>
+              <p><strong>ProjectDocument:</strong> 專案主要型別（包含 id）</p>
               <p><strong>Workpackage:</strong> 工作包型別</p>
-              <p><strong>SubWorkpackage:</strong> 子工作包型別</p>
               <p><strong>IssueRecord:</strong> 問題記錄型別</p>
-              <p><strong>Expense:</strong> 費用型別</p>
-              <p><strong>MaterialEntry:</strong> 材料記錄型別</p>
               <p><strong>Template:</strong> 模板型別</p>
             </div>
           </section>
@@ -465,8 +705,6 @@ export default function TestPage() {
               <p><strong>ProjectType:</strong> system | maintenance | transport</p>
               <p><strong>ProjectPriority:</strong> low | medium | high | critical</p>
               <p><strong>ProjectRiskLevel:</strong> low | medium | high | critical</p>
-              <p><strong>ProjectHealthLevel:</strong> excellent | good | fair | poor | critical</p>
-              <p><strong>ProjectPhase:</strong> initiation | planning | execution | monitoring | closure</p>
             </div>
           </section>
         </div>
@@ -564,6 +802,53 @@ export default function TestPage() {
               </div>
             </div>
           </section>
+        </div>
+      )}
+
+      {/* 表單模態框 */}
+      {showIssueForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <IssueForm
+              issue={editingIssue || undefined}
+              projectId={selectedProject?.id || ''}
+              onSubmit={editingIssue ? handleEditIssue : handleCreateIssue}
+              onCancel={() => {
+                setShowIssueForm(false);
+                setEditingIssue(null);
+              }}
+              isLoading={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showTemplateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <TemplateForm
+              template={editingTemplate}
+              onSubmit={async (templateData) => {
+                try {
+                  if (editingTemplate) {
+                    await TemplateService.updateTemplate(editingTemplate.id, templateData);
+                  } else {
+                    await TemplateService.createTemplate(templateData);
+                  }
+                  await loadTemplates();
+                  setShowTemplateForm(false);
+                  setEditingTemplate(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_template');
+                }
+              }}
+              onCancel={() => {
+                setShowTemplateForm(false);
+                setEditingTemplate(null);
+              }}
+              isLoading={loading}
+            />
+          </div>
         </div>
       )}
     </PageContainer>
