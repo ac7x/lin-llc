@@ -19,6 +19,7 @@ import { useState, useRef, useEffect, FormEvent, ChangeEvent } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
 import { firebaseConfig } from '@/lib/firebase-config';
+import { getErrorMessage, logError, safeAsync } from '@/utils/errorUtils';
 
 
 // 初始化 Firebase
@@ -174,7 +175,7 @@ export default function GeminiChatPage() {
     setInput('');
     setLoading(true);
 
-    try {
+    await safeAsync(async () => {
       let result;
       if (selectedFile) {
         const filePart = await fileToGenerativePart(selectedFile);
@@ -198,20 +199,20 @@ export default function GeminiChatPage() {
         createdAt: new Date(),
       };
       setMessages(prev => [...prev, geminiMsg]);
-    } catch (_error) {
+    }, (error) => {
       const errorMsg: ChatMessage = {
         id: `${Date.now()}-gemini`,
         role: 'gemini',
-        content: '抱歉，發生錯誤，請稍後再試。',
+        content: getErrorMessage(error),
         createdAt: new Date(),
       };
       setMessages(prev => [...prev, errorMsg]);
-    } finally {
-      setLoading(false);
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      logError(error, { operation: 'gemini_send', user: user?.email });
+    });
+    setLoading(false);
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 

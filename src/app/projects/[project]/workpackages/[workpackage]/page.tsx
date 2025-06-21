@@ -26,6 +26,7 @@ import { Project , SubWorkpackage, Workpackage ,
   TemplateToSubWorkpackageOptions,
 } from '@/types/project';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 // Template helper functions
 /**
@@ -185,7 +186,7 @@ export default function WorkpackageDetailPage() {
   useEffect(() => {
     const loadTemplates = async () => {
       setLoadingTemplates(true);
-      try {
+      await safeAsync(async () => {
         const templatesRef = collection(db, 'templates');
         const templatesSnapshot = await getDocs(templatesRef);
         const templatesData = templatesSnapshot.docs.map(doc => ({
@@ -193,10 +194,10 @@ export default function WorkpackageDetailPage() {
           ...doc.data(),
         })) as Template[];
         setTemplates(templatesData);
-      } catch (_error) {
-      } finally {
-        setLoadingTemplates(false);
-      }
+      }, (error) => {
+        logError(error, { operation: 'load_templates' });
+      });
+      setLoadingTemplates(false);
     };
     if (showTemplateModal && templates.length === 0) loadTemplates();
   }, [showTemplateModal, templates.length]);
@@ -233,7 +234,7 @@ export default function WorkpackageDetailPage() {
 
   const handleSave = async (updates: Partial<Workpackage>) => {
     setSaving(true);
-    try {
+    await safeAsync(async () => {
       // 過濾掉 undefined 值
       const filteredUpdates = Object.fromEntries(
         Object.entries(updates).filter(([, value]) => value !== undefined)
@@ -247,17 +248,18 @@ export default function WorkpackageDetailPage() {
             }
           : wp
       );
-      await updateDoc(doc(db, 'projects', projectId), { workpackages: updatedWorkpackages });
+      await retry(() => updateDoc(doc(db, 'projects', projectId), { workpackages: updatedWorkpackages }), 3, 1000);
       router.refresh();
-    } finally {
-      setSaving(false);
-    }
+    }, (error) => {
+      logError(error, { operation: 'save_workpackage', workpackageId, projectId });
+    });
+    setSaving(false);
   };
 
   const handleAddSubWorkpackage = async () => {
     if (!newSubWorkpackage.name.trim() || subSaving) return;
     setSubSaving(true);
-    try {
+    await safeAsync(async () => {
       // 先建立物件，後續用展開運算子動態加入日期欄位
       const dateFields: Partial<Pick<SubWorkpackage, 'estimatedStartDate' | 'estimatedEndDate'>> =
         {};
@@ -290,7 +292,7 @@ export default function WorkpackageDetailPage() {
           ? { ...wp, subWorkpackages: [...(wp.subWorkpackages || []), newSubWp] }
           : wp
       );
-      await updateDoc(doc(db, 'projects', projectId), { workpackages: updatedWorkpackages });
+      await retry(() => updateDoc(doc(db, 'projects', projectId), { workpackages: updatedWorkpackages }), 3, 1000);
       setNewSubWorkpackage({
         name: '',
         description: '',
@@ -301,14 +303,15 @@ export default function WorkpackageDetailPage() {
         estimatedEndDate: '',
         assignedTo: '', // 重置負責人欄位
       });
-    } finally {
-      setSubSaving(false);
-    }
+    }, (error) => {
+      logError(error, { operation: 'add_sub_workpackage', workpackageId, projectId });
+    });
+    setSubSaving(false);
   };
 
   const handleAddFromTemplate = async (template: Template) => {
     setSubSaving(true);
-    try {
+    await safeAsync(async () => {
       // 只有在工作包已有預計日期時才傳遞預設日期
       const templateOptions: TemplateToSubWorkpackageOptions = {
         workpackageId,
@@ -328,32 +331,34 @@ export default function WorkpackageDetailPage() {
           ? { ...wp, subWorkpackages: [...(wp.subWorkpackages || []), ...subWorkpackages] }
           : wp
       );
-      await updateDoc(doc(db, 'projects', projectId), { workpackages: updatedWorkpackages });
+      await retry(() => updateDoc(doc(db, 'projects', projectId), { workpackages: updatedWorkpackages }), 3, 1000);
       setShowTemplateModal(false);
       setSelectedTemplate(null);
       setTemplateQuantities({});
-    } finally {
-      setSubSaving(false);
-    }
+    }, (error) => {
+      logError(error, { operation: 'add_from_template', workpackageId, projectId, templateId: template.id });
+    });
+    setSubSaving(false);
   };
 
   // 新增：指派子工作包負責人的函數
   const handleAssignSubWorkpackage = async (subWpId: string, assignedTo: string) => {
     setSubSaving(true);
-    try {
+    await safeAsync(async () => {
       const updatedSubWps = workpackage.subWorkpackages.map(wp =>
         wp.id === subWpId ? { ...wp, assignedTo: assignedTo || null } : wp
       );
       const updatedWorkpackages = project.workpackages.map(wp =>
         wp.id === workpackageId ? { ...wp, subWorkpackages: updatedSubWps } : wp
       );
-      await updateDoc(doc(db, 'projects', projectId), { workpackages: updatedWorkpackages });
+      await retry(() => updateDoc(doc(db, 'projects', projectId), { workpackages: updatedWorkpackages }), 3, 1000);
       setShowAssignModal(false);
       setSelectedSubWorkpackage(null);
       setAssigningUser('');
-    } finally {
-      setSubSaving(false);
-    }
+    }, (error) => {
+      logError(error, { operation: 'assign_sub_workpackage', subWpId, workpackageId, projectId });
+    });
+    setSubSaving(false);
   };
 
   return (

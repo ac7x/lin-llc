@@ -35,6 +35,7 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 import { Workpackage, SubWorkpackage } from '@/types/project';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface EnhancedSubWorkpackage extends SubWorkpackage {
   workpackageId: string;
@@ -234,15 +235,15 @@ export default function SubWorkpackageSortingPage() {
 
   const saveToFirestore = async (updatedWorkpackages: Workpackage[]) => {
     setSaving(true);
-    try {
-      await updateDoc(doc(db, 'projects', projectId), {
+    await safeAsync(async () => {
+      await retry(() => updateDoc(doc(db, 'projects', projectId), {
         workpackages: updatedWorkpackages,
-      });
-    } catch {
+      }), 3, 1000);
+    }, (error) => {
       alert('更新排序時出錯，請重試。');
-    } finally {
-      setSaving(false);
-    }
+      logError(error, { operation: 'update_sorting', projectId });
+    });
+    setSaving(false);
   };
 
   const startEditSubWorkpackage = (subWp: EnhancedSubWorkpackage) => {
@@ -280,7 +281,7 @@ export default function SubWorkpackageSortingPage() {
     }
     const workpackageId = editingSubWp.workpackageId;
     setSaving(true);
-    try {
+    await safeAsync(async () => {
       const newWorkpackages = workpackages.map(wp => {
         if (wp.id === workpackageId) {
           return {
@@ -307,16 +308,16 @@ export default function SubWorkpackageSortingPage() {
           : subWp
       );
       setAllSubWorkpackages(newAllSubWorkpackages);
-      await updateDoc(doc(db, 'projects', projectId), {
+      await retry(() => updateDoc(doc(db, 'projects', projectId), {
         workpackages: newWorkpackages,
-      });
+      }), 3, 1000);
       setIsEditing(false);
       setEditingSubWp(null);
-    } catch (_error) {
+    }, (error) => {
       alert('更新子工作包時出錯，請重試。');
-    } finally {
-      setSaving(false);
-    }
+      logError(error, { operation: 'update_sub_workpackage', subWpId: editingSubWp.id, workpackageId, projectId });
+    });
+    setSaving(false);
   };
 
   if (loading) return <div className='p-4'>載入中...</div>;

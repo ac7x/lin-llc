@@ -18,6 +18,7 @@ import {
   archiveNotification,
 } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/notification';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface UseNotificationsReturn {
   notifications: NotificationMessage[];
@@ -65,7 +66,7 @@ export function useNotifications(
   const loadFromCache = useCallback(() => {
     if (!isClient) return null;
 
-    try {
+    return safeAsync(async () => {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const { notifications: cachedNotifications, timestamp }: CacheData = JSON.parse(cached);
@@ -73,9 +74,11 @@ export function useNotifications(
           return cachedNotifications;
         }
       }
-    } catch (_error) {
-    }
-    return null;
+      return null;
+    }, (error) => {
+      logError(error, { operation: 'load_from_cache' });
+      return null;
+    });
   }, [isClient]);
 
   // 保存到本地緩存
@@ -83,14 +86,15 @@ export function useNotifications(
     (data: NotificationMessage[]) => {
       if (!isClient) return;
 
-      try {
+      safeAsync(async () => {
         const cacheData: CacheData = {
           notifications: data,
           timestamp: Date.now(),
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-      } catch (_error) {
-      }
+      }, (error) => {
+        logError(error, { operation: 'save_to_cache' });
+      });
     },
     [isClient]
   );
@@ -99,47 +103,24 @@ export function useNotifications(
   const loadNotifications = useCallback(async () => {
     if (!user?.uid) return;
 
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      // 先嘗試從緩存讀取
-      const cachedNotifications = loadFromCache();
-      if (cachedNotifications) {
-        setNotifications(cachedNotifications);
-        setLoading(false);
-      }
+    await safeAsync(async () => {
+      const notifications = await retry(() => getUserNotifications(user.uid, {
+        includeArchived: options.includeArchived,
+        limitCount: options.limitCount,
+        onlyUnread: options.onlyUnread,
+      }), 3, 1000);
 
-      try {
-        // 分開獲取通知和未讀數量
-        const notificationsData = await getUserNotifications(user.uid, {
-          includeArchived,
-          limitCount,
-          onlyUnread,
-        });
-
-        const unreadCountData = await getUnreadNotificationCount(user.uid);
-
-        setNotifications(notificationsData);
-        setUnreadCount(unreadCountData);
-        saveToCache(notificationsData);
-      } catch (err: unknown) {
-        if (err instanceof Error && err.message.includes('需要建立 Firestore 索引')) {
-          setError('系統正在建立必要的索引，請稍後再試。');
-          // 如果有緩存數據，繼續使用
-          if (cachedNotifications) {
-            setNotifications(cachedNotifications);
-          }
-        } else {
-          throw err;
-        }
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '載入通知失敗');
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.uid, includeArchived, limitCount, onlyUnread, loadFromCache, saveToCache]);
+      setNotifications(notifications);
+      setUnreadCount(notifications.filter(n => !n.isRead).length);
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'load_notifications', userId: user.uid });
+    });
+    setLoading(false);
+  }, [user?.uid, options.includeArchived, options.limitCount, options.onlyUnread]);
 
   // 批量處理標記已讀
   const processBatch = useCallback(async () => {
@@ -148,7 +129,7 @@ export function useNotifications(
     const batch = Array.from(batchQueue.current);
     batchQueue.current.clear();
 
-    try {
+    await safeAsync(async () => {
       await Promise.all(batch.map(id => markNotificationAsRead(id)));
 
       // 更新本地狀態
@@ -162,9 +143,10 @@ export function useNotifications(
 
       // 更新未讀數量
       setUnreadCount(prev => Math.max(0, prev - batch.length));
-    } catch (_err: unknown) {
-      setError(_err instanceof Error ? _err.message : 'Failed to process batch');
-    }
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'process_batch', batchSize: batch.length });
+    });
   }, []);
 
   // 標記單一通知為已讀
@@ -210,10 +192,16 @@ export function useNotifications(
     );
 
     // 載入未讀數量
-    getUnreadNotificationCount(user.uid)
-      .then(setUnreadCount)
-      .catch((_err: unknown) => {
-      });
+    safeAsync(async () => {
+      const count = await getUnreadNotificationCount(user.uid);
+      setUnreadCount(count);
+      setLoading(false);
+      setError(null);
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'get_unread_count', userId: user.uid });
+      setLoading(false);
+    });
 
     // 訂閱未讀數量更新
     const unsubscribeUnreadCount = subscribeToUserNotifications(
@@ -240,7 +228,7 @@ export function useNotifications(
   const handleMarkAllAsRead = async () => {
     if (!user?.uid) return;
 
-    try {
+    await safeAsync(async () => {
       await markAllNotificationsAsRead(user.uid);
 
       // 更新本地狀態
@@ -253,15 +241,16 @@ export function useNotifications(
       );
 
       setUnreadCount(0);
-    } catch (_error) {
-      setError(_err instanceof Error ? _err.message : 'Failed to mark all notifications as read');
-      throw _err;
-    }
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'mark_all_as_read', userId: user.uid });
+      throw error;
+    });
   };
 
   // 封存通知
   const handleArchiveNotification = async (notificationId: string) => {
-    try {
+    await safeAsync(async () => {
       await archiveNotification(notificationId);
 
       // 如果不包含已封存的通知，從列表中移除
@@ -283,10 +272,11 @@ export function useNotifications(
       if (notification && !notification.isRead) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
-    } catch (_error) {
-      setError(_err instanceof Error ? _err.message : 'Failed to archive notification');
-      throw _err;
-    }
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'archive_notification', notificationId });
+      throw error;
+    });
   };
 
   return {
@@ -332,16 +322,16 @@ export function useUnreadNotificationCount(): {
     );
 
     // 初始載入未讀數量
-    getUnreadNotificationCount(user.uid)
-      .then((count: number) => {
-        setUnreadCount(count);
-        setLoading(false);
-        setError(null);
-      })
-      .catch((_err: unknown) => {
-        setError('無法載入未讀通知數量');
-        setLoading(false);
-      });
+    safeAsync(async () => {
+      const count = await getUnreadNotificationCount(user.uid);
+      setUnreadCount(count);
+      setLoading(false);
+      setError(null);
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'get_unread_count', userId: user.uid });
+      setLoading(false);
+    });
 
     return unsubscribe;
   }, [user?.uid]);

@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 import { QuoteItem } from '@/types/finance';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 
 export default function QuoteAddPage() {
@@ -73,9 +74,9 @@ export default function QuoteAddPage() {
     e.preventDefault();
     if (!user) return;
 
-    try {
+    await safeAsync(async () => {
       const quoteId = nanoid();
-      await setDoc(doc(db, 'finance', 'default', 'quotes', quoteId), {
+      await retry(() => setDoc(doc(db, 'finance', 'default', 'quotes', quoteId), {
         quoteId,
         quoteName,
         clientName,
@@ -88,11 +89,12 @@ export default function QuoteAddPage() {
         updatedAt: new Date(),
         status: 'draft',
         createdBy: user.uid,
-      });
+      }), 3, 1000);
       router.push('/quotes');
-    } catch (_error) {
-      alert('建立報價單失敗，請稍後再試');
-    }
+    }, (error) => {
+      alert(`建立報價單失敗，請稍後再試：${getErrorMessage(error)}`);
+      logError(error, { operation: 'create_quote', userId: user.uid });
+    });
   };
 
   return (

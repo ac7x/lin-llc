@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, getDocs, db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
 import type { Project } from '@/types/project';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 import ProjectEditModal from './ProjectEditModal';
 import ProjectInfoDisplay from './ProjectInfoDisplay';
@@ -38,9 +39,9 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
 
   useEffect(() => {
     const fetchMembers = async () => {
-      try {
+      await safeAsync(async () => {
         const membersRef = collection(db, 'members');
-        const membersSnap = await getDocs(query(membersRef));
+        const membersSnap = await retry(() => getDocs(query(membersRef)), 3, 1000);
 
         const users = membersSnap.docs.map(doc => ({
           uid: doc.id,
@@ -64,8 +65,9 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
         };
 
         setEligibleUsers(categorizedUsers);
-      } catch (_error) {
-      }
+      }, (error) => {
+        logError(error, { operation: 'fetch_project_members' });
+      });
     };
 
     fetchMembers();

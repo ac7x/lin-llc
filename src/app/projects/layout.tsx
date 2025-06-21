@@ -30,6 +30,7 @@ import {
   Timestamp,
 } from '@/lib/firebase-client';
 import type { Project } from '@/types/project';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 import {
   ProjectProgressPercent,
   ProgressBar,
@@ -64,7 +65,7 @@ function SidebarContent() {
   const handleAddWorkpackage = async () => {
     if (!newWorkpackage.name.trim() || !selectedProjectId || saving) return;
     setSaving(true);
-    try {
+    await safeAsync(async () => {
       const projectRef = doc(db, 'projects', selectedProjectId);
       const projectSnap = projectsSnapshot?.docs.find(doc => doc.id === selectedProjectId);
 
@@ -86,9 +87,9 @@ function SidebarContent() {
         subWorkpackages: [],
       };
 
-      await updateDoc(projectRef, {
+      await retry(() => updateDoc(projectRef, {
         workpackages: [...workpackages, newWp],
-      });
+      }), 3, 1000);
 
       setNewWorkpackage({
         name: '',
@@ -99,11 +100,11 @@ function SidebarContent() {
       });
       setShowCreateModal(false);
       setSelectedProjectId('');
-    } catch (_error) {
-      alert('建立工作包失敗');
-    } finally {
-      setSaving(false);
-    }
+    }, (error) => {
+      alert(`建立工作包失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'add_workpackage', projectId: selectedProjectId });
+    });
+    setSaving(false);
   };
 
   const projects =
@@ -180,13 +181,18 @@ function SidebarContent() {
                     onClick={async e => {
                       e.preventDefault();
                       if (!window.confirm('確定要封存此專案？')) return;
-                      const projectData = { ...project, archivedAt: new Date() };
-                      const userId = project.owner || 'default';
-                      await setDoc(
-                        doc(db, 'archived', userId, 'projects', project.id),
-                        projectData
-                      );
-                      await deleteDoc(doc(db, 'projects', project.id));
+                      await safeAsync(async () => {
+                        const projectData = { ...project, archivedAt: new Date() };
+                        const userId = project.owner || 'default';
+                        await retry(() => setDoc(
+                          doc(db, 'archived', userId, 'projects', project.id),
+                          projectData
+                        ), 3, 1000);
+                        await retry(() => deleteDoc(doc(db, 'projects', project.id)), 3, 1000);
+                      }, (error) => {
+                        alert(`封存專案失敗: ${getErrorMessage(error)}`);
+                        logError(error, { operation: 'archive_project', projectId: project.id });
+                      });
                     }}
                   >
                     🗑️

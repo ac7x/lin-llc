@@ -28,6 +28,7 @@ import {
   formats,
 } from '@/utils/calendarUtils';
 import { getProgressInfo, ProgressColorScale } from '@/utils/colorUtils';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export default function ProjectCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -41,8 +42,8 @@ export default function ProjectCalendarPage() {
   useEffect(() => {
     const fetchAllWorkpackages = async () => {
       setLoading(true);
-      try {
-        const projectsSnapshot = await getDocs(collection(db, 'projects'));
+      await safeAsync(async () => {
+        const projectsSnapshot = await retry(() => getDocs(collection(db, 'projects')), 3, 1000);
         const calendarEvents: CalendarEvent[] = [];
 
         for (const docSnap of projectsSnapshot.docs) {
@@ -74,11 +75,11 @@ export default function ProjectCalendarPage() {
 
         setEvents(calendarEvents);
         setError(null);
-      } catch (_error) {
-        setError(_err instanceof Error ? _err.message : '發生錯誤');
-      } finally {
-        setLoading(false);
-      }
+      }, (error) => {
+        setError(getErrorMessage(error));
+        logError(error, { operation: 'fetch_all_workpackages' });
+      });
+      setLoading(false);
     };
     fetchAllWorkpackages();
   }, []);

@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 import { Project , IssueRecord } from '@/types/project';
 import { formatLocalDate } from '@/utils/dateUtils';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export default function ProjectIssuesPage() {
   const { loading: authLoading } = useAuth();
@@ -70,7 +71,7 @@ export default function ProjectIssuesPage() {
     e.preventDefault();
     if (saving || !newIssue.description) return;
     setSaving(true);
-    try {
+    await safeAsync(async () => {
       const issueRecord: IssueRecord = {
         id: Date.now().toString(),
         type: newIssue.type,
@@ -86,43 +87,44 @@ export default function ProjectIssuesPage() {
         updatedAt: Timestamp.now(),
       };
       if (!projectDoc?.data()?.issues) {
-        await updateDoc(doc(db, 'projects', projectId), {
+        await retry(() => updateDoc(doc(db, 'projects', projectId), {
           issues: [issueRecord],
-        });
+        }), 3, 1000);
       } else {
-        await updateDoc(doc(db, 'projects', projectId), {
+        await retry(() => updateDoc(doc(db, 'projects', projectId), {
           issues: arrayUnion(issueRecord),
-        });
+        }), 3, 1000);
       }
       setNewIssue({
         ...newIssue,
         description: '',
       });
       alert('問題記錄已成功添加！');
-    } catch (_error) {
-      alert(`保存問題記錄時出錯：${  error}`);
-    } finally {
-      setSaving(false);
-    }
+    }, (error) => {
+      alert(`保存問題記錄時出錯：${getErrorMessage(error)}`);
+      logError(error, { operation: 'add_issue_record', projectId });
+    });
+    setSaving(false);
   };
 
   const updateIssueStatus = async (
     issueId: string,
     newStatus: 'open' | 'in-progress' | 'resolved'
   ) => {
-    try {
+    await safeAsync(async () => {
       if (!projectDoc?.exists()) return;
       const project = projectDoc.data() as Project;
       const allIssues = [...(project.issues || [])];
       const updatedIssues = allIssues.map(issue =>
         issue.id === issueId ? { ...issue, status: newStatus } : issue
       );
-      await updateDoc(doc(db, 'projects', projectId), {
+      await retry(() => updateDoc(doc(db, 'projects', projectId), {
         issues: updatedIssues,
-      });
-    } catch (_error) {
-      alert(`更新問題狀態時出錯：${  error}`);
-    }
+      }), 3, 1000);
+    }, (error) => {
+      alert(`更新問題狀態時出錯：${getErrorMessage(error)}`);
+      logError(error, { operation: 'update_issue_status', projectId, issueId });
+    });
   };
 
   if (authLoading) {

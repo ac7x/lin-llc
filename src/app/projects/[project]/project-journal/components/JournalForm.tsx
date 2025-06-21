@@ -108,7 +108,10 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
             const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
             setUploadProgress(progress);
           },
-          error => reject(error),
+          error => {
+            logError(error, { operation: 'upload_photo', fileName, index: i });
+            reject(error);
+          },
           async () => {
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
@@ -122,17 +125,24 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                 updatedAt: nowTimestamp,
                 createdBy: 'current-user', // TODO: Replace with actual user
               });
-            } catch (_error) {
-              reject(_error);
+            } catch (error) {
+              logError(error, { operation: 'get_download_url', fileName, index: i });
+              reject(error);
             }
           }
         );
       });
     });
 
-    const results = await Promise.all(uploadPromises);
-    setUploading(false);
-    return results.filter((record): record is PhotoRecord => record !== null);
+    try {
+      const results = await Promise.all(uploadPromises);
+      setUploading(false);
+      return results.filter((record): record is PhotoRecord => record !== null);
+    } catch (error) {
+      setUploading(false);
+      logError(error, { operation: 'upload_photos_batch', projectId, reportId });
+      throw error;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

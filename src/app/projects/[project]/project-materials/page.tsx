@@ -19,6 +19,7 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { db, doc, updateDoc } from '@/lib/firebase-client';
 import { Project , MaterialEntry } from '@/types/project';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export default function ProjectMaterialsPage() {
   useAuth();
@@ -54,7 +55,8 @@ export default function ProjectMaterialsPage() {
     if (saving || !newMaterial.name) return;
 
     setSaving(true);
-    try {
+    
+    await safeAsync(async () => {
       const materialEntry: MaterialEntry = {
         materialId: Timestamp.now().toMillis().toString(),
         name: newMaterial.name,
@@ -68,14 +70,14 @@ export default function ProjectMaterialsPage() {
 
       // 如果專案尚未有材料陣列，初始化一個
       if (!projectDoc?.data()?.materials) {
-        await updateDoc(doc(db, 'projects', projectId), {
+        await retry(() => updateDoc(doc(db, 'projects', projectId), {
           materials: [materialEntry],
-        });
+        }), 3, 1000);
       } else {
         // 添加新材料到陣列
-        await updateDoc(doc(db, 'projects', projectId), {
+        await retry(() => updateDoc(doc(db, 'projects', projectId), {
           materials: arrayUnion(materialEntry),
-        });
+        }), 3, 1000);
       }
 
       setNewMaterial({
@@ -87,11 +89,12 @@ export default function ProjectMaterialsPage() {
       });
 
       alert('材料記錄已成功添加！');
-    } catch (_error) {
-      alert(`保存材料記錄時出錯：${  error}`);
-    } finally {
-      setSaving(false);
-    }
+    }, (error) => {
+      alert(`保存材料記錄時出錯：${getErrorMessage(error)}`);
+      logError(error, { operation: 'add_material', projectId });
+    });
+    
+    setSaving(false);
   };
 
   if (loading)

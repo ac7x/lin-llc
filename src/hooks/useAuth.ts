@@ -1,5 +1,7 @@
 import { FirebaseError } from 'firebase/app';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useState, useEffect, useCallback } from 'react';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 import { type RoleKey } from '@/constants/roles';
@@ -7,17 +9,13 @@ import {
   auth,
   db,
   GoogleAuthProvider,
-  signInWithPopup,
   getIdToken,
-  onAuthStateChanged,
   User,
-  doc,
-  getDoc,
-  setDoc,
   collection,
   getDocs,
 } from '@/lib/firebase-client';
 import type { AuthState, UseAuthReturn, PermissionCheckOptions, AuthError } from '@/types/auth';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 const arrayToPermissionRecord = (permissions: readonly string[]): Record<string, boolean> => {
   return permissions.reduce(
@@ -64,7 +62,8 @@ export const useAuth = (): UseAuthReturn => {
     Record<RoleKey, Record<string, boolean>>
   > => {
     const permissionRecords = createInitialRolePermissions();
-    try {
+    
+    await safeAsync(async () => {
       const managementRef = collection(db, 'management');
       const snapshot = await getDocs(managementRef);
 
@@ -76,8 +75,10 @@ export const useAuth = (): UseAuthReturn => {
           permissionRecords[role] = arrayToPermissionRecord(permissions);
         }
       });
-    } catch (_error) {
-    }
+    }, (error) => {
+      logError(error, { operation: 'get_standard_permissions' });
+    });
+    
     return permissionRecords;
   }, []);
 
@@ -88,7 +89,7 @@ export const useAuth = (): UseAuthReturn => {
       if (!isMounted) return;
 
       if (currentUser) {
-        try {
+        await safeAsync(async () => {
           const standardPermissions = await getStandardPermissions();
           const memberRef = doc(db, 'members', currentUser.uid);
           const memberDoc = await getDoc(memberRef);
@@ -121,19 +122,20 @@ export const useAuth = (): UseAuthReturn => {
               error: null,
             }));
           }
-        } catch (_error) {
+        }, (error) => {
           if (isMounted) {
             setAuthState(prev => ({
               ...prev,
               loading: false,
               error: {
                 code: 'auth/error',
-                message: '載入用戶資料或同步權限時發生錯誤',
-                details: _error,
+                message: getErrorMessage(error),
+                details: error,
               },
             }));
           }
-        }
+          logError(error, { operation: 'load_user_data', userId: currentUser.uid });
+        });
       } else {
         if (isMounted) {
           setAuthState(prev => ({
@@ -153,16 +155,16 @@ export const useAuth = (): UseAuthReturn => {
   }, [getStandardPermissions]);
 
   const signInWithGoogle = async (): Promise<void> => {
-    try {
+    await safeAsync(async () => {
       setAuthState(prev => ({ ...prev, error: null }));
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const _idToken = await getIdToken(result.user);
+      const result = await retry(() => signInWithPopup(auth, provider), 3, 1000);
+      const _idToken = await retry(() => getIdToken(result.user), 3, 1000);
 
       const memberRef = doc(db, 'members', result.user.uid);
-      const memberDoc = await getDoc(memberRef);
+      const memberDoc = await retry(() => getDoc(memberRef), 3, 1000);
       const standardPermissions = await getStandardPermissions();
-
+      
       if (!memberDoc.exists()) {
         const guestPermissions = standardPermissions['guest'] || {};
         const memberData = {
@@ -174,63 +176,79 @@ export const useAuth = (): UseAuthReturn => {
           rolePermissions: { guest: guestPermissions },
           currentRole: 'guest',
         };
-        await setDoc(memberRef, memberData);
+        await retry(() => setDoc(memberRef, memberData), 3, 1000);
       } else {
-        await setDoc(
+        await retry(() => setDoc(
           memberRef,
           {
             lastLoginAt: new Date().toISOString(),
           },
           { merge: true }
-        );
+        ), 3, 1000);
       }
-
-    } catch (_error) {
+    }, (error) => {
       let authError: AuthError;
-      if (_err instanceof FirebaseError) {
-        authError = { code: _err.code, message: _err.message, details: _err };
-      } else if (_err instanceof Error) {
+      if (error instanceof FirebaseError) {
+        authError = { code: error.code, message: error.message, details: error };
+      } else if (error instanceof Error) {
         authError = {
           code: 'unknown',
-          message: _err.message,
-          details: _err,
+          message: error.message,
+          details: error,
         };
       } else {
         authError = {
           code: 'unknown',
           message: '登入過程中發生未知的錯誤',
-          details: _err,
+          details: error,
         };
       }
       setAuthState(prev => ({ ...prev, error: authError }));
+      logError(error, { operation: 'google_signin' });
       throw authError;
-    }
+    });
+  };
+
+  const signOutUser = async (): Promise<void> => {
+    await safeAsync(async () => {
+      await retry(() => signOut(auth), 3, 1000);
+    }, (error) => {
+      logError(error, { operation: 'sign_out' });
+      throw error;
+    });
   };
 
   const checkPermission = async (options: PermissionCheckOptions): Promise<boolean> => {
-    const { requiredRole, requiredPermissions, checkAll = false } = options;
-    const user = authState.user;
+    const result = await safeAsync(async () => {
+      const { requiredRole, requiredPermissions, checkAll = false } = options;
+      const user = authState.user;
+      
+      if (!user) return false;
 
-    if (!user) return false;
+      // 檢查角色
+      if (requiredRole && user.currentRole !== requiredRole) {
+        return false;
+      }
 
-    // 檢查角色
-    if (requiredRole && user.currentRole !== requiredRole) {
-      return false;
-    }
-
-    // 檢查權限
-    if (requiredPermissions && requiredPermissions.length > 0) {
-      if (checkAll) {
-        return requiredPermissions.every(
-          permission => user.rolePermissions?.[user.currentRole as RoleKey]?.[permission]
+      // 檢查權限
+      if (requiredPermissions && requiredPermissions.length > 0) {
+        if (checkAll) {
+          return requiredPermissions.every(
+            permission => user.rolePermissions?.[user.currentRole as RoleKey]?.[permission] === true
+          );
+        }
+        return requiredPermissions.some(
+          permission => user.rolePermissions?.[user.currentRole as RoleKey]?.[permission] === true
         );
       }
-      return requiredPermissions.some(
-        permission => user.rolePermissions?.[user.currentRole as RoleKey]?.[permission]
-      );
-    }
 
-    return true;
+      return true;
+    }, (error) => {
+      logError(error, { operation: 'check_permission', options });
+      return false;
+    });
+    
+    return result ?? false;
   };
 
   const hasPermission = (permissionId: string): boolean => {

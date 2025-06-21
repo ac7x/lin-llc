@@ -6,6 +6,7 @@ import { useState, useEffect, ReactElement } from 'react';
 import { PAGE_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
 import { db } from '@/lib/firebase-client';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface RolePermissionData {
   role: RoleKey;
@@ -24,9 +25,9 @@ export default function RolePermissionsComponent(): ReactElement {
   useEffect(() => {
     const fetchRolePermissions = async (): Promise<void> => {
       setIsLoading(true);
-      try {
+      await safeAsync(async () => {
         const managementRef = collection(db, 'management');
-        const snapshot = await getDocs(managementRef);
+        const snapshot = await retry(() => getDocs(managementRef), 3, 1000);
 
         const newPermissions: Record<RoleKey, string[]> = {} as Record<RoleKey, string[]>;
         for (const role in DEFAULT_ROLE_PERMISSIONS) {
@@ -40,10 +41,10 @@ export default function RolePermissionsComponent(): ReactElement {
           }
         });
         setRolePermissions(newPermissions);
-      } catch (_error) {
-      } finally {
-        setIsLoading(false);
-      }
+      }, (error) => {
+        logError(error, { operation: 'fetch_role_permissions' });
+      });
+      setIsLoading(false);
     };
 
     void fetchRolePermissions();
@@ -80,7 +81,7 @@ export default function RolePermissionsComponent(): ReactElement {
 
   const handleSave = async (): Promise<void> => {
     setIsSaving(true);
-    try {
+    await safeAsync(async () => {
       const permissionsToSave = (rolePermissions[selectedRole] || [])
         .map(id => {
           return (
@@ -90,17 +91,17 @@ export default function RolePermissionsComponent(): ReactElement {
         .filter(p => p.id);
 
       const roleDocRef = doc(db, 'management', selectedRole);
-      await setDoc(roleDocRef, {
+      await retry(() => setDoc(roleDocRef, {
         role: selectedRole,
         pagePermissions: permissionsToSave,
         updatedAt: new Date().toISOString(),
-      });
+      }), 3, 1000);
       alert('權限已儲存');
-    } catch (_error) {
-      alert('儲存失敗');
-    } finally {
-      setIsSaving(false);
-    }
+    }, (error) => {
+      alert(`儲存失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'save_role_permissions', role: selectedRole });
+    });
+    setIsSaving(false);
   };
 
   if (isLoading) {

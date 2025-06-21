@@ -19,6 +19,7 @@ import {
   getDocs,
 } from '@/lib/firebase-client';
 import { safeToDate } from '@/utils/dateUtils';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 
 // 定義留言訊息的結構
@@ -97,8 +98,9 @@ export default function HomePage(): ReactElement {
         setDeveloperNote(foundDeveloperNote);
         setMessages(fetchedMessages);
       },
-      _err => {
-        setError('無法載入留言，請稍後再試。');
+      error => {
+        setError(getErrorMessage(error));
+        logError(error, { operation: 'load_feedback_messages' });
       }
     );
 
@@ -113,21 +115,20 @@ export default function HomePage(): ReactElement {
       limit(50)
     );
 
-    try {
-      const snapshot = await getDocs(postQuery);
+    await safeAsync(async () => {
+      const snapshot = await retry(() => getDocs(postQuery), 3, 1000);
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
       // 在客戶端過濾開發者日誌和時間
       const recentUserMessages = snapshot.docs.filter(doc => {
         const data = doc.data();
         const createdAt = safeToDate(data.createdAt);
         return !data.isDeveloperNote && createdAt && createdAt >= twentyFourHoursAgo;
       });
-
       setCanPost(recentUserMessages.length === 0);
-    } catch (_error) {
+    }, (error) => {
       setCanPost(true);
-    }
+      logError(error, { operation: 'check_can_post', userId: currentUser.uid });
+    });
   }, []);
 
   useEffect(() => {
@@ -164,20 +165,21 @@ export default function HomePage(): ReactElement {
       return;
     }
 
-    try {
-      await addDoc(collection(db, 'feedback'), {
+    await safeAsync(async () => {
+      await retry(() => addDoc(collection(db, 'feedback'), {
         userId: user.uid,
         userName: user.displayName,
         userPhotoURL: user.photoURL,
         message: newMessage,
         createdAt: serverTimestamp(),
         ...(isDevSubmission && { isDeveloperNote: true, version: version.trim() }),
-      });
+      }), 3, 1000);
       setNewMessage('');
       if (isDevSubmission) setVersion('');
-    } catch (_error) {
-      setError('發送失敗，請稍後再試。');
-    }
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'submit_feedback', userId: user.uid });
+    });
   };
 
   if (loading) {

@@ -4,13 +4,13 @@
  * 確保只在客戶端環境中初始化和使用
  */
 
-import type { Messaging } from 'firebase/messaging';
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { firebaseApp } from '@/lib/firebase-client';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface UseFirebaseMessagingReturn {
-  messaging: Messaging | null;
+  messaging: any;
   fcmToken: string | null;
   loading: boolean;
   error: string | null;
@@ -19,7 +19,7 @@ interface UseFirebaseMessagingReturn {
 }
 
 export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
-  const [messaging, setMessaging] = useState<Messaging | null>(null);
+  const [messaging, setMessaging] = useState<any>(null);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,9 +32,9 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       return;
     }
 
-    try {
+    await safeAsync(async () => {
       const { isSupported, getMessaging, onMessage } = await import('firebase/messaging');
-      const supported = await isSupported();
+      const supported = await retry(() => isSupported(), 3, 1000);
 
       if (supported) {
         const messagingInstance = getMessaging(firebaseApp);
@@ -52,13 +52,12 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
         });
 
         return () => unsubscribe();
-      } else {
       }
-    } catch (_error) {
+    }, (error) => {
       setError('推播通知初始化失敗');
-    } finally {
-      setLoading(false);
-    }
+      logError(error, { operation: 'init_messaging' });
+    });
+    setLoading(false);
   }, [isClient]);
 
   useEffect(() => {
@@ -70,17 +69,17 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       return false;
     }
 
-    try {
+    return await safeAsync(async () => {
       setLoading(true);
       setError(null);
-
-      const permission = await Notification.requestPermission();
+      
+      const permission = await retry(() => Notification.requestPermission(), 3, 1000);
 
       if (permission === 'granted') {
         const { getToken } = await import('firebase/messaging');
-        const token = await getToken(messaging, {
+        const token = await retry(() => getToken(messaging, {
           vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-        });
+        }), 3, 1000);
 
         if (token) {
           setFcmToken(token);
@@ -91,12 +90,11 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       }
 
       return false;
-    } catch (_error) {
+    }, (error) => {
       setError('無法取得通知權限');
+      logError(error, { operation: 'request_messaging_permission' });
       return false;
-    } finally {
-      setLoading(false);
-    }
+    });
   }, [isClient, messaging]);
 
   const getToken = useCallback(async (): Promise<string | null> => {
@@ -104,21 +102,22 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       return null;
     }
 
-    try {
+    return await safeAsync(async () => {
       const { getToken } = await import('firebase/messaging');
-      const token = await getToken(messaging, {
+      const token = await retry(() => getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      });
+      }), 3, 1000);
 
       if (token) {
         setFcmToken(token);
       }
 
       return token;
-    } catch (_error) {
+    }, (error) => {
       setError('無法取得推播通知 Token');
+      logError(error, { operation: 'get_messaging_token' });
       return null;
-    }
+    });
   }, [isClient, messaging]);
 
   return {

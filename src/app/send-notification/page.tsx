@@ -25,8 +25,9 @@ import React, { useState, ReactElement } from 'react';
 import { NotificationBell } from '@/app/notifications/components/NotificationBell';
 import { useAuth } from '@/hooks/useAuth';
 import { Timestamp } from '@/lib/firebase-client';
-import { createNotification } from '@/lib/firebase-notifications';
+import { createNotification, createBulkNotifications } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/notification';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 // 通知類型選項
 const NOTIFICATION_TYPES = [
@@ -96,36 +97,12 @@ export default function SendNotificationPage(): ReactElement {
   // 發送通知
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!user?.uid) {
-      setSendStatus({
-        type: 'error',
-        message: '請先登入後再發送通知',
-      });
-      return;
-    }
-
-    // 驗證表單
-    if (!formData.title.trim()) {
-      setSendStatus({
-        type: 'error',
-        message: '請輸入通知標題',
-      });
-      return;
-    }
-
-    if (!formData.message.trim()) {
-      setSendStatus({
-        type: 'error',
-        message: '請輸入通知內容',
-      });
-      return;
-    }
+    if (!user?.uid || isSending) return;
 
     setIsSending(true);
     setSendStatus({ type: null, message: '' });
 
-    try {
+    await safeAsync(async () => {
       // 準備通知資料
       const notificationData = {
         title: formData.title.trim(),
@@ -134,15 +111,12 @@ export default function SendNotificationPage(): ReactElement {
         category: formData.category,
         priority: formData.priority,
         actionUrl: formData.actionUrl.trim() || undefined,
-        expiresAt: formData.expiresAt
-          ? Timestamp.fromDate(new Date(formData.expiresAt))
-          : undefined,
+        expiresAt: formData.expiresAt ? Timestamp.fromDate(new Date(formData.expiresAt)) : undefined,
       };
 
       // 發送通知
-      await createNotification(user.uid, notificationData);
+      await retry(() => createNotification(user.uid, notificationData), 3, 1000);
 
-      // 成功狀態
       setSendStatus({
         type: 'success',
         message: '通知發送成功！',
@@ -155,14 +129,14 @@ export default function SendNotificationPage(): ReactElement {
       setTimeout(() => {
         setSendStatus({ type: null, message: '' });
       }, 3000);
-    } catch (_error) {
+    }, (error) => {
       setSendStatus({
         type: 'error',
-        message: _error instanceof Error ? _error.message : '發送通知失敗，請重試',
+        message: `發送通知失敗：${getErrorMessage(error)}`,
       });
-    } finally {
-      setIsSending(false);
-    }
+      logError(error, { operation: 'send_notification', userId: user.uid });
+    });
+    setIsSending(false);
   };
 
   // 快速發送測試通知
@@ -178,7 +152,7 @@ export default function SendNotificationPage(): ReactElement {
     setIsSending(true);
     setSendStatus({ type: null, message: '' });
 
-    try {
+    await safeAsync(async () => {
       const testMessages = {
         info: { title: '測試資訊通知', message: '這是一則測試資訊通知' },
         success: { title: '測試成功通知', message: '這是一則測試成功通知' },
@@ -188,12 +162,12 @@ export default function SendNotificationPage(): ReactElement {
 
       const testData = testMessages[type];
 
-      await createNotification(user.uid, {
+      await retry(() => createNotification(user.uid, {
         ...testData,
         type,
         category: 'system',
         priority: 'normal',
-      });
+      }), 3, 1000);
 
       setSendStatus({
         type: 'success',
@@ -203,14 +177,14 @@ export default function SendNotificationPage(): ReactElement {
       setTimeout(() => {
         setSendStatus({ type: null, message: '' });
       }, 3000);
-    } catch (_error) {
+    }, (error) => {
       setSendStatus({
         type: 'error',
-        message: '發送測試通知失敗，請重試',
+        message: `發送測試通知失敗：${getErrorMessage(error)}`,
       });
-    } finally {
-      setIsSending(false);
-    }
+      logError(error, { operation: 'send_test_notification', userId: user.uid, type });
+    });
+    setIsSending(false);
   };
 
   return (

@@ -18,6 +18,7 @@ import { db } from '@/lib/firebase-client';
 import { SubWorkpackage, Workpackage } from '@/types/project';
 import { TimelineGroup, TimelineItem } from '@/types/timeline';
 import { timestampToDate, dateToTimestamp, toDate } from '@/utils/timelineUtils';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 // 專案排程頁面使用的特定 item 類型，擴充通用 TimelineItem
 interface ScheduleTimelineItem extends TimelineItem {
@@ -48,7 +49,7 @@ export default function ProjectsPage() {
     const startDate = toDate(movedItem.start);
     const endDate = toDate(movedItem.end!);
 
-    try {
+    return await safeAsync(async () => {
       const projectDocRef = doc(db, 'projects', movedItem.projectId);
       // We need to read the doc to get the latest workpackages array
       const projectSnap = await getDocs(collection(db, 'projects'));
@@ -76,7 +77,7 @@ export default function ProjectsPage() {
         };
       });
 
-      await updateDoc(projectDocRef, { workpackages: updatedWorkpackages });
+      await retry(() => updateDoc(projectDocRef, { workpackages: updatedWorkpackages }), 3, 1000);
 
       // Optimistically update local state
       setItems(prev =>
@@ -97,9 +98,10 @@ export default function ProjectsPage() {
       );
 
       return true;
-    } catch (_error) {
+    }, (error) => {
+      logError(error, { operation: 'move_timeline_item', itemId: movedItem.id, projectId: movedItem.projectId });
       return false;
-    }
+    });
   }, []);
 
   useEffect(() => {

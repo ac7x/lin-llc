@@ -26,6 +26,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { doc, updateDoc, db } from '@/lib/firebase-client';
 import type { Workpackage } from '@/types/project';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface WorkpackageListProps {
   workpackages: Workpackage[];
@@ -104,13 +105,14 @@ export default function WorkpackageList({ workpackages, projectId }: Workpackage
 
       const updatedWorkpackages = arrayMove(workpackages, oldIndex, newIndex);
 
-      try {
-        await updateDoc(doc(db, 'projects', projectId), {
+      await safeAsync(async () => {
+        await retry(() => updateDoc(doc(db, 'projects', projectId), {
           workpackages: updatedWorkpackages,
-        });
-      } catch (_error) {
-        alert('更新順序時出錯，請重試。');
-      }
+        }), 3, 1000);
+      }, (error) => {
+        alert(`更新順序時出錯: ${getErrorMessage(error)}`);
+        logError(error, { operation: 'update_workpackage_order', projectId });
+      });
     }
   };
 

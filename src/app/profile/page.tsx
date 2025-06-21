@@ -17,6 +17,7 @@ import { useCallback } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
 import { signOut, auth } from '@/lib/firebase-client';
+import { logError, safeAsync } from '@/utils/errorUtils';
 
 const roleDisplayNames: Record<string, string> = {
   owner: '擁有者',
@@ -36,12 +37,14 @@ const UserPanelPage = () => {
   const router = useRouter();
 
   const handleSignOut = useCallback(async () => {
-    try {
+    await safeAsync(async () => {
       await signOut(auth);
       router.push('/signin');
-    } catch (_error) {
-    }
-  }, [router]);
+    }, (error) => {
+      logError(error, { operation: 'sign_out', user: user?.uid });
+      // 不顯示錯誤給用戶，僅記錄
+    });
+  }, [router, user]);
 
   return (
     <main className='max-w-4xl mx-auto'>

@@ -14,6 +14,8 @@
 import { Loader } from '@googlemaps/js-api-loader';
 import { useState, useEffect, useRef } from 'react';
 
+import { getErrorMessage, logError, safeAsync } from '@/utils/errorUtils';
+
 interface AddressSelectorProps {
   value: string;
   onChange: (address: string) => void;
@@ -37,47 +39,45 @@ export default function AddressSelector({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // 初始化 Google Maps API
   useEffect(() => {
     const initGoogleMaps = async () => {
-      if (typeof window === 'undefined' || window.google) return;
+      if (typeof window === 'undefined' || window.google?.maps) return;
 
-      setIsLoading(true);
-      try {
-        const loader = new Loader({
-          apiKey: 'AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o',
-          version: 'weekly',
-          libraries: ['places'],
+      await safeAsync(async () => {
+        // 動態載入 Google Maps API
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+
+        await new Promise<void>((resolve, reject) => {
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load Google Maps API'));
+          document.head.appendChild(script);
         });
 
-        await loader.load();
-
-        // 初始化自動完成功能
-        if (inputRef.current && window.google) {
-          autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-            componentRestrictions: { country: 'tw' }, // 限制在台灣
-            fields: ['formatted_address', 'geometry', 'name'],
-            types: ['establishment', 'geocode'],
-          });
-
-          autocompleteRef.current?.addListener('place_changed', () => {
-            const place = autocompleteRef.current?.getPlace();
-            if (place?.formatted_address) {
-              const address = place.formatted_address;
-              setSelectedAddress(address);
-              onChange(address);
+        // 等待 Google Maps 初始化
+        await new Promise<void>(resolve => {
+          const checkGoogleMaps = () => {
+            if (window.google?.maps) {
+              resolve();
+            } else {
+              setTimeout(checkGoogleMaps, 100);
             }
-          });
-        }
-      } catch (_error) {
-      } finally {
-        setIsLoading(false);
-      }
+          };
+          checkGoogleMaps();
+        });
+      }, (error) => {
+        logError(error, { operation: 'init_google_maps' });
+        setMapError('無法載入地圖服務，請稍後再試');
+      });
     };
 
     initGoogleMaps();
-  }, [onChange]);
+  }, []);
 
   // 開啟地圖選址
   const openMapSelector = () => {

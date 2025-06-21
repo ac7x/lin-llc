@@ -21,9 +21,11 @@ import {
   serverTimestamp,
   writeBatch,
   db,
+  deleteDoc,
 } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
 import type { NotificationMessage } from '@/types/notification';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 import { COLLECTIONS } from './firebase-config';
 
@@ -103,7 +105,7 @@ export async function createNotification(
   userId: string,
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<string> {
-  try {
+  return await safeAsync(async () => {
     const notificationData = {
       ...notification,
       userId,
@@ -111,11 +113,13 @@ export async function createNotification(
       isArchived: false,
       createdAt: serverTimestamp(),
     };
-    const docRef = await addDoc(collection(db, NOTIFICATIONS), cleanObject(notificationData));
+
+    const docRef = await retry(() => addDoc(collection(db, NOTIFICATIONS), notificationData), 3, 1000);
     return docRef.id;
-  } catch (_error) {
-    throw _error;
-  }
+  }, (error) => {
+    logError(error, { operation: 'create_notification', userId });
+    throw error;
+  });
 }
 
 /**
@@ -125,10 +129,10 @@ export async function createBulkNotifications(
   userIds: string[],
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<void> {
-  try {
+  await safeAsync(async () => {
     const batch = writeBatch(db);
+    
     userIds.forEach(userId => {
-      const notificationRef = doc(collection(db, NOTIFICATIONS));
       const notificationData = {
         ...notification,
         userId,
@@ -136,12 +140,16 @@ export async function createBulkNotifications(
         isArchived: false,
         createdAt: serverTimestamp(),
       };
-      batch.set(notificationRef, cleanObject(notificationData));
+      
+      const docRef = doc(collection(db, NOTIFICATIONS));
+      batch.set(docRef, notificationData);
     });
-    await batch.commit();
-  } catch (_error) {
-    throw _error;
-  }
+    
+    await retry(() => batch.commit(), 3, 1000);
+  }, (error) => {
+    logError(error, { operation: 'create_bulk_notifications', userIds });
+    throw error;
+  });
 }
 
 /**
@@ -155,46 +163,33 @@ export async function getUserNotifications(
     onlyUnread?: boolean;
   } = {}
 ): Promise<NotificationMessage[]> {
-  const { limitCount = 50, ...filterOptions } = options;
-
-  try {
-    const cached = getCachedNotifications(userId);
-    if (cached) {
-      return processNotificationsInMemory(cached, filterOptions);
+  return await safeAsync(async () => {
+    const { includeArchived = false, limitCount, onlyUnread = false } = options;
+    
+    let q = query(collection(db, NOTIFICATIONS), where('userId', '==', userId));
+    
+    if (!includeArchived) {
+      q = query(q, where('isArchived', '==', false));
     }
-
-    const q = query(
-      collection(db, NOTIFICATIONS),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc'),
-      limit(limitCount)
-    );
-
-    const snapshot = await getDocs(q);
+    
+    if (onlyUnread) {
+      q = query(q, where('isRead', '==', false));
+    }
+    
+    q = query(q, orderBy('createdAt', 'desc'));
+    
+    if (limitCount) {
+      q = query(q, limit(limitCount));
+    }
+    
+    const snapshot = await retry(() => getDocs(q), 3, 1000);
     const notifications = snapshot.docs.map(docToNotification);
-
-    setCachedNotifications(userId, notifications);
-
-    return processNotificationsInMemory(notifications, filterOptions);
-  } catch (_error) {
-    const firebaseError = _error as FirebaseError;
-    if (
-      firebaseError.code === 'failed-precondition' &&
-      firebaseError.message.includes('requires an index')
-    ) {
-      // 當索引不存在時，改用不含排序的備用查詢
-      const fallbackQuery = query(
-        collection(db, NOTIFICATIONS),
-        where('userId', '==', userId),
-        limit(limitCount)
-      );
-      const snapshot = await getDocs(fallbackQuery);
-      const notifications = snapshot.docs.map(docToNotification);
-      setCachedNotifications(userId, notifications);
-      return processNotificationsInMemory(notifications, filterOptions);
-    }
-    throw _error;
-  }
+    
+    return processNotificationsInMemory(notifications, { includeArchived, onlyUnread });
+  }, (error) => {
+    logError(error, { operation: 'get_user_notifications', userId, options });
+    throw error;
+  });
 }
 
 /**
@@ -257,111 +252,117 @@ export function subscribeToUserNotifications(
  * 標記通知為已讀
  */
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-  try {
+  await safeAsync(async () => {
     const notificationRef = doc(db, NOTIFICATIONS, notificationId);
-    await updateDoc(notificationRef, {
+    await retry(() => updateDoc(notificationRef, {
       isRead: true,
       readAt: serverTimestamp(),
-    });
-  } catch (_error) {
-    throw _error;
-  }
+    }), 3, 1000);
+  }, (error) => {
+    logError(error, { operation: 'mark_notification_read', notificationId });
+    throw error;
+  });
 }
 
 /**
  * 批量標記通知為已讀
  */
 export async function markMultipleNotificationsAsRead(notificationIds: string[]): Promise<void> {
-  if (notificationIds.length === 0) return;
-  try {
+  await safeAsync(async () => {
     const batch = writeBatch(db);
-    notificationIds.forEach(id => {
-      const ref = doc(db, NOTIFICATIONS, id);
-      batch.update(ref, { isRead: true, readAt: serverTimestamp() });
+    
+    notificationIds.forEach(notificationId => {
+      const notificationRef = doc(db, NOTIFICATIONS, notificationId);
+      batch.update(notificationRef, {
+        isRead: true,
+        readAt: serverTimestamp(),
+      });
     });
-    await batch.commit();
-    notificationCache.clear();
-  } catch (_error) {
-    throw _error;
-  }
+    
+    await retry(() => batch.commit(), 3, 1000);
+  }, (error) => {
+    logError(error, { operation: 'mark_multiple_notifications_read', notificationIds });
+    throw error;
+  });
 }
 
 /**
  * 標記所有通知為已讀
  */
 export async function markAllNotificationsAsRead(userId: string): Promise<void> {
-  try {
+  await safeAsync(async () => {
     const q = query(
       collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
       where('isRead', '==', false)
     );
-
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return;
-
+    
+    const snapshot = await retry(() => getDocs(q), 3, 1000);
     const batch = writeBatch(db);
-    snapshot.docs.forEach(docSnap => {
-      batch.update(docSnap.ref, {
+    
+    snapshot.docs.forEach(doc => {
+      batch.update(doc.ref, {
         isRead: true,
         readAt: serverTimestamp(),
       });
     });
-
-    await batch.commit();
-    notificationCache.clear();
-  } catch (_error) {
-    throw _error;
-  }
+    
+    if (snapshot.docs.length > 0) {
+      await retry(() => batch.commit(), 3, 1000);
+    }
+  }, (error) => {
+    logError(error, { operation: 'mark_all_notifications_read', userId });
+    throw error;
+  });
 }
 
 /**
  * 封存通知
  */
 export async function archiveNotification(notificationId: string): Promise<void> {
-  try {
+  await safeAsync(async () => {
     const notificationRef = doc(db, NOTIFICATIONS, notificationId);
-    await updateDoc(notificationRef, {
+    await retry(() => updateDoc(notificationRef, {
       isArchived: true,
-    });
-  } catch (_error) {
-    throw _error;
-  }
+      archivedAt: serverTimestamp(),
+    }), 3, 1000);
+  }, (error) => {
+    logError(error, { operation: 'archive_notification', notificationId });
+    throw error;
+  });
 }
 
 /**
  * 刪除通知 (軟刪除)
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
-  return archiveNotification(notificationId);
+  await safeAsync(async () => {
+    const notificationRef = doc(db, NOTIFICATIONS, notificationId);
+    await retry(() => deleteDoc(notificationRef), 3, 1000);
+  }, (error) => {
+    logError(error, { operation: 'delete_notification', notificationId });
+    throw error;
+  });
 }
 
 /**
  * 取得未讀通知數量
  */
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
-  try {
+  return await safeAsync(async () => {
     const q = query(
       collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
       where('isRead', '==', false),
       where('isArchived', '==', false)
     );
-    const snapshot = await getDocs(q);
+    
+    const snapshot = await retry(() => getDocs(q), 3, 1000);
     return snapshot.size;
-  } catch (_error) {
-    const firebaseError = _error as FirebaseError;
-    if (
-      firebaseError.code === 'failed-precondition' &&
-      firebaseError.message.includes('requires an index')
-    ) {
-      const fallbackQuery = query(collection(db, NOTIFICATIONS), where('userId', '==', userId));
-      const snapshot = await getDocs(fallbackQuery);
-      const notifications = snapshot.docs.map(docToNotification);
-      return notifications.filter(n => !n.isRead && !n.isArchived).length;
-    }
+  }, (error) => {
+    logError(error, { operation: 'get_unread_notification_count', userId });
     return 0;
-  }
+  });
 }
 
 /**
@@ -371,12 +372,14 @@ export async function updateUserNotificationSettings(
   userId: string,
   settings: Partial<AppUser['notificationSettings']>
 ): Promise<void> {
-  try {
+  await safeAsync(async () => {
     const userRef = doc(db, USERS, userId);
-    await updateDoc(userRef, {
+    await retry(() => updateDoc(userRef, {
       notificationSettings: settings,
-    });
-  } catch (_error) {
-    throw _error;
-  }
+      updatedAt: serverTimestamp(),
+    }), 3, 1000);
+  }, (error) => {
+    logError(error, { operation: 'update_user_notification_settings', userId, settings });
+    throw error;
+  });
 }

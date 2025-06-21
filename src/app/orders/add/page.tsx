@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { db, doc, setDoc, Timestamp } from '@/lib/firebase-client';
 import { OrderItem } from '@/types/finance';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export default function OrderAddPage() {
   const router = useRouter();
@@ -66,10 +67,10 @@ export default function OrderAddPage() {
   // 處理送出
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
+    await safeAsync(async () => {
       const orderId = nanoid(5);
       const now = new Date();
-      await setDoc(doc(db, 'finance', 'default', 'orders', orderId), {
+      await retry(() => setDoc(doc(db, 'finance', 'default', 'orders', orderId), {
         orderId,
         orderName,
         orderPrice,
@@ -84,11 +85,12 @@ export default function OrderAddPage() {
         clientContact,
         clientPhone,
         clientEmail,
-      });
+      }), 3, 1000);
       router.push('/orders');
-    } catch (_error) {
-      alert('建立訂單失敗，請稍後再試');
-    }
+    }, (error) => {
+      alert(`建立訂單失敗：${getErrorMessage(error)}`);
+      logError(error, { operation: 'add_order' });
+    });
   };
 
   return (

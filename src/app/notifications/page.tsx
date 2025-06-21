@@ -17,6 +17,7 @@ import React, { useState } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 import type { NotificationMessage } from '@/types/notification';
 import { parseToDate } from '@/utils/dateUtils';
+import { logError, safeAsync, retry, getErrorMessage } from '@/utils/errorUtils';
 
 // 通知類型圖標映射
 const getNotificationIcon = (type: NotificationMessage['type']) => {
@@ -60,24 +61,24 @@ function NotificationItem({ notification, onMarkAsRead, onArchive }: Notificatio
     if (notification.isRead || isProcessing) return;
 
     setIsProcessing(true);
-    try {
-      await onMarkAsRead(notification.id);
-    } catch (_error) {
-    } finally {
-      setIsProcessing(false);
-    }
+    await safeAsync(async () => {
+      await retry(() => onMarkAsRead(notification.id), 3, 1000);
+    }, (error) => {
+      logError(error, { operation: 'mark_notification_read', notificationId: notification.id });
+    });
+    setIsProcessing(false);
   };
 
   const handleArchive = async () => {
     if (isProcessing) return;
 
     setIsProcessing(true);
-    try {
-      await onArchive(notification.id);
-    } catch (_error) {
-    } finally {
-      setIsProcessing(false);
-    }
+    await safeAsync(async () => {
+      await retry(() => onArchive(notification.id), 3, 1000);
+    }, (error) => {
+      logError(error, { operation: 'archive_notification', notificationId: notification.id });
+    });
+    setIsProcessing(false);
   };
 
   const handleClick = () => {
@@ -210,10 +211,12 @@ export default function NotificationsPage() {
   });
 
   const handleMarkAllAsRead = async () => {
-    try {
-      await markAllAsRead();
-    } catch (_error) {
-    }
+    await safeAsync(async () => {
+      await retry(() => markAllAsRead(), 3, 1000);
+    }, (error) => {
+      logError(error, { operation: 'mark_all_notifications_read' });
+      // 不顯示錯誤給用戶，僅記錄
+    });
   };
 
   if (loading) {

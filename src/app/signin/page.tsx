@@ -1,30 +1,25 @@
 'use client';
 
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { type ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
+import { auth } from '@/lib/firebase-client';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export default function SignInPage(): ReactElement {
-  const router = useRouter();
   const { user, loading, error, signInWithGoogle } = useAuth();
+  const router = useRouter();
 
   const handleGoogleSignIn = async (): Promise<void> => {
-    try {
-      await signInWithGoogle();
-      router.push('/profile');
-    } catch (_error) {
-      if (
-        typeof _err === 'object' &&
-        _err !== null &&
-        'message' in _err &&
-        typeof (_err as { message?: unknown }).message === 'string'
-      ) {
-        // 可在此處理錯誤訊息
-      } else {
-        // 其他型別錯誤處理
-      }
-    }
+    await safeAsync(async () => {
+      await retry(() => signInWithGoogle(), 3, 1000);
+      router.push('/dashboard');
+    }, (error) => {
+      alert(`登入失敗：${getErrorMessage(error)}`);
+      logError(error, { operation: 'google_signin' });
+    });
   };
 
   if (loading) {

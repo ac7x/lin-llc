@@ -19,6 +19,7 @@ import { doc, updateDoc, Timestamp, db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
 import type { Project } from '@/types/project';
 import { formatDateForInput } from '@/utils/dateUtils';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 
 interface ProjectEditModalProps {
@@ -55,8 +56,8 @@ export default function ProjectEditModal({
   const hasBudgetPermission = canEditBudget();
 
   const handleUpdateProject = async (formData: FormData) => {
-    try {
-      setIsSubmitting(true);
+    setIsSubmitting(true);
+    await safeAsync(async () => {
       const startDate = formData.get('startDate')?.toString();
       const estimatedEndDate = formData.get('estimatedEndDate')?.toString();
 
@@ -75,13 +76,13 @@ export default function ProjectEditModal({
         updatedAt: Timestamp.now(),
       };
 
-      await updateDoc(doc(db, 'projects', projectId), updates);
+      await retry(() => updateDoc(doc(db, 'projects', projectId), updates), 3, 1000);
       onClose();
-    } catch (_error) {
-      alert('更新失敗，請重試');
-    } finally {
-      setIsSubmitting(false);
-    }
+    }, (error) => {
+      alert(`更新失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'update_project', projectId });
+    });
+    setIsSubmitting(false);
   };
 
   if (!isOpen) return null;
