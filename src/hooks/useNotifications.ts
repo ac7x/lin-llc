@@ -73,7 +73,7 @@ export function useNotifications(
           return cachedNotifications;
         }
       }
-    } catch (_err) {
+    } catch (_error) {
     }
     return null;
   }, [isClient]);
@@ -89,7 +89,7 @@ export function useNotifications(
           timestamp: Date.now(),
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-      } catch (_err) {
+      } catch (_error) {
       }
     },
     [isClient]
@@ -253,7 +253,7 @@ export function useNotifications(
       );
 
       setUnreadCount(0);
-    } catch (_err) {
+    } catch (_error) {
       setError(_err instanceof Error ? _err.message : 'Failed to mark all notifications as read');
       throw _err;
     }
@@ -283,7 +283,7 @@ export function useNotifications(
       if (notification && !notification.isRead) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
-    } catch (_err) {
+    } catch (_error) {
       setError(_err instanceof Error ? _err.message : 'Failed to archive notification');
       throw _err;
     }

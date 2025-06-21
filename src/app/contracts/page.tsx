@@ -30,7 +30,7 @@ export default function ContractsPage() {
   );
   // 搜尋與排序狀態
   const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<null | string>(null);
+  const [sortKey, setSortKey] = useState<string>('');
   const [sortAsc, setSortAsc] = useState(true);
 
   // 處理後的資料

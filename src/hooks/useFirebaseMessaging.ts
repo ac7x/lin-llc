@@ -54,7 +54,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
         return () => unsubscribe();
       } else {
       }
-    } catch (_err) {
+    } catch (_error) {
       setError('推播通知初始化失敗');
     } finally {
       setLoading(false);
@@ -91,7 +91,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       }
 
       return false;
-    } catch (_err) {
+    } catch (_error) {
       setError('無法取得通知權限');
       return false;
     } finally {
@@ -115,7 +115,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       }
 
       return token;
-    } catch (_err) {
+    } catch (_error) {
       setError('無法取得推播通知 Token');
       return null;
     }

@@ -40,8 +40,8 @@ export default function ArchivePage() {
         }
         await deleteDoc(doc(db, 'archived', 'default'));
         setClickCount(0);
-      } catch (_err) {
-        alert(`刪除失敗: ${_err instanceof Error ? _err.message : String(_err)}`);
+      } catch (_error) {
+        alert(`刪除失敗: ${_err instanceof Error ? _err.message : String(_error)}`);
       }
     }
   };

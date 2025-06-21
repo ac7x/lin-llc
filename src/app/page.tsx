@@ -125,7 +125,7 @@ export default function HomePage(): ReactElement {
       });
 
       setCanPost(recentUserMessages.length === 0);
-    } catch (_err) {
+    } catch (_error) {
       setCanPost(true);
     }
   }, []);
@@ -175,7 +175,7 @@ export default function HomePage(): ReactElement {
       });
       setNewMessage('');
       if (isDevSubmission) setVersion('');
-    } catch (_err) {
+    } catch (_error) {
       setError('發送失敗，請稍後再試。');
     }
   };

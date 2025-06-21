@@ -185,7 +185,7 @@ export const useAuth = (): UseAuthReturn => {
         );
       }
 
-    } catch (_err) {
+    } catch (_error) {
       let authError: AuthError;
       if (_err instanceof FirebaseError) {
         authError = { code: _err.code, message: _err.message, details: _err };

@@ -13,7 +13,7 @@ export default function SignInPage(): ReactElement {
     try {
       await signInWithGoogle();
       router.push('/profile');
-    } catch (_err) {
+    } catch (_error) {
       if (
         typeof _err === 'object' &&
         _err !== null &&
