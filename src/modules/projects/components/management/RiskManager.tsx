@@ -29,11 +29,11 @@ type SortDirection = 'asc' | 'desc';
 
 export default function RiskManager({
   risks,
-  projectId,
+  projectId: _projectId,
   onAddRisk,
   onEditRisk,
   onDeleteRisk,
-  onUpdateRiskStatus,
+  onUpdateRiskStatus: _onUpdateRiskStatus,
 }: RiskManagerProps) {
   const [sortBy, setSortBy] = useState<SortOption>('riskLevel');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');

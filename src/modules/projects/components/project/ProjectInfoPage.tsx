@@ -13,97 +13,75 @@ import type { Project } from '@/modules/projects/types/project';
 import type { AppUser } from '@/types/auth';
 import { cn, cardStyles, buttonStyles } from '@/utils/classNameUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
+import { projectStyles } from '@/modules/projects/styles';
 
-import WorkpackageList from '../work-packages/WorkpackageList';
+import { WorkpackageList } from '../work-packages';
 import ProjectEditModal from './ProjectEditModal';
 import ProjectInfoDisplay from './ProjectInfoDisplay';
 
 interface ProjectInfoPageProps {
-  project: Project;
-  projectId: string;
-}
-
-export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [eligibleUsers, setEligibleUsers] = useState<{
+  project: Project & { id: string };
+  eligibleUsers: {
     costControllers: AppUser[];
     supervisors: AppUser[];
     safetyOfficers: AppUser[];
     managers: AppUser[];
-  }>({
-    costControllers: [],
-    supervisors: [],
-    safetyOfficers: [],
-    managers: [],
-  });
-
-  useEffect(() => {
-    const fetchEligibleUsers = async () => {
-      try {
-        const usersQuery = query(collection(db, 'users'));
-        const usersSnapshot = await retry(() => getDocs(usersQuery), 3, 1000);
-        
-        const users = usersSnapshot.docs.map(doc => ({
-          uid: doc.id,
-          ...doc.data(),
-        })) as AppUser[];
-
-        setEligibleUsers({
-          costControllers: users.filter(user => user.role === 'costController'),
-          supervisors: users.filter(user => user.role === 'supervisor'),
-          safetyOfficers: users.filter(user => user.role === 'safetyOfficer'),
-          managers: users.filter(user => user.role === 'manager'),
-        });
-      } catch (error) {
-        logError(error, { operation: 'fetch_eligible_users' });
-      }
-    };
-
-    fetchEligibleUsers();
-  }, []);
-
-  const handleSave = () => {
-    // 重新載入專案資料
-    window.location.reload();
   };
+}
+
+export default function ProjectInfoPage({ project, eligibleUsers }: ProjectInfoPageProps) {
+  const [activeTab, setActiveTab] = useState<'info' | 'workpackages'>('info');
 
   return (
     <div className="space-y-6">
-      {/* 專案資訊顯示 */}
-      <div className={cardStyles.container}>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">專案資訊</h2>
+      {/* 標題 */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          {project.projectName}
+        </h1>
+        <div className="flex space-x-2">
           <button
-            onClick={() => setIsEditing(true)}
-            className={buttonStyles.primary}
+            onClick={() => setActiveTab('info')}
+            className={cn(
+              'px-4 py-2 rounded-lg font-medium transition-colors duration-200',
+              activeTab === 'info'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            )}
           >
-            編輯專案
+            專案資訊
+          </button>
+          <button
+            onClick={() => setActiveTab('workpackages')}
+            className={cn(
+              'px-4 py-2 rounded-lg font-medium transition-colors duration-200',
+              activeTab === 'workpackages'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            )}
+          >
+            工作包
           </button>
         </div>
+      </div>
+
+      {/* 內容區域 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        {activeTab === 'info' && (
+          <div className="p-6">
+            <ProjectInfoDisplay project={project} eligibleUsers={eligibleUsers} />
+          </div>
+        )}
         
-        <ProjectInfoDisplay 
-          project={project} 
-          eligibleUsers={eligibleUsers} 
-        />
+        {activeTab === 'workpackages' && (
+          <div className="p-6">
+            <WorkpackageList
+              workpackages={project.workpackages}
+              projectId={project.id}
+            />
+          </div>
+        )}
       </div>
-
-      {/* 工作包列表 */}
-      <div className={cardStyles.container}>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">工作包管理</h2>
-        <WorkpackageList 
-          workpackages={project.workpackages || []} 
-          projectId={projectId} 
-        />
-      </div>
-
-      {/* 編輯彈窗 */}
-      <ProjectEditModal
-        project={project}
-        isOpen={isEditing}
-        onClose={() => setIsEditing(false)}
-        onSave={handleSave}
-        eligibleUsers={eligibleUsers}
-      />
     </div>
   );
 } 

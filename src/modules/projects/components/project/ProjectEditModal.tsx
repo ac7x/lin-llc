@@ -22,9 +22,10 @@ import type { AppUser } from '@/types/auth';
 import { cn, modalStyles, formStyles, inputStyles, buttonStyles, loadingStyles, alertStyles } from '@/utils/classNameUtils';
 import { formatDateForInput } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { projectStyles } from '@/modules/projects/styles';
 
 interface ProjectEditModalProps {
-  project: Project;
+  project: Project & { id: string };
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -56,7 +57,7 @@ export default function ProjectEditModal({
     address: project.address || '',
     startDate: project.startDate ? formatDateForInput(project.startDate) : '',
     estimatedEndDate: project.estimatedEndDate ? formatDateForInput(project.estimatedEndDate) : '',
-    budget: project.budget || 0,
+    estimatedBudget: project.estimatedBudget || 0,
     owner: project.owner || '',
   });
 
@@ -78,7 +79,7 @@ export default function ProjectEditModal({
       const projectRef = doc(db, 'projects', project.id);
       const updateData: Partial<Project> = {
         ...formData,
-        budget: Number(formData.budget),
+        estimatedBudget: Number(formData.estimatedBudget),
         updatedAt: Timestamp.now(),
       };
 
@@ -106,55 +107,55 @@ export default function ProjectEditModal({
 
   return (
     <div className={modalStyles.overlay}>
-      <div className={modalStyles.content}>
-        <div className={modalStyles.header}>
+      <div className={modalStyles.container}>
+        <div className="flex justify-between items-center mb-6">
           <h2 className={modalStyles.title}>編輯專案資訊</h2>
           <button
             onClick={onClose}
-            className={modalStyles.closeButton}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold"
             disabled={loading}
           >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={formStyles.form}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className={alertStyles.error}>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
-          <div className={formStyles.grid}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 專案基本資訊 */}
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>專案名稱 *</label>
               <input
                 type="text"
                 value={formData.projectName}
                 onChange={(e) => handleInputChange('projectName', e.target.value)}
-                className={inputStyles.input}
+                className={inputStyles.base}
                 required
               />
             </div>
 
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>合約ID</label>
               <input
                 type="text"
                 value={formData.contractId}
                 onChange={(e) => handleInputChange('contractId', e.target.value)}
-                className={inputStyles.input}
+                className={inputStyles.base}
               />
             </div>
 
             {/* 專案成員 */}
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>專案經理</label>
               <select
                 value={formData.manager}
                 onChange={(e) => handleInputChange('manager', e.target.value)}
-                className={inputStyles.select}
+                className={formStyles.select}
               >
                 <option value="">請選擇專案經理</option>
                 {eligibleUsers.managers.map((manager) => (
@@ -165,12 +166,12 @@ export default function ProjectEditModal({
               </select>
             </div>
 
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>監工</label>
               <select
                 value={formData.supervisor}
                 onChange={(e) => handleInputChange('supervisor', e.target.value)}
-                className={inputStyles.select}
+                className={formStyles.select}
               >
                 <option value="">請選擇監工</option>
                 {eligibleUsers.supervisors.map((supervisor) => (
@@ -181,12 +182,12 @@ export default function ProjectEditModal({
               </select>
             </div>
 
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>安全人員</label>
               <select
                 value={formData.safetyOfficer}
                 onChange={(e) => handleInputChange('safetyOfficer', e.target.value)}
-                className={inputStyles.select}
+                className={formStyles.select}
               >
                 <option value="">請選擇安全人員</option>
                 {eligibleUsers.safetyOfficers.map((safetyOfficer) => (
@@ -197,12 +198,12 @@ export default function ProjectEditModal({
               </select>
             </div>
 
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>成本控制員</label>
               <select
                 value={formData.costController}
                 onChange={(e) => handleInputChange('costController', e.target.value)}
-                className={inputStyles.select}
+                className={formStyles.select}
               >
                 <option value="">請選擇成本控制員</option>
                 {eligibleUsers.costControllers.map((costController) => (
@@ -214,95 +215,95 @@ export default function ProjectEditModal({
             </div>
 
             {/* 專案地點 */}
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>地區</label>
               <input
                 type="text"
                 value={formData.region}
                 onChange={(e) => handleInputChange('region', e.target.value)}
-                className={inputStyles.input}
+                className={inputStyles.base}
               />
             </div>
 
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>區域</label>
               <input
                 type="text"
                 value={formData.area}
                 onChange={(e) => handleInputChange('area', e.target.value)}
-                className={inputStyles.input}
+                className={inputStyles.base}
               />
             </div>
 
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>地址</label>
               <AddressSelector
                 value={formData.address}
                 onChange={(value) => handleInputChange('address', value)}
-                className={inputStyles.input}
+                className={inputStyles.base}
               />
             </div>
 
             {/* 專案時間 */}
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>開始日期</label>
               <input
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => handleInputChange('startDate', e.target.value)}
-                className={inputStyles.input}
+                className={inputStyles.base}
               />
             </div>
 
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>預計結束日期</label>
               <input
                 type="date"
                 value={formData.estimatedEndDate}
                 onChange={(e) => handleInputChange('estimatedEndDate', e.target.value)}
-                className={inputStyles.input}
+                className={inputStyles.base}
               />
             </div>
 
             {/* 預算和業主 */}
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>
                 預算 {!canEditBudget && '(僅限經理和成本控制員編輯)'}
               </label>
               <input
                 type="number"
-                value={formData.budget}
-                onChange={(e) => handleInputChange('budget', Number(e.target.value))}
-                className={cn(inputStyles.input, !canEditBudget && 'opacity-50')}
+                value={formData.estimatedBudget}
+                onChange={(e) => handleInputChange('estimatedBudget', Number(e.target.value))}
+                className={cn(inputStyles.base, !canEditBudget && 'opacity-50')}
                 disabled={!canEditBudget}
                 min="0"
                 step="0.01"
               />
             </div>
 
-            <div className={formStyles.field}>
+            <div>
               <label className={formStyles.label}>業主</label>
               <input
                 type="text"
                 value={formData.owner}
                 onChange={(e) => handleInputChange('owner', e.target.value)}
-                className={inputStyles.input}
+                className={inputStyles.base}
               />
             </div>
           </div>
 
-          <div className={formStyles.actions}>
+          <div className="mt-6">
             <button
               type="button"
               onClick={onClose}
-              className={buttonStyles.secondary}
+              className={buttonStyles.outline}
               disabled={loading}
             >
               取消
             </button>
             <button
               type="submit"
-              className={cn(buttonStyles.primary, loading && loadingStyles.button)}
+              className={buttonStyles.primary}
               disabled={loading}
             >
               {loading ? '儲存中...' : '儲存變更'}

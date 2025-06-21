@@ -26,7 +26,7 @@ interface MaterialListProps {
 
 export default function MaterialList({
   materials,
-  projectId,
+  projectId: _projectId,
   onEdit,
   onDelete,
   onAdd,

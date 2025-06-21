@@ -50,7 +50,7 @@ const COMMON_UNITS = [
 
 export default function MaterialForm({
   material,
-  projectId,
+  projectId: _projectId,
   onSubmit,
   onCancel,
   isLoading = false,

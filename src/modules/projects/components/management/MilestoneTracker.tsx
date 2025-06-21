@@ -29,7 +29,7 @@ type SortDirection = 'asc' | 'desc';
 
 export default function MilestoneTracker({
   milestones,
-  projectId,
+  projectId: _projectId,
   onAddMilestone,
   onEditMilestone,
   onDeleteMilestone,
@@ -129,7 +129,7 @@ export default function MilestoneTracker({
     }
   };
 
-  const getStatusText = (status: string) => {
+  const _getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
         return '待完成';

@@ -14,11 +14,11 @@
 import { useState, useEffect } from 'react';
 
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
-import { AddressSelector } from '@/modules/projects/components/common';
-import type { Project } from '@/modules/projects/types/project';
-import type { AppUser } from '@/types/auth';
 import { cn, getQualityColor } from '@/utils/classNameUtils';
 import { formatLocalDate } from '@/utils/dateUtils';
+import { projectStyles } from '@/modules/projects/styles';
+import type { Project } from '@/modules/projects/types/project';
+import type { AppUser } from '@/types/auth';
 
 interface ProjectInfoDisplayProps {
   project: Project;
@@ -54,8 +54,12 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
 
       // 時間控制 (25%)
       if (project.startDate && project.estimatedEndDate) {
-        const startDate = new Date(project.startDate);
-        const endDate = new Date(project.estimatedEndDate);
+        const startDate = project.startDate instanceof Date ? project.startDate : 
+                         typeof project.startDate === 'string' ? new Date(project.startDate) :
+                         project.startDate?.toDate?.() || new Date();
+        const endDate = project.estimatedEndDate instanceof Date ? project.estimatedEndDate : 
+                       typeof project.estimatedEndDate === 'string' ? new Date(project.estimatedEndDate) :
+                       project.estimatedEndDate?.toDate?.() || new Date();
         const now = new Date();
         const totalDuration = endDate.getTime() - startDate.getTime();
         const elapsed = now.getTime() - startDate.getTime();
@@ -70,12 +74,11 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
         }
       }
 
-      // 品質檢查 (20%)
-      const qualityChecks = project.qualityChecks || [];
-      const passedChecks = qualityChecks.filter(check => check.status === 'passed').length;
-      const qualityScore = (passedChecks / Math.max(1, qualityChecks.length)) * 20;
-      score += qualityScore;
-      totalWeight += 20;
+      // 品質指標 (20%)
+      if (project.qualityScore !== undefined) {
+        score += (project.qualityScore / 100) * 20;
+        totalWeight += 20;
+      }
 
       return totalWeight > 0 ? Math.round(score) : 0;
     };
@@ -83,13 +86,25 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
     setQualityScore(calculateQuality());
   }, [project]);
 
-  const getUserName = (uid: string, userList: AppUser[]): string => {
+  const getUserName = (uid: string | undefined, userList: AppUser[]): string => {
+    if (!uid) return '未指派';
     const user = userList.find(u => u.uid === uid);
     return user?.displayName || user?.email || '未指派';
   };
 
-  const getRoleName = (roleKey: RoleKey): string => {
-    return ROLE_NAMES[roleKey] || roleKey;
+  const getRoleDisplayName = (role: string): string => {
+    switch (role) {
+      case 'manager':
+        return '專案經理';
+      case 'supervisor':
+        return '監工';
+      case 'safetyOfficer':
+        return '安全人員';
+      case 'costController':
+        return '成本控制員';
+      default:
+        return role;
+    }
   };
 
   return (
@@ -142,7 +157,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
           
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              {getRoleName('manager')}
+              {getRoleDisplayName('manager')}
             </label>
             <p className="mt-1 text-sm text-gray-900">
               {getUserName(project.manager, eligibleUsers.managers)}
@@ -151,7 +166,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              {getRoleName('supervisor')}
+              {getRoleDisplayName('supervisor')}
             </label>
             <p className="mt-1 text-sm text-gray-900">
               {getUserName(project.supervisor, eligibleUsers.supervisors)}
@@ -160,7 +175,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              {getRoleName('safetyOfficer')}
+              {getRoleDisplayName('safetyOfficer')}
             </label>
             <p className="mt-1 text-sm text-gray-900">
               {getUserName(project.safetyOfficer, eligibleUsers.safetyOfficers)}
@@ -169,7 +184,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              {getRoleName('costController')}
+              {getRoleDisplayName('costController')}
             </label>
             <p className="mt-1 text-sm text-gray-900">
               {getUserName(project.costController, eligibleUsers.costControllers)}
