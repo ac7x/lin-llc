@@ -41,8 +41,7 @@ export async function fetchWeather(region: string): Promise<WeatherData> {
       temperature: Math.round(data.main?.temp || 0),
     };
   } catch (error) {
-    console.error('取得天氣資料失敗:', error);
-    return { weather: '資料取得失敗', temperature: 0 };
+    throw new Error('取得天氣資料失敗');
   }
 }
 

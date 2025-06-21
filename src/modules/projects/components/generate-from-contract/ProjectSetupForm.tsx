@@ -29,7 +29,7 @@ interface ProjectSetupFormProps {
     address: string;
     region: string;
   };
-  onSubmit: (data: any) => void;
+  onSubmit: (data: Record<string, string | number>) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }

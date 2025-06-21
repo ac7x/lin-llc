@@ -80,7 +80,7 @@ const getStatusLabel = (status: string) => {
 
 export default function IssueList({
   issues,
-  projectId,
+  projectId: _projectId,
   onEdit,
   onDelete,
   onAdd,

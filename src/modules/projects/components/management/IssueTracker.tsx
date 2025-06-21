@@ -29,11 +29,11 @@ type SortDirection = 'asc' | 'desc';
 
 export default function IssueTracker({
   issues,
-  projectId,
+  projectId: _projectId,
   onAddIssue,
   onEditIssue,
   onDeleteIssue,
-  onUpdateIssueStatus,
+  onUpdateIssueStatus: _onUpdateIssueStatus,
 }: IssueTrackerProps) {
   const [sortBy, setSortBy] = useState<SortOption>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');

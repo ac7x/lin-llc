@@ -1,17 +1,11 @@
 /**
  * 合約選擇器組件
- * 
- * 用於選擇要生成專案的合約，包括：
- * - 合約列表顯示
- * - 合約詳細資訊
- * - 選擇狀態管理
+ * 提供合約選擇功能
  */
 
 'use client';
 
-import { useState } from 'react';
-
-import { projectStyles } from '@/modules/projects/styles';
+import type { ReactElement } from 'react';
 
 interface Contract {
   id: string;
@@ -26,17 +20,19 @@ interface Contract {
 
 interface ContractSelectorProps {
   contracts: Contract[];
-  selectedContractId: string;
-  onContractSelect: (contractId: string) => void;
+  selectedContractId?: string;
+  onSelectContract: (contractId: string) => void;
+  className?: string;
 }
 
 export default function ContractSelector({
   contracts,
   selectedContractId,
-  onContractSelect,
+  onSelectContract,
+  className,
 }: ContractSelectorProps) {
   return (
-    <div className='space-y-4'>
+    <div className={`space-y-4 ${className || ''}`}>
       {contracts.map(contract => (
         <div
           key={contract.id}
@@ -45,7 +41,7 @@ export default function ContractSelector({
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
               : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
           }`}
-          onClick={() => onContractSelect(contract.id)}
+          onClick={() => onSelectContract(contract.id)}
         >
           <div className='flex justify-between items-start'>
             <div className='flex-1'>

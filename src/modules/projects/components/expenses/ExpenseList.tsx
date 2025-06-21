@@ -56,7 +56,7 @@ const formatAmount = (amount: number): string => {
 
 export default function ExpenseList({
   expenses,
-  projectId,
+  projectId: _projectId,
   onEdit,
   onDelete,
   onAdd,

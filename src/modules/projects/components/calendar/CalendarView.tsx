@@ -33,7 +33,7 @@ interface CalendarEvent {
 export default function CalendarView({
   milestones = [],
   workpackages = [],
-  projectId,
+  projectId: _projectId,
   onDateClick,
   onMilestoneClick,
   onWorkpackageClick,
@@ -50,39 +50,41 @@ export default function CalendarView({
     return { firstDay, lastDay };
   };
 
-  // 獲取月份的所有日期
-  const getMonthDays = (date: Date) => {
-    const { firstDay, lastDay } = getMonthRange(date);
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const days: Array<{ date: Date; isCurrentMonth: boolean }> = [];
-    
-    // 添加上個月的日期
-    const firstDayOfWeek = firstDay.getDay();
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-      const day = new Date(firstDay);
-      day.setDate(day.getDate() - i - 1);
-      days.push({ date: day, isCurrentMonth: false });
-    }
-    
-    // 添加當前月份的日期
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      const day = new Date(year, month, i);
-      days.push({ date: day, isCurrentMonth: true });
-    }
-    
-    // 添加下個月的日期
-    const lastDayOfWeek = lastDay.getDay();
-    for (let i = 1; i <= 6 - lastDayOfWeek; i++) {
-      const day = new Date(lastDay);
-      day.setDate(day.getDate() + i);
-      days.push({ date: day, isCurrentMonth: false });
-    }
-    
-    return days;
-  };
+  const monthDays = useMemo(() => {
+    // 獲取月份的所有日期
+    const getMonthDays = (date: Date) => {
+      const { firstDay, lastDay } = getMonthRange(date);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const days: Array<{ date: Date; isCurrentMonth: boolean }> = [];
+      
+      // 添加上個月的日期
+      const firstDayOfWeek = firstDay.getDay();
+      for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        const day = new Date(firstDay);
+        day.setDate(day.getDate() - i - 1);
+        days.push({ date: day, isCurrentMonth: false });
+      }
+      
+      // 添加當前月份的日期
+      for (let i = 1; i <= lastDay.getDate(); i++) {
+        const day = new Date(year, month, i);
+        days.push({ date: day, isCurrentMonth: true });
+      }
+      
+      // 添加下個月的日期
+      const lastDayOfWeek = lastDay.getDay();
+      for (let i = 1; i <= 6 - lastDayOfWeek; i++) {
+        const day = new Date(lastDay);
+        day.setDate(day.getDate() + i);
+        days.push({ date: day, isCurrentMonth: false });
+      }
+      
+      return days;
+    };
 
-  const monthDays = useMemo(() => getMonthDays(currentDate), [currentDate]);
+    return getMonthDays(currentDate);
+  }, [currentDate]);
 
   // 檢查日期是否有事件
   const getDateEvents = (date: Date): CalendarEvent[] => {

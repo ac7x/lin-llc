@@ -50,7 +50,7 @@ interface JournalFormProps {
 
 export default function JournalForm({
   journalEntry,
-  projectId,
+  projectId: _projectId,
   onSubmit,
   onCancel,
   isSubmitting = false,

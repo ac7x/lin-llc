@@ -64,7 +64,7 @@ const formatDateField = (dateField: Timestamp | Date | string | null | undefined
 
 export default function ExpenseForm({
   expense,
-  projectId,
+  projectId: _projectId,
   onSubmit,
   onCancel,
   isLoading = false,

@@ -7,7 +7,7 @@ interface Project {
   status: string;
   progress?: number;
   createdAt: string;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 interface ProjectsTableProps {

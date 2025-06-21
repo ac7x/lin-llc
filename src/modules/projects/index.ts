@@ -44,6 +44,7 @@ export { default as SubWorkpackageList } from './components/subwork-packages/Sub
 // 日誌組件
 export { default as JournalCard } from './components/journal/JournalCard';
 export { default as JournalForm } from './components/journal/JournalForm';
+export { default as JournalHistory } from './components/journal/JournalHistory';
 
 // 問題組件
 export { default as IssueForm } from './components/issues/IssueForm';
@@ -64,6 +65,8 @@ export { default as TemplateForm } from './components/templates/TemplateForm';
 
 // 管理組件
 export { default as RiskManager } from './components/management/RiskManager';
+export { default as ChangeManager } from './components/management/ChangeManager';
+export { default as MilestoneTracker } from './components/management/MilestoneTracker';
 
 // 日曆組件
 export { default as CalendarView } from './components/calendar/CalendarView';

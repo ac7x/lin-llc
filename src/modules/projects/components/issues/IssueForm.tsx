@@ -61,7 +61,7 @@ const formatDateField = (dateField: Timestamp | Date | string | null | undefined
 
 export default function IssueForm({
   issue,
-  projectId,
+  projectId: _projectId,
   onSubmit,
   onCancel,
   isLoading = false,

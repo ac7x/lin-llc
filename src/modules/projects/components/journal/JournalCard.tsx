@@ -50,7 +50,7 @@ interface JournalCardProps {
 
 export default function JournalCard({
   journalEntry,
-  projectId,
+  projectId: _projectId,
   onEdit,
   onDelete,
   onViewDetails,

@@ -6,7 +6,7 @@ interface ProjectDashboardProps {
     projectName: string;
     status: string;
     progress?: number;
-    [key: string]: any;
+    [key: string]: string | number | undefined;
   };
 }
 

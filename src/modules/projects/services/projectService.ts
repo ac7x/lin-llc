@@ -76,7 +76,14 @@ export class ProjectService {
         return null;
       }
 
-      return docSnap.data() as Project;
+      const data = docSnap.data();
+      return {
+        ...data,
+        id: docSnap.id,
+        // 轉換 Firebase Timestamp 為字串
+        createdAt: data.createdAt?.toDate?.()?.toLocaleDateString() || '未知',
+        updatedAt: data.updatedAt?.toDate?.()?.toLocaleDateString() || '未知',
+      } as unknown as Project;
     }, (error) => {
       logError(error, { operation: 'get_project_by_id', projectId });
       throw error;
@@ -147,36 +154,6 @@ export class ProjectService {
         constraints.push(where('region', '==', filters.region));
       }
 
-      // 添加排序條件
-      switch (sortOption) {
-        case 'createdAt-asc':
-          constraints.push(orderBy('createdAt', 'asc'));
-          break;
-        case 'createdAt-desc':
-          constraints.push(orderBy('createdAt', 'desc'));
-          break;
-        case 'name-asc':
-          constraints.push(orderBy('projectName', 'asc'));
-          break;
-        case 'name-desc':
-          constraints.push(orderBy('projectName', 'desc'));
-          break;
-        case 'status-asc':
-          constraints.push(orderBy('status', 'asc'));
-          break;
-        case 'status-desc':
-          constraints.push(orderBy('status', 'desc'));
-          break;
-        case 'progress-asc':
-          constraints.push(orderBy('progress', 'asc'));
-          break;
-        case 'progress-desc':
-          constraints.push(orderBy('progress', 'desc'));
-          break;
-        default:
-          constraints.push(orderBy('createdAt', 'desc'));
-      }
-
       // 添加限制條件
       if (limitCount) {
         constraints.push(limit(limitCount));
@@ -204,6 +181,30 @@ export class ProjectService {
             project.region?.toLowerCase().includes(lowercasedFilter)
         );
       }
+
+      // 客戶端排序
+      filteredProjects.sort((a, b) => {
+        switch (sortOption) {
+          case 'createdAt-asc':
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          case 'createdAt-desc':
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          case 'name-asc':
+            return a.projectName.localeCompare(b.projectName);
+          case 'name-desc':
+            return b.projectName.localeCompare(a.projectName);
+          case 'status-asc':
+            return a.status.localeCompare(b.status);
+          case 'status-desc':
+            return b.status.localeCompare(a.status);
+          case 'progress-asc':
+            return (a.progress || 0) - (b.progress || 0);
+          case 'progress-desc':
+            return (b.progress || 0) - (a.progress || 0);
+          default:
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+      });
 
       return filteredProjects;
     }, (error) => {
@@ -262,9 +263,21 @@ export class ProjectService {
       
       const overdueProjects = projects.filter(project => {
         if (!project.estimatedEndDate) return false;
-        const endDate = project.estimatedEndDate instanceof Timestamp 
-          ? project.estimatedEndDate.toDate() 
-          : new Date(project.estimatedEndDate);
+        
+        let endDate: Date;
+        if (
+          project.estimatedEndDate &&
+          typeof project.estimatedEndDate === 'object' &&
+          'toDate' in project.estimatedEndDate &&
+          typeof (project.estimatedEndDate as any).toDate === 'function'
+        ) {
+          endDate = (project.estimatedEndDate as unknown as { toDate: () => Date }).toDate();
+        } else if (project.estimatedEndDate) {
+          endDate = new Date(project.estimatedEndDate as string | number | Date);
+        } else {
+          endDate = new Date();
+        }
+        
         return endDate < now;
       }).length;
 

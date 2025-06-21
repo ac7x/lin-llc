@@ -10,20 +10,22 @@
 'use client';
 
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 
-import { projectStyles } from '@/modules/projects/styles';
 import type { Template } from '@/modules/projects/types/project';
 
 interface TemplateSelectorProps {
   templates: Template[];
-  selectedTemplateId: string;
-  onTemplateSelect: (templateId: string) => void;
+  selectedTemplateId?: string;
+  onSelectTemplate: (templateId: string) => void;
+  className?: string;
 }
 
 export default function TemplateSelector({
   templates,
   selectedTemplateId,
-  onTemplateSelect,
+  onSelectTemplate,
+  className,
 }: TemplateSelectorProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -50,7 +52,7 @@ export default function TemplateSelector({
   };
 
   return (
-    <div className='space-y-4'>
+    <div className={`space-y-4 ${className || ''}`}>
       {/* 分類篩選 */}
       <div className='flex flex-wrap gap-2'>
         {categories.map(category => (
@@ -78,7 +80,7 @@ export default function TemplateSelector({
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
-            onClick={() => onTemplateSelect(template.id)}
+            onClick={() => onSelectTemplate(template.id)}
           >
             <div className='flex justify-between items-start mb-2'>
               <h4 className='font-medium text-gray-900 dark:text-gray-100'>
