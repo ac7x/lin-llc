@@ -11,8 +11,10 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { nanoid } from 'nanoid';
 
 // 導入專案模組的所有組件和功能
 import {
@@ -69,6 +71,7 @@ import {
   // 合約生成組件
   ContractSelector,
   TemplateSelector,
+  ProjectSetupForm,
   
   // 日曆組件
   CalendarView,
@@ -129,6 +132,25 @@ import type {
   ProjectChange,
 } from '@/modules/projects/types/project';
 
+// 導入 Firebase 相關
+import { db, collection, addDoc, Timestamp } from '@/lib/firebase-client';
+import type { ContractItem } from '@/types/finance';
+import {
+  getErrorMessage,
+  logError,
+  safeAsync,
+  retry,
+} from '@/utils/errorUtils';
+
+// 定義合約列型別
+interface ContractRow {
+  idx: number;
+  id: string;
+  name: string;
+  createdAt: Date | null;
+  raw: Record<string, unknown>;
+}
+
 export default function TestPage() {
   const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('components');
@@ -161,6 +183,64 @@ export default function TestPage() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [editingWorkpackage, setEditingWorkpackage] = useState<Workpackage | null>(null);
   const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkpackage | null>(null);
+
+  // 合約生成專案相關狀態
+  const [contracts, setContracts] = useState<Array<{
+    id: string;
+    contractNumber: string;
+    contractName: string;
+    clientName: string;
+    contractValue: number;
+    startDate: Date;
+    endDate: Date;
+    description: string;
+  }>>([]);
+  const [selectedContractId, setSelectedContractId] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [showProjectSetup, setShowProjectSetup] = useState(false);
+  const [projectSetupData, setProjectSetupData] = useState<Record<string, string | number>>({});
+
+  // 合約生成專案相關狀態 - 使用真實 Firebase 數據
+  const [importingId, setImportingId] = useState<string | null>(null);
+  const [importMessage, setImportMessage] = useState<string>('');
+
+  // 取得所有已建立專案的 contractId 清單，避免重複建立
+  const [projectsSnapshot] = useCollection(collection(db, 'projects'));
+
+  // 取得已建立專案的 contractId Set
+  const existingContractIds = useMemo(() => {
+    if (!projectsSnapshot) return new Set<string>();
+    return new Set(
+      projectsSnapshot.docs.map(doc => doc.data()?.contractId).filter((id): id is string => !!id)
+    );
+  }, [projectsSnapshot]);
+
+  const [contractsSnapshot] = useCollection(collection(db, 'finance', 'default', 'contracts'));
+
+  // 僅顯示尚未建立專案的合約
+  const contractRows: ContractRow[] = useMemo(() => {
+    if (!contractsSnapshot) return [];
+    return contractsSnapshot.docs
+      .filter(doc => {
+        const data = doc.data();
+        const contractId = (data.contractId as string) || doc.id;
+        return !existingContractIds.has(contractId);
+      })
+      .map((doc, idx) => {
+        const data = doc.data();
+        return {
+          idx: idx + 1,
+          id: (data.contractId as string) || doc.id,
+          name: (data.contractName as string) || (data.contractId as string) || doc.id,
+          createdAt: data.createdAt?.toDate
+            ? data.createdAt.toDate()
+            : data.createdAt
+              ? new Date(data.createdAt)
+              : null,
+          raw: data,
+        };
+      });
+  }, [contractsSnapshot, existingContractIds]);
 
   // 測試 hooks
   const { formData, errors, handleInputChange, handleSubmit, resetForm } = useProjectForm({}, async (data) => {
@@ -244,6 +324,42 @@ export default function TestPage() {
     }
   }, [handleError]);
 
+  // 載入合約資料
+  useEffect(() => {
+    setContracts([
+      {
+        id: 'contract-001',
+        contractNumber: 'CT-2024-001',
+        contractName: '台北市信義區辦公大樓新建工程',
+        clientName: '台北市政府',
+        contractValue: 15000000,
+        startDate: new Date('2024-01-15'),
+        endDate: new Date('2024-12-31'),
+        description: '信義區辦公大樓新建工程，包含基礎工程、結構工程、機電工程等'
+      },
+      {
+        id: 'contract-002',
+        contractNumber: 'CT-2024-002',
+        contractName: '新北市板橋區住宅社區工程',
+        clientName: '新北市政府',
+        contractValue: 25000000,
+        startDate: new Date('2024-02-01'),
+        endDate: new Date('2025-06-30'),
+        description: '板橋區住宅社區工程，包含多棟住宅大樓及公共設施'
+      },
+      {
+        id: 'contract-003',
+        contractNumber: 'CT-2024-003',
+        contractName: '桃園市機場捷運站體工程',
+        clientName: '桃園市政府',
+        contractValue: 35000000,
+        startDate: new Date('2024-03-01'),
+        endDate: new Date('2025-12-31'),
+        description: '機場捷運站體工程，包含站體結構、機電設備、裝修工程等'
+      }
+    ]);
+  }, []);
+
   // 初始化數據
   useEffect(() => {
     if (user) {
@@ -315,6 +431,132 @@ export default function TestPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 合約生成專案相關函數
+  const handleContractSelect = (contractId: string) => {
+    setSelectedContractId(contractId);
+    setShowProjectSetup(false);
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+  };
+
+  // 將合約項目轉換為工作包
+  const convertContractItemsToWorkpackages = (contractItems: ContractItem[]): Workpackage[] => {
+    if (!contractItems || !Array.isArray(contractItems) || contractItems.length === 0) {
+      return [];
+    }
+
+    // 將合約項目轉換為工作包
+    return contractItems.map(item => {
+      const id = nanoid(8); // 使用 nanoid 生成唯一 ID
+
+      // 注意：若 contractItemPrice 已為總價，budget 直接取用
+      // 若 contractItemPrice 為單價，請改為 item.contractItemPrice * item.contractItemQuantity
+      const workpackage: Workpackage = {
+        id,
+        name: String(item.contractItemId),
+        description: `合約項目 ${item.contractItemId}`,
+        status: 'planned' as import('@/modules/projects/types/project').WorkpackageStatus,
+        progress: 0,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        budget: item.contractItemPrice, // 只取 contractItemPrice，避免重複計算
+        category: '合約項目',
+        priority: 'medium',
+        subWorkpackages: [],
+      };
+
+      return workpackage;
+    });
+  };
+
+  const handleProjectSetupSubmit = async (data: Record<string, string | number>) => {
+    setProjectSetupData(data);
+    
+    const selectedContract = contractRows.find(c => c.id === selectedContractId);
+    const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+    
+    if (!selectedContract) {
+      alert('未找到選擇的合約');
+      return;
+    }
+
+    setImportingId(selectedContractId);
+    setImportMessage('');
+    
+    await safeAsync(async () => {
+      // 取得合約項目並轉換為工作包
+      const contractItems = (selectedContract.raw.contractItems as ContractItem[]) || [];
+      const workpackages = convertContractItemsToWorkpackages(contractItems);
+
+      // 預設一個基本的分解資料，包含必要的節點欄位與可選欄位
+      const decomposition = {
+        nodes: [
+          {
+            id: 'root', // 節點唯一識別碼
+            type: 'custom', // 可選欄位：節點類型
+            position: { x: 0, y: 50 }, // 節點座標，x=0 貼齊左邊
+            data: { label: selectedContract.name || '專案分解' }, // 自訂資料型別，至少含 label
+            // ...其他可選欄位如 width, height 等...
+          },
+        ],
+        edges: [],
+      };
+
+      const projectData = {
+        projectName: data.projectName as string,
+        contractId: selectedContract.id,
+        owner: user?.uid || 'default', // 設置專案擁有者
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        status: 'planning' as import('@/modules/projects/types/project').ProjectStatus,
+        decomposition, // 專案分解資料
+        workpackages, // 將合約項目轉換後的工作包列表
+        // 初始化品質分數
+        qualityScore: 10, // 初始品質分數為 10
+        lastQualityAdjustment: Timestamp.now(), // 設置品質分數調整時間
+        // 從專案設定表單獲得的資料
+        manager: data.manager as string,
+        inspector: data.inspector as string,
+        safety: data.safety as string,
+        supervisor: data.supervisor as string,
+        safetyOfficer: data.safetyOfficer as string,
+        costController: data.costController as string,
+        area: data.area as string,
+        address: data.address as string,
+        region: data.region as string,
+        estimatedBudget: data.estimatedBudget as number,
+        estimatedDuration: data.estimatedDuration as number,
+      };
+
+      await retry(() => addDoc(collection(db, 'projects'), projectData), 3, 1000);
+      setImportMessage(`已成功由合約建立專案，合約ID: ${selectedContract.id}`);
+      
+      // 重新載入專案列表
+      await loadProjects();
+      
+      // 重置狀態
+      setShowProjectSetup(false);
+      setSelectedContractId('');
+      setSelectedTemplateId('');
+      setProjectSetupData({});
+    }, (error) => {
+      setImportMessage(`建立失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'import_project', contractId: selectedContract.id });
+    });
+    
+    setImportingId(null);
+  };
+
+  const handleProjectSetupCancel = () => {
+    setShowProjectSetup(false);
+    setSelectedContractId('');
+    setSelectedTemplateId('');
+    setProjectSetupData({});
+    setImportMessage('');
   };
 
   if (authLoading) {
@@ -927,33 +1169,185 @@ export default function TestPage() {
 
               <div className="p-4 border rounded-lg">
                 <h4 className="font-medium mb-2">從合約生成專案</h4>
-                <p className="text-sm text-gray-600 mb-3">基於現有合約自動生成專案</p>
-                <div className="space-y-2">
-                  <ContractSelector
-                    contracts={[
-                      {
-                        id: '1',
-                        contractNumber: 'CTR-2024-001',
-                        contractName: '台北市區道路維修工程',
-                        clientName: '台北市政府',
-                        contractValue: 5000000,
-                        startDate: new Date('2024-01-01'),
-                        endDate: new Date('2024-12-31'),
-                        description: '台北市區主要道路維修及改善工程',
-                      }
-                    ]}
-                    selectedContractId=""
-                    onSelectContract={(_contractId) => {
-                      // 處理合約選擇
-                    }}
-                  />
-                  <TemplateSelector
-                    templates={templates}
-                    selectedTemplateId=""
-                    onSelectTemplate={(_templateId) => {
-                      // 處理模板選擇
-                    }}
-                  />
+                <p className="text-sm text-gray-600 mb-3">基於合約和模板生成新專案</p>
+                
+                {/* 狀態訊息 */}
+                {importMessage && (
+                  <div className='mb-4 bg-blue-50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 p-3 rounded-lg relative'>
+                    {importMessage}
+                    <button
+                      className='absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200'
+                      onClick={() => setImportMessage('')}
+                      aria-label='關閉'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M6 18L18 6M6 6l12 12'
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  {/* 步驟指示器 */}
+                  <div className='flex items-center justify-center space-x-4'>
+                    <div className={`flex items-center ${selectedContractId ? 'text-blue-600' : 'text-gray-400'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        selectedContractId ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        1
+                      </div>
+                      <span className='ml-1 text-xs'>合約</span>
+                    </div>
+                    <div className='w-4 h-1 bg-gray-200'></div>
+                    <div className={`flex items-center ${selectedTemplateId ? 'text-blue-600' : 'text-gray-400'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        selectedTemplateId ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        2
+                      </div>
+                      <span className='ml-1 text-xs'>模板</span>
+                    </div>
+                    <div className='w-4 h-1 bg-gray-200'></div>
+                    <div className={`flex items-center ${showProjectSetup ? 'text-blue-600' : 'text-gray-400'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        showProjectSetup ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        3
+                      </div>
+                      <span className='ml-1 text-xs'>設定</span>
+                    </div>
+                  </div>
+
+                  {/* 載入狀態 */}
+                  {importingId && (
+                    <div className='text-center py-4'>
+                      <div className='inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg'>
+                        <svg
+                          className='animate-spin -ml-1 mr-2 h-4 w-4 text-white'
+                          fill='none'
+                          viewBox='0 0 24 24'
+                        >
+                          <circle
+                            className='opacity-25'
+                            cx='12'
+                            cy='12'
+                            r='10'
+                            stroke='currentColor'
+                            strokeWidth='4'
+                          ></circle>
+                          <path
+                            className='opacity-75'
+                            fill='currentColor'
+                            d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                          ></path>
+                        </svg>
+                        建立專案中...
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 步驟 1: 合約選擇 */}
+                  {!selectedContractId && !importingId && (
+                    <div>
+                      <h5 className='text-sm font-medium mb-2'>步驟 1: 選擇合約</h5>
+                      <div className='max-h-32 overflow-y-auto'>
+                        <ContractSelector
+                          contracts={contractRows.map(row => ({
+                            id: row.id,
+                            contractNumber: row.id,
+                            contractName: row.name,
+                            clientName: '客戶',
+                            contractValue: 0,
+                            startDate: row.createdAt || new Date(),
+                            endDate: row.createdAt || new Date(),
+                            description: row.name,
+                          }))}
+                          selectedContractId={selectedContractId}
+                          onSelectContract={handleContractSelect}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 步驟 2: 模板選擇 */}
+                  {selectedContractId && !selectedTemplateId && !importingId && (
+                    <div>
+                      <h5 className='text-sm font-medium mb-2'>步驟 2: 選擇專案模板</h5>
+                      <div className='mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs'>
+                        已選擇合約: <strong>{contractRows.find(c => c.id === selectedContractId)?.name}</strong>
+                      </div>
+                      <div className='max-h-32 overflow-y-auto'>
+                        <TemplateSelector
+                          templates={templates}
+                          selectedTemplateId={selectedTemplateId}
+                          onSelectTemplate={handleTemplateSelect}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 步驟 3: 專案設定 */}
+                  {selectedContractId && selectedTemplateId && !showProjectSetup && !importingId && (
+                    <div>
+                      <h5 className='text-sm font-medium mb-2'>步驟 3: 設定專案資訊</h5>
+                      <div className='mb-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs'>
+                        <p>已選擇合約: <strong>{contractRows.find(c => c.id === selectedContractId)?.name}</strong></p>
+                        <p>已選擇模板: <strong>{templates.find(t => t.id === selectedTemplateId)?.name}</strong></p>
+                      </div>
+                      <button
+                        onClick={() => setShowProjectSetup(true)}
+                        className={projectStyles.button.primary}
+                      >
+                        開始設定專案
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 專案設定表單 */}
+                  {showProjectSetup && !importingId && (
+                    <div>
+                      <h5 className='text-sm font-medium mb-2'>專案設定</h5>
+                      <div className='max-h-64 overflow-y-auto'>
+                        <ProjectSetupForm
+                          initialData={{
+                            projectName: contractRows.find(c => c.id === selectedContractId)?.name || '',
+                            description: contractRows.find(c => c.id === selectedContractId)?.name || '',
+                            estimatedBudget: 0,
+                            estimatedDuration: 180,
+                            manager: '',
+                            inspector: '',
+                            safety: '',
+                            supervisor: '',
+                            safetyOfficer: '',
+                            costController: '',
+                            area: '',
+                            address: '',
+                            region: '',
+                          }}
+                          onSubmit={handleProjectSetupSubmit}
+                          onCancel={handleProjectSetupCancel}
+                          isLoading={!!importingId}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 重置按鈕 */}
+                  {(selectedContractId || selectedTemplateId || showProjectSetup) && !importingId && (
+                    <div className='flex justify-center pt-2'>
+                      <button
+                        onClick={handleProjectSetupCancel}
+                        className={projectStyles.button.outline}
+                      >
+                        重新開始
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
