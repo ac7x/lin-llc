@@ -42,16 +42,15 @@ function templateItemToSubWorkpackage(
   const now = Timestamp.now();
   const { estimatedStartDate, estimatedEndDate, assignedTo } = options || {};
 
-  // 建立子工作包物件，日期欄位可為 undefined
   return {
     id: nanoid(8),
     name: templateItem.name,
-    description: templateItem.description || '',
+    description: templateItem.description,
     estimatedQuantity: templateItem.estimatedQuantity,
     actualQuantity: 0,
     unit: templateItem.unit,
     progress: 0,
-    status: 'pending',
+    status: 'draft' as import('@/types/project').SubWorkpackageStatus,
     createdAt: now,
     updatedAt: now,
     // 日期欄位為選填，可為 undefined
@@ -280,7 +279,7 @@ export default function WorkpackageDetailPage() {
         estimatedQuantity: newSubWorkpackage.estimatedQuantity,
         unit: newSubWorkpackage.unit,
         budget: newSubWorkpackage.budget,
-        status: '新建立',
+        status: 'draft' as import('@/types/project').SubWorkpackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -1151,7 +1150,7 @@ export default function WorkpackageDetailPage() {
                     estimatedEndDate: estimatedEndDateStr
                       ? Timestamp.fromDate(new Date(estimatedEndDateStr))
                       : undefined,
-                    status: formData.get('status') as string,
+                    status: formData.get('status') as import('@/types/project').WorkpackageStatus,
                     assignedTo: formData.get('assignedTo') as string,
                     budget: Number(formData.get('budget')),
                     category: formData.get('category') as string,
@@ -1192,11 +1191,14 @@ export default function WorkpackageDetailPage() {
                       defaultValue={workpackage.status}
                       className='border border-gray-300 dark:border-gray-600 rounded w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
                     >
-                      <option value='未開始'>未開始</option>
-                      <option value='待開始'>待開始</option>
-                      <option value='進行中'>進行中</option>
-                      <option value='已完成'>已完成</option>
-                      <option value='已暫停'>已暫停</option>
+                      <option value='draft'>草稿</option>
+                      <option value='planned'>已規劃</option>
+                      <option value='ready'>準備就緒</option>
+                      <option value='in-progress'>執行中</option>
+                      <option value='review'>審查中</option>
+                      <option value='completed'>已完成</option>
+                      <option value='on-hold'>暫停中</option>
+                      <option value='cancelled'>已取消</option>
                     </select>
                   </div>
                   <div>

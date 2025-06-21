@@ -54,12 +54,9 @@ export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
  * 專案類型枚舉
  */
 export type ProjectType = 
-  | 'construction'  // 營建工程
-  | 'renovation'    // 裝修工程
-  | 'maintenance'   // 維護工程
-  | 'consulting'    // 諮詢服務
-  | 'design'        // 設計服務
-  | 'other';        // 其他
+  | 'system'       // 系統工程
+  | 'maintenance'  // 維護工程
+  | 'transport';   // 搬運工程
 
 /**
  * 專案風險等級

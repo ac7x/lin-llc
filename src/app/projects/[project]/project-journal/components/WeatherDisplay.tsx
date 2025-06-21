@@ -6,6 +6,7 @@
 
 'use client';
 
+import { cn } from '@/utils/classNameUtils';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 
 export interface WeatherData {
@@ -48,11 +49,30 @@ export default function WeatherDisplay({
   error,
   className = '',
 }: WeatherDisplayProps) {
+  // 使用 classNameUtils 來避免 Firebase Performance 錯誤
+  const baseWeatherClass = cn(
+    'inline-flex items-center px-4 py-2 rounded-lg',
+    className
+  );
+
+  const loadingClass = cn(
+    baseWeatherClass,
+    'bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+  );
+
+  const errorClass = cn(
+    baseWeatherClass,
+    'bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+  );
+
+  const successClass = cn(
+    baseWeatherClass,
+    'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+  );
+
   if (loading) {
     return (
-      <div
-        className={`inline-flex items-center px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg ${className}`}
-      >
+      <div className={loadingClass}>
         <svg className='animate-spin w-5 h-5 mr-2' fill='none' viewBox='0 0 24 24'>
           <circle
             className='opacity-25'
@@ -75,9 +95,7 @@ export default function WeatherDisplay({
 
   if (error || !weatherData) {
     return (
-      <div
-        className={`inline-flex items-center px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg ${className}`}
-      >
+      <div className={errorClass}>
         <svg className='w-5 h-5 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
           <path
             strokeLinecap='round'
@@ -92,9 +110,7 @@ export default function WeatherDisplay({
   }
 
   return (
-    <div
-      className={`inline-flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg ${className}`}
-    >
+    <div className={successClass}>
       <svg className='w-5 h-5 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
           strokeLinecap='round'

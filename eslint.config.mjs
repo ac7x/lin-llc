@@ -38,7 +38,6 @@ const eslintConfig = [
             'sibling',
             'index',
           ],
-          'newlines-between': 'always',
           alphabetize: {
             order: 'asc',
             caseInsensitive: true,

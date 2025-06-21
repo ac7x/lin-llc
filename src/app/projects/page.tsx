@@ -199,12 +199,9 @@ export default function ProjectsPage() {
                 onChange={e => handleFilterChange('type', e.target.value)}
               >
                 <option value=''>全部類型</option>
-                <option value='construction'>營建工程</option>
-                <option value='renovation'>裝修工程</option>
+                <option value='system'>系統工程</option>
                 <option value='maintenance'>維護工程</option>
-                <option value='consulting'>諮詢服務</option>
-                <option value='design'>設計服務</option>
-                <option value='other'>其他</option>
+                <option value='transport'>搬運工程</option>
               </select>
             </div>
             <div>

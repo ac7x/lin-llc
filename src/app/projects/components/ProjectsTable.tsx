@@ -3,12 +3,14 @@ import Link from 'next/link';
 import type { 
   ProjectDocument, 
   ProjectStatus, 
-  ProjectType, 
   ProjectPriority, 
   ProjectRiskLevel, 
   ProjectHealthLevel, 
-  ProjectPhase 
+  ProjectPhase, 
+  ProjectType 
 } from '@/types/project';
+
+import { tableStyles } from '@/utils/classNameUtils';
 
 // 狀態標籤組件
 const StatusBadge = ({ status }: { status?: ProjectStatus }) => {
@@ -247,29 +249,17 @@ const BudgetDisplay = ({ budget }: { budget?: number }) => {
 // 專案類型標籤組件
 const ProjectTypeBadge = ({ projectType }: { projectType?: ProjectType }) => {
   const typeConfig: Record<ProjectType, { label: string; className: string }> = {
-    construction: {
-      label: '營建',
+    system: {
+      label: '系統',
       className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    },
-    renovation: {
-      label: '裝修',
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     },
     maintenance: {
       label: '維護',
-      className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     },
-    consulting: {
-      label: '諮詢',
+    transport: {
+      label: '搬運',
       className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    },
-    design: {
-      label: '設計',
-      className: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-    },
-    other: {
-      label: '其他',
-      className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
     },
   };
 
@@ -295,109 +285,109 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
 
   return (
     <div className='overflow-x-auto'>
-      <table className='w-full border-collapse'>
-        <thead>
-          <tr className='bg-gray-50 dark:bg-gray-900'>
-            <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+      <table className={tableStyles.table}>
+        <thead className={tableStyles.thead}>
+          <tr>
+            <th className={tableStyles.th}>
               序號
             </th>
-            <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+            <th className={tableStyles.th}>
               專案名稱
             </th>
-            <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+            <th className={tableStyles.th}>
               合約ID
             </th>
-            <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+            <th className={tableStyles.th}>
               狀態
             </th>
-            <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+            <th className={tableStyles.th}>
               進度
             </th>
             {showAdvancedColumns && (
               <>
-                <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+                <th className={tableStyles.th}>
                   類型
                 </th>
-                <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+                <th className={tableStyles.th}>
                   優先級
                 </th>
-                <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+                <th className={tableStyles.th}>
                   風險等級
                 </th>
-                <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+                <th className={tableStyles.th}>
                   健康度
                 </th>
-                <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+                <th className={tableStyles.th}>
                   階段
                 </th>
-                <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+                <th className={tableStyles.th}>
                   品質評分
                 </th>
-                <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+                <th className={tableStyles.th}>
                   預算
                 </th>
               </>
             )}
-            <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+            <th className={tableStyles.th}>
               建立日期
             </th>
-            <th className='px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+            <th className={tableStyles.th}>
               操作
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className={tableStyles.tbody}>
           {projects.map((project) => (
             <tr key={project.id} className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200'>
-              <td className='px-4 py-3 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+              <td className={tableStyles.td}>
                 {project.idx}
               </td>
-              <td className='px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700'>
+              <td className={tableStyles.td}>
                 <Link
                   href={`/projects/${project.id}`}
-                  className='hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200'
+                  className='font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200'
                 >
                   {project.projectName}
                 </Link>
               </td>
-              <td className='px-4 py-3 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+              <td className={tableStyles.td}>
                 {project.contractId || '-'}
               </td>
-              <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+              <td className={tableStyles.td}>
                 <StatusBadge status={project.status} />
               </td>
-              <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+              <td className={tableStyles.td}>
                 <ProgressBar progress={project.progress} />
               </td>
               {showAdvancedColumns && (
                 <>
-                  <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+                  <td className={tableStyles.td}>
                     <ProjectTypeBadge projectType={project.projectType} />
                   </td>
-                  <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+                  <td className={tableStyles.td}>
                     <PriorityBadge priority={project.priority} />
                   </td>
-                  <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+                  <td className={tableStyles.td}>
                     <RiskBadge riskLevel={project.riskLevel} />
                   </td>
-                  <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+                  <td className={tableStyles.td}>
                     <HealthBadge healthLevel={project.healthLevel} />
                   </td>
-                  <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+                  <td className={tableStyles.td}>
                     <PhaseBadge phase={project.phase} />
                   </td>
-                  <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+                  <td className={tableStyles.td}>
                     <QualityScore score={project.qualityMetrics?.overallQualityScore} />
                   </td>
-                  <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+                  <td className={tableStyles.td}>
                     <BudgetDisplay budget={project.estimatedBudget} />
                   </td>
                 </>
               )}
-              <td className='px-4 py-3 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700'>
+              <td className={tableStyles.td}>
                 {project.createdAt}
               </td>
-              <td className='px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+              <td className={tableStyles.td}>
                 <div className='flex items-center space-x-2'>
                   <Link
                     href={`/projects/${project.id}`}

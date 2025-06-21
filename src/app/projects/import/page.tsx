@@ -15,6 +15,7 @@ import { nanoid } from 'nanoid';
 import { useState, useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
+import { useAuth } from '@/hooks/useAuth';
 import { db, collection, addDoc, Timestamp } from '@/lib/firebase-client';
 import type { ContractItem } from '@/types/finance';
 import type { Workpackage } from '@/types/project';
@@ -36,6 +37,7 @@ interface ContractRow {
 }
 
 export default function ImportProjectPage() {
+  const { user } = useAuth();
   // 取得所有已建立專案的 contractId 清單，避免重複建立
   const [projectsSnapshot] = useCollection(collection(db, 'projects'));
 
@@ -92,7 +94,7 @@ export default function ImportProjectPage() {
         id,
         name: String(item.contractItemId),
         description: `合約項目 ${item.contractItemId}`,
-        status: '待開始',
+        status: 'planned' as import('@/types/project').WorkpackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -131,9 +133,10 @@ export default function ImportProjectPage() {
       const projectData = {
         projectName: row.name,
         contractId: row.id,
+        owner: user?.uid || 'default', // 設置專案擁有者
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        status: '新建立',
+        status: 'planning' as import('@/types/project').ProjectStatus,
         decomposition, // 專案分解資料
         workpackages, // 將合約項目轉換後的工作包列表
       };
