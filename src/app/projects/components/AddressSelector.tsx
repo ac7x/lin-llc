@@ -7,6 +7,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 
+import { cn, modalStyles, inputStyles, buttonStyles, loadingStyles } from '@/utils/classNameUtils';
+
 // Google Maps API Key
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o';
 
@@ -285,17 +287,17 @@ export default function AddressSelector({
           }}
           placeholder={placeholder}
           disabled={disabled || isLoading || readOnly}
-          className={`flex-1 px-4 py-2 rounded-l-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${className}`}
+          className={cn(inputStyles.base, 'flex-1 rounded-l-lg', className)}
         />
         <button
           type='button'
           onClick={openMapSelector}
           disabled={disabled || isLoading || readOnly}
-          className='px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 flex items-center'
+          className={cn(buttonStyles.primary, 'rounded-r-lg disabled:opacity-50 flex items-center')}
           title='在地圖上選擇地址'
         >
           {isLoading ? (
-            <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
+            <div className={loadingStyles.spinnerWhite}></div>
           ) : (
             <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' />
@@ -307,8 +309,8 @@ export default function AddressSelector({
 
       {/* 地圖選址彈窗 */}
       {isMapOpen && (
-        <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
-          <div className='bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-hidden'>
+        <div className={modalStyles.overlay}>
+          <div className={cn(modalStyles.container, 'max-w-5xl')}>
             <div className='flex justify-between items-center mb-4'>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                 {readOnly ? '查看地址位置' : '在地圖上選擇地址'}
@@ -334,11 +336,11 @@ export default function AddressSelector({
                         searchSuggestions(e.target.value);
                       }}
                       placeholder='搜尋地址或地點...'
-                      className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                      className={inputStyles.base}
                     />
                     {isSearching && (
                       <div className='absolute right-3 top-1/2 -translate-y-1/2'>
-                        <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500'></div>
+                        <div className={loadingStyles.spinnerGreen}></div>
                       </div>
                     )}
                     
@@ -365,7 +367,7 @@ export default function AddressSelector({
                   <button
                     onClick={searchAddress}
                     disabled={!searchTerm.trim()}
-                    className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 flex items-center'
+                    className={cn(buttonStyles.success, 'disabled:opacity-50 flex items-center')}
                   >
                     <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
@@ -374,7 +376,7 @@ export default function AddressSelector({
                   </button>
                   <button
                     onClick={getCurrentLocation}
-                    className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center'
+                    className={cn('px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center')}
                     title='使用當前位置'
                   >
                     <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -422,11 +424,11 @@ export default function AddressSelector({
             <div ref={mapRef} className='w-full h-96 rounded-lg border border-gray-300 dark:border-gray-700' />
 
             <div className='flex justify-end space-x-3 mt-4'>
-              <button onClick={cancelSelection} className='px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200'>
+              <button onClick={cancelSelection} className={buttonStyles.outline}>
                 {readOnly ? '關閉' : '取消'}
               </button>
               {!readOnly && (
-                <button onClick={confirmSelection} className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200'>
+                <button onClick={confirmSelection} className={buttonStyles.primary}>
                   確認選擇
                 </button>
               )}

@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import type { Project } from '@/app/projects/types/project';
 import { collection, query, getDocs, db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
+import { cn, cardStyles } from '@/utils/classNameUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 import ProjectEditModal from './ProjectEditModal';
@@ -74,14 +75,16 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
   }, []);
 
   return (
-    <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+    <div className={cardStyles.base}>
       <div className='flex justify-between items-start mb-6'>
         <h2 className='text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent'>
           專案資訊
         </h2>
         <button
           onClick={() => setIsEditing(true)}
-          className='p-2 rounded-lg bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors duration-200'
+          className={cn(
+            'p-2 rounded-lg bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors duration-200'
+          )}
           title='編輯'
         >
           <svg

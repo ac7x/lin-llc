@@ -26,6 +26,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 import type { Workpackage } from '@/app/projects/types/project';
 import { doc, updateDoc, db } from '@/lib/firebase-client';
+import { cn, buttonStyles } from '@/utils/classNameUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface WorkpackageListProps {
@@ -59,7 +60,9 @@ const SortableWorkpackage = ({ wp, projectId }: { wp: Workpackage; projectId: st
     <div
       ref={setNodeRef}
       style={style}
-      className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center hover:shadow-md transition-shadow duration-200'
+      className={cn(
+        'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center hover:shadow-md transition-shadow duration-200'
+      )}
     >
       <div className='flex-1 cursor-grab' {...attributes} {...listeners}>
         <div className='font-medium text-gray-900 dark:text-gray-100'>{wp.name}</div>
@@ -77,7 +80,7 @@ const SortableWorkpackage = ({ wp, projectId }: { wp: Workpackage; projectId: st
       </div>
       <a
         href={`/projects/${projectId}/workpackages/${wp.id}`}
-        className='ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors duration-200 flex items-center'
+        className={cn(buttonStyles.primary, 'ml-4 text-sm flex items-center')}
       >
         檢視
         <svg className='w-4 h-4 ml-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>

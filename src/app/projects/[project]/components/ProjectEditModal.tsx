@@ -19,6 +19,7 @@ import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
+import { cn, modalStyles, formStyles, inputStyles, buttonStyles, loadingStyles } from '@/utils/classNameUtils';
 import { formatDateForInput } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
@@ -90,9 +91,9 @@ export default function ProjectEditModal({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto'>
-        <h2 className='text-xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent'>
+    <div className={modalStyles.overlay}>
+      <div className={modalStyles.container}>
+        <h2 className={modalStyles.title}>
           編輯專案資訊
         </h2>
         <form
@@ -101,38 +102,38 @@ export default function ProjectEditModal({
             const formData = new FormData(e.target as HTMLFormElement);
             await handleUpdateProject(formData);
           }}
-          className='space-y-4'
+          className={formStyles.group}
         >
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className={formStyles.row}>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 專案名稱
               </label>
               <input
                 name='projectName'
                 defaultValue={project.projectName}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.base}
                 required
               />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 合約ID
               </label>
               <input
                 name='contractId'
                 defaultValue={project.contractId}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.base}
               />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 經理
               </label>
               <select
                 name='manager'
                 defaultValue={project.manager || ''}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={formStyles.select}
               >
                 <option key='manager-empty' value=''>
                   請選擇
@@ -146,13 +147,13 @@ export default function ProjectEditModal({
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 監工
               </label>
               <select
                 name='supervisor'
                 defaultValue={project.supervisor || ''}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={formStyles.select}
               >
                 <option key='supervisor-empty' value=''>
                   請選擇
@@ -166,13 +167,13 @@ export default function ProjectEditModal({
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 安全人員
               </label>
               <select
                 name='safetyOfficer'
                 defaultValue={project.safetyOfficer || ''}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={formStyles.select}
               >
                 <option key='safety-empty' value=''>
                   請選擇
@@ -186,13 +187,13 @@ export default function ProjectEditModal({
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 成本控制員
               </label>
               <select
                 name='costController'
                 defaultValue={project.costController || ''}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={formStyles.select}
               >
                 <option key='cost-empty' value=''>
                   請選擇
@@ -206,13 +207,13 @@ export default function ProjectEditModal({
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 地區
               </label>
               <select
                 name='region'
                 defaultValue={project.region || ''}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={formStyles.select}
               >
                 <option key='region-empty' value=''>
                   請選擇
@@ -225,7 +226,7 @@ export default function ProjectEditModal({
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 地址
               </label>
               <AddressSelector
@@ -238,17 +239,17 @@ export default function ProjectEditModal({
               />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 業主
               </label>
               <input
                 name='owner'
                 defaultValue={project.owner}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.base}
               />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 起始日
               </label>
               <input
@@ -256,11 +257,11 @@ export default function ProjectEditModal({
                 type='date'
                 name='startDate'
                 defaultValue={formatDateForInput(project.startDate)}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.date}
               />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+              <label className={formStyles.label}>
                 預估結束日
               </label>
               <input
@@ -268,14 +269,16 @@ export default function ProjectEditModal({
                 type='date'
                 name='estimatedEndDate'
                 defaultValue={formatDateForInput(project.estimatedEndDate)}
-                className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.date}
               />
             </div>
           </div>
 
           {/* 預算權限提示 */}
           {!hasBudgetPermission && (
-            <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3'>
+            <div className={cn(
+              'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3'
+            )}>
               <div className='flex items-center'>
                 <svg
                   className='w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2'
@@ -302,18 +305,18 @@ export default function ProjectEditModal({
               type='button'
               onClick={onClose}
               disabled={isSubmitting}
-              className='px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50'
+              className={cn(buttonStyles.outline, 'disabled:opacity-50')}
             >
               取消
             </button>
             <button
               type='submit'
               disabled={isSubmitting}
-              className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 flex items-center'
+              className={cn(buttonStyles.primary, 'disabled:opacity-50 flex items-center')}
             >
               {isSubmitting ? (
                 <>
-                  <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
+                  <div className={cn(loadingStyles.spinnerSmall, 'mr-2')}></div>
                   儲存中...
                 </>
               ) : (

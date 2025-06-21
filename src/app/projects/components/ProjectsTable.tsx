@@ -10,7 +10,7 @@ import type {
   ProjectType, 
   IssueRecord 
 } from '@/app/projects/types/project';
-import { cn, longClassName, tableStyles } from '@/utils/classNameUtils';
+import { cn, tableStyles, badgeStyles, progressStyles } from '@/utils/classNameUtils';
 
 // 狀態標籤組件
 const StatusBadge = ({ status }: { status?: ProjectStatus }) => {
@@ -48,13 +48,8 @@ const StatusBadge = ({ status }: { status?: ProjectStatus }) => {
   const config = status ? statusConfig[status] : statusConfig.planning;
   const defaultClass = 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
 
-  // 使用 longClassName 來避免 Firebase Performance 錯誤
-  const baseBadgeClass = longClassName([
-    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
-  ]);
-
   return (
-    <span className={cn(baseBadgeClass, config?.className || defaultClass)}>
+    <span className={cn(badgeStyles.base, config?.className || defaultClass)}>
       {config?.label || status || '-'}
     </span>
   );
@@ -81,15 +76,12 @@ const PriorityBadge = ({ priority }: { priority?: ProjectPriority }) => {
     },
   };
 
-  if (!priority) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
+  if (!priority) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = priorityConfig[priority];
-  const baseBadgeClass = longClassName([
-    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
-  ]);
 
   return (
-    <span className={cn(baseBadgeClass, config.className)}>
+    <span className={cn(badgeStyles.base, config.className)}>
       {config.label}
     </span>
   );
@@ -116,15 +108,12 @@ const RiskBadge = ({ riskLevel }: { riskLevel?: ProjectRiskLevel }) => {
     },
   };
 
-  if (!riskLevel) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
+  if (!riskLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = riskConfig[riskLevel];
-  const baseBadgeClass = longClassName([
-    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
-  ]);
 
   return (
-    <span className={cn(baseBadgeClass, config.className)}>
+    <span className={cn(badgeStyles.base, config.className)}>
       {config.label}
     </span>
   );
@@ -160,15 +149,12 @@ const HealthBadge = ({ healthLevel }: { healthLevel?: ProjectHealthLevel }) => {
     },
   };
 
-  if (!healthLevel) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
+  if (!healthLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = healthConfig[healthLevel];
-  const baseBadgeClass = longClassName([
-    'px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 whitespace-nowrap'
-  ]);
 
   return (
-    <span className={cn(baseBadgeClass, config.className)}>
+    <span className={cn(badgeStyles.base, config.className, 'flex items-center gap-1')}>
       <span>{config.icon}</span>
       <span>{config.label}</span>
     </span>
@@ -200,15 +186,12 @@ const PhaseBadge = ({ phase }: { phase?: ProjectPhase }) => {
     },
   };
 
-  if (!phase) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
+  if (!phase) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = phaseConfig[phase];
-  const baseBadgeClass = longClassName([
-    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
-  ]);
 
   return (
-    <span className={cn(baseBadgeClass, config.className)}>
+    <span className={cn(badgeStyles.base, config.className)}>
       {config.label}
     </span>
   );
@@ -218,25 +201,21 @@ const PhaseBadge = ({ phase }: { phase?: ProjectPhase }) => {
 const ProgressBar = ({ progress }: { progress?: number }) => {
   const percentage = progress || 0;
   const getColorClass = (percent: number) => {
-    if (percent >= 80) return 'bg-green-500';
-    if (percent >= 60) return 'bg-yellow-500';
+    if (percent >= 80) return progressStyles.colors.green;
+    if (percent >= 60) return progressStyles.colors.yellow;
     if (percent >= 40) return 'bg-orange-500';
-    return 'bg-red-500';
+    return progressStyles.colors.red;
   };
 
-  const baseProgressClass = longClassName([
-    'h-2 rounded-full transition-all duration-300'
-  ]);
-
   return (
-    <div className={cn('flex items-center space-x-2 whitespace-nowrap')}>
-      <div className={cn('w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2')}>
+    <div className='flex items-center space-x-2 whitespace-nowrap'>
+      <div className={progressStyles.container}>
         <div
-          className={cn(baseProgressClass, getColorClass(percentage))}
+          className={cn(progressStyles.bar, getColorClass(percentage))}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className={cn('text-xs text-gray-600 dark:text-gray-400 min-w-[2rem]')}>
+      <span className='text-xs text-gray-600 dark:text-gray-400 min-w-[2rem]'>
         {percentage}%
       </span>
     </div>
@@ -245,7 +224,7 @@ const ProgressBar = ({ progress }: { progress?: number }) => {
 
 // 品質評分組件
 const QualityScore = ({ score }: { score?: number }) => {
-  if (!score) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
+  if (!score) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
   
   const getColorClass = (s: number) => {
     if (s >= 8) return 'text-green-600 dark:text-green-400';
@@ -262,10 +241,10 @@ const QualityScore = ({ score }: { score?: number }) => {
 
 // 預算顯示組件
 const BudgetDisplay = ({ budget }: { budget?: number }) => {
-  if (!budget) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
+  if (!budget) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
   
   return (
-    <span className={cn('text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap')}>
+    <span className='text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap'>
       ${budget.toLocaleString()}
     </span>
   );
@@ -288,15 +267,12 @@ const ProjectTypeBadge = ({ projectType }: { projectType?: ProjectType }) => {
     },
   };
 
-  if (!projectType) return <span className={cn('text-gray-400 whitespace-nowrap')}>-</span>;
+  if (!projectType) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = typeConfig[projectType];
-  const baseBadgeClass = longClassName([
-    'px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap'
-  ]);
 
   return (
-    <span className={cn(baseBadgeClass, config.className)}>
+    <span className={cn(badgeStyles.base, config.className)}>
       {config.label}
     </span>
   );
@@ -309,13 +285,13 @@ type ProjectsTableProps = {
 
 export function ProjectsTable({ projects, showAdvancedColumns = false }: ProjectsTableProps) {
   if (projects.length === 0) {
-    return <div className={cn('px-4 py-8 text-center text-gray-500 dark:text-gray-400')}>尚無專案</div>;
+    return <div className='px-4 py-8 text-center text-gray-500 dark:text-gray-400'>尚無專案</div>;
   }
 
   return (
-    <div className={cn('overflow-x-auto')}>
-      <table className={cn(tableStyles.table)}>
-        <thead className={cn(tableStyles.thead)}>
+    <div className='overflow-x-auto'>
+      <table className={tableStyles.table}>
+        <thead className={tableStyles.thead}>
           <tr>
             <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
               序號
@@ -368,16 +344,16 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
             </th>
           </tr>
         </thead>
-        <tbody className={cn(tableStyles.tbody)}>
+        <tbody className={tableStyles.tbody}>
           {projects.map((project) => (
-            <tr key={project.id} className={cn('hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200')}>
+            <tr key={project.id} className={cn(tableStyles.rowHover)}>
               <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                 {project.idx}
               </td>
               <td className={cn(tableStyles.td, 'whitespace-normal')}>
                 <Link
                   href={`/projects/${project.id}`}
-                  className={cn('font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200')}
+                  className='font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200'
                 >
                   {project.projectName}
                 </Link>
@@ -422,11 +398,11 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
                         (issue.type === 'quality' || issue.type === 'progress') && issue.status !== 'resolved'
                       );
                       return qualityOrProgressIssues.length > 0 ? (
-                        <span className={cn('text-orange-600 dark:text-orange-400 font-bold')}>
+                        <span className='text-orange-600 dark:text-orange-400 font-bold'>
                           {qualityOrProgressIssues.length}
                         </span>
                       ) : (
-                        <span className={cn('text-gray-400')}>0</span>
+                        <span className='text-gray-400'>0</span>
                       );
                     })()}
                   </td>
@@ -436,10 +412,10 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
                 {project.createdAt}
               </td>
               <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
-                <div className={cn('flex items-center space-x-2')}>
+                <div className='flex items-center space-x-2'>
                   <Link
                     href={`/projects/${project.id}`}
-                    className={cn('text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors duration-200')}
+                    className='text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors duration-200'
                   >
                     查看
                   </Link>

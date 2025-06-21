@@ -19,6 +19,7 @@ import { useFilteredProjects, useProjectStats, type ProjectFilters, type Project
 import type { IssueRecord } from '@/app/projects/types/project';
 import { DataLoader } from '@/components/common/DataLoader';
 import { useAuth } from '@/hooks/useAuth';
+import { cn, layoutStyles, cardStyles, inputStyles, buttonStyles } from '@/utils/classNameUtils';
 
 import { ProjectsTable } from './components/ProjectsTable';
 
@@ -144,27 +145,27 @@ export default function ProjectsPage() {
   };
 
   return (
-    <main className='max-w-7xl mx-auto'>
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
-        <div className='flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4'>
+    <main className={layoutStyles.main}>
+      <div className={cardStyles.base}>
+        <div className={layoutStyles.pageHeader}>
           <div>
-            <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent'>
+            <h1 className={layoutStyles.pageTitle}>
               專案列表
             </h1>
-            <p className='text-gray-600 dark:text-gray-400 mt-2'>
+            <p className={layoutStyles.pageDescription}>
               管理與追蹤所有專案狀態 • 平均品質分數：{qualityStats.averageQualityScore}
             </p>
           </div>
           <div className='flex items-center gap-2'>
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className='px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200'
+              className={buttonStyles.small}
             >
               {showAdvancedFilters ? '簡化篩選' : '進階篩選'}
             </button>
             <button
               onClick={() => setShowAdvancedColumns(!showAdvancedColumns)}
-              className='px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200'
+              className={buttonStyles.small}
             >
               {showAdvancedColumns ? '簡化檢視' : '詳細檢視'}
             </button>
@@ -174,31 +175,31 @@ export default function ProjectsPage() {
         {/* 統計卡片 */}
         {stats && (
           <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4 mb-6'>
-            <div className='bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg'>
+            <div className={cn(cardStyles.stats, cardStyles.statsColors.blue)}>
               <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>{stats.totalProjects}</div>
               <div className='text-sm text-blue-600 dark:text-blue-400'>總專案數</div>
             </div>
-            <div className='bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg'>
+            <div className={cn(cardStyles.stats, cardStyles.statsColors.yellow)}>
               <div className='text-2xl font-bold text-yellow-600 dark:text-yellow-400'>{stats.activeProjects}</div>
               <div className='text-sm text-yellow-600 dark:text-yellow-400'>執行中</div>
             </div>
-            <div className='bg-green-50 dark:bg-green-900/20 p-4 rounded-lg'>
+            <div className={cn(cardStyles.stats, cardStyles.statsColors.green)}>
               <div className='text-2xl font-bold text-green-600 dark:text-green-400'>{stats.completedProjects}</div>
               <div className='text-sm text-green-600 dark:text-green-400'>已完成</div>
             </div>
-            <div className='bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg'>
+            <div className={cn(cardStyles.stats, cardStyles.statsColors.orange)}>
               <div className='text-2xl font-bold text-orange-600 dark:text-orange-400'>{stats.onHoldProjects}</div>
               <div className='text-sm text-orange-600 dark:text-orange-400'>暫停中</div>
             </div>
-            <div className='bg-red-50 dark:bg-red-900/20 p-4 rounded-lg'>
+            <div className={cn(cardStyles.stats, cardStyles.statsColors.red)}>
               <div className='text-2xl font-bold text-red-600 dark:text-red-400'>{stats.overdueProjects}</div>
               <div className='text-sm text-red-600 dark:text-red-400'>逾期專案</div>
             </div>
-            <div className='bg-pink-50 dark:bg-pink-900/20 p-4 rounded-lg'>
+            <div className={cn(cardStyles.stats, cardStyles.statsColors.pink)}>
               <div className='text-2xl font-bold text-pink-600 dark:text-pink-400'>{stats.totalQualityIssues}</div>
               <div className='text-sm text-pink-600 dark:text-pink-400'>品質問題</div>
             </div>
-            <div className='bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg'>
+            <div className={cn(cardStyles.stats, cardStyles.statsColors.indigo)}>
               <div className='text-2xl font-bold text-indigo-600 dark:text-indigo-400'>{qualityStats.averageQualityScore}</div>
               <div className='text-sm text-indigo-600 dark:text-indigo-400'>平均品質</div>
             </div>
@@ -206,7 +207,7 @@ export default function ProjectsPage() {
         )}
 
         {/* 篩選器 */}
-        <div className='bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 mb-6'>
+        <div className={layoutStyles.filterContainer}>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
             <div>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
@@ -214,7 +215,7 @@ export default function ProjectsPage() {
               </label>
               <input
                 type='text'
-                className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.search}
                 placeholder='專案名稱、合約ID、地區...'
                 defaultValue={searchTerm}
                 onChange={e => handleSearch(e.target.value)}
@@ -225,7 +226,7 @@ export default function ProjectsPage() {
                 狀態
               </label>
               <select
-                className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.base}
                 value={status || ''}
                 onChange={e => handleFilterChange('status', e.target.value)}
               >
@@ -244,7 +245,7 @@ export default function ProjectsPage() {
                 專案類型
               </label>
               <select
-                className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.base}
                 value={projectType || ''}
                 onChange={e => handleFilterChange('type', e.target.value)}
               >
@@ -259,7 +260,7 @@ export default function ProjectsPage() {
                 排序
               </label>
               <select
-                className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                className={inputStyles.base}
                 value={sortBy}
                 onChange={e => handleSortChange(e.target.value as ProjectSortOption)}
               >
@@ -289,7 +290,7 @@ export default function ProjectsPage() {
                   優先級
                 </label>
                 <select
-                  className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                  className={inputStyles.base}
                   value={priority || ''}
                   onChange={e => handleFilterChange('priority', e.target.value)}
                 >
@@ -305,7 +306,7 @@ export default function ProjectsPage() {
                   風險等級
                 </label>
                 <select
-                  className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                  className={inputStyles.base}
                   value={riskLevel || ''}
                   onChange={e => handleFilterChange('riskLevel', e.target.value)}
                 >
@@ -321,7 +322,7 @@ export default function ProjectsPage() {
                   健康度
                 </label>
                 <select
-                  className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                  className={inputStyles.base}
                   value={healthLevel || ''}
                   onChange={e => handleFilterChange('healthLevel', e.target.value)}
                 >
@@ -338,7 +339,7 @@ export default function ProjectsPage() {
                   專案階段
                 </label>
                 <select
-                  className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                  className={inputStyles.base}
                   value={phase || ''}
                   onChange={e => handleFilterChange('phase', e.target.value)}
                 >

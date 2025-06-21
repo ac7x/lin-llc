@@ -18,6 +18,7 @@ import { useQualityScore } from '@/app/projects/hooks/useFilteredProjects';
 import type { Project } from '@/app/projects/types/project';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
+import { cn } from '@/utils/classNameUtils';
 import { formatLocalDate } from '@/utils/dateUtils';
 
 interface ProjectInfoDisplayProps {
@@ -98,7 +99,9 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
                 <span className='text-gray-900 dark:text-gray-100 flex-1'>{project.address}</span>
                 <button
                   onClick={() => setShowAddressMap(!showAddressMap)}
-                  className='px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors duration-200'
+                  className={cn(
+                    'px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors duration-200'
+                  )}
                   title='查看地圖'
                 >
                   <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -143,11 +146,11 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
         <div>
           <label className='text-sm font-medium text-gray-500 dark:text-gray-400'>品質分數</label>
           <div className='mt-1 flex items-center gap-2'>
-            <span className={`text-lg font-bold ${
+            <span className={cn('text-lg font-bold', 
               qualityScoreInfo.currentScore >= 8 ? 'text-green-600 dark:text-green-400' :
               qualityScoreInfo.currentScore >= 6 ? 'text-yellow-600 dark:text-yellow-400' :
               'text-red-600 dark:text-red-400'
-            }`}>
+            )}>
               {Math.round(qualityScoreInfo.currentScore)}/10
             </span>
             {qualityScoreInfo.qualityOrProgressIssuesCount > 0 && (
