@@ -20,35 +20,10 @@ import type {
   ProjectQualityMetrics,
   ProjectFinancialMetrics
 } from '../types';
+import { calculateProjectProgress } from '../types';
 import { convertToDate } from './dateUtils';
 
 // ===== 進度計算與分析 =====
-
-/**
- * 計算專案進度百分比（根據所有 subWorkpackages 的實際完成數量計算）
- */
-function calculateProjectProgress(project: Project): number {
-  const workPackages = project.workPackages || [];
-  if (workPackages.length === 0) return 0;
-  
-  let totalEstimated = 0;
-  let totalActual = 0;
-
-  for (const wp of workPackages) {
-    if (!wp.subPackages || wp.subPackages.length === 0) continue;
-    for (const sub of wp.subPackages) {
-      const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
-      if (estimated > 0) {
-        const actual = typeof sub.actualQuantity === 'number' ? sub.actualQuantity : 0;
-        totalEstimated += estimated;
-        totalActual += actual;
-      }
-    }
-  }
-
-  if (totalEstimated === 0) return 0;
-  return Math.round((totalActual / totalEstimated) * 100);
-}
 
 /**
  * 計算時程績效指數 (SPI)

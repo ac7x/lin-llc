@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { projectStyles } from '../../styles';
 import type { Project } from '@/app/test-projects/types';
-import { toDate } from '@/app/test-projects/types';
+import { convertToDate } from '@/app/test-projects/types';
 
 interface ProjectsTableProps {
   projects: Project[];
@@ -96,7 +96,7 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
               <td className={projectStyles.table.td}>
                 {project.createdAt ? 
                   (() => {
-                    const date = toDate(project.createdAt);
+                    const date = convertToDate(project.createdAt);
                     return date ? date.toLocaleDateString('zh-TW') : '未知';
                   })() 
                   : '未知'}

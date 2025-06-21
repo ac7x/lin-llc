@@ -3,10 +3,14 @@
  * 統一匯出所有專案相關的工具函數
  */
 
-// 進度相關
+// 進度相關 - 從 types 檔案導入核心計算函數
 export {
   calculateProjectProgress,
   calculateWorkpackageProgress,
+} from '../types';
+
+// 進度相關 - 從 progressUtils 導入顯示組件
+export {
   getProgressColor,
   ProjectProgressPercent,
   ProgressBar,

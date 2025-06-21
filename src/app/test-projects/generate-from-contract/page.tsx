@@ -132,7 +132,6 @@ export default function GenerateFromContractPage() {
         estimatedBudget: data.estimatedBudget as number,
         estimatedDuration: data.estimatedDuration as number,
         workPackages: [],
-        workpackages: [],
         projectType: 'system',
         priority: 'medium',
         riskLevel: 'medium',

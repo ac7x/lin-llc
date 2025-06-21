@@ -12,48 +12,8 @@
 import type { ReactElement } from 'react';
 
 import { projectStyles } from '../styles';
+import { calculateProjectProgress, calculateWorkpackageProgress } from '../types';
 import type { Project, WorkPackage } from '../types';
-
-/**
- * 計算專案進度百分比（根據所有 subWorkpackages 的實際完成數量計算）
- * 使用 actualQuantity 總和除以 estimatedQuantity 總和
- * 若 estimatedQuantity 為 0 或未填，則不納入計算。
- * 若所有 estimatedQuantity 為 0，則回傳 0。
- */
-export function calculateProjectProgress(project: Project): number {
-  if (!project.workPackages || project.workPackages.length === 0) return 0;
-  
-  const totalProgress = project.workPackages.reduce((sum, wp) => {
-    return sum + calculateWorkpackageProgress(wp);
-  }, 0);
-
-  return Math.round(totalProgress / project.workPackages.length);
-}
-
-/**
- * 計算工作包進度百分比（根據所有 subWorkpackages 的實際完成數量計算）
- * 使用 actualQuantity 總和除以 estimatedQuantity 總和
- * 若 estimatedQuantity 為 0 或未填，則不納入計算。
- * 若所有 estimatedQuantity 為 0，則回傳 0。
- */
-export function calculateWorkpackageProgress(wp: WorkPackage): number {
-  if (!wp.subPackages || wp.subPackages.length === 0) return 0;
-  
-  let totalEstimated = 0;
-  let totalActual = 0;
-
-  for (const sub of wp.subPackages) {
-    const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
-    if (estimated > 0) {
-      const actual = typeof sub.actualQuantity === 'number' ? sub.actualQuantity : 0;
-      totalEstimated += estimated;
-      totalActual += actual;
-    }
-  }
-
-  if (totalEstimated === 0) return 0;
-  return Math.round((totalActual / totalEstimated) * 100);
-}
 
 /**
  * 取得進度顏色

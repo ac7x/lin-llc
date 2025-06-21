@@ -76,7 +76,7 @@ export default function ProjectInfoPage({ project, eligibleUsers }: ProjectInfoP
         {activeTab === 'workpackages' && (
           <div className="p-6">
         <WorkpackageList 
-              workpackages={project.workpackages}
+              workpackages={project.workPackages}
               projectId={project.id}
         />
           </div>

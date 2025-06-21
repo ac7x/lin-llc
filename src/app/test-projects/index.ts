@@ -102,10 +102,14 @@ export {
 // 工具函數匯出
 // ============================================================================
 
-// 進度計算
+// 進度計算 - 從 types 檔案導入核心計算函數
 export { 
   calculateProjectProgress,
   calculateWorkpackageProgress,
+} from './types';
+
+// 進度顯示組件 - 從 progressUtils 導入
+export { 
   ProgressBarWithPercent,
   ProjectHealthIndicator
 } from './utils/progressUtils';

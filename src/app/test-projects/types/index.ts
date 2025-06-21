@@ -100,7 +100,7 @@ export type ReviewFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly';
 // ============================================================================
 
 // 安全轉成 Date 物件
-export const toDate = (input: DateField): Date | null => {
+export const convertToDate = (input: DateField): Date | null => {
   if (!input) return null;
   if (input instanceof Date) return input;
   if (typeof input === 'string') return new Date(input);
@@ -109,8 +109,8 @@ export const toDate = (input: DateField): Date | null => {
 };
 
 // 格式化日期顯示 (YYYY-MM-DD)
-export const formatDate = (input: DateField, fallback = '--'): string => {
-  const date = toDate(input);
+export const formatDateDisplay = (input: DateField, fallback = '--'): string => {
+  const date = convertToDate(input);
   if (!date) return fallback;
   return date.toISOString().split('T')[0];
 };
@@ -131,8 +131,8 @@ export interface CalculatedTimeRange extends TimeRange {
 
 export const calculateTimeMetrics = (range: TimeRange): CalculatedTimeRange => {
   const now = new Date();
-  const start = toDate(range.start);
-  const end = toDate(range.end);
+  const start = convertToDate(range.start);
+  const end = convertToDate(range.end);
 
   const elapsedDays = start
     ? Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
@@ -301,9 +301,13 @@ export interface SubWorkPackage extends BaseWithId {
   dependencies?: string[];
 }
 
-export const calculateSubProgress = (sub: SubWorkPackage): number => {
-  const total = sub.quantity * sub.unitWeight;
-  return total > 0 ? sub.completedUnits / total : 0;
+export const calculateSubWorkpackageProgress = (sub: SubWorkPackage): number => {
+  if (!sub.tasks || sub.tasks.length === 0) {
+    return sub.progress || 0;
+  }
+  
+  const completedTasks = sub.tasks.filter(task => task.completed).length;
+  return Math.round((completedTasks / sub.tasks.length) * 100);
 };
 
 // ============================================================================
@@ -346,16 +350,16 @@ export interface WorkPackage extends BaseWithId {
   phase?: ProjectPhase;
 }
 
-export const calculateWorkPackageProgress = (wp: WorkPackage): number => {
-  const totalUnits = wp.subPackages.reduce(
-    (sum, sub) => sum + (sub.quantity * sub.unitWeight), 0
-  );
-
-  const completedUnits = wp.subPackages.reduce(
-    (sum, sub) => sum + sub.completedUnits, 0
-  );
-
-  return totalUnits > 0 ? completedUnits / totalUnits : 0;
+export const calculateWorkpackageProgress = (wp: WorkPackage): number => {
+  if (!wp.subPackages || wp.subPackages.length === 0) {
+    return wp.progress || 0;
+  }
+  
+  const totalProgress = wp.subPackages.reduce((sum, sub) => {
+    return sum + calculateSubWorkpackageProgress(sub);
+  }, 0);
+  
+  return Math.round(totalProgress / wp.subPackages.length);
 };
 
 // ============================================================================
@@ -590,14 +594,15 @@ export interface Project extends BaseWithDates {
 }
 
 export const calculateProjectProgress = (project: Project): number => {
-  const workPackages = project.workPackages || [];
-  const totalWeight = workPackages.reduce((sum, wp) => sum + wp.budget, 0);
-
-  const weightedProgress = workPackages.reduce(
-    (sum, wp) => sum + (calculateWorkPackageProgress(wp) * wp.budget), 0
-  );
-
-  return totalWeight > 0 ? weightedProgress / totalWeight : 0;
+  if (!project.workPackages || project.workPackages.length === 0) {
+    return project.progress || 0;
+  }
+  
+  const totalProgress = project.workPackages.reduce((sum, wp) => {
+    return sum + calculateWorkpackageProgress(wp);
+  }, 0);
+  
+  return Math.round(totalProgress / project.workPackages.length);
 };
 
 // ============================================================================
@@ -706,66 +711,28 @@ export interface ProjectMember {
 // ============================================================================
 
 export const mapProjectFromFirestore = (raw: any): Project => {
-  const mapTime = (range: any): CalculatedTimeRange => {
-    return calculateTimeMetrics({
-      start: rawDate(range?.start),
-      end: rawDate(range?.end),
-    });
+  const mapTimeRange = (range: any): CalculatedTimeRange => {
+    return {
+      start: convertToDate(range?.start),
+      end: convertToDate(range?.end),
+      elapsedDays: range?.elapsedDays || 0,
+      remainingDays: range?.remainingDays || 0,
+    };
   };
 
-  const rawDate = (d: any): DateField => (d instanceof Timestamp ? d.toDate() : d ?? null);
+  const convertDateField = (d: any): DateField => (d instanceof Timestamp ? d.toDate() : d ?? null);
 
   return {
-    id: raw.id,
-    projectName: raw.projectName ?? raw.name ?? '',
-    serialNumber: raw.serialNumber ?? '',
-    name: raw.name ?? '',
-    region: raw.region ?? '',
-    address: raw.address ?? '',
-    owner: raw.owner ?? '',
-
-    managers: raw.managers ?? [],
-    supervisors: raw.supervisors ?? [],
-    safetyOfficers: raw.safetyOfficers ?? [],
-
-    status: raw.status ?? [],
-    type: raw.type ?? [],
-    quality: raw.quality ?? '',
-    risk: raw.risk ?? '',
-
-    createdAt: rawDate(raw.createdAt),
-    updatedAt: rawDate(raw.updatedAt),
-
-    estimated: mapTime(raw.estimated),
-    planned: mapTime(raw.planned),
-    actual: mapTime(raw.actual),
-    required: mapTime(raw.required),
-
-    issues: (raw.issues ?? []).map((i: any) => ({
-      id: i.id,
-      description: i.description,
-      createdAt: rawDate(i.createdAt),
-    })),
-
-    logs: (raw.logs ?? []).map((log: any) => ({
-      id: log.id,
-      timestamp: rawDate(log.timestamp),
-      photoUrls: log.photoUrls ?? [],
-      workUpdates: log.workUpdates ?? [],
-    })),
-
-    workPackages: (raw.workpackages ?? raw.workPackages ?? []).map((wp: any) => ({
-      id: wp.id,
-      budget: wp.budget,
-      quantity: wp.quantity,
-      subPackages: (wp.subPackages ?? []).map((sub: any) => ({
-        id: sub.id,
-        quantity: sub.quantity,
-        unitWeight: sub.unitWeight,
-        completedUnits: sub.completedUnits,
-        progress: calculateSubProgress(sub),
-        workers: sub.workers ?? [],
-      })),
-    })),
+    ...raw,
+    startDate: convertDateField(raw.startDate),
+    estimatedEndDate: convertDateField(raw.estimatedEndDate),
+    estimated: mapTimeRange(raw.estimated),
+    planned: mapTimeRange(raw.planned),
+    actual: mapTimeRange(raw.actual),
+    required: mapTimeRange(raw.required),
+    archivedAt: convertDateField(raw.archivedAt),
+    nextReviewDate: convertDateField(raw.nextReviewDate),
+    lastReviewDate: convertDateField(raw.lastReviewDate),
+    lastQualityAdjustment: convertDateField(raw.lastQualityAdjustment),
   };
 };
