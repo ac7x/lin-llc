@@ -18,13 +18,10 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 import { OrderItem } from '@/types/finance';
 import {
-  createError,
   getErrorMessage,
   logError,
   safeAsync,
   retry,
-  ErrorCode,
-  ErrorSeverity,
 } from '@/utils/errorUtils';
 
 export default function OrderDetailPage() {

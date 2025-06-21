@@ -15,13 +15,10 @@ import { useState } from 'react';
 
 import { db, collection, getDocs, deleteDoc, doc } from '@/lib/firebase-client';
 import {
-  createError,
   getErrorMessage,
   logError,
   safeAsync,
   retry,
-  ErrorCode,
-  ErrorSeverity,
 } from '@/utils/errorUtils';
 
 export default function ArchivePage() {

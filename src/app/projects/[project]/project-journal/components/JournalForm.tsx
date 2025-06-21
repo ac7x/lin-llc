@@ -29,16 +29,8 @@ import {
   IssueRecord,
 } from '@/types/project';
 import { toTimestamp } from '@/utils/dateUtils';
+import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 import { calculateProjectProgress } from '@/utils/progressUtils';
-import {
-  createError,
-  getErrorMessage,
-  logError,
-  safeAsync,
-  retry,
-  ErrorCode,
-  ErrorSeverity,
-} from '@/utils/errorUtils';
 
 import { WeatherData } from './WeatherDisplay';
 

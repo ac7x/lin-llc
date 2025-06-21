@@ -19,13 +19,10 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase-client';
 import { QuoteItem } from '@/types/finance';
 import {
-  createError,
   getErrorMessage,
   logError,
   safeAsync,
   retry,
-  ErrorCode,
-  ErrorSeverity,
 } from '@/utils/errorUtils';
 
 export default function QuoteDetailPage() {
