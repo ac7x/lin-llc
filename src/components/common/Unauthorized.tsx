@@ -61,7 +61,12 @@ export function Unauthorized({
           <div>
             <Link
               href='/signin'
-              className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+              className={`
+                inline-flex items-center px-4 py-2 
+                border border-transparent text-sm font-medium rounded-md 
+                text-white bg-indigo-600 hover:bg-indigo-700 
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+              `}
             >
               前往登入頁面
             </Link>
@@ -71,7 +76,12 @@ export function Unauthorized({
           <div>
             <button
               onClick={() => router.back()}
-              className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+              className={`
+                inline-flex items-center px-4 py-2 
+                border border-transparent text-sm font-medium rounded-md 
+                text-white bg-indigo-600 hover:bg-indigo-700 
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+              `}
             >
               返回上一頁
             </button>

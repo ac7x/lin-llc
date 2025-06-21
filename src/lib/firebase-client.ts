@@ -95,7 +95,16 @@ const isClient = typeof window !== 'undefined';
 if (isClient) {
   safeAsync(async () => {
     analytics = getAnalytics(app);
-    performance = getPerformance(app);
+    
+    // Performance 初始化，添加錯誤處理
+    try {
+      performance = getPerformance(app);
+    } catch (error) {
+      // 如果 Performance 初始化失敗，記錄錯誤但不中斷應用
+      logError(error, { operation: 'initialize_performance' });
+      performance = null;
+    }
+    
     remoteConfig = getRemoteConfig(app);
 
     // App Check 初始化
@@ -105,7 +114,7 @@ if (isClient) {
     });
   }, (error) => {
     logError(error, { operation: 'initialize_client_services' });
-    throw error;
+    // 不拋出錯誤，讓應用繼續運行
   });
 }
 

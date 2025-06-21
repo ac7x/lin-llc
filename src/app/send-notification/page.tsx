@@ -256,7 +256,13 @@ export default function SendNotificationPage(): ReactElement {
                 type='text'
                 value={formData.title}
                 onChange={e => handleFormChange('title', e.target.value)}
-                className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                className={`
+                  w-full px-4 py-3 rounded-lg border border-gray-300 
+                  dark:border-gray-600 bg-white dark:bg-gray-700 
+                  text-gray-900 dark:text-gray-100 
+                  focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                  transition-colors
+                `}
                 placeholder='輸入通知標題'
                 maxLength={100}
                 required
@@ -272,7 +278,13 @@ export default function SendNotificationPage(): ReactElement {
                 value={formData.message}
                 onChange={e => handleFormChange('message', e.target.value)}
                 rows={4}
-                className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none'
+                className={`
+                  w-full px-4 py-3 rounded-lg border border-gray-300 
+                  dark:border-gray-600 bg-white dark:bg-gray-700 
+                  text-gray-900 dark:text-gray-100 
+                  focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                  transition-colors resize-none
+                `}
                 placeholder='輸入通知內容'
                 maxLength={500}
                 required
@@ -325,7 +337,13 @@ export default function SendNotificationPage(): ReactElement {
                   onChange={e =>
                     handleFormChange('category', e.target.value as NotificationMessage['category'])
                   }
-                  className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                  className={`
+                    w-full px-4 py-3 rounded-lg border border-gray-300 
+                    dark:border-gray-600 bg-white dark:bg-gray-700 
+                    text-gray-900 dark:text-gray-100 
+                    focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                    transition-colors
+                  `}
                 >
                   {NOTIFICATION_CATEGORIES.map(({ value, label }) => (
                     <option key={value} value={value}>
@@ -348,7 +366,13 @@ export default function SendNotificationPage(): ReactElement {
                   onChange={e =>
                     handleFormChange('priority', e.target.value as 'high' | 'normal' | 'low')
                   }
-                  className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                  className={`
+                    w-full px-4 py-3 rounded-lg border border-gray-300 
+                    dark:border-gray-600 bg-white dark:bg-gray-700 
+                    text-gray-900 dark:text-gray-100 
+                    focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                    transition-colors
+                  `}
                 >
                   <option value='low'>低</option>
                   <option value='normal'>一般</option>
@@ -365,7 +389,13 @@ export default function SendNotificationPage(): ReactElement {
                   type='datetime-local'
                   value={formData.expiresAt}
                   onChange={e => handleFormChange('expiresAt', e.target.value)}
-                  className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                  className={`
+                    w-full px-4 py-3 rounded-lg border border-gray-300 
+                    dark:border-gray-600 bg-white dark:bg-gray-700 
+                    text-gray-900 dark:text-gray-100 
+                    focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                    transition-colors
+                  `}
                 />
               </div>
             </div>
@@ -379,7 +409,13 @@ export default function SendNotificationPage(): ReactElement {
                 type='url'
                 value={formData.actionUrl}
                 onChange={e => handleFormChange('actionUrl', e.target.value)}
-                className='w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                className={`
+                  w-full px-4 py-3 rounded-lg border border-gray-300 
+                  dark:border-gray-600 bg-white dark:bg-gray-700 
+                  text-gray-900 dark:text-gray-100 
+                  focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                  transition-colors
+                `}
                 placeholder='https://example.com'
               />
             </div>
