@@ -12,7 +12,7 @@
 import type { ReactElement } from 'react';
 
 import { Project, Workpackage } from '@/app/projects/types/project';
-import { cn, longClassName } from '@/utils/classNameUtils';
+import { cn, getProgressColor, getQualityColor } from '@/utils/classNameUtils';
 import { calculateProjectProgress as calculateProjectProgressNew, calculateWorkpackageProgress as calculateWorkpackageProgressNew } from './projectUtils';
 
 /**
@@ -44,19 +44,9 @@ export function calculateWorkpackageProgress(wp: Workpackage): number {
  */
 export const ProjectProgressPercent = ({ project }: { project: Project }): ReactElement => {
   const percent = calculateProjectProgress(project);
-  const getColorClass = (progress: number) => {
-    if (progress >= 80) return 'text-green-600 dark:text-green-400';
-    if (progress >= 60) return 'text-yellow-600 dark:text-yellow-400';
-    if (progress >= 40) return 'text-orange-600 dark:text-orange-400';
-    return 'text-red-600 dark:text-red-400';
-  };
-
-  const baseClass = longClassName([
-    'text-xs font-medium'
-  ]);
 
   return (
-    <span className={cn(baseClass, getColorClass(percent))}>
+    <span className={cn('text-xs font-medium', getProgressColor(percent, 'text'))}>
       {percent}%
     </span>
   );
@@ -67,21 +57,11 @@ export const ProjectProgressPercent = ({ project }: { project: Project }): React
  */
 export const ProgressBar = ({ wp }: { wp: Workpackage }): ReactElement => {
   const percent = calculateWorkpackageProgress(wp);
-  const getColorClass = (progress: number) => {
-    if (progress >= 80) return 'bg-green-500';
-    if (progress >= 60) return 'bg-yellow-500';
-    if (progress >= 40) return 'bg-orange-500';
-    return 'bg-red-500';
-  };
-
-  const baseProgressClass = longClassName([
-    'h-2 rounded-full transition-all duration-300'
-  ]);
 
   return (
     <div className={cn('w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2')}>
       <div
-        className={cn(baseProgressClass, getColorClass(percent))}
+        className={cn('h-2 rounded-full transition-all duration-300', getProgressColor(percent, 'bar'))}
         style={{ width: `${percent}%` }}
         title={`進度：${percent}%`}
       />
@@ -101,13 +81,6 @@ export const ProgressBarWithPercent = ({
   showPercent?: boolean;
   size?: 'small' | 'normal' | 'large';
 }): ReactElement => {
-  const getColorClass = (percent: number) => {
-    if (percent >= 80) return 'bg-green-500';
-    if (percent >= 60) return 'bg-yellow-500';
-    if (percent >= 40) return 'bg-orange-500';
-    return 'bg-red-500';
-  };
-
   const getHeightClass = (size: string) => {
     switch (size) {
       case 'small': return 'h-1';
@@ -124,15 +97,11 @@ export const ProgressBarWithPercent = ({
     }
   };
 
-  const baseProgressClass = longClassName([
-    'rounded-full transition-all duration-300'
-  ]);
-
   return (
     <div className={cn('flex items-center space-x-2')}>
       <div className={cn('flex-1 bg-gray-200 dark:bg-gray-700 rounded-full', getHeightClass(size))}>
         <div
-          className={cn(baseProgressClass, getColorClass(progress), getHeightClass(size))}
+          className={cn('rounded-full transition-all duration-300', getProgressColor(progress, 'bar'), getHeightClass(size))}
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -164,13 +133,6 @@ export const ProjectHealthIndicator = ({
   else if (progress >= 40 && qualityScore >= 4) healthScore = 50;
   else healthScore = 25;
 
-  const getHealthColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 dark:text-green-400';
-    if (score >= 60) return 'text-yellow-600 dark:text-yellow-400';
-    if (score >= 40) return 'text-orange-600 dark:text-orange-400';
-    return 'text-red-600 dark:text-red-400';
-  };
-
   const getHealthIcon = (score: number) => {
     if (score >= 80) return '🟢';
     if (score >= 60) return '🟡';
@@ -178,12 +140,8 @@ export const ProjectHealthIndicator = ({
     return '🔴';
   };
 
-  const baseHealthClass = longClassName([
-    'flex items-center space-x-1'
-  ]);
-
   return (
-    <div className={cn(baseHealthClass, getHealthColor(healthScore))}>
+    <div className={cn('flex items-center space-x-1', getQualityColor(healthScore / 10))}>
       <span className={cn('text-sm')}>{getHealthIcon(healthScore)}</span>
       <span className={cn('text-xs font-medium')}>{healthScore}</span>
     </div>

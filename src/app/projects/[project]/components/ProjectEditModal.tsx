@@ -19,7 +19,7 @@ import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
-import { cn, modalStyles, formStyles, inputStyles, buttonStyles, loadingStyles } from '@/utils/classNameUtils';
+import { cn, modalStyles, formStyles, inputStyles, buttonStyles, loadingStyles, alertStyles } from '@/utils/classNameUtils';
 import { formatDateForInput } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
@@ -276,9 +276,7 @@ export default function ProjectEditModal({
 
           {/* 預算權限提示 */}
           {!hasBudgetPermission && (
-            <div className={cn(
-              'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3'
-            )}>
+            <div className={alertStyles.warning}>
               <div className='flex items-center'>
                 <svg
                   className='w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2'

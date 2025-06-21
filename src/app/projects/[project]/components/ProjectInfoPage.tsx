@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react';
 import type { Project } from '@/app/projects/types/project';
 import { collection, query, getDocs, db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
-import { cn, cardStyles } from '@/utils/classNameUtils';
+import { cn, cardStyles, buttonStyles } from '@/utils/classNameUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 import ProjectEditModal from './ProjectEditModal';
@@ -83,7 +83,8 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
         <button
           onClick={() => setIsEditing(true)}
           className={cn(
-            'p-2 rounded-lg bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors duration-200'
+            buttonStyles.edit,
+            'hover:bg-blue-100 dark:hover:bg-blue-900/30'
           )}
           title='編輯'
         >

@@ -16,7 +16,12 @@ import { useMemo } from 'react';
 
 import type { Project } from '@/app/projects/types/project';
 import { ProgressBarWithPercent, ProjectHealthIndicator } from '@/app/projects/utils/progressUtils';
-import { cn, cardStyles } from '@/utils/classNameUtils';
+import { 
+  cn, 
+  cardStyles, 
+  getStatusBadgeStyle,
+  alertStyles
+} from '@/utils/classNameUtils';
 import {
   calculateProjectProgress,
   calculateProjectQualityScore,
@@ -41,15 +46,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
   const overdueMilestones = useMemo(() => getOverdueMilestones(project.milestones || []), [project.milestones]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'planning': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'in-progress': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'on-hold': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-      case 'completed': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
+    return getStatusBadgeStyle(status, 'projectStatus');
   };
 
   const getTrendIcon = (trend: string) => {
@@ -82,7 +79,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
             </p>
           </div>
           <div className='flex items-center space-x-3'>
-            <span className={cn('px-3 py-1 rounded-full text-sm font-medium', getStatusColor(project.status))}>
+            <span className={getStatusColor(project.status)}>
               {project.status === 'planning' && '規劃中'}
               {project.status === 'approved' && '已核准'}
               {project.status === 'in-progress' && '執行中'}
@@ -232,8 +229,8 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           </h3>
           <div className='space-y-3'>
             {overdueMilestones.length > 0 ? (
-              overdueMilestones.slice(0, 3).map((milestone: import('@/app/projects/types/project').ProjectMilestone) => (
-                <div key={milestone.id} className='p-2 bg-red-50 dark:bg-red-900/20 rounded-lg'>
+              overdueMilestones.slice(0, 3).map((milestone) => (
+                <div key={milestone.id} className={cn(alertStyles.error, 'p-2')}>
                   <div className='font-medium text-red-700 dark:text-red-300'>
                     {milestone.name}（逾期）
                   </div>
@@ -248,8 +245,8 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           </div>
           <div className='space-y-3'>
             {upcomingMilestones.length > 0 ? (
-              upcomingMilestones.slice(0, 3).map((milestone: import('@/app/projects/types/project').ProjectMilestone) => (
-                <div key={milestone.id} className='p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg'>
+              upcomingMilestones.slice(0, 3).map((milestone) => (
+                <div key={milestone.id} className={cn(alertStyles.warning, 'p-2')}>
                   <div className='font-medium text-yellow-700 dark:text-yellow-300'>
                     {milestone.name}（即將到期）
                   </div>

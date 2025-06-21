@@ -18,7 +18,7 @@ import { useQualityScore } from '@/app/projects/hooks/useFilteredProjects';
 import type { Project } from '@/app/projects/types/project';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
-import { cn } from '@/utils/classNameUtils';
+import { cn, getQualityColor } from '@/utils/classNameUtils';
 import { formatLocalDate } from '@/utils/dateUtils';
 
 interface ProjectInfoDisplayProps {
@@ -146,11 +146,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
         <div>
           <label className='text-sm font-medium text-gray-500 dark:text-gray-400'>品質分數</label>
           <div className='mt-1 flex items-center gap-2'>
-            <span className={cn('text-lg font-bold', 
-              qualityScoreInfo.currentScore >= 8 ? 'text-green-600 dark:text-green-400' :
-              qualityScoreInfo.currentScore >= 6 ? 'text-yellow-600 dark:text-yellow-400' :
-              'text-red-600 dark:text-red-400'
-            )}>
+            <span className={cn('text-lg font-bold', getQualityColor(qualityScoreInfo.currentScore))}>
               {Math.round(qualityScoreInfo.currentScore)}/10
             </span>
             {qualityScoreInfo.qualityOrProgressIssuesCount > 0 && (

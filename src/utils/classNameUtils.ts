@@ -586,21 +586,152 @@ export const layoutStyles = {
 };
 
 /**
- * 在 classNameUtils.ts 中擴展現有的樣式定義
+ * 新增：狀態顏色組合
  */
-export const commonStyles = {
-  // 輸入框樣式
-  input: 'w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200',
+export const statusColors = {
+  // 專案狀態顏色
+  projectStatus: {
+    planning: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'in-progress': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    'on-hold': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    completed: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+    cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    archived: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+  },
+
+  // 優先級顏色
+  priority: {
+    low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    high: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+  },
+
+  // 風險等級顏色
+  riskLevel: {
+    low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    high: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+  },
+
+  // 健康度顏色
+  healthLevel: {
+    excellent: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    good: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    fair: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    poor: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+  },
+
+  // 專案階段顏色
+  phase: {
+    initiation: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    planning: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    execution: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    monitoring: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    closure: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+  },
+
+  // 專案類型顏色
+  projectType: {
+    system: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    maintenance: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    transport: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+  }
+};
+
+/**
+ * 新增：進度顏色組合
+ */
+export const progressColors = {
+  // 進度條顏色
+  bar: {
+    high: 'bg-green-500',
+    medium: 'bg-yellow-500',
+    low: 'bg-orange-500',
+    critical: 'bg-red-500'
+  },
+
+  // 進度文字顏色
+  text: {
+    high: 'text-green-600 dark:text-green-400',
+    medium: 'text-yellow-600 dark:text-yellow-400',
+    low: 'text-orange-600 dark:text-orange-400',
+    critical: 'text-red-600 dark:text-red-400'
+  }
+};
+
+/**
+ * 新增：品質分數顏色組合
+ */
+export const qualityColors = {
+  excellent: 'text-green-600 dark:text-green-400',
+  good: 'text-blue-600 dark:text-blue-400',
+  fair: 'text-yellow-600 dark:text-yellow-400',
+  poor: 'text-orange-600 dark:text-orange-400',
+  critical: 'text-red-600 dark:text-red-400'
+};
+
+/**
+ * 新增：警告提示樣式組合
+ */
+export const alertStyles = {
+  warning: longClassName([
+    'bg-yellow-50 dark:bg-yellow-900/20',
+    'border border-yellow-200 dark:border-yellow-800',
+    'rounded-lg p-3'
+  ]),
   
-  // 載入動畫
-  loadingSpinner: 'animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500',
+  info: longClassName([
+    'bg-blue-50 dark:bg-blue-900/20',
+    'border border-blue-200 dark:border-blue-800',
+    'rounded-lg p-3'
+  ]),
   
-  // 按鈕樣式
-  buttonPrimary: 'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200',
-  buttonSecondary: 'px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200',
+  success: longClassName([
+    'bg-green-50 dark:bg-green-900/20',
+    'border border-green-200 dark:border-green-800',
+    'rounded-lg p-3'
+  ]),
   
-  // 模態框樣式
-  modalOverlay: 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50',
-  modalContainer: 'bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto',
-  modalTitle: 'text-xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent'
+  error: longClassName([
+    'bg-red-50 dark:bg-red-900/20',
+    'border border-red-200 dark:border-red-800',
+    'rounded-lg p-3'
+  ])
+};
+
+/**
+ * 新增：工具函數
+ */
+
+/**
+ * 根據進度值獲取顏色類別
+ */
+export const getProgressColor = (progress: number, type: 'bar' | 'text' = 'bar') => {
+  if (progress >= 80) return progressColors[type].high;
+  if (progress >= 60) return progressColors[type].medium;
+  if (progress >= 40) return progressColors[type].low;
+  return progressColors[type].critical;
+};
+
+/**
+ * 根據品質分數獲取顏色類別
+ */
+export const getQualityColor = (score: number) => {
+  if (score >= 8) return qualityColors.excellent;
+  if (score >= 6) return qualityColors.good;
+  if (score >= 4) return qualityColors.fair;
+  if (score >= 2) return qualityColors.poor;
+  return qualityColors.critical;
+};
+
+/**
+ * 根據狀態獲取徽章樣式
+ */
+export const getStatusBadgeStyle = (status: string, type: keyof typeof statusColors) => {
+  const statusConfig = statusColors[type] as Record<string, string>;
+  return cn(badgeStyles.base, statusConfig[status] || statusConfig.low || '');
 }; 

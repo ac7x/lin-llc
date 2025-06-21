@@ -26,7 +26,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 import type { Workpackage } from '@/app/projects/types/project';
 import { doc, updateDoc, db } from '@/lib/firebase-client';
-import { cn, buttonStyles } from '@/utils/classNameUtils';
+import { cn, buttonStyles, cardStyles } from '@/utils/classNameUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface WorkpackageListProps {
@@ -61,7 +61,8 @@ const SortableWorkpackage = ({ wp, projectId }: { wp: Workpackage; projectId: st
       ref={setNodeRef}
       style={style}
       className={cn(
-        'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center hover:shadow-md transition-shadow duration-200'
+        cardStyles.hover,
+        'flex justify-between items-center'
       )}
     >
       <div className='flex-1 cursor-grab' {...attributes} {...listeners}>

@@ -10,208 +10,122 @@ import type {
   ProjectType, 
   IssueRecord 
 } from '@/app/projects/types/project';
-import { cn, tableStyles, badgeStyles, progressStyles } from '@/utils/classNameUtils';
+import { 
+  cn, 
+  tableStyles, 
+  progressStyles,
+  getStatusBadgeStyle,
+  getProgressColor,
+  getQualityColor
+} from '@/utils/classNameUtils';
 
-// 狀態標籤組件
+// 狀態標籤組件 - 大幅簡化
 const StatusBadge = ({ status }: { status?: ProjectStatus }) => {
-  const statusConfig: Record<ProjectStatus, { label: string; className: string }> = {
-    planning: {
-      label: '規劃中',
-      className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    },
-    approved: {
-      label: '已核准',
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    },
-    'in-progress': {
-      label: '執行中',
-      className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    },
-    'on-hold': {
-      label: '暫停中',
-      className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    },
-    completed: {
-      label: '已完成',
-      className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-    },
-    cancelled: {
-      label: '已取消',
-      className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    },
-    archived: {
-      label: '已封存',
-      className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    },
+  if (!status) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  
+  const statusLabels: Record<ProjectStatus, string> = {
+    planning: '規劃中',
+    approved: '已核准',
+    'in-progress': '執行中',
+    'on-hold': '暫停中',
+    completed: '已完成',
+    cancelled: '已取消',
+    archived: '已封存',
   };
 
-  const config = status ? statusConfig[status] : statusConfig.planning;
-  const defaultClass = 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-
   return (
-    <span className={cn(badgeStyles.base, config?.className || defaultClass)}>
-      {config?.label || status || '-'}
+    <span className={getStatusBadgeStyle(status, 'projectStatus')}>
+      {statusLabels[status]}
     </span>
   );
 };
 
-// 優先級標籤組件
+// 優先級標籤組件 - 大幅簡化
 const PriorityBadge = ({ priority }: { priority?: ProjectPriority }) => {
-  const priorityConfig: Record<ProjectPriority, { label: string; className: string }> = {
-    low: {
-      label: '低',
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    },
-    medium: {
-      label: '中',
-      className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    },
-    high: {
-      label: '高',
-      className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    },
-    critical: {
-      label: '緊急',
-      className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    },
-  };
-
   if (!priority) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
-
-  const config = priorityConfig[priority];
+  
+  const priorityLabels: Record<ProjectPriority, string> = {
+    low: '低',
+    medium: '中',
+    high: '高',
+    critical: '緊急',
+  };
 
   return (
-    <span className={cn(badgeStyles.base, config.className)}>
-      {config.label}
+    <span className={getStatusBadgeStyle(priority, 'priority')}>
+      {priorityLabels[priority]}
     </span>
   );
 };
 
-// 風險等級標籤組件
+// 風險等級標籤組件 - 大幅簡化
 const RiskBadge = ({ riskLevel }: { riskLevel?: ProjectRiskLevel }) => {
-  const riskConfig: Record<ProjectRiskLevel, { label: string; className: string }> = {
-    low: {
-      label: '低風險',
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    },
-    medium: {
-      label: '中風險',
-      className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    },
-    high: {
-      label: '高風險',
-      className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    },
-    critical: {
-      label: '極高風險',
-      className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    },
+  if (!riskLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  
+  const riskLabels: Record<ProjectRiskLevel, string> = {
+    low: '低風險',
+    medium: '中風險',
+    high: '高風險',
+    critical: '極高風險',
   };
 
-  if (!riskLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
-
-  const config = riskConfig[riskLevel];
-
   return (
-    <span className={cn(badgeStyles.base, config.className)}>
-      {config.label}
+    <span className={getStatusBadgeStyle(riskLevel, 'riskLevel')}>
+      {riskLabels[riskLevel]}
     </span>
   );
 };
 
-// 健康度標籤組件
+// 健康度標籤組件 - 大幅簡化
 const HealthBadge = ({ healthLevel }: { healthLevel?: ProjectHealthLevel }) => {
-  const healthConfig: Record<ProjectHealthLevel, { label: string; className: string; icon: string }> = {
-    excellent: {
-      label: '優秀',
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      icon: '🟢',
-    },
-    good: {
-      label: '良好',
-      className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      icon: '🔵',
-    },
-    fair: {
-      label: '一般',
-      className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      icon: '🟡',
-    },
-    poor: {
-      label: '不佳',
-      className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      icon: '🟠',
-    },
-    critical: {
-      label: '危急',
-      className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-      icon: '🔴',
-    },
-  };
-
   if (!healthLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  
+  const healthConfig: Record<ProjectHealthLevel, { label: string; icon: string }> = {
+    excellent: { label: '優秀', icon: '🟢' },
+    good: { label: '良好', icon: '🔵' },
+    fair: { label: '一般', icon: '🟡' },
+    poor: { label: '不佳', icon: '🟠' },
+    critical: { label: '危急', icon: '🔴' },
+  };
 
   const config = healthConfig[healthLevel];
 
   return (
-    <span className={cn(badgeStyles.base, config.className, 'flex items-center gap-1')}>
+    <span className={cn(getStatusBadgeStyle(healthLevel, 'healthLevel'), 'flex items-center gap-1')}>
       <span>{config.icon}</span>
       <span>{config.label}</span>
     </span>
   );
 };
 
-// 階段標籤組件
+// 階段標籤組件 - 大幅簡化
 const PhaseBadge = ({ phase }: { phase?: ProjectPhase }) => {
-  const phaseConfig: Record<ProjectPhase, { label: string; className: string }> = {
-    initiation: {
-      label: '啟動',
-      className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    },
-    planning: {
-      label: '規劃',
-      className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    },
-    execution: {
-      label: '執行',
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    },
-    monitoring: {
-      label: '監控',
-      className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    },
-    closure: {
-      label: '收尾',
-      className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-    },
+  if (!phase) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  
+  const phaseLabels: Record<ProjectPhase, string> = {
+    initiation: '啟動',
+    planning: '規劃',
+    execution: '執行',
+    monitoring: '監控',
+    closure: '收尾',
   };
 
-  if (!phase) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
-
-  const config = phaseConfig[phase];
-
   return (
-    <span className={cn(badgeStyles.base, config.className)}>
-      {config.label}
+    <span className={getStatusBadgeStyle(phase, 'phase')}>
+      {phaseLabels[phase]}
     </span>
   );
 };
 
-// 進度條組件
+// 進度條組件 - 大幅簡化
 const ProgressBar = ({ progress }: { progress?: number }) => {
   const percentage = progress || 0;
-  const getColorClass = (percent: number) => {
-    if (percent >= 80) return progressStyles.colors.green;
-    if (percent >= 60) return progressStyles.colors.yellow;
-    if (percent >= 40) return 'bg-orange-500';
-    return progressStyles.colors.red;
-  };
 
   return (
     <div className='flex items-center space-x-2 whitespace-nowrap'>
       <div className={progressStyles.container}>
         <div
-          className={cn(progressStyles.bar, getColorClass(percentage))}
+          className={cn(progressStyles.bar, getProgressColor(percentage, 'bar'))}
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -222,18 +136,12 @@ const ProgressBar = ({ progress }: { progress?: number }) => {
   );
 };
 
-// 品質評分組件
+// 品質評分組件 - 大幅簡化
 const QualityScore = ({ score }: { score?: number }) => {
   if (!score) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
   
-  const getColorClass = (s: number) => {
-    if (s >= 8) return 'text-green-600 dark:text-green-400';
-    if (s >= 6) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
-  };
-
   return (
-    <span className={cn('font-medium whitespace-nowrap', getColorClass(score))}>
+    <span className={cn('font-medium whitespace-nowrap', getQualityColor(score))}>
       {score}/10
     </span>
   );
@@ -250,30 +158,19 @@ const BudgetDisplay = ({ budget }: { budget?: number }) => {
   );
 };
 
-// 專案類型標籤組件
+// 專案類型標籤組件 - 大幅簡化
 const ProjectTypeBadge = ({ projectType }: { projectType?: ProjectType }) => {
-  const typeConfig: Record<ProjectType, { label: string; className: string }> = {
-    system: {
-      label: '系統',
-      className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    },
-    maintenance: {
-      label: '維護',
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    },
-    transport: {
-      label: '搬運',
-      className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    },
+  if (!projectType) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
+  
+  const typeLabels: Record<ProjectType, string> = {
+    system: '系統',
+    maintenance: '維護',
+    transport: '搬運',
   };
 
-  if (!projectType) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
-
-  const config = typeConfig[projectType];
-
   return (
-    <span className={cn(badgeStyles.base, config.className)}>
-      {config.label}
+    <span className={getStatusBadgeStyle(projectType, 'projectType')}>
+      {typeLabels[projectType]}
     </span>
   );
 };
