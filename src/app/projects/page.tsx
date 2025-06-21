@@ -100,7 +100,7 @@ export default function ProjectsPage() {
     });
     
     return {
-      averageQualityScore: Math.round((totalQualityScore / projects.length) * 10) / 10,
+      averageQualityScore: Math.round(totalQualityScore / projects.length),
       totalQualityIssues
     };
   }, [projects]);
@@ -152,7 +152,7 @@ export default function ProjectsPage() {
               專案列表
             </h1>
             <p className='text-gray-600 dark:text-gray-400 mt-2'>
-              管理與追蹤所有專案狀態 • 平均品質分數：{qualityStats.averageQualityScore}/10
+              管理與追蹤所有專案狀態 • 平均品質分數：{qualityStats.averageQualityScore}
             </p>
           </div>
           <div className='flex items-center gap-2'>
@@ -199,7 +199,7 @@ export default function ProjectsPage() {
               <div className='text-sm text-pink-600 dark:text-pink-400'>品質問題</div>
             </div>
             <div className='bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg'>
-              <div className='text-2xl font-bold text-indigo-600 dark:text-indigo-400'>{qualityStats.averageQualityScore}/10</div>
+              <div className='text-2xl font-bold text-indigo-600 dark:text-indigo-400'>{qualityStats.averageQualityScore}</div>
               <div className='text-sm text-indigo-600 dark:text-indigo-400'>平均品質</div>
             </div>
           </div>

@@ -13,9 +13,9 @@
 
 import { useState, useEffect } from 'react';
 
+import AddressSelector from '@/app/projects/components/AddressSelector';
 import { useQualityScore } from '@/app/projects/hooks/useFilteredProjects';
 import type { Project } from '@/app/projects/types/project';
-import AddressSelector from '@/app/projects/components/AddressSelector';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
 import { formatLocalDate } from '@/utils/dateUtils';
@@ -148,7 +148,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
               qualityScoreInfo.currentScore >= 6 ? 'text-yellow-600 dark:text-yellow-400' :
               'text-red-600 dark:text-red-400'
             }`}>
-              {qualityScoreInfo.currentScore.toFixed(1)}/10
+              {Math.round(qualityScoreInfo.currentScore)}/10
             </span>
             {qualityScoreInfo.qualityOrProgressIssuesCount > 0 && (
               <span className='text-xs text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/20 px-2 py-1 rounded'>

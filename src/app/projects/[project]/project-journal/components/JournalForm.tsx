@@ -5,34 +5,17 @@
  */
 'use client';
 
-import { UpdateData } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, Timestamp, UpdateData } from 'firebase/firestore';
+import { ref, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { useState } from 'react';
 
-// import Image from 'next/image';
-import {
-  Project,
-  ActivityLog,
-  PhotoRecord,
-  PhotoType,
-  Workpackage,
-  IssueRecord,
-} from '@/app/projects/types/project';
-import {
-  db,
-  storage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  updateDoc,
-  arrayUnion,
-  doc,
-  Timestamp,
-} from '@/lib/firebase-client';
+import type { WeatherData } from '@/app/projects/components/WeatherDisplay';
+import type { Project, PhotoType, PhotoRecord, ActivityLog, Workpackage, IssueRecord } from '@/app/projects/types/project';
+
+import { calculateProjectProgress } from '@/app/projects/utils/projectUtils';
+import { db, storage } from '@/lib/firebase-client';
 import { toTimestamp } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
-import { calculateProjectProgress } from '../../../utils/progressUtils';
-
-import { WeatherData } from '../../../components/WeatherDisplay';
 
 interface JournalFormProps {
   projectId: string;
