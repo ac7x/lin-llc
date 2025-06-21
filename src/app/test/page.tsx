@@ -467,6 +467,7 @@ export default function TestPage() {
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         budget: totalPrice, // 使用總價（單價 × 數量）
+        quantity: item.contractItemQuantity, // 添加缺少的 quantity 屬性
         category: '合約項目',
         priority: 'medium',
         subPackages: [],

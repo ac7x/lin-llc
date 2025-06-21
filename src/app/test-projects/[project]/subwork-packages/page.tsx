@@ -173,7 +173,7 @@ export default function ProjectSubWorkpackagesPage() {
         {(data) => (
           <SubWorkpackageList
             subWorkpackages={data}
-            workpackageId={project.workpackages[0]?.id || ''}
+            workpackageId={project.workPackages[0]?.id || ''}
             onAddSubWorkpackage={() => setShowSubWorkpackageForm(true)}
             onEditSubWorkpackage={(subWorkpackage) => {
               setEditingSubWorkpackage(subWorkpackage);
@@ -191,7 +191,7 @@ export default function ProjectSubWorkpackagesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <SubWorkpackageForm
               subWorkpackage={editingSubWorkpackage || undefined}
-              workpackageId={project.workpackages[0]?.id || ''}
+              workpackageId={project.workPackages[0]?.id || ''}
               onSubmit={editingSubWorkpackage ? handleEditSubWorkpackage : handleCreateSubWorkpackage}
               onCancel={() => {
                 setShowSubWorkpackageForm(false);
