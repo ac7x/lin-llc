@@ -15,6 +15,10 @@ import { useEffect, useRef, useState } from 'react';
 
 import { logError, safeAsync } from '@/utils/errorUtils';
 
+// 全域 Google Maps API 載入狀態
+let googleMapsLoadingPromise: Promise<void> | null = null;
+let googleMapsLoaded = false;
+
 interface AddressSelectorProps {
   value: string;
   onChange: (address: string) => void;
@@ -30,7 +34,7 @@ export default function AddressSelector({
   className = '',
   disabled = false,
 }: AddressSelectorProps) {
-  const [isLoading, _setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const _autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(value);
@@ -42,9 +46,38 @@ export default function AddressSelector({
   // 初始化 Google Maps API
   useEffect(() => {
     const initGoogleMaps = async () => {
-      if (typeof window === 'undefined' || window.google?.maps) return;
+      // 如果已經載入過，直接返回
+      if (typeof window === 'undefined' || window.google?.maps || googleMapsLoaded) {
+        return;
+      }
 
-      await safeAsync(async () => {
+      // 如果正在載入中，等待載入完成
+      if (googleMapsLoadingPromise) {
+        await googleMapsLoadingPromise;
+        return;
+      }
+
+      setIsLoading(true);
+
+      // 創建新的載入 Promise
+      googleMapsLoadingPromise = safeAsync(async () => {
+        // 檢查是否已經有 Google Maps script 標籤
+        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+        if (existingScript) {
+          // 等待現有的 script 載入完成
+          await new Promise<void>((resolve) => {
+            const checkGoogleMaps = () => {
+              if (window.google?.maps) {
+                resolve();
+              } else {
+                setTimeout(checkGoogleMaps, 100);
+              }
+            };
+            checkGoogleMaps();
+          });
+          return;
+        }
+
         // 動態載入 Google Maps API
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
@@ -68,9 +101,19 @@ export default function AddressSelector({
           };
           checkGoogleMaps();
         });
+
+        googleMapsLoaded = true;
       }, (error) => {
         logError(error, { operation: 'init_google_maps' });
-      });
+        googleMapsLoadingPromise = null;
+      }) as Promise<void>;
+
+      try {
+        await googleMapsLoadingPromise;
+      } finally {
+        setIsLoading(false);
+        googleMapsLoadingPromise = null;
+      }
     };
 
     initGoogleMaps();
