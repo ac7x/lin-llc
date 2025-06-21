@@ -12,7 +12,7 @@
 import { useState, useEffect } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Template } from '@/app/test-projects/types/project';
+import type { Template } from '@/app/test-projects/types';
 
 interface TemplateFormProps {
   template?: Template | null;

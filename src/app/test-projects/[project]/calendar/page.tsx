@@ -18,7 +18,7 @@ import { PageContainer, PageHeader } from '@/app/test-projects/components/common
 import { ProjectService } from '@/app/test-projects/services/projectService';
 import { WorkpackageService } from '@/app/test-projects/services/workpackageService';
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Project, ProjectMilestone, WorkPackage } from '@/app/test-projects/types/project';
+import type { Project, ProjectMilestone, WorkPackage } from '@/app/test-projects/types';
 
 export default function ProjectCalendarPage() {
   const params = useParams();
@@ -87,7 +87,7 @@ export default function ProjectCalendarPage() {
     }
 
     // 子工作包事件
-    workpackage.subPackages?.forEach((subWorkpackage: import('@/app/test-projects/types/project').SubWorkPackage) => {
+    workpackage.subPackages?.forEach((subWorkpackage: import('@/app/test-projects/types').SubWorkPackage) => {
       if (subWorkpackage.estimatedStartDate) {
         events.push({
           id: `${subWorkpackage.id}-start`,

@@ -126,7 +126,7 @@ import type {
   ProjectStats as ProjectStatsType,
   Expense,
   MaterialEntry,
-} from '@/app/test-projects/types/project';
+} from '@/app/test-projects/types';
 
 // 導入 Firebase 相關
 import { db, collection, addDoc, Timestamp } from '@/lib/firebase-client';
@@ -462,7 +462,7 @@ export default function TestPage() {
         id,
         name: workpackageName,
         description: workpackageDescription,
-        status: 'planned' as import('@/app/test-projects/types/project').WorkpackageStatus,
+        status: 'planned' as import('@/app/test-projects/types').WorkpackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),

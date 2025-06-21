@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/test-projects/components/common';
 import { SubWorkpackageList, SubWorkpackageForm } from '@/app/test-projects/components/subwork-packages';
 import { getSubWorkpackagesByProjectId } from '@/app/test-projects/services/subworkpackageService';
-import type { Project, SubWorkPackage } from '@/app/test-projects/types/project';
+import type { Project, SubWorkPackage } from '@/app/test-projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/test-projects/styles';
 

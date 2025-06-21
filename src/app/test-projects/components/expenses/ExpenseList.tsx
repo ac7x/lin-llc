@@ -14,7 +14,7 @@ import type { Timestamp } from 'firebase/firestore';
 import { useState, useMemo } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Expense } from '@/app/test-projects/types/project';
+import type { Expense } from '@/app/test-projects/types';
 
 interface ExpenseListProps {
   expenses: Expense[];

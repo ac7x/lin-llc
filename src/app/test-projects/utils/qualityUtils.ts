@@ -3,7 +3,7 @@
  * 提供專案品質評分和趨勢分析功能
  */
 
-import type { Project, Workpackage } from '../types/project';
+import type { Project, Workpackage } from '../types';
 
 /**
  * 計算品質評分

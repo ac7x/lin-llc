@@ -9,7 +9,7 @@
 import { useState, useEffect } from 'react';
 
 import { collection, query, getDocs, db } from '@/lib/firebase-client';
-import type { Project } from '@/app/test-projects/types/project';
+import type { Project } from '@/app/test-projects/types';
 import type { AppUser } from '@/types/auth';
 import { cn, cardStyles, buttonStyles } from '@/utils/classNameUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';

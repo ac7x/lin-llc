@@ -13,7 +13,7 @@
 import { useState } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { MaterialEntry } from '@/app/test-projects/types/project';
+import type { MaterialEntry } from '@/app/test-projects/types';
 
 interface MaterialFormProps {
   material?: MaterialEntry;

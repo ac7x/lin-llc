@@ -32,7 +32,7 @@ import type {
   ProjectSortOption,
   ProjectStats,
   ProjectMember 
-} from '@/app/test-projects/types/project';
+} from '@/app/test-projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export class ProjectService {
@@ -194,9 +194,13 @@ export class ProjectService {
           case 'name-desc':
             return b.projectName.localeCompare(a.projectName);
           case 'status-asc':
-            return a.status.localeCompare(b.status);
+            const statusA = Array.isArray(a.status) ? a.status[0] || '' : a.status || '';
+            const statusB = Array.isArray(b.status) ? b.status[0] || '' : b.status || '';
+            return statusA.localeCompare(statusB);
           case 'status-desc':
-            return b.status.localeCompare(a.status);
+            const statusA2 = Array.isArray(a.status) ? a.status[0] || '' : a.status || '';
+            const statusB2 = Array.isArray(b.status) ? b.status[0] || '' : b.status || '';
+            return statusB2.localeCompare(statusA2);
           case 'progress-asc':
             return (a.progress || 0) - (b.progress || 0);
           case 'progress-desc':
@@ -281,9 +285,14 @@ export class ProjectService {
 
       const totalQualityIssues = projects.reduce((sum, project) => {
         const issues = project.issues || [];
-        const qualityOrProgressIssues = issues.filter(issue => 
-          (issue.type === 'quality' || issue.type === 'progress') && issue.status !== 'resolved'
-        );
+        const qualityOrProgressIssues = issues.filter(issue => {
+          // 檢查是否為 IssueRecord 型別（有 type 和 status 屬性）
+          if ('type' in issue && 'status' in issue) {
+            return (issue.type === 'quality' || issue.type === 'progress') && issue.status !== 'resolved';
+          }
+          // 如果是 ProjectIssue 型別，則不計入品質問題統計
+          return false;
+        });
         return sum + qualityOrProgressIssues.length;
       }, 0);
 

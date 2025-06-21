@@ -17,7 +17,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { DailyReport } from '../types/project';
+import type { DailyReport } from '../types';
 
 const COLLECTION_NAME = 'dailyReports';
 

@@ -19,7 +19,7 @@ import type {
   ProjectHealthLevel,
   ProjectQualityMetrics,
   ProjectFinancialMetrics
-} from '../types/project';
+} from '../types';
 import { convertToDate } from './dateUtils';
 
 // ===== 進度計算與分析 =====

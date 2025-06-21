@@ -15,7 +15,7 @@ import { collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/test-projects/components/common';
 import { ProjectsTable, ProjectStats } from '@/app/test-projects/components/dashboard';
-import type { Project } from '@/app/test-projects/types/project';
+import type { Project } from '@/app/test-projects/types';
 
 interface ProjectWithId extends Project {
   id: string;

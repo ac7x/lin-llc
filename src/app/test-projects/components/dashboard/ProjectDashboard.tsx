@@ -1,5 +1,5 @@
 import { projectStyles } from '../../styles';
-import type { Project } from '@/app/test-projects/types/project';
+import type { Project } from '@/app/test-projects/types';
 
 interface ProjectDashboardProps {
   project?: Pick<Project, 'id' | 'projectName' | 'status' | 'progress'>;

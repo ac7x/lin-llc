@@ -4,7 +4,7 @@ import type {
   ProjectRiskLevel, 
   ProjectHealthLevel, 
   ProjectPhase 
-} from '../types/project';
+} from '../types';
 
 // ============================================================================
 // 狀態標籤

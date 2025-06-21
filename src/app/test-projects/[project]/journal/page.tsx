@@ -15,7 +15,7 @@ import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/test-projects/components/common';
-import type { Project } from '@/app/test-projects/types/project';
+import type { Project } from '@/app/test-projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/test-projects/styles';
 

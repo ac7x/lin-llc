@@ -14,7 +14,7 @@
 import { useState } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { SubWorkPackage } from '@/app/test-projects/types/project';
+import type { SubWorkPackage } from '@/app/test-projects/types';
 
 interface SubWorkpackageCardProps {
   subWorkpackage: SubWorkPackage;

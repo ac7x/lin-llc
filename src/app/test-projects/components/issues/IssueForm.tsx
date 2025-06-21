@@ -15,7 +15,7 @@ import type { Timestamp } from 'firebase/firestore';
 import { useState } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { IssueRecord } from '@/app/test-projects/types/project';
+import type { IssueRecord } from '@/app/test-projects/types';
 
 interface IssueFormProps {
   issue?: IssueRecord;

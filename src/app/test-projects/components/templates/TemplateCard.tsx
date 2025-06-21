@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import type { ReactElement } from 'react';
 
-import type { Template } from '@/app/test-projects/types/project';
+import type { Template } from '@/app/test-projects/types';
 
 interface TemplateCardProps {
   template: Template;

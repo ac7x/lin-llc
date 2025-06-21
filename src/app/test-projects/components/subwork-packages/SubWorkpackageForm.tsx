@@ -13,7 +13,7 @@
 import { useState, useEffect } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { SubWorkPackage } from '@/app/test-projects/types/project';
+import type { SubWorkPackage } from '@/app/test-projects/types';
 
 interface SubWorkpackageFormProps {
   subWorkpackage?: SubWorkPackage;

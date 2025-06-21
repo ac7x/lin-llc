@@ -13,7 +13,7 @@
 import { useState, useMemo } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { ProjectMilestone } from '@/app/test-projects/types/project';
+import type { ProjectMilestone } from '@/app/test-projects/types';
 
 interface MilestoneTrackerProps {
   milestones: ProjectMilestone[];

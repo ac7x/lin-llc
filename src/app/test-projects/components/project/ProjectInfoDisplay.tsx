@@ -17,7 +17,7 @@ import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { cn, getQualityColor } from '@/utils/classNameUtils';
 import { formatLocalDate } from '@/utils/dateUtils';
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Project } from '@/app/test-projects/types/project';
+import type { Project } from '@/app/test-projects/types';
 import type { AppUser } from '@/types/auth';
 
 interface ProjectInfoDisplayProps {

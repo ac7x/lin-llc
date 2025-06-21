@@ -17,7 +17,7 @@ import { useState, useEffect } from 'react';
 import { PageContainer, PageHeader } from '@/app/test-projects/components/common';
 import { TemplateService } from '@/app/test-projects/services/templateService';
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Template } from '@/app/test-projects/types/project';
+import type { Template } from '@/app/test-projects/types';
 
 export default function TemplatesPage() {
   const router = useRouter();

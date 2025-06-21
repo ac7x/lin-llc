@@ -243,7 +243,7 @@ export type {
   ProjectStats,
   QualityScoreInfo,
   ProjectMember,
-} from './types/project';
+} from './types';
 
 // ============================================================================
 // 樣式匯出

@@ -6,7 +6,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { Project, ProjectFilters, ProjectSortOption, ProjectStats, ProjectStatus } from '@/app/test-projects/types/project';
+import type { Project, ProjectFilters, ProjectSortOption, ProjectStats, ProjectStatus } from '@/app/test-projects/types';
 
 interface UseFilteredProjectsReturn {
   filteredProjects: Project[];

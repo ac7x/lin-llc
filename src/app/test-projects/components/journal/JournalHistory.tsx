@@ -13,7 +13,7 @@
 import { useState, useMemo } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { BaseWithId } from '@/app/test-projects/types/project';
+import type { BaseWithId } from '@/app/test-projects/types';
 
 // 日誌條目介面
 interface JournalEntry extends BaseWithId {

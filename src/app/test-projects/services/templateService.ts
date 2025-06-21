@@ -16,7 +16,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { Template, SubWorkpackageTemplateItem } from '../types/project';
+import type { Template, SubWorkpackageTemplateItem } from '../types';
 
 const COLLECTION_NAME = 'templates';
 

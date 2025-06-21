@@ -4,7 +4,7 @@
  */
 
 import type { Timestamp } from 'firebase/firestore';
-import type { DateField } from '../types/project';
+import type { DateField } from '../types';
 
 /**
  * 將 DateField 轉換為 Date 物件

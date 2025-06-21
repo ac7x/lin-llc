@@ -13,7 +13,7 @@
 import { useState, useMemo } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { ProjectRisk } from '@/app/test-projects/types/project';
+import type { ProjectRisk } from '@/app/test-projects/types';
 
 interface RiskManagerProps {
   risks: ProjectRisk[];

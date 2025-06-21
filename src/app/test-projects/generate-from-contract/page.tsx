@@ -13,7 +13,7 @@ import { PageContainer, PageHeader } from '@/app/test-projects/components/common
 import { ContractSelector, TemplateSelector, ProjectSetupForm } from '@/app/test-projects/components/generate-from-contract';
 import { ProjectService, TemplateService } from '@/app/test-projects/services';
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Project, Template } from '@/app/test-projects/types/project';
+import type { Project, Template } from '@/app/test-projects/types';
 
 interface Contract {
   id: string;

@@ -17,7 +17,7 @@ import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 import { AddressSelector } from '@/app/test-projects/components/common';
-import type { Project } from '@/app/test-projects/types/project';
+import type { Project } from '@/app/test-projects/types';
 import type { AppUser } from '@/types/auth';
 import { cn, modalStyles, formStyles, inputStyles, buttonStyles, loadingStyles, alertStyles } from '@/utils/classNameUtils';
 import { formatDateForInput } from '@/utils/dateUtils';

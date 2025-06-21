@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { projectStyles } from '../../styles';
-import type { Project } from '@/app/test-projects/types/project';
-import { toDate } from '@/app/test-projects/types/project';
+import type { Project } from '@/app/test-projects/types';
+import { toDate } from '@/app/test-projects/types';
 
 interface ProjectsTableProps {
   projects: Project[];

@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/test-projects/components/common';
 import { IssueList, IssueForm } from '@/app/test-projects/components/issues';
 import { IssueService } from '@/app/test-projects/services';
-import type { Project, IssueRecord } from '@/app/test-projects/types/project';
+import type { Project, IssueRecord } from '@/app/test-projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/test-projects/styles';
 

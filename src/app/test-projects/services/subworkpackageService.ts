@@ -25,7 +25,7 @@ import {
 } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase-client';
-import type { SubWorkPackage, TemplateToSubWorkpackageOptions } from '@/app/test-projects/types/project';
+import type { SubWorkPackage, TemplateToSubWorkpackageOptions } from '@/app/test-projects/types';
 
 // 子工作包集合名稱
 const SUBWORKPACKAGE_COLLECTION = 'subworkpackages';

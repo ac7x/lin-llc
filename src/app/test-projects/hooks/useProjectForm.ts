@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { Project } from '../types/project';
+import type { Project } from '../types';
 
 interface UseProjectFormReturn {
   formData: Partial<Project>;

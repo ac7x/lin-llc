@@ -14,7 +14,7 @@
 import { useState } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { WorkPackage } from '@/app/test-projects/types/project';
+import type { WorkPackage } from '@/app/test-projects/types';
 
 interface WorkpackageCardProps {
   workpackage: WorkPackage;

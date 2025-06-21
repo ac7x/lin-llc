@@ -18,7 +18,7 @@ import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader } from '@/app/test-projects/components/common';
 import { ProjectDashboard } from '@/app/test-projects/components/dashboard';
 import { ProjectInfoPage } from '@/app/test-projects/components/project';
-import type { Project } from '@/app/test-projects/types/project';
+import type { Project } from '@/app/test-projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface ProjectWithId extends Project {

@@ -2,7 +2,7 @@ import { doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import { db } from '@/lib/firebase-client';
 import { safeAsync, retry, getErrorMessage, logError } from '@/utils/errorUtils';
-import type { Project } from '../types/project';
+import type { Project } from '../types';
 
 export function useProjectActions() {
   const [isLoading, setIsLoading] = useState(false);

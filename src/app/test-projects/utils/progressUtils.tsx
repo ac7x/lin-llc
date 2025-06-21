@@ -12,7 +12,7 @@
 import type { ReactElement } from 'react';
 
 import { projectStyles } from '../styles';
-import type { Project, WorkPackage } from '../types/project';
+import type { Project, WorkPackage } from '../types';
 
 /**
  * 計算專案進度百分比（根據所有 subWorkpackages 的實際完成數量計算）

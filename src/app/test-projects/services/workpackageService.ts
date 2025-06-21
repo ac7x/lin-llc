@@ -17,7 +17,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { WorkPackage, SubWorkPackage } from '../types/project';
+import type { WorkPackage, SubWorkPackage } from '../types';
 
 const COLLECTION_NAME = 'workpackages';
 

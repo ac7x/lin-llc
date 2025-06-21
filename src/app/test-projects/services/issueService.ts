@@ -17,7 +17,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { IssueRecord } from '../types/project';
+import type { IssueRecord } from '../types';
 
 const COLLECTION_NAME = 'issues';
 
