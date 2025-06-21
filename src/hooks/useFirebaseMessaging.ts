@@ -7,10 +7,10 @@
 import { useEffect, useState, useCallback } from 'react';
 
 import { firebaseApp } from '@/lib/firebase-client';
-import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface UseFirebaseMessagingReturn {
-  messaging: any;
+  messaging: unknown;
   fcmToken: string | null;
   loading: boolean;
   error: string | null;
@@ -19,7 +19,7 @@ interface UseFirebaseMessagingReturn {
 }
 
 export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
-  const [messaging, setMessaging] = useState<any>(null);
+  const [messaging, setMessaging] = useState<unknown>(null);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       return false;
     }
 
-    return await safeAsync(async () => {
+    const result = await safeAsync(async () => {
       setLoading(true);
       setError(null);
       
@@ -77,7 +77,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
 
       if (permission === 'granted') {
         const { getToken } = await import('firebase/messaging');
-        const token = await retry(() => getToken(messaging, {
+        const token = await retry(() => getToken(messaging as any, {
           vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
         }), 3, 1000);
 
@@ -95,6 +95,8 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
       logError(error, { operation: 'request_messaging_permission' });
       return false;
     });
+    
+    return result ?? false;
   }, [isClient, messaging]);
 
   const getToken = useCallback(async (): Promise<string | null> => {
@@ -104,7 +106,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
 
     return await safeAsync(async () => {
       const { getToken } = await import('firebase/messaging');
-      const token = await retry(() => getToken(messaging, {
+      const token = await retry(() => getToken(messaging as any, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
       }), 3, 1000);
 

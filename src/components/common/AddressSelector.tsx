@@ -12,9 +12,10 @@
 'use client';
 
 import { Loader } from '@googlemaps/js-api-loader';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { getErrorMessage, logError, safeAsync } from '@/utils/errorUtils';
+import { useAuth } from '@/hooks/useAuth';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface AddressSelectorProps {
   value: string;
@@ -31,15 +32,18 @@ export default function AddressSelector({
   className = '',
   disabled = false,
 }: AddressSelectorProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [address, setAddress] = useState('');
+  const [isLoading, _setIsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const _autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [mapError, _setMapError] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
-  const [mapError, setMapError] = useState<string | null>(null);
 
   // 初始化 Google Maps API
   useEffect(() => {
@@ -72,7 +76,7 @@ export default function AddressSelector({
         });
       }, (error) => {
         logError(error, { operation: 'init_google_maps' });
-        setMapError('無法載入地圖服務，請稍後再試');
+        _setMapError('無法載入 Google Maps API');
       });
     };
 

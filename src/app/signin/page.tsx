@@ -1,11 +1,9 @@
 'use client';
 
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { ReactElement } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
-import { auth } from '@/lib/firebase-client';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export default function SignInPage(): ReactElement {

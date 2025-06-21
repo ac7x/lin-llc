@@ -25,7 +25,7 @@ import {
 } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
 import type { NotificationMessage } from '@/types/notification';
-import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 import { COLLECTIONS } from './firebase-config';
 
@@ -37,40 +37,7 @@ interface FirebaseError extends Error {
   message: string;
 }
 
-// #region 快取機制
-const notificationCache = new Map<
-  string,
-  {
-    data: NotificationMessage[];
-    timestamp: number;
-  }
->();
-const CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取
-
-function getCachedNotifications(userId: string): NotificationMessage[] | null {
-  const cached = notificationCache.get(userId);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data;
-  }
-  return null;
-}
-
-function setCachedNotifications(userId: string, notifications: NotificationMessage[]): void {
-  notificationCache.set(userId, {
-    data: notifications,
-    timestamp: Date.now(),
-  });
-}
-// #endregion
-
 // #region 輔助函數
-/** 移除物件中的 undefined 屬性 */
-const cleanObject = <T extends object>(obj: T): Partial<T> => {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => value !== undefined)
-  ) as Partial<T>;
-};
-
 /** 將 Firestore 文件快照轉換為通知物件 */
 const docToNotification = (doc: DocumentSnapshot<DocumentData>): NotificationMessage => {
   const data = doc.data() as Omit<NotificationMessage, 'id'>;
@@ -105,7 +72,7 @@ export async function createNotification(
   userId: string,
   notification: Omit<NotificationMessage, 'id' | 'userId' | 'isRead' | 'isArchived' | 'createdAt'>
 ): Promise<string> {
-  return await safeAsync(async () => {
+  const result = await safeAsync(async () => {
     const notificationData = {
       ...notification,
       userId,
@@ -120,6 +87,12 @@ export async function createNotification(
     logError(error, { operation: 'create_notification', userId });
     throw error;
   });
+  
+  if (!result) {
+    throw new Error('建立通知失敗');
+  }
+  
+  return result;
 }
 
 /**
@@ -163,7 +136,7 @@ export async function getUserNotifications(
     onlyUnread?: boolean;
   } = {}
 ): Promise<NotificationMessage[]> {
-  return await safeAsync(async () => {
+  const result = await safeAsync(async () => {
     const { includeArchived = false, limitCount, onlyUnread = false } = options;
     
     let q = query(collection(db, NOTIFICATIONS), where('userId', '==', userId));
@@ -190,6 +163,12 @@ export async function getUserNotifications(
     logError(error, { operation: 'get_user_notifications', userId, options });
     throw error;
   });
+  
+  if (!result) {
+    return [];
+  }
+  
+  return result;
 }
 
 /**
@@ -349,7 +328,7 @@ export async function deleteNotification(notificationId: string): Promise<void> 
  * 取得未讀通知數量
  */
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
-  return await safeAsync(async () => {
+  const result = await safeAsync(async () => {
     const q = query(
       collection(db, NOTIFICATIONS),
       where('userId', '==', userId),
@@ -361,8 +340,10 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
     return snapshot.size;
   }, (error) => {
     logError(error, { operation: 'get_unread_notification_count', userId });
-    return 0;
+    throw error;
   });
+  
+  return result ?? 0;
 }
 
 /**

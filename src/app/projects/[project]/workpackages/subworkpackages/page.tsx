@@ -35,7 +35,7 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 import { Workpackage, SubWorkpackage } from '@/types/project';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
-import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface EnhancedSubWorkpackage extends SubWorkpackage {
   workpackageId: string;

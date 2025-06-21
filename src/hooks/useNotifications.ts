@@ -62,43 +62,6 @@ export function useNotifications(
   // 檢查是否在客戶端環境
   const isClient = typeof window !== 'undefined';
 
-  // 從本地緩存讀取數據
-  const loadFromCache = useCallback(() => {
-    if (!isClient) return null;
-
-    return safeAsync(async () => {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const { notifications: cachedNotifications, timestamp }: CacheData = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_EXPIRY) {
-          return cachedNotifications;
-        }
-      }
-      return null;
-    }, (error) => {
-      logError(error, { operation: 'load_from_cache' });
-      return null;
-    });
-  }, [isClient]);
-
-  // 保存到本地緩存
-  const saveToCache = useCallback(
-    (data: NotificationMessage[]) => {
-      if (!isClient) return;
-
-      safeAsync(async () => {
-        const cacheData: CacheData = {
-          notifications: data,
-          timestamp: Date.now(),
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-      }, (error) => {
-        logError(error, { operation: 'save_to_cache' });
-      });
-    },
-    [isClient]
-  );
-
   // 取得通知資料
   const loadNotifications = useCallback(async () => {
     if (!user?.uid) return;

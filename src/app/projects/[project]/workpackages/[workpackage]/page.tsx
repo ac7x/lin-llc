@@ -26,7 +26,7 @@ import { Project , SubWorkpackage, Workpackage ,
   TemplateToSubWorkpackageOptions,
 } from '@/types/project';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
-import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 // Template helper functions
 /**

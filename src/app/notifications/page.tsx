@@ -17,7 +17,7 @@ import React, { useState } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 import type { NotificationMessage } from '@/types/notification';
 import { parseToDate } from '@/utils/dateUtils';
-import { logError, safeAsync, retry, getErrorMessage } from '@/utils/errorUtils';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 // 通知類型圖標映射
 const getNotificationIcon = (type: NotificationMessage['type']) => {

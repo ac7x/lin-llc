@@ -25,7 +25,7 @@ import React, { useState, ReactElement } from 'react';
 import { NotificationBell } from '@/app/notifications/components/NotificationBell';
 import { useAuth } from '@/hooks/useAuth';
 import { Timestamp } from '@/lib/firebase-client';
-import { createNotification, createBulkNotifications } from '@/lib/firebase-notifications';
+import { createNotification } from '@/lib/firebase-notifications';
 import type { NotificationMessage } from '@/types/notification';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
