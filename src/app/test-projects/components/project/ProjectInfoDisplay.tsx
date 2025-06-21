@@ -47,7 +47,10 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
 
       // 問題數量 (25%)
       const issues = project.issues || [];
-      const unresolvedIssues = issues.filter(issue => issue.status !== 'resolved').length;
+      const unresolvedIssues = issues.filter(issue => {
+        // 檢查 issue 是否有 status 屬性（IssueRecord 有，ProjectIssue 沒有）
+        return 'status' in issue && issue.status !== 'resolved';
+      }).length;
       const issueScore = Math.max(0, 25 - unresolvedIssues * 2);
       score += issueScore;
       totalWeight += 25;

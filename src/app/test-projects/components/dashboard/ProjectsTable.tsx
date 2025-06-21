@@ -1,14 +1,7 @@
 import Link from 'next/link';
 import { projectStyles } from '../../styles';
-
-interface Project {
-  id: string;
-  projectName: string;
-  status: string;
-  progress?: number;
-  createdAt: string;
-  [key: string]: string | number | undefined;
-}
+import type { Project } from '../../types/project';
+import { toDate } from '../../types/project';
 
 interface ProjectsTableProps {
   projects: Project[];
@@ -23,6 +16,19 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
       </div>
     );
   }
+
+  // 處理 status 顯示邏輯
+  const getStatusDisplay = (status: Project['status']): string => {
+    if (Array.isArray(status)) {
+      return status.length > 0 ? status[0] : '未知';
+    }
+    return status || '未知';
+  };
+
+  // 處理專案名稱顯示邏輯
+  const getProjectName = (project: Project): string => {
+    return project.projectName || project.name || '未命名專案';
+  };
 
   return (
     <div className={projectStyles.table.container}>
@@ -50,15 +56,15 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
               <td className={projectStyles.table.td}>{index + 1}</td>
               <td className={projectStyles.table.td}>
                 <Link
-                  href={`/projects/${project.id}`}
+                  href={`/test-projects/${project.id}`}
                   className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
                 >
-                  {project.projectName}
+                  {getProjectName(project)}
                 </Link>
               </td>
               <td className={projectStyles.table.td}>
                 <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 rounded-full">
-                  {project.status}
+                  {getStatusDisplay(project.status)}
                 </span>
               </td>
               <td className={projectStyles.table.td}>
@@ -76,18 +82,29 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
               </td>
               {showAdvancedColumns && (
                 <>
-                  <td className={projectStyles.table.td}>-</td>
-                  <td className={projectStyles.table.td}>-</td>
-                  <td className={projectStyles.table.td}>-</td>
+                  <td className={projectStyles.table.td}>
+                    {Array.isArray(project.type) ? project.type.join(', ') : project.type || '-'}
+                  </td>
+                  <td className={projectStyles.table.td}>
+                    {project.priority || '-'}
+                  </td>
+                  <td className={projectStyles.table.td}>
+                    {project.riskLevel || '-'}
+                  </td>
                 </>
               )}
               <td className={projectStyles.table.td}>
-                {project.createdAt || '未知'}
+                {project.createdAt ? 
+                  (() => {
+                    const date = toDate(project.createdAt);
+                    return date ? date.toLocaleDateString('zh-TW') : '未知';
+                  })() 
+                  : '未知'}
               </td>
               <td className={projectStyles.table.td}>
                 <div className="flex items-center space-x-2">
                   <Link
-                    href={`/projects/${project.id}`}
+                    href={`/test-projects/${project.id}`}
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors duration-200"
                   >
                     查看
