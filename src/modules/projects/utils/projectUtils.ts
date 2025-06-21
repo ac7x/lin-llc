@@ -16,7 +16,9 @@ import type {
   ProjectMilestone,
   ProjectRiskLevel,
   ProjectPriority,
-  ProjectHealthLevel
+  ProjectHealthLevel,
+  ProjectQualityMetrics,
+  ProjectFinancialMetrics
 } from '../types/project';
 import { convertToDate } from './dateUtils';
 

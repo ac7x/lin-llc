@@ -20,7 +20,8 @@ import {
   where, 
   orderBy,
   Timestamp,
-  serverTimestamp 
+  serverTimestamp,
+  FieldValue
 } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase-client';
@@ -168,7 +169,11 @@ export const updateSubWorkpackageProgress = async (
   try {
     const docRef = doc(db, SUBWORKPACKAGE_COLLECTION, subWorkpackageId);
     
-    const updateData: any = {
+    const updateData: {
+      progress: number;
+      updatedAt: FieldValue;
+      progressHistory?: unknown[];
+    } = {
       progress,
       updatedAt: serverTimestamp(),
     };

@@ -29,27 +29,65 @@ import {
   ProjectsTable,
   ProjectStatsComponent,
   
+  // 專案相關組件
+  ProjectEditModal,
+  ProjectInfoDisplay,
+  ProjectInfoPage,
+  
   // 工作包組件
+  WorkpackageCard,
+  WorkpackageForm,
   WorkpackageList,
+  
+  // 子工作包組件
+  SubWorkpackageCard,
+  SubWorkpackageForm,
+  SubWorkpackageList,
+  
+  // 日誌組件
+  JournalCard,
+  JournalForm,
+  JournalHistory,
   
   // 問題組件
   IssueForm,
   IssueList,
+  IssueTracker,
+  
+  // 費用組件
+  ExpenseForm,
+  ExpenseList,
+  
+  // 材料組件
+  MaterialForm,
+  MaterialList,
   
   // 模板組件
   TemplateCard,
   TemplateForm,
   
+  // 管理組件
+  RiskManager,
+  ChangeManager,
+  MilestoneTracker,
+  
   // 日曆組件
   CalendarView,
+  
+  // 生成專案組件
+  ContractSelector,
+  ProjectSetupForm,
+  TemplateSelector,
   
   // Hooks
   useProjectForm,
   useProjectErrorHandler,
+  useFilteredProjects,
   
   // 服務
   ProjectService,
   WorkpackageService,
+  JournalService,
   IssueService,
   TemplateService,
   
@@ -76,10 +114,16 @@ import {
   
   // 型別
   type Workpackage,
+  type SubWorkpackage,
   type IssueRecord,
   type Template,
   type ProjectDocument,
   type ProjectStats,
+  type Expense,
+  type MaterialEntry,
+  type ProjectMilestone,
+  type ProjectRisk,
+  type ProjectChange,
 } from '@/modules/projects';
 
 export default function TestPage() {
@@ -92,20 +136,34 @@ export default function TestPage() {
   const [projects, setProjects] = useState<ProjectDocument[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectDocument | null>(null);
   const [workpackages, setWorkpackages] = useState<Workpackage[]>([]);
+  const [subWorkpackages, setSubWorkpackages] = useState<SubWorkpackage[]>([]);
   const [issues, setIssues] = useState<IssueRecord[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [materials, setMaterials] = useState<MaterialEntry[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [projectStats, setProjectStats] = useState<ProjectStats | null>(null);
   
   // 表單狀態
   const [showIssueForm, setShowIssueForm] = useState(false);
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [showWorkpackageForm, setShowWorkpackageForm] = useState(false);
+  const [showSubWorkpackageForm, setShowSubWorkpackageForm] = useState(false);
   
   // 編輯狀態
   const [editingIssue, setEditingIssue] = useState<IssueRecord | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<MaterialEntry | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [editingWorkpackage, setEditingWorkpackage] = useState<Workpackage | null>(null);
+  const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkpackage | null>(null);
 
   // 測試 hooks
-  const { formData, errors, setFieldValue, validateForm } = useProjectForm();
+  const { formData, errors, handleInputChange, handleSubmit, resetForm } = useProjectForm({}, async (data) => {
+    // 處理表單提交
+    console.log('表單數據:', data);
+  });
   const { handleError } = useProjectErrorHandler();
 
   const tabs = [
@@ -129,6 +187,12 @@ export default function TestPage() {
       
       setWorkpackages(workpackagesData);
       setIssues(issuesData);
+      
+      // 如果有工作包，載入第一個工作包的子工作包
+      if (workpackagesData.length > 0) {
+        // 這裡需要實作載入子工作包的邏輯
+        setSubWorkpackages([]);
+      }
     } catch (err) {
       handleError(err as Error, 'load_project_details');
     }
@@ -353,7 +417,12 @@ export default function TestPage() {
             </h3>
             <div className="space-y-4">
               {selectedProject && (
-                <ProjectDashboard project={selectedProject} />
+                <ProjectDashboard project={{
+                  id: selectedProject.id,
+                  projectName: selectedProject.projectName,
+                  status: selectedProject.status,
+                  progress: selectedProject.progress,
+                }} />
               )}
               {projectStats && (
                 <ProjectStatsComponent stats={projectStats} />
@@ -368,7 +437,7 @@ export default function TestPage() {
             <DataLoader
               loading={loading}
               error={error ? new Error(error) : null}
-              data={projects}
+              data={projects as any[]}
             >
               {(data) => (
                 <ProjectsTable 
@@ -389,10 +458,73 @@ export default function TestPage() {
               data={workpackages}
             >
               {(data) => (
-                <WorkpackageList 
-                  workpackages={data} 
-                  projectId={selectedProject?.id || ''} 
-                />
+                <div className="space-y-4">
+                  <WorkpackageList 
+                    workpackages={data} 
+                    projectId={selectedProject?.id || ''} 
+                  />
+                  
+                  {/* 工作包卡片展示 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.slice(0, 3).map((workpackage) => (
+                      <WorkpackageCard
+                        key={workpackage.id}
+                        workpackage={workpackage}
+                        projectId={selectedProject?.id || ''}
+                        onEdit={(_workpackage) => {
+                          // 處理編輯
+                        }}
+                        onDelete={(_workpackageId) => {
+                          // 處理刪除
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </DataLoader>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              子工作包組件
+            </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={subWorkpackages}
+            >
+              {(data) => (
+                <div className="space-y-4">
+                  <SubWorkpackageList
+                    subWorkpackages={data}
+                    workpackageId={workpackages[0]?.id || ''}
+                    onAddSubWorkpackage={() => setShowSubWorkpackageForm(true)}
+                    onEditSubWorkpackage={(_subWorkpackage) => {
+                      // 處理編輯
+                    }}
+                    onDeleteSubWorkpackage={(_subWorkpackageId) => {
+                      // 處理刪除
+                    }}
+                  />
+                  
+                  {/* 子工作包卡片展示 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.slice(0, 3).map((subWorkpackage) => (
+                      <SubWorkpackageCard
+                        key={subWorkpackage.id}
+                        subWorkpackage={subWorkpackage}
+                        workpackageId={workpackages[0]?.id || ''}
+                        onEdit={(_subWorkpackage) => {
+                          // 處理編輯
+                        }}
+                        onDelete={(_subWorkpackageId) => {
+                          // 處理刪除
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
               )}
             </DataLoader>
           </section>
@@ -418,6 +550,84 @@ export default function TestPage() {
               />
             </section>
           )}
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              管理組件
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* 問題追蹤器 */}
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-4">問題追蹤器</h4>
+                <IssueTracker
+                  issues={issues}
+                  projectId={selectedProject?.id || ''}
+                  onAddIssue={() => setShowIssueForm(true)}
+                  onEditIssue={(_issue) => {
+                    // 處理編輯
+                  }}
+                  onDeleteIssue={(_issueId) => {
+                    // 處理刪除
+                  }}
+                />
+              </div>
+
+              {/* 風險管理器 */}
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-4">風險管理器</h4>
+                <RiskManager
+                  risks={selectedProject?.risks || []}
+                  projectId={selectedProject?.id || ''}
+                  onAddRisk={() => {
+                    // 處理新增風險
+                  }}
+                  onEditRisk={(_risk) => {
+                    // 處理編輯風險
+                  }}
+                  onDeleteRisk={(_riskId) => {
+                    // 處理刪除風險
+                  }}
+                />
+              </div>
+
+              {/* 變更管理器 */}
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-4">變更管理器</h4>
+                <ChangeManager
+                  changes={selectedProject?.changes || []}
+                  projectId={selectedProject?.id || ''}
+                  onAddChange={() => {
+                    // 處理新增變更
+                  }}
+                  onEditChange={(_change) => {
+                    // 處理編輯變更
+                  }}
+                  onDeleteChange={(_changeId) => {
+                    // 處理刪除變更
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              里程碑追蹤器
+            </h3>
+            <MilestoneTracker
+              milestones={selectedProject?.milestones || []}
+              projectId={selectedProject?.id || ''}
+              onAddMilestone={() => {
+                // 處理新增里程碑
+              }}
+              onEditMilestone={(_milestone) => {
+                // 處理編輯里程碑
+              }}
+              onDeleteMilestone={(_milestoneId) => {
+                // 處理刪除里程碑
+              }}
+            />
+          </section>
         </div>
       )}
 
@@ -464,6 +674,82 @@ export default function TestPage() {
 
           <section>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              費用管理
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium">專案費用</h4>
+                <button
+                  onClick={() => setShowExpenseForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  新增費用
+                </button>
+              </div>
+              
+              <DataLoader
+                loading={loading}
+                error={error ? new Error(error) : null}
+                data={expenses}
+              >
+                {(data) => (
+                  <ExpenseList
+                    expenses={data}
+                    projectId={selectedProject?.id || ''}
+                    onEdit={(_expense) => {
+                      // 處理編輯費用
+                    }}
+                    onDelete={async (_expenseId) => {
+                      // 處理刪除費用
+                    }}
+                    onAdd={() => setShowExpenseForm(true)}
+                    isLoading={loading}
+                  />
+                )}
+              </DataLoader>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              材料管理
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium">專案材料</h4>
+                <button
+                  onClick={() => setShowMaterialForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  新增材料
+                </button>
+              </div>
+              
+              <DataLoader
+                loading={loading}
+                error={error ? new Error(error) : null}
+                data={materials}
+              >
+                {(data) => (
+                  <MaterialList
+                    materials={data}
+                    projectId={selectedProject?.id || ''}
+                    onEdit={(_material) => {
+                      // 處理編輯材料
+                    }}
+                    onDelete={async (_materialId) => {
+                      // 處理刪除材料
+                    }}
+                    onAdd={() => setShowMaterialForm(true)}
+                    isLoading={loading}
+                  />
+                )}
+              </DataLoader>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               模板管理
             </h3>
             <div className="space-y-4">
@@ -488,12 +774,9 @@ export default function TestPage() {
                       <TemplateCard
                         key={template.id}
                         template={template}
-                        onEdit={(templateId) => {
-                          const templateToEdit = data.find(t => t.id === templateId);
-                          if (templateToEdit) {
-                            setEditingTemplate(templateToEdit);
-                            setShowTemplateForm(true);
-                          }
+                        onEdit={(template) => {
+                          setEditingTemplate(template);
+                          setShowTemplateForm(true);
                         }}
                         onDelete={async (templateId) => {
                           try {
@@ -503,8 +786,8 @@ export default function TestPage() {
                             handleError(err as Error, 'delete_template');
                           }
                         }}
-                        onApply={(_templateId) => {
-                          // 處理模板應用
+                        onSelect={(_template) => {
+                          // 處理模板選擇
                         }}
                       />
                     ))}
@@ -531,7 +814,7 @@ export default function TestPage() {
                 <input
                   type="text"
                   value={formData.projectName || ''}
-                  onChange={(e) => setFieldValue('projectName', e.target.value)}
+                  onChange={(e) => handleInputChange('projectName', e.target.value)}
                   className={projectStyles.form.input}
                 />
                 {errors.projectName && (
@@ -540,11 +823,8 @@ export default function TestPage() {
               </div>
               <button
                 onClick={() => {
-                  if (validateForm()) {
-                    // 表單驗證通過
-                  } else {
-                    // 表單驗證失敗
-                  }
+                  // 表單驗證和提交
+                  console.log('表單數據:', formData);
                 }}
                 className={projectStyles.button.primary}
               >
@@ -691,8 +971,14 @@ export default function TestPage() {
             <div className="p-4 border rounded-lg space-y-2">
               <p><strong>ProjectDocument:</strong> 專案主要型別（包含 id）</p>
               <p><strong>Workpackage:</strong> 工作包型別</p>
+              <p><strong>SubWorkpackage:</strong> 子工作包型別</p>
               <p><strong>IssueRecord:</strong> 問題記錄型別</p>
+              <p><strong>Expense:</strong> 費用型別</p>
+              <p><strong>MaterialEntry:</strong> 材料型別</p>
               <p><strong>Template:</strong> 模板型別</p>
+              <p><strong>ProjectMilestone:</strong> 里程碑型別</p>
+              <p><strong>ProjectRisk:</strong> 風險型別</p>
+              <p><strong>ProjectChange:</strong> 變更型別</p>
             </div>
           </section>
 
@@ -823,6 +1109,56 @@ export default function TestPage() {
         </div>
       )}
 
+      {showExpenseForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <ExpenseForm
+              expense={editingExpense || undefined}
+              projectId={selectedProject?.id || ''}
+              onSubmit={async (expenseData) => {
+                try {
+                  // 這裡需要實作費用服務
+                  setShowExpenseForm(false);
+                  setEditingExpense(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_expense');
+                }
+              }}
+              onCancel={() => {
+                setShowExpenseForm(false);
+                setEditingExpense(null);
+              }}
+              isLoading={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showMaterialForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <MaterialForm
+              material={editingMaterial || undefined}
+              projectId={selectedProject?.id || ''}
+              onSubmit={async (materialData) => {
+                try {
+                  // 這裡需要實作材料服務
+                  setShowMaterialForm(false);
+                  setEditingMaterial(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_material');
+                }
+              }}
+              onCancel={() => {
+                setShowMaterialForm(false);
+                setEditingMaterial(null);
+              }}
+              isLoading={loading}
+            />
+          </div>
+        </div>
+      )}
+
       {showTemplateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -847,6 +1183,56 @@ export default function TestPage() {
                 setEditingTemplate(null);
               }}
               isLoading={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showWorkpackageForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <WorkpackageForm
+              workpackage={editingWorkpackage || undefined}
+              projectId={selectedProject?.id || ''}
+              onSubmit={async (workpackageData) => {
+                try {
+                  // 這裡需要實作工作包服務
+                  setShowWorkpackageForm(false);
+                  setEditingWorkpackage(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_workpackage');
+                }
+              }}
+              onCancel={() => {
+                setShowWorkpackageForm(false);
+                setEditingWorkpackage(null);
+              }}
+              isSubmitting={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showSubWorkpackageForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <SubWorkpackageForm
+              subWorkpackage={editingSubWorkpackage || undefined}
+              workpackageId={workpackages[0]?.id || ''}
+              onSubmit={async (subWorkpackageData) => {
+                try {
+                  // 這裡需要實作子工作包服務
+                  setShowSubWorkpackageForm(false);
+                  setEditingSubWorkpackage(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_subworkpackage');
+                }
+              }}
+              onCancel={() => {
+                setShowSubWorkpackageForm(false);
+                setEditingSubWorkpackage(null);
+              }}
+              isSubmitting={loading}
             />
           </div>
         </div>

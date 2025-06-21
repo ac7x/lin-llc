@@ -304,7 +304,7 @@ export function useQualityScore(projects: Project[]): {
       totalIssuesCount,
     };
   }, [projects]);
-}
+} 
 
 const fetchProjects = async (): Promise<Project[]> => {
   try {

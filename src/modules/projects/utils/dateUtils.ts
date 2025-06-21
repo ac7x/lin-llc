@@ -9,7 +9,7 @@ import type { DateField } from '../types/project';
 /**
  * 將 DateField 轉換為 Date 物件
  */
-export function convertToDate(dateField: DateField): Date | null {
+export const convertToDate = (dateField: DateField): Date | null => {
   if (!dateField) return null;
   
   if (dateField instanceof Date) {
@@ -20,12 +20,12 @@ export function convertToDate(dateField: DateField): Date | null {
     return new Date(dateField);
   }
   
-  if (dateField && typeof dateField === 'object' && 'toDate' in dateField) {
-    return (dateField as Timestamp).toDate();
+  if (typeof dateField === 'object' && 'toDate' in dateField) {
+    return dateField.toDate();
   }
   
   return null;
-}
+};
 
 /**
  * 格式化專案日期

@@ -77,7 +77,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
       // 品質指標 (20%)
       if (project.qualityScore !== undefined) {
         score += (project.qualityScore / 100) * 20;
-        totalWeight += 20;
+      totalWeight += 20;
       }
 
       return totalWeight > 0 ? Math.round(score) : 0;

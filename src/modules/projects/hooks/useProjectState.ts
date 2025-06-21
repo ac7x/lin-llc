@@ -7,42 +7,44 @@ interface Project {
   [key: string]: any;
 }
 
-export function useProjectState(initialProject?: Project) {
-  const [project, setProject] = useState<Project | undefined>(initialProject);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+interface UseProjectStateReturn {
+  projects: Project[];
+  loading: boolean;
+  error: string | null;
+  addProject: (project: Partial<Project>) => Promise<void>;
+  updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
+  refreshProjects: () => Promise<void>;
+}
 
-  const updateProject = useCallback((updates: Partial<Project>) => {
-    if (!project) return;
-    setProject((prev: Project | undefined) => prev ? { ...prev, ...updates } : undefined);
-  }, [project]);
+export function useProjectState(): UseProjectStateReturn {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const resetProject = useCallback((newProject?: Project) => {
-    setProject(newProject);
-    setIsEditing(false);
-    setIsLoading(false);
-  }, []);
+  const addProject = async (project: Partial<Project>) => {
+    // 實作新增專案邏輯
+  };
 
-  const startEditing = useCallback(() => {
-    setIsEditing(true);
-  }, []);
+  const updateProject = async (id: string, updates: Partial<Project>) => {
+    // 實作更新專案邏輯
+  };
 
-  const stopEditing = useCallback(() => {
-    setIsEditing(false);
-  }, []);
+  const deleteProject = async (id: string) => {
+    // 實作刪除專案邏輯
+  };
 
-  const setLoading = useCallback((loading: boolean) => {
-    setIsLoading(loading);
-  }, []);
+  const refreshProjects = async () => {
+    // 實作重新載入專案邏輯
+  };
 
   return {
-    project,
-    isEditing,
-    isLoading,
+    projects,
+    loading,
+    error,
+    addProject,
     updateProject,
-    resetProject,
-    startEditing,
-    stopEditing,
-    setLoading,
+    deleteProject,
+    refreshProjects,
   };
 } 

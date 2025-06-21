@@ -219,18 +219,16 @@ export class ProjectService {
    * 更新專案
    */
   static async updateProject(projectId: string, updates: Partial<Project>): Promise<void> {
-    await safeAsync(async () => {
-      const docRef = doc(db, this.COLLECTION_NAME, projectId);
-      const updateData = {
+    try {
+      const projectRef = doc(db, this.COLLECTION_NAME, projectId);
+      await updateDoc(projectRef, {
         ...updates,
-        updatedAt: Timestamp.now(),
-      };
-
-      await retry(() => updateDoc(docRef, updateData), 3, 1000);
-    }, (error) => {
+        updatedAt: Timestamp.fromDate(new Date()),
+      });
+    } catch (error) {
       logError(error, { operation: 'update_project', projectId });
       throw error;
-    });
+    }
   }
 
   /**
