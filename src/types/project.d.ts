@@ -403,6 +403,9 @@ export interface Project extends BaseWithDates {
   nextReviewDate?: DateField; // 下次審查日期
   lastReviewDate?: DateField; // 上次審查日期
   reviewFrequency?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly'; // 審查頻率
+  // 新增品質分數追蹤欄位
+  qualityScore?: number; // 即時品質分數 (0-10)，初始值為 10
+  lastQualityAdjustment?: DateField; // 上次品質分數調整時間
 }
 
 // ===== Template 型別區 =====

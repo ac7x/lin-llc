@@ -139,6 +139,9 @@ export default function ImportProjectPage() {
         status: 'planning' as import('@/types/project').ProjectStatus,
         decomposition, // 專案分解資料
         workpackages, // 將合約項目轉換後的工作包列表
+        // 初始化品質分數
+        qualityScore: 10, // 初始品質分數為 10
+        lastQualityAdjustment: Timestamp.now(), // 設置品質分數調整時間
       };
       await retry(() => addDoc(collection(db, 'projects'), projectData), 3, 1000);
       setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);

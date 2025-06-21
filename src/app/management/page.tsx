@@ -3,6 +3,7 @@
 import { useAuth } from '@/hooks/useAuth';
 
 import RolePermissions from './components/RolePermissions';
+import UserList from './components/UserList';
 
 export default function ManagementPage() {
   const { loading } = useAuth();
@@ -19,6 +20,7 @@ export default function ManagementPage() {
     <div className='container mx-auto p-4 sm:p-6 lg:p-8'>
       <div className='space-y-8'>
         <RolePermissions />
+        <UserList />
       </div>
     </div>
   );

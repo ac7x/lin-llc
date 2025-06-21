@@ -60,7 +60,11 @@ export default function RootLayout({
     return (
       <html lang='zh-TW'>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-900`}
+          style={{
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties}
+          className='antialiased bg-white dark:bg-gray-900'
         >
           <div className='flex justify-center items-center min-h-screen'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400'></div>
@@ -75,7 +79,11 @@ export default function RootLayout({
     return (
       <html lang='zh-TW'>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-900`}
+          style={{
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties}
+          className='antialiased bg-white dark:bg-gray-900'
         >
           <Unauthorized
             message='請先登入以訪問此頁面'
@@ -98,7 +106,11 @@ export default function RootLayout({
         )}
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100`}
+        style={{
+          '--font-geist-sans': geistSans.variable,
+          '--font-geist-mono': geistMono.variable,
+        } as React.CSSProperties}
+        className='antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100'
       >
         <main className='pb-16'>{children}</main>
         {user && <BottomNavigation />}

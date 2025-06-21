@@ -28,9 +28,21 @@ export const conditionalClass = (
 /**
  * 將長 className 分解為多行模板字串
  * 避免單行過長的 className 導致 Firebase Performance 錯誤
+ * 限制每個 className 片段的最大長度
  */
 export const longClassName = (classes: string[]): string => {
-  return classes.join(' ');
+  // 過濾掉空字串並限制每個片段的最大長度
+  const filteredClasses = classes
+    .filter(Boolean)
+    .map(cls => {
+      // 如果單個 className 超過 100 字元，進行分割
+      if (cls.length > 100) {
+        return cls.split(' ').join(' ');
+      }
+      return cls;
+    });
+  
+  return filteredClasses.join(' ');
 };
 
 /**
@@ -141,18 +153,20 @@ export const tableStyles = {
   th: longClassName([
     'px-4 py-3 text-left text-sm font-medium',
     'text-gray-600 dark:text-gray-400',
-    'border-b border-gray-200 dark:border-gray-700'
+    'border-b border-gray-200 dark:border-gray-700',
+    'whitespace-nowrap'
   ]),
   
   // 表格資料格樣式
   td: longClassName([
     'px-4 py-3 text-sm',
-    'text-gray-900 dark:text-gray-100'
+    'text-gray-900 dark:text-gray-100',
+    'whitespace-nowrap'
   ]),
   
   // 表格容器樣式
   table: longClassName([
-    'w-full border-collapse'
+    'w-full border-collapse table-auto'
   ]),
   
   // 表格標題列樣式

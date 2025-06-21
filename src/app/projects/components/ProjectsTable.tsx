@@ -7,10 +7,11 @@ import type {
   ProjectRiskLevel, 
   ProjectHealthLevel, 
   ProjectPhase, 
-  ProjectType 
+  ProjectType, 
+  IssueRecord 
 } from '@/types/project';
 
-import { tableStyles } from '@/utils/classNameUtils';
+import { tableStyles, cn } from '@/utils/classNameUtils';
 
 // 狀態標籤組件
 const StatusBadge = ({ status }: { status?: ProjectStatus }) => {
@@ -49,7 +50,7 @@ const StatusBadge = ({ status }: { status?: ProjectStatus }) => {
   const defaultClass = 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${config?.className || defaultClass}`}>
+    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config?.className || defaultClass}`}>
       {config?.label || status || '-'}
     </span>
   );
@@ -76,11 +77,11 @@ const PriorityBadge = ({ priority }: { priority?: ProjectPriority }) => {
     },
   };
 
-  if (!priority) return null;
+  if (!priority) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = priorityConfig[priority];
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.className}`}>
       {config.label}
     </span>
   );
@@ -107,11 +108,11 @@ const RiskBadge = ({ riskLevel }: { riskLevel?: ProjectRiskLevel }) => {
     },
   };
 
-  if (!riskLevel) return null;
+  if (!riskLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = riskConfig[riskLevel];
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.className}`}>
       {config.label}
     </span>
   );
@@ -147,11 +148,11 @@ const HealthBadge = ({ healthLevel }: { healthLevel?: ProjectHealthLevel }) => {
     },
   };
 
-  if (!healthLevel) return null;
+  if (!healthLevel) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = healthConfig[healthLevel];
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${config.className}`}>
+    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 whitespace-nowrap ${config.className}`}>
       <span>{config.icon}</span>
       <span>{config.label}</span>
     </span>
@@ -183,11 +184,11 @@ const PhaseBadge = ({ phase }: { phase?: ProjectPhase }) => {
     },
   };
 
-  if (!phase) return null;
+  if (!phase) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = phaseConfig[phase];
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.className}`}>
       {config.label}
     </span>
   );
@@ -204,7 +205,7 @@ const ProgressBar = ({ progress }: { progress?: number }) => {
   };
 
   return (
-    <div className='flex items-center space-x-2'>
+    <div className='flex items-center space-x-2 whitespace-nowrap'>
       <div className='w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
         <div
           className={`h-2 rounded-full transition-all duration-300 ${getColorClass(percentage)}`}
@@ -220,7 +221,7 @@ const ProgressBar = ({ progress }: { progress?: number }) => {
 
 // 品質評分組件
 const QualityScore = ({ score }: { score?: number }) => {
-  if (!score) return <span className='text-gray-400'>-</span>;
+  if (!score) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
   
   const getColorClass = (s: number) => {
     if (s >= 8) return 'text-green-600 dark:text-green-400';
@@ -229,7 +230,7 @@ const QualityScore = ({ score }: { score?: number }) => {
   };
 
   return (
-    <span className={`font-medium ${getColorClass(score)}`}>
+    <span className={`font-medium whitespace-nowrap ${getColorClass(score)}`}>
       {score}/10
     </span>
   );
@@ -237,10 +238,10 @@ const QualityScore = ({ score }: { score?: number }) => {
 
 // 預算顯示組件
 const BudgetDisplay = ({ budget }: { budget?: number }) => {
-  if (!budget) return <span className='text-gray-400'>-</span>;
+  if (!budget) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
   
   return (
-    <span className='text-sm text-gray-600 dark:text-gray-400'>
+    <span className='text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap'>
       ${budget.toLocaleString()}
     </span>
   );
@@ -263,11 +264,11 @@ const ProjectTypeBadge = ({ projectType }: { projectType?: ProjectType }) => {
     },
   };
 
-  if (!projectType) return null;
+  if (!projectType) return <span className='text-gray-400 whitespace-nowrap'>-</span>;
 
   const config = typeConfig[projectType];
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.className}`}>
       {config.label}
     </span>
   );
@@ -288,50 +289,53 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
       <table className={tableStyles.table}>
         <thead className={tableStyles.thead}>
           <tr>
-            <th className={tableStyles.th}>
+            <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
               序號
             </th>
-            <th className={tableStyles.th}>
+            <th className={cn(tableStyles.th, 'whitespace-normal')}>
               專案名稱
             </th>
-            <th className={tableStyles.th}>
+            <th className={cn(tableStyles.th, 'whitespace-normal')}>
               合約ID
             </th>
-            <th className={tableStyles.th}>
+            <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
               狀態
             </th>
-            <th className={tableStyles.th}>
+            <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
               進度
             </th>
             {showAdvancedColumns && (
               <>
-                <th className={tableStyles.th}>
+                <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
                   類型
                 </th>
-                <th className={tableStyles.th}>
+                <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
                   優先級
                 </th>
-                <th className={tableStyles.th}>
+                <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
                   風險等級
                 </th>
-                <th className={tableStyles.th}>
+                <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
                   健康度
                 </th>
-                <th className={tableStyles.th}>
+                <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
                   階段
                 </th>
-                <th className={tableStyles.th}>
+                <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
                   品質評分
                 </th>
-                <th className={tableStyles.th}>
+                <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
                   預算
+                </th>
+                <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
+                  品質問題
                 </th>
               </>
             )}
-            <th className={tableStyles.th}>
+            <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
               建立日期
             </th>
-            <th className={tableStyles.th}>
+            <th className={cn(tableStyles.th, 'whitespace-nowrap')}>
               操作
             </th>
           </tr>
@@ -339,10 +343,10 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
         <tbody className={tableStyles.tbody}>
           {projects.map((project) => (
             <tr key={project.id} className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200'>
-              <td className={tableStyles.td}>
+              <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                 {project.idx}
               </td>
-              <td className={tableStyles.td}>
+              <td className={cn(tableStyles.td, 'whitespace-normal')}>
                 <Link
                   href={`/projects/${project.id}`}
                   className='font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200'
@@ -350,44 +354,60 @@ export function ProjectsTable({ projects, showAdvancedColumns = false }: Project
                   {project.projectName}
                 </Link>
               </td>
-              <td className={tableStyles.td}>
+              <td className={cn(tableStyles.td, 'whitespace-normal')}>
                 {project.contractId || '-'}
               </td>
-              <td className={tableStyles.td}>
+              <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                 <StatusBadge status={project.status} />
               </td>
-              <td className={tableStyles.td}>
+              <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                 <ProgressBar progress={project.progress} />
               </td>
               {showAdvancedColumns && (
                 <>
-                  <td className={tableStyles.td}>
+                  <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                     <ProjectTypeBadge projectType={project.projectType} />
                   </td>
-                  <td className={tableStyles.td}>
+                  <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                     <PriorityBadge priority={project.priority} />
                   </td>
-                  <td className={tableStyles.td}>
+                  <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                     <RiskBadge riskLevel={project.riskLevel} />
                   </td>
-                  <td className={tableStyles.td}>
+                  <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                     <HealthBadge healthLevel={project.healthLevel} />
                   </td>
-                  <td className={tableStyles.td}>
+                  <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                     <PhaseBadge phase={project.phase} />
                   </td>
-                  <td className={tableStyles.td}>
-                    <QualityScore score={project.qualityMetrics?.overallQualityScore} />
+                  <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
+                    <QualityScore score={project.qualityScore} />
                   </td>
-                  <td className={tableStyles.td}>
+                  <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                     <BudgetDisplay budget={project.estimatedBudget} />
+                  </td>
+                  <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
+                    {/* 品質問題數量 - 只計算未解決的品質/進度問題 */}
+                    {(() => {
+                      const issues = (project.issues || []) as IssueRecord[];
+                      const qualityOrProgressIssues = issues.filter((issue: IssueRecord) => 
+                        (issue.type === 'quality' || issue.type === 'progress') && issue.status !== 'resolved'
+                      );
+                      return qualityOrProgressIssues.length > 0 ? (
+                        <span className='text-orange-600 dark:text-orange-400 font-bold'>
+                          {qualityOrProgressIssues.length}
+                        </span>
+                      ) : (
+                        <span className='text-gray-400'>0</span>
+                      );
+                    })()}
                   </td>
                 </>
               )}
-              <td className={tableStyles.td}>
+              <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                 {project.createdAt}
               </td>
-              <td className={tableStyles.td}>
+              <td className={cn(tableStyles.td, 'whitespace-nowrap')}>
                 <div className='flex items-center space-x-2'>
                   <Link
                     href={`/projects/${project.id}`}

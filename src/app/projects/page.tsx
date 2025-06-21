@@ -13,11 +13,12 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useTransition, useState } from 'react';
+import { useTransition, useState, useMemo } from 'react';
 
 import { DataLoader } from '@/components/common/DataLoader';
 import { useAuth } from '@/hooks/useAuth';
 import { useFilteredProjects, useProjectStats, type ProjectFilters, type ProjectSortOption } from '@/hooks/useFilteredProjects';
+import type { IssueRecord } from '@/types/project';
 
 import { ProjectsTable } from './components/ProjectsTable';
 
@@ -52,6 +53,57 @@ export default function ProjectsPage() {
 
   const { projects, loading, error } = useFilteredProjects(filters, sortBy);
   const { stats } = useProjectStats();
+
+  // 計算所有專案的品質分數統計
+  const qualityStats = useMemo(() => {
+    if (!projects.length) return { averageQualityScore: 0, totalQualityIssues: 0 };
+    
+    let totalQualityScore = 0;
+    let totalQualityIssues = 0;
+    
+    projects.forEach(project => {
+      // 基礎品質分數
+      const baseScore = project.qualityScore ?? 10;
+      
+      // 計算未解決的問題數量
+      const issues = project.issues || [];
+      const unresolvedIssues = issues.filter((issue: IssueRecord) => issue.status !== 'resolved');
+      
+      // 根據問題類型計算扣分
+      let issueDeduction = 0;
+      let qualityOrProgressIssuesCount = 0;
+      
+      unresolvedIssues.forEach((issue: IssueRecord) => {
+        switch (issue.type) {
+          case 'progress':
+            issueDeduction += 0.5; // 進度問題扣 0.5 分
+            qualityOrProgressIssuesCount++;
+            break;
+          case 'quality':
+            issueDeduction += 1; // 品質問題扣 1 分
+            qualityOrProgressIssuesCount++;
+            break;
+          case 'safety':
+            issueDeduction += 2; // 安全問題扣 2 分
+            break;
+          case 'other':
+            issueDeduction += 0.1; // 其他問題扣 0.1 分
+            break;
+        }
+      });
+      
+      // 計算最終分數
+      const currentScore = Math.max(0, Math.min(10, baseScore - issueDeduction));
+      
+      totalQualityScore += currentScore;
+      totalQualityIssues += qualityOrProgressIssuesCount;
+    });
+    
+    return {
+      averageQualityScore: Math.round((totalQualityScore / projects.length) * 10) / 10,
+      totalQualityIssues
+    };
+  }, [projects]);
 
   const handleSearch = (term: string) => {
     const params = new URLSearchParams(window.location.search);
@@ -99,7 +151,9 @@ export default function ProjectsPage() {
             <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent'>
               專案列表
             </h1>
-            <p className='text-gray-600 dark:text-gray-400 mt-2'>管理與追蹤所有專案狀態</p>
+            <p className='text-gray-600 dark:text-gray-400 mt-2'>
+              管理與追蹤所有專案狀態 • 平均品質分數：{qualityStats.averageQualityScore}/10
+            </p>
           </div>
           <div className='flex items-center gap-2'>
             <button
@@ -119,7 +173,7 @@ export default function ProjectsPage() {
 
         {/* 統計卡片 */}
         {stats && (
-          <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 mb-6'>
+          <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4 mb-6'>
             <div className='bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg'>
               <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>{stats.totalProjects}</div>
               <div className='text-sm text-blue-600 dark:text-blue-400'>總專案數</div>
@@ -136,21 +190,17 @@ export default function ProjectsPage() {
               <div className='text-2xl font-bold text-orange-600 dark:text-orange-400'>{stats.onHoldProjects}</div>
               <div className='text-sm text-orange-600 dark:text-orange-400'>暫停中</div>
             </div>
-            <div className='bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg'>
-              <div className='text-2xl font-bold text-purple-600 dark:text-purple-400'>{stats.averageProgress}%</div>
-              <div className='text-sm text-purple-600 dark:text-purple-400'>平均進度</div>
-            </div>
-            <div className='bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg'>
-              <div className='text-2xl font-bold text-indigo-600 dark:text-indigo-400'>{stats.averageQualityScore}/10</div>
-              <div className='text-sm text-indigo-600 dark:text-indigo-400'>平均品質</div>
-            </div>
             <div className='bg-red-50 dark:bg-red-900/20 p-4 rounded-lg'>
               <div className='text-2xl font-bold text-red-600 dark:text-red-400'>{stats.overdueProjects}</div>
               <div className='text-sm text-red-600 dark:text-red-400'>逾期專案</div>
             </div>
             <div className='bg-pink-50 dark:bg-pink-900/20 p-4 rounded-lg'>
-              <div className='text-2xl font-bold text-pink-600 dark:text-pink-400'>{stats.highRiskProjects}</div>
-              <div className='text-sm text-pink-600 dark:text-pink-400'>高風險</div>
+              <div className='text-2xl font-bold text-pink-600 dark:text-pink-400'>{stats.totalQualityIssues}</div>
+              <div className='text-sm text-pink-600 dark:text-pink-400'>品質問題</div>
+            </div>
+            <div className='bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg'>
+              <div className='text-2xl font-bold text-indigo-600 dark:text-indigo-400'>{qualityStats.averageQualityScore}/10</div>
+              <div className='text-sm text-indigo-600 dark:text-indigo-400'>平均品質</div>
             </div>
           </div>
         )}

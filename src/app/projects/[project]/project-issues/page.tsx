@@ -7,6 +7,7 @@
  * - 問題分類
  * - 問題解決追蹤
  * - 問題歷史記錄
+ * - 品質分數自動調整
  */
 
 'use client';
@@ -17,6 +18,7 @@ import { useState, useMemo } from 'react';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
 import { useAuth } from '@/hooks/useAuth';
+import { useQualityScore, updateProjectQualityScore } from '@/hooks/useFilteredProjects';
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 import { Project , IssueRecord } from '@/types/project';
 import { formatLocalDate } from '@/utils/dateUtils';
@@ -53,11 +55,18 @@ export default function ProjectIssuesPage() {
     severity: '',
   });
 
-  const issues = useMemo(() => {
-    if (!projectDoc?.exists()) return [];
-    const project = projectDoc.data() as Project;
-    return project.issues || [];
+  const project = useMemo(() => {
+    if (!projectDoc?.exists()) return null;
+    return projectDoc.data() as Project;
   }, [projectDoc]);
+
+  // 使用品質分數 hook
+  const qualityScoreInfo = useQualityScore(project);
+
+  const issues = useMemo(() => {
+    if (!project) return [];
+    return project.issues || [];
+  }, [project]);
 
   const filteredIssues = useMemo(() => {
     let result = [...(issues || [])];
@@ -86,7 +95,9 @@ export default function ProjectIssuesPage() {
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       };
-      if (!projectDoc?.data()?.issues) {
+
+      // 新增問題到專案
+      if (!project?.issues) {
         await retry(() => updateDoc(doc(db, 'projects', projectId), {
           issues: [issueRecord],
         }), 3, 1000);
@@ -95,6 +106,36 @@ export default function ProjectIssuesPage() {
           issues: arrayUnion(issueRecord),
         }), 3, 1000);
       }
+
+      // 如果是品質、進度或安全問題，立即調整品質分數
+      if (newIssue.type === 'quality' || newIssue.type === 'progress' || newIssue.type === 'safety') {
+        const baseScore = project?.qualityScore || 10;
+        const issues = [...(project?.issues || []), issueRecord];
+        const unresolvedIssues = issues.filter((issue: IssueRecord) => issue.status !== 'resolved');
+        
+        // 根據問題類型計算扣分
+        let issueDeduction = 0;
+        unresolvedIssues.forEach((issue: IssueRecord) => {
+          switch (issue.type) {
+            case 'progress':
+              issueDeduction += 0.5; // 進度問題扣 0.5 分
+              break;
+            case 'quality':
+              issueDeduction += 1; // 品質問題扣 1 分
+              break;
+            case 'safety':
+              issueDeduction += 2; // 安全問題扣 2 分
+              break;
+            case 'other':
+              issueDeduction += 0.1; // 其他問題扣 0.1 分
+              break;
+          }
+        });
+        
+        const newScore = Math.max(0, Math.min(10, baseScore - issueDeduction));
+        await updateProjectQualityScore(projectId, newScore);
+      }
+
       setNewIssue({
         ...newIssue,
         description: '',
@@ -112,15 +153,44 @@ export default function ProjectIssuesPage() {
     newStatus: 'open' | 'in-progress' | 'resolved'
   ) => {
     await safeAsync(async () => {
-      if (!projectDoc?.exists()) return;
-      const project = projectDoc.data() as Project;
+      if (!project) return;
       const allIssues = [...(project.issues || [])];
+      const issueToUpdate = allIssues.find(issue => issue.id === issueId);
       const updatedIssues = allIssues.map(issue =>
         issue.id === issueId ? { ...issue, status: newStatus } : issue
       );
+      
       await retry(() => updateDoc(doc(db, 'projects', projectId), {
         issues: updatedIssues,
       }), 3, 1000);
+
+      // 如果問題狀態改變且是品質、進度或安全問題，重新計算品質分數
+      if (issueToUpdate && (issueToUpdate.type === 'quality' || issueToUpdate.type === 'progress' || issueToUpdate.type === 'safety')) {
+        const baseScore = project?.qualityScore || 10;
+        const unresolvedIssues = updatedIssues.filter((issue: IssueRecord) => issue.status !== 'resolved');
+        
+        // 根據問題類型計算扣分
+        let issueDeduction = 0;
+        unresolvedIssues.forEach((issue: IssueRecord) => {
+          switch (issue.type) {
+            case 'progress':
+              issueDeduction += 0.5; // 進度問題扣 0.5 分
+              break;
+            case 'quality':
+              issueDeduction += 1; // 品質問題扣 1 分
+              break;
+            case 'safety':
+              issueDeduction += 2; // 安全問題扣 2 分
+              break;
+            case 'other':
+              issueDeduction += 0.1; // 其他問題扣 0.1 分
+              break;
+          }
+        });
+        
+        const newScore = Math.max(0, Math.min(10, baseScore - issueDeduction));
+        await updateProjectQualityScore(projectId, newScore);
+      }
     }, (error) => {
       alert(`更新問題狀態時出錯：${getErrorMessage(error)}`);
       logError(error, { operation: 'update_issue_status', projectId, issueId });
@@ -152,6 +222,18 @@ export default function ProjectIssuesPage() {
               專案問題追蹤
             </h1>
             <p className='text-gray-600 dark:text-gray-400 mt-2'>追蹤和管理專案中的各類問題</p>
+          </div>
+          {/* 品質分數顯示 */}
+          <div className='text-right'>
+            <div className='text-sm text-gray-500 dark:text-gray-400'>品質分數</div>
+            <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
+              {qualityScoreInfo.currentScore.toFixed(1)}/10
+            </div>
+            {qualityScoreInfo.qualityOrProgressIssuesCount > 0 && (
+              <div className='text-xs text-orange-600 dark:text-orange-400'>
+                {qualityScoreInfo.qualityOrProgressIssuesCount} 個品質/進度問題
+              </div>
+            )}
           </div>
         </div>
 

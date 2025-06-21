@@ -6,11 +6,13 @@
  * - 專案成員（經理、監工、安全人員、成本控制員）
  * - 專案地點和時間資訊
  * - 業主資訊
+ * - 品質分數
  */
 
 'use client';
 
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
+import { useQualityScore } from '@/hooks/useFilteredProjects';
 import type { AppUser } from '@/types/auth';
 import type { Project } from '@/types/project';
 import { formatLocalDate } from '@/utils/dateUtils';
@@ -32,6 +34,9 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
     if (!user) return '-';
     return `${user.displayName} (${ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})`;
   };
+
+  // 使用品質分數 hook
+  const qualityScoreInfo = useQualityScore(project);
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
@@ -92,6 +97,23 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
           <label className='text-sm font-medium text-gray-500 dark:text-gray-400'>預估結束日</label>
           <div className='mt-1 text-gray-900 dark:text-gray-100'>
             {project.estimatedEndDate ? formatLocalDate(project.estimatedEndDate) : '-'}
+          </div>
+        </div>
+        <div>
+          <label className='text-sm font-medium text-gray-500 dark:text-gray-400'>品質分數</label>
+          <div className='mt-1 flex items-center gap-2'>
+            <span className={`text-lg font-bold ${
+              qualityScoreInfo.currentScore >= 8 ? 'text-green-600 dark:text-green-400' :
+              qualityScoreInfo.currentScore >= 6 ? 'text-yellow-600 dark:text-yellow-400' :
+              'text-red-600 dark:text-red-400'
+            }`}>
+              {qualityScoreInfo.currentScore.toFixed(1)}/10
+            </span>
+            {qualityScoreInfo.qualityOrProgressIssuesCount > 0 && (
+              <span className='text-xs text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/20 px-2 py-1 rounded'>
+                {qualityScoreInfo.qualityOrProgressIssuesCount} 個問題
+              </span>
+            )}
           </div>
         </div>
       </div>

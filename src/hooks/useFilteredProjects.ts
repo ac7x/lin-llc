@@ -11,7 +11,10 @@ import type {
   ProjectPriority, 
   ProjectRiskLevel, 
   ProjectHealthLevel, 
-  ProjectPhase 
+  ProjectPhase,
+  Project,
+  IssueRecord,
+  DailyReport
 } from '@/types/project';
 import { formatDate } from '@/utils/dateUtils';
 
@@ -125,10 +128,10 @@ export function useFilteredProjects(
         constraints.push(orderBy('healthLevel', 'desc'));
         break;
       case 'qualityScore-asc':
-        constraints.push(orderBy('qualityMetrics.overallQualityScore', 'asc'));
+        constraints.push(orderBy('qualityScore', 'asc'));
         break;
       case 'qualityScore-desc':
-        constraints.push(orderBy('qualityMetrics.overallQualityScore', 'desc'));
+        constraints.push(orderBy('qualityScore', 'desc'));
         break;
       case 'budget-asc':
         constraints.push(orderBy('estimatedBudget', 'asc'));
@@ -158,16 +161,21 @@ export function useFilteredProjects(
 
     const mappedProjects = snapshot.docs.map((doc, idx) => {
       const data = doc.data();
+      const project = data as Project;
+      
+      // 使用動態狀態計算
+      const dynamicStatus = calculateDynamicProjectStatus(project);
+      
       return {
         id: doc.id,
         idx: idx + 1,
         projectName: data.projectName || doc.id,
         contractId: data.contractId,
         createdAt: formatDate(data.createdAt),
-        status: data.status,
+        status: dynamicStatus, // 使用動態計算的狀態
         projectType: data.projectType,
         priority: data.priority,
-        riskLevel: data.riskLevel,
+        riskLevel: calculateDynamicRiskLevel(project), // 使用動態計算的風險等級
         healthLevel: data.healthLevel,
         phase: data.phase,
         manager: data.manager,
@@ -177,12 +185,14 @@ export function useFilteredProjects(
         estimatedEndDate: data.estimatedEndDate,
         estimatedBudget: data.estimatedBudget,
         actualBudget: data.actualBudget,
+        qualityScore: data.qualityScore ?? 10,
         qualityMetrics: data.qualityMetrics,
         safetyMetrics: data.safetyMetrics,
         financialMetrics: data.financialMetrics,
         milestones: data.milestones,
         risks: data.risks,
         changes: data.changes,
+        issues: data.issues, // 添加問題追蹤欄位
       } as ProjectDocument;
     });
 
@@ -259,7 +269,7 @@ export function useFilteredProjects(
 
     if (filters.qualityRange) {
       filteredProjects = filteredProjects.filter(project => {
-        const qualityScore = project.qualityMetrics?.overallQualityScore || 0;
+        const qualityScore = project.qualityScore ?? 10;
         return qualityScore >= filters.qualityRange!.min && qualityScore <= filters.qualityRange!.max;
       });
     }
@@ -298,9 +308,9 @@ export function useFilteredProjects(
           case 'healthLevel-desc':
             return getHealthLevelWeight(b.healthLevel) - getHealthLevelWeight(a.healthLevel);
           case 'qualityScore-asc':
-            return (a.qualityMetrics?.overallQualityScore || 0) - (b.qualityMetrics?.overallQualityScore || 0);
+            return (a.qualityScore ?? 10) - (b.qualityScore ?? 10);
           case 'qualityScore-desc':
-            return (b.qualityMetrics?.overallQualityScore || 0) - (a.qualityMetrics?.overallQualityScore || 0);
+            return (b.qualityScore ?? 10) - (a.qualityScore ?? 10);
           case 'budget-asc':
             return (a.estimatedBudget || 0) - (b.estimatedBudget || 0);
           case 'budget-desc':
@@ -359,16 +369,88 @@ export function useProjectStats() {
     if (!snapshot) return null;
 
     const projects = snapshot.docs.map(doc => doc.data());
+    const now = new Date();
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
     
     const totalProjects = projects.length;
-    const activeProjects = projects.filter(p => p.status === 'in-progress').length;
-    const completedProjects = projects.filter(p => p.status === 'completed').length;
-    const onHoldProjects = projects.filter(p => p.status === 'on-hold').length;
-    const planningProjects = projects.filter(p => p.status === 'planning').length;
-    const approvedProjects = projects.filter(p => p.status === 'approved').length;
+    
+    // 計算已完成專案：從 projects 的 progress 欄位判斷
+    const completedProjects = projects.filter(project => {
+      return (project.progress || 0) >= 100;
+    }).length;
 
-    const totalProgress = projects.reduce((sum, p) => sum + (p.progress || 0), 0);
-    const averageProgress = totalProjects > 0 ? Math.round(totalProgress / totalProjects) : 0;
+    // 計算暫停中專案：reports 中最後一筆日誌的 updatedAt 超過 3 天沒有更新
+    const onHoldProjects = projects.filter(project => {
+      const reports = project.reports || [];
+      if (reports.length === 0) return true; // 沒有日誌 = 暫停中
+      
+      // 找到最新的日誌
+      const latestReport = reports.reduce((latest: DailyReport, current: DailyReport) => {
+        const latestDate = latest.updatedAt && typeof latest.updatedAt === 'object' && 'toDate' in latest.updatedAt
+          ? (latest.updatedAt as { toDate: () => Date }).toDate()
+          : new Date(latest.updatedAt as string);
+        const currentDate = current.updatedAt && typeof current.updatedAt === 'object' && 'toDate' in current.updatedAt
+          ? (current.updatedAt as { toDate: () => Date }).toDate()
+          : new Date(current.updatedAt as string);
+        return latestDate > currentDate ? latest : current;
+      });
+      
+      const latestReportDate = latestReport.updatedAt && typeof latestReport.updatedAt === 'object' && 'toDate' in latestReport.updatedAt
+        ? (latestReport.updatedAt as { toDate: () => Date }).toDate()
+        : new Date(latestReport.updatedAt as string);
+      
+      return latestReportDate < threeDaysAgo;
+    }).length;
+
+    // 計算執行中專案：reports 中最後一筆日誌的 updatedAt 在 3 天內有更新
+    const activeProjects = projects.filter(project => {
+      const reports = project.reports || [];
+      if (reports.length === 0) return false; // 沒有日誌 = 不是執行中
+      
+      // 找到最新的日誌
+      const latestReport = reports.reduce((latest: DailyReport, current: DailyReport) => {
+        const latestDate = latest.updatedAt && typeof latest.updatedAt === 'object' && 'toDate' in latest.updatedAt
+          ? (latest.updatedAt as { toDate: () => Date }).toDate()
+          : new Date(latest.updatedAt as string);
+        const currentDate = current.updatedAt && typeof current.updatedAt === 'object' && 'toDate' in current.updatedAt
+          ? (current.updatedAt as { toDate: () => Date }).toDate()
+          : new Date(current.updatedAt as string);
+        return latestDate > currentDate ? latest : current;
+      });
+      
+      const latestReportDate = latestReport.updatedAt && typeof latestReport.updatedAt === 'object' && 'toDate' in latestReport.updatedAt
+        ? (latestReport.updatedAt as { toDate: () => Date }).toDate()
+        : new Date(latestReport.updatedAt as string);
+      
+      return latestReportDate >= threeDaysAgo;
+    }).length;
+
+    // 計算逾期專案：estimatedEndDate 超過今天
+    const overdueProjects = projects.filter(project => {
+      if (!project.estimatedEndDate) return false;
+      const endDate = project.estimatedEndDate && typeof project.estimatedEndDate === 'object' && 'toDate' in project.estimatedEndDate
+        ? (project.estimatedEndDate as { toDate: () => Date }).toDate()
+        : new Date(project.estimatedEndDate as string);
+      return endDate < now;
+    }).length;
+
+    // 計算高風險專案：問題追蹤中有 1 個安全問題
+    const highRiskProjects = projects.filter(project => {
+      if (!project.issues || !Array.isArray(project.issues)) return false;
+      const safetyIssues = project.issues.filter(issue => issue.type === 'safety');
+      return safetyIssues.length >= 1;
+    }).length;
+
+    const planningProjects = projects.filter(p => {
+      const project = p as Project;
+      const dynamicStatus = calculateDynamicProjectStatus(project);
+      return dynamicStatus === 'planning';
+    }).length;
+    const approvedProjects = projects.filter(p => {
+      const project = p as Project;
+      const dynamicStatus = calculateDynamicProjectStatus(project);
+      return dynamicStatus === 'approved';
+    }).length;
 
     const riskDistribution = {
       low: projects.filter(p => p.riskLevel === 'low').length,
@@ -393,9 +475,34 @@ export function useProjectStats() {
       closure: projects.filter(p => p.phase === 'closure').length,
     };
 
-    const qualityScores = projects
-      .filter(p => p.qualityMetrics?.overallQualityScore)
-      .map(p => p.qualityMetrics.overallQualityScore);
+    // 計算平均品質分數 - 使用新的扣分標準
+    const qualityScores = projects.map(project => {
+      const baseScore = project.qualityScore ?? 10;
+      const issues = project.issues || [];
+      const unresolvedIssues = issues.filter((issue: IssueRecord) => issue.status !== 'resolved');
+      
+      // 根據問題類型計算扣分
+      let issueDeduction = 0;
+      unresolvedIssues.forEach((issue: IssueRecord) => {
+        switch (issue.type) {
+          case 'progress':
+            issueDeduction += 0.5; // 進度問題扣 0.5 分
+            break;
+          case 'quality':
+            issueDeduction += 1; // 品質問題扣 1 分
+            break;
+          case 'safety':
+            issueDeduction += 2; // 安全問題扣 2 分
+            break;
+          case 'other':
+            issueDeduction += 0.1; // 其他問題扣 0.1 分
+            break;
+        }
+      });
+      
+      return Math.max(0, Math.min(10, baseScore - issueDeduction));
+    });
+    
     const averageQualityScore = qualityScores.length > 0 
       ? Math.round(qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length)
       : 0;
@@ -404,15 +511,12 @@ export function useProjectStats() {
     const totalActualCost = projects.reduce((sum, p) => sum + (p.financialMetrics?.actualCost || 0), 0);
     const budgetVariance = totalBudget - totalActualCost;
 
-    const overdueProjects = projects.filter(p => {
-      if (!p.estimatedEndDate) return false;
-      const endDate = p.estimatedEndDate && typeof p.estimatedEndDate === 'object' && 'toDate' in p.estimatedEndDate
-        ? (p.estimatedEndDate as { toDate: () => Date }).toDate()
-        : new Date(p.estimatedEndDate as string);
-      return endDate < new Date() && p.status !== 'completed';
-    }).length;
-
-    const highRiskProjects = projects.filter(p => p.riskLevel === 'high' || p.riskLevel === 'critical').length;
+    // 計算所有專案的品質/進度問題總數
+    const totalQualityIssues = projects.reduce((sum, project) => {
+      const issues = project.issues || [];
+      const qualityOrProgressIssues = issues.filter((issue: IssueRecord) => issue.type === 'quality' || issue.type === 'progress');
+      return sum + qualityOrProgressIssues.length;
+    }, 0);
 
     return {
       totalProjects,
@@ -421,7 +525,6 @@ export function useProjectStats() {
       onHoldProjects,
       planningProjects,
       approvedProjects,
-      averageProgress,
       riskDistribution,
       healthDistribution,
       phaseDistribution,
@@ -431,8 +534,170 @@ export function useProjectStats() {
       budgetVariance,
       overdueProjects,
       highRiskProjects,
+      totalQualityIssues,
     };
   }, [snapshot]);
 
   return { stats, loading, error };
+}
+
+/**
+ * 品質分數管理 Hook
+ * 處理專案品質分數的計算和調整
+ * 工程問題本來就不該發生，直接根據問題追蹤扣分
+ */
+export function useQualityScore(project: Project | null) {
+  return useMemo(() => {
+    if (!project) {
+      return {
+        currentScore: 10,
+        baseScore: 10,
+        issueDeduction: 0,
+        qualityOrProgressIssuesCount: 0
+      };
+    }
+    
+    // 基礎品質分數
+    const baseScore = project.qualityScore ?? 10;
+    
+    // 檢查未解決的問題數量
+    const issues = project.issues || [];
+    const unresolvedIssues = issues.filter((issue: IssueRecord) => issue.status !== 'resolved');
+    
+    // 根據問題類型計算扣分
+    let issueDeduction = 0;
+    let qualityOrProgressIssuesCount = 0;
+    
+    unresolvedIssues.forEach((issue: IssueRecord) => {
+      switch (issue.type) {
+        case 'progress':
+          issueDeduction += 0.5; // 進度問題扣 0.5 分
+          qualityOrProgressIssuesCount++;
+          break;
+        case 'quality':
+          issueDeduction += 1; // 品質問題扣 1 分
+          qualityOrProgressIssuesCount++;
+          break;
+        case 'safety':
+          issueDeduction += 2; // 安全問題扣 2 分
+          break;
+        case 'other':
+          issueDeduction += 0.1; // 其他問題扣 0.1 分
+          break;
+      }
+    });
+    
+    // 計算最終分數，確保在 0-10 範圍內
+    const currentScore = Math.max(0, Math.min(10, baseScore - issueDeduction));
+    
+    return {
+      currentScore,
+      baseScore,
+      issueDeduction,
+      qualityOrProgressIssuesCount
+    };
+  }, [project]);
+}
+
+/**
+ * 更新專案品質分數
+ */
+export async function updateProjectQualityScore(projectId: string, newScore: number) {
+  const { db, doc, updateDoc, Timestamp } = await import('@/lib/firebase-client');
+  
+  try {
+    await updateDoc(doc(db, 'projects', projectId), {
+      qualityScore: newScore,
+      lastQualityAdjustment: Timestamp.now(),
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('更新品質分數失敗:', error);
+    throw error;
+  }
+}
+
+/**
+ * 根據日誌更新時間動態計算專案狀態
+ * 使用專案日誌的 updatedAt 來判斷專案是執行中還是暫停中
+ */
+export function calculateDynamicProjectStatus(project: Project): ProjectStatus {
+  // 如果專案已完成，保持 completed 狀態
+  if (project.progress && project.progress >= 100) {
+    return 'completed';
+  }
+  
+  // 如果專案已取消或封存，保持原有狀態
+  if (project.status === 'cancelled' || project.status === 'archived') {
+    return project.status;
+  }
+  
+  const reports = project.reports || [];
+  const now = new Date();
+  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  
+  // 沒有日誌記錄 = 暫停中
+  if (reports.length === 0) {
+    return 'on-hold';
+  }
+  
+  // 找到最新的日誌
+  const latestReport = reports.reduce((latest: DailyReport, current: DailyReport) => {
+    const latestDate = latest.updatedAt && typeof latest.updatedAt === 'object' && 'toDate' in latest.updatedAt
+      ? (latest.updatedAt as { toDate: () => Date }).toDate()
+      : new Date(latest.updatedAt as string);
+    const currentDate = current.updatedAt && typeof current.updatedAt === 'object' && 'toDate' in current.updatedAt
+      ? (current.updatedAt as { toDate: () => Date }).toDate()
+      : new Date(current.updatedAt as string);
+    return latestDate > currentDate ? latest : current;
+  });
+  
+  const latestReportDate = latestReport.updatedAt && typeof latestReport.updatedAt === 'object' && 'toDate' in latestReport.updatedAt
+    ? (latestReport.updatedAt as { toDate: () => Date }).toDate()
+    : new Date(latestReport.updatedAt as string);
+  
+  // 最近 3 天內有日誌更新 = 執行中
+  if (latestReportDate >= threeDaysAgo) {
+    return 'in-progress';
+  }
+  
+  // 超過 3 天沒有日誌更新 = 暫停中
+  return 'on-hold';
+}
+
+/**
+ * 根據品質分數扣分計算動態風險等級
+ * 品質分數越低，風險等級越高
+ */
+function calculateDynamicRiskLevel(project: Project): ProjectRiskLevel {
+  const baseScore = project.qualityScore ?? 10;
+  const issues = project.issues || [];
+  const unresolvedIssues = issues.filter((issue: IssueRecord) => issue.status !== 'resolved');
+  
+  // 根據問題類型計算扣分
+  let issueDeduction = 0;
+  unresolvedIssues.forEach((issue: IssueRecord) => {
+    switch (issue.type) {
+      case 'progress':
+        issueDeduction += 0.5; // 進度問題扣 0.5 分
+        break;
+      case 'quality':
+        issueDeduction += 1; // 品質問題扣 1 分
+        break;
+      case 'safety':
+        issueDeduction += 2; // 安全問題扣 2 分
+        break;
+      case 'other':
+        issueDeduction += 0.1; // 其他問題扣 0.1 分
+        break;
+    }
+  });
+  
+  const currentScore = Math.max(0, Math.min(10, baseScore - issueDeduction));
+  
+  // 根據當前品質分數決定風險等級
+  if (currentScore >= 8) return 'low';
+  if (currentScore >= 6) return 'medium';
+  if (currentScore >= 4) return 'high';
+  return 'critical';
 }
