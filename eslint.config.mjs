@@ -17,6 +17,8 @@ const eslintConfig = [
       "src/lib/firebase-config.ts",
       "src/lib/firebase-context.tsx",
       "src/app/test-projects/**",
+      "src/app/test/**",
+      "src/modules/test-projects/**",
     ],
   },
   {
