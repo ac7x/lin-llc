@@ -531,7 +531,6 @@ export interface Project extends BaseWithDates {
  
   // 核心資料
   workPackages: WorkPackage[];
-  workpackages: WorkPackage[];
   decomposition?: object;
  
   // 報告與記錄
@@ -591,7 +590,7 @@ export interface Project extends BaseWithDates {
 }
 
 export const calculateProjectProgress = (project: Project): number => {
-  const workPackages = project.workPackages || project.workpackages || [];
+  const workPackages = project.workPackages || [];
   const totalWeight = workPackages.reduce((sum, wp) => sum + wp.budget, 0);
 
   const weightedProgress = workPackages.reduce(
@@ -755,20 +754,7 @@ export const mapProjectFromFirestore = (raw: any): Project => {
       workUpdates: log.workUpdates ?? [],
     })),
 
-    workPackages: (raw.workPackages ?? []).map((wp: any) => ({
-      id: wp.id,
-      budget: wp.budget,
-      quantity: wp.quantity,
-      subPackages: (wp.subPackages ?? []).map((sub: any) => ({
-        id: sub.id,
-        quantity: sub.quantity,
-        unitWeight: sub.unitWeight,
-        completedUnits: sub.completedUnits,
-        progress: calculateSubProgress(sub),
-        workers: sub.workers ?? [],
-      })),
-    })),
-    workpackages: (raw.workpackages ?? raw.workPackages ?? []).map((wp: any) => ({
+    workPackages: (raw.workpackages ?? raw.workPackages ?? []).map((wp: any) => ({
       id: wp.id,
       budget: wp.budget,
       quantity: wp.quantity,

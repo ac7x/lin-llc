@@ -3,18 +3,19 @@
  * 提供專案品質評分和趨勢分析功能
  */
 
-import type { Project, Workpackage } from '../types';
+import type { Project, WorkPackage } from '../types';
 
 /**
  * 計算品質評分
  */
 export function calculateQualityScore(project: Project): number {
-  if (!project.workpackages || project.workpackages.length === 0) return 0;
+  const workPackages = project.workPackages || [];
+  if (workPackages.length === 0) return 0;
 
   let totalScore = 0;
   let validWorkpackages = 0;
 
-  for (const wp of project.workpackages) {
+  for (const wp of workPackages) {
     if (wp.qualityMetrics) {
       const wpScore = calculateWorkpackageQualityScore(wp);
       if (wpScore > 0) {
@@ -31,7 +32,7 @@ export function calculateQualityScore(project: Project): number {
 /**
  * 計算工作包品質評分
  */
-function calculateWorkpackageQualityScore(wp: Workpackage): number {
+function calculateWorkpackageQualityScore(wp: WorkPackage): number {
   if (!wp.qualityMetrics) return 0;
 
   const { inspectionPassRate, defectRate, reworkPercentage } = wp.qualityMetrics;

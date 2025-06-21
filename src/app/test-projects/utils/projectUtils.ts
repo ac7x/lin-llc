@@ -28,12 +28,13 @@ import { convertToDate } from './dateUtils';
  * 計算專案進度百分比（根據所有 subWorkpackages 的實際完成數量計算）
  */
 function calculateProjectProgress(project: Project): number {
-  if (!project.workpackages || project.workpackages.length === 0) return 0;
+  const workPackages = project.workPackages || [];
+  if (workPackages.length === 0) return 0;
   
   let totalEstimated = 0;
   let totalActual = 0;
 
-  for (const wp of project.workpackages) {
+  for (const wp of workPackages) {
     if (!wp.subPackages || wp.subPackages.length === 0) continue;
     for (const sub of wp.subPackages) {
       const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
@@ -147,12 +148,13 @@ function getImpactWeight(impact: string): number {
  * 基於工作包的品質指標
  */
 export function calculateProjectQualityScore(project: Project): number {
-  if (!project.workpackages || project.workpackages.length === 0) return 0;
+  const workPackages = project.workPackages || [];
+  if (workPackages.length === 0) return 0;
 
   let totalScore = 0;
   let validWorkpackages = 0;
 
-  for (const wp of project.workpackages) {
+  for (const wp of workPackages) {
     if (wp.qualityMetrics) {
       const wpScore = calculateWorkpackageQualityScore(wp);
       if (wpScore > 0) {

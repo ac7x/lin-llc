@@ -118,8 +118,8 @@ import { projectStyles } from '@/app/test-projects/styles';
 
 // 導入型別
 import type {
-  Workpackage,
-  SubWorkpackage,
+  WorkPackage,
+  SubWorkPackage,
   IssueRecord,
   Template,
   ProjectDocument,
@@ -156,8 +156,8 @@ export default function TestPage() {
   // 真實數據狀態
   const [projects, setProjects] = useState<ProjectDocument[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectDocument | null>(null);
-  const [workpackages, setWorkpackages] = useState<Workpackage[]>([]);
-  const [subWorkpackages, setSubWorkpackages] = useState<SubWorkpackage[]>([]);
+  const [workpackages, setWorkpackages] = useState<WorkPackage[]>([]);
+  const [subWorkpackages, setSubWorkpackages] = useState<SubWorkPackage[]>([]);
   const [issues, setIssues] = useState<IssueRecord[]>([]);
   const [_setExpenses, setExpenses] = useState<Expense[]>([]);
   const [_setMaterials, setMaterials] = useState<MaterialEntry[]>([]);
@@ -177,8 +177,8 @@ export default function TestPage() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<MaterialEntry | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
-  const [editingWorkpackage, setEditingWorkpackage] = useState<Workpackage | null>(null);
-  const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkpackage | null>(null);
+  const [editingWorkpackage, setEditingWorkpackage] = useState<WorkPackage | null>(null);
+  const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkPackage | null>(null);
 
   // 合約生成專案相關狀態
   const [_contracts, setContracts] = useState<Array<{
@@ -442,7 +442,7 @@ export default function TestPage() {
   };
 
   // 將合約項目轉換為工作包
-  const convertContractItemsToWorkpackages = (contractItems: ContractItem[]): Workpackage[] => {
+  const convertContractItemsToWorkpackages = (contractItems: ContractItem[]): WorkPackage[] => {
     if (!contractItems || !Array.isArray(contractItems) || contractItems.length === 0) {
       return [];
     }
@@ -458,7 +458,7 @@ export default function TestPage() {
       const workpackageName = `項目 ${item.contractItemId}`;
       const workpackageDescription = `合約項目 ${item.contractItemId} - 數量: ${item.contractItemQuantity}${item.contractItemWeight ? `, 權重: ${item.contractItemWeight}` : ''}`;
 
-      const workpackage: Workpackage = {
+      const workpackage: WorkPackage = {
         id,
         name: workpackageName,
         description: workpackageDescription,
@@ -469,7 +469,7 @@ export default function TestPage() {
         budget: totalPrice, // 使用總價（單價 × 數量）
         category: '合約項目',
         priority: 'medium',
-        subWorkpackages: [],
+        subPackages: [],
         // 可以根據權重設定優先級
         ...(item.contractItemWeight && item.contractItemWeight > 0.7 ? { priority: 'high' as const } : {}),
         ...(item.contractItemWeight && item.contractItemWeight < 0.3 ? { priority: 'low' as const } : {}),
