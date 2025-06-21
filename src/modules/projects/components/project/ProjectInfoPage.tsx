@@ -8,15 +8,15 @@
 
 import { useState, useEffect } from 'react';
 
-import type { Project } from '@/modules/projects/types/project';
 import { collection, query, getDocs, db } from '@/lib/firebase-client';
+import type { Project } from '@/modules/projects/types/project';
 import type { AppUser } from '@/types/auth';
 import { cn, cardStyles, buttonStyles } from '@/utils/classNameUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
+import WorkpackageList from '../work-packages/WorkpackageList';
 import ProjectEditModal from './ProjectEditModal';
 import ProjectInfoDisplay from './ProjectInfoDisplay';
-import WorkpackageList from '../work-packages/WorkpackageList';
 
 interface ProjectInfoPageProps {
   project: Project;

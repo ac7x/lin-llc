@@ -12,8 +12,8 @@
 
 import { useState, useMemo } from 'react';
 
-import type { ProjectRisk } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { ProjectRisk } from '@/modules/projects/types/project';
 
 interface RiskManagerProps {
   risks: ProjectRisk[];
@@ -136,7 +136,7 @@ export default function RiskManager({
 
   // 篩選和排序風險
   const filteredAndSortedRisks = useMemo(() => {
-    let filtered = risks.filter(risk => {
+    const filtered = risks.filter(risk => {
       // 狀態篩選
       if (statusFilter !== 'all' && risk.status !== statusFilter) {
         return false;

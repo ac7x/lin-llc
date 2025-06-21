@@ -13,11 +13,11 @@
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { useState } from 'react';
 
-import { AddressSelector } from '@/modules/projects/components/common';
-import type { Project } from '@/modules/projects/types/project';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
+import { AddressSelector } from '@/modules/projects/components/common';
+import type { Project } from '@/modules/projects/types/project';
 import type { AppUser } from '@/types/auth';
 import { cn, modalStyles, formStyles, inputStyles, buttonStyles, loadingStyles, alertStyles } from '@/utils/classNameUtils';
 import { formatDateForInput } from '@/utils/dateUtils';

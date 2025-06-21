@@ -11,11 +11,11 @@
 
 'use client';
 
-import { useState } from 'react';
 import type { Timestamp } from 'firebase/firestore';
+import { useState } from 'react';
 
-import type { Expense } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { Expense } from '@/modules/projects/types/project';
 
 interface ExpenseFormProps {
   expense?: Expense;

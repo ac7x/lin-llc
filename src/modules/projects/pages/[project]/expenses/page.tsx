@@ -4,13 +4,13 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
-import { projectStyles } from '@/modules/projects/styles';
 import { PageContainer, PageHeader } from '@/modules/projects/components/common';
 import { ExpenseForm, ExpenseList } from '@/modules/projects/components/expenses';
 import { ProjectService } from '@/modules/projects/services/projectService';
+import { projectStyles } from '@/modules/projects/styles';
 import type { Project } from '@/modules/projects/types/project';
 
 export default function ProjectExpensesPage() {

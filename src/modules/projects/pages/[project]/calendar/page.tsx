@@ -10,14 +10,14 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
-import { projectStyles } from '@/modules/projects/styles';
-import { PageContainer, PageHeader } from '@/modules/projects/components/common';
 import { CalendarView } from '@/modules/projects/components/calendar';
+import { PageContainer, PageHeader } from '@/modules/projects/components/common';
 import { ProjectService } from '@/modules/projects/services/projectService';
 import { WorkpackageService } from '@/modules/projects/services/workpackageService';
+import { projectStyles } from '@/modules/projects/styles';
 import type { Project, Workpackage } from '@/modules/projects/types/project';
 
 export default function ProjectCalendarPage() {

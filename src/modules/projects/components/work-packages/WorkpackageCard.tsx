@@ -13,8 +13,8 @@
 
 import { useState } from 'react';
 
-import type { Workpackage } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { Workpackage } from '@/modules/projects/types/project';
 
 interface WorkpackageCardProps {
   workpackage: Workpackage;

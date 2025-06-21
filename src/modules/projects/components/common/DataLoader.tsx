@@ -1,5 +1,5 @@
-import LoadingSpinner from './LoadingSpinner';
 import { projectStyles } from '../../styles';
+import LoadingSpinner from './LoadingSpinner';
 
 interface DataLoaderProps<T> {
   loading: boolean;

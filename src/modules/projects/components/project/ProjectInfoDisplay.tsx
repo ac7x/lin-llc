@@ -13,9 +13,9 @@
 
 import { useState, useEffect } from 'react';
 
+import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { AddressSelector } from '@/modules/projects/components/common';
 import type { Project } from '@/modules/projects/types/project';
-import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
 import { cn, getQualityColor } from '@/utils/classNameUtils';
 import { formatLocalDate } from '@/utils/dateUtils';
@@ -118,7 +118,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
             <label className="block text-sm font-medium text-gray-700">品質分數</label>
             <div className="mt-1 flex items-center">
               <span className={cn(
-                "text-sm font-medium",
+                'text-sm font-medium',
                 getQualityColor(qualityScore)
               )}>
                 {qualityScore}%
@@ -126,7 +126,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
               <div className="ml-2 flex-1 bg-gray-200 rounded-full h-2">
                 <div
                   className={cn(
-                    "h-2 rounded-full transition-all duration-300",
+                    'h-2 rounded-full transition-all duration-300',
                     getQualityColor(qualityScore).replace('text-', 'bg-')
                   )}
                   style={{ width: `${qualityScore}%` }}

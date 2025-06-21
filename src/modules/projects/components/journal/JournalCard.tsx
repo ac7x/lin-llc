@@ -13,8 +13,8 @@
 
 import { useState } from 'react';
 
-import type { BaseWithId } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { BaseWithId } from '@/modules/projects/types/project';
 
 // 日誌條目介面
 interface JournalEntry extends BaseWithId {

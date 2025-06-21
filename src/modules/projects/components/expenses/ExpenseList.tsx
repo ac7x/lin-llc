@@ -10,11 +10,11 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
 import type { Timestamp } from 'firebase/firestore';
+import { useState, useMemo } from 'react';
 
-import type { Expense } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { Expense } from '@/modules/projects/types/project';
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -80,7 +80,7 @@ export default function ExpenseList({
 
   // 篩選和排序費用
   const filteredAndSortedExpenses = useMemo(() => {
-    let filtered = expenses.filter(expense => {
+    const filtered = expenses.filter(expense => {
       const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
       return matchesSearch && matchesCategory;

@@ -10,15 +10,15 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 
 import { doc, getDoc } from 'firebase/firestore';
-import type { Project } from '@/modules/projects/types/project';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase-client';
-import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { LoadingSpinner, DataLoader } from '@/modules/projects/components/common';
 import { ProjectDashboard } from '@/modules/projects/components/dashboard';
+import type { Project } from '@/modules/projects/types/project';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import ProjectInfoPage from '@/modules/projects/components/ProjectInfoPage';
 
 interface ProjectWithId extends Project {

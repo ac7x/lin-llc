@@ -12,8 +12,8 @@
 
 import { useState, useMemo } from 'react';
 
-import type { SubWorkpackage } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { SubWorkpackage } from '@/modules/projects/types/project';
 import SubWorkpackageCard from './SubWorkpackageCard';
 
 interface SubWorkpackageListProps {
@@ -52,7 +52,7 @@ export default function SubWorkpackageList({
 
   // 篩選和排序子工作包
   const filteredAndSortedSubWorkpackages = useMemo(() => {
-    let filtered = subWorkpackages.filter(sub => {
+    const filtered = subWorkpackages.filter(sub => {
       // 狀態篩選
       if (statusFilter !== 'all' && sub.status !== statusFilter) {
         return false;

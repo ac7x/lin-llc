@@ -11,11 +11,11 @@
 
 'use client';
 
-import { useState } from 'react';
 import type { Timestamp } from 'firebase/firestore';
+import { useState } from 'react';
 
-import type { IssueRecord } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { IssueRecord } from '@/modules/projects/types/project';
 
 interface IssueFormProps {
   issue?: IssueRecord;

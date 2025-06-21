@@ -11,11 +11,11 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
 import type { Timestamp } from 'firebase/firestore';
+import { useState, useMemo } from 'react';
 
-import type { IssueRecord } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { IssueRecord } from '@/modules/projects/types/project';
 
 interface IssueListProps {
   issues: IssueRecord[];
@@ -108,7 +108,7 @@ export default function IssueList({
 
   // 篩選和排序問題
   const filteredAndSortedIssues = useMemo(() => {
-    let filtered = issues.filter(issue => {
+    const filtered = issues.filter(issue => {
       const matchesSearch = issue.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = typeFilter === 'all' || issue.type === typeFilter;
       const matchesSeverity = severityFilter === 'all' || issue.severity === severityFilter;

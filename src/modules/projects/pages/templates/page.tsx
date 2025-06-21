@@ -11,12 +11,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
-import { projectStyles } from '@/modules/projects/styles';
 import { PageContainer, PageHeader } from '@/modules/projects/components/common';
 import { TemplateService } from '@/modules/projects/services/templateService';
+import { projectStyles } from '@/modules/projects/styles';
 import type { Template } from '@/modules/projects/types/project';
 
 export default function TemplatesPage() {

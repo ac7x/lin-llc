@@ -12,8 +12,8 @@
 
 import { useState, useMemo } from 'react';
 
-import type { MaterialEntry } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { MaterialEntry } from '@/modules/projects/types/project';
 
 interface MaterialListProps {
   materials: MaterialEntry[];
@@ -49,7 +49,7 @@ export default function MaterialList({
 
   // 篩選和排序材料
   const filteredAndSortedMaterials = useMemo(() => {
-    let filtered = materials.filter(material => {
+    const filtered = materials.filter(material => {
       const matchesSearch = material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            material.materialId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            material.supplier.toLowerCase().includes(searchTerm.toLowerCase());

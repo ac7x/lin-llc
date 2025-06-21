@@ -12,8 +12,8 @@
 
 import { useState, useMemo } from 'react';
 
-import type { IssueRecord } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { IssueRecord } from '@/modules/projects/types/project';
 
 interface IssueTrackerProps {
   issues: IssueRecord[];
@@ -110,7 +110,7 @@ export default function IssueTracker({
 
   // 篩選和排序問題
   const filteredAndSortedIssues = useMemo(() => {
-    let filtered = issues.filter(issue => {
+    const filtered = issues.filter(issue => {
       // 狀態篩選
       if (statusFilter !== 'all' && issue.status !== statusFilter) {
         return false;

@@ -12,8 +12,8 @@
 
 import { useState } from 'react';
 
-import type { MaterialEntry } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { MaterialEntry } from '@/modules/projects/types/project';
 
 interface MaterialFormProps {
   material?: MaterialEntry;

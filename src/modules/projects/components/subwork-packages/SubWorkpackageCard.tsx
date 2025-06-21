@@ -13,8 +13,8 @@
 
 import { useState } from 'react';
 
-import type { SubWorkpackage } from '@/modules/projects/types/project';
 import { projectStyles } from '@/modules/projects/styles';
+import type { SubWorkpackage } from '@/modules/projects/types/project';
 
 interface SubWorkpackageCardProps {
   subWorkpackage: SubWorkpackage;

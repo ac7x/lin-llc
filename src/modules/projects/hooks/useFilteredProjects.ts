@@ -16,8 +16,8 @@ import type {
   ProjectSortOption,
   ProjectStats
 } from '../types/project';
-import { calculateProjectQualityScore } from '../utils/projectUtils';
 import { convertToDate } from '../utils/dateUtils';
+import { calculateProjectQualityScore } from '../utils/projectUtils';
 
 interface UseFilteredProjectsReturn {
   filteredProjects: ProjectDocument[];

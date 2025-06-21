@@ -10,13 +10,13 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
-import { projectStyles } from '@/modules/projects/styles';
 import { PageContainer, PageHeader } from '@/modules/projects/components/common';
 import { ProjectService } from '@/modules/projects/services/projectService';
 import { WorkpackageService } from '@/modules/projects/services/workpackageService';
+import { projectStyles } from '@/modules/projects/styles';
 import type { Project, Template } from '@/modules/projects/types/project';
 
 interface Contract {
