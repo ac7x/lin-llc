@@ -5,6 +5,7 @@
  */
 
 import type { Messaging } from 'firebase/messaging';
+
 import { useEffect, useState, useCallback } from 'react';
 import { firebaseApp } from '@/lib/firebase-client';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
