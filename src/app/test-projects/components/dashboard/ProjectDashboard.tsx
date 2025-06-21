@@ -1,13 +1,8 @@
 import { projectStyles } from '../../styles';
+import type { Project } from '@/app/test-projects/types/project';
 
 interface ProjectDashboardProps {
-  project?: {
-    id: string;
-    projectName: string;
-    status: string;
-    progress?: number;
-    [key: string]: string | number | undefined;
-  };
+  project?: Pick<Project, 'id' | 'projectName' | 'status' | 'progress'>;
 }
 
 export default function ProjectDashboard({ project }: ProjectDashboardProps) {
@@ -22,6 +17,11 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
     );
   }
 
+  // 狀態顯示處理
+  const statusText = Array.isArray(project.status)
+    ? project.status.join('、')
+    : project.status;
+
   return (
     <div className="space-y-6">
       {/* 專案概覽 */}
@@ -32,12 +32,12 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
               {project.projectName}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              專案狀態: {project.status}
+              專案狀態: {statusText}
             </p>
           </div>
           <div className="flex items-center space-x-3">
             <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 rounded-full">
-              {project.status}
+              {statusText}
             </span>
           </div>
         </div>

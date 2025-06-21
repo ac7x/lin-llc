@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/test-projects/components/common';
 import { WorkpackageList, WorkpackageForm } from '@/app/test-projects/components/work-packages';
 import { WorkpackageService } from '@/app/test-projects/services';
-import type { Project, Workpackage } from '@/app/test-projects/types/project';
+import type { Project, WorkPackage } from '@/app/test-projects/types/project';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/test-projects/styles';
 
@@ -30,11 +30,11 @@ export default function ProjectWorkpackagesPage() {
   const projectId = params.project as string;
   
   const [project, setProject] = useState<ProjectWithId | null>(null);
-  const [workpackages, setWorkpackages] = useState<Workpackage[]>([]);
+  const [workpackages, setWorkpackages] = useState<WorkPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showWorkpackageForm, setShowWorkpackageForm] = useState(false);
-  const [editingWorkpackage, setEditingWorkpackage] = useState<Workpackage | null>(null);
+  const [editingWorkpackage, setEditingWorkpackage] = useState<WorkPackage | null>(null);
 
   // 載入專案資料
   const loadProject = async () => {
@@ -86,7 +86,7 @@ export default function ProjectWorkpackagesPage() {
   }, [project]);
 
   // 處理新增工作包
-  const handleCreateWorkpackage = async (workpackageData: Partial<Workpackage>) => {
+  const handleCreateWorkpackage = async (workpackageData: Partial<WorkPackage>) => {
     if (!projectId) return;
     
     try {
@@ -100,7 +100,7 @@ export default function ProjectWorkpackagesPage() {
   };
 
   // 處理編輯工作包
-  const handleEditWorkpackage = async (workpackageData: Partial<Workpackage>) => {
+  const handleEditWorkpackage = async (workpackageData: Partial<WorkPackage>) => {
     if (!editingWorkpackage) return;
     
     try {

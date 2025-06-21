@@ -13,20 +13,20 @@
 import { useState, useMemo } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { ProjectMilestone, Workpackage } from '@/app/test-projects/types/project';
+import type { ProjectMilestone, WorkPackage } from '@/app/test-projects/types/project';
 
 interface CalendarViewProps {
   milestones?: ProjectMilestone[];
-  workpackages?: Workpackage[];
+  workpackages?: WorkPackage[];
   projectId: string;
   onDateClick?: (date: Date) => void;
   onMilestoneClick?: (milestone: ProjectMilestone) => void;
-  onWorkpackageClick?: (workpackage: Workpackage) => void;
+  onWorkpackageClick?: (workpackage: WorkPackage) => void;
 }
 
 interface CalendarEvent {
   type: 'milestone' | 'workpackage-start' | 'workpackage-end';
-  data: ProjectMilestone | Workpackage;
+  data: ProjectMilestone | WorkPackage;
   color: string;
 }
 
@@ -255,7 +255,7 @@ export default function CalendarView({
                         if (event.type === 'milestone') {
                           onMilestoneClick?.(event.data as ProjectMilestone);
                         } else {
-                          onWorkpackageClick?.(event.data as Workpackage);
+                          onWorkpackageClick?.(event.data as WorkPackage);
                         }
                       }}
                       className={`
@@ -265,12 +265,12 @@ export default function CalendarView({
                       title={
                         event.type === 'milestone' 
                           ? `里程碑: ${(event.data as ProjectMilestone).name}`
-                          : `工作包: ${(event.data as Workpackage).name}`
+                          : `工作包: ${(event.data as WorkPackage).name}`
                       }
                     >
                       {event.type === 'milestone' 
                         ? (event.data as ProjectMilestone).name
-                        : (event.data as Workpackage).name
+                        : (event.data as WorkPackage).name
                       }
                     </div>
                   ))}

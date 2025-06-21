@@ -13,14 +13,14 @@
 import { useState, useMemo } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { SubWorkpackage } from '@/app/test-projects/types/project';
+import type { SubWorkPackage } from '@/app/test-projects/types/project';
 import SubWorkpackageCard from './SubWorkpackageCard';
 
 interface SubWorkpackageListProps {
-  subWorkpackages: SubWorkpackage[];
+  subWorkpackages: SubWorkPackage[];
   workpackageId: string;
   onAddSubWorkpackage?: () => void;
-  onEditSubWorkpackage?: (subWorkpackage: SubWorkpackage) => void;
+  onEditSubWorkpackage?: (subWorkpackage: SubWorkPackage) => void;
   onDeleteSubWorkpackage?: (subWorkpackageId: string) => void;
   onViewSubWorkpackageDetails?: (subWorkpackageId: string) => void;
 }
@@ -42,7 +42,7 @@ export default function SubWorkpackageList({
   const [searchTerm, setSearchTerm] = useState('');
 
   // 計算子工作包進度
-  const calculateSubWorkpackageProgress = (sub: SubWorkpackage): number => {
+  const calculateSubWorkpackageProgress = (sub: SubWorkPackage): number => {
     const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
     if (estimated === 0) return 0;
     

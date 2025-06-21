@@ -6,16 +6,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { Project, ProjectFilters, ProjectSortOption, ProjectStats } from '@/app/test-projects/types/project';
-import { 
-  calculateProjectQualityScore,
-  calculateSchedulePerformanceIndex,
-  calculateCostPerformanceIndex,
-  getUpcomingMilestones,
-  getOverdueMilestones,
-  analyzeProjectStatusTrend,
-  calculateProjectPriorityScore
-} from '@/app/test-projects/utils/projectUtils';
+import type { Project, ProjectFilters, ProjectSortOption, ProjectStats, ProjectStatus } from '@/app/test-projects/types/project';
 
 interface UseFilteredProjectsReturn {
   filteredProjects: Project[];
@@ -27,6 +18,39 @@ interface UseFilteredProjectsReturn {
     totalIssuesCount: number;
   };
 }
+
+// 輔助函式：檢查專案狀態是否匹配
+const isProjectStatusMatch = (projectStatus: ProjectStatus | string[], filterStatus: ProjectStatus): boolean => {
+  if (Array.isArray(projectStatus)) {
+    return projectStatus.includes(filterStatus);
+  }
+  return projectStatus === filterStatus;
+};
+
+// 輔助函式：檢查專案是否為活躍狀態
+const isProjectActive = (projectStatus: ProjectStatus | string[]): boolean => {
+  const activeStatuses: ProjectStatus[] = ['planning', 'approved', 'in-progress'];
+  if (Array.isArray(projectStatus)) {
+    return projectStatus.some(status => activeStatuses.includes(status as ProjectStatus));
+  }
+  return activeStatuses.includes(projectStatus as ProjectStatus);
+};
+
+// 輔助函式：檢查專案是否完成
+const isProjectCompleted = (projectStatus: ProjectStatus | string[]): boolean => {
+  if (Array.isArray(projectStatus)) {
+    return projectStatus.includes('completed');
+  }
+  return projectStatus === 'completed';
+};
+
+// 輔助函式：檢查專案是否暫停
+const isProjectOnHold = (projectStatus: ProjectStatus | string[]): boolean => {
+  if (Array.isArray(projectStatus)) {
+    return projectStatus.includes('on-hold');
+  }
+  return projectStatus === 'on-hold';
+};
 
 export function useFilteredProjects(
   projects: Project[],
@@ -50,7 +74,7 @@ export function useFilteredProjects(
 
     // 狀態過濾
     if (filters.status) {
-      result = result.filter(project => project.status === filters.status);
+      result = result.filter(project => isProjectStatusMatch(project.status, filters.status!));
     }
 
     // 專案類型過濾
@@ -175,18 +199,16 @@ export function useFilteredProjects(
 
   const projectStats = useMemo((): ProjectStats => {
     const totalProjects = projects.length;
-    const activeProjects = projects.filter(p => 
-      ['planning', 'approved', 'in-progress'].includes(p.status)
-    ).length;
-    const completedProjects = projects.filter(p => p.status === 'completed').length;
-    const onHoldProjects = projects.filter(p => p.status === 'on-hold').length;
+    const activeProjects = projects.filter(p => isProjectActive(p.status)).length;
+    const completedProjects = projects.filter(p => isProjectCompleted(p.status)).length;
+    const onHoldProjects = projects.filter(p => isProjectOnHold(p.status)).length;
     const overdueProjects = projects.filter(p => {
       const endDate = p.estimatedEndDate ? 
         (p.estimatedEndDate instanceof Date ? p.estimatedEndDate : 
          typeof p.estimatedEndDate === 'string' ? new Date(p.estimatedEndDate) :
          p.estimatedEndDate?.toDate?.() || new Date()) : null;
       if (!endDate) return false;
-      return endDate < new Date() && p.status !== 'completed';
+      return endDate < new Date() && !isProjectCompleted(p.status);
     }).length;
     
     const totalQualityIssues = projects.reduce((sum, project) => {
@@ -214,9 +236,10 @@ export function useFilteredProjects(
     const baseScore = 10; // 基礎品質分數
     const qualityOrProgressIssuesCount = projects.reduce((sum, project) => {
       const issues = project.issues || [];
-      return sum + issues.filter(issue => 
-        issue.type === 'quality' || issue.type === 'progress'
-      ).length;
+      return sum + issues.filter(issue => {
+        // 檢查 issue 是否有 type 屬性（IssueRecord 有，ProjectIssue 沒有）
+        return 'type' in issue && (issue.type === 'quality' || issue.type === 'progress');
+      }).length;
     }, 0);
 
     const totalIssuesCount = projects.reduce((sum, project) => {
@@ -242,18 +265,16 @@ export function useFilteredProjects(
 export function useProjectStats(projects: Project[]): ProjectStats {
   return useMemo((): ProjectStats => {
     const totalProjects = projects.length;
-    const activeProjects = projects.filter(p => 
-      ['planning', 'approved', 'in-progress'].includes(p.status)
-    ).length;
-    const completedProjects = projects.filter(p => p.status === 'completed').length;
-    const onHoldProjects = projects.filter(p => p.status === 'on-hold').length;
+    const activeProjects = projects.filter(p => isProjectActive(p.status)).length;
+    const completedProjects = projects.filter(p => isProjectCompleted(p.status)).length;
+    const onHoldProjects = projects.filter(p => isProjectOnHold(p.status)).length;
     const overdueProjects = projects.filter(p => {
       const endDate = p.estimatedEndDate ? 
         (p.estimatedEndDate instanceof Date ? p.estimatedEndDate : 
          typeof p.estimatedEndDate === 'string' ? new Date(p.estimatedEndDate) :
          p.estimatedEndDate?.toDate?.() || new Date()) : null;
       if (!endDate) return false;
-      return endDate < new Date() && p.status !== 'completed';
+      return endDate < new Date() && !isProjectCompleted(p.status);
     }).length;
     
     const totalQualityIssues = projects.reduce((sum, project) => {
@@ -288,9 +309,10 @@ export function useQualityScore(projects: Project[]): {
     const baseScore = 10; // 基礎品質分數
     const qualityOrProgressIssuesCount = projects.reduce((sum, project) => {
       const issues = project.issues || [];
-      return sum + issues.filter(issue => 
-        issue.type === 'quality' || issue.type === 'progress'
-      ).length;
+      return sum + issues.filter(issue => {
+        // 檢查 issue 是否有 type 屬性（IssueRecord 有，ProjectIssue 沒有）
+        return 'type' in issue && (issue.type === 'quality' || issue.type === 'progress');
+      }).length;
     }, 0);
 
     const totalIssuesCount = projects.reduce((sum, project) => {
@@ -328,16 +350,16 @@ const fetchProjectStats = async (): Promise<ProjectStats> => {
     
     return {
       totalProjects: projects.length,
-      activeProjects: projects.filter(p => p.status === 'in-progress').length,
-      completedProjects: projects.filter(p => p.status === 'completed').length,
-      onHoldProjects: projects.filter(p => p.status === 'on-hold').length,
+      activeProjects: projects.filter(p => isProjectActive(p.status)).length,
+      completedProjects: projects.filter(p => isProjectCompleted(p.status)).length,
+      onHoldProjects: projects.filter(p => isProjectOnHold(p.status)).length,
       overdueProjects: projects.filter(p => {
         const endDate = p.estimatedEndDate ? 
           (p.estimatedEndDate instanceof Date ? p.estimatedEndDate : 
            typeof p.estimatedEndDate === 'string' ? new Date(p.estimatedEndDate) :
            p.estimatedEndDate?.toDate?.() || new Date()) : null;
         if (!endDate) return false;
-        return endDate < new Date() && p.status !== 'completed';
+        return endDate < new Date() && !isProjectCompleted(p.status);
       }).length,
       totalQualityIssues: projects.reduce((sum, p) => sum + (p.issues?.length || 0), 0),
       averageQualityScore: projects.reduce((sum, p) => sum + (p.qualityScore || 0), 0) / Math.max(1, projects.length),

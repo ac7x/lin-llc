@@ -176,3 +176,10 @@ src\modules\projects\pages\list
 src\modules\projects\pages\list\page.tsx
 src\modules\projects\pages\templates
 src\modules\projects\pages\templates\page.tsx
+
+
+
+
+@page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @CalendarView.tsx @index.ts @AddressSelector.tsx @DataLoader.tsx @index.ts @LoadingSpinner.tsx @PageContainer.tsx @PageHeader.tsx @WeatherDisplay.tsx @index.ts @ProjectDashboard.tsx @ProjectsTable.tsx @ExpenseList.tsx @ProjectStats.tsx @ExpenseForm.tsx @index.ts @ContractSelector.tsx @index.ts @ProjectSetupForm.tsx @TemplateSelector.tsx @index.ts @IssueForm.tsx @IssueList.tsx @index.ts @JournalCard.tsx @JournalForm.tsx @JournalHistory.tsx @ChangeManager.tsx @index.ts @IssueTracker.tsx @MilestoneTracker.tsx @RiskManager.tsx @index.ts @MaterialForm.tsx @index.ts @MaterialList.tsx @ProjectEditModal.tsx @ProjectInfoDisplay.tsx @ProjectInfoPage.tsx @index.ts @SubWorkpackageCard.tsx @SubWorkpackageForm.tsx @SubWorkpackageList.tsx @index.ts @TemplateCard.tsx @TemplateForm.tsx @index.ts @WorkpackageCard.tsx @WorkpackageForm.tsx @WorkpackageList.tsx @index.ts @index.ts @projectConstants.ts @statusConstants.ts @validationRules.ts @page.tsx @index.ts @useFilteredProjects.ts @useProjectActions.ts @useProjectErrorHandler.ts @useProjectForm.ts @useProjectState.ts @index.ts @page.tsx @issueService.ts @journalService.ts @projectService.ts @subworkpackageService.ts @templateService.ts @workpackageService.ts @project.d.ts @index.ts @page.tsx @dateUtils.ts @index.ts @progressUtils.tsx @projectUtils.ts @qualityUtils.ts @riskUtils.ts @page.tsx @index.ts @layout.tsx @/test-projects @/[project] @/calendar @/expenses @/issues @/journal @/materials @/subwork-packages @/work-packages @/components @/calendar @/common @/dashboard @/expenses @/generate-from-contract @/issues @/journal @/management @/materials @/project @/subwork-packages @/templates @/work-packages @/constants @/generate-from-contract @/hooks @/list @/services @/styles @/templates @/types @/utils
+
+src\app\test-projects\types\project.d.ts 

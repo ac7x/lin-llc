@@ -13,12 +13,12 @@
 import { useState, useEffect } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Workpackage } from '@/app/test-projects/types/project';
+import type { WorkPackage } from '@/app/test-projects/types/project';
 
 interface WorkpackageFormProps {
-  workpackage?: Workpackage;
+  workpackage?: WorkPackage;
   projectId: string;
-  onSubmit: (data: Partial<Workpackage>) => void;
+  onSubmit: (data: Partial<WorkPackage>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
@@ -86,9 +86,9 @@ export default function WorkpackageForm({
       return;
     }
 
-    const submitData: Partial<Workpackage> = {
+    const submitData: Partial<WorkPackage> = {
       ...formData,
-      subWorkpackages: workpackage?.subWorkpackages || [],
+      subPackages: workpackage?.subPackages || [],
     };
 
     onSubmit(submitData);

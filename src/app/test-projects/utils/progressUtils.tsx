@@ -12,7 +12,7 @@
 import type { ReactElement } from 'react';
 
 import { projectStyles } from '../styles';
-import type { Project, Workpackage } from '../types/project';
+import type { Project, WorkPackage } from '../types/project';
 
 /**
  * 計算專案進度百分比（根據所有 subWorkpackages 的實際完成數量計算）
@@ -21,25 +21,13 @@ import type { Project, Workpackage } from '../types/project';
  * 若所有 estimatedQuantity 為 0，則回傳 0。
  */
 export function calculateProjectProgress(project: Project): number {
-  if (!project.workpackages || project.workpackages.length === 0) return 0;
+  if (!project.workPackages || project.workPackages.length === 0) return 0;
   
-  let totalEstimated = 0;
-  let totalActual = 0;
+  const totalProgress = project.workPackages.reduce((sum, wp) => {
+    return sum + calculateWorkpackageProgress(wp);
+  }, 0);
 
-  for (const wp of project.workpackages) {
-    if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) continue;
-    for (const sub of wp.subWorkpackages) {
-      const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
-      if (estimated > 0) {
-        const actual = typeof sub.actualQuantity === 'number' ? sub.actualQuantity : 0;
-        totalEstimated += estimated;
-        totalActual += actual;
-      }
-    }
-  }
-
-  if (totalEstimated === 0) return 0;
-  return Math.round((totalActual / totalEstimated) * 100);
+  return Math.round(totalProgress / project.workPackages.length);
 }
 
 /**
@@ -48,13 +36,13 @@ export function calculateProjectProgress(project: Project): number {
  * 若 estimatedQuantity 為 0 或未填，則不納入計算。
  * 若所有 estimatedQuantity 為 0，則回傳 0。
  */
-export function calculateWorkpackageProgress(wp: Workpackage): number {
-  if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) return 0;
+export function calculateWorkpackageProgress(wp: WorkPackage): number {
+  if (!wp.subPackages || wp.subPackages.length === 0) return 0;
   
   let totalEstimated = 0;
   let totalActual = 0;
 
-  for (const sub of wp.subWorkpackages) {
+  for (const sub of wp.subPackages) {
     const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
     if (estimated > 0) {
       const actual = typeof sub.actualQuantity === 'number' ? sub.actualQuantity : 0;
@@ -163,7 +151,7 @@ export const ProjectHealthIndicator = ({
 
   const getHealthIcon = (score: number) => {
     if (score >= 80) return '🟢';
-    if (score >= 60) return '🟡';
+    if (score >= 60) return '��';
     if (score >= 40) return '🟠';
     return '🔴';
   };

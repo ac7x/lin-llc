@@ -18,14 +18,14 @@ import { PageContainer, PageHeader } from '@/app/test-projects/components/common
 import { ProjectService } from '@/app/test-projects/services/projectService';
 import { WorkpackageService } from '@/app/test-projects/services/workpackageService';
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Project, ProjectMilestone, Workpackage } from '@/app/test-projects/types/project';
+import type { Project, ProjectMilestone, WorkPackage } from '@/app/test-projects/types/project';
 
 export default function ProjectCalendarPage() {
   const params = useParams();
   const projectId = params.project as string;
   
   const [project, setProject] = useState<Project | null>(null);
-  const [workpackages, setWorkpackages] = useState<Workpackage[]>([]);
+  const [workpackages, setWorkpackages] = useState<WorkPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
@@ -87,7 +87,7 @@ export default function ProjectCalendarPage() {
     }
 
     // 子工作包事件
-    workpackage.subWorkpackages?.forEach(subWorkpackage => {
+    workpackage.subPackages?.forEach((subWorkpackage: import('@/app/test-projects/types/project').SubWorkPackage) => {
       if (subWorkpackage.estimatedStartDate) {
         events.push({
           id: `${subWorkpackage.id}-start`,
@@ -122,7 +122,7 @@ export default function ProjectCalendarPage() {
     // TODO: 實作里程碑點擊處理邏輯
   };
 
-  const handleWorkpackageClick = (workpackage: Workpackage) => {
+  const handleWorkpackageClick = (workpackage: WorkPackage) => {
     // TODO: 實作工作包點擊處理邏輯
   };
 

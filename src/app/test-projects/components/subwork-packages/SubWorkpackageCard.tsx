@@ -14,12 +14,12 @@
 import { useState } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { SubWorkpackage } from '@/app/test-projects/types/project';
+import type { SubWorkPackage } from '@/app/test-projects/types/project';
 
 interface SubWorkpackageCardProps {
-  subWorkpackage: SubWorkpackage;
+  subWorkpackage: SubWorkPackage;
   workpackageId: string;
-  onEdit?: (subWorkpackage: SubWorkpackage) => void;
+  onEdit?: (subWorkpackage: SubWorkPackage) => void;
   onDelete?: (subWorkpackageId: string) => void;
   onViewDetails?: (subWorkpackageId: string) => void;
 }
@@ -33,7 +33,7 @@ export default function SubWorkpackageCard({
   const [isExpanded, setIsExpanded] = useState(false);
   
   // 計算子工作包進度
-  const calculateSubWorkpackageProgress = (sub: SubWorkpackage): number => {
+  const calculateSubWorkpackageProgress = (sub: SubWorkPackage): number => {
     const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
     if (estimated === 0) return 0;
     

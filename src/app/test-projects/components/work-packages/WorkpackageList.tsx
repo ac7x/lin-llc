@@ -25,25 +25,25 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 import { doc, updateDoc, db } from '@/lib/firebase-client';
-import type { Workpackage } from '@/app/test-projects/types/project';
+import type { WorkPackage } from '@/app/test-projects/types/project';
 import { cn, buttonStyles, cardStyles } from '@/utils/classNameUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface WorkpackageListProps {
-  workpackages: Workpackage[];
+  workpackages: WorkPackage[];
   projectId: string;
 }
 
-const getWorkpackageProgress = (wp: Workpackage): number => {
-  if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) {
+const getWorkpackageProgress = (wp: WorkPackage): number => {
+  if (!wp.subPackages || wp.subPackages.length === 0) {
     return wp.progress || 0;
   }
 
-  const totalProgress = wp.subWorkpackages.reduce((sum, subWp) => {
+  const totalProgress = wp.subPackages.reduce((sum: number, subWp: any) => {
     return sum + (subWp.progress || 0);
   }, 0);
 
-  return Math.round(totalProgress / wp.subWorkpackages.length);
+  return wp.subPackages.length > 0 ? Math.round(totalProgress / wp.subPackages.length) : 0;
 };
 
 const getStatusColor = (status: string): string => {
@@ -65,7 +65,7 @@ const SortableWorkpackageItem = ({
   workpackage, 
   projectId 
 }: { 
-  workpackage: Workpackage; 
+  workpackage: WorkPackage; 
   projectId: string; 
 }) => {
   const {
@@ -75,7 +75,7 @@ const SortableWorkpackageItem = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: workpackage.id });
+  } = useSortable({ id: workpackage.id || '' });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -107,9 +107,9 @@ const SortableWorkpackageItem = ({
           <div className="flex items-center space-x-4 mb-3">
             <span className={cn(
               'px-2 py-1 text-xs font-medium rounded-full',
-              getStatusColor(workpackage.status)
+              getStatusColor(workpackage.status || '')
             )}>
-              {workpackage.status}
+              {workpackage.status || '未知'}
             </span>
             <span className="text-sm text-gray-600">
               進度: {progress}%
@@ -147,11 +147,11 @@ const SortableWorkpackageItem = ({
       </div>
 
       {/* 子工作包列表 */}
-      {workpackage.subWorkpackages && workpackage.subWorkpackages.length > 0 && (
+      {workpackage.subPackages && workpackage.subPackages.length > 0 && (
         <div className="mt-4 pl-4 border-l-2 border-gray-200">
           <h4 className="text-sm font-medium text-gray-700 mb-2">子工作包</h4>
           <div className="space-y-2">
-            {workpackage.subWorkpackages.map((subWp) => (
+            {workpackage.subPackages.map((subWp) => (
               <div key={subWp.id} className="bg-gray-50 rounded p-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-900">{subWp.name}</span>
@@ -230,7 +230,7 @@ export default function WorkpackageList({ workpackages, projectId }: Workpackage
         >
           {workpackages.map((workpackage) => (
             <SortableWorkpackageItem
-              key={workpackage.id}
+              key={workpackage.id || ''}
               workpackage={workpackage}
               projectId={projectId}
             />

@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/test-projects/components/common';
 import { SubWorkpackageList, SubWorkpackageForm } from '@/app/test-projects/components/subwork-packages';
 import { getSubWorkpackagesByProjectId } from '@/app/test-projects/services/subworkpackageService';
-import type { Project, SubWorkpackage } from '@/app/test-projects/types/project';
+import type { Project, SubWorkPackage } from '@/app/test-projects/types/project';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/test-projects/styles';
 
@@ -29,11 +29,11 @@ export default function ProjectSubWorkpackagesPage() {
   const params = useParams();
   const projectId = params.project as string;
   const [project, setProject] = useState<ProjectWithId | null>(null);
-  const [subWorkpackages, setSubWorkpackages] = useState<SubWorkpackage[]>([]);
+  const [subWorkpackages, setSubWorkpackages] = useState<SubWorkPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSubWorkpackageForm, setShowSubWorkpackageForm] = useState(false);
-  const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkpackage | null>(null);
+  const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkPackage | null>(null);
 
   // 載入專案資料
   const loadProject = async () => {
@@ -85,7 +85,7 @@ export default function ProjectSubWorkpackagesPage() {
   }, [project]);
 
   // 處理新增子工作包
-  const handleCreateSubWorkpackage = async (subWorkpackageData: Partial<SubWorkpackage>) => {
+  const handleCreateSubWorkpackage = async (subWorkpackageData: Partial<SubWorkPackage>) => {
     if (!projectId) return;
     
     try {
@@ -99,7 +99,7 @@ export default function ProjectSubWorkpackagesPage() {
   };
 
   // 處理編輯子工作包
-  const handleEditSubWorkpackage = async (subWorkpackageData: Partial<SubWorkpackage>) => {
+  const handleEditSubWorkpackage = async (subWorkpackageData: Partial<SubWorkPackage>) => {
     if (!editingSubWorkpackage) return;
     
     try {

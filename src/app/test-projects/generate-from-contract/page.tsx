@@ -111,8 +111,11 @@ export default function GenerateFromContractPage() {
       }
 
       // 創建專案
-      const projectDataToSubmit: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> = {
+      const projectDataToSubmit: Omit<Project, 'createdAt' | 'updatedAt'> = {
+        id: `temp-${Date.now()}`, // 臨時 ID，會在 Firestore 中被替換
         projectName: data.projectName as string,
+        name: data.projectName as string,
+        serialNumber: `PRJ-${Date.now()}`,
         status: 'planning',
         progress: 0,
         manager: data.manager as string,
@@ -128,12 +131,26 @@ export default function GenerateFromContractPage() {
         estimatedEndDate: contract.endDate,
         estimatedBudget: data.estimatedBudget as number,
         estimatedDuration: data.estimatedDuration as number,
+        workPackages: [],
         workpackages: [],
         projectType: 'system',
         priority: 'medium',
         riskLevel: 'medium',
         phase: 'initiation',
         healthLevel: 'good',
+        owner: data.manager as string,
+        managers: [data.manager as string],
+        supervisors: [data.supervisor as string],
+        safetyOfficers: [data.safetyOfficer as string],
+        issues: [],
+        logs: [],
+        type: ['system'],
+        quality: 'good',
+        risk: 'medium',
+        estimated: { start: null, end: null, elapsedDays: 0, remainingDays: 0 },
+        planned: { start: null, end: null, elapsedDays: 0, remainingDays: 0 },
+        actual: { start: null, end: null, elapsedDays: 0, remainingDays: 0 },
+        required: { start: null, end: null, elapsedDays: 0, remainingDays: 0 },
       };
 
       const projectId = await ProjectService.createProject(projectDataToSubmit);

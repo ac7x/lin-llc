@@ -17,7 +17,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { Workpackage, SubWorkpackage } from '../types/project';
+import type { WorkPackage, SubWorkPackage } from '../types/project';
 
 const COLLECTION_NAME = 'workpackages';
 
@@ -28,7 +28,7 @@ export class WorkpackageService {
   /**
    * 取得專案的所有工作包
    */
-  static async getWorkpackagesByProject(projectId: string): Promise<Workpackage[]> {
+  static async getWorkpackagesByProject(projectId: string): Promise<WorkPackage[]> {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
@@ -41,7 +41,7 @@ export class WorkpackageService {
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
-      })) as Workpackage[];
+      })) as WorkPackage[];
       
       // 在客戶端排序
       return workpackages.sort((a, b) => {
@@ -58,7 +58,7 @@ export class WorkpackageService {
   /**
    * 根據 ID 取得工作包
    */
-  static async getWorkpackageById(id: string): Promise<Workpackage | null> {
+  static async getWorkpackageById(id: string): Promise<WorkPackage | null> {
     try {
       const docRef = doc(db, COLLECTION_NAME, id);
       const docSnap = await getDoc(docRef);
@@ -69,7 +69,7 @@ export class WorkpackageService {
           ...docSnap.data(),
           createdAt: docSnap.data().createdAt?.toDate?.() || new Date(),
           updatedAt: docSnap.data().updatedAt?.toDate?.() || new Date(),
-        } as Workpackage;
+        } as WorkPackage;
       }
       
       return null;
@@ -82,7 +82,7 @@ export class WorkpackageService {
   /**
    * 建立新工作包
    */
-  static async createWorkpackage(workpackageData: Omit<Workpackage, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  static async createWorkpackage(workpackageData: Omit<WorkPackage, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
       const now = Timestamp.now();
       const docRef = await addDoc(collection(db, COLLECTION_NAME), {
@@ -101,7 +101,7 @@ export class WorkpackageService {
   /**
    * 更新工作包
    */
-  static async updateWorkpackage(id: string, workpackageData: Partial<Workpackage>): Promise<void> {
+  static async updateWorkpackage(id: string, workpackageData: Partial<WorkPackage>): Promise<void> {
     try {
       const docRef = doc(db, COLLECTION_NAME, id);
       await updateDoc(docRef, {
@@ -141,7 +141,7 @@ export class WorkpackageService {
         throw new Error('工作包不存在');
       }
 
-      const updatedSubWorkpackages = workpackage.subWorkpackages.map(sub => {
+      const updatedSubWorkpackages = workpackage.subPackages.map(sub => {
         if (sub.id === subWorkpackageId) {
           return {
             ...sub,
@@ -153,7 +153,7 @@ export class WorkpackageService {
       });
 
       await this.updateWorkpackage(workpackageId, {
-        subWorkpackages: updatedSubWorkpackages,
+        subPackages: updatedSubWorkpackages,
       });
     } catch (error) {
       console.error('更新子工作包進度失敗:', error);
@@ -164,7 +164,7 @@ export class WorkpackageService {
   /**
    * 根據狀態取得工作包
    */
-  static async getWorkpackagesByStatus(status: string): Promise<Workpackage[]> {
+  static async getWorkpackagesByStatus(status: string): Promise<WorkPackage[]> {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
@@ -177,7 +177,7 @@ export class WorkpackageService {
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
-      })) as Workpackage[];
+      })) as WorkPackage[];
       
       // 在客戶端排序
       return workpackages.sort((a, b) => {

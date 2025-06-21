@@ -19,7 +19,7 @@ export interface BaseWithId extends BaseWithDates {
 // 列舉型別定義
 // ============================================================================
 
-export type ProjectStatus = 
+export type ProjectStatus =
   | 'planning'      // 規劃中
   | 'approved'      // 已核准
   | 'in-progress'   // 執行中
@@ -28,7 +28,7 @@ export type ProjectStatus =
   | 'cancelled'     // 已取消
   | 'archived';     // 已封存
 
-export type WorkpackageStatus = 
+export type WorkpackageStatus =
   | 'draft'         // 草稿
   | 'planned'       // 已規劃
   | 'ready'         // 準備就緒
@@ -38,7 +38,7 @@ export type WorkpackageStatus =
   | 'on-hold'       // 暫停中
   | 'cancelled';    // 已取消
 
-export type SubWorkpackageStatus = 
+export type SubWorkpackageStatus =
   | 'draft'         // 草稿
   | 'assigned'      // 已分配
   | 'in-progress'   // 執行中
@@ -49,7 +49,7 @@ export type SubWorkpackageStatus =
 
 export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
 
-export type ProjectType = 
+export type ProjectType =
   | 'system'       // 系統工程
   | 'maintenance'  // 維護工程
   | 'transport';   // 搬運工程
@@ -58,7 +58,7 @@ export type ProjectRiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export type ProjectHealthLevel = 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
 
-export type ProjectPhase = 
+export type ProjectPhase =
   | 'initiation'    // 啟動階段
   | 'planning'      // 規劃階段
   | 'execution'     // 執行階段
@@ -94,6 +94,56 @@ export type MilestoneStatus = 'pending' | 'completed' | 'overdue';
 export type MilestoneType = 'start' | 'intermediate' | 'end';
 
 export type ReviewFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly';
+
+// ============================================================================
+// 工具函式
+// ============================================================================
+
+// 安全轉成 Date 物件
+export const toDate = (input: DateField): Date | null => {
+  if (!input) return null;
+  if (input instanceof Date) return input;
+  if (typeof input === 'string') return new Date(input);
+  if ('toDate' in input) return input.toDate?.() ?? null;
+  return null;
+};
+
+// 格式化日期顯示 (YYYY-MM-DD)
+export const formatDate = (input: DateField, fallback = '--'): string => {
+  const date = toDate(input);
+  if (!date) return fallback;
+  return date.toISOString().split('T')[0];
+};
+
+// ============================================================================
+// 時間結構與計算
+// ============================================================================
+
+export interface TimeRange {
+  start: DateField | null;
+  end: DateField | null;
+}
+
+export interface CalculatedTimeRange extends TimeRange {
+  elapsedDays: number;
+  remainingDays: number;
+}
+
+export const calculateTimeMetrics = (range: TimeRange): CalculatedTimeRange => {
+  const now = new Date();
+  const start = toDate(range.start);
+  const end = toDate(range.end);
+
+  const elapsedDays = start
+    ? Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  const remainingDays = end
+    ? Math.max(0, Math.floor((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  return { start, end, elapsedDays, remainingDays };
+};
 
 // ============================================================================
 // 任務與進度相關型別
@@ -213,18 +263,22 @@ export interface ProjectFinancialMetrics {
 }
 
 // ============================================================================
-// 工作包相關型別
+// 子工作包（增強版）
 // ============================================================================
 
-export interface SubWorkpackage extends BaseWithId {
+export interface SubWorkPackage extends BaseWithId {
   name: string;
   description?: string;
+  quantity: number;
+  unitWeight: number;
+  completedUnits: number;
+  progress: number;
+  workers: string[];
   actualStartDate?: DateField;
   actualEndDate?: DateField;
   plannedStartDate?: DateField;
   plannedEndDate?: DateField;
   status?: SubWorkpackageStatus;
-  progress?: number;
   assignedTo?: string | null;
   priority?: number;
   estimatedQuantity?: number;
@@ -247,9 +301,21 @@ export interface SubWorkpackage extends BaseWithId {
   dependencies?: string[];
 }
 
-export interface Workpackage extends BaseWithId {
+export const calculateSubProgress = (sub: SubWorkPackage): number => {
+  const total = sub.quantity * sub.unitWeight;
+  return total > 0 ? sub.completedUnits / total : 0;
+};
+
+// ============================================================================
+// 工作包（增強版）
+// ============================================================================
+
+export interface WorkPackage extends BaseWithId {
   name: string;
   description?: string;
+  budget: number;
+  quantity: number;
+  subPackages: SubWorkPackage[];
   actualStartDate?: DateField;
   actualEndDate?: DateField;
   plannedStartDate?: DateField;
@@ -259,10 +325,8 @@ export interface Workpackage extends BaseWithId {
   status?: WorkpackageStatus;
   progress?: number;
   assignedTo?: string | null;
-  budget?: number;
   category?: string;
   priority?: 'low' | 'medium' | 'high';
-  subWorkpackages: SubWorkpackage[];
   qualityMetrics?: {
     inspectionPassRate: number;
     defectRate: number;
@@ -281,6 +345,18 @@ export interface Workpackage extends BaseWithId {
   dependencies?: string[];
   phase?: ProjectPhase;
 }
+
+export const calculateWorkPackageProgress = (wp: WorkPackage): number => {
+  const totalUnits = wp.subPackages.reduce(
+    (sum, sub) => sum + (sub.quantity * sub.unitWeight), 0
+  );
+
+  const completedUnits = wp.subPackages.reduce(
+    (sum, sub) => sum + sub.completedUnits, 0
+  );
+
+  return totalUnits > 0 ? completedUnits / totalUnits : 0;
+};
 
 // ============================================================================
 // 日誌與報告型別
@@ -341,6 +417,24 @@ export interface DailyReport extends BaseWithId {
   projectProgress?: number;
 }
 
+// 保留原有的專案日誌型別（向後相容）
+export interface ProjectLog {
+  id: string;
+  timestamp: DateField;
+  photoUrls: string[];
+  workUpdates: Array<{
+    subPackageId: string;
+    completedUnits: number;
+  }>;
+}
+
+// 保留原有的專案問題型別（向後相容）
+export interface ProjectIssue {
+  id: string;
+  description: string;
+  createdAt: DateField;
+}
+
 // ============================================================================
 // 區域與費用型別
 // ============================================================================
@@ -393,17 +487,20 @@ export type TemplateToSubWorkpackageOptions = {
 };
 
 // ============================================================================
-// 主要專案型別
+// 專案主體（增強版）
 // ============================================================================
 
 export interface Project extends BaseWithDates {
   // 基本資訊
+  id: string;
   projectId?: string;
+  serialNumber: string;
   projectName: string;
+  name: string;
   contractId?: string;
-  status: ProjectStatus;
+  status: ProjectStatus | string[];
   progress?: number;
-  
+ 
   // 人員配置
   manager?: string;
   inspector?: string;
@@ -411,58 +508,70 @@ export interface Project extends BaseWithDates {
   supervisor?: string;
   safetyOfficer?: string;
   costController?: string;
-  
+  managers: string[];
+  supervisors: string[];
+  safetyOfficers: string[];
+ 
   // 地點資訊
   area?: string;
-  address?: string;
-  region?: string;
-  
+  address: string;
+  region: string;
+ 
   // 時間資訊
   startDate?: DateField;
   estimatedEndDate?: DateField;
-  
+  estimated: CalculatedTimeRange;
+  planned: CalculatedTimeRange;
+  actual: CalculatedTimeRange;
+  required: CalculatedTimeRange;
+ 
   // 其他基本資訊
-  owner?: string;
+  owner: string;
   zones?: Zone[];
-  
+ 
   // 核心資料
-  workpackages: Workpackage[];
+  workPackages: WorkPackage[];
+  workpackages: WorkPackage[];
   decomposition?: object;
-  
+ 
   // 報告與記錄
   reports?: DailyReport[];
   photos?: PhotoRecord[];
   materials?: MaterialEntry[];
-  issues?: IssueRecord[];
+  issues: ProjectIssue[] | IssueRecord[];
+  logs: ProjectLog[];
   expenses?: Expense[];
-  
+ 
   // 權限與封存
   roles?: string[];
   archivedAt?: DateField | null;
-  
+ 
   // 專案分類
-  projectType?: ProjectType;
+  projectType?: ProjectType | string[];
+  type: string[];
   priority?: ProjectPriority;
-  riskLevel?: ProjectRiskLevel;
+  riskLevel?: ProjectRiskLevel | string;
+  risk: string;
   phase?: ProjectPhase;
   healthLevel?: ProjectHealthLevel;
-  
+ 
   // 管理項目
   milestones?: ProjectMilestone[];
   risks?: ProjectRisk[];
   changes?: ProjectChange[];
-  
+ 
   // 指標
   qualityMetrics?: ProjectQualityMetrics;
   safetyMetrics?: ProjectSafetyMetrics;
   financialMetrics?: ProjectFinancialMetrics;
-  
+  quality: string;
+ 
   // 預算與時程
   estimatedBudget?: number;
   actualBudget?: number;
   estimatedDuration?: number;
   actualDuration?: number;
-  
+ 
   // 專案管理
   stakeholders?: string[];
   objectives?: string[];
@@ -470,23 +579,33 @@ export interface Project extends BaseWithDates {
   constraints?: string[];
   assumptions?: string[];
   lessonsLearned?: string[];
-  
+ 
   // 審查
   nextReviewDate?: DateField;
   lastReviewDate?: DateField;
   reviewFrequency?: ReviewFrequency;
-  
+ 
   // 品質追蹤
   qualityScore?: number;
   lastQualityAdjustment?: DateField;
 }
+
+export const calculateProjectProgress = (project: Project): number => {
+  const workPackages = project.workPackages || project.workpackages || [];
+  const totalWeight = workPackages.reduce((sum, wp) => sum + wp.budget, 0);
+
+  const weightedProgress = workPackages.reduce(
+    (sum, wp) => sum + (calculateWorkPackageProgress(wp) * wp.budget), 0
+  );
+
+  return totalWeight > 0 ? weightedProgress / totalWeight : 0;
+};
 
 // ============================================================================
 // 擴展型別（用於特定用途）
 // ============================================================================
 
 export interface ProjectDocument extends Project {
-  id: string;
   idx: number;
   createdAt: string;
 }
@@ -523,7 +642,7 @@ export interface ProjectFilters {
   };
 }
 
-export type ProjectSortOption = 
+export type ProjectSortOption =
   | 'name-asc'
   | 'name-desc'
   | 'createdAt-asc'
@@ -584,68 +703,69 @@ export interface ProjectMember {
 }
 
 // ============================================================================
-// 匯出所有型別
+// Firestore 資料轉換器
 // ============================================================================
 
-export type {
-  // 基礎型別
-  DateField,
-  BaseWithDates,
-  BaseWithId,
-  
-  // 列舉型別
-  ProjectStatus,
-  WorkpackageStatus,
-  SubWorkpackageStatus,
-  ProjectPriority,
-  ProjectType,
-  ProjectRiskLevel,
-  ProjectHealthLevel,
-  ProjectPhase,
-  PhotoType,
-  TaskStatus,
-  TaskPriority,
-  IssueType,
-  IssueSeverity,
-  IssueStatus,
-  RiskProbability,
-  RiskImpact,
-  RiskStatus,
-  ChangeType,
-  ChangeImpact,
-  ChangeStatus,
-  MilestoneStatus,
-  MilestoneType,
-  ReviewFrequency,
-  
-  // 實體型別
-  Task,
-  ProgressHistoryRecord,
-  ProjectMilestone,
-  ProjectRisk,
-  ProjectChange,
-  ProjectQualityMetrics,
-  ProjectSafetyMetrics,
-  ProjectFinancialMetrics,
-  SubWorkpackage,
-  Workpackage,
-  ActivityLog,
-  MaterialEntry,
-  IssueRecord,
-  PhotoRecord,
-  DailyReport,
-  Zone,
-  Expense,
-  SubWorkpackageTemplateItem,
-  Template,
-  TemplateToSubWorkpackageOptions,
-  Project,
-  ProjectDocument,
-  
-  // 功能型別
-  ProjectFilters,
-  ProjectSortOption,
-  ProjectStats,
-  QualityScoreInfo,
-  ProjectMember,
+export const mapProjectFromFirestore = (raw: any): Project => {
+  const mapTime = (range: any): CalculatedTimeRange => {
+    return calculateTimeMetrics({
+      start: rawDate(range?.start),
+      end: rawDate(range?.end),
+    });
+  };
+
+  const rawDate = (d: any): DateField => (d instanceof Timestamp ? d.toDate() : d ?? null);
+
+  return {
+    id: raw.id,
+    serialNumber: raw.serialNumber ?? '',
+    name: raw.name ?? '',
+    region: raw.region ?? '',
+    address: raw.address ?? '',
+    owner: raw.owner ?? '',
+
+    managers: raw.managers ?? [],
+    supervisors: raw.supervisors ?? [],
+    safetyOfficers: raw.safetyOfficers ?? [],
+
+    status: raw.status ?? [],
+    type: raw.type ?? [],
+    quality: raw.quality ?? '',
+    risk: raw.risk ?? '',
+
+    createdAt: rawDate(raw.createdAt),
+    updatedAt: rawDate(raw.updatedAt),
+
+    estimated: mapTime(raw.estimated),
+    planned: mapTime(raw.planned),
+    actual: mapTime(raw.actual),
+    required: mapTime(raw.required),
+
+    issues: (raw.issues ?? []).map((i: any) => ({
+      id: i.id,
+      description: i.description,
+      createdAt: rawDate(i.createdAt),
+    })),
+
+    logs: (raw.logs ?? []).map((log: any) => ({
+      id: log.id,
+      timestamp: rawDate(log.timestamp),
+      photoUrls: log.photoUrls ?? [],
+      workUpdates: log.workUpdates ?? [],
+    })),
+
+    workPackages: (raw.workPackages ?? []).map((wp: any) => ({
+      id: wp.id,
+      budget: wp.budget,
+      quantity: wp.quantity,
+      subPackages: (wp.subPackages ?? []).map((sub: any) => ({
+        id: sub.id,
+        quantity: sub.quantity,
+        unitWeight: sub.unitWeight,
+        completedUnits: sub.completedUnits,
+        progress: calculateSubProgress(sub),
+        workers: sub.workers ?? [],
+      })),
+    })),
+  };
 };

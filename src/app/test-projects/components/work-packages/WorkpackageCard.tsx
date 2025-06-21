@@ -14,12 +14,12 @@
 import { useState } from 'react';
 
 import { projectStyles } from '@/app/test-projects/styles';
-import type { Workpackage } from '@/app/test-projects/types/project';
+import type { WorkPackage } from '@/app/test-projects/types/project';
 
 interface WorkpackageCardProps {
-  workpackage: Workpackage;
+  workpackage: WorkPackage;
   projectId: string;
-  onEdit?: (workpackage: Workpackage) => void;
+  onEdit?: (workpackage: WorkPackage) => void;
   onDelete?: (workpackageId: string) => void;
   onViewDetails?: (workpackageId: string) => void;
 }
@@ -33,13 +33,13 @@ export default function WorkpackageCard({
   const [isExpanded, setIsExpanded] = useState(false);
   
   // 計算工作包進度
-  const calculateWorkpackageProgress = (wp: Workpackage): number => {
-    if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) return 0;
+  const calculateWorkpackageProgress = (wp: WorkPackage): number => {
+    if (!wp.subPackages || wp.subPackages.length === 0) return 0;
     
     let totalEstimated = 0;
     let totalActual = 0;
 
-    for (const sub of wp.subWorkpackages) {
+    for (const sub of wp.subPackages) {
       const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
       if (estimated > 0) {
         const actual = typeof sub.actualQuantity === 'number' ? sub.actualQuantity : 0;
@@ -53,8 +53,8 @@ export default function WorkpackageCard({
   };
   
   const progress = calculateWorkpackageProgress(workpackage);
-  const subWorkpackageCount = workpackage.subWorkpackages?.length || 0;
-  const completedSubWorkpackages = workpackage.subWorkpackages?.filter(
+  const subWorkpackageCount = workpackage.subPackages?.length || 0;
+  const completedSubWorkpackages = workpackage.subPackages?.filter(
     sub => sub.status === 'completed'
   ).length || 0;
 
@@ -184,7 +184,7 @@ export default function WorkpackageCard({
                 子工作包 ({subWorkpackageCount})
               </h4>
               <div className='space-y-2 max-h-32 overflow-y-auto'>
-                {workpackage.subWorkpackages?.slice(0, 3).map((sub) => (
+                {workpackage.subPackages?.slice(0, 3).map((sub) => (
                   <div key={sub.id} className='flex justify-between items-center text-xs'>
                     <span className='text-gray-600 dark:text-gray-400 truncate'>{sub.name}</span>
                     <span className={`px-1 py-0.5 rounded text-xs ${getStatusColor(sub.status)}`}>
