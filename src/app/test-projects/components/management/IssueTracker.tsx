@@ -12,8 +12,8 @@
 
 import { useState, useMemo } from 'react';
 
-import { projectStyles } from '@/modules/test-projects/styles';
-import type { IssueRecord } from '@/modules/test-projects/types/project';
+import { projectStyles } from '@/app/test-projects/styles';
+import type { IssueRecord } from '@/app/test-projects/types/project';
 
 interface IssueTrackerProps {
   issues: IssueRecord[];

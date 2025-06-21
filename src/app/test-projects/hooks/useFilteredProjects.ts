@@ -6,7 +6,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { Project, ProjectFilters, ProjectSortOption, ProjectStats } from '@/modules/test-projects/types/project';
+import type { Project, ProjectFilters, ProjectSortOption, ProjectStats } from '@/app/test-projects/types/project';
 import { 
   calculateProjectQualityScore,
   calculateSchedulePerformanceIndex,
@@ -15,7 +15,7 @@ import {
   getOverdueMilestones,
   analyzeProjectStatusTrend,
   calculateProjectPriorityScore
-} from '@/modules/test-projects/utils/projectUtils';
+} from '@/app/test-projects/utils/projectUtils';
 
 interface UseFilteredProjectsReturn {
   filteredProjects: Project[];

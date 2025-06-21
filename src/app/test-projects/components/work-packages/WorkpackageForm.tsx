@@ -12,8 +12,8 @@
 
 import { useState, useEffect } from 'react';
 
-import { projectStyles } from '@/modules/test-projects/styles';
-import type { Workpackage } from '@/modules/test-projects/types/project';
+import { projectStyles } from '@/app/test-projects/styles';
+import type { Workpackage } from '@/app/test-projects/types/project';
 
 interface WorkpackageFormProps {
   workpackage?: Workpackage;

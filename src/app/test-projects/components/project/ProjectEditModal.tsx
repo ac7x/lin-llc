@@ -16,13 +16,13 @@ import { useState } from 'react';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
-import { AddressSelector } from '@/modules/test-projects/components/common';
-import type { Project } from '@/modules/test-projects/types/project';
+import { AddressSelector } from '@/app/test-projects/components/common';
+import type { Project } from '@/app/test-projects/types/project';
 import type { AppUser } from '@/types/auth';
 import { cn, modalStyles, formStyles, inputStyles, buttonStyles, loadingStyles, alertStyles } from '@/utils/classNameUtils';
 import { formatDateForInput } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
-import { projectStyles } from '@/modules/test-projects/styles';
+import { projectStyles } from '@/app/test-projects/styles';
 
 interface ProjectEditModalProps {
   project: Project & { id: string };

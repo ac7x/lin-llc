@@ -12,7 +12,7 @@
 import { useState } from 'react';
 import type { ReactElement } from 'react';
 
-import type { Template } from '@/modules/test-projects/types/project';
+import type { Template } from '@/app/test-projects/types/project';
 
 interface TemplateSelectorProps {
   templates: Template[];

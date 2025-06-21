@@ -22,7 +22,6 @@
       "@/*": ["./src/*"],
       "@/app/*": ["./src/app/*"],
       "@/utils/*": ["./src/utils/*"],
-      "@/modules/*": ["./src/modules/*"],
       "@/lib/*": ["./src/lib/*"],
       "@/styles/*": ["./src/styles/*"],
       "@/components/*": ["./src/components/*"],

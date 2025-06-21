@@ -12,8 +12,8 @@
 
 import { useState, useMemo } from 'react';
 
-import { projectStyles } from '@/modules/test-projects/styles';
-import type { ProjectMilestone, Workpackage } from '@/modules/test-projects/types/project';
+import { projectStyles } from '@/app/test-projects/styles';
+import type { ProjectMilestone, Workpackage } from '@/app/test-projects/types/project';
 
 interface CalendarViewProps {
   milestones?: ProjectMilestone[];

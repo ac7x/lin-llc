@@ -14,10 +14,10 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-import { PageContainer, PageHeader } from '@/modules/test-projects/components/common';
-import { TemplateService } from '@/modules/test-projects/services/templateService';
-import { projectStyles } from '@/modules/test-projects/styles';
-import type { Template } from '@/modules/test-projects/types/project';
+import { PageContainer, PageHeader } from '@/app/test-projects/components/common';
+import { TemplateService } from '@/app/test-projects/services/templateService';
+import { projectStyles } from '@/app/test-projects/styles';
+import type { Template } from '@/app/test-projects/types/project';
 
 export default function TemplatesPage() {
   const router = useRouter();

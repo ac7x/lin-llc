@@ -32,7 +32,7 @@ import type {
   ProjectSortOption,
   ProjectStats,
   ProjectMember 
-} from '@/modules/test-projects/types/project';
+} from '@/app/test-projects/types/project';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export class ProjectService {

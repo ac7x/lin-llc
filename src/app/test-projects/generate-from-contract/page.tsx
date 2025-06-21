@@ -9,11 +9,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { PageContainer, PageHeader } from '@/modules/test-projects/components/common';
-import { ContractSelector, TemplateSelector, ProjectSetupForm } from '@/modules/test-projects/components/generate-from-contract';
-import { ProjectService, TemplateService } from '@/modules/test-projects/services';
-import { projectStyles } from '@/modules/test-projects/styles';
-import type { Project, Template } from '@/modules/test-projects/types/project';
+import { PageContainer, PageHeader } from '@/app/test-projects/components/common';
+import { ContractSelector, TemplateSelector, ProjectSetupForm } from '@/app/test-projects/components/generate-from-contract';
+import { ProjectService, TemplateService } from '@/app/test-projects/services';
+import { projectStyles } from '@/app/test-projects/styles';
+import type { Project, Template } from '@/app/test-projects/types/project';
 
 interface Contract {
   id: string;

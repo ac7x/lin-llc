@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { projectStyles } from '@/modules/test-projects/styles';
+import { projectStyles } from '@/app/test-projects/styles';
 
 interface ProjectSetupFormProps {
   initialData?: {

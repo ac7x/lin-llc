@@ -14,12 +14,12 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/modules/test-projects/components/common';
-import { WorkpackageList, WorkpackageForm } from '@/modules/test-projects/components/work-packages';
-import { WorkpackageService } from '@/modules/test-projects/services';
-import type { Project, Workpackage } from '@/modules/test-projects/types/project';
+import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/test-projects/components/common';
+import { WorkpackageList, WorkpackageForm } from '@/app/test-projects/components/work-packages';
+import { WorkpackageService } from '@/app/test-projects/services';
+import type { Project, Workpackage } from '@/app/test-projects/types/project';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
-import { projectStyles } from '@/modules/test-projects/styles';
+import { projectStyles } from '@/app/test-projects/styles';
 
 interface ProjectWithId extends Project {
   id: string;

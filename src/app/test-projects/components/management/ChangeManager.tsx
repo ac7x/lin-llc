@@ -12,8 +12,8 @@
 
 import { useState, useMemo } from 'react';
 
-import { projectStyles } from '@/modules/test-projects/styles';
-import type { ProjectChange } from '@/modules/test-projects/types/project';
+import { projectStyles } from '@/app/test-projects/styles';
+import type { ProjectChange } from '@/app/test-projects/types/project';
 
 interface ChangeManagerProps {
   changes: ProjectChange[];

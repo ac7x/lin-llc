@@ -25,7 +25,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 import { doc, updateDoc, db } from '@/lib/firebase-client';
-import type { Workpackage } from '@/modules/test-projects/types/project';
+import type { Workpackage } from '@/app/test-projects/types/project';
 import { cn, buttonStyles, cardStyles } from '@/utils/classNameUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
