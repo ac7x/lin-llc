@@ -17,9 +17,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, type ReactNode } from 'react';
 
+import { PageLayout, PageContent, Sidebar } from '@/app/projects/components/layout/PageLayout';
 import type { Project, Workpackage } from '@/app/projects/types/project';
 import { PermissionCheck } from '@/components/common/PermissionCheck';
-import { PageLayout, PageContent, Sidebar } from '@/components/layout/PageLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 import { navigationStyles, modalStyles, inputStyles, cn, buttonStyles } from '@/utils/classNameUtils';

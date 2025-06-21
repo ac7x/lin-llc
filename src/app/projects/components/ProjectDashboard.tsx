@@ -16,7 +16,12 @@ import { useMemo } from 'react';
 
 import type { Project } from '@/app/projects/types/project';
 import { ProgressBarWithPercent, ProjectHealthIndicator } from '@/app/projects/utils/progressUtils';
-import { cn } from '@/utils/classNameUtils';
+import { 
+  cn, 
+  cardStyles, 
+  getStatusBadgeStyle,
+  alertStyles
+} from '@/utils/classNameUtils';
 import {
   calculateProjectProgress,
   calculateProjectQualityScore,
@@ -41,15 +46,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
   const overdueMilestones = useMemo(() => getOverdueMilestones(project.milestones || []), [project.milestones]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'planning': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'in-progress': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'on-hold': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-      case 'completed': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
+    return getStatusBadgeStyle(status, 'projectStatus');
   };
 
   const getTrendIcon = (trend: string) => {
@@ -71,7 +68,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
   return (
     <div className='space-y-6'>
       {/* 專案概覽 */}
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+      <div className={cardStyles.base}>
         <div className='flex justify-between items-start mb-4'>
           <div>
             <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
@@ -81,8 +78,8 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
               合約ID: {project.contractId || '未指定'}
             </p>
           </div>
-          <div className={cn('flex items-center space-x-3')}>
-            <span className={cn('px-3 py-1 rounded-full text-sm font-medium', getStatusColor(project.status))}>
+          <div className='flex items-center space-x-3'>
+            <span className={getStatusColor(project.status)}>
               {project.status === 'planning' && '規劃中'}
               {project.status === 'approved' && '已核准'}
               {project.status === 'in-progress' && '執行中'}
@@ -98,7 +95,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
         {/* 狀態趨勢 */}
         <div className={cn('flex items-center space-x-2 text-sm', getTrendColor(statusTrend.trend))}>
           <span>{getTrendIcon(statusTrend.trend)}</span>
-          <span className={cn('font-medium')}>
+          <span className='font-medium'>
             {statusTrend.trend === 'improving' && '專案狀態改善中'}
             {statusTrend.trend === 'declining' && '專案狀態需關注'}
             {statusTrend.trend === 'stable' && '專案狀態穩定'}
@@ -108,7 +105,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
 
       {/* 關鍵指標 */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+        <div className={cardStyles.base}>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>整體進度</p>
@@ -123,7 +120,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           </div>
         </div>
 
-        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+        <div className={cardStyles.base}>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>品質評分</p>
@@ -133,8 +130,8 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
               <span className='text-green-600 dark:text-green-400 text-xl'>⭐</span>
             </div>
           </div>
-          <div className={cn('mt-4')}>
-            <div className={cn('flex space-x-1')}>
+          <div className='mt-4'>
+            <div className='flex space-x-1'>
               {[...Array(10)].map((_, i) => (
                 <div
                   key={i}
@@ -148,7 +145,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           </div>
         </div>
 
-        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+        <div className={cardStyles.base}>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>時程績效</p>
@@ -165,7 +162,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           </div>
         </div>
 
-        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+        <div className={cardStyles.base}>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>成本績效</p>
@@ -186,7 +183,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
       {/* 風險與里程碑 */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         {/* 風險監控 */}
-        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+        <div className={cardStyles.base}>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
             風險監控
           </h3>
@@ -226,14 +223,14 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
         </div>
 
         {/* 里程碑 */}
-        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+        <div className={cardStyles.base}>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
             里程碑
           </h3>
           <div className='space-y-3'>
             {overdueMilestones.length > 0 ? (
-              overdueMilestones.slice(0, 3).map((milestone: import('@/app/projects/types/project').ProjectMilestone) => (
-                <div key={milestone.id} className='p-2 bg-red-50 dark:bg-red-900/20 rounded-lg'>
+              overdueMilestones.slice(0, 3).map((milestone) => (
+                <div key={milestone.id} className={cn(alertStyles.error, 'p-2')}>
                   <div className='font-medium text-red-700 dark:text-red-300'>
                     {milestone.name}（逾期）
                   </div>
@@ -248,8 +245,8 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           </div>
           <div className='space-y-3'>
             {upcomingMilestones.length > 0 ? (
-              upcomingMilestones.slice(0, 3).map((milestone: import('@/app/projects/types/project').ProjectMilestone) => (
-                <div key={milestone.id} className='p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg'>
+              upcomingMilestones.slice(0, 3).map((milestone) => (
+                <div key={milestone.id} className={cn(alertStyles.warning, 'p-2')}>
                   <div className='font-medium text-yellow-700 dark:text-yellow-300'>
                     {milestone.name}（即將到期）
                   </div>
@@ -266,7 +263,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
       </div>
 
       {/* 狀態指標 */}
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+      <div className={cardStyles.base}>
         <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
           專案狀態指標
         </h3>
