@@ -19,6 +19,9 @@ import { logError, safeAsync } from '@/utils/errorUtils';
 let googleMapsLoadingPromise: Promise<void> | null = null;
 let googleMapsLoaded = false;
 
+// 硬編碼 Google Maps API Key
+const GOOGLE_MAPS_API_KEY = 'AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o';
+
 interface AddressSelectorProps {
   value: string;
   onChange: (address: string) => void;
@@ -61,47 +64,16 @@ export default function AddressSelector({
 
       // 創建新的載入 Promise
       googleMapsLoadingPromise = safeAsync(async () => {
-        // 檢查是否已經有 Google Maps script 標籤
-        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-        if (existingScript) {
-          // 等待現有的 script 載入完成
-          await new Promise<void>((resolve) => {
-            const checkGoogleMaps = () => {
-              if (window.google?.maps) {
-                resolve();
-              } else {
-                setTimeout(checkGoogleMaps, 100);
-              }
-            };
-            checkGoogleMaps();
-          });
-          return;
-        }
-
-        // 動態載入 Google Maps API
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-
-        await new Promise<void>((resolve, reject) => {
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load Google Maps API'));
-          document.head.appendChild(script);
+        // 使用 @googlemaps/js-api-loader
+        const { Loader } = await import('@googlemaps/js-api-loader');
+        
+        const loader = new Loader({
+          apiKey: GOOGLE_MAPS_API_KEY,
+          version: 'weekly',
+          libraries: ['places'],
         });
 
-        // 等待 Google Maps 初始化
-        await new Promise<void>(resolve => {
-          const checkGoogleMaps = () => {
-            if (window.google?.maps) {
-              resolve();
-            } else {
-              setTimeout(checkGoogleMaps, 100);
-            }
-          };
-          checkGoogleMaps();
-        });
-
+        await loader.load();
         googleMapsLoaded = true;
       }, (error) => {
         logError(error, { operation: 'init_google_maps' });
@@ -121,53 +93,80 @@ export default function AddressSelector({
 
   // 開啟地圖選址
   const openMapSelector = () => {
-    if (!window.google || !mapRef.current) return;
+    if (!window.google) {
+      alert('地圖服務正在載入中，請稍後再試');
+      return;
+    }
+
+    if (!window.google.maps) {
+      alert('地圖服務初始化失敗，請重新整理頁面');
+      return;
+    }
+
+    if (!mapRef.current) {
+      alert('地圖容器錯誤，請重新整理頁面');
+      return;
+    }
 
     setIsMapOpen(true);
 
-    // 初始化地圖
-    const map = new window.google.maps.Map(mapRef.current, {
-      center: { lat: 23.5, lng: 121 }, // 台灣中心點
-      zoom: 7,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false,
-    });
-
-    mapInstanceRef.current = map;
-
-    // 添加點擊事件
-    map.addListener('click', (event: google.maps.MapMouseEvent) => {
-      const lat = event.latLng?.lat();
-      const lng = event.latLng?.lng();
-
-      if (lat && lng) {
-        // 清除之前的標記
-        if (markerRef.current) {
-          markerRef.current.setMap(null);
-        }
-
-        // 添加新標記
-        markerRef.current = new window.google.maps.Marker({
-          position: { lat, lng },
-          map,
-          draggable: true,
+    // 使用 setTimeout 確保 DOM 元素已渲染
+    setTimeout(() => {
+      try {
+        // 初始化地圖
+        const map = new window.google.maps.Map(mapRef.current!, {
+          center: { lat: 23.5, lng: 121 }, // 台灣中心點
+          zoom: 7,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
         });
 
-        // 獲取地址
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode(
-          { location: { lat, lng } },
-          (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
-            if (status === 'OK' && results && results[0]) {
-              const address = results[0].formatted_address;
-              setSelectedAddress(address);
-              onChange(address);
+        mapInstanceRef.current = map;
+
+        // 添加點擊事件
+        map.addListener('click', (event: google.maps.MapMouseEvent) => {
+          const lat = event.latLng?.lat();
+          const lng = event.latLng?.lng();
+
+          if (lat && lng) {
+            // 清除之前的標記
+            if (markerRef.current) {
+              markerRef.current.setMap(null);
             }
+
+            // 添加新標記
+            markerRef.current = new window.google.maps.Marker({
+              position: { lat, lng },
+              map,
+              draggable: true,
+            });
+
+            // 獲取地址
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode(
+              { location: { lat, lng } },
+              (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
+                if (status === 'OK' && results && results[0]) {
+                  const address = results[0].formatted_address;
+                  setSelectedAddress(address);
+                  onChange(address);
+                } else {
+                  // 即使地理編碼失敗，也設置座標作為地址
+                  const address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                  setSelectedAddress(address);
+                  onChange(address);
+                }
+              }
+            );
           }
-        );
+        });
+
+      } catch (_error) {
+        alert('地圖初始化失敗，請重新整理頁面');
+        setIsMapOpen(false);
       }
-    });
+    }, 100);
   };
 
   // 確認地圖選擇
