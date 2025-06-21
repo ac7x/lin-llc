@@ -131,7 +131,10 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (saving || uploading) return;
+    
+    // 防止重複提交
     setSaving(true);
+    setUploading(true);
 
     const weather = weatherData?.weather || '';
     const temperature = weatherData?.temperature || 0;
@@ -139,7 +142,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
     await safeAsync(async () => {
       const now = new Date();
       const nowTimestamp = toTimestamp(now);
-      const reportId = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${now.getTime()}`;
+      const reportId = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${now.getTime()}_${Math.random().toString(36).substr(2, 9)}`;
 
       let photoRecords: PhotoRecord[] = [];
       if (photoFiles.some(file => file !== null)) {
@@ -235,6 +238,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
       logError(error, { operation: 'submit_journal', projectId });
     });
     setSaving(false);
+    setUploading(false);
     setUploadProgress(0);
   };
 
@@ -256,6 +260,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
               onChange={e =>
                 setNewReport({ ...newReport, workforceCount: parseInt(e.target.value) || 0 })
               }
+              disabled={saving}
             />
           </div>
         </div>
@@ -268,6 +273,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
             value={newReport.description}
             onChange={e => setNewReport({ ...newReport, description: e.target.value })}
             placeholder='記錄今日施工項目、進度、機具使用等...'
+            disabled={saving}
           />
         </div>
         <div>
@@ -279,6 +285,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
             value={newReport.issues}
             onChange={e => setNewReport({ ...newReport, issues: e.target.value })}
             placeholder='記錄任何影響進度的問題、安全事項或需要協調的工作...'
+            disabled={saving}
           />
         </div>
 
@@ -289,6 +296,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
               type='button'
               onClick={handleAddPhotoField}
               className='inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200'
+              disabled={saving}
             >
               <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path
@@ -309,6 +317,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                   type='button'
                   onClick={() => handleRemovePhotoField(index)}
                   className='text-red-500 hover:text-red-700 transition-colors duration-200'
+                  disabled={saving}
                 >
                   <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path
@@ -406,6 +415,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                         )
                       );
                     }}
+                    disabled={saving}
                   >
                     <option value=''>請選擇</option>
                     {workpackages.map(wp => (
@@ -430,7 +440,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                         )
                       );
                     }}
-                    disabled={!input.workpackageId}
+                    disabled={!input.workpackageId || saving}
                   >
                     <option value=''>請選擇</option>
                     {subWorkpackages.map(sw => (
@@ -455,7 +465,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                         arr.map((item, i) => (i === idx ? { ...item, actualQuantity: v } : item))
                       );
                     }}
-                    disabled={!input.subWorkpackageId}
+                    disabled={!input.subWorkpackageId || saving}
                   />
                   {input.subWorkpackageId && selectedSubWp && (
                     <div className='mt-1 text-xs text-gray-600 dark:text-gray-400'>
@@ -472,6 +482,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                       type='button'
                       className='text-red-500 hover:text-red-700 text-sm transition-colors duration-200'
                       onClick={() => setProgressInputs(arr => arr.filter((_, i) => i !== idx))}
+                      disabled={saving}
                     >
                       移除
                     </button>
@@ -486,6 +497,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
                           { workpackageId: '', subWorkpackageId: '', actualQuantity: 0 },
                         ])
                       }
+                      disabled={saving}
                     >
                       新增一筆
                     </button>
