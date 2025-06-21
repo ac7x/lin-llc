@@ -25,7 +25,7 @@ interface WorkpackageFormProps {
 
 export default function WorkpackageForm({
   workpackage,
-  projectId,
+  projectId: _projectId,
   onSubmit,
   onCancel,
   isSubmitting = false,

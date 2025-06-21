@@ -9,31 +9,34 @@ import type { Project } from '../types/project';
 interface UseProjectFormReturn {
   formData: Partial<Project>;
   errors: Record<string, string>;
-  isLoading: boolean;
-  setFormData: (data: Partial<Project>) => void;
-  setFieldValue: (field: keyof Project, value: any) => void;
-  validateField: (field: keyof Project) => boolean;
-  validateForm: () => boolean;
+  isSubmitting: boolean;
+  handleInputChange: (field: string, value: string | number | Date | null) => void;
+  handleSubmit: (e: React.FormEvent) => Promise<void>;
   resetForm: () => void;
-  setLoading: (loading: boolean) => void;
 }
 
-export function useProjectForm(initialData: Partial<Project> = {}): UseProjectFormReturn {
+export function useProjectForm(
+  initialData: Partial<Project> = {},
+  onSubmit: (data: Partial<Project>) => Promise<void>
+): UseProjectFormReturn {
   const [formData, setFormData] = useState<Partial<Project>>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const setFieldValue = useCallback((field: keyof Project, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // 清除該欄位的錯誤
+  const handleInputChange = (field: string, value: string | number | Date | null) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // 清除對應的錯誤訊息
     if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+      setErrors(prev => ({
+        ...prev,
+        [field]: '',
+      }));
     }
-  }, [errors]);
+  };
 
   const validateField = useCallback((field: keyof Project): boolean => {
     const value = formData[field];
@@ -113,22 +116,25 @@ export function useProjectForm(initialData: Partial<Project> = {}): UseProjectFo
   const resetForm = useCallback(() => {
     setFormData(initialData);
     setErrors({});
-    setIsLoading(false);
   }, [initialData]);
 
-  const setLoading = useCallback((loading: boolean) => {
-    setIsLoading(loading);
-  }, []);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    if (validateForm()) {
+      await onSubmit(formData);
+    }
+
+    setIsSubmitting(false);
+  };
 
   return {
     formData,
     errors,
-    isLoading,
-    setFormData,
-    setFieldValue,
-    validateField,
-    validateForm,
+    isSubmitting,
+    handleInputChange,
+    handleSubmit,
     resetForm,
-    setLoading,
   };
 } 

@@ -3,24 +3,22 @@
  * 提供專案列表過濾、排序和統計功能
  */
 
-import { useMemo } from 'react';
-import type { 
-  ProjectDocument, 
-  ProjectStatus, 
-  ProjectType, 
-  ProjectPriority, 
-  ProjectRiskLevel, 
-  ProjectHealthLevel, 
-  ProjectPhase,
-  ProjectFilters,
-  ProjectSortOption,
-  ProjectStats
-} from '../types/project';
-import { convertToDate } from '../utils/dateUtils';
-import { calculateProjectQualityScore } from '../utils/projectUtils';
+import { useState, useMemo, useEffect } from 'react';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
+import type { Project, ProjectFilters, ProjectSortOption, ProjectStats } from '@/modules/projects/types/project';
+import { 
+  calculateProjectQualityScore,
+  calculateSchedulePerformanceIndex,
+  calculateCostPerformanceIndex,
+  getUpcomingMilestones,
+  getOverdueMilestones,
+  analyzeProjectStatusTrend,
+  calculateProjectPriorityScore
+} from '@/modules/projects/utils/projectUtils';
 
 interface UseFilteredProjectsReturn {
-  filteredProjects: ProjectDocument[];
+  filteredProjects: Project[];
   projectStats: ProjectStats;
   qualityScoreInfo: {
     currentScore: number;
@@ -31,7 +29,7 @@ interface UseFilteredProjectsReturn {
 }
 
 export function useFilteredProjects(
-  projects: ProjectDocument[],
+  projects: Project[],
   filters: ProjectFilters,
   sortOption: ProjectSortOption = 'createdAt-desc'
 ): UseFilteredProjectsReturn {
@@ -93,10 +91,14 @@ export function useFilteredProjects(
     // 日期範圍過濾
     if (filters.dateRange) {
       result = result.filter(project => {
-        const projectDate = convertToDate(project.startDate || null);
+        const projectDate = project.startDate ? 
+          (project.startDate instanceof Date ? project.startDate : 
+           typeof project.startDate === 'string' ? new Date(project.startDate) :
+           project.startDate?.toDate?.() || new Date()) : null;
         if (!projectDate) return false;
         
-        return projectDate >= filters.dateRange!.startDate && projectDate <= filters.dateRange!.endDate;
+        return projectDate >= filters.dateRange!.startDate && 
+               projectDate <= filters.dateRange!.endDate;
       });
     }
 
@@ -128,13 +130,19 @@ export function useFilteredProjects(
     result.sort((a, b) => {
       const [field, direction] = sortOption.split('-') as [string, 'asc' | 'desc'];
       
-      let aValue: any = a[field as keyof ProjectDocument];
-      let bValue: any = b[field as keyof ProjectDocument];
+      let aValue: any = a[field as keyof Project];
+      let bValue: any = b[field as keyof Project];
       
       // 處理日期排序
       if (field.includes('Date') || field.includes('At')) {
-        aValue = convertToDate(aValue || null) || new Date(0);
-        bValue = convertToDate(bValue || null) || new Date(0);
+        aValue = aValue ? 
+          (aValue instanceof Date ? aValue : 
+           typeof aValue === 'string' ? new Date(aValue) :
+           aValue?.toDate?.() || new Date()) : new Date(0);
+        bValue = bValue ? 
+          (bValue instanceof Date ? bValue : 
+           typeof bValue === 'string' ? new Date(bValue) :
+           bValue?.toDate?.() || new Date()) : new Date(0);
       }
       
       // 處理字串排序
@@ -173,7 +181,10 @@ export function useFilteredProjects(
     const completedProjects = projects.filter(p => p.status === 'completed').length;
     const onHoldProjects = projects.filter(p => p.status === 'on-hold').length;
     const overdueProjects = projects.filter(p => {
-      const endDate = convertToDate(p.estimatedEndDate || null);
+      const endDate = p.estimatedEndDate ? 
+        (p.estimatedEndDate instanceof Date ? p.estimatedEndDate : 
+         typeof p.estimatedEndDate === 'string' ? new Date(p.estimatedEndDate) :
+         p.estimatedEndDate?.toDate?.() || new Date()) : null;
       if (!endDate) return false;
       return endDate < new Date() && p.status !== 'completed';
     }).length;
@@ -182,6 +193,8 @@ export function useFilteredProjects(
       return sum + (project.issues?.length || 0);
     }, 0);
 
+    const averageQualityScore = projects.reduce((sum, project) => sum + (project.qualityScore || 0), 0) / Math.max(1, projects.length);
+
     return {
       totalProjects,
       activeProjects,
@@ -189,6 +202,7 @@ export function useFilteredProjects(
       onHoldProjects,
       overdueProjects,
       totalQualityIssues,
+      averageQualityScore,
     };
   }, [projects]);
 
@@ -225,7 +239,7 @@ export function useFilteredProjects(
 }
 
 // 重新導出統計功能
-export function useProjectStats(projects: ProjectDocument[]): ProjectStats {
+export function useProjectStats(projects: Project[]): ProjectStats {
   return useMemo((): ProjectStats => {
     const totalProjects = projects.length;
     const activeProjects = projects.filter(p => 
@@ -234,7 +248,10 @@ export function useProjectStats(projects: ProjectDocument[]): ProjectStats {
     const completedProjects = projects.filter(p => p.status === 'completed').length;
     const onHoldProjects = projects.filter(p => p.status === 'on-hold').length;
     const overdueProjects = projects.filter(p => {
-      const endDate = convertToDate(p.estimatedEndDate || null);
+      const endDate = p.estimatedEndDate ? 
+        (p.estimatedEndDate instanceof Date ? p.estimatedEndDate : 
+         typeof p.estimatedEndDate === 'string' ? new Date(p.estimatedEndDate) :
+         p.estimatedEndDate?.toDate?.() || new Date()) : null;
       if (!endDate) return false;
       return endDate < new Date() && p.status !== 'completed';
     }).length;
@@ -243,6 +260,8 @@ export function useProjectStats(projects: ProjectDocument[]): ProjectStats {
       return sum + (project.issues?.length || 0);
     }, 0);
 
+    const averageQualityScore = projects.reduce((sum, project) => sum + (project.qualityScore || 0), 0) / Math.max(1, projects.length);
+
     return {
       totalProjects,
       activeProjects,
@@ -250,11 +269,12 @@ export function useProjectStats(projects: ProjectDocument[]): ProjectStats {
       onHoldProjects,
       overdueProjects,
       totalQualityIssues,
+      averageQualityScore,
     };
   }, [projects]);
 }
 
-export function useQualityScore(projects: ProjectDocument[]): {
+export function useQualityScore(projects: Project[]): {
   currentScore: number;
   baseScore: number;
   qualityOrProgressIssuesCount: number;
@@ -284,4 +304,54 @@ export function useQualityScore(projects: ProjectDocument[]): {
       totalIssuesCount,
     };
   }, [projects]);
-} 
+}
+
+const fetchProjects = async (): Promise<Project[]> => {
+  try {
+    const projectsRef = collection(db, 'projects');
+    const q = query(projectsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as unknown as Project[];
+  } catch (error) {
+    console.error('取得專案列表失敗:', error);
+    return [];
+  }
+};
+
+const fetchProjectStats = async (): Promise<ProjectStats> => {
+  try {
+    const projects = await fetchProjects();
+    
+    return {
+      totalProjects: projects.length,
+      activeProjects: projects.filter(p => p.status === 'in-progress').length,
+      completedProjects: projects.filter(p => p.status === 'completed').length,
+      onHoldProjects: projects.filter(p => p.status === 'on-hold').length,
+      overdueProjects: projects.filter(p => {
+        const endDate = p.estimatedEndDate ? 
+          (p.estimatedEndDate instanceof Date ? p.estimatedEndDate : 
+           typeof p.estimatedEndDate === 'string' ? new Date(p.estimatedEndDate) :
+           p.estimatedEndDate?.toDate?.() || new Date()) : null;
+        if (!endDate) return false;
+        return endDate < new Date() && p.status !== 'completed';
+      }).length,
+      totalQualityIssues: projects.reduce((sum, p) => sum + (p.issues?.length || 0), 0),
+      averageQualityScore: projects.reduce((sum, p) => sum + (p.qualityScore || 0), 0) / Math.max(1, projects.length),
+    };
+  } catch (error) {
+    console.error('取得專案統計失敗:', error);
+    return {
+      totalProjects: 0,
+      activeProjects: 0,
+      completedProjects: 0,
+      onHoldProjects: 0,
+      overdueProjects: 0,
+      totalQualityIssues: 0,
+      averageQualityScore: 0,
+    };
+  }
+}; 

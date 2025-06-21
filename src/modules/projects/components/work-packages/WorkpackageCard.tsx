@@ -26,10 +26,9 @@ interface WorkpackageCardProps {
 
 export default function WorkpackageCard({
   workpackage,
-  projectId,
   onEdit,
   onDelete,
-  onViewDetails,
+  projectId: _projectId,
 }: WorkpackageCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -206,30 +205,26 @@ export default function WorkpackageCard({
 
       {/* 操作按鈕 */}
       <div className='flex justify-end space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700'>
-        {onViewDetails && (
+        <div className="flex space-x-2">
           <button
-            onClick={() => onViewDetails(workpackage.id)}
-            className={`${projectStyles.button.primary} text-sm`}
-          >
-            查看詳情
-          </button>
-        )}
-        {onEdit && (
-          <button
-            onClick={() => onEdit(workpackage)}
-            className={`${projectStyles.button.outline} text-sm`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit?.(workpackage);
+            }}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
           >
             編輯
           </button>
-        )}
-        {onDelete && (
           <button
-            onClick={() => onDelete(workpackage.id)}
-            className={`${projectStyles.button.danger} text-sm`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(workpackage.id);
+            }}
+            className="text-red-600 hover:text-red-800 text-sm font-medium"
           >
             刪除
           </button>
-        )}
+        </div>
       </div>
     </div>
   );

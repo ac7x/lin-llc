@@ -25,7 +25,7 @@ interface SubWorkpackageFormProps {
 
 export default function SubWorkpackageForm({
   subWorkpackage,
-  workpackageId,
+  workpackageId: _workpackageId,
   onSubmit,
   onCancel,
   isSubmitting = false,
