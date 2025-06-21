@@ -41,7 +41,8 @@
       "notification",
       "auth",
       "common",
-      "archive"
+      "archive",
+      "google-maps"
     ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
