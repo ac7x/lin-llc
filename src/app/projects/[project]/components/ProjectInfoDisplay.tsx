@@ -11,10 +11,10 @@
 
 'use client';
 
+import { useQualityScore } from '@/app/projects/hooks/useFilteredProjects';
+import type { Project } from '@/app/projects/types/project';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
-import { useQualityScore } from '@/hooks/useFilteredProjects';
 import type { AppUser } from '@/types/auth';
-import type { Project } from '@/types/project';
 import { formatLocalDate } from '@/utils/dateUtils';
 
 interface ProjectInfoDisplayProps {

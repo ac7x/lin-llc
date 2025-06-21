@@ -7,7 +7,7 @@
 
 import Image from 'next/image';
 
-import { ActivityLog, DailyReport, PhotoRecord } from '@/types/project';
+import { ActivityLog, DailyReport, PhotoRecord } from '@/app/projects/types/project';
 import { safeToDate } from '@/utils/dateUtils';
 
 interface JournalHistoryProps {

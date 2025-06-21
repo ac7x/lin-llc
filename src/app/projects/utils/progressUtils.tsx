@@ -11,8 +11,8 @@
 
 import type { ReactElement } from 'react';
 
-import { Project, Workpackage } from '@/types/project';
-import { calculateProjectProgress as calculateProjectProgressNew, calculateWorkpackageProgress as calculateWorkpackageProgressNew } from '@/utils/projectUtils';
+import { Project, Workpackage } from '@/app/projects/types/project';
+import { calculateProjectProgress as calculateProjectProgressNew, calculateWorkpackageProgress as calculateWorkpackageProgressNew } from './projectUtils';
 
 /**
  * 計算專案進度百分比（根據所有 subWorkpackages 的實際完成數量計算）

@@ -16,7 +16,7 @@ import type {
   ProjectMilestone,
   ProjectRiskLevel,
   ProjectPriority
-} from '@/types/project';
+} from '@/app/projects/types/project';
 
 // ===== 進度計算與分析 =====
 

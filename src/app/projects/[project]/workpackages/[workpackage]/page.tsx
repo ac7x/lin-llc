@@ -17,14 +17,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useDocument, useCollection } from 'react-firebase-hooks/firestore';
 
-import { useAuth } from '@/hooks/useAuth';
-import { db, doc, updateDoc } from '@/lib/firebase-client';
-import type { AppUser } from '@/types/auth';
 import { Project , SubWorkpackage, Workpackage ,
   Template,
   SubWorkpackageTemplateItem,
   TemplateToSubWorkpackageOptions,
-} from '@/types/project';
+} from '@/app/projects/types/project';
+import { useAuth } from '@/hooks/useAuth';
+import { db, doc, updateDoc } from '@/lib/firebase-client';
+import type { AppUser } from '@/types/auth';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
@@ -50,7 +50,7 @@ function templateItemToSubWorkpackage(
     actualQuantity: 0,
     unit: templateItem.unit,
     progress: 0,
-    status: 'draft' as import('@/types/project').SubWorkpackageStatus,
+    status: 'draft' as import('@/app/projects/types/project').SubWorkpackageStatus,
     createdAt: now,
     updatedAt: now,
     // 日期欄位為選填，可為 undefined
@@ -279,7 +279,7 @@ export default function WorkpackageDetailPage() {
         estimatedQuantity: newSubWorkpackage.estimatedQuantity,
         unit: newSubWorkpackage.unit,
         budget: newSubWorkpackage.budget,
-        status: 'draft' as import('@/types/project').SubWorkpackageStatus,
+        status: 'draft' as import('@/app/projects/types/project').SubWorkpackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -1150,7 +1150,7 @@ export default function WorkpackageDetailPage() {
                     estimatedEndDate: estimatedEndDateStr
                       ? Timestamp.fromDate(new Date(estimatedEndDateStr))
                       : undefined,
-                    status: formData.get('status') as import('@/types/project').WorkpackageStatus,
+                    status: formData.get('status') as import('@/app/projects/types/project').WorkpackageStatus,
                     assignedTo: formData.get('assignedTo') as string,
                     budget: Number(formData.get('budget')),
                     category: formData.get('category') as string,

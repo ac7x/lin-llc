@@ -19,9 +19,9 @@ import WeatherDisplay, {
   fetchWeather,
   WeatherData,
 } from '@/app/projects/[project]/project-journal/components/WeatherDisplay';
+import { Project } from '@/app/projects/types/project';
 import { useAuth } from '@/hooks/useAuth';
 import { db, doc } from '@/lib/firebase-client';
-import { Project } from '@/types/project';
 
 import JournalForm from './components/JournalForm';
 import JournalHistory from './components/JournalHistory';

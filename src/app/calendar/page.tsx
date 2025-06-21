@@ -17,9 +17,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Calendar } from 'react-big-calendar';
 import '@/styles/react-big-calendar.css';
 
+import { Workpackage, SubWorkpackage } from '@/app/projects/types/project';
 import { db } from '@/lib/firebase-client';
 import { CalendarEvent } from '@/types/calendar';
-import { Workpackage, SubWorkpackage } from '@/types/project';
 import {
   localizer,
   createCalendarEvent,

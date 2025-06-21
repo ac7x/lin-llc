@@ -12,12 +12,12 @@
 
 import { useState } from 'react';
 
+import type { Project } from '@/app/projects/types/project';
 import AddressSelector from '@/components/common/AddressSelector';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { doc, updateDoc, Timestamp, db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
-import type { Project } from '@/types/project';
 import { formatDateForInput } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';

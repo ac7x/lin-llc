@@ -15,10 +15,10 @@ import { nanoid } from 'nanoid';
 import { useState, useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
+import type { Workpackage } from '@/app/projects/types/project';
 import { useAuth } from '@/hooks/useAuth';
 import { db, collection, addDoc, Timestamp } from '@/lib/firebase-client';
 import type { ContractItem } from '@/types/finance';
-import type { Workpackage } from '@/types/project';
 import {
   getErrorMessage,
   logError,
@@ -94,7 +94,7 @@ export default function ImportProjectPage() {
         id,
         name: String(item.contractItemId),
         description: `合約項目 ${item.contractItemId}`,
-        status: 'planned' as import('@/types/project').WorkpackageStatus,
+        status: 'planned' as import('@/app/projects/types/project').WorkpackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -136,7 +136,7 @@ export default function ImportProjectPage() {
         owner: user?.uid || 'default', // 設置專案擁有者
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        status: 'planning' as import('@/types/project').ProjectStatus,
+        status: 'planning' as import('@/app/projects/types/project').ProjectStatus,
         decomposition, // 專案分解資料
         workpackages, // 將合約項目轉換後的工作包列表
         // 初始化品質分數

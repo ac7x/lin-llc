@@ -1,5 +1,5 @@
+import type { Project } from '@/app/projects/types/project';
 import type { ContractData, OrderData, QuoteData } from './finance';
-import type { Project } from './project';
 
 // 封存資料的 Firestore 原始結構
 export interface FirestoreArchiveData extends Record<string, unknown> {

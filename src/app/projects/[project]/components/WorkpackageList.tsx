@@ -24,8 +24,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import type { Workpackage } from '@/app/projects/types/project';
 import { doc, updateDoc, db } from '@/lib/firebase-client';
-import type { Workpackage } from '@/types/project';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface WorkpackageListProps {

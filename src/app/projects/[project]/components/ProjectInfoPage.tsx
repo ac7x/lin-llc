@@ -8,9 +8,9 @@
 
 import { useState, useEffect } from 'react';
 
+import type { Project } from '@/app/projects/types/project';
 import { collection, query, getDocs, db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
-import type { Project } from '@/types/project';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 import ProjectEditModal from './ProjectEditModal';

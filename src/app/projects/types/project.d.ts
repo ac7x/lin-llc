@@ -4,7 +4,7 @@
  * 用於管理專案生命週期中的各項活動和資源
  */
 
-import { DateField, BaseWithDates } from './common';
+import { DateField, BaseWithDates } from '../../../types/common';
 
 // ===== 專案狀態與生命週期管理 =====
 

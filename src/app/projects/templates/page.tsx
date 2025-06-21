@@ -16,9 +16,9 @@ import { nanoid } from 'nanoid';
 import { useState, useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
+import { Template, SubWorkpackageTemplateItem } from '@/app/projects/types/project';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
-import { Template, SubWorkpackageTemplateItem } from '@/types/project';
 
 
 export default function TemplatesPage() {

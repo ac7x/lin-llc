@@ -10,6 +10,14 @@ import { useState } from 'react';
 
 // import Image from 'next/image';
 import {
+  Project,
+  ActivityLog,
+  PhotoRecord,
+  PhotoType,
+  Workpackage,
+  IssueRecord,
+} from '@/app/projects/types/project';
+import {
   db,
   storage,
   ref,
@@ -20,17 +28,9 @@ import {
   doc,
   Timestamp,
 } from '@/lib/firebase-client';
-import {
-  Project,
-  ActivityLog,
-  PhotoRecord,
-  PhotoType,
-  Workpackage,
-  IssueRecord,
-} from '@/types/project';
 import { toTimestamp } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
-import { calculateProjectProgress } from '@/utils/progressUtils';
+import { calculateProjectProgress } from '../../../utils/progressUtils';
 
 import { WeatherData } from './WeatherDisplay';
 

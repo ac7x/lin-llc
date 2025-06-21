@@ -16,9 +16,9 @@ import { useParams } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
+import { Project , MaterialEntry } from '@/app/projects/types/project';
 import { useAuth } from '@/hooks/useAuth';
 import { db, doc, updateDoc } from '@/lib/firebase-client';
-import { Project , MaterialEntry } from '@/types/project';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 export default function ProjectMaterialsPage() {

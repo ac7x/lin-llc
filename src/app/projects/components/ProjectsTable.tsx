@@ -9,7 +9,7 @@ import type {
   ProjectPhase, 
   ProjectType, 
   IssueRecord 
-} from '@/types/project';
+} from '@/app/projects/types/project';
 
 import { tableStyles, cn } from '@/utils/classNameUtils';
 

@@ -32,8 +32,8 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
+import { Workpackage, SubWorkpackage } from '@/app/projects/types/project';
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
-import { Workpackage, SubWorkpackage } from '@/types/project';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 

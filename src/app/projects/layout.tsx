@@ -17,15 +17,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, type ReactNode } from 'react';
 
+import type { Project, Workpackage } from '@/app/projects/types/project';
 import { PermissionCheck } from '@/components/common/PermissionCheck';
 import { PageLayout, PageContent, Sidebar } from '@/components/layout/PageLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
-import type { Project, Workpackage } from '@/types/project';
 import { navigationStyles, modalStyles, inputStyles, cn, buttonStyles } from '@/utils/classNameUtils';
 import { safeAsync, retry, getErrorMessage, logError } from '@/utils/errorUtils';
-import { ProjectProgressPercent, ProgressBar } from '@/utils/progressUtils';
-import { calculateWorkpackageProgress } from '@/utils/projectUtils';
+import { ProjectProgressPercent, ProgressBar } from './utils/progressUtils';
+import { calculateWorkpackageProgress } from './utils/projectUtils';
 
 function SidebarContent() {
   const { user } = useAuth();
@@ -280,10 +280,10 @@ function SidebarContent() {
                             </span>
                           </div>
                           <div className='mt-1 flex items-center gap-2'>
-                            <ProgressBar wp={wp as import('@/types/project').Workpackage} />
+                            <ProgressBar wp={wp as import('@/app/projects/types/project').Workpackage} />
                             <span className='text-xs text-gray-500'>
                               {calculateWorkpackageProgress(
-                                wp as import('@/types/project').Workpackage
+                                wp as import('@/app/projects/types/project').Workpackage
                               )}
                               %
                             </span>

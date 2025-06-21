@@ -17,11 +17,11 @@ import { useParams } from 'next/navigation';
 import { useState, useMemo, useEffect } from 'react';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
+import { Workpackage } from '@/app/projects/types/project';
 import { useAuth } from '@/hooks/useAuth';
 import { db, doc, updateDoc } from '@/lib/firebase-client';
 import { BaseWithDates } from '@/types/common';
 import { ExpenseData, ExpenseItem } from '@/types/finance';
-import { Workpackage } from '@/types/project';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
 import {
   getErrorMessage,

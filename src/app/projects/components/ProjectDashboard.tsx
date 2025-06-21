@@ -14,8 +14,8 @@
 
 import { useMemo } from 'react';
 
-import type { Project } from '@/types/project';
-import { ProgressBarWithPercent, ProjectHealthIndicator } from '@/utils/progressUtils';
+import type { Project } from '@/app/projects/types/project';
+import { ProgressBarWithPercent, ProjectHealthIndicator } from '@/app/projects/utils/progressUtils';
 import {
   calculateProjectProgress,
   calculateProjectQualityScore,
@@ -24,7 +24,7 @@ import {
   getUpcomingMilestones,
   getOverdueMilestones,
   analyzeProjectStatusTrend,
-} from '@/utils/projectUtils';
+} from '../utils/projectUtils';
 
 interface ProjectDashboardProps {
   project: Project;
@@ -230,7 +230,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           </h3>
           <div className='space-y-3'>
             {overdueMilestones.length > 0 ? (
-              overdueMilestones.slice(0, 3).map((milestone: import('@/types/project').ProjectMilestone) => (
+              overdueMilestones.slice(0, 3).map((milestone: import('@/app/projects/types/project').ProjectMilestone) => (
                 <div key={milestone.id} className='p-2 bg-red-50 dark:bg-red-900/20 rounded-lg'>
                   <div className='font-medium text-red-700 dark:text-red-300'>
                     {milestone.name}（逾期）
@@ -246,7 +246,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           </div>
           <div className='space-y-3'>
             {upcomingMilestones.length > 0 ? (
-              upcomingMilestones.slice(0, 3).map((milestone: import('@/types/project').ProjectMilestone) => (
+              upcomingMilestones.slice(0, 3).map((milestone: import('@/app/projects/types/project').ProjectMilestone) => (
                 <div key={milestone.id} className='p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg'>
                   <div className='font-medium text-yellow-700 dark:text-yellow-300'>
                     {milestone.name}（即將到期）
@@ -269,7 +269,7 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
           專案狀態指標
         </h3>
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-          {statusTrend.indicators.map((indicator, index) => (
+          {statusTrend.indicators.map((indicator: string, index: number) => (
             <div key={index} className='flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg'>
               <span className='text-sm'>📋</span>
               <span className='text-sm text-gray-700 dark:text-gray-300'>{indicator}</span>

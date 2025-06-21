@@ -34,13 +34,13 @@ import {
   Bar,
 } from 'recharts';
 
+import { Workpackage, Project } from '@/app/projects/types/project';
 import { Unauthorized } from '@/components/common/Unauthorized';
 import { ROLE_HIERARCHY, ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db, collection } from '@/lib/firebase-client';
-import { Workpackage, Project } from '@/types/project';
 import { safeToDate } from '@/utils/dateUtils';
-import { calculateProjectProgress } from '@/utils/progressUtils';
+import { calculateProjectProgress } from '../projects/utils/progressUtils';
 
 // 抽取共用樣式
 const cardStyles = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6';

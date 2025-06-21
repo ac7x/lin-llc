@@ -15,10 +15,10 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTransition, useState, useMemo } from 'react';
 
+import { useFilteredProjects, useProjectStats, type ProjectFilters, type ProjectSortOption } from '@/app/projects/hooks/useFilteredProjects';
+import type { IssueRecord } from '@/app/projects/types/project';
 import { DataLoader } from '@/components/common/DataLoader';
 import { useAuth } from '@/hooks/useAuth';
-import { useFilteredProjects, useProjectStats, type ProjectFilters, type ProjectSortOption } from '@/hooks/useFilteredProjects';
-import type { IssueRecord } from '@/types/project';
 
 import { ProjectsTable } from './components/ProjectsTable';
 
@@ -33,12 +33,12 @@ export default function ProjectsPage() {
 
   // 從 URL 參數取得篩選條件
   const searchTerm = searchParams.get('q') ?? '';
-  const status = searchParams.get('status') as import('@/types/project').ProjectStatus | undefined;
-  const projectType = searchParams.get('type') as import('@/types/project').ProjectType | undefined;
-  const priority = searchParams.get('priority') as import('@/types/project').ProjectPriority | undefined;
-  const riskLevel = searchParams.get('riskLevel') as import('@/types/project').ProjectRiskLevel | undefined;
-  const healthLevel = searchParams.get('healthLevel') as import('@/types/project').ProjectHealthLevel | undefined;
-  const phase = searchParams.get('phase') as import('@/types/project').ProjectPhase | undefined;
+  const status = searchParams.get('status') as import('@/app/projects/types/project').ProjectStatus | undefined;
+  const projectType = searchParams.get('type') as import('@/app/projects/types/project').ProjectType | undefined;
+  const priority = searchParams.get('priority') as import('@/app/projects/types/project').ProjectPriority | undefined;
+  const riskLevel = searchParams.get('riskLevel') as import('@/app/projects/types/project').ProjectRiskLevel | undefined;
+  const healthLevel = searchParams.get('healthLevel') as import('@/app/projects/types/project').ProjectHealthLevel | undefined;
+  const phase = searchParams.get('phase') as import('@/app/projects/types/project').ProjectPhase | undefined;
   const sortBy = (searchParams.get('sort') as ProjectSortOption) || 'createdAt-desc';
 
   const filters: ProjectFilters = {

@@ -17,10 +17,10 @@ import { useParams } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
+import { useQualityScore, updateProjectQualityScore } from '@/app/projects/hooks/useFilteredProjects';
+import { Project , IssueRecord } from '@/app/projects/types/project';
 import { useAuth } from '@/hooks/useAuth';
-import { useQualityScore, updateProjectQualityScore } from '@/hooks/useFilteredProjects';
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
-import { Project , IssueRecord } from '@/types/project';
 import { formatLocalDate } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 

@@ -2,8 +2,6 @@ import { query, where, orderBy } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
-import { useAuth } from '@/hooks/useAuth';
-import { collection, db } from '@/lib/firebase-client';
 import type { 
   ProjectDocument, 
   ProjectStatus, 
@@ -15,7 +13,9 @@ import type {
   Project,
   IssueRecord,
   DailyReport
-} from '@/types/project';
+} from '@/app/projects/types/project';
+import { useAuth } from '@/hooks/useAuth';
+import { collection, db } from '@/lib/firebase-client';
 import { formatDate } from '@/utils/dateUtils';
 
 export interface ProjectFilters {

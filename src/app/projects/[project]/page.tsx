@@ -15,11 +15,11 @@ import { useParams } from 'next/navigation';
 import { useMemo } from 'react';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
+import type { Project } from '@/app/projects/types/project';
 import { DataLoader } from '@/components/common/DataLoader';
 import Tabs from '@/components/common/Tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { doc, db } from '@/lib/firebase-client';
-import type { Project } from '@/types/project';
 
 import ProjectInfoPage from './components/ProjectInfoPage';
 import ProjectCalendarPage from './project-calendar/page';

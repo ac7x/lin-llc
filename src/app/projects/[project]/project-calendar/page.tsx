@@ -18,11 +18,11 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Calendar } from 'react-big-calendar';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
+import { Workpackage, SubWorkpackage } from '@/app/projects/types/project';
 import { useAuth } from '@/hooks/useAuth';
 import '@/styles/react-big-calendar.css';
 import { db, doc } from '@/lib/firebase-client';
 import { CalendarEvent } from '@/types/calendar';
-import { Workpackage, SubWorkpackage } from '@/types/project';
 import {
   localizer,
   createCalendarEvent,
