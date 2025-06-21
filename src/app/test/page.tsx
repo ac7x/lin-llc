@@ -12,10 +12,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { nanoid } from 'nanoid';
 import Link from 'next/link';
+
+import { useAuth } from '@/hooks/useAuth';
 
 // 導入專案模組的所有組件和功能
 import {
@@ -25,7 +26,6 @@ import {
   LoadingSpinner,
   PageContainer,
   PageHeader,
-  WeatherDisplay,
   
   // 儀表板組件
   ProjectDashboard,
@@ -76,23 +76,21 @@ import {
   
   // 日曆組件
   CalendarView,
-} from '@/modules/projects/components';
+} from '@/modules/test-projects/components';
 
 // 導入 Hooks
 import {
   useProjectForm,
   useProjectErrorHandler,
-  useFilteredProjects,
-} from '@/modules/projects/hooks';
+} from '@/modules/test-projects/hooks';
 
 // 導入服務
 import {
   ProjectService,
   WorkpackageService,
-  JournalService,
   IssueService,
   TemplateService,
-} from '@/modules/projects/services';
+} from '@/modules/test-projects/services';
 
 // 導入工具函數和常數
 import {
@@ -102,21 +100,21 @@ import {
   calculateCostPerformanceIndex,
   analyzeProjectStatusTrend,
   calculateProjectPriorityScore,
-} from '@/modules/projects/utils';
+} from '@/modules/test-projects/utils';
 
 import {
   ProgressBarWithPercent,
   ProjectHealthIndicator,
-} from '@/modules/projects/utils/progressUtils';
+} from '@/modules/test-projects/utils/progressUtils';
 
 import {
   PROJECT_STATUS_OPTIONS,
   PROJECT_TYPE_OPTIONS,
   PROJECT_PRIORITY_OPTIONS,
   PROJECT_RISK_LEVEL_OPTIONS,
-} from '@/modules/projects/constants';
+} from '@/modules/test-projects/constants';
 
-import { projectStyles } from '@/modules/projects/styles';
+import { projectStyles } from '@/modules/test-projects/styles';
 
 // 導入型別
 import type {
@@ -128,10 +126,7 @@ import type {
   ProjectStats as ProjectStatsType,
   Expense,
   MaterialEntry,
-  ProjectMilestone,
-  ProjectRisk,
-  ProjectChange,
-} from '@/modules/projects/types/project';
+} from '@/modules/test-projects/types/project';
 
 // 導入 Firebase 相關
 import { db, collection, addDoc, Timestamp } from '@/lib/firebase-client';
@@ -164,8 +159,8 @@ export default function TestPage() {
   const [workpackages, setWorkpackages] = useState<Workpackage[]>([]);
   const [subWorkpackages, setSubWorkpackages] = useState<SubWorkpackage[]>([]);
   const [issues, setIssues] = useState<IssueRecord[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [materials, setMaterials] = useState<MaterialEntry[]>([]);
+  const [_setExpenses, setExpenses] = useState<Expense[]>([]);
+  const [_setMaterials, setMaterials] = useState<MaterialEntry[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [projectStats, setProjectStats] = useState<ProjectStatsType | null>(null);
   
@@ -186,7 +181,7 @@ export default function TestPage() {
   const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkpackage | null>(null);
 
   // 合約生成專案相關狀態
-  const [contracts, setContracts] = useState<Array<{
+  const [_contracts, setContracts] = useState<Array<{
     id: string;
     contractNumber: string;
     contractName: string;
@@ -199,7 +194,7 @@ export default function TestPage() {
   const [selectedContractId, setSelectedContractId] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [showProjectSetup, setShowProjectSetup] = useState(false);
-  const [projectSetupData, setProjectSetupData] = useState<Record<string, string | number>>({});
+  const [_projectSetupData, setProjectSetupData] = useState<Record<string, string | number>>({});
 
   // 合約生成專案相關狀態 - 使用真實 Firebase 數據
   const [importingId, setImportingId] = useState<string | null>(null);
@@ -244,9 +239,9 @@ export default function TestPage() {
   }, [contractsSnapshot, existingContractIds]);
 
   // 測試 hooks
-  const { formData, errors, handleInputChange, handleSubmit, resetForm } = useProjectForm({}, async (data) => {
+  const { formData, errors, handleInputChange, handleSubmit, resetForm } = useProjectForm({}, async (_data) => {
     // 處理表單提交
-    console.log('表單數據:', data);
+    console.log('表單數據:', _data);
   });
   const { handleError } = useProjectErrorHandler();
 
@@ -467,7 +462,7 @@ export default function TestPage() {
         id,
         name: workpackageName,
         description: workpackageDescription,
-        status: 'planned' as import('@/modules/projects/types/project').WorkpackageStatus,
+        status: 'planned' as import('@/modules/test-projects/types/project').WorkpackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -488,7 +483,7 @@ export default function TestPage() {
     setProjectSetupData(data);
     
     const selectedContract = contractRows.find(c => c.id === selectedContractId);
-    const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+    const _selectedTemplate = templates.find(t => t.id === selectedTemplateId);
     
     if (!selectedContract) {
       alert('未找到選擇的合約');
@@ -523,7 +518,7 @@ export default function TestPage() {
         owner: user?.uid || 'default', // 設置專案擁有者
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        status: 'planning' as import('@/modules/projects/types/project').ProjectStatus,
+        status: 'planning' as const,
         decomposition, // 專案分解資料
         workpackages, // 將合約項目轉換後的工作包列表
         // 初始化品質分數
@@ -1127,11 +1122,11 @@ export default function TestPage() {
               <DataLoader
                 loading={loading}
                 error={error ? new Error(error) : null}
-                data={expenses}
+                data={[]}
               >
-                {(data) => (
+                {(_data) => (
                   <ExpenseList
-                    expenses={data}
+                    expenses={[]}
                     projectId={selectedProject?.id || ''}
                     onEdit={(_expense) => {
                       // 處理編輯費用
@@ -1165,11 +1160,11 @@ export default function TestPage() {
               <DataLoader
                 loading={loading}
                 error={error ? new Error(error) : null}
-                data={materials}
+                data={[]}
               >
-                {(data) => (
+                {(_data) => (
                   <MaterialList
-                    materials={data}
+                    materials={[]}
                     projectId={selectedProject?.id || ''}
                     onEdit={(_material) => {
                       // 處理編輯材料
@@ -1278,7 +1273,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}`}
+                      src={`/test-projects/${selectedProject.id}`}
                       title="專案主頁"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1287,7 +1282,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案主頁</span>
                     <Link
-                      href={`/projects/${selectedProject.id}`}
+                      href={`/test-projects/${selectedProject.id}`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1300,7 +1295,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/calendar`}
+                      src={`/test-projects/${selectedProject.id}/calendar`}
                       title="日曆頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1309,7 +1304,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">日曆頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/calendar`}
+                      href={`/test-projects/${selectedProject.id}/calendar`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1322,7 +1317,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/expenses`}
+                      src={`/test-projects/${selectedProject.id}/expenses`}
                       title="費用頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1331,7 +1326,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">費用頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/expenses`}
+                      href={`/test-projects/${selectedProject.id}/expenses`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1344,7 +1339,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/issues`}
+                      src={`/test-projects/${selectedProject.id}/issues`}
                       title="問題頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1353,7 +1348,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">問題頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/issues`}
+                      href={`/test-projects/${selectedProject.id}/issues`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1366,7 +1361,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/journal`}
+                      src={`/test-projects/${selectedProject.id}/journal`}
                       title="日誌頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1375,7 +1370,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">日誌頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/journal`}
+                      href={`/test-projects/${selectedProject.id}/journal`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1388,7 +1383,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/materials`}
+                      src={`/test-projects/${selectedProject.id}/materials`}
                       title="材料頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1397,7 +1392,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">材料頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/materials`}
+                      href={`/test-projects/${selectedProject.id}/materials`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1410,7 +1405,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/subwork-packages`}
+                      src={`/test-projects/${selectedProject.id}/subwork-packages`}
                       title="子工作包頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1419,7 +1414,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">子工作包頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/subwork-packages`}
+                      href={`/test-projects/${selectedProject.id}/subwork-packages`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1432,7 +1427,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/work-packages`}
+                      src={`/test-projects/${selectedProject.id}/work-packages`}
                       title="工作包頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1441,7 +1436,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">工作包頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/work-packages`}
+                      href={`/test-projects/${selectedProject.id}/work-packages`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1462,7 +1457,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src="/projects/generate-from-contract"
+                      src="/test-projects/generate-from-contract"
                       title="合約生成專案頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1471,7 +1466,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">合約生成專案</span>
                     <Link
-                      href="/projects/generate-from-contract"
+                      href="/test-projects/generate-from-contract"
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1484,7 +1479,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src="/projects/list"
+                      src="/test-projects/list"
                       title="專案列表頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1493,7 +1488,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案列表</span>
                     <Link
-                      href="/projects/list"
+                      href="/test-projects/list"
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1506,7 +1501,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src="/projects/templates"
+                      src="/test-projects/templates"
                       title="模板管理頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1515,7 +1510,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">模板管理</span>
                     <Link
-                      href="/projects/templates"
+                      href="/test-projects/templates"
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -2133,7 +2128,7 @@ export default function TestPage() {
               </h4>
               <WorkpackageForm
                 projectId={selectedProject?.id || ''}
-                onSubmit={(_data) => {
+                onSubmit={async (_data) => {
                   // 處理提交
                 }}
                 onCancel={() => {
@@ -2149,7 +2144,7 @@ export default function TestPage() {
               </h4>
               <SubWorkpackageForm
                 workpackageId={workpackages[0]?.id || ''}
-                onSubmit={(_data) => {
+                onSubmit={async (_data) => {
                   // 處理提交
                 }}
                 onCancel={() => {
@@ -2178,7 +2173,7 @@ export default function TestPage() {
               </h4>
               <JournalForm
                 projectId={selectedProject?.id || ''}
-                onSubmit={(_data) => {
+                onSubmit={async (_data) => {
                   // 處理提交
                 }}
                 onCancel={() => {
