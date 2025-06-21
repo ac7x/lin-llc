@@ -13,12 +13,6 @@
 │   ├── fonts
 │   │   └── NotoSerifTC-Regular.ttf
 │   └── sup.svg
-├── script
-│   ├── debug.sh
-│   ├── install.sh
-│   ├── reset.sh
-│   ├── script.sh
-│   └── uninstall.sh
 ├── src
 │   ├── app
 │   │   ├── archive
@@ -68,102 +62,102 @@
 │   │   │   ├── components
 │   │   │   │   └── ProjectsTable.tsx
 │   │   │   ├── import
-│   │   │   │   └── page.tsx
+│   │   │   │   └── page.tsx
 │   │   │   ├── layout.tsx
 │   │   │   ├── page.tsx
 │   │   │   ├── [project]
-│   │   │   │   ├── components
-│   │   │   │   │   ├── ProjectEditModal.tsx
-│   │   │   │   │   ├── ProjectInfoDisplay.tsx
-│   │   │   │   │   ├── ProjectInfoPage.tsx
-│   │   │   │   │   └── WorkpackageList.tsx
-│   │   │   │   ├── page.tsx
-│   │   │   │   ├── project-calendar
-│   │   │   │   │   └── page.tsx
-│   │   │   │   ├── project-expenses
-│   │   │   │   │   └── page.tsx
-│   │   │   │   ├── project-issues
-│   │   │   │   │   └── page.tsx
-│   │   │   │   ├── project-journal
-│   │   │   │   │   ├── components
-│   │   │   │   │   │   ├── JournalForm.tsx
-│   │   │   │   │   │   ├── JournalHistory.tsx
-│   │   │   │   │   │   └── WeatherDisplay.tsx
-│   │   │   │   │   └── page.tsx
-│   │   │   │   ├── project-materials
-│   │   │   │   │   └── page.tsx
-│   │   │   │   └── workpackages
-│   │   │   │       ├── subworkpackages
-│   │   │   │       │   └── page.tsx
-│   │   │   │       └── [workpackage]
-│   │   │   │           └── page.tsx
+│   │   │   │   ├── components
+│   │   │   │   │   ├── ProjectEditModal.tsx
+│   │   │   │   │   ├── ProjectInfoDisplay.tsx
+│   │   │   │   │   ├── ProjectInfoPage.tsx
+│   │   │   │   │   └── WorkpackageList.tsx
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── project-calendar
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── project-expenses
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── project-issues
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── project-journal
+│   │   │   │   │   ├── components
+│   │   │   │   │   │   ├── JournalForm.tsx
+│   │   │   │   │   │   ├── JournalHistory.tsx
+│   │   │   │   │   │   └── WeatherDisplay.tsx
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── project-materials
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── workpackages
+│   │   │   │       ├── subworkpackages
+│   │   │   │       │   └── page.tsx
+│   │   │   │       └── [workpackage]
+│   │   │   │           └── page.tsx
 │   │   │   └── templates
-│   │   │       └── page.tsx
+│   │   │      └── page.tsx
 │   │   ├── quotes
-│   │   │   ├── add
-│   │   │   │   └── page.tsx
-│   │   │   ├── layout.tsx
-│   │   │   ├── page.tsx
-│   │   │   └── [quote]
-│   │   │       └── page.tsx
+│   │   │   ├── add
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   ├── page.tsx
+│   │   │   └── [quote]
+│   │   │       └── page.tsx
 │   │   ├── schedule
-│   │   │   ├── layout.tsx
-│   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
 │   │   ├── send-notification
-│   │   │   ├── layout.tsx
-│   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
 │   │   └── signin
-│   │       └── page.tsx
+│   │      └── page.tsx
 │   ├── components
-│   │   ├── common
-│   │   │   ├── AddressSelector.tsx
-│   │   │   ├── DataLoader.tsx
-│   │   │   ├── PermissionCheck.tsx
-│   │   │   ├── Tabs.tsx
-│   │   │   ├── Unauthorized.tsx
-│   │   │   └── VisTimeline.tsx
-│   │   ├── layout
-│   │   │   └── PageLayout.tsx
-│   │   ├── pdf
-│   │   │   ├── ContractPdfDocument.tsx
-│   │   │   ├── OrderPdfDocument.tsx
-│   │   │   ├── pdfUtils.ts
-│   │   │   └── QuotePdfDocument.tsx
-│   │   └── tabs
-│   │       └── BottomNavigation.tsx
+│   │   ├── common
+│   │   │   ├── AddressSelector.tsx
+│   │   │   ├── DataLoader.tsx
+│   │   │   ├── PermissionCheck.tsx
+│   │   │   ├── Tabs.tsx
+│   │   │   ├── Unauthorized.tsx
+│   │   │   └── VisTimeline.tsx
+│   │   ├── layout
+│   │   │   └── PageLayout.tsx
+│   │   ├── pdf
+│   │   │   ├── ContractPdfDocument.tsx
+│   │   │   ├── OrderPdfDocument.tsx
+│   │   │   ├── pdfUtils.ts
+│   │   │   └── QuotePdfDocument.tsx
+│   │   └── tabs
+│   │       └── BottomNavigation.tsx
 │   ├── constants
-│   │   ├── navigation.tsx
-│   │   ├── permissions.ts
-│   │   └── roles.ts
+│   │   ├── navigation.tsx
+│   │   ├── permissions.ts
+│   │   └── roles.ts
 │   ├── hooks
-│   │   ├── useAuth.ts
-│   │   ├── useFilteredProjects.ts
-│   │   ├── useFirebaseMessaging.ts
-│   │   └── useNotifications.ts
+│   │   ├── useAuth.ts
+│   │   ├── useFilteredProjects.ts
+│   │   ├── useFirebaseMessaging.ts
+│   │   └── useNotifications.ts
 │   ├── lib
-│   │   ├── firebase-client.ts
-│   │   ├── firebase-config.ts
-│   │   └── firebase-notifications.ts
+│   │   ├── firebase-client.ts
+│   │   ├── firebase-config.ts
+│   │   └── firebase-notifications.ts
 │   ├── styles
-│   │   ├── globals.css
-│   │   └── react-big-calendar.css
+│   │   ├── globals.css
+│   │   └── react-big-calendar.css
 │   ├── types
-│   │   ├── archive.d.ts
-│   │   ├── auth.d.ts
-│   │   ├── calendar.d.ts
-│   │   ├── common.d.ts
-│   │   ├── finance.d.ts
-│   │   ├── google-maps.d.ts
-│   │   ├── navigation.d.ts
-│   │   ├── notification.d.ts
-│   │   ├── project.d.ts
-│   │   └── timeline.d.ts
+│   │   ├── archive.d.ts
+│   │   ├── auth.d.ts
+│   │   ├── calendar.d.ts
+│   │   ├── common.d.ts
+│   │   ├── finance.d.ts
+│   │   ├── google-maps.d.ts
+│   │   ├── navigation.d.ts
+│   │   ├── notification.d.ts
+│   │   ├── project.d.ts
+│   │   └── timeline.d.ts
 │   └── utils
-│       ├── calendarUtils.ts
-│       ├── colorUtils.ts
-│       ├── dateUtils.ts
-│       ├── progressUtils.tsx
-│       ├── taiwanCityUtils.ts
-│       └── timelineUtils.ts
+│       ├── calendarUtils.ts
+│       ├── colorUtils.ts
+│       ├── dateUtils.ts
+│       ├── progressUtils.tsx
+│       ├── taiwanCityUtils.ts
+│       └── timelineUtils.ts
 ├── storage.rules
 └── tsconfig.json

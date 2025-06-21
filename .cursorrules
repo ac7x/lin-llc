@@ -4,9 +4,7 @@ exclude:
   - .next
   - .git
   - public
-  - script
   - coverage
-  - src/styles
   - package-lock.json
   - postcss.config.mjs
   - eslint.config.mjs
