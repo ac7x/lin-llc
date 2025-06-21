@@ -15,6 +15,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { nanoid } from 'nanoid';
+import Link from 'next/link';
 
 // 導入專案模組的所有組件和功能
 import {
@@ -259,6 +260,8 @@ export default function TestPage() {
     { id: 'types', label: '型別定義' },
     { id: 'constants', label: '常數' },
     { id: 'styles', label: '樣式' },
+    { id: 'contract-generation', label: '合約生成專案' },
+    { id: 'forms', label: '表單測試' },
   ];
 
   // 載入專案詳細資料
@@ -452,21 +455,29 @@ export default function TestPage() {
     // 將合約項目轉換為工作包
     return contractItems.map(item => {
       const id = nanoid(8); // 使用 nanoid 生成唯一 ID
+      
+      // 計算總價：單價 × 數量
+      const totalPrice = item.contractItemPrice * item.contractItemQuantity;
+      
+      // 建立更詳細的工作包名稱和描述
+      const workpackageName = `項目 ${item.contractItemId}`;
+      const workpackageDescription = `合約項目 ${item.contractItemId} - 數量: ${item.contractItemQuantity}${item.contractItemWeight ? `, 權重: ${item.contractItemWeight}` : ''}`;
 
-      // 注意：若 contractItemPrice 已為總價，budget 直接取用
-      // 若 contractItemPrice 為單價，請改為 item.contractItemPrice * item.contractItemQuantity
       const workpackage: Workpackage = {
         id,
-        name: String(item.contractItemId),
-        description: `合約項目 ${item.contractItemId}`,
+        name: workpackageName,
+        description: workpackageDescription,
         status: 'planned' as import('@/modules/projects/types/project').WorkpackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        budget: item.contractItemPrice, // 只取 contractItemPrice，避免重複計算
+        budget: totalPrice, // 使用總價（單價 × 數量）
         category: '合約項目',
         priority: 'medium',
         subWorkpackages: [],
+        // 可以根據權重設定優先級
+        ...(item.contractItemWeight && item.contractItemWeight > 0.7 ? { priority: 'high' as const } : {}),
+        ...(item.contractItemWeight && item.contractItemWeight < 0.3 ? { priority: 'low' as const } : {}),
       };
 
       return workpackage;
@@ -647,193 +658,229 @@ export default function TestPage() {
                 />
               </div>
               <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">WeatherDisplay</h4>
-                <WeatherDisplay 
-                  weatherData={{ weather: '晴天', temperature: 25 }}
+                <h4 className="font-medium mb-2">DataLoader</h4>
+                <DataLoader
                   loading={false}
-                  error={false}
-                />
+                  error={null}
+                  data={[]}
+                  emptyMessage="尚無資料"
+                >
+                  {(data) => <div>資料載入成功</div>}
+                </DataLoader>
               </div>
             </div>
           </section>
 
           <section>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              儀表板組件
+              專案子頁面功能展示
             </h3>
-            <div className="space-y-4">
-              {selectedProject && (
-                <ProjectDashboard project={{
-                  id: selectedProject.id,
-                  projectName: selectedProject.projectName,
-                  status: selectedProject.status,
-                  progress: selectedProject.progress,
-                }} />
-              )}
-              {projectStats && (
-                <ProjectStats stats={projectStats} />
-              )}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案列表
-            </h3>
-            <DataLoader
-              loading={loading}
-              error={error ? new Error(error) : null}
-              data={projects as any[]}
-            >
-              {(data) => (
-                <ProjectsTable 
-                  projects={data} 
-                  showAdvancedColumns={true}
-                />
-              )}
-            </DataLoader>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              工作包組件
-            </h3>
-            <DataLoader
-              loading={loading}
-              error={error ? new Error(error) : null}
-              data={workpackages}
-            >
-              {(data) => (
-                <div className="space-y-4">
-                  <WorkpackageList 
-                    workpackages={data} 
-                    projectId={selectedProject?.id || ''} 
-                  />
-                  
-                  {/* 工作包卡片展示 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.slice(0, 3).map((workpackage) => (
-                      <WorkpackageCard
-                        key={workpackage.id}
-                        workpackage={workpackage}
-                        projectId={selectedProject?.id || ''}
-                        onEdit={(_workpackage) => {
-                          // 處理編輯
-                        }}
-                        onDelete={(_workpackageId) => {
-                          // 處理刪除
-                        }}
-                      />
-                    ))}
+            
+            {/* 工作包管理 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                工作包管理頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">專案工作包</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      管理專案的主要工作包和進度追蹤
+                    </p>
                   </div>
+                  <button className={projectStyles.button.primary}>
+                    新增工作包
+                  </button>
                 </div>
-              )}
-            </DataLoader>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              子工作包組件
-            </h3>
-            <DataLoader
-              loading={loading}
-              error={error ? new Error(error) : null}
-              data={subWorkpackages}
-            >
-              {(data) => (
-                <div className="space-y-4">
-                  <SubWorkpackageList
-                    subWorkpackages={data}
-                    workpackageId={workpackages[0]?.id || ''}
-                    onAddSubWorkpackage={() => setShowSubWorkpackageForm(true)}
-                    onEditSubWorkpackage={(_subWorkpackage) => {
-                      // 處理編輯
-                    }}
-                    onDeleteSubWorkpackage={(_subWorkpackageId) => {
-                      // 處理刪除
-                    }}
-                  />
-                  
-                  {/* 子工作包卡片展示 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.slice(0, 3).map((subWorkpackage) => (
-                      <SubWorkpackageCard
-                        key={subWorkpackage.id}
-                        subWorkpackage={subWorkpackage}
-                        workpackageId={workpackages[0]?.id || ''}
-                        onEdit={(_subWorkpackage) => {
-                          // 處理編輯
-                        }}
-                        onDelete={(_subWorkpackageId) => {
-                          // 處理刪除
-                        }}
-                      />
-                    ))}
-                  </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    工作包管理功能開發中 - 此頁面將提供工作包創建、進度管理和資源分配功能
+                  </p>
                 </div>
-              )}
-            </DataLoader>
-          </section>
-
-          {selectedProject && (
-            <section>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                日曆視圖
-              </h3>
-              <CalendarView
-                projectId={selectedProject.id}
-                milestones={selectedProject.milestones || []}
-                workpackages={workpackages}
-                onDateClick={(_date) => {
-                  // 處理日期點擊
-                }}
-                onMilestoneClick={(_milestone) => {
-                  // 處理里程碑點擊
-                }}
-                onWorkpackageClick={(_workpackage) => {
-                  // 處理工作包點擊
-                }}
-              />
-            </section>
-          )}
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              管理組件
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* 問題追蹤器 */}
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-4">問題追蹤器</h4>
-                <IssueTracker
-                  issues={issues}
-                  projectId={selectedProject?.id || ''}
-                  onAddIssue={() => setShowIssueForm(true)}
-                  onEditIssue={(_issue) => {
-                    // 處理編輯
-                  }}
-                  onDeleteIssue={(_issueId) => {
-                    // 處理刪除
-                  }}
-                />
               </div>
+            </div>
 
-              {/* 風險管理器 */}
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-4">風險管理器</h4>
-                <RiskManager
-                  risks={selectedProject?.risks || []}
-                  projectId={selectedProject?.id || ''}
-                  onAddRisk={() => {
-                    // 處理新增風險
-                  }}
-                  onEditRisk={(_risk) => {
-                    // 處理編輯風險
-                  }}
-                  onDeleteRisk={(_riskId) => {
-                    // 處理刪除風險
-                  }}
-                />
+            {/* 子工作包管理 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                子工作包管理頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">子工作包</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      管理工作包下的詳細任務和子項目
+                    </p>
+                  </div>
+                  <button className={projectStyles.button.primary}>
+                    新增子工作包
+                  </button>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    子工作包管理功能開發中 - 此頁面將提供詳細任務分解和進度追蹤
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 日曆視圖 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                專案日曆頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">專案時程</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      查看專案時程和重要事件
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded">
+                      月視圖
+                    </button>
+                    <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                      週視圖
+                    </button>
+                    <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                      日視圖
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    日曆功能開發中 - 此頁面將顯示工作包時程、里程碑和重要事件
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 費用管理 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                費用管理頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">專案費用</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      管理專案相關費用和支出
+                    </p>
+                  </div>
+                  <button className={projectStyles.button.primary}>
+                    新增費用
+                  </button>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    費用管理功能開發中 - 此頁面將提供費用記錄、分類和報表功能
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 材料管理 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                材料管理頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">專案材料</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      管理專案使用的材料和資源
+                    </p>
+                  </div>
+                  <button className={projectStyles.button.primary}>
+                    新增材料
+                  </button>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    材料管理功能開發中 - 此頁面將提供材料庫存、使用記錄和採購管理
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 日誌管理 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                日誌管理頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">專案日誌</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      記錄專案進度和重要事件
+                    </p>
+                  </div>
+                  <button className={projectStyles.button.primary}>
+                    新增日誌
+                  </button>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    日誌管理功能開發中 - 此頁面將提供日誌記錄、搜尋和歷史追蹤
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 問題管理 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                問題管理頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">專案問題</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      追蹤和管理專案中的問題和風險
+                    </p>
+                  </div>
+                  <button className={projectStyles.button.primary}>
+                    新增問題
+                  </button>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    問題管理功能開發中 - 此頁面將提供問題追蹤、狀態管理和解決方案記錄
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 專案資訊頁面 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                專案資訊頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">專案概覽</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      查看專案基本資訊和統計資料
+                    </p>
+                  </div>
+                  <button className={projectStyles.button.outline}>
+                    編輯專案
+                  </button>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    專案資訊頁面功能開發中 - 此頁面將顯示專案詳細資訊、人員配置和進度統計
+                  </p>
+                </div>
               </div>
             </div>
           </section>
@@ -1013,344 +1060,302 @@ export default function TestPage() {
         <div className="space-y-8">
           <section>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案詳細頁面功能
+              專案子頁面縮圖總覽
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">專案儀表板</h4>
-                <p className="text-sm text-gray-600 mb-3">顯示專案概覽、進度和關鍵指標</p>
-                {selectedProject && (
-                  <ProjectDashboard project={{
-                    id: selectedProject.id,
-                    projectName: selectedProject.projectName,
-                    status: selectedProject.status,
-                    progress: selectedProject.progress,
-                  }} />
-                )}
-              </div>
-              
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">專案資訊</h4>
-                <p className="text-sm text-gray-600 mb-3">顯示專案詳細資訊和人員配置</p>
-                {selectedProject && (
-                  <ProjectInfoDisplay 
-                    project={selectedProject}
-                    eligibleUsers={{
-                      costControllers: [],
-                      supervisors: [],
-                      safetyOfficers: [],
-                      managers: [],
-                    }}
-                  />
-                )}
+            
+            {/* 測試專案選擇 */}
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h4 className="font-medium mb-2">測試專案選擇</h4>
+              <div className="flex items-center space-x-4">
+                <select 
+                  className="px-3 py-2 border rounded-lg"
+                  onChange={(e) => {
+                    const project = projects.find(p => p.id === e.target.value);
+                    if (project) {
+                      setSelectedProject(project);
+                    }
+                  }}
+                  value={selectedProject?.id || ''}
+                >
+                  <option value="">請選擇測試專案</option>
+                  {projects.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.projectName}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm text-gray-600">
+                  選擇專案以預覽子頁面
+                </span>
               </div>
             </div>
-          </section>
 
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案子頁面功能
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">日曆視圖</h4>
-                <p className="text-sm text-gray-600 mb-3">專案時程和里程碑管理</p>
-                {selectedProject && (
-                  <CalendarView
-                    projectId={selectedProject.id}
-                    milestones={selectedProject.milestones || []}
-                    workpackages={workpackages}
-                    onDateClick={(_date) => {
-                      // 處理日期點擊
-                    }}
-                    onMilestoneClick={(_milestone) => {
-                      // 處理里程碑點擊
-                    }}
-                    onWorkpackageClick={(_workpackage) => {
-                      // 處理工作包點擊
-                    }}
-                  />
-                )}
-              </div>
-
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">費用管理</h4>
-                <p className="text-sm text-gray-600 mb-3">專案費用記錄和統計</p>
-                <button
-                  onClick={() => setShowExpenseForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  測試費用管理
-                </button>
-              </div>
-
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">材料管理</h4>
-                <p className="text-sm text-gray-600 mb-3">專案材料和設備管理</p>
-                <button
-                  onClick={() => setShowMaterialForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  測試材料管理
-                </button>
-              </div>
-
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">工作包管理</h4>
-                <p className="text-sm text-gray-600 mb-3">專案工作包和子工作包管理</p>
-                <button
-                  onClick={() => setShowWorkpackageForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  測試工作包管理
-                </button>
-              </div>
-
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">專案日誌</h4>
-                <p className="text-sm text-gray-600 mb-3">專案進度記錄和事件管理</p>
-                <div className="text-center py-4">
-                  <div className="text-gray-500 dark:text-gray-400 mb-2">
-                    日誌功能開發中
+            {/* 專案子頁面縮圖 */}
+            {selectedProject && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {/* 專案主頁 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/projects/${selectedProject.id}`}
+                      title="專案主頁"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
-                  <p className="text-sm text-gray-400 dark:text-gray-500">
-                    此功能將提供日誌記錄、進度追蹤和事件管理
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">問題管理</h4>
-                <p className="text-sm text-gray-600 mb-3">專案問題追蹤和解決</p>
-                <button
-                  onClick={() => setShowIssueForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  測試問題管理
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案管理頁面功能
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">專案列表</h4>
-                <p className="text-sm text-gray-600 mb-3">所有專案的列表和篩選</p>
-                <DataLoader
-                  loading={loading}
-                  error={error ? new Error(error) : null}
-                  data={projects as any[]}
-                >
-                  {(data) => (
-                    <div className="max-h-40 overflow-y-auto">
-                      <ProjectsTable 
-                        projects={data.slice(0, 3)} 
-                        showAdvancedColumns={false}
-                      />
-                    </div>
-                  )}
-                </DataLoader>
-              </div>
-
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">模板管理</h4>
-                <p className="text-sm text-gray-600 mb-3">專案模板的創建和管理</p>
-                <button
-                  onClick={() => setShowTemplateForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  測試模板管理
-                </button>
-              </div>
-
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">從合約生成專案</h4>
-                <p className="text-sm text-gray-600 mb-3">基於合約和模板生成新專案</p>
-                
-                {/* 狀態訊息 */}
-                {importMessage && (
-                  <div className='mb-4 bg-blue-50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 p-3 rounded-lg relative'>
-                    {importMessage}
-                    <button
-                      className='absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200'
-                      onClick={() => setImportMessage('')}
-                      aria-label='關閉'
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">專案主頁</span>
+                    <Link
+                      href={`/projects/${selectedProject.id}`}
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
                     >
-                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M6 18L18 6M6 6l12 12'
-                        />
-                      </svg>
-                    </button>
+                      開新分頁檢視
+                    </Link>
                   </div>
-                )}
+                </div>
 
-                <div className="space-y-4">
-                  {/* 步驟指示器 */}
-                  <div className='flex items-center justify-center space-x-4'>
-                    <div className={`flex items-center ${selectedContractId ? 'text-blue-600' : 'text-gray-400'}`}>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                        selectedContractId ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        1
-                      </div>
-                      <span className='ml-1 text-xs'>合約</span>
-                    </div>
-                    <div className='w-4 h-1 bg-gray-200'></div>
-                    <div className={`flex items-center ${selectedTemplateId ? 'text-blue-600' : 'text-gray-400'}`}>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                        selectedTemplateId ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        2
-                      </div>
-                      <span className='ml-1 text-xs'>模板</span>
-                    </div>
-                    <div className='w-4 h-1 bg-gray-200'></div>
-                    <div className={`flex items-center ${showProjectSetup ? 'text-blue-600' : 'text-gray-400'}`}>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                        showProjectSetup ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        3
-                      </div>
-                      <span className='ml-1 text-xs'>設定</span>
-                    </div>
+                {/* 日曆頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/projects/${selectedProject.id}/calendar`}
+                      title="日曆頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">日曆頁面</span>
+                    <Link
+                      href={`/projects/${selectedProject.id}/calendar`}
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
 
-                  {/* 載入狀態 */}
-                  {importingId && (
-                    <div className='text-center py-4'>
-                      <div className='inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg'>
-                        <svg
-                          className='animate-spin -ml-1 mr-2 h-4 w-4 text-white'
-                          fill='none'
-                          viewBox='0 0 24 24'
-                        >
-                          <circle
-                            className='opacity-25'
-                            cx='12'
-                            cy='12'
-                            r='10'
-                            stroke='currentColor'
-                            strokeWidth='4'
-                          ></circle>
-                          <path
-                            className='opacity-75'
-                            fill='currentColor'
-                            d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                          ></path>
-                        </svg>
-                        建立專案中...
-                      </div>
-                    </div>
-                  )}
+                {/* 費用頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/projects/${selectedProject.id}/expenses`}
+                      title="費用頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">費用頁面</span>
+                    <Link
+                      href={`/projects/${selectedProject.id}/expenses`}
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
 
-                  {/* 步驟 1: 合約選擇 */}
-                  {!selectedContractId && !importingId && (
-                    <div>
-                      <h5 className='text-sm font-medium mb-2'>步驟 1: 選擇合約</h5>
-                      <div className='max-h-32 overflow-y-auto'>
-                        <ContractSelector
-                          contracts={contractRows.map(row => ({
-                            id: row.id,
-                            contractNumber: row.id,
-                            contractName: row.name,
-                            clientName: '客戶',
-                            contractValue: 0,
-                            startDate: row.createdAt || new Date(),
-                            endDate: row.createdAt || new Date(),
-                            description: row.name,
-                          }))}
-                          selectedContractId={selectedContractId}
-                          onSelectContract={handleContractSelect}
-                        />
-                      </div>
-                    </div>
-                  )}
+                {/* 問題頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/projects/${selectedProject.id}/issues`}
+                      title="問題頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">問題頁面</span>
+                    <Link
+                      href={`/projects/${selectedProject.id}/issues`}
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
 
-                  {/* 步驟 2: 模板選擇 */}
-                  {selectedContractId && !selectedTemplateId && !importingId && (
-                    <div>
-                      <h5 className='text-sm font-medium mb-2'>步驟 2: 選擇專案模板</h5>
-                      <div className='mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs'>
-                        已選擇合約: <strong>{contractRows.find(c => c.id === selectedContractId)?.name}</strong>
-                      </div>
-                      <div className='max-h-32 overflow-y-auto'>
-                        <TemplateSelector
-                          templates={templates}
-                          selectedTemplateId={selectedTemplateId}
-                          onSelectTemplate={handleTemplateSelect}
-                        />
-                      </div>
-                    </div>
-                  )}
+                {/* 日誌頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/projects/${selectedProject.id}/journal`}
+                      title="日誌頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">日誌頁面</span>
+                    <Link
+                      href={`/projects/${selectedProject.id}/journal`}
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
 
-                  {/* 步驟 3: 專案設定 */}
-                  {selectedContractId && selectedTemplateId && !showProjectSetup && !importingId && (
-                    <div>
-                      <h5 className='text-sm font-medium mb-2'>步驟 3: 設定專案資訊</h5>
-                      <div className='mb-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs'>
-                        <p>已選擇合約: <strong>{contractRows.find(c => c.id === selectedContractId)?.name}</strong></p>
-                        <p>已選擇模板: <strong>{templates.find(t => t.id === selectedTemplateId)?.name}</strong></p>
-                      </div>
-                      <button
-                        onClick={() => setShowProjectSetup(true)}
-                        className={projectStyles.button.primary}
-                      >
-                        開始設定專案
-                      </button>
-                    </div>
-                  )}
+                {/* 材料頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/projects/${selectedProject.id}/materials`}
+                      title="材料頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">材料頁面</span>
+                    <Link
+                      href={`/projects/${selectedProject.id}/materials`}
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
 
-                  {/* 專案設定表單 */}
-                  {showProjectSetup && !importingId && (
-                    <div>
-                      <h5 className='text-sm font-medium mb-2'>專案設定</h5>
-                      <div className='max-h-64 overflow-y-auto'>
-                        <ProjectSetupForm
-                          initialData={{
-                            projectName: contractRows.find(c => c.id === selectedContractId)?.name || '',
-                            description: contractRows.find(c => c.id === selectedContractId)?.name || '',
-                            estimatedBudget: 0,
-                            estimatedDuration: 180,
-                            manager: '',
-                            inspector: '',
-                            safety: '',
-                            supervisor: '',
-                            safetyOfficer: '',
-                            costController: '',
-                            area: '',
-                            address: '',
-                            region: '',
-                          }}
-                          onSubmit={handleProjectSetupSubmit}
-                          onCancel={handleProjectSetupCancel}
-                          isLoading={!!importingId}
-                        />
-                      </div>
-                    </div>
-                  )}
+                {/* 子工作包頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/projects/${selectedProject.id}/subwork-packages`}
+                      title="子工作包頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">子工作包頁面</span>
+                    <Link
+                      href={`/projects/${selectedProject.id}/subwork-packages`}
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
 
-                  {/* 重置按鈕 */}
-                  {(selectedContractId || selectedTemplateId || showProjectSetup) && !importingId && (
-                    <div className='flex justify-center pt-2'>
-                      <button
-                        onClick={handleProjectSetupCancel}
-                        className={projectStyles.button.outline}
-                      >
-                        重新開始
-                      </button>
-                    </div>
-                  )}
+                {/* 工作包頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/projects/${selectedProject.id}/work-packages`}
+                      title="工作包頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">工作包頁面</span>
+                    <Link
+                      href={`/projects/${selectedProject.id}/work-packages`}
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* 獨立頁面（不需要專案ID） */}
+            <section className="mt-8">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                獨立頁面
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {/* 合約生成專案頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/projects/generate-from-contract"
+                      title="合約生成專案頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">合約生成專案</span>
+                    <Link
+                      href="/projects/generate-from-contract"
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
+
+                {/* 專案列表頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/projects/list"
+                      title="專案列表頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">專案列表</span>
+                    <Link
+                      href="/projects/list"
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
+
+                {/* 模板管理頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/projects/templates"
+                      title="模板管理頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">模板管理</span>
+                    <Link
+                      href="/projects/templates"
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 使用說明 */}
+            {!selectedProject && (
+              <div className="text-center py-8">
+                <div className="text-gray-500 dark:text-gray-400 mb-2">
+                  請先選擇一個測試專案
+                </div>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  選擇專案後，將顯示該專案的所有子頁面縮圖預覽
+                </p>
+              </div>
+            )}
           </section>
         </div>
       )}
@@ -1791,6 +1796,449 @@ export default function TestPage() {
               isSubmitting={loading}
             />
           </div>
+        </div>
+      )}
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              儀表板組件
+            </h3>
+            <div className="space-y-4">
+              {selectedProject && (
+                <ProjectDashboard project={{
+                  id: selectedProject.id,
+                  projectName: selectedProject.projectName,
+                  status: selectedProject.status,
+                  progress: selectedProject.progress,
+                }} />
+              )}
+              {projectStats && (
+                <ProjectStats stats={projectStats} />
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              專案列表
+            </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={projects as any[]}
+            >
+              {(data) => (
+                <ProjectsTable 
+                  projects={data} 
+                  showAdvancedColumns={true}
+                />
+              )}
+            </DataLoader>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              工作包組件
+            </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={workpackages}
+            >
+              {(data) => (
+                <div className="space-y-4">
+                  <WorkpackageList 
+                    workpackages={data} 
+                    projectId={selectedProject?.id || ''} 
+                  />
+                  
+                  {/* 工作包卡片展示 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.slice(0, 3).map((workpackage) => (
+                      <WorkpackageCard
+                        key={workpackage.id}
+                        workpackage={workpackage}
+                        projectId={selectedProject?.id || ''}
+                        onEdit={(_workpackage) => {
+                          // 處理編輯
+                        }}
+                        onDelete={(_workpackageId) => {
+                          // 處理刪除
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </DataLoader>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              子工作包組件
+            </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={subWorkpackages}
+            >
+              {(data) => (
+                <div className="space-y-4">
+                  <SubWorkpackageList
+                    subWorkpackages={data}
+                    workpackageId={workpackages[0]?.id || ''}
+                    onAddSubWorkpackage={() => setShowSubWorkpackageForm(true)}
+                    onEditSubWorkpackage={(_subWorkpackage) => {
+                      // 處理編輯
+                    }}
+                    onDeleteSubWorkpackage={(_subWorkpackageId) => {
+                      // 處理刪除
+                    }}
+                  />
+
+                  {/* 子工作包卡片展示 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.slice(0, 3).map((subWorkpackage) => (
+                      <SubWorkpackageCard
+                        key={subWorkpackage.id}
+                        subWorkpackage={subWorkpackage}
+                        workpackageId={workpackages[0]?.id || ''}
+                        onEdit={(_subWorkpackage) => {
+                          // 處理編輯
+                        }}
+                        onDelete={(_subWorkpackageId) => {
+                          // 處理刪除
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </DataLoader>
+          </section>
+
+          {selectedProject && (
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                日曆視圖
+              </h3>
+              <CalendarView
+                projectId={selectedProject.id}
+                milestones={selectedProject.milestones || []}
+                workpackages={workpackages}
+                onDateClick={(_date) => {
+                  // 處理日期點擊
+                }}
+                onMilestoneClick={(_milestone) => {
+                  // 處理里程碑點擊
+                }}
+                onWorkpackageClick={(_workpackage) => {
+                  // 處理工作包點擊
+                }}
+              />
+            </section>
+          )}
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              管理組件
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* 問題追蹤器 */}
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-4">問題追蹤器</h4>
+                <IssueTracker
+                  issues={issues}
+                  projectId={selectedProject?.id || ''}
+                  onAddIssue={() => setShowIssueForm(true)}
+                  onEditIssue={(_issue) => {
+                    // 處理編輯
+                  }}
+                  onDeleteIssue={(_issueId) => {
+                    // 處理刪除
+                  }}
+                />
+              </div>
+
+              {/* 風險管理器 */}
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-4">風險管理器</h4>
+                <RiskManager
+                  risks={selectedProject?.risks || []}
+                  projectId={selectedProject?.id || ''}
+                  onAddRisk={() => {
+                    // 處理新增風險
+                  }}
+                  onEditRisk={(_risk) => {
+                    // 處理編輯風險
+                  }}
+                  onDeleteRisk={(_riskId) => {
+                    // 處理刪除風險
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* 合約生成專案功能 */}
+      {activeTab === 'contract-generation' && (
+        <div className="space-y-8">
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              合約生成專案功能
+            </h3>
+            
+            {/* 步驟指示器 */}
+            <div className="mb-6">
+              <div className="flex items-center justify-center space-x-4">
+                <div className={`flex items-center ${selectedContractId ? 'text-blue-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedContractId ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                    1
+                  </div>
+                  <span className="ml-2 text-sm font-medium">選擇合約</span>
+                </div>
+                <div className={`w-8 h-0.5 ${selectedContractId ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                <div className={`flex items-center ${selectedTemplateId ? 'text-blue-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedTemplateId ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                    2
+                  </div>
+                  <span className="ml-2 text-sm font-medium">選擇模板</span>
+                </div>
+                <div className={`w-8 h-0.5 ${selectedTemplateId ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                <div className={`flex items-center ${showProjectSetup ? 'text-blue-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${showProjectSetup ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                    3
+                  </div>
+                  <span className="ml-2 text-sm font-medium">設定專案</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 狀態訊息 */}
+            {importMessage && (
+              <div className={`p-4 rounded-lg ${
+                importMessage.includes('成功') 
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' 
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+              }`}>
+                {importMessage}
+              </div>
+            )}
+
+            {/* 步驟 1: 合約選擇 */}
+            {!selectedContractId && (
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  步驟 1: 選擇合約
+                </h4>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    從以下合約中選擇一個來生成專案：
+                  </p>
+                  <ContractSelector
+                    contracts={contractRows.map(row => ({
+                      id: row.id,
+                      contractNumber: row.id,
+                      contractName: row.name,
+                      clientName: '客戶名稱',
+                      contractValue: 1000000,
+                      startDate: row.createdAt || new Date(),
+                      endDate: new Date((row.createdAt || new Date()).getTime() + 365 * 24 * 60 * 60 * 1000),
+                      description: '合約描述'
+                    }))}
+                    selectedContractId={selectedContractId}
+                    onSelectContract={handleContractSelect}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 步驟 2: 模板選擇 */}
+            {selectedContractId && !selectedTemplateId && (
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  步驟 2: 選擇模板
+                </h4>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    選擇要應用的專案模板：
+                  </p>
+                  <TemplateSelector
+                    templates={templates}
+                    selectedTemplateId={selectedTemplateId}
+                    onSelectTemplate={handleTemplateSelect}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 步驟 3: 專案設定 */}
+            {selectedContractId && selectedTemplateId && showProjectSetup && (
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  步驟 3: 設定專案資訊
+                </h4>
+                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+                  <ProjectSetupForm
+                    initialData={{
+                      projectName: `專案 ${selectedContractId}`,
+                      description: '從合約生成的專案',
+                      estimatedBudget: 1000000,
+                      estimatedDuration: 365,
+                      manager: '',
+                      inspector: '',
+                      safety: '',
+                      supervisor: '',
+                      safetyOfficer: '',
+                      costController: '',
+                      area: '',
+                      address: '',
+                      region: '',
+                    }}
+                    onSubmit={handleProjectSetupSubmit}
+                    onCancel={handleProjectSetupCancel}
+                    isLoading={!!importingId}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 重置按鈕 */}
+            {(selectedContractId || selectedTemplateId || showProjectSetup) && (
+              <div className="flex justify-center">
+                <button
+                  onClick={handleProjectSetupCancel}
+                  className={projectStyles.button.outline}
+                >
+                  重新開始
+                </button>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {/* 表單測試 */}
+      {activeTab === 'forms' && (
+        <div className="space-y-8">
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              表單組件測試
+            </h3>
+            
+            {/* 工作包表單 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                工作包表單
+              </h4>
+              <WorkpackageForm
+                projectId={selectedProject?.id || ''}
+                onSubmit={(_data) => {
+                  // 處理提交
+                }}
+                onCancel={() => {
+                  // 處理取消
+                }}
+              />
+            </div>
+
+            {/* 子工作包表單 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                子工作包表單
+              </h4>
+              <SubWorkpackageForm
+                workpackageId={workpackages[0]?.id || ''}
+                onSubmit={(_data) => {
+                  // 處理提交
+                }}
+                onCancel={() => {
+                  // 處理取消
+                }}
+              />
+            </div>
+
+            {/* 問題表單 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                問題表單
+              </h4>
+              <IssueForm
+                projectId={selectedProject?.id || ''}
+                onSubmit={handleCreateIssue}
+                onCancel={() => setShowIssueForm(false)}
+                isLoading={false}
+              />
+            </div>
+
+            {/* 日誌表單 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                日誌表單
+              </h4>
+              <JournalForm
+                projectId={selectedProject?.id || ''}
+                onSubmit={(_data) => {
+                  // 處理提交
+                }}
+                onCancel={() => {
+                  // 處理取消
+                }}
+              />
+            </div>
+
+            {/* 費用表單 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                費用表單
+              </h4>
+              <ExpenseForm
+                projectId={selectedProject?.id || ''}
+                onSubmit={(_expenseData) => {
+                  // 處理提交
+                }}
+                onCancel={() => {
+                  // 處理取消
+                }}
+                isLoading={false}
+              />
+            </div>
+
+            {/* 材料表單 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                材料表單
+              </h4>
+              <MaterialForm
+                projectId={selectedProject?.id || ''}
+                onSubmit={(_materialData) => {
+                  // 處理提交
+                }}
+                onCancel={() => {
+                  // 處理取消
+                }}
+                isLoading={false}
+              />
+            </div>
+
+            {/* 模板表單 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                模板表單
+              </h4>
+              <TemplateForm
+                onSubmit={(_templateData) => {
+                  // 處理提交
+                }}
+                onCancel={() => {
+                  // 處理取消
+                }}
+                isLoading={false}
+              />
+            </div>
+          </section>
         </div>
       )}
     </PageContainer>
