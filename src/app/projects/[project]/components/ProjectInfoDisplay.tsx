@@ -15,7 +15,7 @@ import { useState, useEffect } from 'react';
 
 import { useQualityScore } from '@/app/projects/hooks/useFilteredProjects';
 import type { Project } from '@/app/projects/types/project';
-import AddressSelector from '@/components/common/AddressSelector';
+import AddressSelector from '@/app/projects/components/AddressSelector';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
 import { formatLocalDate } from '@/utils/dateUtils';

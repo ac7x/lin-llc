@@ -18,7 +18,7 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 import WeatherDisplay, {
   fetchWeather,
   WeatherData,
-} from '@/app/projects/[project]/project-journal/components/WeatherDisplay';
+} from '@/app/projects/components/WeatherDisplay';
 import { Project } from '@/app/projects/types/project';
 import { useAuth } from '@/hooks/useAuth';
 import { db, doc } from '@/lib/firebase-client';

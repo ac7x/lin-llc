@@ -13,7 +13,7 @@
 import { useState } from 'react';
 
 import type { Project } from '@/app/projects/types/project';
-import AddressSelector from '@/components/common/AddressSelector';
+import AddressSelector from '@/app/projects/components/AddressSelector';
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { doc, updateDoc, Timestamp, db } from '@/lib/firebase-client';

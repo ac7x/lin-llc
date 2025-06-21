@@ -32,7 +32,7 @@ import { toTimestamp } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 import { calculateProjectProgress } from '../../../utils/progressUtils';
 
-import { WeatherData } from './WeatherDisplay';
+import { WeatherData } from '../../../components/WeatherDisplay';
 
 interface JournalFormProps {
   projectId: string;
