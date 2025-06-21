@@ -31,15 +31,6 @@ interface UseNotificationsReturn {
   refreshNotifications: () => Promise<void>;
 }
 
-const CACHE_KEY = 'notifications_cache';
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5 分鐘
-const BATCH_SIZE = 10; // 批量處理大小
-
-interface CacheData {
-  notifications: NotificationMessage[];
-  timestamp: number;
-}
-
 export function useNotifications(
   options: {
     includeArchived?: boolean;
@@ -59,33 +50,8 @@ export function useNotifications(
   const batchQueue = useRef<Set<string>>(new Set());
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // 檢查是否在客戶端環境
-  const isClient = typeof window !== 'undefined';
-
-  // 取得通知資料
-  const loadNotifications = useCallback(async () => {
-    if (!user?.uid) return;
-
-    setLoading(true);
-    setError(null);
-
-    await safeAsync(async () => {
-      const notifications = await retry(() => getUserNotifications(user.uid, {
-        includeArchived: options.includeArchived,
-        limitCount: options.limitCount,
-        onlyUnread: options.onlyUnread,
-      }), 3, 1000);
-
-      setNotifications(notifications);
-      setUnreadCount(notifications.filter(n => !n.isRead).length);
-    }, (error) => {
-      setError(getErrorMessage(error));
-      logError(error, { operation: 'load_notifications', userId: user.uid });
-    });
-    setLoading(false);
-  }, [user?.uid, options.includeArchived, options.limitCount, options.onlyUnread]);
-
   // 批量處理標記已讀
+  const BATCH_SIZE = 10;
   const processBatch = useCallback(async () => {
     if (batchQueue.current.size === 0) return;
 
@@ -131,6 +97,29 @@ export function useNotifications(
     },
     [processBatch]
   );
+
+  // 取得通知資料
+  const loadNotifications = useCallback(async () => {
+    if (!user?.uid) return;
+
+    setLoading(true);
+    setError(null);
+
+    await safeAsync(async () => {
+      const notifications = await retry(() => getUserNotifications(user.uid, {
+        includeArchived: options.includeArchived,
+        limitCount: options.limitCount,
+        onlyUnread: options.onlyUnread,
+      }), 3, 1000);
+
+      setNotifications(notifications);
+      setUnreadCount(notifications.filter(n => !n.isRead).length);
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'load_notifications', userId: user.uid });
+    });
+    setLoading(false);
+  }, [user?.uid, options.includeArchived, options.limitCount, options.onlyUnread]);
 
   // 即時監聽通知更新
   useEffect(() => {

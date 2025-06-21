@@ -11,11 +11,8 @@
 
 'use client';
 
-import { Loader } from '@googlemaps/js-api-loader';
 import { useEffect, useRef, useState } from 'react';
-
-import { useAuth } from '@/hooks/useAuth';
-import { logError, safeAsync, retry } from '@/utils/errorUtils';
+import { logError, safeAsync } from '@/utils/errorUtils';
 
 interface AddressSelectorProps {
   value: string;
@@ -32,12 +29,8 @@ export default function AddressSelector({
   className = '',
   disabled = false,
 }: AddressSelectorProps) {
-  const [address, setAddress] = useState('');
   const [isLoading, _setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const _autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const [mapError, _setMapError] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -76,7 +69,6 @@ export default function AddressSelector({
         });
       }, (error) => {
         logError(error, { operation: 'init_google_maps' });
-        _setMapError('無法載入 Google Maps API');
       });
     };
 

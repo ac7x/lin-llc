@@ -14,12 +14,11 @@ import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 import VisTimeline from '@/components/common/VisTimeline';
-import { useAuth } from '@/hooks/useAuth';
 import { db, doc, updateDoc } from '@/lib/firebase-client';
-import { Project, Workpackage, SubWorkpackage } from '@/types/project';
+import { Workpackage, SubWorkpackage } from '@/types/project';
 import { TimelineGroup, TimelineItem } from '@/types/timeline';
-import { timestampToDate, dateToTimestamp, toDate } from '@/utils/timelineUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
+import { timestampToDate, dateToTimestamp, toDate } from '@/utils/timelineUtils';
 
 // 專案排程頁面使用的特定 item 類型，擴充通用 TimelineItem
 interface ScheduleTimelineItem extends TimelineItem {

@@ -4,13 +4,14 @@
  * 確保只在客戶端環境中初始化和使用
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import type { Messaging } from 'firebase/messaging';
 
+import { useEffect, useState, useCallback } from 'react';
 import { firebaseApp } from '@/lib/firebase-client';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 
 interface UseFirebaseMessagingReturn {
-  messaging: unknown;
+  messaging: Messaging | null;
   fcmToken: string | null;
   loading: boolean;
   error: string | null;
@@ -19,7 +20,7 @@ interface UseFirebaseMessagingReturn {
 }
 
 export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
-  const [messaging, setMessaging] = useState<unknown>(null);
+  const [messaging, setMessaging] = useState<Messaging | null>(null);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +78,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
 
       if (permission === 'granted') {
         const { getToken } = await import('firebase/messaging');
-        const token = await retry(() => getToken(messaging as any, {
+        const token = await retry(() => getToken(messaging, {
           vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
         }), 3, 1000);
 
@@ -106,7 +107,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
 
     return await safeAsync(async () => {
       const { getToken } = await import('firebase/messaging');
-      const token = await retry(() => getToken(messaging as any, {
+      const token = await retry(() => getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
       }), 3, 1000);
 

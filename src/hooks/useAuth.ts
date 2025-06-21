@@ -1,7 +1,7 @@
 import { FirebaseError } from 'firebase/app';
+import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useState, useEffect, useCallback } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 import { type RoleKey } from '@/constants/roles';
@@ -206,15 +206,6 @@ export const useAuth = (): UseAuthReturn => {
       setAuthState(prev => ({ ...prev, error: authError }));
       logError(error, { operation: 'google_signin' });
       throw authError;
-    });
-  };
-
-  const signOutUser = async (): Promise<void> => {
-    await safeAsync(async () => {
-      await retry(() => signOut(auth), 3, 1000);
-    }, (error) => {
-      logError(error, { operation: 'sign_out' });
-      throw error;
     });
   };
 
