@@ -1,0 +1,83 @@
+/**
+ * 專案材料管理頁面
+ */
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+
+import { projectStyles } from '@/modules/projects/styles';
+import { PageContainer, PageHeader } from '@/modules/projects/components/common';
+import { ProjectService } from '@/modules/projects/services/projectService';
+import type { Project } from '@/modules/projects/types/project';
+
+export default function ProjectMaterialsPage() {
+  const params = useParams();
+  const projectId = params.project as string;
+  
+  const [project, setProject] = useState<Project | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProject = async () => {
+      try {
+        setIsLoading(true);
+        const projectData = await ProjectService.getProjectById(projectId);
+        setProject(projectData);
+      } catch (error) {
+        console.error('載入專案失敗:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (projectId) {
+      loadProject();
+    }
+  }, [projectId]);
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <div className='flex items-center justify-center h-64'>
+          <div className='text-gray-500 dark:text-gray-400'>載入中...</div>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (!project) {
+    return (
+      <PageContainer>
+        <div className='text-center py-12'>
+          <div className='text-gray-500 dark:text-gray-400'>專案不存在</div>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title={`${project.projectName} - 材料管理`}
+        subtitle='管理專案材料和設備'
+      >
+        <button className={projectStyles.button.primary}>
+          新增材料
+        </button>
+      </PageHeader>
+
+      <div className={projectStyles.card.base}>
+        <div className='text-center py-12'>
+          <div className='text-gray-500 dark:text-gray-400 mb-4'>
+            材料管理功能開發中
+          </div>
+          <p className='text-sm text-gray-400 dark:text-gray-500'>
+            此頁面將提供材料清單、庫存管理和採購追蹤功能
+          </p>
+        </div>
+      </div>
+    </PageContainer>
+  );
+}

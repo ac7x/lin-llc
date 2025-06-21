@@ -1,185 +1,3 @@
-
-
-src\types\common.d.ts
-src\utils\dateUtils.ts
-
-src\app\projects
-src\app\projects\[project]
-src\app\projects\[project]\components
-src\app\projects\[project]\components\ProjectEditModal.tsx
-src\app\projects\[project]\components\ProjectInfoDisplay.tsx
-src\app\projects\[project]\components\ProjectInfoPage.tsx
-src\app\projects\[project]\components\WorkpackageList.tsx
-src\app\projects\[project]\project-calendar
-src\app\projects\[project]\project-calendar\page.tsx
-src\app\projects\[project]\project-expenses
-src\app\projects\[project]\project-expenses\page.tsx
-src\app\projects\[project]\project-issues
-src\app\projects\[project]\project-issues\page.tsx
-src\app\projects\[project]\project-journal
-src\app\projects\[project]\project-journal\components
-src\app\projects\[project]\project-journal\components\JournalForm.tsx
-src\app\projects\[project]\project-journal\components\JournalHistory.tsx
-src\app\projects\[project]\project-journal\page.tsx
-src\app\projects\[project]\project-materials
-src\app\projects\[project]\project-materials\page.tsx
-src\app\projects\[project]\workpackages
-src\app\projects\[project]\workpackages\[workpackage]
-src\app\projects\[project]\workpackages\[workpackage]\page.tsx
-src\app\projects\[project]\workpackages\subworkpackages
-src\app\projects\[project]\workpackages\subworkpackages\page.tsx
-src\app\projects\[project]\page.tsx
-src\app\projects\components
-src\app\projects\components\AddressSelector.tsx
-src\app\projects\components\ProjectDashboard.tsx
-src\app\projects\components\ProjectsTable.tsx
-src\app\projects\components\WeatherDisplay.tsx
-src\app\projects\hooks
-src\app\projects\hooks\useFilteredProjects.ts
-src\app\projects\import
-src\app\projects\import\page.tsx
-src\app\projects\templates
-src\app\projects\templates\page.tsx
-src\app\projects\types
-src\app\projects\types\project.d.ts
-src\app\projects\utils
-src\app\projects\utils\progressUtils.tsx
-src\app\projects\utils\projectUtils.ts
-src\app\projects\layout.tsx
-src\app\projects\page.tsx
-
-
-
-
-@ProjectEditModal.tsx @ProjectInfoDisplay.tsx @ProjectInfoPage.tsx @WorkpackageList.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @AddressSelector.tsx @ProjectDashboard.tsx @ProjectsTable.tsx @WeatherDisplay.tsx @useFilteredProjects.ts @page.tsx @page.tsx @project.d.ts @progressUtils.tsx @projectUtils.ts @layout.tsx @/projects @page.tsx @/[project] @/components @/project-calendar @/project-expenses @/project-issues @/project-journal @/components @/project-materials @/workpackages @/[workpackage] @/subworkpackages @/components @/hooks @/import @/templates @/types @/utils 
-
-
-src/modules/projects/
-├── index.ts                           # 模組主要匯出點
-├── types/
-│   └── project.d.ts                   # 專案型別定義
-├── components/
-│   ├── common/                        # 通用組件
-│   │   ├── PageHeader.tsx
-│   │   ├── PageContainer.tsx
-│   │   ├── LoadingSpinner.tsx
-│   │   ├── AddressSelector.tsx
-│   │   └── DataLoader.tsx
-│   ├── dashboard/                     # 儀表板組件
-│   │   ├── ProjectDashboard.tsx
-│   │   ├── ProjectsTable.tsx
-│   │   ├── ProjectStats.tsx
-│   │   └── ProjectWeatherDisplay.tsx
-│   ├── project/                       # 專案相關組件
-│   │   ├── ProjectEditModal.tsx
-│   │   ├── ProjectInfoDisplay.tsx
-│   │   ├── ProjectInfoPage.tsx
-│   │   └── ProjectForm.tsx
-│   ├── workpackage/                   # 工作包組件
-│   │   ├── WorkpackageList.tsx
-│   │   ├── WorkpackageCard.tsx
-│   │   ├── SubWorkpackageList.tsx
-│   │   └── WorkpackageForm.tsx
-│   ├── journal/                       # 日誌組件
-│   │   ├── JournalForm.tsx
-│   │   ├── JournalHistory.tsx
-│   │   └── JournalCard.tsx
-│   └── management/                    # 管理組件
-│       ├── IssueTracker.tsx
-│       ├── RiskManager.tsx
-│       ├── MilestoneTracker.tsx
-│       └── ChangeManager.tsx
-├── hooks/                             # 自定義 Hooks
-│   ├── useProjectActions.ts
-│   ├── useProjectState.ts
-│   ├── useProjectForm.ts
-│   ├── useProjectErrorHandler.ts
-│   ├── useFilteredProjects.ts
-│   ├── useProjectStats.ts
-│   └── useQualityScore.ts
-├── services/                          # 服務層
-│   ├── projectService.ts
-│   ├── workpackageService.ts
-│   ├── journalService.ts
-│   ├── issueService.ts
-│   └── templateService.ts
-├── utils/                             # 工具函數
-│   ├── progressUtils.tsx
-│   ├── projectUtils.ts
-│   ├── qualityUtils.ts
-│   ├── riskUtils.ts
-│   └── dateUtils.ts
-├── styles/                            # 樣式定義
-│   └── index.ts
-└── constants/                         # 常數定義
-    ├── projectConstants.ts
-    ├── statusConstants.ts
-    └── validationRules.ts
-
-
-src/modules/projects/
-├── index.ts                              # 模組主要匯出點
-├── types/
-│   └── projectTypes.ts                   # 專案型別定義
-├── components/
-│   ├── common/
-│   │   ├── PageHeader.tsx
-│   │   ├── PageContainer.tsx
-│   │   ├── LoadingSpinner.tsx
-│   │   ├── AddressSelector.tsx
-│   │   └── DataLoader.tsx
-│   ├── dashboard/
-│   │   ├── ProjectDashboard.tsx
-│   │   ├── ProjectTable.tsx
-│   │   ├── ProjectStatistics.tsx
-│   │   └── ProjectWeatherDisplay.tsx
-│   ├── project/
-│   │   ├── ProjectEditModal.tsx
-│   │   ├── ProjectInfoDisplay.tsx
-│   │   ├── ProjectInfoPage.tsx
-│   │   └── ProjectForm.tsx
-│   ├── work-packages/
-│   │   ├── WorkPackageList.tsx
-│   │   ├── WorkPackageCard.tsx
-│   │   ├── WorkPackageSubList.tsx
-│   │   └── WorkPackageForm.tsx
-│   ├── journals/
-│   │   ├── JournalForm.tsx
-│   │   ├── JournalHistory.tsx
-│   │   └── JournalCard.tsx
-│   └── management/
-│       ├── IssueTracker.tsx
-│       ├── RiskManager.tsx
-│       ├── MilestoneTracker.tsx
-│       └── ChangeManager.tsx
-├── hooks/
-│   ├── useProjectActions.ts
-│   ├── useProjectState.ts
-│   ├── useProjectForm.ts
-│   ├── useProjectErrorHandler.ts
-│   ├── useFilteredProjects.ts
-│   ├── useProjectStatistics.ts
-│   └── useQualityScore.ts
-├── services/
-│   ├── projectService.ts
-│   ├── workPackageService.ts
-│   ├── journalService.ts
-│   ├── issueService.ts
-│   └── templateService.ts
-├── utils/
-│   ├── progressUtils.ts
-│   ├── projectUtils.ts
-│   ├── qualityUtils.ts
-│   ├── riskUtils.ts
-│   └── dateUtils.ts
-├── styles/
-│   └── index.ts
-└── constants/
-    ├── projectConstants.ts
-    ├── statusConstants.ts
-    └── validationRules.ts
-
-
 /**
  * 專案管理模組
  * 
@@ -195,7 +13,8 @@ export * from './components/common';
 export * from './components/dashboard';
 export * from './components/project';
 export * from './components/journal';
-export * from './components/workpackage';
+export * from './components/work-package';
+export * from './components/subwork-package';
 
 export * from './hooks';
 export * from './types';
@@ -211,8 +30,8 @@ export { default as ProjectExpensesPage } from './pages/[project]/expenses/page'
 export { default as ProjectIssuesPage } from './pages/[project]/issues/page';
 export { default as ProjectJournalPage } from './pages/[project]/journal/page';
 export { default as ProjectMaterialsPage } from './pages/[project]/materials/page';
-export { default as WorkpackageDetailPage } from './pages/[project]/workpackages/[workpackage]/page';
-export { default as SubWorkpackagesPage } from './pages/[project]/workpackages/subworkpackages/page';
+export { default as WorkpackageDetailPage } from './pages/[project]/work-packages/[workpackage]/page';
+export { default as SubWorkpackagesPage } from './pages/[project]/work-packages/subworkpackages/page';
 
 // 錯誤處理
 export { useProjectErrorHandler } from './hooks/useProjectErrorHandler';
