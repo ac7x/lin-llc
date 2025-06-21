@@ -10,16 +10,15 @@
 
 'use client';
 
-
 import { doc, getDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader } from '@/modules/test-projects/components/common';
 import { ProjectDashboard } from '@/modules/test-projects/components/dashboard';
+import { ProjectInfoPage } from '@/modules/test-projects/components/project';
 import type { Project } from '@/modules/test-projects/types/project';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
-import ProjectInfoPage from '@/modules/projects/components/ProjectInfoPage';
 
 interface ProjectWithId extends Project {
   id: string;
@@ -91,7 +90,12 @@ export default function ProjectPage() {
       <ProjectDashboard project={project} />
       
       {/* 專案資訊 */}
-      <ProjectInfoPage project={project} projectId={projectId} />
+      <ProjectInfoPage project={project} eligibleUsers={{
+        costControllers: [],
+        supervisors: [],
+        safetyOfficers: [],
+        managers: [],
+      }} />
     </div>
   );
 }

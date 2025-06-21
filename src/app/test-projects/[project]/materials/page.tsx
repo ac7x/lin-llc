@@ -1,59 +1,151 @@
 /**
  * 專案材料管理頁面
+ * 
+ * 管理專案材料和設備，包括：
+ * - 材料列表
+ * - 新增材料
+ * - 庫存管理
+ * - 採購追蹤
  */
 
 'use client';
 
-import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-
-import { PageContainer, PageHeader } from '@/modules/test-projects/components/common';
-import { ProjectService } from '@/modules/test-projects/services/projectService';
+import { useParams } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
+import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/modules/test-projects/components/common';
+import { MaterialForm, MaterialList } from '@/modules/test-projects/components/materials';
+import type { Project, MaterialEntry } from '@/modules/test-projects/types/project';
+import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/modules/test-projects/styles';
-import type { Project } from '@/modules/test-projects/types/project';
+
+interface ProjectWithId extends Project {
+  id: string;
+}
 
 export default function ProjectMaterialsPage() {
   const params = useParams();
   const projectId = params.project as string;
   
-  const [project, setProject] = useState<Project | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [project, setProject] = useState<ProjectWithId | null>(null);
+  const [materials, setMaterials] = useState<MaterialEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<MaterialEntry | null>(null);
+
+  // 載入專案資料
+  const loadProject = async () => {
+    if (!projectId) return;
+
+    setLoading(true);
+    setError(null);
+
+    await safeAsync(async () => {
+      const projectDoc = await retry(() => getDoc(doc(db, 'projects', projectId)), 3, 1000);
+      
+      if (!projectDoc.exists()) {
+        throw new Error('專案不存在');
+      }
+
+      const projectData = projectDoc.data() as Project;
+      setProject({
+        ...projectData,
+        id: projectDoc.id,
+      });
+    }, (error) => {
+      setError(error instanceof Error ? error.message : '載入專案失敗');
+      logError(error, { operation: 'fetch_project', projectId });
+    });
+
+    setLoading(false);
+  };
+
+  // 載入材料資料
+  const loadMaterials = async () => {
+    if (!projectId) return;
+
+    try {
+      // 這裡需要實作材料服務的載入方法
+      // const materialsData = await MaterialService.getMaterialsByProject(projectId);
+      // setMaterials(materialsData);
+      setMaterials([]); // 暫時設為空陣列
+    } catch (err) {
+      logError(err as Error, { operation: 'fetch_materials', projectId });
+    }
+  };
 
   useEffect(() => {
-    const loadProject = async () => {
-      try {
-        setIsLoading(true);
-        const projectData = await ProjectService.getProjectById(projectId);
-        setProject(projectData);
-      } catch (error) {
-        console.error('載入專案失敗:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (projectId) {
-      loadProject();
-    }
+    loadProject();
   }, [projectId]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (project) {
+      loadMaterials();
+    }
+  }, [project]);
+
+  // 處理新增材料
+  const handleCreateMaterial = async (materialData: Omit<MaterialEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!projectId) return;
+    
+    try {
+      // 這裡需要實作材料服務的創建方法
+      await loadMaterials();
+      setShowMaterialForm(false);
+      setEditingMaterial(null);
+    } catch (err) {
+      logError(err as Error, { operation: 'create_material', projectId });
+    }
+  };
+
+  // 處理編輯材料
+  const handleEditMaterial = async (materialData: Partial<MaterialEntry>) => {
+    if (!editingMaterial) return;
+    
+    try {
+      // 這裡需要實作材料服務的更新方法
+      await loadMaterials();
+      setShowMaterialForm(false);
+      setEditingMaterial(null);
+    } catch (err) {
+      logError(err as Error, { operation: 'update_material', projectId });
+    }
+  };
+
+  // 處理刪除材料
+  const handleDeleteMaterial = async (materialId: string) => {
+    if (!projectId) return;
+    
+    try {
+      // 這裡需要實作材料服務的刪除方法
+      await loadMaterials();
+    } catch (err) {
+      logError(err as Error, { operation: 'delete_material', projectId });
+    }
+  };
+
+  if (loading) {
     return (
-      <PageContainer>
-        <div className='flex items-center justify-center h-64'>
-          <div className='text-gray-500 dark:text-gray-400'>載入中...</div>
-        </div>
-      </PageContainer>
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner size="large" />
+      </div>
     );
   }
 
-  if (!project) {
+  if (error || !project) {
     return (
-      <PageContainer>
-        <div className='text-center py-12'>
-          <div className='text-gray-500 dark:text-gray-400'>專案不存在</div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            載入失敗
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            {error || '專案不存在'}
+          </p>
         </div>
-      </PageContainer>
+      </div>
     );
   }
 
@@ -63,21 +155,51 @@ export default function ProjectMaterialsPage() {
         title={`${project.projectName} - 材料管理`}
         subtitle='管理專案材料和設備'
       >
-        <button className={projectStyles.button.primary}>
+        <button
+          onClick={() => setShowMaterialForm(true)}
+          className={projectStyles.button.primary}
+        >
           新增材料
         </button>
       </PageHeader>
 
-      <div className={projectStyles.card.base}>
-        <div className='text-center py-12'>
-          <div className='text-gray-500 dark:text-gray-400 mb-4'>
-            材料管理功能開發中
+      <DataLoader
+        loading={loading}
+        error={error ? new Error(error) : null}
+        data={materials}
+      >
+        {(data) => (
+          <MaterialList
+            materials={data}
+            projectId={projectId}
+            onEdit={(material) => {
+              setEditingMaterial(material);
+              setShowMaterialForm(true);
+            }}
+            onDelete={handleDeleteMaterial}
+            onAdd={() => setShowMaterialForm(true)}
+            isLoading={loading}
+          />
+        )}
+      </DataLoader>
+
+      {/* 材料表單模態框 */}
+      {showMaterialForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <MaterialForm
+              material={editingMaterial || undefined}
+              projectId={projectId}
+              onSubmit={editingMaterial ? handleEditMaterial : handleCreateMaterial}
+              onCancel={() => {
+                setShowMaterialForm(false);
+                setEditingMaterial(null);
+              }}
+              isLoading={loading}
+            />
           </div>
-          <p className='text-sm text-gray-400 dark:text-gray-500'>
-            此頁面將提供材料清單、庫存管理和採購追蹤功能
-          </p>
         </div>
-      </div>
+      )}
     </PageContainer>
   );
 }

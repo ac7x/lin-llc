@@ -1,17 +1,9 @@
 import Link from 'next/link';
 import { projectStyles } from '../../styles';
-
-interface Project {
-  id: string;
-  projectName: string;
-  status: string;
-  progress?: number;
-  createdAt: string;
-  [key: string]: string | number | undefined;
-}
+import type { Project } from '../../types/project';
 
 interface ProjectsTableProps {
-  projects: Project[];
+  projects: (Project & { id: string })[];
   showAdvancedColumns?: boolean;
 }
 
@@ -50,7 +42,7 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
               <td className={projectStyles.table.td}>{index + 1}</td>
               <td className={projectStyles.table.td}>
                 <Link
-                  href={`/projects/${project.id}`}
+                  href={`/test-projects/${project.id}`}
                   className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
                 >
                   {project.projectName}
@@ -82,12 +74,12 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
                 </>
               )}
               <td className={projectStyles.table.td}>
-                {project.createdAt || '未知'}
+                {typeof project.createdAt === 'string' ? project.createdAt : '未知'}
               </td>
               <td className={projectStyles.table.td}>
                 <div className="flex items-center space-x-2">
                   <Link
-                    href={`/projects/${project.id}`}
+                    href={`/test-projects/${project.id}`}
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors duration-200"
                   >
                     查看

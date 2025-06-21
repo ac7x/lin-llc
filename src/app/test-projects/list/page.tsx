@@ -1,97 +1,87 @@
 /**
- * 專案詳細頁面
+ * 專案列表頁面
  * 
- * 顯示單一專案的詳細資訊，包括：
- * - 專案基本資訊
- * - 專案儀表板
- * - 工作包管理
- * - 日誌記錄
+ * 顯示所有專案的列表，包括：
+ * - 專案搜尋和篩選
+ * - 專案統計資訊
+ * - 專案狀態管理
  */
 
 'use client';
 
-
-import { doc, getDoc } from 'firebase/firestore';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import { LoadingSpinner, DataLoader } from '@/modules/test-projects/components/common';
-import { ProjectDashboard } from '@/modules/test-projects/components/dashboard';
+import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/modules/test-projects/components/common';
+import { ProjectsTable, ProjectStats } from '@/modules/test-projects/components/dashboard';
 import type { Project } from '@/modules/test-projects/types/project';
-import { logError, safeAsync, retry } from '@/utils/errorUtils';
-import ProjectInfoPage from '@/modules/projects/components/ProjectInfoPage';
 
 interface ProjectWithId extends Project {
   id: string;
 }
 
 export default function ProjectPage() {
-  const params = useParams();
-  const projectId = params.project as string;
-  const [project, setProject] = useState<ProjectWithId | null>(null);
+  const [projects, setProjects] = useState<ProjectWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [projectsSnapshot] = useCollection(collection(db, 'projects'));
+
   useEffect(() => {
     const fetchProject = async () => {
-      if (!projectId) return;
+      if (!projectsSnapshot) return;
 
       setLoading(true);
       setError(null);
 
-      await safeAsync(async () => {
-        const projectDoc = await retry(() => getDoc(doc(db, 'projects', projectId)), 3, 1000);
-        
-        if (!projectDoc.exists()) {
-          throw new Error('專案不存在');
-        }
-
-        const projectData = projectDoc.data() as Project;
-        setProject({
-          ...projectData,
-          id: projectDoc.id,
-        });
-      }, (error) => {
-        setError(error instanceof Error ? error.message : '載入專案失敗');
-        logError(error, { operation: 'fetch_project', projectId });
-      });
-
-      setLoading(false);
+      try {
+        const projectsData = projectsSnapshot.docs.map(doc => ({
+          ...doc.data() as Project,
+          id: doc.id,
+        }));
+        setProjects(projectsData);
+      } catch (err) {
+        setError('載入專案失敗');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchProject();
-  }, [projectId]);
-
-  if (loading) {
-    return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error || !project) {
-    return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <div className='text-center'>
-          <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2'>
-            載入失敗
-          </h2>
-          <p className='text-gray-600 dark:text-gray-400'>
-            {error || '專案不存在'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  }, [projectsSnapshot]);
 
   return (
-    <div className='space-y-6'>
-      {/* 專案儀表板 */}
-      <ProjectDashboard project={project} />
-      
-      {/* 專案資訊 */}
-      <ProjectInfoPage project={project} projectId={projectId} />
-    </div>
+    <PageContainer>
+      <PageHeader 
+        title="專案列表" 
+        subtitle="管理所有專案"
+      />
+
+      <DataLoader
+        loading={loading}
+        error={error ? new Error(error) : null}
+        data={projects}
+      >
+        {(data) => (
+          <div className="space-y-6">
+            <ProjectStats stats={{
+              totalProjects: data.length,
+              activeProjects: data.filter(p => p.status === 'in-progress').length,
+              completedProjects: data.filter(p => p.status === 'completed').length,
+              onHoldProjects: data.filter(p => p.status === 'on-hold').length,
+              overdueProjects: 0,
+              totalQualityIssues: 0,
+              averageQualityScore: 8.5,
+            }} />
+            
+            <ProjectsTable 
+              projects={data} 
+              showAdvancedColumns={true}
+            />
+          </div>
+        )}
+      </DataLoader>
+    </PageContainer>
   );
 }

@@ -677,6 +677,9 @@ export default function TestPage() {
                   projectName: selectedProject.projectName,
                   status: selectedProject.status,
                   progress: selectedProject.progress,
+                  workpackages: selectedProject.workpackages,
+                  createdAt: selectedProject.createdAt,
+                  updatedAt: selectedProject.updatedAt,
                 }} />
               )}
               {projectStats && (

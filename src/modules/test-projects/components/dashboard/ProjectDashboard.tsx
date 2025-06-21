@@ -1,13 +1,8 @@
 import { projectStyles } from '../../styles';
+import type { Project } from '../../types/project';
 
 interface ProjectDashboardProps {
-  project?: {
-    id: string;
-    projectName: string;
-    status: string;
-    progress?: number;
-    [key: string]: string | number | undefined;
-  };
+  project?: Project & { id: string };
 }
 
 export default function ProjectDashboard({ project }: ProjectDashboardProps) {
