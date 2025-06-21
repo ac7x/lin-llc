@@ -27,12 +27,10 @@ import {
   // 儀表板組件
   ProjectDashboard,
   ProjectsTable,
-  ProjectStatsComponent,
+  ProjectStats,
   
   // 專案相關組件
-  ProjectEditModal,
   ProjectInfoDisplay,
-  ProjectInfoPage,
   
   // 工作包組件
   WorkpackageCard,
@@ -47,12 +45,14 @@ import {
   // 日誌組件
   JournalCard,
   JournalForm,
-  JournalHistory,
   
   // 問題組件
   IssueForm,
   IssueList,
   IssueTracker,
+  
+  // 管理組件
+  RiskManager,
   
   // 費用組件
   ExpenseForm,
@@ -66,65 +66,68 @@ import {
   TemplateCard,
   TemplateForm,
   
-  // 管理組件
-  RiskManager,
-  ChangeManager,
-  MilestoneTracker,
+  // 合約生成組件
+  ContractSelector,
+  TemplateSelector,
   
   // 日曆組件
   CalendarView,
-  
-  // 生成專案組件
-  ContractSelector,
-  ProjectSetupForm,
-  TemplateSelector,
-  
-  // Hooks
+} from '@/modules/projects/components';
+
+// 導入 Hooks
+import {
   useProjectForm,
   useProjectErrorHandler,
   useFilteredProjects,
-  
-  // 服務
+} from '@/modules/projects/hooks';
+
+// 導入服務
+import {
   ProjectService,
   WorkpackageService,
   JournalService,
   IssueService,
   TemplateService,
-  
-  // 工具函數
+} from '@/modules/projects/services';
+
+// 導入工具函數和常數
+import {
   calculateProjectProgress,
   calculateProjectQualityScore,
   calculateSchedulePerformanceIndex,
   calculateCostPerformanceIndex,
   analyzeProjectStatusTrend,
   calculateProjectPriorityScore,
-  
-  // 進度工具
+} from '@/modules/projects/utils';
+
+import {
   ProgressBarWithPercent,
   ProjectHealthIndicator,
-  
-  // 常數
+} from '@/modules/projects/utils/progressUtils';
+
+import {
   PROJECT_STATUS_OPTIONS,
   PROJECT_TYPE_OPTIONS,
   PROJECT_PRIORITY_OPTIONS,
   PROJECT_RISK_LEVEL_OPTIONS,
-  
-  // 樣式
-  projectStyles,
-  
-  // 型別
-  type Workpackage,
-  type SubWorkpackage,
-  type IssueRecord,
-  type Template,
-  type ProjectDocument,
-  type ProjectStats,
-  type Expense,
-  type MaterialEntry,
-  type ProjectMilestone,
-  type ProjectRisk,
-  type ProjectChange,
-} from '@/modules/projects';
+} from '@/modules/projects/constants';
+
+import { projectStyles } from '@/modules/projects/styles';
+
+// 導入型別
+import type {
+  Workpackage,
+  SubWorkpackage,
+  IssueRecord,
+  Template,
+  ProjectDocument,
+  ProjectStats as ProjectStatsType,
+  Expense,
+  MaterialEntry,
+  ProjectMilestone,
+  ProjectRisk,
+  ProjectChange,
+} from '@/modules/projects/types/project';
 
 export default function TestPage() {
   const { user, loading: authLoading } = useAuth();
@@ -141,7 +144,7 @@ export default function TestPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [materials, setMaterials] = useState<MaterialEntry[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [projectStats, setProjectStats] = useState<ProjectStats | null>(null);
+  const [projectStats, setProjectStats] = useState<ProjectStatsType | null>(null);
   
   // 表單狀態
   const [showIssueForm, setShowIssueForm] = useState(false);
@@ -169,6 +172,7 @@ export default function TestPage() {
   const tabs = [
     { id: 'components', label: '組件展示' },
     { id: 'data', label: '數據管理' },
+    { id: 'pages', label: '頁面功能' },
     { id: 'hooks', label: 'Hooks 測試' },
     { id: 'services', label: '服務層測試' },
     { id: 'utils', label: '工具函數' },
@@ -425,7 +429,7 @@ export default function TestPage() {
                 }} />
               )}
               {projectStats && (
-                <ProjectStatsComponent stats={projectStats} />
+                <ProjectStats stats={projectStats} />
               )}
             </div>
           </section>
@@ -589,44 +593,7 @@ export default function TestPage() {
                   }}
                 />
               </div>
-
-              {/* 變更管理器 */}
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-4">變更管理器</h4>
-                <ChangeManager
-                  changes={selectedProject?.changes || []}
-                  projectId={selectedProject?.id || ''}
-                  onAddChange={() => {
-                    // 處理新增變更
-                  }}
-                  onEditChange={(_change) => {
-                    // 處理編輯變更
-                  }}
-                  onDeleteChange={(_changeId) => {
-                    // 處理刪除變更
-                  }}
-                />
-              </div>
             </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              里程碑追蹤器
-            </h3>
-            <MilestoneTracker
-              milestones={selectedProject?.milestones || []}
-              projectId={selectedProject?.id || ''}
-              onAddMilestone={() => {
-                // 處理新增里程碑
-              }}
-              onEditMilestone={(_milestone) => {
-                // 處理編輯里程碑
-              }}
-              onDeleteMilestone={(_milestoneId) => {
-                // 處理刪除里程碑
-              }}
-            />
           </section>
         </div>
       )}
@@ -794,6 +761,201 @@ export default function TestPage() {
                   </div>
                 )}
               </DataLoader>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* 頁面功能測試 */}
+      {activeTab === 'pages' && (
+        <div className="space-y-8">
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              專案詳細頁面功能
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">專案儀表板</h4>
+                <p className="text-sm text-gray-600 mb-3">顯示專案概覽、進度和關鍵指標</p>
+                {selectedProject && (
+                  <ProjectDashboard project={{
+                    id: selectedProject.id,
+                    projectName: selectedProject.projectName,
+                    status: selectedProject.status,
+                    progress: selectedProject.progress,
+                  }} />
+                )}
+              </div>
+              
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">專案資訊</h4>
+                <p className="text-sm text-gray-600 mb-3">顯示專案詳細資訊和人員配置</p>
+                {selectedProject && (
+                  <ProjectInfoDisplay 
+                    project={selectedProject}
+                    eligibleUsers={{
+                      costControllers: [],
+                      supervisors: [],
+                      safetyOfficers: [],
+                      managers: [],
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              專案子頁面功能
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">日曆視圖</h4>
+                <p className="text-sm text-gray-600 mb-3">專案時程和里程碑管理</p>
+                {selectedProject && (
+                  <CalendarView
+                    projectId={selectedProject.id}
+                    milestones={selectedProject.milestones || []}
+                    workpackages={workpackages}
+                    onDateClick={(_date) => {
+                      // 處理日期點擊
+                    }}
+                    onMilestoneClick={(_milestone) => {
+                      // 處理里程碑點擊
+                    }}
+                    onWorkpackageClick={(_workpackage) => {
+                      // 處理工作包點擊
+                    }}
+                  />
+                )}
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">費用管理</h4>
+                <p className="text-sm text-gray-600 mb-3">專案費用記錄和統計</p>
+                <button
+                  onClick={() => setShowExpenseForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  測試費用管理
+                </button>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">材料管理</h4>
+                <p className="text-sm text-gray-600 mb-3">專案材料和設備管理</p>
+                <button
+                  onClick={() => setShowMaterialForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  測試材料管理
+                </button>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">工作包管理</h4>
+                <p className="text-sm text-gray-600 mb-3">專案工作包和子工作包管理</p>
+                <button
+                  onClick={() => setShowWorkpackageForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  測試工作包管理
+                </button>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">專案日誌</h4>
+                <p className="text-sm text-gray-600 mb-3">專案進度記錄和事件管理</p>
+                <div className="text-center py-4">
+                  <div className="text-gray-500 dark:text-gray-400 mb-2">
+                    日誌功能開發中
+                  </div>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    此功能將提供日誌記錄、進度追蹤和事件管理
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">問題管理</h4>
+                <p className="text-sm text-gray-600 mb-3">專案問題追蹤和解決</p>
+                <button
+                  onClick={() => setShowIssueForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  測試問題管理
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              專案管理頁面功能
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">專案列表</h4>
+                <p className="text-sm text-gray-600 mb-3">所有專案的列表和篩選</p>
+                <DataLoader
+                  loading={loading}
+                  error={error ? new Error(error) : null}
+                  data={projects as any[]}
+                >
+                  {(data) => (
+                    <div className="max-h-40 overflow-y-auto">
+                      <ProjectsTable 
+                        projects={data.slice(0, 3)} 
+                        showAdvancedColumns={false}
+                      />
+                    </div>
+                  )}
+                </DataLoader>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">模板管理</h4>
+                <p className="text-sm text-gray-600 mb-3">專案模板的創建和管理</p>
+                <button
+                  onClick={() => setShowTemplateForm(true)}
+                  className={projectStyles.button.primary}
+                >
+                  測試模板管理
+                </button>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">從合約生成專案</h4>
+                <p className="text-sm text-gray-600 mb-3">基於現有合約自動生成專案</p>
+                <div className="space-y-2">
+                  <ContractSelector
+                    contracts={[
+                      {
+                        id: '1',
+                        contractNumber: 'CTR-2024-001',
+                        contractName: '台北市區道路維修工程',
+                        clientName: '台北市政府',
+                        contractValue: 5000000,
+                        startDate: new Date('2024-01-01'),
+                        endDate: new Date('2024-12-31'),
+                        description: '台北市區主要道路維修及改善工程',
+                      }
+                    ]}
+                    selectedContractId=""
+                    onSelectContract={(_contractId) => {
+                      // 處理合約選擇
+                    }}
+                  />
+                  <TemplateSelector
+                    templates={templates}
+                    selectedTemplateId=""
+                    onSelectTemplate={(_templateId) => {
+                      // 處理模板選擇
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </section>
         </div>

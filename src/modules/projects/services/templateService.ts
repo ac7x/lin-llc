@@ -12,8 +12,8 @@ import {
   updateDoc, 
   deleteDoc, 
   query, 
-  where,
-  Timestamp
+  where, 
+  Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import type { Template, SubWorkpackageTemplateItem } from '../types/project';
