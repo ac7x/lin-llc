@@ -673,6 +673,187 @@ export default function TestPage() {
 
           <section>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              儀表板組件
+            </h3>
+            <div className="space-y-4">
+              {selectedProject && (
+                <ProjectDashboard project={{
+                  id: selectedProject.id,
+                  projectName: selectedProject.projectName,
+                  status: selectedProject.status,
+                  progress: selectedProject.progress,
+                }} />
+              )}
+              {projectStats && (
+                <ProjectStats stats={projectStats} />
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              專案列表
+            </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={projects as any[]}
+            >
+              {(data) => (
+                <ProjectsTable 
+                  projects={data} 
+                  showAdvancedColumns={true}
+                />
+              )}
+            </DataLoader>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              工作包組件
+            </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={workpackages}
+            >
+              {(data) => (
+                <div className="space-y-4">
+                  <WorkpackageList 
+                    workpackages={data} 
+                    projectId={selectedProject?.id || ''} 
+                  />
+                  
+                  {/* 工作包卡片展示 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.slice(0, 3).map((workpackage) => (
+                      <WorkpackageCard
+                        key={workpackage.id}
+                        workpackage={workpackage}
+                        projectId={selectedProject?.id || ''}
+                        onEdit={(_workpackage) => {
+                          // 處理編輯
+                        }}
+                        onDelete={(_workpackageId) => {
+                          // 處理刪除
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </DataLoader>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              子工作包組件
+            </h3>
+            <DataLoader
+              loading={loading}
+              error={error ? new Error(error) : null}
+              data={subWorkpackages}
+            >
+              {(data) => (
+                <div className="space-y-4">
+                  <SubWorkpackageList
+                    subWorkpackages={data}
+                    workpackageId={workpackages[0]?.id || ''}
+                    onAddSubWorkpackage={() => setShowSubWorkpackageForm(true)}
+                    onEditSubWorkpackage={(_subWorkpackage) => {
+                      // 處理編輯
+                    }}
+                    onDeleteSubWorkpackage={(_subWorkpackageId) => {
+                      // 處理刪除
+                    }}
+                  />
+
+                  {/* 子工作包卡片展示 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.slice(0, 3).map((subWorkpackage) => (
+                      <SubWorkpackageCard
+                        key={subWorkpackage.id}
+                        subWorkpackage={subWorkpackage}
+                        workpackageId={workpackages[0]?.id || ''}
+                        onEdit={(_subWorkpackage) => {
+                          // 處理編輯
+                        }}
+                        onDelete={(_subWorkpackageId) => {
+                          // 處理刪除
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </DataLoader>
+          </section>
+
+          {selectedProject && (
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                日曆視圖
+              </h3>
+              <CalendarView
+                projectId={selectedProject.id}
+                milestones={selectedProject.milestones || []}
+                workpackages={workpackages}
+                onDateClick={(_date) => {
+                  // 處理日期點擊
+                }}
+                onMilestoneClick={(_milestone) => {
+                  // 處理里程碑點擊
+                }}
+                onWorkpackageClick={(_workpackage) => {
+                  // 處理工作包點擊
+                }}
+              />
+            </section>
+          )}
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              管理組件
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* 問題追蹤器 */}
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-4">問題追蹤器</h4>
+                <IssueTracker
+                  issues={issues}
+                  projectId={selectedProject?.id || ''}
+                  onAddIssue={() => setShowIssueForm(true)}
+                  onEditIssue={(_issue) => {
+                    // 處理編輯
+                  }}
+                  onDeleteIssue={(_issueId) => {
+                    // 處理刪除
+                  }}
+                />
+              </div>
+
+              {/* 風險管理器 */}
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-4">風險管理器</h4>
+                <RiskManager
+                  risks={selectedProject?.risks || []}
+                  projectId={selectedProject?.id || ''}
+                  onAddRisk={() => {
+                    // 處理新增風險
+                  }}
+                  onEditRisk={(_risk) => {
+                    // 處理編輯風險
+                  }}
+                  onDeleteRisk={(_riskId) => {
+                    // 處理刪除風險
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               專案子頁面功能展示
             </h3>
             
@@ -1799,189 +1980,6 @@ export default function TestPage() {
         </div>
       )}
 
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              儀表板組件
-            </h3>
-            <div className="space-y-4">
-              {selectedProject && (
-                <ProjectDashboard project={{
-                  id: selectedProject.id,
-                  projectName: selectedProject.projectName,
-                  status: selectedProject.status,
-                  progress: selectedProject.progress,
-                }} />
-              )}
-              {projectStats && (
-                <ProjectStats stats={projectStats} />
-              )}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案列表
-            </h3>
-            <DataLoader
-              loading={loading}
-              error={error ? new Error(error) : null}
-              data={projects as any[]}
-            >
-              {(data) => (
-                <ProjectsTable 
-                  projects={data} 
-                  showAdvancedColumns={true}
-                />
-              )}
-            </DataLoader>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              工作包組件
-            </h3>
-            <DataLoader
-              loading={loading}
-              error={error ? new Error(error) : null}
-              data={workpackages}
-            >
-              {(data) => (
-                <div className="space-y-4">
-                  <WorkpackageList 
-                    workpackages={data} 
-                    projectId={selectedProject?.id || ''} 
-                  />
-                  
-                  {/* 工作包卡片展示 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.slice(0, 3).map((workpackage) => (
-                      <WorkpackageCard
-                        key={workpackage.id}
-                        workpackage={workpackage}
-                        projectId={selectedProject?.id || ''}
-                        onEdit={(_workpackage) => {
-                          // 處理編輯
-                        }}
-                        onDelete={(_workpackageId) => {
-                          // 處理刪除
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </DataLoader>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              子工作包組件
-            </h3>
-            <DataLoader
-              loading={loading}
-              error={error ? new Error(error) : null}
-              data={subWorkpackages}
-            >
-              {(data) => (
-                <div className="space-y-4">
-                  <SubWorkpackageList
-                    subWorkpackages={data}
-                    workpackageId={workpackages[0]?.id || ''}
-                    onAddSubWorkpackage={() => setShowSubWorkpackageForm(true)}
-                    onEditSubWorkpackage={(_subWorkpackage) => {
-                      // 處理編輯
-                    }}
-                    onDeleteSubWorkpackage={(_subWorkpackageId) => {
-                      // 處理刪除
-                    }}
-                  />
-
-                  {/* 子工作包卡片展示 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.slice(0, 3).map((subWorkpackage) => (
-                      <SubWorkpackageCard
-                        key={subWorkpackage.id}
-                        subWorkpackage={subWorkpackage}
-                        workpackageId={workpackages[0]?.id || ''}
-                        onEdit={(_subWorkpackage) => {
-                          // 處理編輯
-                        }}
-                        onDelete={(_subWorkpackageId) => {
-                          // 處理刪除
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </DataLoader>
-          </section>
-
-          {selectedProject && (
-            <section>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                日曆視圖
-              </h3>
-              <CalendarView
-                projectId={selectedProject.id}
-                milestones={selectedProject.milestones || []}
-                workpackages={workpackages}
-                onDateClick={(_date) => {
-                  // 處理日期點擊
-                }}
-                onMilestoneClick={(_milestone) => {
-                  // 處理里程碑點擊
-                }}
-                onWorkpackageClick={(_workpackage) => {
-                  // 處理工作包點擊
-                }}
-              />
-            </section>
-          )}
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              管理組件
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* 問題追蹤器 */}
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-4">問題追蹤器</h4>
-                <IssueTracker
-                  issues={issues}
-                  projectId={selectedProject?.id || ''}
-                  onAddIssue={() => setShowIssueForm(true)}
-                  onEditIssue={(_issue) => {
-                    // 處理編輯
-                  }}
-                  onDeleteIssue={(_issueId) => {
-                    // 處理刪除
-                  }}
-                />
-              </div>
-
-              {/* 風險管理器 */}
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-4">風險管理器</h4>
-                <RiskManager
-                  risks={selectedProject?.risks || []}
-                  projectId={selectedProject?.id || ''}
-                  onAddRisk={() => {
-                    // 處理新增風險
-                  }}
-                  onEditRisk={(_risk) => {
-                    // 處理編輯風險
-                  }}
-                  onDeleteRisk={(_riskId) => {
-                    // 處理刪除風險
-                  }}
-                />
-              </div>
-            </div>
-          </section>
-        </div>
-      )}
-
       {/* 合約生成專案功能 */}
       {activeTab === 'contract-generation' && (
         <div className="space-y-8">
@@ -2196,7 +2194,7 @@ export default function TestPage() {
               </h4>
               <ExpenseForm
                 projectId={selectedProject?.id || ''}
-                onSubmit={(_expenseData) => {
+                onSubmit={async (_expenseData) => {
                   // 處理提交
                 }}
                 onCancel={() => {
@@ -2213,7 +2211,7 @@ export default function TestPage() {
               </h4>
               <MaterialForm
                 projectId={selectedProject?.id || ''}
-                onSubmit={(_materialData) => {
+                onSubmit={async (_materialData) => {
                   // 處理提交
                 }}
                 onCancel={() => {
@@ -2229,8 +2227,9 @@ export default function TestPage() {
                 模板表單
               </h4>
               <TemplateForm
-                onSubmit={(_templateData) => {
+                onSubmit={async (_templateData) => {
                   // 處理提交
+                  return Promise.resolve();
                 }}
                 onCancel={() => {
                   // 處理取消
