@@ -16,6 +16,7 @@ interface AddressSelectorProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  readOnly?: boolean;
 }
 
 interface AddressSuggestion {
@@ -33,6 +34,7 @@ export default function AddressSelector({
   placeholder = '請輸入地址',
   className = '',
   disabled = false,
+  readOnly = false,
 }: AddressSelectorProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
@@ -100,16 +102,18 @@ export default function AddressSelector({
     markerRef.current = new window.google.maps.Marker({
       position: { lat, lng },
       map: mapInstanceRef.current,
-      draggable: true,
+      draggable: !readOnly,
     });
-    markerRef.current.addListener('dragend', () => {
-      const position = markerRef.current?.getPosition();
-      if (position) {
-        geocodeLocation(position.lat(), position.lng());
-      }
-    });
+    if (!readOnly) {
+      markerRef.current.addListener('dragend', () => {
+        const position = markerRef.current?.getPosition();
+        if (position) {
+          geocodeLocation(position.lat(), position.lng());
+        }
+      });
+    }
     geocodeLocation(lat, lng);
-  }, [geocodeLocation]);
+  }, [geocodeLocation, readOnly]);
 
   // 初始化地圖和服務
   useEffect(() => {
@@ -127,16 +131,18 @@ export default function AddressSelector({
     autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
     placesServiceRef.current = new window.google.maps.places.PlacesService(map);
 
-    // 地圖點擊事件
-    map.addListener('click', (event: google.maps.MapMouseEvent) => {
-      const lat = event.latLng?.lat();
-      const lng = event.latLng?.lng();
+    // 地圖點擊事件 - 只在非只讀模式下啟用
+    if (!readOnly) {
+      map.addListener('click', (event: google.maps.MapMouseEvent) => {
+        const lat = event.latLng?.lat();
+        const lng = event.latLng?.lng();
 
-      if (lat && lng) {
-        updateMarkerAndAddress(lat, lng);
-      }
-    });
-  }, [isMapOpen, updateMarkerAndAddress]);
+        if (lat && lng) {
+          updateMarkerAndAddress(lat, lng);
+        }
+      });
+    }
+  }, [isMapOpen, updateMarkerAndAddress, readOnly]);
 
   // 獲取當前位置
   const getCurrentLocation = () => {
@@ -278,13 +284,13 @@ export default function AddressSelector({
             onChange(e.target.value);
           }}
           placeholder={placeholder}
-          disabled={disabled || isLoading}
+          disabled={disabled || isLoading || readOnly}
           className={`flex-1 px-4 py-2 rounded-l-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${className}`}
         />
         <button
           type='button'
           onClick={openMapSelector}
-          disabled={disabled || isLoading}
+          disabled={disabled || isLoading || readOnly}
           className='px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 flex items-center'
           title='在地圖上選擇地址'
         >
@@ -305,7 +311,7 @@ export default function AddressSelector({
           <div className='bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-hidden'>
             <div className='flex justify-between items-center mb-4'>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                在地圖上選擇地址
+                {readOnly ? '查看地址位置' : '在地圖上選擇地址'}
               </h3>
               <button onClick={cancelSelection} className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'>
                 <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -314,98 +320,100 @@ export default function AddressSelector({
               </button>
             </div>
 
-            {/* 搜尋和工具列 */}
-            <div className='mb-4 space-y-3'>
-              <div className='flex gap-2'>
-                <div className='flex-1 relative'>
-                  <input
-                    ref={searchBoxRef}
-                    type='text'
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      searchSuggestions(e.target.value);
-                    }}
-                    placeholder='搜尋地址或地點...'
-                    className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
-                  />
-                  {isSearching && (
-                    <div className='absolute right-3 top-1/2 -translate-y-1/2'>
-                      <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500'></div>
-                    </div>
-                  )}
-                  
-                  {/* 搜尋建議下拉選單 */}
-                  {showSuggestions && suggestions.length > 0 && (
-                    <div className='absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto'>
-                      {suggestions.map((suggestion) => (
-                        <button
-                          key={suggestion.place_id}
-                          onClick={() => selectSuggestion(suggestion)}
-                          className='w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0'
-                        >
-                          <div className='font-medium text-gray-900 dark:text-gray-100'>
-                            {suggestion.structured_formatting.main_text}
-                          </div>
-                          <div className='text-sm text-gray-500 dark:text-gray-400'>
-                            {suggestion.structured_formatting.secondary_text}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+            {/* 搜尋和工具列 - 只在非只讀模式下顯示 */}
+            {!readOnly && (
+              <div className='mb-4 space-y-3'>
+                <div className='flex gap-2'>
+                  <div className='flex-1 relative'>
+                    <input
+                      ref={searchBoxRef}
+                      type='text'
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        searchSuggestions(e.target.value);
+                      }}
+                      placeholder='搜尋地址或地點...'
+                      className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                    />
+                    {isSearching && (
+                      <div className='absolute right-3 top-1/2 -translate-y-1/2'>
+                        <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500'></div>
+                      </div>
+                    )}
+                    
+                    {/* 搜尋建議下拉選單 */}
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className='absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto'>
+                        {suggestions.map((suggestion) => (
+                          <button
+                            key={suggestion.place_id}
+                            onClick={() => selectSuggestion(suggestion)}
+                            className='w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0'
+                          >
+                            <div className='font-medium text-gray-900 dark:text-gray-100'>
+                              {suggestion.structured_formatting.main_text}
+                            </div>
+                            <div className='text-sm text-gray-500 dark:text-gray-400'>
+                              {suggestion.structured_formatting.secondary_text}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={searchAddress}
+                    disabled={!searchTerm.trim()}
+                    className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 flex items-center'
+                  >
+                    <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+                    </svg>
+                    搜尋
+                  </button>
+                  <button
+                    onClick={getCurrentLocation}
+                    className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center'
+                    title='使用當前位置'
+                  >
+                    <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' />
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 11a3 3 0 11-6 0 3 3 0 016 0z' />
+                    </svg>
+                    定位
+                  </button>
                 </div>
-                <button
-                  onClick={searchAddress}
-                  disabled={!searchTerm.trim()}
-                  className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 flex items-center'
-                >
-                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
-                  </svg>
-                  搜尋
-                </button>
-                <button
-                  onClick={getCurrentLocation}
-                  className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center'
-                  title='使用當前位置'
-                >
-                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' />
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 11a3 3 0 11-6 0 3 3 0 016 0z' />
-                  </svg>
-                  定位
-                </button>
+                
+                <div className='flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400'>
+                  <span className='flex items-center'>
+                    <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+                    </svg>
+                    點擊地圖選擇位置
+                  </span>
+                  <span className='flex items-center'>
+                    <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 9l4-4 4 4m0 6l-4 4-4-4' />
+                    </svg>
+                    拖曳標記精確定位
+                  </span>
+                  <span className='flex items-center'>
+                    <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+                    </svg>
+                    搜尋地址自動定位
+                  </span>
+                </div>
               </div>
-              
-              <div className='flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400'>
-                <span className='flex items-center'>
-                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
-                  </svg>
-                  點擊地圖選擇位置
-                </span>
-                <span className='flex items-center'>
-                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 9l4-4 4 4m0 6l-4 4-4-4' />
-                  </svg>
-                  拖曳標記精確定位
-                </span>
-                <span className='flex items-center'>
-                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
-                  </svg>
-                  搜尋地址自動定位
-                </span>
-              </div>
-            </div>
+            )}
 
             {/* 已選擇地址顯示 */}
             {selectedAddress && (
               <div className='mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
                 <p className='text-sm text-blue-800 dark:text-blue-200'>
-                  <span className='font-medium'>已選擇地址:</span> {selectedAddress}
+                  <span className='font-medium'>{readOnly ? '地址位置:' : '已選擇地址:'}</span> {selectedAddress}
                 </p>
               </div>
             )}
@@ -415,11 +423,13 @@ export default function AddressSelector({
 
             <div className='flex justify-end space-x-3 mt-4'>
               <button onClick={cancelSelection} className='px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200'>
-                取消
+                {readOnly ? '關閉' : '取消'}
               </button>
-              <button onClick={confirmSelection} className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200'>
-                確認選擇
-              </button>
+              {!readOnly && (
+                <button onClick={confirmSelection} className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200'>
+                  確認選擇
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -43,6 +43,7 @@ export default function ProjectEditModal({
   eligibleUsers,
 }: ProjectEditModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState(project.address || '');
   const { user } = useAuth();
 
   // 檢查預算權限的函數
@@ -69,7 +70,7 @@ export default function ProjectEditModal({
         safetyOfficer: formData.get('safetyOfficer'),
         costController: formData.get('costController'),
         region: formData.get('region'),
-        address: formData.get('address'),
+        address: currentAddress,
         owner: formData.get('owner'),
         startDate: startDate ? Timestamp.fromDate(new Date(startDate)) : null,
         estimatedEndDate: estimatedEndDate ? Timestamp.fromDate(new Date(estimatedEndDate)) : null,
@@ -227,21 +228,13 @@ export default function ProjectEditModal({
                 地址
               </label>
               <AddressSelector
-                value={project.address || ''}
+                value={currentAddress}
                 onChange={address => {
-                  // 更新表單中的地址值
-                  const addressInput = document.querySelector(
-                    'input[name="address"]'
-                  ) as HTMLInputElement;
-                  if (addressInput) {
-                    addressInput.value = address;
-                  }
+                  setCurrentAddress(address);
                 }}
                 placeholder='請輸入或選擇地址'
                 className='w-full'
               />
-              {/* 隱藏的地址輸入框，用於表單提交 */}
-              <input name='address' defaultValue={project.address} className='hidden' />
             </div>
             <div>
               <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
