@@ -227,7 +227,7 @@ export default function ProjectIssuesPage() {
           <div className='text-right'>
             <div className='text-sm text-gray-500 dark:text-gray-400'>品質分數</div>
             <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
-              {qualityScoreInfo.currentScore.toFixed(1)}/10
+              {Math.round(qualityScoreInfo.currentScore)}/10
             </div>
             {qualityScoreInfo.qualityOrProgressIssuesCount > 0 && (
               <div className='text-xs text-orange-600 dark:text-orange-400'>

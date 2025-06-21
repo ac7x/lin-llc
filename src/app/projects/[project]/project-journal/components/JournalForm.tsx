@@ -5,34 +5,17 @@
  */
 'use client';
 
-import { UpdateData } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, Timestamp, UpdateData } from 'firebase/firestore';
+import { ref, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { useState } from 'react';
 
-// import Image from 'next/image';
-import {
-  Project,
-  ActivityLog,
-  PhotoRecord,
-  PhotoType,
-  Workpackage,
-  IssueRecord,
-} from '@/app/projects/types/project';
-import {
-  db,
-  storage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  updateDoc,
-  arrayUnion,
-  doc,
-  Timestamp,
-} from '@/lib/firebase-client';
+import type { WeatherData } from '@/app/projects/components/WeatherDisplay';
+import type { Project, PhotoType, PhotoRecord, ActivityLog, Workpackage, IssueRecord } from '@/app/projects/types/project';
+
+import { calculateProjectProgress } from '@/app/projects/utils/projectUtils';
+import { db, storage } from '@/lib/firebase-client';
 import { toTimestamp } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
-import { calculateProjectProgress } from '../../../utils/progressUtils';
-
-import { WeatherData } from './WeatherDisplay';
 
 interface JournalFormProps {
   projectId: string;
@@ -116,7 +99,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               resolve({
-                id: `${Date.now()}_${i}`,
+                id: `${now.getTime()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
                 url: downloadURL,
                 type: photoTypes[i],
                 description: photoDescriptions[i],
@@ -156,7 +139,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
     await safeAsync(async () => {
       const now = new Date();
       const nowTimestamp = toTimestamp(now);
-      const reportId = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const reportId = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${now.getTime()}`;
 
       let photoRecords: PhotoRecord[] = [];
       if (photoFiles.some(file => file !== null)) {
@@ -180,7 +163,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
               sw.actualQuantity = newActualQuantity;
 
               activities.push({
-                id: `${input.workpackageId}_${input.subWorkpackageId}_${now.getTime()}`,
+                id: `${input.workpackageId}_${input.subWorkpackageId}_${now.getTime()}_${Math.random().toString(36).substr(2, 9)}`,
                 workpackageId: input.workpackageId,
                 description: `${wp?.name || ''} / ${sw?.name || ''}`,
                 startTime: nowTimestamp,
@@ -224,7 +207,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
 
       if (newReport.issues.trim()) {
         const issueRecord: Omit<IssueRecord, 'dueDate'> & { dueDate: Timestamp | null } = {
-          id: Date.now().toString(),
+          id: `${now.getTime()}_${Math.random().toString(36).substr(2, 9)}`,
           description: newReport.issues.trim(),
           type: 'progress',
           severity: 'medium',
@@ -319,7 +302,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
             </button>
           </div>
           {photoFiles.map((file, index) => (
-            <div key={index} className='p-4 border rounded-lg bg-gray-50 dark:bg-gray-700'>
+            <div key={`photo_${index}`} className='p-4 border rounded-lg bg-gray-50 dark:bg-gray-700'>
               <div className='flex justify-between items-start mb-2'>
                 <h4 className='font-medium text-gray-900 dark:text-gray-100'>照片 #{index + 1}</h4>
                 <button
@@ -405,7 +388,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
             const subWorkpackages = selectedWp?.subWorkpackages || [];
             const selectedSubWp = subWorkpackages.find(sw => sw.id === input.subWorkpackageId);
             return (
-              <div key={idx} className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-end'>
+              <div key={`progress_${idx}`} className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-end'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     選擇工作包

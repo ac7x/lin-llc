@@ -12,6 +12,7 @@
 import type { ReactElement } from 'react';
 
 import { Project, Workpackage } from '@/app/projects/types/project';
+import { cn, longClassName } from '@/utils/classNameUtils';
 import { calculateProjectProgress as calculateProjectProgressNew, calculateWorkpackageProgress as calculateWorkpackageProgressNew } from './projectUtils';
 
 /**
@@ -50,8 +51,12 @@ export const ProjectProgressPercent = ({ project }: { project: Project }): React
     return 'text-red-600 dark:text-red-400';
   };
 
+  const baseClass = longClassName([
+    'text-xs font-medium'
+  ]);
+
   return (
-    <span className={`text-xs font-medium ${getColorClass(percent)}`}>
+    <span className={cn(baseClass, getColorClass(percent))}>
       {percent}%
     </span>
   );
@@ -69,10 +74,14 @@ export const ProgressBar = ({ wp }: { wp: Workpackage }): ReactElement => {
     return 'bg-red-500';
   };
 
+  const baseProgressClass = longClassName([
+    'h-2 rounded-full transition-all duration-300'
+  ]);
+
   return (
-    <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
+    <div className={cn('w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2')}>
       <div
-        className={`${getColorClass(percent)} h-2 rounded-full transition-all duration-300`}
+        className={cn(baseProgressClass, getColorClass(percent))}
         style={{ width: `${percent}%` }}
         title={`進度：${percent}%`}
       />
@@ -115,16 +124,20 @@ export const ProgressBarWithPercent = ({
     }
   };
 
+  const baseProgressClass = longClassName([
+    'rounded-full transition-all duration-300'
+  ]);
+
   return (
-    <div className='flex items-center space-x-2'>
-      <div className={`flex-1 bg-gray-200 dark:bg-gray-700 rounded-full ${getHeightClass(size)}`}>
+    <div className={cn('flex items-center space-x-2')}>
+      <div className={cn('flex-1 bg-gray-200 dark:bg-gray-700 rounded-full', getHeightClass(size))}>
         <div
-          className={`${getColorClass(progress)} ${getHeightClass(size)} rounded-full transition-all duration-300`}
+          className={cn(baseProgressClass, getColorClass(progress), getHeightClass(size))}
           style={{ width: `${progress}%` }}
         />
       </div>
       {showPercent && (
-        <span className={`${getTextSizeClass(size)} text-gray-600 dark:text-gray-400 min-w-[2rem]`}>
+        <span className={cn(getTextSizeClass(size), 'text-gray-600 dark:text-gray-400 min-w-[2rem]')}>
           {progress}%
         </span>
       )}
@@ -165,10 +178,14 @@ export const ProjectHealthIndicator = ({
     return '🔴';
   };
 
+  const baseHealthClass = longClassName([
+    'flex items-center space-x-1'
+  ]);
+
   return (
-    <div className={`flex items-center space-x-1 ${getHealthColor(healthScore)}`}>
-      <span className='text-sm'>{getHealthIcon(healthScore)}</span>
-      <span className='text-xs font-medium'>{healthScore}</span>
+    <div className={cn(baseHealthClass, getHealthColor(healthScore))}>
+      <span className={cn('text-sm')}>{getHealthIcon(healthScore)}</span>
+      <span className={cn('text-xs font-medium')}>{healthScore}</span>
     </div>
   );
 };
