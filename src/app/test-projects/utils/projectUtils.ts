@@ -11,7 +11,7 @@
 
 import type { 
   Project, 
-  Workpackage, 
+  WorkPackage, 
   ProjectRisk, 
   ProjectMilestone,
   ProjectRiskLevel,
@@ -34,8 +34,8 @@ function calculateProjectProgress(project: Project): number {
   let totalActual = 0;
 
   for (const wp of project.workpackages) {
-    if (!wp.subWorkpackages || wp.subWorkpackages.length === 0) continue;
-    for (const sub of wp.subWorkpackages) {
+    if (!wp.subPackages || wp.subPackages.length === 0) continue;
+    for (const sub of wp.subPackages) {
       const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
       if (estimated > 0) {
         const actual = typeof sub.actualQuantity === 'number' ? sub.actualQuantity : 0;
@@ -169,7 +169,7 @@ export function calculateProjectQualityScore(project: Project): number {
 /**
  * 計算工作包品質評分
  */
-export function calculateWorkpackageQualityScore(wp: Workpackage): number {
+export function calculateWorkpackageQualityScore(wp: WorkPackage): number {
   if (!wp.qualityMetrics) return 0;
 
   const { inspectionPassRate, defectRate, reworkPercentage } = wp.qualityMetrics;
@@ -407,7 +407,11 @@ export function calculateProjectPriorityScore(project: Project): number {
     high: 10,
     critical: 15,
   };
-  score += riskScores[project.riskLevel || 'low'];
+  // 修正：確保 riskLevel 是 ProjectRiskLevel
+  const riskLevel = (['low', 'medium', 'high', 'critical'] as const).includes(project.riskLevel as ProjectRiskLevel)
+    ? project.riskLevel as ProjectRiskLevel
+    : 'low';
+  score += riskScores[riskLevel];
 
   // 進度影響 (進度低的專案優先級更高)
   const progress = project.progress || 0;
