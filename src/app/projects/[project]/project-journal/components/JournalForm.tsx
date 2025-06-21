@@ -30,6 +30,15 @@ import {
 } from '@/types/project';
 import { toTimestamp } from '@/utils/dateUtils';
 import { calculateProjectProgress } from '@/utils/progressUtils';
+import {
+  createError,
+  getErrorMessage,
+  logError,
+  safeAsync,
+  retry,
+  ErrorCode,
+  ErrorSeverity,
+} from '@/utils/errorUtils';
 
 import { WeatherData } from './WeatherDisplay';
 
@@ -142,7 +151,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
     const weather = weatherData?.weather || '';
     const temperature = weatherData?.temperature || 0;
 
-    try {
+    await safeAsync(async () => {
       const now = new Date();
       const nowTimestamp = toTimestamp(now);
       const reportId = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
@@ -227,7 +236,7 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
         updatePayload.issues = arrayUnion(issueRecord);
       }
 
-      await updateDoc(projectRef, updatePayload);
+      await retry(() => updateDoc(projectRef, updatePayload), 3, 1000);
 
       // Reset form
       setNewReport({ workforceCount: 0, description: '', issues: '' });
@@ -236,12 +245,12 @@ export default function JournalForm({ projectId, projectData, weatherData }: Jou
       setPhotoTypes([]);
       setProgressInputs([{ workpackageId: '', subWorkpackageId: '', actualQuantity: 0 }]);
       alert('工作日誌已成功提交！');
-    } catch (_error) {
-      alert(`保存工作日誌時出錯：${_error instanceof Error ? _error.message : String(_error)}`);
-    } finally {
-      setSaving(false);
-      setUploadProgress(0);
-    }
+    }, (error) => {
+      alert(`保存工作日誌時出錯：${getErrorMessage(error)}`);
+      logError(error, { operation: 'submit_journal', projectId });
+    });
+    setSaving(false);
+    setUploadProgress(0);
   };
 
   return (

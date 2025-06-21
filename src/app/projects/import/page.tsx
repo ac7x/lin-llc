@@ -19,6 +19,15 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { db } from '@/lib/firebase-client';
 import { ContractItem } from '@/types/finance';
 import { Workpackage } from '@/types/project';
+import {
+  createError,
+  getErrorMessage,
+  logError,
+  safeAsync,
+  retry,
+  ErrorCode,
+  ErrorSeverity,
+} from '@/utils/errorUtils';
 
 
 // 定義合約列型別
@@ -105,7 +114,7 @@ export default function ImportProjectPage() {
   const handleImport = async (row: ContractRow) => {
     setImportingId(row.id);
     setMessage('');
-    try {
+    await safeAsync(async () => {
       // 取得合約項目並轉換為工作包
       const contractItems = (row.raw.contractItems as ContractItem[]) || [];
       const workpackages = convertContractItemsToWorkpackages(contractItems);
@@ -132,13 +141,13 @@ export default function ImportProjectPage() {
         decomposition, // 專案分解資料
         workpackages, // 將合約項目轉換後的工作包列表
       };
-      await addDoc(collection(db, 'projects'), projectData);
+      await retry(() => addDoc(collection(db, 'projects'), projectData), 3, 1000);
       setMessage(`已成功由合約建立專案，合約ID: ${row.id}`);
-    } catch (_error) {
-      setMessage(`建立失敗: ${_err instanceof Error ? _err.message : String(_error)}`);
-    } finally {
-      setImportingId(null);
-    }
+    }, (error) => {
+      setMessage(`建立失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'import_project', contractId: row.id });
+    });
+    setImportingId(null);
   };
 
   return (

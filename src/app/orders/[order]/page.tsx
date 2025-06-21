@@ -17,6 +17,15 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 
 import { db, doc, updateDoc, Timestamp } from '@/lib/firebase-client';
 import { OrderItem } from '@/types/finance';
+import {
+  createError,
+  getErrorMessage,
+  logError,
+  safeAsync,
+  retry,
+  ErrorCode,
+  ErrorSeverity,
+} from '@/utils/errorUtils';
 
 export default function OrderDetailPage() {
   const router = useRouter();
@@ -96,8 +105,8 @@ export default function OrderDetailPage() {
   // 儲存編輯
   const handleSaveEdit = async (e: FormEvent) => {
     e.preventDefault();
-    try {
-      await updateDoc(doc(db, 'finance', 'default', 'orders', orderId), {
+    await safeAsync(async () => {
+      await retry(() => updateDoc(doc(db, 'finance', 'default', 'orders', orderId), {
         orderName: editOrderName,
         orderPrice: editOrderPrice,
         orderItems: editOrderItems.map((item, idx) => ({
@@ -109,7 +118,7 @@ export default function OrderDetailPage() {
         clientPhone: editClientPhone,
         clientEmail: editClientEmail,
         updatedAt: Timestamp.now(),
-      });
+      }), 3, 1000);
       setOrderName(editOrderName);
       setOrderPrice(editOrderPrice);
       setOrderItems(editOrderItems);
@@ -118,9 +127,10 @@ export default function OrderDetailPage() {
       setClientPhone(editClientPhone);
       setClientEmail(editClientEmail);
       setEditing(false);
-    } catch (_error) {
-      alert(`儲存失敗: ${_err instanceof Error ? _err.message : String(_error)}`);
-    }
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'save_order_edit', orderId });
+    });
   };
 
   return (

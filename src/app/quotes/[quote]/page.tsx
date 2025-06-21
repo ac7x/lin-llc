@@ -18,6 +18,15 @@ import { useDocument } from 'react-firebase-hooks/firestore';
 
 import { db } from '@/lib/firebase-client';
 import { QuoteItem } from '@/types/finance';
+import {
+  createError,
+  getErrorMessage,
+  logError,
+  safeAsync,
+  retry,
+  ErrorCode,
+  ErrorSeverity,
+} from '@/utils/errorUtils';
 
 export default function QuoteDetailPage() {
   const router = useRouter();
@@ -106,8 +115,8 @@ export default function QuoteDetailPage() {
   // 儲存編輯
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await updateDoc(doc(db, 'finance', 'default', 'quotes', quoteId), {
+    await safeAsync(async () => {
+      await retry(() => updateDoc(doc(db, 'finance', 'default', 'quotes', quoteId), {
         quoteName: editQuoteName,
         quotePrice: editQuotePrice,
         quoteItems: editQuoteItems.map((item, idx) => ({
@@ -119,7 +128,7 @@ export default function QuoteDetailPage() {
         clientPhone: editClientPhone,
         clientEmail: editClientEmail,
         updatedAt: Timestamp.now(),
-      });
+      }), 3, 1000);
       setQuoteName(editQuoteName);
       setQuotePrice(editQuotePrice);
       setQuoteItems(editQuoteItems);
@@ -128,9 +137,10 @@ export default function QuoteDetailPage() {
       setClientPhone(editClientPhone);
       setClientEmail(editClientEmail);
       setEditing(false);
-    } catch (_error) {
-      alert(`儲存失敗: ${_err instanceof Error ? _err.message : String(_error)}`);
-    }
+    }, (error) => {
+      setError(getErrorMessage(error));
+      logError(error, { operation: 'save_quote_edit', quoteId });
+    });
   };
 
   return (

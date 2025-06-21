@@ -23,6 +23,15 @@ import { BaseWithDates } from '@/types/common';
 import { ExpenseData, ExpenseItem } from '@/types/finance';
 import { Workpackage } from '@/types/project';
 import { formatLocalDate, formatDateForInput } from '@/utils/dateUtils';
+import {
+  createError,
+  getErrorMessage,
+  logError,
+  safeAsync,
+  retry,
+  ErrorCode,
+  ErrorSeverity,
+} from '@/utils/errorUtils';
 
 export default function ProjectExpensesPage() {
   const params = useParams();
@@ -148,29 +157,31 @@ export default function ProjectExpensesPage() {
       return;
     }
 
-    if (!newExpense.items || newExpense.items.length === 0) {
+    if (!Array.isArray(newExpense.items) || newExpense.items.length === 0) {
       setMessage('請至少新增一個支出項目');
       return;
     }
 
     setSaving(true);
-    try {
+    await safeAsync(async () => {
       const now = Timestamp.now();
       const projectData = projectDoc.data();
 
       // 確保所有項目都有正確的 workpackageId 和時間戳
-      const validatedItems = newExpense.items.map(item => ({
-        ...item,
-        createdAt: item.createdAt || now,
-        updatedAt: now,
-        // 確保其他必要欄位都有值
-        expenseItemId: item.expenseItemId,
-        description: item.description || '',
-        quantity: item.quantity || 0,
-        unitPrice: item.unitPrice || 0,
-        amount: item.amount || 0,
-        workpackageId: item.workpackageId || '',
-      }));
+      const validatedItems = Array.isArray(newExpense.items)
+        ? newExpense.items.map(item => ({
+            ...item,
+            createdAt: item.createdAt || now,
+            updatedAt: now,
+            // 確保其他必要欄位都有值
+            expenseItemId: item.expenseItemId,
+            description: item.description || '',
+            quantity: item.quantity || 0,
+            unitPrice: item.unitPrice || 0,
+            amount: item.amount || 0,
+            workpackageId: item.workpackageId || '',
+          }))
+        : [];
 
       const expenseData: ExpenseData = {
         expenseId: editingExpense?.expenseId || nanoid(8),
@@ -209,33 +220,34 @@ export default function ProjectExpensesPage() {
       setExpenses(updatedExpenses);
 
       // 更新 Firestore
-      await updateDoc(doc(db, 'projects', projectId), {
+      await retry(() => updateDoc(doc(db, 'projects', projectId), {
         expenses: updatedExpenses,
-      });
+      }), 3, 1000);
 
       // 先關閉模態視窗
       setShowModal(false);
       // 然後重置表單
       resetForm();
-    } catch (_error) {
-      setMessage(`儲存失敗: ${_error instanceof Error ? _error.message : String(_error)}`);
-    } finally {
-      setSaving(false);
-    }
+    }, (error) => {
+      setMessage(`儲存失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'save_project_expense', projectId });
+    });
+    setSaving(false);
   };
 
   const handleDeleteExpense = async (expenseId: string) => {
     if (!confirm('確定要刪除此費用？') || !projectDoc?.data() || !projectId) return;
-    try {
+    await safeAsync(async () => {
       const updatedExpenses = expenses.filter((exp: ExpenseData) => exp.expenseId !== expenseId);
       setExpenses(updatedExpenses);
-      await updateDoc(doc(db, 'projects', projectId), {
+      await retry(() => updateDoc(doc(db, 'projects', projectId), {
         expenses: updatedExpenses,
-      });
+      }), 3, 1000);
       setMessage('已刪除費用');
-    } catch (_error) {
-      setMessage(`刪除失敗: ${_error instanceof Error ? _error.message : String(_error)}`);
-    }
+    }, (error) => {
+      setMessage(`刪除失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'delete_project_expense', projectId, expenseId });
+    });
   };
 
   const handleEditExpense = (expense: ExpenseData) => {

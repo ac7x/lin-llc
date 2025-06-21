@@ -18,6 +18,15 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 
 import { db, collection, setDoc, doc, getDocs, Timestamp } from '@/lib/firebase-client';
 import { OrderData, QuoteData, OrderItem, QuoteItem } from '@/types/finance';
+import {
+  createError,
+  getErrorMessage,
+  logError,
+  safeAsync,
+  retry,
+  ErrorCode,
+  ErrorSeverity,
+} from '@/utils/errorUtils';
 
 // Tab 類型
 type SourceTab = 'order' | 'quote';
@@ -109,7 +118,7 @@ export default function ImportContractPage() {
   const handleImportContract = async (row: RowBase) => {
     setImportingId(row.id);
     setMessage('');
-    try {
+    await safeAsync(async () => {
       let contractData: Record<string, unknown> = {};
       // 生成 contractId
       const newContractId = nanoid(8);
@@ -161,15 +170,14 @@ export default function ImportContractPage() {
       }
 
       // 使用 setDoc 代替 addDoc，並指定文件 ID 與 contractId 一致
-      // 這樣文件路徑就會是 /finance/default/contracts/newContractId
-      await setDoc(doc(db, 'finance', 'default', 'contracts', newContractId), contractData);
+      await retry(() => setDoc(doc(db, 'finance', 'default', 'contracts', newContractId), contractData), 3, 1000);
 
       setMessage(`已成功由${tab === 'order' ? '訂單' : '估價單'}建立合約，來源ID: ${row.id}`);
-    } catch (_error) {
-      setMessage(`建立失敗: ${_err instanceof Error ? _err.message : String(_error)}`);
-    } finally {
-      setImportingId(null);
-    }
+    }, (error) => {
+      setMessage(`建立失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'import_contract', sourceType: tab, sourceId: row.id });
+    });
+    setImportingId(null);
   };
 
   // Tab UI

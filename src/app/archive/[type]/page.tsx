@@ -28,6 +28,15 @@ import type {
   FirestoreArchiveData,
   BaseArchiveData,
 } from '@/types/archive';
+import {
+  createError,
+  getErrorMessage,
+  logError,
+  safeAsync,
+  retry,
+  ErrorCode,
+  ErrorSeverity,
+} from '@/utils/errorUtils';
 
 // 定義還原路徑
 const RESTORE_PATHS: Record<ArchiveType, string[]> = {
@@ -110,12 +119,29 @@ const getTypedData = (data: FirestoreArchiveData, type: ArchiveType): ArchiveDat
         typeof specificData.contractName !== 'string' ||
         typeof specificData.contractPrice !== 'number'
       ) {
-        throw new Error('Invalid contract data structure');
+        throw createError(
+          ErrorCode.DATA_INVALID,
+          '合約資料結構無效',
+          ErrorSeverity.MEDIUM,
+          { 
+            contractName: typeof specificData.contractName,
+            contractPrice: typeof specificData.contractPrice,
+            dataId: id 
+          }
+        );
       }
       return { ...specificData, ...baseData } as ArchivedContract;
     case 'orders':
       if (typeof specificData.orderName !== 'string') {
-        throw new Error('Invalid order data structure');
+        throw createError(
+          ErrorCode.DATA_INVALID,
+          '訂單資料結構無效',
+          ErrorSeverity.MEDIUM,
+          { 
+            orderName: typeof specificData.orderName,
+            dataId: id 
+          }
+        );
       }
       return { ...specificData, ...baseData } as ArchivedOrder;
     case 'quotes':
@@ -123,7 +149,16 @@ const getTypedData = (data: FirestoreArchiveData, type: ArchiveType): ArchiveDat
         typeof specificData.quoteName !== 'string' ||
         typeof specificData.quotePrice !== 'number'
       ) {
-        throw new Error('Invalid quote data structure');
+        throw createError(
+          ErrorCode.DATA_INVALID,
+          '估價單資料結構無效',
+          ErrorSeverity.MEDIUM,
+          { 
+            quoteName: typeof specificData.quoteName,
+            quotePrice: typeof specificData.quotePrice,
+            dataId: id 
+          }
+        );
       }
       return { ...specificData, ...baseData } as ArchivedQuote;
     case 'projects':
@@ -131,12 +166,26 @@ const getTypedData = (data: FirestoreArchiveData, type: ArchiveType): ArchiveDat
         typeof specificData.projectName !== 'string' ||
         typeof specificData.contractId !== 'string'
       ) {
-        throw new Error('Invalid project data structure');
+        throw createError(
+          ErrorCode.DATA_INVALID,
+          '專案資料結構無效',
+          ErrorSeverity.MEDIUM,
+          { 
+            projectName: typeof specificData.projectName,
+            contractId: typeof specificData.contractId,
+            dataId: id 
+          }
+        );
       }
       return { ...specificData, ...baseData } as ArchivedProject;
     default:
       const exhaustiveCheck: never = type;
-      throw new Error(`Unknown archive type: ${exhaustiveCheck}`);
+      throw createError(
+        ErrorCode.INVALID_OPERATION,
+        `未知的封存類型: ${exhaustiveCheck}`,
+        ErrorSeverity.HIGH,
+        { archiveType: type }
+      );
   }
 };
 
@@ -173,15 +222,57 @@ export default function ArchivePage() {
   // 獲取封存保留天數
   useEffect(() => {
     const fetchRetentionDays = async () => {
-      const docRef = doc(db, 'settings', 'archive');
-      const snapshot = await getDoc(docRef);
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        setArchiveRetentionDays(typeof data.retentionDays === 'number' ? data.retentionDays : 3650);
+      const result = await safeAsync(
+        async () => {
+          const docRef = doc(db, 'settings', 'archive');
+          const snapshot = await retry(
+            async () => {
+              const doc = await getDoc(docRef);
+              if (!doc.exists()) {
+                throw createError(
+                  ErrorCode.DATA_NOT_FOUND,
+                  '封存設定不存在',
+                  ErrorSeverity.LOW,
+                  { settingsPath: 'settings/archive' }
+                );
+              }
+              return doc;
+            },
+            3,
+            1000
+          );
+          
+          const data = snapshot.data();
+          const retentionDays = typeof data.retentionDays === 'number' ? data.retentionDays : 3650;
+          
+          if (retentionDays < 0) {
+            throw createError(
+              ErrorCode.DATA_INVALID,
+              '封存保留天數不能為負數',
+              ErrorSeverity.MEDIUM,
+              { retentionDays }
+            );
+          }
+          
+          return retentionDays;
+        },
+        (error) => {
+          logError(error, {
+            operation: 'fetch_retention_days',
+            archiveType: type,
+          });
+          // 使用預設值
+          setArchiveRetentionDays(3650);
+        }
+      );
+      
+      if (result !== null) {
+        setArchiveRetentionDays(result);
       }
     };
+    
     fetchRetentionDays();
-  }, []); // 僅在 mount 時執行
+  }, [type]); // 添加 type 依賴
 
   // 獲取封存資料
   const [dataSnapshot, dataLoading, dataError] = useCollection(
@@ -203,7 +294,12 @@ export default function ArchivePage() {
       const archiveSnapshot = await getDoc(archiveDocRef);
 
       if (!archiveSnapshot.exists()) {
-        throw new Error('封存資料不存在');
+        throw createError(
+          ErrorCode.DATA_NOT_FOUND,
+          '封存資料不存在',
+          ErrorSeverity.MEDIUM,
+          { archiveId: row.id, archiveType: type }
+        );
       }
 
       const archiveData = archiveSnapshot.data();
@@ -211,7 +307,12 @@ export default function ArchivePage() {
       // 根據類型還原到對應的集合
       const restorePath = RESTORE_PATHS[type];
       if (!restorePath) {
-        throw new Error(`不支援的還原類型: ${type}`);
+        throw createError(
+          ErrorCode.INVALID_OPERATION,
+          `不支援的還原類型: ${type}`,
+          ErrorSeverity.HIGH,
+          { archiveType: type }
+        );
       }
 
       await setDoc(doc(db, restorePath.join('/'), row.id), {
@@ -229,8 +330,14 @@ export default function ArchivePage() {
       setTimeout(() => {
         setRestoreMessage('');
       }, 3000);
-    } catch (_error) {
-      setRestoreMessage(`還原失敗: ${_err instanceof Error ? _err.message : String(_error)}`);
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      setRestoreMessage(`還原失敗: ${errorMessage}`);
+      logError(error, {
+        operation: 'restore_archive',
+        archiveId: row.id,
+        archiveType: type,
+      });
     } finally {
       setRestoringId(null);
     }
@@ -244,7 +351,13 @@ export default function ArchivePage() {
         try {
           const data = { ...doc.data(), id: doc.id, idx: idx + 1 } as FirestoreArchiveData;
           return getTypedData(data, type);
-        } catch (_error) {
+        } catch (error) {
+          logError(error, {
+            operation: 'process_archive_data',
+            docId: doc.id,
+            archiveType: type,
+            index: idx,
+          });
           return null;
         }
       })
@@ -350,7 +463,7 @@ export default function ArchivePage() {
                     colSpan={ARCHIVE_TABLE_COLUMNS[type].length + 3}
                     className='px-4 py-4 text-center text-red-500 dark:text-red-400'
                   >
-                    {String(dataError)}
+                    {getErrorMessage(dataError)}
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
