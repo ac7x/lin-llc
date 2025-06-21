@@ -102,7 +102,7 @@ export default function MaterialForm({
         notes: formData.notes.trim(),
       });
     } catch (error) {
-      console.error('提交材料表單時發生錯誤:', error);
+      // 錯誤處理已由上層組件處理
     }
   };
 

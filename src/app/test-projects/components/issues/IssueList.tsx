@@ -192,7 +192,7 @@ export default function IssueList({
       try {
         await onDelete(issueId);
       } catch (error) {
-        console.error('刪除問題時發生錯誤:', error);
+        // 錯誤處理已由上層組件處理
       }
     }
   };
@@ -201,7 +201,7 @@ export default function IssueList({
     try {
       await onStatusChange(issueId, newStatus);
     } catch (error) {
-      console.error('更新問題狀態時發生錯誤:', error);
+      // 錯誤處理已由上層組件處理
     }
   };
 

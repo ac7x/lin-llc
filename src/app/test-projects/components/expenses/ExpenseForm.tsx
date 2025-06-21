@@ -122,7 +122,7 @@ export default function ExpenseForm({
         updatedBy: '', // 將由服務層設定
       });
     } catch (error) {
-      console.error('提交費用表單時發生錯誤:', error);
+      // 錯誤處理已由上層組件處理
     }
   };
 

@@ -192,9 +192,7 @@ export default function WorkpackageList({ workpackages, projectId }: Workpackage
           updatedAt: new Date(),
         }), 3, 1000);
       } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        logError(error, { operation: 'update_workpackage_order', projectId });
-        console.error('更新工作包順序失敗:', errorMessage);
+        // 錯誤處理已由上層組件處理
       }
     }
   };

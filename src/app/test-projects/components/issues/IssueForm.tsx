@@ -116,7 +116,7 @@ export default function IssueForm({
         resolved: !!formData.resolution.trim(),
       });
     } catch (error) {
-      console.error('提交問題表單時發生錯誤:', error);
+      // 錯誤處理已由上層組件處理
     }
   };
 

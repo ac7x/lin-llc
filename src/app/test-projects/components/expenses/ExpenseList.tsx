@@ -142,7 +142,7 @@ export default function ExpenseList({
       try {
         await onDelete(expenseId);
       } catch (error) {
-        console.error('刪除費用時發生錯誤:', error);
+        // 錯誤處理已由上層組件處理
       }
     }
   };

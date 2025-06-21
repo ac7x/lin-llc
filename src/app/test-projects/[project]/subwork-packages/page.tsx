@@ -124,6 +124,10 @@ export default function ProjectSubWorkpackagesPage() {
     }
   };
 
+  const handleViewSubWorkpackageDetails = (subWorkpackageId: string) => {
+    // TODO: 實作查看子工作包詳情邏輯
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -176,10 +180,7 @@ export default function ProjectSubWorkpackagesPage() {
               setShowSubWorkpackageForm(true);
             }}
             onDeleteSubWorkpackage={handleDeleteSubWorkpackage}
-            onViewSubWorkpackageDetails={(subWorkpackageId) => {
-              // 處理查看詳情
-              console.log('查看子工作包詳情:', subWorkpackageId);
-            }}
+            onViewSubWorkpackageDetails={handleViewSubWorkpackageDetails}
           />
         )}
       </DataLoader>

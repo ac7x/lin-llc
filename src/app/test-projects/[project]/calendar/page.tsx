@@ -18,7 +18,7 @@ import { PageContainer, PageHeader } from '@/modules/test-projects/components/co
 import { ProjectService } from '@/modules/test-projects/services/projectService';
 import { WorkpackageService } from '@/modules/test-projects/services/workpackageService';
 import { projectStyles } from '@/modules/test-projects/styles';
-import type { Project, Workpackage } from '@/modules/test-projects/types/project';
+import type { Project, ProjectMilestone, Workpackage } from '@/modules/test-projects/types/project';
 
 export default function ProjectCalendarPage() {
   const params = useParams();
@@ -117,6 +117,14 @@ export default function ProjectCalendarPage() {
 
     return events;
   });
+
+  const handleMilestoneClick = (milestone: ProjectMilestone) => {
+    // TODO: 實作里程碑點擊處理邏輯
+  };
+
+  const handleWorkpackageClick = (workpackage: Workpackage) => {
+    // TODO: 實作工作包點擊處理邏輯
+  };
 
   if (isLoading) {
     return (
@@ -241,12 +249,8 @@ export default function ProjectCalendarPage() {
             workpackages={workpackages}
             projectId={projectId}
             onDateClick={(date) => setSelectedDate(date)}
-            onMilestoneClick={(milestone) => {
-              console.log('點擊里程碑:', milestone);
-            }}
-            onWorkpackageClick={(workpackage) => {
-              console.log('點擊工作包:', workpackage);
-            }}
+            onMilestoneClick={handleMilestoneClick}
+            onWorkpackageClick={handleWorkpackageClick}
           />
         </div>
 

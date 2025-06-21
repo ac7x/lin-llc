@@ -73,35 +73,15 @@ export default function ProjectJournalPage() {
     setLoading(false);
   };
 
-  // 載入日誌資料（模擬數據）
+  // 載入日誌資料
   const loadJournals = async () => {
     if (!projectId) return;
 
     try {
-      // 暫時使用模擬數據
-      const mockJournals: JournalEntry[] = [
-        {
-          id: '1',
-          title: '專案啟動會議',
-          content: '與客戶進行專案啟動會議，確認專案範圍和時程',
-          date: new Date('2024-01-15'),
-          author: '專案經理',
-          category: 'meeting',
-          priority: 5,
-          tags: ['會議', '啟動']
-        },
-        {
-          id: '2',
-          title: '基礎工程完成',
-          content: '基礎工程已按時程完成，品質符合要求',
-          date: new Date('2024-02-01'),
-          author: '工程師',
-          category: 'progress',
-          priority: 3,
-          tags: ['進度', '基礎工程']
-        }
-      ];
-      setJournals(mockJournals);
+      // TODO: 實作從日誌服務獲取資料
+      // const journalsData = await JournalService.getDailyReportsByProject(projectId);
+      // setJournals(journalsData);
+      setJournals([]);
     } catch (err) {
       logError(err as Error, { operation: 'fetch_journals', projectId });
     }

@@ -168,10 +168,12 @@ export default function ProjectWorkpackagesPage() {
         data={workpackages}
       >
         {(data) => (
-          <WorkpackageList
-            workpackages={data}
-            projectId={projectId}
-          />
+          projectId && (
+            <WorkpackageList
+              workpackages={data}
+              projectId={projectId}
+            />
+          )
         )}
       </DataLoader>
 

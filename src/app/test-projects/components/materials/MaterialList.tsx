@@ -109,7 +109,7 @@ export default function MaterialList({
       try {
         await onDelete(materialId);
       } catch (error) {
-        console.error('刪除材料時發生錯誤:', error);
+        // 錯誤處理已由上層組件處理
       }
     }
   };

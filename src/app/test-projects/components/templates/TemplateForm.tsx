@@ -43,6 +43,7 @@ export default function TemplateForm({
 
   const [subWorkpackages, setSubWorkpackages] = useState<SubWorkpackageItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 初始化表單資料
   useEffect(() => {
@@ -110,7 +111,9 @@ export default function TemplateForm({
 
       await onSubmit(templateData);
     } catch (error) {
-      console.error('提交模板失敗:', error);
+      // 錯誤處理已由上層組件處理
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

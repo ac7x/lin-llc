@@ -34,7 +34,7 @@ export default function TemplatesPage() {
         const templatesData = await TemplateService.getAllTemplates();
         setTemplates(templatesData);
       } catch (error) {
-        console.error('載入模板失敗:', error);
+        // 錯誤處理已由 DataLoader 組件處理
       } finally {
         setIsLoading(false);
       }
@@ -63,14 +63,15 @@ export default function TemplatesPage() {
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
-    if (confirm('確定要刪除此模板嗎？此操作無法復原。')) {
-      try {
-        await TemplateService.deleteTemplate(templateId);
-        setTemplates(templates.filter(t => t.id !== templateId));
-      } catch (error) {
-        console.error('刪除模板失敗:', error);
-        alert('刪除模板失敗');
-      }
+    if (!confirm('確定要刪除此模板嗎？此操作無法復原。')) {
+      return;
+    }
+
+    try {
+      await TemplateService.deleteTemplate(templateId);
+      setTemplates(prev => prev.filter(template => template.id !== templateId));
+    } catch (error) {
+      // 錯誤處理已由 DataLoader 組件處理
     }
   };
 
