@@ -1,486 +1,154 @@
+│  index.ts
+│
+├─components
+│  │  index.ts
+│  │
+│  ├─calendar
+│  │      CalendarView.tsx
+│  │      index.ts
+│  │
+│  ├─common
+│  │      AddressSelector.tsx
+│  │      DataLoader.tsx
+│  │      index.ts
+│  │      LoadingSpinner.tsx
+│  │      PageContainer.tsx
+│  │      PageHeader.tsx
+│  │      WeatherDisplay.tsx
+│  │
+│  ├─dashboard
+│  │      index.ts
+│  │      ProjectDashboard.tsx
+│  │      ProjectsTable.tsx
+│  │      ProjectStats.tsx
+│  │
+│  ├─expenses
+│  │      ExpenseForm.tsx
+│  │      ExpenseList.tsx
+│  │      index.ts
+│  │
+│  ├─generate-from-contract
+│  │      ContractSelector.tsx
+│  │      index.ts
+│  │      ProjectSetupForm.tsx
+│  │      TemplateSelector.tsx
+│  │
+│  ├─issues
+│  │      index.ts
+│  │      IssueForm.tsx
+│  │      IssueList.tsx
+│  │
+│  ├─journal
+│  │      index.ts
+│  │      JournalCard.tsx
+│  │      JournalForm.tsx
+│  │      JournalHistory.tsx
+│  │
+│  ├─management
+│  │      ChangeManager.tsx
+│  │      index.ts
+│  │      IssueTracker.tsx
+│  │      MilestoneTracker.tsx
+│  │      RiskManager.tsx
+│  │
+│  ├─materials
+│  │      index.ts
+│  │      MaterialForm.tsx
+│  │      MaterialList.tsx
+│  │
+│  ├─project
+│  │      index.ts
+│  │      ProjectEditModal.tsx
+│  │      ProjectInfoDisplay.tsx
+│  │      ProjectInfoPage.tsx
+│  │
+│  ├─subwork-packages
+│  │      index.ts
+│  │      SubWorkpackageCard.tsx
+│  │      SubWorkpackageForm.tsx
+│  │      SubWorkpackageList.tsx
+│  │
+│  ├─templates
+│  │      index.ts
+│  │      TemplateCard.tsx
+│  │      TemplateForm.tsx
+│  │
+│  └─work-packages
+│          index.ts
+│          WorkpackageCard.tsx
+│          WorkpackageForm.tsx
+│          WorkpackageList.tsx
+│
+├─constants
+│      index.ts
+│      projectConstants.ts
+│      statusConstants.ts
+│      validationRules.ts
+│
+├─hooks
+│      index.ts
+│      useFilteredProjects.ts
+│      useProjectActions.ts
+│      useProjectErrorHandler.ts
+│      useProjectForm.ts
+│      useProjectState.ts
+│
+├─pages
+│  ├─generate-from-contract
+│  │      page.tsx
+│  │
+│  ├─list
+│  │      page.tsx
+│  │
+│  ├─templates
+│  │      page.tsx
+│  │
+│  └─[project]
+│      │  page.tsx
+│      │
+│      ├─calendar
+│      │      page.tsx
+│      │
+│      ├─expenses
+│      │      page.tsx
+│      │
+│      ├─issues
+│      │      page.tsx
+│      │
+│      ├─journal
+│      │      page.tsx
+│      │
+│      ├─materials
+│      │      page.tsx
+│      │
+│      ├─subwork-packages
+│      │      page.tsx
+│      │
+│      └─work-packages
+│              page.tsx
+│
+├─services
+│      index.ts
+│      issueService.ts
+│      journalService.ts
+│      projectService.ts
+│      subworkpackageService.ts
+│      templateService.ts
+│      workpackageService.ts
+│
+├─styles
+│      index.ts
+│
+├─types
+│      project.d.ts
+│
+└─utils
+        dateUtils.ts
+        index.ts
+        progressUtils.tsx
+        projectUtils.ts
+        qualityUtils.ts
+        riskUtils.ts
 
 
-src\types\common.d.ts
-src\utils\dateUtils.ts
-
-src\app\projects
-src\app\projects\[project]
-src\app\projects\[project]\components
-src\app\projects\[project]\components\ProjectEditModal.tsx
-src\app\projects\[project]\components\ProjectInfoDisplay.tsx
-src\app\projects\[project]\components\ProjectInfoPage.tsx
-src\app\projects\[project]\components\WorkpackageList.tsx
-src\app\projects\[project]\project-calendar
-src\app\projects\[project]\project-calendar\page.tsx
-src\app\projects\[project]\project-expenses
-src\app\projects\[project]\project-expenses\page.tsx
-src\app\projects\[project]\project-issues
-src\app\projects\[project]\project-issues\page.tsx
-src\app\projects\[project]\project-journal
-src\app\projects\[project]\project-journal\components
-src\app\projects\[project]\project-journal\components\JournalForm.tsx
-src\app\projects\[project]\project-journal\components\JournalHistory.tsx
-src\app\projects\[project]\project-journal\page.tsx
-src\app\projects\[project]\project-materials
-src\app\projects\[project]\project-materials\page.tsx
-src\app\projects\[project]\workpackages
-src\app\projects\[project]\workpackages\[workpackage]
-src\app\projects\[project]\workpackages\[workpackage]\page.tsx
-src\app\projects\[project]\workpackages\subworkpackages
-src\app\projects\[project]\workpackages\subworkpackages\page.tsx
-src\app\projects\[project]\page.tsx
-src\app\projects\components
-src\app\projects\components\AddressSelector.tsx
-src\app\projects\components\ProjectDashboard.tsx
-src\app\projects\components\ProjectsTable.tsx
-src\app\projects\components\WeatherDisplay.tsx
-src\app\projects\hooks
-src\app\projects\hooks\useFilteredProjects.ts
-src\app\projects\import
-src\app\projects\import\page.tsx
-src\app\projects\templates
-src\app\projects\templates\page.tsx
-src\app\projects\types
-src\app\projects\types\project.d.ts
-src\app\projects\utils
-src\app\projects\utils\progressUtils.tsx
-src\app\projects\utils\projectUtils.ts
-src\app\projects\layout.tsx
-src\app\projects\page.tsx
-
-
-
-
-@ProjectEditModal.tsx @ProjectInfoDisplay.tsx @ProjectInfoPage.tsx @WorkpackageList.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @AddressSelector.tsx @ProjectDashboard.tsx @ProjectsTable.tsx @WeatherDisplay.tsx @useFilteredProjects.ts @page.tsx @page.tsx @project.d.ts @progressUtils.tsx @projectUtils.ts @layout.tsx @/projects @page.tsx @/[project] @/components @/project-calendar @/project-expenses @/project-issues @/project-journal @/components @/project-materials @/workpackages @/[workpackage] @/subworkpackages @/components @/hooks @/import @/templates @/types @/utils 
-
-
-src/modules/projects/
-├── index.ts                           # 模組主要匯出點
-├── types/
-│   └── project.d.ts                   # 專案型別定義
-├── components/
-│   ├── common/                        # 通用組件
-│   │   ├── PageHeader.tsx
-│   │   ├── PageContainer.tsx
-│   │   ├── LoadingSpinner.tsx
-│   │   ├── AddressSelector.tsx
-│   │   └── DataLoader.tsx
-│   ├── dashboard/                     # 儀表板組件
-│   │   ├── ProjectDashboard.tsx
-│   │   ├── ProjectsTable.tsx
-│   │   ├── ProjectStats.tsx
-│   │   └── ProjectWeatherDisplay.tsx
-│   ├── project/                       # 專案相關組件
-│   │   ├── ProjectEditModal.tsx
-│   │   ├── ProjectInfoDisplay.tsx
-│   │   ├── ProjectInfoPage.tsx
-│   │   └── ProjectForm.tsx
-│   ├── workpackage/                   # 工作包組件
-│   │   ├── WorkpackageList.tsx
-│   │   ├── WorkpackageCard.tsx
-│   │   ├── SubWorkpackageList.tsx
-│   │   └── WorkpackageForm.tsx
-│   ├── journal/                       # 日誌組件
-│   │   ├── JournalForm.tsx
-│   │   ├── JournalHistory.tsx
-│   │   └── JournalCard.tsx
-│   └── management/                    # 管理組件
-│       ├── IssueTracker.tsx
-│       ├── RiskManager.tsx
-│       ├── MilestoneTracker.tsx
-│       └── ChangeManager.tsx
-├── hooks/                             # 自定義 Hooks
-│   ├── useProjectActions.ts
-│   ├── useProjectState.ts
-│   ├── useProjectForm.ts
-│   ├── useProjectErrorHandler.ts
-│   ├── useFilteredProjects.ts
-│   ├── useProjectStats.ts
-│   └── useQualityScore.ts
-├── services/                          # 服務層
-│   ├── projectService.ts
-│   ├── workpackageService.ts
-│   ├── journalService.ts
-│   ├── issueService.ts
-│   └── templateService.ts
-├── utils/                             # 工具函數
-│   ├── progressUtils.tsx
-│   ├── projectUtils.ts
-│   ├── qualityUtils.ts
-│   ├── riskUtils.ts
-│   └── dateUtils.ts
-├── styles/                            # 樣式定義
-│   └── index.ts
-└── constants/                         # 常數定義
-    ├── projectConstants.ts
-    ├── statusConstants.ts
-    └── validationRules.ts
-
-
-src/modules/projects/
-├── index.ts                              # 模組主要匯出點
-├── types/
-│   └── projectTypes.ts                   # 專案型別定義
-├── components/
-│   ├── common/
-│   │   ├── PageHeader.tsx
-│   │   ├── PageContainer.tsx
-│   │   ├── LoadingSpinner.tsx
-│   │   ├── AddressSelector.tsx
-│   │   └── DataLoader.tsx
-│   ├── dashboard/
-│   │   ├── ProjectDashboard.tsx
-│   │   ├── ProjectTable.tsx
-│   │   ├── ProjectStatistics.tsx
-│   │   └── ProjectWeatherDisplay.tsx
-│   ├── project/
-│   │   ├── ProjectEditModal.tsx
-│   │   ├── ProjectInfoDisplay.tsx
-│   │   ├── ProjectInfoPage.tsx
-│   │   └── ProjectForm.tsx
-│   ├── work-packages/
-│   │   ├── WorkPackageList.tsx
-│   │   ├── WorkPackageCard.tsx
-│   │   ├── WorkPackageSubList.tsx
-│   │   └── WorkPackageForm.tsx
-│   ├── journals/
-│   │   ├── JournalForm.tsx
-│   │   ├── JournalHistory.tsx
-│   │   └── JournalCard.tsx
-│   └── management/
-│       ├── IssueTracker.tsx
-│       ├── RiskManager.tsx
-│       ├── MilestoneTracker.tsx
-│       └── ChangeManager.tsx
-├── hooks/
-│   ├── useProjectActions.ts
-│   ├── useProjectState.ts
-│   ├── useProjectForm.ts
-│   ├── useProjectErrorHandler.ts
-│   ├── useFilteredProjects.ts
-│   ├── useProjectStatistics.ts
-│   └── useQualityScore.ts
-├── services/
-│   ├── projectService.ts
-│   ├── workPackageService.ts
-│   ├── journalService.ts
-│   ├── issueService.ts
-│   └── templateService.ts
-├── utils/
-│   ├── progressUtils.ts
-│   ├── projectUtils.ts
-│   ├── qualityUtils.ts
-│   ├── riskUtils.ts
-│   └── dateUtils.ts
-├── styles/
-│   └── index.ts
-└── constants/
-    ├── projectConstants.ts
-    ├── statusConstants.ts
-    └── validationRules.ts
-
-
-/**
- * 專案管理模組
- * 
- * 提供完整的專案管理功能，包括：
- * - 專案 CRUD 操作
- * - 工作包管理
- * - 專案儀表板
- * - 統計分析
- * - 錯誤處理
- */
-
-export * from './components/common';
-export * from './components/dashboard';
-export * from './components/project';
-export * from './components/journal';
-export * from './components/workpackage';
-
-export * from './hooks';
-export * from './types';
-export * from './utils';
-export * from './services';
-export * from './constants';
-
-// 重新導出頁面組件
-export { default as ProjectsListPage } from './pages/list/page';
-export { default as ProjectDetailPage } from './pages/[project]/page';
-export { default as ProjectCalendarPage } from './pages/[project]/calendar/page';
-export { default as ProjectExpensesPage } from './pages/[project]/expenses/page';
-export { default as ProjectIssuesPage } from './pages/[project]/issues/page';
-export { default as ProjectJournalPage } from './pages/[project]/journal/page';
-export { default as ProjectMaterialsPage } from './pages/[project]/materials/page';
-export { default as WorkpackageDetailPage } from './pages/[project]/workpackages/[workpackage]/page';
-export { default as SubWorkpackagesPage } from './pages/[project]/workpackages/subworkpackages/page';
-
-// 錯誤處理
-export { useProjectErrorHandler } from './hooks/useProjectErrorHandler';
-
-// 狀態管理
-export { useProjectState } from './hooks/useProjectState';
-export { useProjectActions } from './hooks/useProjectActions';
-export { useProjectForm } from './hooks/useProjectForm';
-
-// 服務層
-export { ProjectService } from './services/projectService';
-
-// 樣式
-export { projectStyles } from './styles';
-
-// ============================================================================
-// 專案系統模組 - 主要匯出點
-// ============================================================================
-
-// ============================================================================
-// 型別匯出
-// ============================================================================
-
-export type {
-  // 基礎型別
-  DateField,
-  BaseWithDates,
-  BaseWithId,
-  
-  // 列舉型別
-  ProjectStatus,
-  WorkpackageStatus,
-  SubWorkpackageStatus,
-  ProjectPriority,
-  ProjectType,
-  ProjectRiskLevel,
-  ProjectHealthLevel,
-  ProjectPhase,
-  PhotoType,
-  TaskStatus,
-  TaskPriority,
-  IssueType,
-  IssueSeverity,
-  IssueStatus,
-  RiskProbability,
-  RiskImpact,
-  RiskStatus,
-  ChangeType,
-  ChangeImpact,
-  ChangeStatus,
-  MilestoneStatus,
-  MilestoneType,
-  ReviewFrequency,
-  
-  // 實體型別
-  Task,
-  ProgressHistoryRecord,
-  ProjectMilestone,
-  ProjectRisk,
-  ProjectChange,
-  ProjectQualityMetrics,
-  ProjectSafetyMetrics,
-  ProjectFinancialMetrics,
-  SubWorkpackage,
-  Workpackage,
-  ActivityLog,
-  MaterialEntry,
-  IssueRecord,
-  PhotoRecord,
-  DailyReport,
-  Zone,
-  Expense,
-  SubWorkpackageTemplateItem,
-  Template,
-  TemplateToSubWorkpackageOptions,
-  Project,
-  ProjectDocument,
-  
-  // 功能型別
-  ProjectFilters,
-  ProjectSortOption,
-  ProjectStats,
-  QualityScoreInfo,
-  ProjectMember,
-} from './types/project';
-
-// ============================================================================
-// 組件匯出
-// ============================================================================
-
-// 通用組件
-export { default as AddressSelector } from './components/common/AddressSelector';
-export { default as DataLoader } from './components/common/DataLoader';
-export { default as LoadingSpinner } from './components/common/LoadingSpinner';
-export { default as PageContainer } from './components/common/PageContainer';
-export { default as PageHeader } from './components/common/PageHeader';
-
-// 專案相關組件
-export { default as ProjectEditModal } from './components/ProjectEditModal';
-export { default as ProjectInfoDisplay } from './components/ProjectInfoDisplay';
-export { default as ProjectInfoPage } from './components/ProjectInfoPage';
-export { default as WorkpackageList } from './components/WorkpackageList';
-export { default as WeatherDisplay } from './components/WeatherDisplay';
-
-// 儀表板組件
-export { default as ProjectDashboard } from './components/dashboard/ProjectDashboard';
-export { default as ProjectsTable } from './components/dashboard/ProjectsTable';
-export { default as ProjectStats } from './components/dashboard/ProjectStats';
-
-// ============================================================================
-// Hooks 匯出
-// ============================================================================
-
-// 專案狀態管理
-export { useProjectState } from './hooks/useProjectState';
-export { useProjectActions } from './hooks/useProjectActions';
-export { useProjectForm } from './hooks/useProjectForm';
-export { useProjectErrorHandler } from './hooks/useProjectErrorHandler';
-
-// 專案資料處理
-export { 
-  useFilteredProjects, 
-  useProjectStats, 
-  useQualityScore 
-} from './hooks/useFilteredProjects';
-
-// ============================================================================
-// 服務層匯出
-// ============================================================================
-
-export { ProjectService } from './services/projectService';
-export { WorkpackageService } from './services/workpackageService';
-export { JournalService } from './services/journalService';
-export { IssueService } from './services/issueService';
-export { TemplateService } from './services/templateService';
-
-// ============================================================================
-// 工具函數匯出
-// ============================================================================
-
-// 進度計算
-export { 
-  calculateProjectProgress,
-  calculateWorkpackageProgress,
-  ProgressBarWithPercent,
-  ProjectHealthIndicator
-} from './utils/progressUtils';
-
-// 專案工具
-export {
-  calculateProjectQualityScore,
-  calculateSchedulePerformanceIndex,
-  calculateCostPerformanceIndex,
-  getUpcomingMilestones,
-  getOverdueMilestones,
-  analyzeProjectStatusTrend,
-  calculateProjectPriorityScore
-} from './utils/projectUtils';
-
-// 日期工具
-export {
-  formatDateForInput,
-  formatLocalDate,
-  convertFirebaseTimestamp
-} from './utils/dateUtils';
-
-// 品質工具
-export {
-  calculateQualityScore,
-  getQualityLevel,
-  getQualityColor
-} from './utils/qualityUtils';
-
-// 風險工具
-export {
-  calculateRiskLevel,
-  getRiskColor,
-  getRiskDescription
-} from './utils/riskUtils';
-
-// ============================================================================
-// 常數匯出
-// ============================================================================
-
-export {
-  PROJECT_STATUS_OPTIONS,
-  PROJECT_TYPE_OPTIONS,
-  PROJECT_PRIORITY_OPTIONS,
-  PROJECT_RISK_LEVEL_OPTIONS,
-  PROJECT_HEALTH_LEVEL_OPTIONS,
-  PROJECT_PHASE_OPTIONS
-} from './constants/projectConstants';
-
-export {
-  WORKPACKAGE_STATUS_OPTIONS,
-  SUB_WORKPACKAGE_STATUS_OPTIONS,
-  TASK_STATUS_OPTIONS,
-  ISSUE_TYPE_OPTIONS,
-  ISSUE_SEVERITY_OPTIONS,
-  ISSUE_STATUS_OPTIONS
-} from './constants/statusConstants';
-
-export {
-  PROJECT_VALIDATION_RULES,
-  WORKPACKAGE_VALIDATION_RULES,
-  TASK_VALIDATION_RULES
-} from './constants/validationRules';
-
-// ============================================================================
-// 預設匯出（模組整體）
-// ============================================================================
-
-const ProjectModule = {
-  // 型別
-  types: {
-    Project,
-    Workpackage,
-    SubWorkpackage,
-    ProjectStatus,
-    ProjectType,
-    // ... 其他型別
-  },
-  
-  // 組件
-  components: {
-    ProjectDashboard,
-    ProjectsTable,
-    ProjectEditModal,
-    WorkpackageList,
-    JournalForm,
-    // ... 其他組件
-  },
-  
-  // Hooks
-  hooks: {
-    useProjectActions,
-    useFilteredProjects,
-    useProjectStats,
-    useQualityScore,
-    // ... 其他 hooks
-  },
-  
-  // 服務
-  services: {
-    ProjectService,
-    WorkpackageService,
-    JournalService,
-    // ... 其他服務
-  },
-  
-  // 工具
-  utils: {
-    calculateProjectProgress,
-    calculateProjectQualityScore,
-    // ... 其他工具
-  },
-  
-  // 樣式
-  styles: {
-    projectStyles,
-  },
-  
-  // 常數
-  constants: {
-    PROJECT_STATUS_OPTIONS,
-    PROJECT_TYPE_OPTIONS,
-    // ... 其他常數
-  },
-};
-
-export default ProjectModule;
+@CalendarView.tsx @index.ts @AddressSelector.tsx @index.ts @DataLoader.tsx @LoadingSpinner.tsx @PageContainer.tsx @PageHeader.tsx @WeatherDisplay.tsx @index.ts @ProjectDashboard.tsx @ProjectsTable.tsx @ProjectStats.tsx @ExpenseForm.tsx @ExpenseList.tsx @index.ts @ProjectSetupForm.tsx @TemplateSelector.tsx @index.ts @ContractSelector.tsx @index.ts @IssueForm.tsx @IssueList.tsx @index.ts @JournalCard.tsx @JournalForm.tsx @JournalHistory.tsx @ChangeManager.tsx @index.ts @IssueTracker.tsx @MilestoneTracker.tsx @RiskManager.tsx @index.ts @MaterialForm.tsx @MaterialList.tsx @index.ts @ProjectEditModal.tsx @ProjectInfoDisplay.tsx @ProjectInfoPage.tsx @index.ts @SubWorkpackageCard.tsx @SubWorkpackageForm.tsx @SubWorkpackageList.tsx @index.ts @TemplateCard.tsx @TemplateForm.tsx @index.ts @WorkpackageCard.tsx @WorkpackageForm.tsx @WorkpackageList.tsx @index.ts @index.ts @projectConstants.ts @statusConstants.ts @validationRules.ts @index.ts @useFilteredProjects.ts @useProjectActions.ts @useProjectErrorHandler.ts @useProjectForm.ts @useProjectState.ts @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @page.tsx @index.ts @page.tsx @projectService.ts @issueService.ts @journalService.ts @subworkpackageService.ts @templateService.ts @workpackageService.ts @index.ts @project.d.ts @dateUtils.ts @index.ts @progressUtils.tsx @projectUtils.ts @index.ts @qualityUtils.ts @riskUtils.ts @/projects @/components @/calendar @/common @/dashboard @/expenses @/generate-from-contract @/issues @/journal @/management @/materials @/project @/subwork-packages @/templates @/work-packages @/constants @/hooks @/pages @/[project] @/calendar @/expenses @/issues @/journal @/materials @/subwork-packages @/work-packages @/generate-from-contract @/list @/templates @/services @/styles @/types @/utils 
