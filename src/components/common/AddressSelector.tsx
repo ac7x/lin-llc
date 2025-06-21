@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 // Google Maps API Key
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o';
@@ -18,6 +18,15 @@ interface AddressSelectorProps {
   disabled?: boolean;
 }
 
+interface AddressSuggestion {
+  place_id: string;
+  description: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
+
 export default function AddressSelector({
   value,
   onChange,
@@ -28,11 +37,18 @@ export default function AddressSelector({
   const [isLoading, setIsLoading] = useState(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(value);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
+  const searchBoxRef = useRef<HTMLInputElement>(null);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
 
   // 載入 Google Maps API
   useEffect(() => {
@@ -59,7 +75,43 @@ export default function AddressSelector({
     loadGoogleMaps();
   }, []);
 
-  // 初始化地圖
+  // 地理編碼
+  const geocodeLocation = useCallback((lat: number, lng: number) => {
+    if (!window.google?.maps) return;
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode(
+      { location: { lat, lng } },
+      (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
+        const address = status === 'OK' && results?.[0] 
+          ? results[0].formatted_address 
+          : `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        setSelectedAddress(address);
+        onChange(address);
+      }
+    );
+  }, [onChange]);
+
+  // 更新標記和地址
+  const updateMarkerAndAddress = useCallback((lat: number, lng: number) => {
+    if (!mapInstanceRef.current) return;
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
+    }
+    markerRef.current = new window.google.maps.Marker({
+      position: { lat, lng },
+      map: mapInstanceRef.current,
+      draggable: true,
+    });
+    markerRef.current.addListener('dragend', () => {
+      const position = markerRef.current?.getPosition();
+      if (position) {
+        geocodeLocation(position.lat(), position.lng());
+      }
+    });
+    geocodeLocation(lat, lng);
+  }, [geocodeLocation]);
+
+  // 初始化地圖和服務
   useEffect(() => {
     if (!isMapOpen || !mapRef.current || !window.google?.maps) return;
 
@@ -72,6 +124,8 @@ export default function AddressSelector({
     });
 
     mapInstanceRef.current = map;
+    autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+    placesServiceRef.current = new window.google.maps.places.PlacesService(map);
 
     // 地圖點擊事件
     map.addListener('click', (event: google.maps.MapMouseEvent) => {
@@ -79,39 +133,122 @@ export default function AddressSelector({
       const lng = event.latLng?.lng();
 
       if (lat && lng) {
-        // 清除舊標記
-        if (markerRef.current) {
-          markerRef.current.setMap(null);
-        }
-
-        // 新增標記
-        markerRef.current = new window.google.maps.Marker({
-          position: { lat, lng },
-          map,
-          draggable: true,
-        });
-
-        // 地理編碼
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode(
-          { location: { lat, lng } },
-          (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
-            const address = status === 'OK' && results?.[0] 
-              ? results[0].formatted_address 
-              : `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            
-            setSelectedAddress(address);
-            onChange(address);
-          }
-        );
+        updateMarkerAndAddress(lat, lng);
       }
     });
-  }, [isMapOpen, onChange]);
+  }, [isMapOpen, updateMarkerAndAddress]);
+
+  // 獲取當前位置
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('您的瀏覽器不支援地理定位功能');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setCenter({ lat: latitude, lng: longitude });
+          mapInstanceRef.current.setZoom(15);
+          updateMarkerAndAddress(latitude, longitude);
+        }
+      },
+      (_error) => {
+        alert('無法獲取您的位置，請手動選擇地址');
+      }
+    );
+  };
+
+  // 搜尋建議
+  const searchSuggestions = async (query: string) => {
+    if (!query.trim() || !autocompleteServiceRef.current) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      autocompleteServiceRef.current.getPlacePredictions(
+        {
+          input: query,
+          componentRestrictions: { country: 'tw' }, // 限制在台灣
+          types: ['geocode', 'establishment'],
+        },
+        (predictions: google.maps.places.AutocompletePrediction[] | null, status: google.maps.places.PlacesServiceStatus) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+            setSuggestions(predictions as AddressSuggestion[]);
+            setShowSuggestions(true);
+          } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+          }
+        }
+      );
+    } catch (_error) {
+      // 搜尋建議失敗，靜默處理
+      setSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 選擇建議地址
+  const selectSuggestion = (suggestion: AddressSuggestion) => {
+    if (!placesServiceRef.current) return;
+
+    placesServiceRef.current.getDetails(
+      {
+        placeId: suggestion.place_id,
+        fields: ['geometry', 'formatted_address'],
+      },
+      (place: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && place?.geometry?.location) {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setCenter({ lat, lng });
+            mapInstanceRef.current.setZoom(16);
+            updateMarkerAndAddress(lat, lng);
+          }
+          
+          setSearchTerm(suggestion.description);
+          setShowSuggestions(false);
+        }
+      }
+    );
+  };
+
+  // 搜尋地址
+  const searchAddress = () => {
+    if (!searchTerm.trim() || !mapInstanceRef.current) return;
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode(
+      { address: searchTerm },
+      (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
+        if (status === 'OK' && results?.[0]) {
+          const location = results[0].geometry.location;
+          const lat = location.lat();
+          const lng = location.lng();
+          
+          mapInstanceRef.current?.setCenter({ lat, lng });
+          mapInstanceRef.current?.setZoom(16);
+          updateMarkerAndAddress(lat, lng);
+        } else {
+          alert('找不到該地址，請嘗試其他關鍵字');
+        }
+      }
+    );
+  };
 
   const openMapSelector = () => setIsMapOpen(true);
 
   const closeMap = () => {
     setIsMapOpen(false);
+    setShowSuggestions(false);
     if (mapInstanceRef.current) {
       mapInstanceRef.current = null;
     }
@@ -125,6 +262,7 @@ export default function AddressSelector({
 
   const cancelSelection = () => {
     setSelectedAddress(value);
+    setSearchTerm('');
     closeMap();
   };
 
@@ -164,7 +302,7 @@ export default function AddressSelector({
       {/* 地圖選址彈窗 */}
       {isMapOpen && (
         <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50'>
-          <div className='bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden'>
+          <div className='bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-hidden'>
             <div className='flex justify-between items-center mb-4'>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                 在地圖上選擇地址
@@ -176,19 +314,103 @@ export default function AddressSelector({
               </button>
             </div>
 
-            <div className='mb-4'>
-              <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
-                點擊地圖上的位置來選擇地址，或拖曳標記到精確位置
-              </p>
-              {selectedAddress && (
-                <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
-                  <p className='text-sm text-blue-800 dark:text-blue-200'>
-                    已選擇地址: {selectedAddress}
-                  </p>
+            {/* 搜尋和工具列 */}
+            <div className='mb-4 space-y-3'>
+              <div className='flex gap-2'>
+                <div className='flex-1 relative'>
+                  <input
+                    ref={searchBoxRef}
+                    type='text'
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      searchSuggestions(e.target.value);
+                    }}
+                    placeholder='搜尋地址或地點...'
+                    className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200'
+                  />
+                  {isSearching && (
+                    <div className='absolute right-3 top-1/2 -translate-y-1/2'>
+                      <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500'></div>
+                    </div>
+                  )}
+                  
+                  {/* 搜尋建議下拉選單 */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className='absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto'>
+                      {suggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.place_id}
+                          onClick={() => selectSuggestion(suggestion)}
+                          className='w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0'
+                        >
+                          <div className='font-medium text-gray-900 dark:text-gray-100'>
+                            {suggestion.structured_formatting.main_text}
+                          </div>
+                          <div className='text-sm text-gray-500 dark:text-gray-400'>
+                            {suggestion.structured_formatting.secondary_text}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+                <button
+                  onClick={searchAddress}
+                  disabled={!searchTerm.trim()}
+                  className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 flex items-center'
+                >
+                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+                  </svg>
+                  搜尋
+                </button>
+                <button
+                  onClick={getCurrentLocation}
+                  className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center'
+                  title='使用當前位置'
+                >
+                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' />
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 11a3 3 0 11-6 0 3 3 0 016 0z' />
+                  </svg>
+                  定位
+                </button>
+              </div>
+              
+              <div className='flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400'>
+                <span className='flex items-center'>
+                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+                  </svg>
+                  點擊地圖選擇位置
+                </span>
+                <span className='flex items-center'>
+                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 9l4-4 4 4m0 6l-4 4-4-4' />
+                  </svg>
+                  拖曳標記精確定位
+                </span>
+                <span className='flex items-center'>
+                  <svg className='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+                  </svg>
+                  搜尋地址自動定位
+                </span>
+              </div>
             </div>
 
+            {/* 已選擇地址顯示 */}
+            {selectedAddress && (
+              <div className='mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
+                <p className='text-sm text-blue-800 dark:text-blue-200'>
+                  <span className='font-medium'>已選擇地址:</span> {selectedAddress}
+                </p>
+              </div>
+            )}
+
+            {/* 地圖容器 */}
             <div ref={mapRef} className='w-full h-96 rounded-lg border border-gray-300 dark:border-gray-700' />
 
             <div className='flex justify-end space-x-3 mt-4'>
