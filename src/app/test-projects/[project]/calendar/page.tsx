@@ -13,12 +13,12 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-import { CalendarView } from '@/modules/test-projects/components/calendar';
-import { PageContainer, PageHeader } from '@/modules/test-projects/components/common';
-import { ProjectService } from '@/modules/test-projects/services/projectService';
-import { WorkpackageService } from '@/modules/test-projects/services/workpackageService';
-import { projectStyles } from '@/modules/test-projects/styles';
-import type { Project, ProjectMilestone, Workpackage } from '@/modules/test-projects/types/project';
+import { CalendarView } from '@/app/test-projects/components/calendar';
+import { PageContainer, PageHeader } from '@/app/test-projects/components/common';
+import { ProjectService } from '@/app/test-projects/services/projectService';
+import { WorkpackageService } from '@/app/test-projects/services/workpackageService';
+import { projectStyles } from '@/app/test-projects/styles';
+import type { Project, ProjectMilestone, Workpackage } from '@/app/test-projects/types/project';
 
 export default function ProjectCalendarPage() {
   const params = useParams();
