@@ -16,7 +16,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
 import { SubWorkPackageList, SubWorkPackageForm } from '@/app/modules/projects/components/subwork-packages';
-import { getSubWorkPackagesByProjectId, createSubWorkPackage, updateSubWorkPackage, deleteSubWorkPackage } from '@/app/modules/projects/services/subworkPackageService';
+import { getSubWorkPackagesByProjectId, createSubWorkPackage, updateSubWorkPackage, deleteSubWorkPackage } from '@/app/modules/projects/services/subWorkPackageService';
 import type { Project, SubWorkPackage } from '@/app/modules/projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
