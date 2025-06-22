@@ -1,23 +1,30 @@
-'use client';
+// app/layout.tsx
+// 這是一個 Server Component (預設)
 
-import BottomNavigation from '@/components/tabs/BottomNavigation';
-import { useAuth } from '@/hooks/useAuth';
+import { Inter } from 'next/font/google';
+import { FirebaseProvider } from './projects/components/firebase/FirebaseProvider'; // 調整路徑以符合您的項目結構
 
-// 正確定義 LayoutProps 接口，只包含 children
-interface LayoutProps {
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata = {
+  title: 'Firebase Admin + Auth + App Check Demo',
+  description: 'Next.js App Router with advanced Firebase security',
+};
+
+export default function RootLayout({
+  children,
+}: {
   children: React.ReactNode;
-}
-
-// 使用 LayoutProps 接口來定義組件
-function Layout({ children }: LayoutProps) {
-  const { user } = useAuth();
-
+}) {
   return (
-    <>
-      <main className='pb-16'>{children}</main>
-      {user && <BottomNavigation />}
-    </>
+    <html lang="en">
+      <body className={inter.className}>
+        {/* 將整個應用程式包裹在 FirebaseProvider 中，以初始化客戶端 Firebase SDK */}
+        {/* FirebaseProvider 是一個 Client Component，因此它會在瀏覽器端執行 */}
+        <FirebaseProvider>
+          {children}
+        </FirebaseProvider>
+      </body>
+    </html>
   );
 }
-
-export default Layout;
