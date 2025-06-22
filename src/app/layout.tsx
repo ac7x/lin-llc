@@ -20,9 +20,9 @@ import type { ReactElement, ReactNode } from 'react';
 
 import { Unauthorized } from '@/components/common/Unauthorized';
 import BottomNavigation from '@/components/tabs/BottomNavigation';
+import { useAppCheck } from '@/hooks/useAppCheck';
 import { useAuth } from '@/hooks/useAuth';
 import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
-import { useAppCheck } from '@/hooks/useAppCheck';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

@@ -1,6 +1,6 @@
+import { getToken } from 'firebase/app-check';
 import { useState, useEffect } from 'react';
 import { appCheck } from '@/lib/firebase-init';
-import { getToken } from 'firebase/app-check';
 import { logError } from '@/utils/errorUtils';
 
 export const useAppCheck = () => {
