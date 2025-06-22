@@ -171,7 +171,6 @@ export default function ProjectExpensesPage() {
         {(data) => (
           <ExpenseList
             expenses={data}
-            projectId={projectId}
             onEdit={(expense) => {
               setEditingExpense(expense);
               setShowExpenseForm(true);
