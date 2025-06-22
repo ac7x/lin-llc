@@ -19,7 +19,6 @@ import type { IssueRecord } from '@/app/modules/projects/types';
 
 interface IssueFormProps {
   issue?: IssueRecord;
-  projectId: string;
   onSubmit: (issue: Omit<IssueRecord, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
@@ -61,7 +60,6 @@ const formatDateField = (dateField: Timestamp | Date | string | null | undefined
 
 export default function IssueForm({
   issue,
-  projectId: _projectId,
   onSubmit,
   onCancel,
   isLoading = false,

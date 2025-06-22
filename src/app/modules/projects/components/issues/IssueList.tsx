@@ -19,7 +19,6 @@ import type { IssueRecord } from '@/app/modules/projects/types';
 
 interface IssueListProps {
   issues: IssueRecord[];
-  projectId: string;
   onEdit: (issue: IssueRecord) => void;
   onDelete: (issueId: string) => Promise<void>;
   onAdd: () => void;
@@ -80,7 +79,6 @@ const getStatusLabel = (status: string) => {
 
 export default function IssueList({
   issues,
-  projectId: _projectId,
   onEdit,
   onDelete,
   onAdd,

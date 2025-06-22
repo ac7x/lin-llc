@@ -17,7 +17,6 @@ import type { ProjectRisk } from '@/app/modules/projects/types';
 
 interface RiskManagerProps {
   risks: ProjectRisk[];
-  projectId: string;
   onAddRisk?: () => void;
   onEditRisk?: (risk: ProjectRisk) => void;
   onDeleteRisk?: (riskId: string) => void;
@@ -29,11 +28,10 @@ type SortDirection = 'asc' | 'desc';
 
 export default function RiskManager({
   risks,
-  projectId: _projectId,
   onAddRisk,
   onEditRisk,
   onDeleteRisk,
-  onUpdateRiskStatus: _onUpdateRiskStatus,
+  onUpdateRiskStatus,
 }: RiskManagerProps) {
   const [sortBy, setSortBy] = useState<SortOption>('riskLevel');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');

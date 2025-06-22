@@ -6,7 +6,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { Project, ProjectFilters, ProjectSortOption, ProjectStats, ProjectStatus } from '@/app/modules/projects/types';
+import type { 
+  Project, 
+  ProjectFilters, 
+  ProjectSortOption, 
+  ProjectStats, 
+  ProjectStatus 
+} from '@/app/modules/projects/types';
+import { convertToDate, type DateField } from '@/app/modules/projects/types';
 
 interface UseFilteredProjectsReturn {
   filteredProjects: Project[];
@@ -152,45 +159,29 @@ export function useFilteredProjects(
 
     // 排序
     result.sort((a, b) => {
-      const [field, direction] = sortOption.split('-') as [string, 'asc' | 'desc'];
+      const [field, direction] = sortOption.split('-') as [keyof Project, 'asc' | 'desc'];
       
-      let aValue: any = a[field as keyof Project];
-      let bValue: any = b[field as keyof Project];
+      let aValue: unknown = a[field];
+      let bValue: unknown = b[field];
       
       // 處理日期排序
-      if (field.includes('Date') || field.includes('At')) {
-        aValue = aValue ? 
-          (aValue instanceof Date ? aValue : 
-           typeof aValue === 'string' ? new Date(aValue) :
-           aValue?.toDate?.() || new Date()) : new Date(0);
-        bValue = bValue ? 
-          (bValue instanceof Date ? bValue : 
-           typeof bValue === 'string' ? new Date(bValue) :
-           bValue?.toDate?.() || new Date()) : new Date(0);
+      if (field === 'createdAt' || field === 'startDate' || field === 'estimatedEndDate') {
+        aValue = convertToDate(aValue as DateField)?.getTime() ?? 0;
+        bValue = convertToDate(bValue as DateField)?.getTime() ?? 0;
       }
       
       // 處理字串排序
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
+        return direction === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
       
-      // 處理數值排序
+      // 處理數字排序
       if (typeof aValue === 'number' && typeof bValue === 'number') {
-        if (direction === 'asc') {
-          return aValue - bValue;
-        } else {
-          return bValue - aValue;
-        }
+        return direction === 'asc' ? aValue - bValue : bValue - aValue;
       }
       
-      // 處理字串和日期排序
-      if (aValue < bValue) {
-        return direction === 'asc' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return direction === 'asc' ? 1 : -1;
-      }
       return 0;
     });
 

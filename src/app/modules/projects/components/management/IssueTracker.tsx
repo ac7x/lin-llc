@@ -17,7 +17,6 @@ import type { IssueRecord } from '@/app/modules/projects/types';
 
 interface IssueTrackerProps {
   issues: IssueRecord[];
-  projectId: string;
   onAddIssue?: () => void;
   onEditIssue?: (issue: IssueRecord) => void;
   onDeleteIssue?: (issueId: string) => void;
@@ -29,11 +28,10 @@ type SortDirection = 'asc' | 'desc';
 
 export default function IssueTracker({
   issues,
-  projectId: _projectId,
   onAddIssue,
   onEditIssue,
   onDeleteIssue,
-  onUpdateIssueStatus: _onUpdateIssueStatus,
+  onUpdateIssueStatus,
 }: IssueTrackerProps) {
   const [sortBy, setSortBy] = useState<SortOption>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');

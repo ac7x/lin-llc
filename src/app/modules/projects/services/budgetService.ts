@@ -22,7 +22,8 @@ import {
   orderBy,
   serverTimestamp,
   Timestamp,
-  FieldValue
+  FieldValue,
+  limit
 } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase-client';
@@ -50,17 +51,15 @@ export const createProjectBudget = async (
   budgetData: Omit<ProjectBudget, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> => {
   try {
-    const docRef = await addDoc(collection(db, BUDGET_COLLECTION), {
+    const budgetRef = collection(db, 'projectBudgets');
+    const docRef = await addDoc(budgetRef, {
       ...budgetData,
-      projectId,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
-
     return docRef.id;
   } catch (error) {
-    console.error('創建專案預算時發生錯誤:', error);
-    throw new Error('創建專案預算失敗');
+    throw new Error(`創建專案預算失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
   }
 };
 
@@ -72,14 +71,13 @@ export const updateProjectBudget = async (
   updateData: Partial<ProjectBudget>
 ): Promise<void> => {
   try {
-    const docRef = doc(db, BUDGET_COLLECTION, budgetId);
-    await updateDoc(docRef, {
+    const budgetRef = doc(db, 'projectBudgets', budgetId);
+    await updateDoc(budgetRef, {
       ...updateData,
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date(),
     });
   } catch (error) {
-    console.error('更新專案預算時發生錯誤:', error);
-    throw new Error('更新專案預算失敗');
+    throw new Error(`更新專案預算失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
   }
 };
 
@@ -88,43 +86,21 @@ export const updateProjectBudget = async (
  */
 export const getProjectBudget = async (projectId: string): Promise<ProjectBudget | null> => {
   try {
-    const q = query(
-      collection(db, BUDGET_COLLECTION),
-      where('projectId', '==', projectId)
-    );
-
+    const budgetRef = collection(db, 'projectBudgets');
+    const q = query(budgetRef, where('projectId', '==', projectId), limit(1));
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
       return null;
     }
-
-    // 在記憶體中按創建時間排序，取最新的
-    const budgets = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
-        startDate: data.startDate?.toDate?.() || data.startDate,
-        endDate: data.endDate?.toDate?.() || data.endDate,
-        approvedDate: data.approvedDate?.toDate?.() || data.approvedDate,
-      } as ProjectBudget;
-    });
-
-    return budgets.sort((a, b) => {
-      const dateA = a.createdAt instanceof Date ? a.createdAt : 
-                   a.createdAt && typeof a.createdAt === 'object' && 'toDate' in a.createdAt ? 
-                   a.createdAt.toDate() : new Date(0);
-      const dateB = b.createdAt instanceof Date ? b.createdAt : 
-                   b.createdAt && typeof b.createdAt === 'object' && 'toDate' in b.createdAt ? 
-                   b.createdAt.toDate() : new Date(0);
-      return dateB.getTime() - dateA.getTime(); // 降序排列，取最新的
-    })[0];
+    
+    const doc = querySnapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data(),
+    } as ProjectBudget;
   } catch (error) {
-    console.error('獲取專案預算時發生錯誤:', error);
-    throw new Error('獲取專案預算失敗');
+    throw new Error(`獲取專案預算失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
   }
 };
 

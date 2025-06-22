@@ -18,7 +18,6 @@ import type { WorkPackage } from '@/app/modules/projects/types';
 
 interface WorkPackageCardProps {
   workPackage: WorkPackage;
-  projectId: string;
   onEdit?: (workPackage: WorkPackage) => void;
   onDelete?: (workPackageId: string) => void;
   onViewDetails?: (workPackageId: string) => void;
@@ -28,7 +27,7 @@ export default function WorkPackageCard({
   workPackage,
   onEdit,
   onDelete,
-  projectId: _projectId,
+  onViewDetails,
 }: WorkPackageCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   

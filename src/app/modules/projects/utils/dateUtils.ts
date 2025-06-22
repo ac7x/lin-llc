@@ -4,26 +4,16 @@
  */
 
 import type { Timestamp } from 'firebase/firestore';
-import type { DateField } from '../types';
+import type { DateField } from '@/app/modules/projects/types';
 
 /**
  * 將 DateField 轉換為 Date 物件
  */
 export const convertToDate = (dateField: DateField): Date | null => {
   if (!dateField) return null;
-  
-  if (dateField instanceof Date) {
-    return dateField;
-  }
-  
-  if (typeof dateField === 'string') {
-    return new Date(dateField);
-  }
-  
-  if (typeof dateField === 'object' && 'toDate' in dateField) {
-    return dateField.toDate();
-  }
-  
+  if (dateField instanceof Date) return dateField;
+  if (typeof dateField === 'string') return new Date(dateField);
+  if ('toDate' in dateField) return dateField.toDate?.() ?? null;
   return null;
 };
 
@@ -32,8 +22,7 @@ export const convertToDate = (dateField: DateField): Date | null => {
  */
 export function formatProjectDate(dateField: DateField): string {
   const date = convertToDate(dateField);
-  if (!date) return '未設定';
-  
+  if (!date) return '--';
   return date.toLocaleDateString('zh-TW', {
     year: 'numeric',
     month: '2-digit',
@@ -61,21 +50,20 @@ export function isProjectOverdue(endDate: DateField): boolean {
   const end = convertToDate(endDate);
   if (!end) return false;
   
-  const now = new Date();
-  return end < now;
+  return new Date() > end;
 }
 
 /**
  * 取得日期範圍內的專案
  */
-export function getProjectsInDateRange(
-  projects: any[],
+export function getProjectsInDateRange<T extends { startDate?: DateField; estimatedEndDate?: DateField }>(
+  projects: T[],
   startDate: Date,
   endDate: Date
-): any[] {
+): T[] {
   return projects.filter(project => {
-    const projectStart = convertToDate(project.startDate);
-    const projectEnd = convertToDate(project.estimatedEndDate);
+    const projectStart = convertToDate(project.startDate ?? null);
+    const projectEnd = convertToDate(project.estimatedEndDate ?? null);
     
     if (!projectStart || !projectEnd) return false;
     

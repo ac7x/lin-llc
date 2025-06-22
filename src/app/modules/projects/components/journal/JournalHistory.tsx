@@ -31,7 +31,6 @@ type SortDirection = 'asc' | 'desc';
 
 interface JournalHistoryProps {
   journals: JournalEntry[];
-  projectId: string;
   onViewDetails?: (journalEntryId: string) => void;
   onEdit?: (journalEntry: JournalEntry) => void;
   onDelete?: (journalEntryId: string) => void;
@@ -39,7 +38,6 @@ interface JournalHistoryProps {
 
 export default function JournalHistory({
   journals,
-  projectId: _projectId,
   onViewDetails,
   onEdit,
   onDelete,

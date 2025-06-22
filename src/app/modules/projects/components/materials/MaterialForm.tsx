@@ -17,7 +17,6 @@ import type { MaterialEntry } from '@/app/modules/projects/types';
 
 interface MaterialFormProps {
   material?: MaterialEntry;
-  projectId: string;
   onSubmit: (material: Omit<MaterialEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
@@ -50,7 +49,6 @@ const COMMON_UNITS = [
 
 export default function MaterialForm({
   material,
-  projectId: _projectId,
   onSubmit,
   onCancel,
   isLoading = false,

@@ -17,7 +17,6 @@ import type { ProjectMilestone } from '@/app/modules/projects/types';
 
 interface MilestoneTrackerProps {
   milestones: ProjectMilestone[];
-  projectId: string;
   onAddMilestone?: () => void;
   onEditMilestone?: (milestone: ProjectMilestone) => void;
   onDeleteMilestone?: (milestoneId: string) => void;
@@ -29,7 +28,6 @@ type SortDirection = 'asc' | 'desc';
 
 export default function MilestoneTracker({
   milestones,
-  projectId: _projectId,
   onAddMilestone,
   onEditMilestone,
   onDeleteMilestone,

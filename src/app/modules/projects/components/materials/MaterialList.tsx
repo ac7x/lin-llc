@@ -17,7 +17,6 @@ import type { MaterialEntry } from '@/app/modules/projects/types';
 
 interface MaterialListProps {
   materials: MaterialEntry[];
-  projectId: string;
   onEdit: (material: MaterialEntry) => void;
   onDelete: (materialId: string) => Promise<void>;
   onAdd: () => void;
@@ -26,7 +25,6 @@ interface MaterialListProps {
 
 export default function MaterialList({
   materials,
-  projectId: _projectId,
   onEdit,
   onDelete,
   onAdd,

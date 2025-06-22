@@ -18,7 +18,6 @@ import type { ProjectMilestone, WorkPackage } from '@/app/modules/projects/types
 interface CalendarViewProps {
   milestones?: ProjectMilestone[];
   workPackages?: WorkPackage[];
-  projectId: string;
   onDateClick?: (date: Date) => void;
   onMilestoneClick?: (milestone: ProjectMilestone) => void;
   onWorkPackageClick?: (workPackage: WorkPackage) => void;
@@ -33,7 +32,6 @@ interface CalendarEvent {
 export default function CalendarView({
   milestones = [],
   workPackages = [],
-  projectId: _projectId,
   onDateClick,
   onMilestoneClick,
   onWorkPackageClick,

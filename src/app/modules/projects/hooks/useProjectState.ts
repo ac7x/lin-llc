@@ -4,7 +4,7 @@ interface Project {
   id: string;
   projectName: string;
   status: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface UseProjectStateReturn {
@@ -35,7 +35,7 @@ export function useProjectState(): UseProjectStateReturn {
   };
 
   const refreshProjects = async () => {
-    // 實作重新載入專案邏輯
+    // 實作重新整理專案邏輯
   };
 
   return {

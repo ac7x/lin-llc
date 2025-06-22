@@ -866,29 +866,53 @@ export interface BudgetStats {
 // Firestore 資料轉換器
 // ============================================================================
 
-export const mapProjectFromFirestore = (raw: any): Project => {
-  const mapTimeRange = (range: any): CalculatedTimeRange => {
+interface FirestoreTimeRange {
+  start?: unknown;
+  end?: unknown;
+  elapsedDays?: number;
+  remainingDays?: number;
+}
+
+interface FirestoreProject {
+  startDate?: unknown;
+  estimatedEndDate?: unknown;
+  estimated?: FirestoreTimeRange;
+  planned?: FirestoreTimeRange;
+  actual?: FirestoreTimeRange;
+  required?: FirestoreTimeRange;
+  archivedAt?: unknown;
+  nextReviewDate?: unknown;
+  lastReviewDate?: unknown;
+  lastQualityAdjustment?: unknown;
+  [key: string]: unknown;
+}
+
+export const mapProjectFromFirestore = (raw: FirestoreProject): Project => {
+  const mapTimeRange = (range: FirestoreTimeRange): CalculatedTimeRange => {
     return {
-      start: convertToDate(range?.start),
-      end: convertToDate(range?.end),
+      start: convertToDate(range?.start as DateField),
+      end: convertToDate(range?.end as DateField),
       elapsedDays: range?.elapsedDays || 0,
       remainingDays: range?.remainingDays || 0,
     };
   };
 
-  const convertDateField = (d: any): DateField => (d instanceof Timestamp ? d.toDate() : d ?? null);
+  const convertDateField = (d: unknown): DateField => {
+    if (d instanceof Timestamp) return d.toDate();
+    return d as DateField ?? null;
+  };
 
   return {
     ...raw,
     startDate: convertDateField(raw.startDate),
     estimatedEndDate: convertDateField(raw.estimatedEndDate),
-    estimated: mapTimeRange(raw.estimated),
-    planned: mapTimeRange(raw.planned),
-    actual: mapTimeRange(raw.actual),
-    required: mapTimeRange(raw.required),
+    estimated: mapTimeRange(raw.estimated || {}),
+    planned: mapTimeRange(raw.planned || {}),
+    actual: mapTimeRange(raw.actual || {}),
+    required: mapTimeRange(raw.required || {}),
     archivedAt: convertDateField(raw.archivedAt),
     nextReviewDate: convertDateField(raw.nextReviewDate),
     lastReviewDate: convertDateField(raw.lastReviewDate),
     lastQualityAdjustment: convertDateField(raw.lastQualityAdjustment),
-  };
+  } as Project;
 };

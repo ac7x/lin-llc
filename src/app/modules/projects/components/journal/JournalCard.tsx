@@ -42,7 +42,6 @@ interface JournalEntry extends BaseWithId {
 
 interface JournalCardProps {
   journalEntry: JournalEntry;
-  projectId: string;
   onEdit?: (journalEntry: JournalEntry) => void;
   onDelete?: (journalEntryId: string) => void;
   onViewDetails?: (journalEntryId: string) => void;
@@ -50,7 +49,6 @@ interface JournalCardProps {
 
 export default function JournalCard({
   journalEntry,
-  projectId: _projectId,
   onEdit,
   onDelete,
   onViewDetails,

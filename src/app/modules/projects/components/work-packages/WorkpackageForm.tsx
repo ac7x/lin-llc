@@ -17,7 +17,6 @@ import type { WorkPackage } from '@/app/modules/projects/types';
 
 interface WorkPackageFormProps {
   workPackage?: WorkPackage;
-  projectId: string;
   onSubmit: (data: Partial<WorkPackage>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -25,7 +24,6 @@ interface WorkPackageFormProps {
 
 export default function WorkPackageForm({
   workPackage,
-  projectId: _projectId,
   onSubmit,
   onCancel,
   isSubmitting = false,

@@ -42,7 +42,6 @@ interface JournalEntry extends BaseWithId {
 
 interface JournalFormProps {
   journalEntry?: JournalEntry;
-  projectId: string;
   onSubmit: (data: Partial<JournalEntry>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -50,7 +49,6 @@ interface JournalFormProps {
 
 export default function JournalForm({
   journalEntry,
-  projectId: _projectId,
   onSubmit,
   onCancel,
   isSubmitting = false,

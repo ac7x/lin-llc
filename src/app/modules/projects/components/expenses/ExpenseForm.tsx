@@ -19,7 +19,6 @@ import type { Expense } from '@/app/modules/projects/types';
 
 interface ExpenseFormProps {
   expense?: Expense;
-  projectId: string;
   onSubmit: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
@@ -64,7 +63,6 @@ const formatDateField = (dateField: Timestamp | Date | string | null | undefined
 
 export default function ExpenseForm({
   expense,
-  projectId: _projectId,
   onSubmit,
   onCancel,
   isLoading = false,

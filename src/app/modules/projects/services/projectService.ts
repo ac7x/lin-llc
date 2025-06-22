@@ -366,22 +366,27 @@ export class ProjectService {
    * 批次更新專案
    */
   static async batchUpdateProjects(updates: Array<{ id: string; updates: Partial<Project> }>): Promise<void> {
-    await safeAsync(async () => {
-      const batch = writeBatch(db);
-      const now = Timestamp.now();
-
-      updates.forEach(({ id, updates: projectUpdates }) => {
-        const docRef = doc(db, this.COLLECTION_NAME, id);
-        batch.update(docRef, {
-          ...projectUpdates,
-          updatedAt: now,
-        });
+    const batch = writeBatch(db);
+    
+    for (const { id, updates: projectUpdates } of updates) {
+      const projectRef = doc(db, this.COLLECTION_NAME, id);
+      
+      // 處理日期欄位的轉換
+      const processedUpdates: Partial<Project> = { ...projectUpdates };
+      
+      if (projectUpdates.estimatedEndDate) {
+        const endDate = projectUpdates.estimatedEndDate;
+        if (endDate && typeof endDate === 'object' && 'toDate' in endDate) {
+          processedUpdates.estimatedEndDate = endDate.toDate();
+        }
+      }
+      
+      batch.update(projectRef, {
+        ...processedUpdates,
+        updatedAt: new Date(),
       });
-
-      await retry(() => batch.commit(), 3, 1000);
-    }, (error) => {
-      logError(error, { operation: 'batch_update_projects' });
-      throw error;
-    });
+    }
+    
+    await batch.commit();
   }
 } 

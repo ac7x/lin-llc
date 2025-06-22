@@ -18,7 +18,6 @@ import type { Expense } from '@/app/modules/projects/types';
 
 interface ExpenseListProps {
   expenses: Expense[];
-  projectId: string;
   onEdit: (expense: Expense) => void;
   onDelete: (expenseId: string) => Promise<void>;
   onAdd: () => void;
@@ -56,7 +55,6 @@ const formatAmount = (amount: number): string => {
 
 export default function ExpenseList({
   expenses,
-  projectId: _projectId,
   onEdit,
   onDelete,
   onAdd,
