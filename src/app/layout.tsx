@@ -22,6 +22,7 @@ import { Unauthorized } from '@/components/common/Unauthorized';
 import BottomNavigation from '@/components/tabs/BottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
 import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
+import { useAppCheck } from '@/hooks/useAppCheck';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -46,6 +47,7 @@ export default function RootLayout({
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
+  const { isInitialized, isValid, error } = useAppCheck();
 
   // 檢查是否在客戶端環境
   useEffect(() => {
@@ -54,6 +56,45 @@ export default function RootLayout({
 
   // 檢查當前路徑是否需要驗證
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
+
+  // 檢查 App Check 狀態
+  if (!isInitialized) {
+    return (
+      <html lang='zh-TW'>
+        <body
+          style={{
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties}
+          className='antialiased bg-white dark:bg-gray-900'
+        >
+          <div className='flex justify-center items-center min-h-screen'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400'></div>
+          </div>
+        </body>
+      </html>
+    );
+  }
+
+  if (!isValid || error) {
+    return (
+      <html lang='zh-TW'>
+        <body
+          style={{
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties}
+          className='antialiased bg-white dark:bg-gray-900'
+        >
+          <Unauthorized
+            message='安全驗證失敗，請重新載入頁面'
+            showBackButton={false}
+            showSignInButton={false}
+          />
+        </body>
+      </html>
+    );
+  }
 
   // 如果正在載入，顯示載入中狀態
   if (loading) {
