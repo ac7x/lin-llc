@@ -171,7 +171,6 @@ export default function ProjectMaterialsPage() {
         {(data) => (
           <MaterialList
             materials={data}
-            projectId={projectId}
             onEdit={(material) => {
               setEditingMaterial(material);
               setShowMaterialForm(true);
@@ -189,7 +188,6 @@ export default function ProjectMaterialsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <MaterialForm
               material={editingMaterial || undefined}
-              projectId={projectId}
               onSubmit={editingMaterial ? handleEditMaterial : handleCreateMaterial}
               onCancel={() => {
                 setShowMaterialForm(false);
