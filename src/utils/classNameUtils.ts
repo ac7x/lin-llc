@@ -43,7 +43,7 @@ export const longClassName = (classes: string[]): string => {
         let currentChunk = '';
         
         for (const word of words) {
-          if ((currentChunk + ' ' + word).length > 80) {
+          if (`${currentChunk} ${word}`.length > 80) {
             if (currentChunk) {
               chunks.push(currentChunk.trim());
               currentChunk = word;
@@ -51,7 +51,7 @@ export const longClassName = (classes: string[]): string => {
               chunks.push(word);
             }
           } else {
-            currentChunk += (currentChunk ? ' ' : '') + word;
+            currentChunk = `${currentChunk}${currentChunk ? ' ' : ''}${word}`;
           }
         }
         

@@ -78,13 +78,13 @@ import {
   
   // 日曆組件
   CalendarView,
-} from '@/app/modules/test-projects/components';
+} from '@/app/modules/projects/components';
 
 // 導入 Hooks
 import {
   useProjectForm,
   useProjectErrorHandler,
-} from '@/app/modules/test-projects/hooks';
+} from '@/app/modules/projects/hooks';
 
 // 導入服務
 import {
@@ -92,7 +92,7 @@ import {
   WorkpackageService,
   IssueService,
   TemplateService,
-} from '@/app/modules/test-projects/services';
+} from '@/app/modules/projects/services';
 
 // 導入工具函數和常數
 import {
@@ -102,21 +102,21 @@ import {
   calculateCostPerformanceIndex,
   analyzeProjectStatusTrend,
   calculateProjectPriorityScore,
-} from '@/app/modules/test-projects/utils';
+} from '@/app/modules/projects/utils';
 
 import {
   ProgressBarWithPercent,
   ProjectHealthIndicator,
-} from '@/app/modules/test-projects/utils/progressUtils';
+} from '@/app/modules/projects/utils/progressUtils';
 
 import {
   PROJECT_STATUS_OPTIONS,
   PROJECT_TYPE_OPTIONS,
   PROJECT_PRIORITY_OPTIONS,
   PROJECT_RISK_LEVEL_OPTIONS,
-} from '@/app/modules/test-projects/constants';
+} from '@/app/modules/projects/constants';
 
-import { projectStyles } from '@/app/modules/test-projects/styles';
+import { projectStyles } from '@/app/modules/projects/styles';
 
 // 導入型別
 import type {
@@ -128,7 +128,7 @@ import type {
   ProjectStats as ProjectStatsType,
   Expense,
   MaterialEntry,
-} from '@/app/modules/test-projects/types';
+} from '@/app/modules/projects/types';
 
 // 導入 Firebase 相關
 import { db, collection, addDoc, Timestamp } from '@/lib/firebase-client';
@@ -464,7 +464,7 @@ export default function TestPage() {
         id,
         name: workpackageName,
         description: workpackageDescription,
-        status: 'planned' as import('@/app/modules/test-projects/types').WorkpackageStatus,
+        status: 'planned' as import('@/app/modules/projects/types').WorkpackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),

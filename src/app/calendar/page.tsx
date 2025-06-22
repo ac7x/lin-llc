@@ -27,9 +27,9 @@ import {
   messages,
   formats,
 } from '@/utils/calendarUtils';
+import { cn, longClassName } from '@/utils/classNameUtils';
 import { getProgressInfo, ProgressColorScale } from '@/utils/colorUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
-import { cn, longClassName } from '@/utils/classNameUtils';
 
 export default function ProjectCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
