@@ -1284,7 +1284,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}`}
+                      src={`/modules/projects/${selectedProject.id}`}
                       title="專案主頁"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1293,7 +1293,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案主頁</span>
                     <Link
-                      href={`/projects/${selectedProject.id}`}
+                      href={`/modules/projects/${selectedProject.id}`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1306,7 +1306,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/calendar`}
+                      src={`/modules/projects/${selectedProject.id}/calendar`}
                       title="日曆頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1315,7 +1315,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">日曆頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/calendar`}
+                      href={`/modules/projects/${selectedProject.id}/calendar`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1328,7 +1328,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/expenses`}
+                      src={`/modules/projects/${selectedProject.id}/expenses`}
                       title="費用頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1337,7 +1337,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">費用頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/expenses`}
+                      href={`/modules/projects/${selectedProject.id}/expenses`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1350,7 +1350,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/issues`}
+                      src={`/modules/projects/${selectedProject.id}/issues`}
                       title="問題頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1359,7 +1359,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">問題頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/issues`}
+                      href={`/modules/projects/${selectedProject.id}/issues`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1372,7 +1372,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/journal`}
+                      src={`/modules/projects/${selectedProject.id}/journal`}
                       title="日誌頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1381,7 +1381,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">日誌頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/journal`}
+                      href={`/modules/projects/${selectedProject.id}/journal`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1394,7 +1394,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/materials`}
+                      src={`/modules/projects/${selectedProject.id}/materials`}
                       title="材料頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1403,7 +1403,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">材料頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/materials`}
+                      href={`/modules/projects/${selectedProject.id}/materials`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1416,7 +1416,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/subwork-packages`}
+                      src={`/modules/projects/${selectedProject.id}/subwork-packages`}
                       title="子工作包頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1425,7 +1425,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">子工作包頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/subwork-packages`}
+                      href={`/modules/projects/${selectedProject.id}/subwork-packages`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1438,7 +1438,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/work-packages`}
+                      src={`/modules/projects/${selectedProject.id}/work-packages`}
                       title="工作包頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1447,7 +1447,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">工作包頁面</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/work-packages`}
+                      href={`/modules/projects/${selectedProject.id}/work-packages`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1460,7 +1460,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/document`}
+                      src={`/modules/projects/${selectedProject.id}/document`}
                       title="專案文件頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1469,7 +1469,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案文件</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/document`}
+                      href={`/modules/projects/${selectedProject.id}/document`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1482,7 +1482,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/projects/${selectedProject.id}/budget`}
+                      src={`/modules/projects/${selectedProject.id}/budget`}
                       title="專案預算頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1491,7 +1491,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案預算</span>
                     <Link
-                      href={`/projects/${selectedProject.id}/budget`}
+                      href={`/modules/projects/${selectedProject.id}/budget`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1512,7 +1512,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src="/projects/generate-from-contract"
+                      src="/modules/projects/generate-from-contract"
                       title="合約生成專案頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1521,7 +1521,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">合約生成專案</span>
                     <Link
-                      href="/projects/generate-from-contract"
+                      href="/modules/projects/generate-from-contract"
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1534,7 +1534,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src="/projects/list"
+                      src="/modules/projects/list"
                       title="專案列表頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1543,7 +1543,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案列表</span>
                     <Link
-                      href="/projects/list"
+                      href="/modules/projects/list"
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1556,7 +1556,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src="/projects/templates"
+                      src="/modules/projects/templates"
                       title="模板管理頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1565,7 +1565,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">模板管理</span>
                     <Link
-                      href="/projects/templates"
+                      href="/modules/projects/templates"
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
