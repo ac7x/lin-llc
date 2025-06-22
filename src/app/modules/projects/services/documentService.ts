@@ -34,6 +34,8 @@ import {
 
 import { db, storage } from '@/lib/firebase-client';
 import type { ProjectDocumentFile, DocumentVersion, DocumentCategory } from '@/app/modules/projects/types';
+import { appCheck } from '@/lib/firebase-init';
+import { getToken } from 'firebase/app-check';
 
 // 文件集合名稱
 const DOCUMENT_COLLECTION = 'projectDocuments';
@@ -63,24 +65,29 @@ export const uploadDocumentToStorage = async (
   fileName: string
 ): Promise<{ url: string; thumbnailUrl?: string }> => {
   try {
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop();
-    const storagePath = `projects/${projectId}/documents/${timestamp}_${fileName}.${fileExtension}`;
-    const storageRef = ref(storage, storagePath);
+    // 獲取 App Check token
+    const token = await getToken(appCheck!, /* forceRefresh */ false);
 
-    // 上傳文件
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
+    // 上傳檔案時附加 token
+    const storageRef = ref(storage, `projects/${projectId}/documents/${fileName}`);
+    await uploadBytes(storageRef, file, {
+      customMetadata: {
+        'X-Firebase-AppCheck': token.token,
+      },
+    });
+
+    // 獲取下載 URL
+    const url = await getDownloadURL(storageRef);
 
     // 如果是圖片，生成縮圖
     let thumbnailURL: string | undefined;
     if (file.type.startsWith('image/')) {
       // 這裡可以實作圖片縮圖生成邏輯
-      thumbnailURL = downloadURL;
+      thumbnailURL = url;
     }
 
     return {
-      url: downloadURL,
+      url,
       thumbnailUrl: thumbnailURL,
     };
   } catch (error) {

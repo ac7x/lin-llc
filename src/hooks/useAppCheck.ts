@@ -57,5 +57,6 @@ export const useAppCheck = () => {
     isValid,
     getToken: fetchToken,
     error,
+    appCheck,
   };
 };
