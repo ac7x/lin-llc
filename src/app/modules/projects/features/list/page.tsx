@@ -53,6 +53,9 @@ export default function ProjectPage() {
 
   // 檢查專案狀態的輔助函數
   const hasStatus = (project: Project, targetStatus: ProjectStatus): boolean => {
+    // 確保 project.status 存在
+    if (!project.status) return false;
+    
     if (Array.isArray(project.status)) {
       return project.status.includes(targetStatus);
     }
@@ -78,6 +81,7 @@ export default function ProjectPage() {
               activeProjects: data.filter(p => hasStatus(p, 'in-progress')).length,
               completedProjects: data.filter(p => hasStatus(p, 'completed')).length,
               onHoldProjects: data.filter(p => hasStatus(p, 'on-hold')).length,
+              planningProjects: data.filter(p => hasStatus(p, 'planning')).length,
               overdueProjects: 0,
               totalQualityIssues: 0,
               averageQualityScore: 8.5,

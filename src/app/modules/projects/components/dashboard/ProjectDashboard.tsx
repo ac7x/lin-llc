@@ -1,5 +1,6 @@
 import { projectStyles } from '../../styles';
-import type { Project } from '@/app/modules/projects/types';
+import { STATUS_LABELS } from '../../constants/statusConstants';
+import type { Project, ProjectStatus } from '@/app/modules/projects/types';
 
 interface ProjectDashboardProps {
   project?: Pick<Project, 'id' | 'projectName' | 'status' | 'progress'>;
@@ -17,10 +18,17 @@ export default function ProjectDashboard({ project }: ProjectDashboardProps) {
     );
   }
 
-  // 狀態顯示處理
-  const statusText = Array.isArray(project.status)
-    ? project.status.join('、')
-    : project.status;
+  // 狀態顯示處理 - 使用中文標籤
+  const getStatusDisplay = (status: Project['status']): string => {
+    if (!status) return '未知';
+    
+    if (Array.isArray(status)) {
+      return status.length > 0 ? STATUS_LABELS[status[0] as ProjectStatus] || status[0] : '未知';
+    }
+    return STATUS_LABELS[status as ProjectStatus] || status || '未知';
+  };
+
+  const statusText = getStatusDisplay(project.status);
 
   return (
     <div className="space-y-6">

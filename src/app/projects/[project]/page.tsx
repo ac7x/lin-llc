@@ -29,6 +29,26 @@ import ProjectJournalPage from './project-journal/page';
 import ProjectMaterialsPage from './project-materials/page';
 import SubWorkpackageSortingPage from './workpackages/subworkpackages/page';
 
+// 狀態標籤對應
+const STATUS_LABELS: Record<string, string> = {
+  planning: '規劃中',
+  approved: '已核准',
+  'in-progress': '執行中',
+  'on-hold': '暫停中',
+  completed: '已完成',
+  cancelled: '已取消',
+  archived: '已封存',
+};
+
+// 獲取狀態顯示文字
+const getStatusDisplay = (status: any): string => {
+  if (!status) return '未知';
+  
+  if (Array.isArray(status)) {
+    return status.length > 0 ? STATUS_LABELS[status[0]] || status[0] : '未知';
+  }
+  return STATUS_LABELS[status] || status || '未知';
+};
 
 export default function ProjectDetailPage() {
   const { loading: authLoading } = useAuth();
@@ -76,7 +96,7 @@ export default function ProjectDetailPage() {
               <h1 className='text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100'>
                 {loadedProject.projectName}
               </h1>
-              <div className='text-gray-600 dark:text-gray-300'>狀態: {loadedProject.status}</div>
+              <div className='text-gray-600 dark:text-gray-300'>狀態: {getStatusDisplay(loadedProject.status)}</div>
             </div>
 
             <Tabs tabs={tabs} initialTab='journal' />

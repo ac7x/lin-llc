@@ -57,7 +57,7 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
               <td className={projectStyles.table.td}>{index + 1}</td>
               <td className={projectStyles.table.td}>
                 <Link
-                  href={`/test-projects/${project.id}`}
+                  href={`/projects/${project.id}`}
                   className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
                 >
                   {getProjectName(project)}
@@ -105,7 +105,7 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
               <td className={projectStyles.table.td}>
                 <div className="flex items-center space-x-2">
                   <Link
-                    href={`/test-projects/${project.id}`}
+                    href={`/projects/${project.id}`}
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors duration-200"
                   >
                     查看

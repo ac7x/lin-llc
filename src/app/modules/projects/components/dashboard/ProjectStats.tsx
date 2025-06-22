@@ -6,6 +6,7 @@ interface ProjectStatsProps {
     activeProjects: number;
     completedProjects: number;
     onHoldProjects: number;
+    planningProjects?: number;
     overdueProjects: number;
     totalQualityIssues: number;
     averageQualityScore: number;
@@ -27,10 +28,14 @@ export default function ProjectStats({ stats }: ProjectStatsProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 mb-6">
       <div className={`${projectStyles.card.stats} ${projectStyles.card.statsColors.blue}`}>
         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalProjects}</div>
         <div className="text-sm text-blue-600 dark:text-blue-400">總專案數</div>
+      </div>
+      <div className={`${projectStyles.card.stats} ${projectStyles.card.statsColors.indigo}`}>
+        <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.planningProjects || 0}</div>
+        <div className="text-sm text-indigo-600 dark:text-indigo-400">規劃中</div>
       </div>
       <div className={`${projectStyles.card.stats} ${projectStyles.card.statsColors.yellow}`}>
         <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.activeProjects}</div>

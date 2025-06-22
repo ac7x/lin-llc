@@ -228,7 +228,7 @@ export default function GenerateFromContractPage() {
       
       // 導航到新創建的專案
       setTimeout(() => {
-        router.push(`/test-projects/${projectId}`);
+        router.push(`/projects/${projectId}`);
       }, 1500);
     }, (error) => {
       setMessage(`建立失敗: ${getErrorMessage(error)}`);
