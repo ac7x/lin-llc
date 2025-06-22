@@ -23,7 +23,9 @@
     "pfm": "git push origin main --force",
     "rb": "git fetch origin && git reset --hard origin/main",
     "script": "bash script/script.sh",
-    "reset": "bash script/reset.sh"
+    "reset": "bash script/reset.sh",
+    "lint:case": "eslint --rule 'unicorn/filename-case: error' src/",
+    "check-case": "npm run lint:case && npm run type-check"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -59,9 +61,10 @@
     "@types/react": "^19",
     "@types/react-big-calendar": "^1.16.2",
     "@types/react-dom": "^19",
-    "eslint": "^9",
+    "eslint": "^9.29.0",
     "eslint-config-next": "15.3.2",
     "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-unicorn": "^59.0.1",
     "prettier": "^3.2.5",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4",

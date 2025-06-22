@@ -32,7 +32,7 @@ const eslintConfig = [
       'react/jsx-uses-react': 'off',
       'react/jsx-uses-vars': 'error',
 
-      // Import 相關規則
+      // Import 相關規則 - 區分大小寫
       'import/order': [
         'error',
         {
@@ -46,12 +46,16 @@ const eslintConfig = [
           ],
           alphabetize: {
             order: 'asc',
-            caseInsensitive: true,
+            caseInsensitive: false, // 區分大小寫
           },
         },
       ],
       'import/no-unresolved': 'off', // TypeScript 處理
       'import/no-duplicates': 'error',
+
+      // 檔案命名規則 - 確保大小寫一致性
+      'import/no-unused-modules': 'off',
+      'import/no-relative-parent-imports': 'off',
 
       // 代碼風格規則
       'prefer-const': 'error',
