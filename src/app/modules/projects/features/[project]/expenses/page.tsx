@@ -188,7 +188,6 @@ export default function ProjectExpensesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <ExpenseForm
               expense={editingExpense || undefined}
-              projectId={projectId}
               onSubmit={editingExpense ? handleEditExpense : handleCreateExpense}
               onCancel={() => {
                 setShowExpenseForm(false);

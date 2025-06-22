@@ -14,13 +14,9 @@ const eslintConfig = [
     'next/core-web-vitals',
     'next/typescript',
     'plugin:import/recommended',
-    'plugin:import/typescript',
-    'prettier'
+    'plugin:import/typescript'
   ),
   {
-    plugins: {
-      import: 'eslint-plugin-import',
-    },
     ignores: [
       'src/lib/firebase-client.ts',
       'src/lib/firebase-config.ts',
@@ -56,7 +52,6 @@ const eslintConfig = [
       ],
       'import/no-unresolved': 'off', // TypeScript 處理
       'import/no-duplicates': 'error',
-      'import/no-case-sensitive': 'error', // ✅ 檢查 import 大小寫錯誤
 
       // 代碼風格規則
       'prefer-const': 'error',
