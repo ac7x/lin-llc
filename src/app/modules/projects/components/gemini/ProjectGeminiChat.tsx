@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useProjectGemini, type ProjectChatMessage } from '../../hooks/useProjectGemini';
 import type { Project, WorkPackage, SubWorkPackage, IssueRecord } from '../../types';
@@ -52,22 +52,22 @@ export function ProjectGeminiChat({
     if (project) {
       addContext({ project, workPackages, subWorkPackages, issues });
     }
-  }, [project, workPackages, subWorkPackages, issues, addContext]);
+  }, [project?.id, workPackages.length, subWorkPackages.length, issues.length, addContext]);
 
   // 檢查是否接近底部
-  const checkIfNearBottom = () => {
+  const checkIfNearBottom = useCallback(() => {
     if (!chatContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
     const threshold = 100;
     setIsNearBottom(scrollHeight - scrollTop - clientHeight < threshold);
-  };
+  }, []);
 
   // 滾動到底部
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, []);
 
   // 監聽滾動事件
   useEffect(() => {
@@ -80,14 +80,14 @@ export function ProjectGeminiChat({
 
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [checkIfNearBottom]);
 
   // 當有新訊息時，如果用戶在底部附近，則自動滾動
   useEffect(() => {
     if (isNearBottom) {
       scrollToBottom();
     }
-  }, [messages, isNearBottom]);
+  }, [messages, isNearBottom, scrollToBottom]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

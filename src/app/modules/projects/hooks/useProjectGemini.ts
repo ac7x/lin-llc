@@ -76,18 +76,72 @@ export function useProjectGemini(options: UseProjectGeminiOptions = {}): UseProj
     if (autoInitialize) {
       initializeChat();
     }
-  }, [autoInitialize]);
+  }, [autoInitialize, maxTokens]);
 
-  const initializeChat = () => {
+  const initializeChat = useCallback(() => {
     chatRef.current = model.startChat({
       generationConfig: {
         maxOutputTokens: maxTokens,
       },
     });
-  };
+  }, [model, maxTokens]);
+
+  // 構建上下文提示
+  const buildContextPrompt = useCallback((baseContext: any, additionalContext?: any): string => {
+    const mergedContext = { ...baseContext, ...additionalContext };
+    let prompt = '';
+
+    if (mergedContext.project) {
+      const startDate = mergedContext.project.startDate instanceof Date 
+        ? mergedContext.project.startDate.toLocaleDateString('zh-TW')
+        : (mergedContext.project.startDate && typeof mergedContext.project.startDate === 'object' && 'toDate' in mergedContext.project.startDate)
+          ? mergedContext.project.startDate.toDate().toLocaleDateString('zh-TW')
+          : '未設定';
+      
+      const endDate = mergedContext.project.estimatedEndDate instanceof Date 
+        ? mergedContext.project.estimatedEndDate.toLocaleDateString('zh-TW')
+        : (mergedContext.project.estimatedEndDate && typeof mergedContext.project.estimatedEndDate === 'object' && 'toDate' in mergedContext.project.estimatedEndDate)
+          ? mergedContext.project.estimatedEndDate.toDate().toLocaleDateString('zh-TW')
+          : '未設定';
+
+      prompt += `專案資訊：
+- 專案名稱：${mergedContext.project.projectName}
+- 狀態：${mergedContext.project.status}
+- 進度：${mergedContext.project.progress || 0}%
+- 開始日期：${startDate}
+- 預計結束日期：${endDate}
+- 預算：${mergedContext.project.estimatedBudget ? `NT$ ${mergedContext.project.estimatedBudget.toLocaleString()}` : '未設定'}
+
+`;
+    }
+
+    if (mergedContext.workPackages && mergedContext.workPackages.length > 0) {
+      prompt += `工作包資訊：
+${mergedContext.workPackages.map((wp: WorkPackage, index: number) => 
+  `${index + 1}. ${wp.name} - 進度：${wp.progress || 0}% - 狀態：${wp.status}`
+).join('\n')}
+
+`;
+    }
+
+    if (mergedContext.issues && mergedContext.issues.length > 0) {
+      prompt += `問題記錄：
+${mergedContext.issues.map((issue: IssueRecord, index: number) => 
+  `${index + 1}. ${issue.description || '無標題'} - 嚴重程度：${issue.severity} - 狀態：${issue.status}`
+).join('\n')}
+
+`;
+    }
+
+    if (prompt) {
+      prompt += '請基於以上專案資訊回答用戶的問題。你是一位在台灣具備十年以上工地管理經驗的專案經理，熟悉工地作業流程、施工進度與品質控制，擅長成本預算管控與安全規劃。請用繁體中文回答，並提供實用的建議。';
+    }
+
+    return prompt;
+  }, []);
 
   // 發送訊息
-  const sendMessage = async (content: string, additionalContext?: any) => {
+  const sendMessage = useCallback(async (content: string, additionalContext?: any) => {
     if (!content.trim()) return;
 
     const userMsg: ProjectChatMessage = {
@@ -141,76 +195,22 @@ export function useProjectGemini(options: UseProjectGeminiOptions = {}): UseProj
     });
 
     setIsLoading(false);
-  };
+  }, [context, projectId, buildContextPrompt]);
 
   // 清除訊息
-  const clearMessages = () => {
+  const clearMessages = useCallback(() => {
     setMessages([]);
     setError(null);
     initializeChat();
-  };
+  }, [initializeChat]);
 
   // 添加上下文
   const addContext = useCallback((newContext: any) => {
     setContext((prev: any) => ({ ...prev, ...newContext }));
   }, []);
 
-  // 構建上下文提示
-  const buildContextPrompt = (baseContext: any, additionalContext?: any): string => {
-    const mergedContext = { ...baseContext, ...additionalContext };
-    let prompt = '';
-
-    if (mergedContext.project) {
-      const startDate = mergedContext.project.startDate instanceof Date 
-        ? mergedContext.project.startDate.toLocaleDateString('zh-TW')
-        : (mergedContext.project.startDate && typeof mergedContext.project.startDate === 'object' && 'toDate' in mergedContext.project.startDate)
-          ? mergedContext.project.startDate.toDate().toLocaleDateString('zh-TW')
-          : '未設定';
-      
-      const endDate = mergedContext.project.estimatedEndDate instanceof Date 
-        ? mergedContext.project.estimatedEndDate.toLocaleDateString('zh-TW')
-        : (mergedContext.project.estimatedEndDate && typeof mergedContext.project.estimatedEndDate === 'object' && 'toDate' in mergedContext.project.estimatedEndDate)
-          ? mergedContext.project.estimatedEndDate.toDate().toLocaleDateString('zh-TW')
-          : '未設定';
-
-      prompt += `專案資訊：
-- 專案名稱：${mergedContext.project.projectName}
-- 狀態：${mergedContext.project.status}
-- 進度：${mergedContext.project.progress || 0}%
-- 開始日期：${startDate}
-- 預計結束日期：${endDate}
-- 預算：${mergedContext.project.estimatedBudget ? `NT$ ${mergedContext.project.estimatedBudget.toLocaleString()}` : '未設定'}
-
-`;
-    }
-
-    if (mergedContext.workPackages && mergedContext.workPackages.length > 0) {
-      prompt += `工作包資訊：
-${mergedContext.workPackages.map((wp: WorkPackage, index: number) => 
-  `${index + 1}. ${wp.name} - 進度：${wp.progress || 0}% - 狀態：${wp.status}`
-).join('\n')}
-
-`;
-    }
-
-    if (mergedContext.issues && mergedContext.issues.length > 0) {
-      prompt += `問題記錄：
-${mergedContext.issues.map((issue: IssueRecord, index: number) => 
-  `${index + 1}. ${issue.description || '無標題'} - 嚴重程度：${issue.severity} - 狀態：${issue.status}`
-).join('\n')}
-
-`;
-    }
-
-    if (prompt) {
-      prompt += '請基於以上專案資訊回答用戶的問題。你是一位在台灣具備十年以上工地管理經驗的專案經理，熟悉工地作業流程、施工進度與品質控制，擅長成本預算管控與安全規劃。請用繁體中文回答，並提供實用的建議。';
-    }
-
-    return prompt;
-  };
-
   // 專案分析
-  const analyzeProject = async (project: Project) => {
+  const analyzeProject = useCallback(async (project: Project) => {
     const startDate = project.startDate instanceof Date 
       ? project.startDate.toLocaleDateString('zh-TW')
       : (project.startDate && typeof project.startDate === 'object' && 'toDate' in project.startDate)
@@ -239,10 +239,10 @@ ${mergedContext.issues.map((issue: IssueRecord, index: number) =>
 4. 時程和預算控制建議`;
 
     await sendMessage(analysisPrompt, { project });
-  };
+  }, [sendMessage]);
 
   // 取得專案建議
-  const getProjectSuggestions = async (project: Project) => {
+  const getProjectSuggestions = useCallback(async (project: Project) => {
     const suggestionPrompt = `基於這個專案的資訊，請提供具體的改進建議：
 
 專案名稱：${project.projectName}
@@ -257,10 +257,10 @@ ${mergedContext.issues.map((issue: IssueRecord, index: number) =>
 5. 團隊協作`;
 
     await sendMessage(suggestionPrompt, { project });
-  };
+  }, [sendMessage]);
 
   // 分析工作包
-  const analyzeWorkPackage = async (workPackage: WorkPackage) => {
+  const analyzeWorkPackage = useCallback(async (workPackage: WorkPackage) => {
     const wpAnalysisPrompt = `請分析這個工作包的狀況：
 
 工作包名稱：${workPackage.name}
@@ -277,10 +277,10 @@ ${mergedContext.issues.map((issue: IssueRecord, index: number) =>
 4. 風險識別`;
 
     await sendMessage(wpAnalysisPrompt, { workPackage });
-  };
+  }, [sendMessage]);
 
   // 風險分析
-  const getRiskAnalysis = async (project: Project, issues: IssueRecord[]) => {
+  const getRiskAnalysis = useCallback(async (project: Project, issues: IssueRecord[]) => {
     const riskPrompt = `請進行專案風險分析：
 
 專案資訊：
@@ -300,10 +300,10 @@ ${issues.map((issue, index) =>
 4. 預防措施建議`;
 
     await sendMessage(riskPrompt, { project, issues });
-  };
+  }, [sendMessage]);
 
   // 進度報告
-  const getProgressReport = async (project: Project, workPackages: WorkPackage[]) => {
+  const getProgressReport = useCallback(async (project: Project, workPackages: WorkPackage[]) => {
     const progressPrompt = `請生成專案進度報告：
 
 專案資訊：
@@ -324,7 +324,7 @@ ${workPackages.map((wp, index) =>
 5. 里程碑達成狀況`;
 
     await sendMessage(progressPrompt, { project, workPackages });
-  };
+  }, [sendMessage]);
 
   return {
     messages,

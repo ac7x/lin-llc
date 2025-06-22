@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/hooks/useAuth';
@@ -170,18 +170,25 @@ export default function AnalyticsPage() {
 
   const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'performance' | 'details'>('overview');
 
-  // 檢查權限
-  if (!authLoading && (!user || !hasPermission('analytics'))) {
-    router.push('/signin');
-    return null;
-  }
+  // 檢查權限並導航
+  useEffect(() => {
+    if (!authLoading && (!user || !hasPermission('analytics'))) {
+      router.push('/signin');
+    }
+  }, [authLoading, user, hasPermission, router]);
 
+  // 如果正在檢查權限或載入中，顯示載入狀態
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
+  }
+
+  // 如果沒有權限，不渲染內容（useEffect 會處理導航）
+  if (!user || !hasPermission('analytics')) {
+    return null;
   }
 
   if (!analyticsData) {

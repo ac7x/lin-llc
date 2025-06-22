@@ -55,7 +55,8 @@ export default function ProjectGeminiPage() {
   useEffect(() => {
     if (projectSnapshot && !projectSnapshot.empty) {
       const projectData = projectSnapshot.docs[0].data() as Project;
-      setProject({ ...projectData, id: projectSnapshot.docs[0].id });
+      const newProject = { ...projectData, id: projectSnapshot.docs[0].id };
+      setProject(newProject);
     }
   }, [projectSnapshot]);
 
@@ -83,7 +84,11 @@ export default function ProjectGeminiPage() {
 
   // 處理載入狀態
   useEffect(() => {
-    if (projectSnapshot && workPackagesSnapshot && issuesSnapshot) {
+    const allSnapshotsLoaded = projectSnapshot !== undefined && 
+                              workPackagesSnapshot !== undefined && 
+                              issuesSnapshot !== undefined;
+    
+    if (allSnapshotsLoaded) {
       setLoading(false);
     }
   }, [projectSnapshot, workPackagesSnapshot, issuesSnapshot]);
