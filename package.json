@@ -16,6 +16,7 @@
     "type-check": "tsc --noEmit",
     "fix-imports": "node scripts/fix-imports.js",
     "check-imports": "npm run lint -- --rule 'import/order: error'",
+    "check": "npm run lint && npm run type-check",
     "fes": "firebase emulators:start",
     "fd": "firebase deploy",
     "fdb": "firebase deploy --only hosting",
@@ -62,6 +63,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.1.3",
     "prettier": "^3.2.5",
     "tailwind-scrollbar": "^4.0.2",
@@ -69,4 +71,3 @@
     "typescript": "^5"
   }
 }
-

@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 // @ts-ignore
 import { Network, DataSet } from 'vis-network';
-import 'vis-network/dist/vis-network.css';
+import 'vis-network/styles/vis-network.css';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { ScheduleItem, ScheduleDependency } from '../../services/scheduleService';
