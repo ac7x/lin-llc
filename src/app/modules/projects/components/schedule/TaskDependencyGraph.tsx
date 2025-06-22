@@ -178,7 +178,9 @@ export default function TaskDependencyGraph({
         width: 2,
         shadow: true,
         smooth: {
+          enabled: true,
           type: 'continuous',
+          roundness: 0.5,
         },
       },
       physics: {
