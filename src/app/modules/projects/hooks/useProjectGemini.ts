@@ -4,7 +4,7 @@
  * 提供專案相關的 AI 對話功能，包括專案分析、建議和問題解答
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { getAI, getGenerativeModel, GoogleAIBackend, GenerativeModel } from 'firebase/ai';
 import { initializeApp } from 'firebase/app';
 import { firebaseConfig } from '@/lib/firebase-config';
@@ -151,9 +151,9 @@ export function useProjectGemini(options: UseProjectGeminiOptions = {}): UseProj
   };
 
   // 添加上下文
-  const addContext = (newContext: any) => {
+  const addContext = useCallback((newContext: any) => {
     setContext((prev: any) => ({ ...prev, ...newContext }));
-  };
+  }, []);
 
   // 構建上下文提示
   const buildContextPrompt = (baseContext: any, additionalContext?: any): string => {

@@ -19,11 +19,27 @@ import {
 } from 'firebase/firestore';
 import { ref, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase-client';
-import type { DailyReport, ActivityLog, PhotoRecord, WorkPackage, SubWorkPackage } from '../types';
+import type { DailyReport, ActivityLog, PhotoRecord, WorkPackage, SubWorkPackage, DateField } from '../types';
 import { calculateProjectProgress } from '../types';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
 const COLLECTION_NAME = 'dailyReports';
+
+/**
+ * 將 DateField 轉換為 Date 物件
+ */
+const convertDateField = (dateField: DateField): Date => {
+  if (dateField instanceof Date) {
+    return dateField;
+  }
+  if (typeof dateField === 'object' && dateField && 'toDate' in dateField) {
+    return dateField.toDate();
+  }
+  if (typeof dateField === 'string') {
+    return new Date(dateField);
+  }
+  return new Date(0);
+};
 
 /**
  * 日誌服務類別
@@ -31,9 +47,11 @@ const COLLECTION_NAME = 'dailyReports';
 export class JournalService {
   /**
    * 取得專案的所有日誌
+   * 注意：需要建立複合索引 (projectId, date)
    */
   static async getDailyReportsByProject(projectId: string): Promise<DailyReport[]> {
     try {
+      // 先嘗試使用 orderBy 的查詢
       const q = query(
         collection(db, COLLECTION_NAME),
         where('projectId', '==', projectId),
@@ -49,7 +67,32 @@ export class JournalService {
       })) as DailyReport[];
 
       return reports;
-    } catch (error) {
+    } catch (error: any) {
+      // 如果索引不存在，使用簡單查詢然後在記憶體中排序
+      if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+        console.warn('索引不存在，使用記憶體排序:', error.message);
+        
+        const q = query(
+          collection(db, COLLECTION_NAME),
+          where('projectId', '==', projectId)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const reports = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+          updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
+        })) as DailyReport[];
+
+        // 在記憶體中按日期排序
+        return reports.sort((a, b) => {
+          const dateA = convertDateField(a.date);
+          const dateB = convertDateField(b.date);
+          return dateB.getTime() - dateA.getTime();
+        });
+      }
+      
       console.error('取得日誌列表失敗:', error);
       throw new Error('取得日誌列表失敗');
     }
@@ -284,6 +327,7 @@ export class JournalService {
 
   /**
    * 根據日期範圍取得日誌
+   * 注意：需要建立複合索引 (projectId, date)
    */
   static async getDailyReportsByDateRange(
     projectId: string, 
@@ -308,7 +352,37 @@ export class JournalService {
       })) as DailyReport[];
 
       return reports;
-    } catch (error) {
+    } catch (error: any) {
+      // 如果索引不存在，使用簡單查詢然後在記憶體中過濾和排序
+      if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+        console.warn('索引不存在，使用記憶體過濾和排序:', error.message);
+        
+        const q = query(
+          collection(db, COLLECTION_NAME),
+          where('projectId', '==', projectId)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const reports = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+          updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
+        })) as DailyReport[];
+
+        // 在記憶體中過濾日期範圍並排序
+        return reports
+          .filter(report => {
+            const reportDate = convertDateField(report.date);
+            return reportDate >= startDate && reportDate <= endDate;
+          })
+          .sort((a, b) => {
+            const dateA = convertDateField(a.date);
+            const dateB = convertDateField(b.date);
+            return dateB.getTime() - dateA.getTime();
+          });
+      }
+      
       console.error('根據日期範圍取得日誌失敗:', error);
       throw new Error('根據日期範圍取得日誌失敗');
     }
@@ -316,6 +390,7 @@ export class JournalService {
 
   /**
    * 取得專案的最新日誌
+   * 注意：需要建立複合索引 (projectId, date)
    */
   static async getLatestDailyReport(projectId: string): Promise<DailyReport | null> {
     try {
@@ -337,7 +412,38 @@ export class JournalService {
         createdAt: latestDoc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: latestDoc.data().updatedAt?.toDate?.() || new Date(),
       } as DailyReport;
-    } catch (error) {
+    } catch (error: any) {
+      // 如果索引不存在，使用簡單查詢然後在記憶體中排序
+      if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+        console.warn('索引不存在，使用記憶體排序:', error.message);
+        
+        const q = query(
+          collection(db, COLLECTION_NAME),
+          where('projectId', '==', projectId)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          return null;
+        }
+
+        const reports = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+          updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
+        })) as DailyReport[];
+
+        // 在記憶體中按日期排序並返回最新的
+        const sortedReports = reports.sort((a, b) => {
+          const dateA = convertDateField(a.date);
+          const dateB = convertDateField(b.date);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        return sortedReports[0] || null;
+      }
+      
       console.error('取得最新日誌失敗:', error);
       throw new Error('取得最新日誌失敗');
     }

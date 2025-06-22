@@ -109,11 +109,43 @@ export function useProjectContracts() {
     setError(null);
   }, []);
 
+  // 處理 useCollection 錯誤
+  useEffect(() => {
+    if (contractsError) {
+      setError(`載入合約失敗: ${contractsError.message}`);
+    }
+  }, [contractsError]);
+
   // 取得所有合約
-  const contracts = contractsSnapshot?.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as ProjectContract[] || [];
+  const contracts = contractsSnapshot?.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      // 轉換 Firestore Timestamp 到 Date
+      startDate: data.startDate?.toDate ? data.startDate.toDate() : data.startDate,
+      endDate: data.endDate?.toDate ? data.endDate.toDate() : data.endDate,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt,
+      // 轉換附件中的日期
+      attachments: (data.attachments || []).map((attachment: any) => ({
+        ...attachment,
+        uploadedAt: attachment.uploadedAt?.toDate ? attachment.uploadedAt.toDate() : attachment.uploadedAt,
+      })),
+      // 轉換里程碑中的日期
+      milestones: (data.milestones || []).map((milestone: any) => ({
+        ...milestone,
+        dueDate: milestone.dueDate?.toDate ? milestone.dueDate.toDate() : milestone.dueDate,
+        completedDate: milestone.completedDate?.toDate ? milestone.completedDate.toDate() : milestone.completedDate,
+      })),
+      // 轉換付款中的日期
+      payments: (data.payments || []).map((payment: any) => ({
+        ...payment,
+        dueDate: payment.dueDate?.toDate ? payment.dueDate.toDate() : payment.dueDate,
+        paidDate: payment.paidDate?.toDate ? payment.paidDate.toDate() : payment.paidDate,
+      })),
+    };
+  }) as ProjectContract[] || [];
 
   // 新增合約
   const addContract = useCallback(async (contractData: Omit<ProjectContract, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -394,7 +426,7 @@ export function useProjectContracts() {
   return {
     // 狀態
     loading: loading || contractsLoading,
-    error: error || contractsError?.message,
+    error,
     
     // 數據
     contracts,

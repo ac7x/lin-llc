@@ -56,8 +56,61 @@ export function useProjectSchedule({
   const [filterType, setFilterType] = useState<string[]>([]);
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
 
-  // 載入時程數據
-  const loadScheduleData = useCallback(async () => {
+  // 初始化載入
+  useEffect(() => {
+    const loadData = async () => {
+      if (!projectId) return;
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const [itemsData, dependenciesData, statsData] = await Promise.all([
+          ScheduleService.getProjectSchedule(projectId),
+          ScheduleService.getProjectDependencies(projectId),
+          ScheduleService.getScheduleStats(projectId),
+        ]);
+        
+        setScheduleItems(itemsData);
+        setDependencies(dependenciesData);
+        setStats(statsData);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '載入時程數據失敗';
+        setError(errorMessage);
+        console.error('載入時程數據失敗:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [projectId]);
+
+  // 自動刷新
+  useEffect(() => {
+    if (!autoRefresh || !projectId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const [itemsData, dependenciesData, statsData] = await Promise.all([
+          ScheduleService.getProjectSchedule(projectId),
+          ScheduleService.getProjectDependencies(projectId),
+          ScheduleService.getScheduleStats(projectId),
+        ]);
+        
+        setScheduleItems(itemsData);
+        setDependencies(dependenciesData);
+        setStats(statsData);
+      } catch (err) {
+        console.error('自動刷新時程數據失敗:', err);
+      }
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, refreshInterval, projectId]);
+
+  // 手動刷新時程
+  const refreshSchedule = useCallback(async () => {
     if (!projectId) return;
 
     try {
@@ -81,11 +134,6 @@ export function useProjectSchedule({
       setIsLoading(false);
     }
   }, [projectId]);
-
-  // 手動刷新時程
-  const refreshSchedule = useCallback(async () => {
-    await loadScheduleData();
-  }, [loadScheduleData]);
 
   // 更新項目進度
   const updateItemProgress = useCallback(async (itemId: string, progress: number) => {
@@ -135,22 +183,6 @@ export function useProjectSchedule({
       console.error('刪除依賴關係失敗:', err);
     }
   }, [projectId]);
-
-  // 初始化載入
-  useEffect(() => {
-    loadScheduleData();
-  }, [loadScheduleData]);
-
-  // 自動刷新
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      loadScheduleData();
-    }, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, loadScheduleData]);
 
   // 篩選後的項目
   const filteredItems = useMemo(() => {
@@ -240,7 +272,30 @@ export function useSimpleProjectSchedule(projectId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadScheduleData = useCallback(async () => {
+  // 初始化載入
+  useEffect(() => {
+    const loadData = async () => {
+      if (!projectId) return;
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const itemsData = await ScheduleService.getProjectSchedule(projectId);
+        setScheduleItems(itemsData);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '載入時程數據失敗';
+        setError(errorMessage);
+        console.error('載入時程數據失敗:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [projectId]);
+
+  // 刷新函數
+  const refresh = useCallback(async () => {
     if (!projectId) return;
 
     try {
@@ -257,14 +312,10 @@ export function useSimpleProjectSchedule(projectId: string) {
     }
   }, [projectId]);
 
-  useEffect(() => {
-    loadScheduleData();
-  }, [loadScheduleData]);
-
   return {
     scheduleItems,
     isLoading,
     error,
-    refresh: loadScheduleData,
+    refresh,
   };
 }

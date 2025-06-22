@@ -6,6 +6,8 @@
     ├─components
     │  │  index.ts
     │  │
+    │  ├─admin
+    │  ├─analytics
     │  ├─budget
     │  │      BudgetForm.tsx
     │  │      BudgetTracker.tsx
@@ -25,6 +27,7 @@
     │  │      PageHeader.tsx
     │  │      WeatherDisplay.tsx
     │  │
+    │  ├─contracts
     │  ├─dashboard
     │  │      index.ts
     │  │      ProjectDashboard.tsx
@@ -40,6 +43,11 @@
     │  │      ExpenseForm.tsx
     │  │      ExpenseList.tsx
     │  │      index.ts
+    │  │
+    │  ├─gemini
+    │  │      index.ts
+    │  │      ProjectAnalysisDisplay.tsx
+    │  │      ProjectGeminiChat.tsx
     │  │
     │  ├─generate-from-contract
     │  │      ContractSelector.tsx
@@ -108,6 +116,15 @@
     │      validationRules.ts
     │
     ├─features
+    │  ├─admin
+    │  │      page.tsx
+    │  │
+    │  ├─analytics
+    │  │      page.tsx
+    │  │
+    │  ├─contracts
+    │  │      page.tsx
+    │  │
     │  ├─generate-from-contract
     │  │      page.tsx
     │  │
@@ -132,6 +149,9 @@
     │      ├─expenses
     │      │      page.tsx
     │      │
+    │      ├─gemini
+    │      │      page.tsx
+    │      │
     │      ├─issues
     │      │      page.tsx
     │      │
@@ -154,18 +174,26 @@
     │      index.ts
     │      useFilteredProjects.ts
     │      useProjectActions.ts
+    │      useProjectAdmin.ts
+    │      useProjectAnalytics.ts
     │      useProjectBudget.ts
     │      useProjectCalendar.ts
+    │      useProjectContracts.ts
     │      useProjectDocuments.ts
     │      useProjectErrorHandler.ts
     │      useProjectForm.ts
+    │      useProjectGemini.ts
     │      useProjectSchedule.ts
     │      useProjectState.ts
     │
     ├─services
+    │      adminService.ts
+    │      analyticsService.ts
     │      budgetService.ts
     │      calendarService.ts
+    │      contractService.ts
     │      documentService.ts
+    │      geminiService.ts
     │      index.ts
     │      issueService.ts
     │      journalService.ts
@@ -182,8 +210,12 @@
     │      index.ts
     │
     └─utils
+            adminUtils.ts
+            analyticsUtils.ts
             calendarUtils.ts
+            contractUtils.ts
             dateUtils.ts
+            geminiUtils.ts
             index.ts
             progressUtils.tsx
             projectUtils.ts

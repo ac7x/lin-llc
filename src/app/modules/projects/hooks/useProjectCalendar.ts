@@ -51,44 +51,43 @@ export function useProjectCalendar({
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [eventTypeFilter, setEventTypeFilter] = useState<string[]>([]);
 
-  // 載入日曆事件
-  const loadEvents = useCallback(async () => {
-    if (!projectId) return;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      const eventsData = await CalendarService.getProjectCalendarEvents(projectId);
-      setEvents(eventsData);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '載入日曆事件失敗';
-      setError(errorMessage);
-      console.error('載入日曆事件失敗:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projectId]);
-
-  // 手動刷新事件
-  const refreshEvents = useCallback(async () => {
-    await loadEvents();
-  }, [loadEvents]);
-
   // 初始化載入
   useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
+    const loadData = async () => {
+      if (!projectId) return;
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const eventsData = await CalendarService.getProjectCalendarEvents(projectId);
+        setEvents(eventsData);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '載入日曆事件失敗';
+        setError(errorMessage);
+        console.error('載入日曆事件失敗:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [projectId]);
 
   // 自動刷新
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh || !projectId) return;
 
-    const interval = setInterval(() => {
-      loadEvents();
+    const interval = setInterval(async () => {
+      try {
+        const eventsData = await CalendarService.getProjectCalendarEvents(projectId);
+        setEvents(eventsData);
+      } catch (err) {
+        console.error('自動刷新日曆事件失敗:', err);
+      }
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, loadEvents]);
+  }, [autoRefresh, refreshInterval, projectId]);
 
   // 計算今日事件
   const todayEvents = useMemo(() => {
@@ -149,6 +148,24 @@ export function useProjectCalendar({
     
     return events.filter(event => eventTypeFilter.includes(event.type));
   }, [events, eventTypeFilter]);
+
+  // 手動刷新事件
+  const refreshEvents = useCallback(async () => {
+    if (!projectId) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const eventsData = await CalendarService.getProjectCalendarEvents(projectId);
+      setEvents(eventsData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '載入日曆事件失敗';
+      setError(errorMessage);
+      console.error('載入日曆事件失敗:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId]);
 
   return {
     // 數據狀態

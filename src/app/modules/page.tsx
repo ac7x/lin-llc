@@ -1,12 +1,9 @@
 /**
- * 專案模組測試頁面
+ * 專案模組展示頁面
  * 
- * 展示 src/modules/projects 模組的所有功能，使用真實的 Firebase 服務串接
+ * 展示 src/modules/projects 模組的核心功能
  * - 組件展示
- * - Hooks 測試
- * - 服務層測試
- * - 工具函數測試
- * - 型別定義展示
+ * - 頁面功能預覽
  */
 
 'use client';
@@ -17,10 +14,9 @@ import { nanoid } from 'nanoid';
 import Link from 'next/link';
 
 import { useAuth } from '@/hooks/useAuth';
-
 import { cn, longClassName } from '@/utils/classNameUtils';
 
-// 導入專案模組的所有組件和功能
+// 導入專案模組的核心組件
 import {
   // 通用組件
   AddressSelector,
@@ -84,12 +80,6 @@ import {
   ProjectAnalysisDisplay,
 } from '@/app/modules/projects/components';
 
-// 導入 Hooks
-import {
-  useProjectForm,
-  useProjectErrorHandler,
-} from '@/app/modules/projects/hooks';
-
 // 導入服務
 import {
   ProjectService,
@@ -98,27 +88,16 @@ import {
   TemplateService,
 } from '@/app/modules/projects/services';
 
-// 導入工具函數和常數
+// 導入工具函數
 import {
   calculateProjectProgress,
   calculateProjectQualityScore,
-  calculateSchedulePerformanceIndex,
-  calculateCostPerformanceIndex,
-  analyzeProjectStatusTrend,
-  calculateProjectPriorityScore,
 } from '@/app/modules/projects/utils';
 
 import {
   ProgressBarWithPercent,
   ProjectHealthIndicator,
 } from '@/app/modules/projects/utils/progressUtils';
-
-import {
-  PROJECT_STATUS_OPTIONS,
-  PROJECT_TYPE_OPTIONS,
-  PROJECT_PRIORITY_OPTIONS,
-  PROJECT_RISK_LEVEL_OPTIONS,
-} from '@/app/modules/projects/constants';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 
@@ -159,50 +138,19 @@ export default function TestPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // 真實數據狀態
+  // 核心數據狀態
   const [projects, setProjects] = useState<ProjectDocument[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectDocument | null>(null);
   const [workPackages, setWorkPackages] = useState<WorkPackage[]>([]);
   const [subWorkPackages, setSubWorkPackages] = useState<SubWorkPackage[]>([]);
   const [issues, setIssues] = useState<IssueRecord[]>([]);
-  const [_setExpenses, setExpenses] = useState<Expense[]>([]);
-  const [_setMaterials, setMaterials] = useState<MaterialEntry[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [projectStats, setProjectStats] = useState<ProjectStatsType | null>(null);
   
-  // 表單狀態
-  const [showIssueForm, setShowIssueForm] = useState(false);
-  const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [showMaterialForm, setShowMaterialForm] = useState(false);
-  const [showTemplateForm, setShowTemplateForm] = useState(false);
-  const [showWorkPackageForm, setShowWorkPackageForm] = useState(false);
-  const [showSubWorkPackageForm, setShowSubWorkPackageForm] = useState(false);
-  
-  // 編輯狀態
-  const [editingIssue, setEditingIssue] = useState<IssueRecord | null>(null);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [editingMaterial, setEditingMaterial] = useState<MaterialEntry | null>(null);
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
-  const [editingWorkPackage, setEditingWorkPackage] = useState<WorkPackage | null>(null);
-  const [editingSubWorkPackage, setEditingSubWorkPackage] = useState<SubWorkPackage | null>(null);
-
   // 合約生成專案相關狀態
-  const [_contracts, setContracts] = useState<Array<{
-    id: string;
-    contractNumber: string;
-    contractName: string;
-    clientName: string;
-    contractValue: number;
-    startDate: Date;
-    endDate: Date;
-    description: string;
-  }>>([]);
   const [selectedContractId, setSelectedContractId] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [showProjectSetup, setShowProjectSetup] = useState(false);
-  const [_projectSetupData, setProjectSetupData] = useState<Record<string, string | number>>({});
-
-  // 合約生成專案相關狀態 - 使用真實 Firebase 數據
   const [importingId, setImportingId] = useState<string | null>(null);
   const [importMessage, setImportMessage] = useState<string>('');
 
@@ -244,25 +192,10 @@ export default function TestPage() {
       });
   }, [contractsSnapshot, existingContractIds]);
 
-  // 測試 hooks
-  const { formData, errors, handleInputChange, handleSubmit, resetForm } = useProjectForm({}, async (_data) => {
-    // 處理表單提交
-    console.log('表單數據:', _data);
-  });
-  const { handleError } = useProjectErrorHandler();
-
   const tabs = [
     { id: 'components', label: '組件展示' },
-    { id: 'data', label: '數據管理' },
     { id: 'pages', label: '頁面功能' },
-    { id: 'hooks', label: 'Hooks 測試' },
-    { id: 'services', label: '服務層測試' },
-    { id: 'utils', label: '工具函數' },
-    { id: 'types', label: '型別定義' },
-    { id: 'constants', label: '常數' },
-    { id: 'styles', label: '樣式' },
     { id: 'contract-generation', label: '合約生成專案' },
-    { id: 'forms', label: '表單測試' },
   ];
 
   // 載入專案詳細資料
@@ -278,16 +211,67 @@ export default function TestPage() {
       
       // 如果有工作包，載入第一個工作包的子工作包
       if (workPackagesData.length > 0) {
-        // 這裡需要實作載入子工作包的邏輯
         setSubWorkPackages([]);
       }
     } catch (err) {
-      handleError(err as Error, 'load_project_details');
+      console.error('載入專案詳細資料失敗:', err);
     }
-  }, [handleError]);
+  }, []);
 
-  // 載入專案數據
-  const loadProjects = useCallback(async () => {
+  // 初始化數據
+  useEffect(() => {
+    if (user) {
+      // 載入專案數據
+      const loadProjects = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const projectsData = await ProjectService.getAllProjects();
+          const projectsWithId = projectsData as ProjectDocument[];
+          setProjects(projectsWithId);
+          
+          if (projectsWithId.length > 0) {
+            setSelectedProject(projectsWithId[0]);
+            await loadProjectDetails(projectsWithId[0].id);
+          }
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : '載入專案失敗';
+          setError(errorMessage);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 載入統計資料
+      const loadStats = async () => {
+        try {
+          const stats = await ProjectService.getProjectStats();
+          setProjectStats(stats);
+        } catch (err) {
+          console.error('載入統計資料失敗:', err);
+        }
+      };
+
+      // 載入模板
+      const loadTemplates = async () => {
+        try {
+          const templatesData = await TemplateService.getAllTemplates();
+          setTemplates(templatesData);
+        } catch (err) {
+          console.error('載入模板失敗:', err);
+        }
+      };
+
+      loadProjects();
+      loadStats();
+      loadTemplates();
+    }
+  }, [user, loadProjectDetails]);
+
+  // 重新載入函數
+  const handleReload = useCallback(async () => {
+    if (!user) return;
+    
     setLoading(true);
     setError(null);
     try {
@@ -302,140 +286,10 @@ export default function TestPage() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '載入專案失敗';
       setError(errorMessage);
-      handleError(err as Error, 'load_projects');
     } finally {
       setLoading(false);
     }
-  }, [loadProjectDetails, handleError]);
-
-  // 載入統計資料
-  const loadStats = useCallback(async () => {
-    try {
-      const stats = await ProjectService.getProjectStats();
-      setProjectStats(stats);
-    } catch (err) {
-      handleError(err as Error, 'load_stats');
-    }
-  }, [handleError]);
-
-  // 載入模板
-  const loadTemplates = useCallback(async () => {
-    try {
-      const templatesData = await TemplateService.getAllTemplates();
-      setTemplates(templatesData);
-    } catch (err) {
-      handleError(err as Error, 'load_templates');
-    }
-  }, [handleError]);
-
-  // 載入合約資料
-  useEffect(() => {
-    setContracts([
-      {
-        id: 'contract-001',
-        contractNumber: 'CT-2024-001',
-        contractName: '台北市信義區辦公大樓新建工程',
-        clientName: '台北市政府',
-        contractValue: 15000000,
-        startDate: new Date('2024-01-15'),
-        endDate: new Date('2024-12-31'),
-        description: '信義區辦公大樓新建工程，包含基礎工程、結構工程、機電工程等'
-      },
-      {
-        id: 'contract-002',
-        contractNumber: 'CT-2024-002',
-        contractName: '新北市板橋區住宅社區工程',
-        clientName: '新北市政府',
-        contractValue: 25000000,
-        startDate: new Date('2024-02-01'),
-        endDate: new Date('2025-06-30'),
-        description: '板橋區住宅社區工程，包含多棟住宅大樓及公共設施'
-      },
-      {
-        id: 'contract-003',
-        contractNumber: 'CT-2024-003',
-        contractName: '桃園市機場捷運站體工程',
-        clientName: '桃園市政府',
-        contractValue: 35000000,
-        startDate: new Date('2024-03-01'),
-        endDate: new Date('2025-12-31'),
-        description: '機場捷運站體工程，包含站體結構、機電設備、裝修工程等'
-      }
-    ]);
-  }, []);
-
-  // 初始化數據
-  useEffect(() => {
-    if (user) {
-      loadProjects();
-      loadStats();
-      loadTemplates();
-    }
-  }, [user, loadProjects, loadStats, loadTemplates]);
-
-  // 處理新增問題
-  const handleCreateIssue = async (issueData: Omit<IssueRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!selectedProject) return;
-    
-    setLoading(true);
-    try {
-      await IssueService.createIssue(issueData);
-      await loadProjectDetails(selectedProject.id);
-      setShowIssueForm(false);
-      setEditingIssue(null);
-    } catch (err) {
-      handleError(err as Error, 'create_issue');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 處理編輯問題
-  const handleEditIssue = async (issueData: Partial<IssueRecord>) => {
-    if (!editingIssue) return;
-    
-    setLoading(true);
-    try {
-      await IssueService.updateIssue(editingIssue.id, issueData);
-      await loadProjectDetails(selectedProject!.id);
-      setShowIssueForm(false);
-      setEditingIssue(null);
-    } catch (err) {
-      handleError(err as Error, 'update_issue');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 處理刪除問題
-  const handleDeleteIssue = async (issueId: string) => {
-    if (!selectedProject) return;
-    
-    setLoading(true);
-    try {
-      await IssueService.deleteIssue(issueId);
-      await loadProjectDetails(selectedProject.id);
-    } catch (err) {
-      handleError(err as Error, 'delete_issue');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 處理問題狀態變更
-  const handleIssueStatusChange = async (issueId: string, status: 'open' | 'in-progress' | 'resolved') => {
-    if (!selectedProject) return;
-    
-    setLoading(true);
-    try {
-      await IssueService.updateIssue(issueId, { status });
-      await loadProjectDetails(selectedProject.id);
-    } catch (err) {
-      handleError(err as Error, 'update_issue_status');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, loadProjectDetails]);
 
   // 合約生成專案相關函數
   const handleContractSelect = (contractId: string) => {
@@ -453,14 +307,9 @@ export default function TestPage() {
       return [];
     }
 
-    // 將合約項目轉換為工作包
     return contractItems.map(item => {
-      const id = nanoid(8); // 使用 nanoid 生成唯一 ID
-      
-      // 計算總價：單價 × 數量
+      const id = nanoid(8);
       const totalPrice = item.contractItemPrice * item.contractItemQuantity;
-      
-      // 建立更詳細的工作包名稱和描述
       const workPackageName = `項目 ${item.contractItemId}`;
       const workPackageDescription = `合約項目 ${item.contractItemId} - 數量: ${item.contractItemQuantity}${item.contractItemWeight ? `, 權重: ${item.contractItemWeight}` : ''}`;
 
@@ -472,12 +321,11 @@ export default function TestPage() {
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        budget: totalPrice, // 使用總價（單價 × 數量）
-        quantity: item.contractItemQuantity, // 添加缺少的 quantity 屬性
+        budget: totalPrice,
+        quantity: item.contractItemQuantity,
         category: '合約項目',
         priority: 'medium',
         subPackages: [],
-        // 可以根據權重設定優先級
         ...(item.contractItemWeight && item.contractItemWeight > 0.7 ? { priority: 'high' as const } : {}),
         ...(item.contractItemWeight && item.contractItemWeight < 0.3 ? { priority: 'low' as const } : {}),
       };
@@ -487,10 +335,7 @@ export default function TestPage() {
   };
 
   const handleProjectSetupSubmit = async (data: Record<string, string | number>) => {
-    setProjectSetupData(data);
-    
     const selectedContract = contractRows.find(c => c.id === selectedContractId);
-    const _selectedTemplate = templates.find(t => t.id === selectedTemplateId);
     
     if (!selectedContract) {
       alert('未找到選擇的合約');
@@ -501,19 +346,16 @@ export default function TestPage() {
     setImportMessage('');
     
     await safeAsync(async () => {
-      // 取得合約項目並轉換為工作包
       const contractItems = (selectedContract.raw.contractItems as ContractItem[]) || [];
       const workPackages = convertContractItemsToWorkPackages(contractItems);
 
-      // 預設一個基本的分解資料，包含必要的節點欄位與可選欄位
       const decomposition = {
         nodes: [
           {
-            id: 'root', // 節點唯一識別碼
-            type: 'custom', // 可選欄位：節點類型
-            position: { x: 0, y: 50 }, // 節點座標，x=0 貼齊左邊
-            data: { label: selectedContract.name || '專案分解' }, // 自訂資料型別，至少含 label
-            // ...其他可選欄位如 width, height 等...
+            id: 'root',
+            type: 'custom',
+            position: { x: 0, y: 50 },
+            data: { label: selectedContract.name || '專案分解' },
           },
         ],
         edges: [],
@@ -522,16 +364,14 @@ export default function TestPage() {
       const projectData = {
         projectName: data.projectName as string,
         contractId: selectedContract.id,
-        owner: user?.uid || 'default', // 設置專案擁有者
+        owner: user?.uid || 'default',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         status: 'planning' as const,
-        decomposition, // 專案分解資料
-        workPackages, // 將合約項目轉換後的工作包列表
-        // 初始化品質分數
-        qualityScore: 10, // 初始品質分數為 10
-        lastQualityAdjustment: Timestamp.now(), // 設置品質分數調整時間
-        // 從專案設定表單獲得的資料
+        decomposition,
+        workPackages,
+        qualityScore: 10,
+        lastQualityAdjustment: Timestamp.now(),
         manager: data.manager as string,
         inspector: data.inspector as string,
         safety: data.safety as string,
@@ -549,13 +389,13 @@ export default function TestPage() {
       setImportMessage(`已成功由合約建立專案，合約ID: ${selectedContract.id}`);
       
       // 重新載入專案列表
-      await loadProjects();
+      const projectsData = await ProjectService.getAllProjects();
+      const projectsWithId = projectsData as ProjectDocument[];
+      setProjects(projectsWithId);
       
-      // 重置狀態
       setShowProjectSetup(false);
       setSelectedContractId('');
       setSelectedTemplateId('');
-      setProjectSetupData({});
     }, (error) => {
       setImportMessage(`建立失敗: ${getErrorMessage(error)}`);
       logError(error, { operation: 'import_project', contractId: selectedContract.id });
@@ -568,7 +408,6 @@ export default function TestPage() {
     setShowProjectSetup(false);
     setSelectedContractId('');
     setSelectedTemplateId('');
-    setProjectSetupData({});
     setImportMessage('');
   };
 
@@ -603,7 +442,7 @@ export default function TestPage() {
       >
         <div className="flex space-x-2">
           <button
-            onClick={loadProjects}
+            onClick={handleReload}
             disabled={loading}
             className={projectStyles.button.outline}
           >
@@ -768,7 +607,9 @@ export default function TestPage() {
                   <SubWorkPackageList
                     subWorkPackages={data}
                     workPackageId={workPackages[0]?.id || ''}
-                    onAddSubWorkPackage={() => setShowSubWorkPackageForm(true)}
+                    onAddSubWorkPackage={() => {
+                      // 處理新增子工作包
+                    }}
                     onEditSubWorkPackage={(_subWorkPackage) => {
                       // 處理編輯
                     }}
@@ -888,7 +729,9 @@ export default function TestPage() {
                 <h4 className="font-medium mb-4">問題追蹤器</h4>
                 <IssueTracker
                   issues={issues}
-                  onAddIssue={() => setShowIssueForm(true)}
+                  onAddIssue={() => {
+                    // 處理新增問題
+                  }}
                   onEditIssue={(_issue) => {
                     // 處理編輯
                   }}
@@ -1158,171 +1001,6 @@ export default function TestPage() {
       )}
 
       {/* 數據管理 */}
-      {activeTab === 'data' && (
-        <div className="space-y-8">
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              問題管理
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">專案問題</h4>
-                <button
-                  onClick={() => setShowIssueForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  新增問題
-                </button>
-              </div>
-              
-              <DataLoader
-                loading={loading}
-                error={error ? new Error(error) : null}
-                data={issues}
-              >
-                {(data) => (
-                  <IssueList
-                    issues={data}
-                    onEdit={(issue) => {
-                      setEditingIssue(issue);
-                      setShowIssueForm(true);
-                    }}
-                    onDelete={handleDeleteIssue}
-                    onAdd={() => setShowIssueForm(true)}
-                    onStatusChange={handleIssueStatusChange}
-                    isLoading={loading}
-                  />
-                )}
-              </DataLoader>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              費用管理
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">專案費用</h4>
-                <button
-                  onClick={() => setShowExpenseForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  新增費用
-                </button>
-              </div>
-              
-              <DataLoader
-                loading={loading}
-                error={error ? new Error(error) : null}
-                data={[]}
-              >
-                {(_data) => (
-                  <ExpenseList
-                    expenses={[]}
-                    onEdit={(_expense) => {
-                      // 處理編輯費用
-                    }}
-                    onDelete={async (_expenseId) => {
-                      // 處理刪除費用
-                    }}
-                    onAdd={() => setShowExpenseForm(true)}
-                    isLoading={loading}
-                  />
-                )}
-              </DataLoader>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              材料管理
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">專案材料</h4>
-                <button
-                  onClick={() => setShowMaterialForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  新增材料
-                </button>
-              </div>
-              
-              <DataLoader
-                loading={loading}
-                error={error ? new Error(error) : null}
-                data={[]}
-              >
-                {(_data) => (
-                  <MaterialList
-                    materials={[]}
-                    onEdit={(_material) => {
-                      // 處理編輯材料
-                    }}
-                    onDelete={async (_materialId) => {
-                      // 處理刪除材料
-                    }}
-                    onAdd={() => setShowMaterialForm(true)}
-                    isLoading={loading}
-                  />
-                )}
-              </DataLoader>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              模板管理
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">專案模板</h4>
-                <button
-                  onClick={() => setShowTemplateForm(true)}
-                  className={projectStyles.button.primary}
-                >
-                  新增模板
-                </button>
-              </div>
-              
-              <DataLoader
-                loading={loading}
-                error={error ? new Error(error) : null}
-                data={templates}
-              >
-                {(data) => (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.map((template) => (
-                      <TemplateCard
-                        key={template.id}
-                        template={template}
-                        onEdit={(template) => {
-                          setEditingTemplate(template);
-                          setShowTemplateForm(true);
-                        }}
-                        onDelete={async (templateId) => {
-                          try {
-                            await TemplateService.deleteTemplate(templateId);
-                            await loadTemplates();
-                          } catch (err) {
-                            handleError(err as Error, 'delete_template');
-                          }
-                        }}
-                        onSelect={(_template) => {
-                          // 處理模板選擇
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </DataLoader>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* 頁面功能測試 */}
       {activeTab === 'pages' && (
         <div className="space-y-8">
           <section>
@@ -1719,300 +1397,52 @@ export default function TestPage() {
                     </Link>
                   </div>
                 </div>
+
+                {/* 個人資料頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/profile"
+                      title="個人資料頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">個人資料</span>
+                    <Link
+                      href="/modules/projects/features/profile"
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
+
+                {/* 登入頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/signin"
+                      title="登入頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">登入</span>
+                    <Link
+                      href="/modules/projects/features/signin"
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
               </div>
             </section>
-          </section>
-        </div>
-      )}
-
-      {/* Hooks 測試 */}
-      {activeTab === 'hooks' && (
-        <div className="space-y-6">
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案表單 Hook
-            </h3>
-            <div className="p-4 border rounded-lg space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  專案名稱
-                </label>
-                <input
-                  type="text"
-                  value={formData.projectName || ''}
-                  onChange={(e) => handleInputChange('projectName', e.target.value)}
-                  className={projectStyles.form.input}
-                />
-                {errors.projectName && (
-                  <p className="text-sm text-red-600 mt-1">{errors.projectName}</p>
-                )}
-              </div>
-              <button
-                onClick={() => {
-                  // 表單驗證和提交
-                  console.log('表單數據:', formData);
-                }}
-                className={projectStyles.button.primary}
-              >
-                驗證表單
-              </button>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              錯誤處理 Hook
-            </h3>
-            <div className="p-4 border rounded-lg space-y-4">
-              <button
-                onClick={() => {
-                  try {
-                    throw new Error('測試錯誤');
-                  } catch (error) {
-                    handleError(error as Error, 'test_operation');
-                  }
-                }}
-                className={projectStyles.button.danger}
-              >
-                觸發測試錯誤
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* 服務層測試 */}
-      {activeTab === 'services' && (
-        <div className="space-y-6">
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案服務
-            </h3>
-            <div className="p-4 border rounded-lg space-y-4">
-              <button
-                onClick={async () => {
-                  try {
-                    const stats = await ProjectService.getProjectStats();
-                    alert(`總專案數: ${stats.totalProjects}`);
-                  } catch (error) {
-                    handleError(error as Error, 'get_project_stats');
-                  }
-                }}
-                className={projectStyles.button.primary}
-              >
-                取得專案統計
-              </button>
-              
-              <button
-                onClick={async () => {
-                  try {
-                    const allProjects = await ProjectService.getAllProjects();
-                    alert(`載入 ${allProjects.length} 個專案`);
-                  } catch (error) {
-                    handleError(error as Error, 'get_all_projects');
-                  }
-                }}
-                className={projectStyles.button.secondary}
-              >
-                取得所有專案
-              </button>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              工作包服務
-            </h3>
-            <div className="p-4 border rounded-lg space-y-4">
-              <button
-                onClick={async () => {
-                  if (!selectedProject) {
-                    alert('請先選擇專案');
-                    return;
-                  }
-                  try {
-                    const workPackages = await WorkPackageService.getWorkPackagesByProject(selectedProject.id);
-                    alert(`載入 ${workPackages.length} 個工作包`);
-                  } catch (error) {
-                    handleError(error as Error, 'get_workPackages');
-                  }
-                }}
-                className={projectStyles.button.primary}
-              >
-                取得專案工作包
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* 工具函數 */}
-      {activeTab === 'utils' && (
-        <div className="space-y-6">
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              進度計算
-            </h3>
-            <div className="p-4 border rounded-lg space-y-4">
-              {selectedProject && (
-                <>
-                  <div>
-                    <p>專案進度: {calculateProjectProgress(selectedProject)}%</p>
-                    <ProgressBarWithPercent percent={calculateProjectProgress(selectedProject)} />
-                  </div>
-                  <div>
-                    <p>品質分數: {calculateProjectQualityScore(selectedProject)}</p>
-                    <ProjectHealthIndicator project={selectedProject} />
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案分析
-            </h3>
-            <div className="p-4 border rounded-lg space-y-2">
-              {selectedProject && (
-                <>
-                  <p>時程績效指數: {calculateSchedulePerformanceIndex(selectedProject)}</p>
-                  <p>成本績效指數: {calculateCostPerformanceIndex(selectedProject)}</p>
-                  <p>專案優先級分數: {calculateProjectPriorityScore(selectedProject)}</p>
-                  <p>狀態趨勢: {analyzeProjectStatusTrend(selectedProject).trend}</p>
-                </>
-              )}
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* 型別定義 */}
-      {activeTab === 'types' && (
-        <div className="space-y-6">
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案型別
-            </h3>
-            <div className="p-4 border rounded-lg space-y-2">
-              <p><strong>ProjectDocument:</strong> 專案主要型別（包含 id）</p>
-              <p><strong>WorkPackage:</strong> 工作包型別</p>
-              <p><strong>SubWorkPackage:</strong> 子工作包型別</p>
-              <p><strong>IssueRecord:</strong> 問題記錄型別</p>
-              <p><strong>Expense:</strong> 費用型別</p>
-              <p><strong>MaterialEntry:</strong> 材料型別</p>
-              <p><strong>Template:</strong> 模板型別</p>
-              <p><strong>ProjectMilestone:</strong> 里程碑型別</p>
-              <p><strong>ProjectRisk:</strong> 風險型別</p>
-              <p><strong>ProjectChange:</strong> 變更型別</p>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              狀態型別
-            </h3>
-            <div className="p-4 border rounded-lg space-y-2">
-              <p><strong>ProjectStatus:</strong> planning | approved | in-progress | on-hold | completed | cancelled | archived</p>
-              <p><strong>ProjectType:</strong> system | maintenance | transport</p>
-              <p><strong>PriorityLevel:</strong> low | medium | high | critical</p>
-              <p><strong>SeverityLevel:</strong> low | medium | high</p>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* 常數 */}
-      {activeTab === 'constants' && (
-        <div className="space-y-6">
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案常數
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">專案狀態選項</h4>
-                <ul className="text-sm space-y-1">
-                  {PROJECT_STATUS_OPTIONS.map(option => (
-                    <li key={option.value}>{option.label}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">專案類型選項</h4>
-                <ul className="text-sm space-y-1">
-                  {PROJECT_TYPE_OPTIONS.map(option => (
-                    <li key={option.value}>{option.label}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">優先級選項</h4>
-                <ul className="text-sm space-y-1">
-                  {PROJECT_PRIORITY_OPTIONS.map(option => (
-                    <li key={option.value}>{option.label}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">風險等級選項</h4>
-                <ul className="text-sm space-y-1">
-                  {PROJECT_RISK_LEVEL_OPTIONS.map(option => (
-                    <li key={option.value}>{option.label}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* 樣式 */}
-      {activeTab === 'styles' && (
-        <div className="space-y-6">
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              專案樣式
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">按鈕樣式</h4>
-                <div className="space-x-2">
-                  <button className={projectStyles.button.primary}>主要按鈕</button>
-                  <button className={projectStyles.button.secondary}>次要按鈕</button>
-                  <button className={projectStyles.button.outline}>外框按鈕</button>
-                  <button className={projectStyles.button.small}>小按鈕</button>
-                </div>
-              </div>
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">表單樣式</h4>
-                <div className="space-y-2">
-                  <input 
-                    type="text" 
-                    placeholder="輸入文字" 
-                    className={projectStyles.form.input}
-                  />
-                  <select className={projectStyles.form.select}>
-                    <option>選項 1</option>
-                    <option>選項 2</option>
-                  </select>
-                </div>
-              </div>
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">卡片樣式</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className={projectStyles.card.base}>
-                    <div className="p-4">基本卡片</div>
-                  </div>
-                  <div className={projectStyles.card.stats}>
-                    <div className="p-4">統計卡片</div>
-                  </div>
-                  <div className={projectStyles.card.stats}>
-                    <div className="p-4">統計卡片</div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </section>
         </div>
       )}
@@ -2154,275 +1584,6 @@ export default function TestPage() {
           </section>
         </div>
       )}
-
-      {/* 表單測試 */}
-      {activeTab === 'forms' && (
-        <div className="space-y-8">
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              表單組件測試
-            </h3>
-            
-            {/* 工作包表單 */}
-            <div className="mb-8 p-6 border rounded-lg">
-              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                工作包表單
-              </h4>
-              <WorkPackageForm
-                onSubmit={async (_data) => {
-                  // 處理提交
-                }}
-                onCancel={() => {
-                  // 處理取消
-                }}
-              />
-            </div>
-
-            {/* 子工作包表單 */}
-            <div className="mb-8 p-6 border rounded-lg">
-              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                子工作包表單
-              </h4>
-              <SubWorkPackageForm
-                onSubmit={async (_data) => {
-                  // 處理提交
-                }}
-                onCancel={() => {
-                  // 處理取消
-                }}
-              />
-            </div>
-
-            {/* 問題表單 */}
-            <div className="mb-8 p-6 border rounded-lg">
-              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                問題表單
-              </h4>
-              <IssueForm
-                onSubmit={handleCreateIssue}
-                onCancel={() => setShowIssueForm(false)}
-                isLoading={false}
-              />
-            </div>
-
-            {/* 日誌表單 */}
-            <div className="mb-8 p-6 border rounded-lg">
-              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                日誌表單
-              </h4>
-              <JournalForm
-                projectId={selectedProject?.id || ''}
-                projectData={selectedProject || {}}
-                weatherData={{
-                  weather: '晴天',
-                  temperature: 25,
-                  rainfall: 0,
-                }}
-                onSubmit={async (_data) => {
-                  // 處理提交
-                }}
-                onCancel={() => {
-                  // 處理取消
-                }}
-              />
-            </div>
-
-            {/* 費用表單 */}
-            <div className="mb-8 p-6 border rounded-lg">
-              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                費用表單
-              </h4>
-              <ExpenseForm
-                onSubmit={async (_expenseData) => {
-                  // 處理提交
-                }}
-                onCancel={() => {
-                  // 處理取消
-                }}
-                isLoading={false}
-              />
-            </div>
-
-            {/* 材料表單 */}
-            <div className="mb-8 p-6 border rounded-lg">
-              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                材料表單
-              </h4>
-              <MaterialForm
-                onSubmit={async (_materialData) => {
-                  // 處理提交
-                }}
-                onCancel={() => {
-                  // 處理取消
-                }}
-                isLoading={false}
-              />
-            </div>
-
-            {/* 模板表單 */}
-            <div className="mb-8 p-6 border rounded-lg">
-              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                模板表單
-              </h4>
-              <TemplateForm
-                onSubmit={async (_templateData) => {
-                  // 處理提交
-                  return Promise.resolve();
-                }}
-                onCancel={() => {
-                  // 處理取消
-                }}
-                isLoading={false}
-              />
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* 表單模態框 */}
-      {showIssueForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <IssueForm
-              issue={editingIssue || undefined}
-              onSubmit={editingIssue ? handleEditIssue : handleCreateIssue}
-              onCancel={() => {
-                setShowIssueForm(false);
-                setEditingIssue(null);
-              }}
-              isLoading={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showExpenseForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <ExpenseForm
-              expense={editingExpense || undefined}
-              onSubmit={async (expenseData) => {
-                try {
-                  // 這裡需要實作費用服務
-                  setShowExpenseForm(false);
-                  setEditingExpense(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_expense');
-                }
-              }}
-              onCancel={() => {
-                setShowExpenseForm(false);
-                setEditingExpense(null);
-              }}
-              isLoading={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showMaterialForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <MaterialForm
-              material={editingMaterial || undefined}
-              onSubmit={async (materialData) => {
-                try {
-                  // 這裡需要實作材料服務
-                  setShowMaterialForm(false);
-                  setEditingMaterial(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_material');
-                }
-              }}
-              onCancel={() => {
-                setShowMaterialForm(false);
-                setEditingMaterial(null);
-              }}
-              isLoading={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showTemplateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <TemplateForm
-              template={editingTemplate}
-              onSubmit={async (templateData) => {
-                try {
-                  if (editingTemplate) {
-                    await TemplateService.updateTemplate(editingTemplate.id, templateData);
-                  } else {
-                    await TemplateService.createTemplate(templateData);
-                  }
-                  await loadTemplates();
-                  setShowTemplateForm(false);
-                  setEditingTemplate(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_template');
-                }
-              }}
-              onCancel={() => {
-                setShowTemplateForm(false);
-                setEditingTemplate(null);
-              }}
-              isLoading={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showWorkPackageForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <WorkPackageForm
-              workPackage={editingWorkPackage || undefined}
-              onSubmit={async (workPackageData) => {
-                try {
-                  // 這裡需要實作工作包服務
-                  setShowWorkPackageForm(false);
-                  setEditingWorkPackage(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_workPackage');
-                }
-              }}
-              onCancel={() => {
-                setShowWorkPackageForm(false);
-                setEditingWorkPackage(null);
-              }}
-              isSubmitting={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showSubWorkPackageForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <SubWorkPackageForm
-              subWorkPackage={editingSubWorkPackage || undefined}
-              onSubmit={async (subWorkPackageData) => {
-                try {
-                  // 這裡需要實作子工作包服務
-                  setShowSubWorkPackageForm(false);
-                  setEditingSubWorkPackage(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_subworkPackage');
-                }
-              }}
-              onCancel={() => {
-                setShowSubWorkPackageForm(false);
-                setEditingSubWorkPackage(null);
-              }}
-              isSubmitting={loading}
-            />
-          </div>
-        </div>
-      )}
-
-
-
     </PageContainer>
   );
 }
