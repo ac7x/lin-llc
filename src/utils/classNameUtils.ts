@@ -35,9 +35,31 @@ export const longClassName = (classes: string[]): string => {
   const filteredClasses = classes
     .filter(Boolean)
     .map(cls => {
-      // 如果單個 className 超過 100 字元，進行分割
-      if (cls.length > 100) {
-        return cls.split(' ').join(' ');
+      // 如果單個 className 超過 80 字元，進行分割
+      if (cls.length > 80) {
+        // 按空格分割並重新組合，確保每個片段不會太長
+        const words = cls.split(' ');
+        const chunks: string[] = [];
+        let currentChunk = '';
+        
+        for (const word of words) {
+          if ((currentChunk + ' ' + word).length > 80) {
+            if (currentChunk) {
+              chunks.push(currentChunk.trim());
+              currentChunk = word;
+            } else {
+              chunks.push(word);
+            }
+          } else {
+            currentChunk += (currentChunk ? ' ' : '') + word;
+          }
+        }
+        
+        if (currentChunk) {
+          chunks.push(currentChunk.trim());
+        }
+        
+        return chunks.join(' ');
       }
       return cls;
     });

@@ -92,8 +92,9 @@ export const getSubWorkpackagesByWorkpackageId = async (workpackageId: string): 
   try {
     const q = query(
       collection(db, SUBWORKPACKAGE_COLLECTION),
-      where('workpackageId', '==', workpackageId),
-      orderBy('createdAt', 'asc')
+      where('workpackageId', '==', workpackageId)
+      // 暫時移除 orderBy 以避免索引需求
+      // orderBy('createdAt', 'asc')
     );
 
     const querySnapshot = await getDocs(q);
@@ -115,7 +116,21 @@ export const getSubWorkpackagesByWorkpackageId = async (workpackageId: string): 
       } as SubWorkPackage);
     });
 
-    return subWorkpackages;
+    // 在記憶體中按創建時間排序
+    return subWorkpackages.sort((a, b) => {
+      const getDate = (dateField: any): Date => {
+        if (dateField instanceof Date) return dateField;
+        if (dateField && typeof dateField === 'string') return new Date(dateField);
+        if (dateField && typeof dateField === 'object' && 'toDate' in dateField) {
+          return dateField.toDate();
+        }
+        return new Date(0);
+      };
+      
+      const dateA = getDate(a.createdAt);
+      const dateB = getDate(b.createdAt);
+      return dateA.getTime() - dateB.getTime();
+    });
   } catch (error) {
     console.error('查詢子工作包時發生錯誤:', error);
     throw new Error('查詢子工作包失敗');

@@ -94,24 +94,46 @@ const isClient = typeof window !== 'undefined';
 // 只在客戶端初始化需要 navigator 的服務
 if (isClient) {
   safeAsync(async () => {
-    analytics = getAnalytics(app);
-    
-    // Performance 初始化，添加錯誤處理
+    // Analytics 初始化
     try {
-      performance = getPerformance(app);
+      const analyticsSupported = await isAnalyticsSupported();
+      if (analyticsSupported) {
+        analytics = getAnalytics(app);
+      }
+    } catch (error) {
+      logError(error, { operation: 'initialize_analytics' });
+    }
+    
+    // Performance 初始化，添加更嚴格的錯誤處理
+    try {
+      // 檢查是否支援 Performance API
+      if ('performance' in window && typeof window.performance.mark === 'function') {
+        performance = getPerformance(app);
+      } else {
+        console.warn('Firebase Performance: 瀏覽器不支援 Performance API');
+      }
     } catch (error) {
       // 如果 Performance 初始化失敗，記錄錯誤但不中斷應用
       logError(error, { operation: 'initialize_performance' });
       performance = null;
     }
     
-    remoteConfig = getRemoteConfig(app);
+    // Remote Config 初始化
+    try {
+      remoteConfig = getRemoteConfig(app);
+    } catch (error) {
+      logError(error, { operation: 'initialize_remote_config' });
+    }
 
     // App Check 初始化
-    appCheck = initializeAppCheck(firebaseApp, {
-      provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
-      isTokenAutoRefreshEnabled: true,
-    });
+    try {
+      appCheck = initializeAppCheck(firebaseApp, {
+        provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch (error) {
+      logError(error, { operation: 'initialize_app_check' });
+    }
   }, (error) => {
     logError(error, { operation: 'initialize_client_services' });
     // 不拋出錯誤，讓應用繼續運行

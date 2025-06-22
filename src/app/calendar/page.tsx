@@ -29,6 +29,7 @@ import {
 } from '@/utils/calendarUtils';
 import { getProgressInfo, ProgressColorScale } from '@/utils/colorUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { cn, longClassName } from '@/utils/classNameUtils';
 
 export default function ProjectCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -264,7 +265,14 @@ ${progressText}`);
 
         <div
           ref={calendarContainerRef}
-          className={`bg-white dark:bg-gray-900 rounded-lg shadow p-4 mb-6${isFullscreen ? ' fixed inset-0 z-50 !rounded-none !mb-0 !p-0 !max-w-none !h-screen' : ''}`}
+          className={cn(
+            longClassName([
+              'bg-white dark:bg-gray-900 rounded-lg shadow p-4 mb-6'
+            ]),
+            isFullscreen && longClassName([
+              'fixed inset-0 z-50 !rounded-none !mb-0 !p-0 !max-w-none !h-screen'
+            ])
+          )}
           style={{ height: isFullscreen ? '100vh' : '700px' }}
         >
           <Calendar
