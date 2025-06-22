@@ -33,6 +33,9 @@ import { STATUS_LABELS, STATUS_COLORS } from '@/app/modules/projects/constants/s
 interface WorkPackageListProps {
   workPackages: WorkPackage[];
   projectId: string;
+  onAddWorkPackage?: () => void;
+  onEditWorkPackage?: (workPackage: WorkPackage) => void;
+  onDeleteWorkPackage?: (workPackageId: string) => void;
 }
 
 const getWorkPackageProgress = (wp: WorkPackage): number => {
@@ -57,10 +60,14 @@ const getStatusColor = (status: string): string => {
 
 const SortableWorkPackageItem = ({ 
   workPackage, 
-  projectId 
+  projectId,
+  onEditWorkPackage,
+  onDeleteWorkPackage,
 }: { 
   workPackage: WorkPackage; 
-  projectId: string; 
+  projectId: string;
+  onEditWorkPackage?: (workPackage: WorkPackage) => void;
+  onDeleteWorkPackage?: (workPackageId: string) => void;
 }) => {
   const {
     attributes,
@@ -119,24 +126,30 @@ const SortableWorkPackageItem = ({
         </div>
 
         <div className="flex space-x-2">
-          <button
-            className={cn(buttonStyles.secondary, 'text-sm')}
-            onClick={(e) => {
-              e.stopPropagation();
-              // 處理編輯工作包
-            }}
-          >
-            編輯
-          </button>
-          <button
-            className={cn(buttonStyles.secondary, 'text-sm')}
-            onClick={(e) => {
-              e.stopPropagation();
-              // 處理查看詳情
-            }}
-          >
-            詳情
-          </button>
+          {onEditWorkPackage && (
+            <button
+              className={cn(buttonStyles.secondary, 'text-sm')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditWorkPackage(workPackage);
+              }}
+            >
+              編輯
+            </button>
+          )}
+          {onDeleteWorkPackage && (
+            <button
+              className={cn(buttonStyles.secondary, 'text-sm')}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm('確定要刪除這個工作包嗎？')) {
+                  onDeleteWorkPackage(workPackage.id);
+                }
+              }}
+            >
+              刪除
+            </button>
+          )}
         </div>
       </div>
 
@@ -162,7 +175,13 @@ const SortableWorkPackageItem = ({
   );
 };
 
-export default function WorkPackageList({ workPackages, projectId }: WorkPackageListProps) {
+export default function WorkPackageList({ 
+  workPackages, 
+  projectId,
+  onAddWorkPackage,
+  onEditWorkPackage,
+  onDeleteWorkPackage,
+}: WorkPackageListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -195,9 +214,14 @@ export default function WorkPackageList({ workPackages, projectId }: WorkPackage
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">尚無工作包</p>
-        <button className={cn(buttonStyles.primary, 'mt-4')}>
-          新增工作包
-        </button>
+        {onAddWorkPackage && (
+          <button 
+            className={cn(buttonStyles.primary, 'mt-4')}
+            onClick={onAddWorkPackage}
+          >
+            新增工作包
+          </button>
+        )}
       </div>
     );
   }
@@ -208,9 +232,14 @@ export default function WorkPackageList({ workPackages, projectId }: WorkPackage
         <h3 className="text-lg font-semibold text-gray-900">
           工作包列表 ({workPackages.length})
         </h3>
-        <button className={buttonStyles.primary}>
-          新增工作包
-        </button>
+        {onAddWorkPackage && (
+          <button 
+            className={buttonStyles.primary}
+            onClick={onAddWorkPackage}
+          >
+            新增工作包
+          </button>
+        )}
       </div>
 
       <DndContext
@@ -227,6 +256,8 @@ export default function WorkPackageList({ workPackages, projectId }: WorkPackage
               key={workPackage.id || ''}
               workPackage={workPackage}
               projectId={projectId}
+              onEditWorkPackage={onEditWorkPackage}
+              onDeleteWorkPackage={onDeleteWorkPackage}
             />
           ))}
         </SortableContext>

@@ -14,32 +14,45 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-import { PageContainer, PageHeader } from '@/app/modules/projects/components/common';
+import { PageContainer, PageHeader, LoadingSpinner } from '@/app/modules/projects/components/common';
+import { TemplateForm } from '@/app/modules/projects/components/templates';
 import { TemplateService } from '@/app/modules/projects/services/templateService';
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { Template } from '@/app/modules/projects/types';
+import { useAuth } from '@/hooks/useAuth';
+import { getErrorMessage, logError, safeAsync } from '@/utils/errorUtils';
 
 export default function TemplatesPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // 表單狀態
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // 載入模板資料
-  useEffect(() => {
-    const loadTemplates = async () => {
-      try {
-        setIsLoading(true);
-        const templatesData = await TemplateService.getAllTemplates();
-        setTemplates(templatesData);
-      } catch (error) {
-        // 錯誤處理已由 DataLoader 組件處理
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadTemplates = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const templatesData = await TemplateService.getAllTemplates();
+      setTemplates(templatesData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '載入模板失敗';
+      setError(errorMessage);
+      logError(err as Error, { operation: 'load_templates' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadTemplates();
   }, []);
 
@@ -54,36 +67,89 @@ export default function TemplatesPage() {
   // 獲取所有分類
   const categories = ['all', ...Array.from(new Set(templates.map(t => t.category)))];
 
+  // 處理新增模板
   const handleCreateTemplate = () => {
-    router.push('/projects/templates/create');
+    setEditingTemplate(null);
+    setShowTemplateForm(true);
   };
 
+  // 處理編輯模板
   const handleEditTemplate = (templateId: string) => {
-    router.push(`/projects/templates/${templateId}/edit`);
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setEditingTemplate(template);
+      setShowTemplateForm(true);
+    }
   };
 
+  // 處理刪除模板
   const handleDeleteTemplate = async (templateId: string) => {
     if (!confirm('確定要刪除此模板嗎？此操作無法復原。')) {
       return;
     }
 
     try {
+      setSubmitting(true);
       await TemplateService.deleteTemplate(templateId);
-      setTemplates(prev => prev.filter(template => template.id !== templateId));
-    } catch (error) {
-      // 錯誤處理已由 DataLoader 組件處理
+      await loadTemplates();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '刪除模板失敗';
+      setError(errorMessage);
+      logError(err as Error, { operation: 'delete_template', templateId });
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  // 處理模板提交
+  const handleTemplateSubmit = async (templateData: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!user) {
+      setError('請先登入');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      if (editingTemplate) {
+        await TemplateService.updateTemplate(editingTemplate.id, templateData);
+      } else {
+        await TemplateService.createTemplate({
+          ...templateData,
+          createdBy: user.uid,
+        });
+      }
+
+      await loadTemplates();
+      setShowTemplateForm(false);
+      setEditingTemplate(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '儲存模板失敗';
+      setError(errorMessage);
+      logError(err as Error, { operation: 'save_template', templateId: editingTemplate?.id });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 處理取消
+  const handleCancel = () => {
+    setShowTemplateForm(false);
+    setEditingTemplate(null);
+    setError(null);
+  };
+
+  // 處理應用模板
   const handleApplyTemplate = (templateId: string) => {
-    router.push(`/projects/generate-from-contract?template=${templateId}`);
+    router.push(`/modules/projects/features/generate-from-contract?template=${templateId}`);
   };
 
   if (isLoading) {
     return (
       <PageContainer>
-        <div className='flex items-center justify-center h-64'>
-          <div className='text-gray-500 dark:text-gray-400'>載入中...</div>
+        <div className="flex items-center justify-center h-64">
+          <LoadingSpinner size="large" />
         </div>
       </PageContainer>
     );
@@ -98,10 +164,18 @@ export default function TemplatesPage() {
         <button
           onClick={handleCreateTemplate}
           className={projectStyles.button.primary}
+          disabled={submitting}
         >
           新增模板
         </button>
       </PageHeader>
+
+      {/* 錯誤顯示 */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
 
       <div className='space-y-6'>
         {/* 篩選和搜尋 */}
@@ -224,7 +298,8 @@ export default function TemplatesPage() {
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template.id)}
-                      className='px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-md transition-colors duration-200'
+                      disabled={submitting}
+                      className='px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-md transition-colors duration-200 disabled:opacity-50'
                     >
                       刪除
                     </button>
@@ -280,6 +355,16 @@ export default function TemplatesPage() {
           </div>
         </div>
       </div>
+
+      {/* 模板表單模態框 */}
+      {showTemplateForm && (
+        <TemplateForm
+          template={editingTemplate}
+          onSubmit={handleTemplateSubmit}
+          onCancel={handleCancel}
+          isLoading={submitting}
+        />
+      )}
     </PageContainer>
   );
 }

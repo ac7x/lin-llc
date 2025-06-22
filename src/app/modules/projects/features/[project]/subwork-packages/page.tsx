@@ -12,12 +12,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
 import { SubWorkPackageList, SubWorkPackageForm } from '@/app/modules/projects/components/subwork-packages';
-import { getSubWorkPackagesByProjectId, createSubWorkPackage, updateSubWorkPackage, deleteSubWorkPackage } from '@/app/modules/projects/services/subWorkPackageService';
-import type { Project, SubWorkPackage } from '@/app/modules/projects/types';
+import type { Project, SubWorkPackage, WorkPackage } from '@/app/modules/projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
 
@@ -51,10 +50,21 @@ export default function ProjectSubWorkPackagesPage() {
       }
 
       const projectData = projectDoc.data() as Project;
-      setProject({
+      const projectWithId = {
         ...projectData,
         id: projectDoc.id,
+      };
+      
+      setProject(projectWithId);
+      
+      // 從專案的工作包中提取所有子工作包
+      const allSubWorkPackages: SubWorkPackage[] = [];
+      projectData.workPackages?.forEach(workPackage => {
+        if (workPackage.subPackages && workPackage.subPackages.length > 0) {
+          allSubWorkPackages.push(...workPackage.subPackages);
+        }
       });
+      setSubWorkPackages(allSubWorkPackages);
     }, (error) => {
       setError(error instanceof Error ? error.message : '載入專案失敗');
       logError(error, { operation: 'fetch_project', projectId });
@@ -63,45 +73,56 @@ export default function ProjectSubWorkPackagesPage() {
     setLoading(false);
   };
 
-  // 載入子工作包資料
-  const loadSubWorkPackages = async () => {
-    if (!projectId) return;
-
-    try {
-      const subWorkPackagesData = await getSubWorkPackagesByProjectId(projectId);
-      setSubWorkPackages(subWorkPackagesData);
-    } catch (err) {
-      logError(err as Error, { operation: 'fetch_subworkPackages', projectId });
-    }
-  };
-
   useEffect(() => {
     loadProject();
   }, [projectId]);
 
-  useEffect(() => {
-    if (project) {
-      loadSubWorkPackages();
-    }
-  }, [project]);
-
   // 處理新增子工作包
   const handleCreateSubWorkPackage = async (subWorkPackageData: Partial<SubWorkPackage>) => {
-    if (!projectId || !project) return;
+    if (!project || !projectId) return;
     
     setSubmitting(true);
     try {
       // 獲取第一個工作包的 ID
-      const workPackageId = project.workPackages[0]?.id;
-      if (!workPackageId) {
+      const firstWorkPackage = project.workPackages?.[0];
+      if (!firstWorkPackage) {
         throw new Error('專案中沒有可用的工作包');
       }
 
-      // 創建子工作包
-      await createSubWorkPackage(workPackageId, subWorkPackageData as Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'>);
-      
-      // 重新載入子工作包列表
-      await loadSubWorkPackages();
+      const newSubWorkPackage: SubWorkPackage = {
+        id: `swp_${Date.now()}`, // 生成臨時 ID
+        name: subWorkPackageData.name || '',
+        description: subWorkPackageData.description || '',
+        quantity: subWorkPackageData.quantity || 0,
+        unitWeight: subWorkPackageData.unitWeight || 1,
+        completedUnits: subWorkPackageData.completedUnits || 0,
+        progress: subWorkPackageData.progress || 0,
+        workers: subWorkPackageData.workers || [],
+        status: subWorkPackageData.status || 'draft',
+        assignedTo: subWorkPackageData.assignedTo || null,
+        priority: subWorkPackageData.priority || 'medium',
+        estimatedQuantity: subWorkPackageData.estimatedQuantity || 0,
+        actualQuantity: subWorkPackageData.actualQuantity || 0,
+        unit: subWorkPackageData.unit || '個',
+        budget: subWorkPackageData.budget || 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // 更新專案文檔中的工作包陣列
+      const updatedWorkPackages = project.workPackages.map(wp => 
+        wp.id === firstWorkPackage.id 
+          ? { ...wp, subPackages: [...(wp.subPackages || []), newSubWorkPackage] }
+          : wp
+      );
+
+      await updateDoc(doc(db, 'projects', projectId), {
+        workPackages: updatedWorkPackages,
+        updatedAt: new Date(),
+      });
+
+      // 重新載入專案數據
+      await loadProject();
       setShowSubWorkPackageForm(false);
       setEditingSubWorkPackage(null);
     } catch (err) {
@@ -113,15 +134,27 @@ export default function ProjectSubWorkPackagesPage() {
 
   // 處理編輯子工作包
   const handleEditSubWorkPackage = async (subWorkPackageData: Partial<SubWorkPackage>) => {
-    if (!editingSubWorkPackage) return;
+    if (!editingSubWorkPackage || !project || !projectId) return;
     
     setSubmitting(true);
     try {
-      // 更新子工作包
-      await updateSubWorkPackage(editingSubWorkPackage.id, subWorkPackageData);
-      
-      // 重新載入子工作包列表
-      await loadSubWorkPackages();
+      // 更新專案文檔中的工作包陣列
+      const updatedWorkPackages = project.workPackages.map(wp => ({
+        ...wp,
+        subPackages: wp.subPackages?.map(subWp => 
+          subWp.id === editingSubWorkPackage.id 
+            ? { ...subWp, ...subWorkPackageData, updatedAt: new Date() }
+            : subWp
+        ) || []
+      }));
+
+      await updateDoc(doc(db, 'projects', projectId), {
+        workPackages: updatedWorkPackages,
+        updatedAt: new Date(),
+      });
+
+      // 重新載入專案數據
+      await loadProject();
       setShowSubWorkPackageForm(false);
       setEditingSubWorkPackage(null);
     } catch (err) {
@@ -133,14 +166,22 @@ export default function ProjectSubWorkPackagesPage() {
 
   // 處理刪除子工作包
   const handleDeleteSubWorkPackage = async (subWorkPackageId: string) => {
-    if (!projectId) return;
+    if (!project || !projectId) return;
     
     try {
-      // 刪除子工作包
-      await deleteSubWorkPackage(subWorkPackageId);
-      
-      // 重新載入子工作包列表
-      await loadSubWorkPackages();
+      // 更新專案文檔中的工作包陣列
+      const updatedWorkPackages = project.workPackages.map(wp => ({
+        ...wp,
+        subPackages: wp.subPackages?.filter(subWp => subWp.id !== subWorkPackageId) || []
+      }));
+
+      await updateDoc(doc(db, 'projects', projectId), {
+        workPackages: updatedWorkPackages,
+        updatedAt: new Date(),
+      });
+
+      // 重新載入專案數據
+      await loadProject();
     } catch (err) {
       logError(err as Error, { operation: 'delete_subworkPackage', projectId });
     }
@@ -195,7 +236,7 @@ export default function ProjectSubWorkPackagesPage() {
         {(data) => (
           <SubWorkPackageList
             subWorkPackages={data}
-            workPackageId={project.workPackages[0]?.id || ''}
+            workPackageId={project.workPackages?.[0]?.id || ''}
             onAddSubWorkPackage={() => setShowSubWorkPackageForm(true)}
             onEditSubWorkPackage={(subWorkPackage) => {
               setEditingSubWorkPackage(subWorkPackage);
@@ -213,7 +254,6 @@ export default function ProjectSubWorkPackagesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <SubWorkPackageForm
               subWorkPackage={editingSubWorkPackage || undefined}
-              workPackageId={project.workPackages[0]?.id || ''}
               onSubmit={editingSubWorkPackage ? handleEditSubWorkPackage : handleCreateSubWorkPackage}
               onCancel={() => {
                 setShowSubWorkPackageForm(false);

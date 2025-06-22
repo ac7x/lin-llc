@@ -13,6 +13,7 @@ import { useState, useEffect } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { Template } from '@/app/modules/projects/types';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TemplateFormProps {
   template?: Template | null;
@@ -35,6 +36,7 @@ export default function TemplateForm({
   onCancel,
   isLoading = false,
 }: TemplateFormProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -80,6 +82,13 @@ export default function TemplateForm({
       newErrors.subWorkPackages = '至少需要一個子工作包項目';
     }
 
+    // 驗證子工作包項目
+    subWorkPackages.forEach((item, index) => {
+      if (!item.name.trim()) {
+        newErrors[`subWorkPackage_${index}_name`] = '項目名稱為必填';
+      }
+    });
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -87,11 +96,17 @@ export default function TemplateForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!user) {
+      setErrors({ auth: '請先登入' });
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
 
     try {
+      setIsSubmitting(true);
       const templateData: Omit<Template, 'id' | 'createdAt' | 'updatedAt'> = {
         name: formData.name.trim(),
         description: formData.description.trim(),
@@ -102,11 +117,11 @@ export default function TemplateForm({
           description: item.description,
           estimatedQuantity: item.estimatedQuantity,
           unit: item.unit,
-          createdBy: 'current-user',
+          createdBy: user.uid,
           createdAt: new Date(),
           updatedAt: new Date(),
         })),
-        createdBy: 'current-user', // 應該從認證上下文獲取
+        createdBy: user.uid,
       };
 
       await onSubmit(templateData);
@@ -164,6 +179,13 @@ export default function TemplateForm({
               </svg>
             </button>
           </div>
+
+          {/* 認證錯誤 */}
+          {errors.auth && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600">{errors.auth}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className='space-y-6'>
             {/* 基本資訊 */}
@@ -265,15 +287,18 @@ export default function TemplateForm({
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       <div>
                         <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                          名稱
+                          名稱 *
                         </label>
                         <input
                           type='text'
                           value={item.name}
                           onChange={(e) => updateSubWorkPackage(item.id, 'name', e.target.value)}
-                          className={projectStyles.form.input}
+                          className={`${projectStyles.form.input} ${errors[`subWorkPackage_${index}_name`] ? 'border-red-500' : ''}`}
                           placeholder='輸入項目名稱'
                         />
+                        {errors[`subWorkPackage_${index}_name`] && (
+                          <p className='text-red-500 text-sm mt-1'>{errors[`subWorkPackage_${index}_name`]}</p>
+                        )}
                       </div>
 
                       <div>
@@ -332,16 +357,16 @@ export default function TemplateForm({
                 type='button'
                 onClick={onCancel}
                 className={projectStyles.button.outline}
-                disabled={isLoading}
+                disabled={isLoading || isSubmitting}
               >
                 取消
               </button>
               <button
                 type='submit'
                 className={projectStyles.button.primary}
-                disabled={isLoading}
+                disabled={isLoading || isSubmitting}
               >
-                {isLoading ? '儲存中...' : (template ? '更新模板' : '建立模板')}
+                {isLoading || isSubmitting ? '儲存中...' : (template ? '更新模板' : '建立模板')}
               </button>
             </div>
           </form>

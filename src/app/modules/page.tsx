@@ -78,6 +78,10 @@ import {
   
   // 日曆組件
   CalendarView,
+  
+  // Gemini 組件
+  ProjectGeminiChat,
+  ProjectAnalysisDisplay,
 } from '@/app/modules/projects/components';
 
 // 導入 Hooks
@@ -814,6 +818,65 @@ export default function TestPage() {
               />
             </section>
           )}
+          {selectedProject && (
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                時程管理
+              </h3>
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                    專案時程
+                  </h4>
+                  <button
+                    onClick={() => {
+                      // 導航到時程管理頁面
+                      window.location.href = `/modules/projects/features/${selectedProject.id}/schedule`;
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    查看完整時程
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">開始日期</span>
+                    <span className="text-sm font-medium">
+                      {(() => {
+                        if (selectedProject.startDate instanceof Date) {
+                          return selectedProject.startDate.toLocaleDateString('zh-TW');
+                        }
+                        if (typeof selectedProject.startDate === 'object' && selectedProject.startDate?.toDate) {
+                          return selectedProject.startDate.toDate().toLocaleDateString('zh-TW');
+                        }
+                        return '未設定';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">結束日期</span>
+                    <span className="text-sm font-medium">
+                      {(() => {
+                        if (selectedProject.estimatedEndDate instanceof Date) {
+                          return selectedProject.estimatedEndDate.toLocaleDateString('zh-TW');
+                        }
+                        if (typeof selectedProject.estimatedEndDate === 'object' && selectedProject.estimatedEndDate?.toDate) {
+                          return selectedProject.estimatedEndDate.toDate().toLocaleDateString('zh-TW');
+                        }
+                        return '未設定';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">進度</span>
+                    <span className="text-sm font-medium">
+                      {selectedProject.progress || 0}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
           <section>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -904,6 +967,30 @@ export default function TestPage() {
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     子工作包管理功能開發中 - 此頁面將提供詳細任務分解和進度追蹤
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Gemini AI 助手 */}
+            <div className="mb-8 p-6 border rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                Gemini AI 助手頁面
+              </h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h5 className="font-medium">AI 專案助手</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      使用 Gemini AI 協助專案管理和決策
+                    </p>
+                  </div>
+                  <button className={projectStyles.button.primary}>
+                    開始對話
+                  </button>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Gemini AI 功能開發中 - 此頁面將提供 AI 驅動的專案分析、建議生成和智能助手功能
                   </p>
                 </div>
               </div>
@@ -1471,20 +1558,20 @@ export default function TestPage() {
                   </div>
                 </div>
 
-                {/* 專案預算頁面 */}
+                {/* Gemini AI 頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/modules/projects/features/${selectedProject.id}/budget`}
-                      title="專案預算頁面"
+                      src={`/modules/projects/features/${selectedProject.id}/gemini`}
+                      title="Gemini AI 頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
                     />
                   </div>
                   <div className="flex flex-col items-center">
-                    <span className="font-medium mb-1">專案預算</span>
+                    <span className="font-medium mb-1">AI 分析</span>
                     <Link
-                      href={`/modules/projects/features/${selectedProject.id}/budget`}
+                      href={`/modules/projects/features/${selectedProject.id}/gemini`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1501,6 +1588,72 @@ export default function TestPage() {
                 獨立頁面
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {/* 專案管理頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/admin"
+                      title="專案管理頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">專案管理</span>
+                    <Link
+                      href="/modules/projects/features/admin"
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
+
+                {/* 專案分析頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/analytics"
+                      title="專案分析頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">專案分析</span>
+                    <Link
+                      href="/modules/projects/features/analytics"
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
+
+                {/* 合約管理頁面 */}
+                <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/contracts"
+                      title="合約管理頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium mb-1">合約管理</span>
+                    <Link
+                      href="/modules/projects/features/contracts"
+                      target="_blank"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      開新分頁檢視
+                    </Link>
+                  </div>
+                </div>
+
                 {/* 合約生成專案頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
@@ -1864,148 +2017,6 @@ export default function TestPage() {
         </div>
       )}
 
-      {/* 表單模態框 */}
-      {showIssueForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <IssueForm
-              issue={editingIssue || undefined}
-              onSubmit={editingIssue ? handleEditIssue : handleCreateIssue}
-              onCancel={() => {
-                setShowIssueForm(false);
-                setEditingIssue(null);
-              }}
-              isLoading={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showExpenseForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <ExpenseForm
-              expense={editingExpense || undefined}
-              onSubmit={async (expenseData) => {
-                try {
-                  // 這裡需要實作費用服務
-                  setShowExpenseForm(false);
-                  setEditingExpense(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_expense');
-                }
-              }}
-              onCancel={() => {
-                setShowExpenseForm(false);
-                setEditingExpense(null);
-              }}
-              isLoading={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showMaterialForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <MaterialForm
-              material={editingMaterial || undefined}
-              onSubmit={async (materialData) => {
-                try {
-                  // 這裡需要實作材料服務
-                  setShowMaterialForm(false);
-                  setEditingMaterial(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_material');
-                }
-              }}
-              onCancel={() => {
-                setShowMaterialForm(false);
-                setEditingMaterial(null);
-              }}
-              isLoading={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showTemplateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <TemplateForm
-              template={editingTemplate}
-              onSubmit={async (templateData) => {
-                try {
-                  if (editingTemplate) {
-                    await TemplateService.updateTemplate(editingTemplate.id, templateData);
-                  } else {
-                    await TemplateService.createTemplate(templateData);
-                  }
-                  await loadTemplates();
-                  setShowTemplateForm(false);
-                  setEditingTemplate(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_template');
-                }
-              }}
-              onCancel={() => {
-                setShowTemplateForm(false);
-                setEditingTemplate(null);
-              }}
-              isLoading={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showWorkPackageForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <WorkPackageForm
-              workPackage={editingWorkPackage || undefined}
-              onSubmit={async (workPackageData) => {
-                try {
-                  // 這裡需要實作工作包服務
-                  setShowWorkPackageForm(false);
-                  setEditingWorkPackage(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_workPackage');
-                }
-              }}
-              onCancel={() => {
-                setShowWorkPackageForm(false);
-                setEditingWorkPackage(null);
-              }}
-              isSubmitting={loading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showSubWorkPackageForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <SubWorkPackageForm
-              subWorkPackage={editingSubWorkPackage || undefined}
-              onSubmit={async (subWorkPackageData) => {
-                try {
-                  // 這裡需要實作子工作包服務
-                  setShowSubWorkPackageForm(false);
-                  setEditingSubWorkPackage(null);
-                } catch (err) {
-                  handleError(err as Error, 'save_subworkPackage');
-                }
-              }}
-              onCancel={() => {
-                setShowSubWorkPackageForm(false);
-                setEditingSubWorkPackage(null);
-              }}
-              isSubmitting={loading}
-            />
-          </div>
-        </div>
-      )}
-
       {/* 合約生成專案功能 */}
       {activeTab === 'contract-generation' && (
         <div className="space-y-8">
@@ -2267,7 +2278,151 @@ export default function TestPage() {
           </section>
         </div>
       )}
+
+      {/* 表單模態框 */}
+      {showIssueForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <IssueForm
+              issue={editingIssue || undefined}
+              onSubmit={editingIssue ? handleEditIssue : handleCreateIssue}
+              onCancel={() => {
+                setShowIssueForm(false);
+                setEditingIssue(null);
+              }}
+              isLoading={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showExpenseForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <ExpenseForm
+              expense={editingExpense || undefined}
+              onSubmit={async (expenseData) => {
+                try {
+                  // 這裡需要實作費用服務
+                  setShowExpenseForm(false);
+                  setEditingExpense(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_expense');
+                }
+              }}
+              onCancel={() => {
+                setShowExpenseForm(false);
+                setEditingExpense(null);
+              }}
+              isLoading={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showMaterialForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <MaterialForm
+              material={editingMaterial || undefined}
+              onSubmit={async (materialData) => {
+                try {
+                  // 這裡需要實作材料服務
+                  setShowMaterialForm(false);
+                  setEditingMaterial(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_material');
+                }
+              }}
+              onCancel={() => {
+                setShowMaterialForm(false);
+                setEditingMaterial(null);
+              }}
+              isLoading={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showTemplateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <TemplateForm
+              template={editingTemplate}
+              onSubmit={async (templateData) => {
+                try {
+                  if (editingTemplate) {
+                    await TemplateService.updateTemplate(editingTemplate.id, templateData);
+                  } else {
+                    await TemplateService.createTemplate(templateData);
+                  }
+                  await loadTemplates();
+                  setShowTemplateForm(false);
+                  setEditingTemplate(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_template');
+                }
+              }}
+              onCancel={() => {
+                setShowTemplateForm(false);
+                setEditingTemplate(null);
+              }}
+              isLoading={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showWorkPackageForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <WorkPackageForm
+              workPackage={editingWorkPackage || undefined}
+              onSubmit={async (workPackageData) => {
+                try {
+                  // 這裡需要實作工作包服務
+                  setShowWorkPackageForm(false);
+                  setEditingWorkPackage(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_workPackage');
+                }
+              }}
+              onCancel={() => {
+                setShowWorkPackageForm(false);
+                setEditingWorkPackage(null);
+              }}
+              isSubmitting={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {showSubWorkPackageForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <SubWorkPackageForm
+              subWorkPackage={editingSubWorkPackage || undefined}
+              onSubmit={async (subWorkPackageData) => {
+                try {
+                  // 這裡需要實作子工作包服務
+                  setShowSubWorkPackageForm(false);
+                  setEditingSubWorkPackage(null);
+                } catch (err) {
+                  handleError(err as Error, 'save_subworkPackage');
+                }
+              }}
+              onCancel={() => {
+                setShowSubWorkPackageForm(false);
+                setEditingSubWorkPackage(null);
+              }}
+              isSubmitting={loading}
+            />
+          </div>
+        </div>
+      )}
+
+
+
     </PageContainer>
   );
 }
-

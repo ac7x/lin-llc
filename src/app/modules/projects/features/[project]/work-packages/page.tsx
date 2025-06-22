@@ -12,11 +12,10 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
 import { WorkPackageList, WorkPackageForm } from '@/app/modules/projects/components/work-packages';
-import { WorkPackageService } from '@/app/modules/projects/services';
 import type { Project, WorkPackage } from '@/app/modules/projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
@@ -51,10 +50,14 @@ export default function ProjectWorkPackagesPage() {
       }
 
       const projectData = projectDoc.data() as Project;
-      setProject({
+      const projectWithId = {
         ...projectData,
         id: projectDoc.id,
-      });
+      };
+      
+      setProject(projectWithId);
+      // 從專案數據中提取工作包
+      setWorkPackages(projectData.workPackages || []);
     }, (error) => {
       setError(error instanceof Error ? error.message : '載入專案失敗');
       logError(error, { operation: 'fetch_project', projectId });
@@ -63,35 +66,40 @@ export default function ProjectWorkPackagesPage() {
     setLoading(false);
   };
 
-  // 載入工作包資料
-  const loadWorkPackages = async () => {
-    if (!projectId) return;
-
-    try {
-      const workPackagesData = await WorkPackageService.getWorkPackagesByProject(projectId);
-      setWorkPackages(workPackagesData);
-    } catch (err) {
-      logError(err as Error, { operation: 'fetch_workPackages', projectId });
-    }
-  };
-
   useEffect(() => {
     loadProject();
   }, [projectId]);
 
-  useEffect(() => {
-    if (project) {
-      loadWorkPackages();
-    }
-  }, [project]);
-
   // 處理新增工作包
   const handleCreateWorkPackage = async (workPackageData: Partial<WorkPackage>) => {
-    if (!projectId) return;
+    if (!project || !projectId) return;
     
     try {
-      // 這裡需要實作工作包服務的創建方法
-      await loadWorkPackages();
+      const newWorkPackage: WorkPackage = {
+        id: `wp_${Date.now()}`, // 生成臨時 ID
+        name: workPackageData.name || '',
+        description: workPackageData.description || '',
+        budget: workPackageData.budget || 0,
+        quantity: workPackageData.quantity || 0,
+        subPackages: [],
+        status: workPackageData.status || 'draft',
+        progress: workPackageData.progress || 0,
+        assignedTo: workPackageData.assignedTo || null,
+        category: workPackageData.category || '',
+        priority: workPackageData.priority || 'medium',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // 更新專案文檔中的工作包陣列
+      const updatedWorkPackages = [...workPackages, newWorkPackage];
+      await updateDoc(doc(db, 'projects', projectId), {
+        workPackages: updatedWorkPackages,
+        updatedAt: new Date(),
+      });
+
+      // 重新載入專案數據
+      await loadProject();
       setShowWorkPackageForm(false);
       setEditingWorkPackage(null);
     } catch (err) {
@@ -101,11 +109,23 @@ export default function ProjectWorkPackagesPage() {
 
   // 處理編輯工作包
   const handleEditWorkPackage = async (workPackageData: Partial<WorkPackage>) => {
-    if (!editingWorkPackage) return;
+    if (!editingWorkPackage || !projectId) return;
     
     try {
-      // 這裡需要實作工作包服務的更新方法
-      await loadWorkPackages();
+      const updatedWorkPackages = workPackages.map(wp => 
+        wp.id === editingWorkPackage.id 
+          ? { ...wp, ...workPackageData, updatedAt: new Date() }
+          : wp
+      );
+
+      // 更新專案文檔中的工作包陣列
+      await updateDoc(doc(db, 'projects', projectId), {
+        workPackages: updatedWorkPackages,
+        updatedAt: new Date(),
+      });
+
+      // 重新載入專案數據
+      await loadProject();
       setShowWorkPackageForm(false);
       setEditingWorkPackage(null);
     } catch (err) {
@@ -118,8 +138,16 @@ export default function ProjectWorkPackagesPage() {
     if (!projectId) return;
     
     try {
-      // 這裡需要實作工作包服務的刪除方法
-      await loadWorkPackages();
+      const updatedWorkPackages = workPackages.filter(wp => wp.id !== workPackageId);
+      
+      // 更新專案文檔中的工作包陣列
+      await updateDoc(doc(db, 'projects', projectId), {
+        workPackages: updatedWorkPackages,
+        updatedAt: new Date(),
+      });
+
+      // 重新載入專案數據
+      await loadProject();
     } catch (err) {
       logError(err as Error, { operation: 'delete_workPackage', projectId });
     }
@@ -168,12 +196,16 @@ export default function ProjectWorkPackagesPage() {
         data={workPackages}
       >
         {(data) => (
-          projectId && (
-            <WorkPackageList
-              workPackages={data}
-              projectId={projectId}
-            />
-          )
+          <WorkPackageList
+            workPackages={data}
+            projectId={projectId}
+            onAddWorkPackage={() => setShowWorkPackageForm(true)}
+            onEditWorkPackage={(workPackage) => {
+              setEditingWorkPackage(workPackage);
+              setShowWorkPackageForm(true);
+            }}
+            onDeleteWorkPackage={handleDeleteWorkPackage}
+          />
         )}
       </DataLoader>
 
@@ -183,7 +215,6 @@ export default function ProjectWorkPackagesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <WorkPackageForm
               workPackage={editingWorkPackage || undefined}
-              projectId={projectId}
               onSubmit={editingWorkPackage ? handleEditWorkPackage : handleCreateWorkPackage}
               onCancel={() => {
                 setShowWorkPackageForm(false);

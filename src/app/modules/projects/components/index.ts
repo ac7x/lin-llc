@@ -44,4 +44,7 @@ export * from './subwork-packages';
 export * from './templates';
 
 // 工作包組件
-export * from './work-packages'; 
+export * from './work-packages';
+
+// Gemini 組件
+export * from './gemini'; 
