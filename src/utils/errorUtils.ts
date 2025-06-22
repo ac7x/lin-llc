@@ -249,7 +249,6 @@ export const safeAsync = async <T>(
     if (errorHandler) {
       errorHandler(error);
     } else {
-      // eslint-disable-next-line no-console
       console.error('安全異步執行發生錯誤:', error);
     }
     return null;
@@ -301,15 +300,12 @@ export const logError = (
   
   // 在開發環境中輸出詳細錯誤資訊
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
     console.error('錯誤詳情:', errorInfo);
     if (error instanceof Error) {
-      // eslint-disable-next-line no-console
       console.error('原始錯誤:', error);
     }
   } else {
     // 在生產環境中只記錄基本資訊
-    // eslint-disable-next-line no-console
     console.error('應用錯誤:', errorInfo.message);
   }
 };

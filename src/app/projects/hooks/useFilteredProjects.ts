@@ -611,7 +611,6 @@ export async function updateProjectQualityScore(projectId: string, newScore: num
       lastQualityAdjustment: Timestamp.now(),
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('更新品質分數失敗:', error);
     throw error;
   }

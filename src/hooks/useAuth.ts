@@ -159,7 +159,7 @@ export const useAuth = (): UseAuthReturn => {
       setAuthState(prev => ({ ...prev, error: null }));
       const provider = new GoogleAuthProvider();
       const result = await retry(() => signInWithPopup(auth, provider), 3, 1000);
-      const _idToken = await retry(() => getIdToken(result.user), 3, 1000);
+      await retry(() => getIdToken(result.user), 3, 1000);
 
       const memberRef = doc(db, 'members', result.user.uid);
       const memberDoc = await retry(() => getDoc(memberRef), 3, 1000);
