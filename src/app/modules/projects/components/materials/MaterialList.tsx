@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { MaterialEntry } from '@/app/modules/projects/types';
@@ -29,7 +29,7 @@ export default function MaterialList({
   onDelete,
   onAdd,
   isLoading = false,
-}: MaterialListProps) {
+}: MaterialListProps): ReactElement {
   const [searchTerm, setSearchTerm] = useState('');
   const [unitFilter, setUnitFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'supplier'>('name');

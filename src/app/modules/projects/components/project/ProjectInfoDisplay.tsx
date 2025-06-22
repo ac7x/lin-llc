@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { cn, getQualityColor } from '@/utils/classNameUtils';
@@ -30,7 +30,7 @@ interface ProjectInfoDisplayProps {
   };
 }
 
-export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectInfoDisplayProps) {
+export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectInfoDisplayProps): ReactElement {
   const [qualityScore, setQualityScore] = useState<number>(0);
 
   useEffect(() => {

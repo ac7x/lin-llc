@@ -12,7 +12,7 @@
 'use client';
 
 import type { Timestamp } from 'firebase/firestore';
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { IssueRecord } from '@/app/modules/projects/types';
@@ -40,7 +40,7 @@ const SEVERITY_LEVELS = [
 
 // 輔助函數：將 DateField 轉換為日期字串
 const formatDateField = (dateField: Timestamp | Date | string | null | undefined): string => {
-  if (!dateField) return '';
+  if (!dateField) return new Date().toISOString().split('T')[0];
   
   if (typeof dateField === 'string') {
     return dateField.split('T')[0];
@@ -55,7 +55,7 @@ const formatDateField = (dateField: Timestamp | Date | string | null | undefined
     return dateField.toDate().toISOString().split('T')[0];
   }
   
-  return '';
+  return new Date().toISOString().split('T')[0];
 };
 
 export default function IssueForm({
@@ -64,7 +64,7 @@ export default function IssueForm({
   onCancel,
   isLoading = false,
   availableUsers = [],
-}: IssueFormProps) {
+}: IssueFormProps): ReactElement {
   const [formData, setFormData] = useState({
     type: issue?.type || 'other',
     description: issue?.description || '',

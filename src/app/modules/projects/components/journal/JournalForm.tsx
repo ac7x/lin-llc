@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { BaseWithId } from '@/app/modules/projects/types';
@@ -52,7 +52,7 @@ export default function JournalForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
-}: JournalFormProps) {
+}: JournalFormProps): ReactElement {
   const [formData, setFormData] = useState({
     title: journalEntry?.title || '',
     content: journalEntry?.content || '',

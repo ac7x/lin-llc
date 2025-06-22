@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { BaseWithId } from '@/app/modules/projects/types';
@@ -52,7 +52,7 @@ export default function JournalCard({
   onEdit,
   onDelete,
   onViewDetails,
-}: JournalCardProps) {
+}: JournalCardProps): ReactElement {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const formatDate = (date: string | Date | { toDate: () => Date }) => {

@@ -11,7 +11,7 @@
 'use client';
 
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { useState } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 
 import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,7 +43,7 @@ export default function ProjectEditModal({
   onClose,
   onSave,
   eligibleUsers,
-}: ProjectEditModalProps) {
+}: ProjectEditModalProps): ReactElement {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     projectName: project.projectName || '',
@@ -103,7 +103,7 @@ export default function ProjectEditModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) return <></>;
 
   return (
     <div className={modalStyles.overlay}>

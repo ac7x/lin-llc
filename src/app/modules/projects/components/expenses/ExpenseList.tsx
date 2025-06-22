@@ -11,7 +11,7 @@
 'use client';
 
 import type { Timestamp } from 'firebase/firestore';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { Expense } from '@/app/modules/projects/types';
@@ -59,7 +59,7 @@ export default function ExpenseList({
   onDelete,
   onAdd,
   isLoading = false,
-}: ExpenseListProps) {
+}: ExpenseListProps): ReactElement {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'category'>('date');

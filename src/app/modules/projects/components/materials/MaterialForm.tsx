@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { MaterialEntry } from '@/app/modules/projects/types';
@@ -52,7 +52,7 @@ export default function MaterialForm({
   onSubmit,
   onCancel,
   isLoading = false,
-}: MaterialFormProps) {
+}: MaterialFormProps): ReactElement {
   const [formData, setFormData] = useState({
     materialId: material?.materialId || '',
     name: material?.name || '',

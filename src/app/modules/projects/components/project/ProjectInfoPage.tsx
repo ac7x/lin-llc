@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 
 import { collection, query, getDocs, db } from '@/lib/firebase-client';
 import type { Project } from '@/app/modules/projects/types';
@@ -29,7 +29,7 @@ interface ProjectInfoPageProps {
   };
 }
 
-export default function ProjectInfoPage({ project, eligibleUsers }: ProjectInfoPageProps) {
+export default function ProjectInfoPage({ project, eligibleUsers }: ProjectInfoPageProps): ReactElement {
   const [activeTab, setActiveTab] = useState<'info' | 'workPackages'>('info');
 
   return (

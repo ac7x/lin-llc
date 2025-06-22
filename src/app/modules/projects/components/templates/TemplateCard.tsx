@@ -5,9 +5,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import type { ReactElement } from 'react';
-
+import { useState, type ReactElement } from 'react';
+import { projectStyles } from '../../styles';
 import type { Template } from '@/app/modules/projects/types';
 
 interface TemplateCardProps {
@@ -24,7 +23,7 @@ export default function TemplateCard({
   onEdit,
   onDelete,
   selected,
-}: TemplateCardProps) {
+}: TemplateCardProps): ReactElement {
   const [isHovered, setIsHovered] = useState(false);
 
   const formatDate = (date: Date | string | { toDate: () => Date } | null) => {

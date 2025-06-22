@@ -9,9 +9,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import type { ReactElement } from 'react';
-
+import { useState, type ReactElement } from 'react';
+import { projectStyles } from '../../styles';
 import type { Template } from '@/app/modules/projects/types';
 
 interface TemplateSelectorProps {
@@ -26,7 +25,7 @@ export default function TemplateSelector({
   selectedTemplateId,
   onSelectTemplate,
   className,
-}: TemplateSelectorProps) {
+}: TemplateSelectorProps): ReactElement {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // 獲取所有分類

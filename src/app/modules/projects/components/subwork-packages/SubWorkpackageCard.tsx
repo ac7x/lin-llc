@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { SubWorkPackage, PriorityLevel } from '@/app/modules/projects/types';
@@ -29,7 +29,7 @@ export default function SubWorkPackageCard({
   onEdit,
   onDelete,
   workPackageId: _workPackageId,
-}: SubWorkPackageCardProps) {
+}: SubWorkPackageCardProps): ReactElement {
   const [isExpanded, setIsExpanded] = useState(false);
   
   // 計算子工作包進度

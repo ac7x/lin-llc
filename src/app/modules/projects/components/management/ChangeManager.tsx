@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { ProjectChange } from '@/app/modules/projects/types';
@@ -32,7 +32,7 @@ export default function ChangeManager({
   onEditChange,
   onDeleteChange,
   onUpdateChangeStatus,
-}: ChangeManagerProps) {
+}: ChangeManagerProps): ReactElement {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [impactFilter, setImpactFilter] = useState<string>('all');

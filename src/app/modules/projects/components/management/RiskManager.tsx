@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { ProjectRisk } from '@/app/modules/projects/types';
@@ -32,7 +32,7 @@ export default function RiskManager({
   onEditRisk,
   onDeleteRisk,
   onUpdateRiskStatus,
-}: RiskManagerProps) {
+}: RiskManagerProps): ReactElement {
   const [sortBy, setSortBy] = useState<SortOption>('riskLevel');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('all');

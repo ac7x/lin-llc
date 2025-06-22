@@ -12,7 +12,7 @@
 'use client';
 
 import type { Timestamp } from 'firebase/firestore';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { IssueRecord } from '@/app/modules/projects/types';
@@ -85,7 +85,7 @@ export default function IssueList({
   onStatusChange,
   isLoading = false,
   availableUsers = [],
-}: IssueListProps) {
+}: IssueListProps): ReactElement {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');

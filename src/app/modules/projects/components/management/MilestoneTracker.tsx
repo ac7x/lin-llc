@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { ProjectMilestone } from '@/app/modules/projects/types';
@@ -32,7 +32,7 @@ export default function MilestoneTracker({
   onEditMilestone,
   onDeleteMilestone,
   onUpdateMilestoneStatus,
-}: MilestoneTrackerProps) {
+}: MilestoneTrackerProps): ReactElement {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');

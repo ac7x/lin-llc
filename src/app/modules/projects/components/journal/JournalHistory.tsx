@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { BaseWithId } from '@/app/modules/projects/types';
@@ -42,7 +42,7 @@ export default function JournalHistory({
   onViewDetails,
   onEdit,
   onDelete,
-}: JournalHistoryProps) {
+}: JournalHistoryProps): ReactElement {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
 

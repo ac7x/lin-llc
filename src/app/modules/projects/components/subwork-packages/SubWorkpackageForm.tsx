@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { SubWorkPackage, PriorityLevel } from '@/app/modules/projects/types';
@@ -22,13 +22,47 @@ interface SubWorkPackageFormProps {
   isSubmitting?: boolean;
 }
 
+const SUBWORK_PACKAGE_STATUSES = [
+  { value: 'draft', label: '草稿' },
+  { value: 'assigned', label: '已分配' },
+  { value: 'in-progress', label: '執行中' },
+  { value: 'review', label: '審查中' },
+  { value: 'completed', label: '已完成' },
+  { value: 'on-hold', label: '暫停中' },
+  { value: 'cancelled', label: '已取消' },
+] as const;
+
+const PRIORITY_LEVELS = [
+  { value: 'low', label: '低' },
+  { value: 'medium', label: '中' },
+  { value: 'high', label: '高' },
+  { value: 'critical', label: '緊急' },
+] as const;
+
+const UNITS = [
+  '個',
+  '件',
+  '套',
+  '組',
+  '箱',
+  '包',
+  '公斤',
+  '公噸',
+  '公尺',
+  '平方公尺',
+  '立方公尺',
+  '公升',
+  '小時',
+  '天',
+  '其他',
+] as const;
+
 export default function SubWorkPackageForm({
   subWorkPackage,
-  workPackageId: _workPackageId,
   onSubmit,
   onCancel,
   isSubmitting = false,
-}: SubWorkPackageFormProps) {
+}: SubWorkPackageFormProps): ReactElement {
   const [formData, setFormData] = useState({
     name: subWorkPackage?.name || '',
     description: subWorkPackage?.description || '',
@@ -199,13 +233,11 @@ export default function SubWorkPackageForm({
               onChange={(e) => handleInputChange('status', e.target.value)}
               className={projectStyles.form.select}
             >
-              <option value='draft'>草稿</option>
-              <option value='assigned'>已分配</option>
-              <option value='in-progress'>執行中</option>
-              <option value='review'>審查中</option>
-              <option value='completed'>已完成</option>
-              <option value='on-hold'>暫停中</option>
-              <option value='cancelled'>已取消</option>
+              {SUBWORK_PACKAGE_STATUSES.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -219,10 +251,11 @@ export default function SubWorkPackageForm({
               onChange={(e) => handleInputChange('priority', e.target.value)}
               className={`${projectStyles.form.select} ${errors.priority ? 'border-red-500' : ''}`}
             >
-              <option value='low'>低</option>
-              <option value='medium'>中</option>
-              <option value='high'>高</option>
-              <option value='critical'>緊急</option>
+              {PRIORITY_LEVELS.map((level) => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
+                </option>
+              ))}
             </select>
             {errors.priority && (
               <p className='text-red-500 text-sm mt-1'>{errors.priority}</p>

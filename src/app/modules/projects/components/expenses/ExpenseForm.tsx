@@ -12,7 +12,7 @@
 'use client';
 
 import type { Timestamp } from 'firebase/firestore';
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { Expense } from '@/app/modules/projects/types';
@@ -66,7 +66,7 @@ export default function ExpenseForm({
   onSubmit,
   onCancel,
   isLoading = false,
-}: ExpenseFormProps) {
+}: ExpenseFormProps): ReactElement {
   const [formData, setFormData] = useState({
     description: expense?.description || '',
     amount: expense?.amount || 0,

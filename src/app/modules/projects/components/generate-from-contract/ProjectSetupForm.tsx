@@ -9,7 +9,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 
@@ -39,7 +39,7 @@ export default function ProjectSetupForm({
   onSubmit,
   onCancel,
   isLoading = false,
-}: ProjectSetupFormProps) {
+}: ProjectSetupFormProps): ReactElement {
   const [formData, setFormData] = useState({
     projectName: '',
     description: '',

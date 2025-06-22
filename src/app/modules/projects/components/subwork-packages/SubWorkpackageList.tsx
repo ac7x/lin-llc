@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { SubWorkPackage } from '@/app/modules/projects/types';
@@ -35,7 +35,7 @@ export default function SubWorkPackageList({
   onEditSubWorkPackage,
   onDeleteSubWorkPackage,
   onViewSubWorkPackageDetails,
-}: SubWorkPackageListProps) {
+}: SubWorkPackageListProps): ReactElement {
   const [sortBy, setSortBy] = useState<SortOption>('priority');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('all');

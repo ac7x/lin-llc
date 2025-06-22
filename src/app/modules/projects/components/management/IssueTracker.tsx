@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { IssueRecord } from '@/app/modules/projects/types';
@@ -32,7 +32,7 @@ export default function IssueTracker({
   onEditIssue,
   onDeleteIssue,
   onUpdateIssueStatus,
-}: IssueTrackerProps) {
+}: IssueTrackerProps): ReactElement {
   const [sortBy, setSortBy] = useState<SortOption>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('all');

@@ -5,7 +5,7 @@
 
 'use client';
 
-import type { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 interface Contract {
   id: string;
@@ -30,7 +30,7 @@ export default function ContractSelector({
   selectedContractId,
   onSelectContract,
   className,
-}: ContractSelectorProps) {
+}: ContractSelectorProps): ReactElement {
   return (
     <div className={`space-y-4 ${className || ''}`}>
       {contracts.map(contract => (
