@@ -188,7 +188,7 @@ export default function TemplatesPage() {
                   {/* 模板統計 */}
                   <div className='flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4'>
                     <span>
-                      子工作包: {template.subWorkpackages?.length || 0}
+                      子工作包: {template.subWorkPackages?.length || 0}
                     </span>
                     <span>
                       建立者: {template.createdBy}

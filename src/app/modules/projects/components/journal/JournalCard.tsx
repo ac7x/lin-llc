@@ -29,7 +29,7 @@ interface JournalEntry extends BaseWithId {
     name: string;
     url: string;
   }>;
-  relatedWorkpackages?: Array<{
+  relatedWorkPackages?: Array<{
     name: string;
     status?: string;
   }>;
@@ -243,13 +243,13 @@ export default function JournalCard({
           )}
 
           {/* 相關工作包 */}
-          {journalEntry.relatedWorkpackages && journalEntry.relatedWorkpackages.length > 0 && (
+          {journalEntry.relatedWorkPackages && journalEntry.relatedWorkPackages.length > 0 && (
             <div className='mb-4'>
               <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 相關工作包
               </h4>
               <div className='space-y-2'>
-                {journalEntry.relatedWorkpackages.map((wp: { name: string; status?: string }, index: number) => (
+                {journalEntry.relatedWorkPackages.map((wp: { name: string; status?: string }, index: number) => (
                   <div key={index} className='flex items-center text-xs'>
                     <span className='text-gray-600 dark:text-gray-400'>{wp.name}</span>
                     <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getCategoryColor(wp.status)}`}>

@@ -15,8 +15,8 @@ import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
-import { SubWorkpackageList, SubWorkpackageForm } from '@/app/modules/projects/components/subwork-packages';
-import { getSubWorkpackagesByProjectId, createSubWorkpackage, updateSubWorkpackage, deleteSubWorkpackage } from '@/app/modules/projects/services/subworkpackageService';
+import { SubWorkPackageList, SubWorkPackageForm } from '@/app/modules/projects/components/subwork-packages';
+import { getSubWorkPackagesByProjectId, createSubWorkPackage, updateSubWorkPackage, deleteSubWorkPackage } from '@/app/modules/projects/services/subworkPackageService';
 import type { Project, SubWorkPackage } from '@/app/modules/projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
@@ -25,16 +25,16 @@ interface ProjectWithId extends Project {
   id: string;
 }
 
-export default function ProjectSubWorkpackagesPage() {
+export default function ProjectSubWorkPackagesPage() {
   const params = useParams();
   const projectId = params.project as string;
   const [project, setProject] = useState<ProjectWithId | null>(null);
-  const [subWorkpackages, setSubWorkpackages] = useState<SubWorkPackage[]>([]);
+  const [subWorkPackages, setSubWorkPackages] = useState<SubWorkPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSubWorkpackageForm, setShowSubWorkpackageForm] = useState(false);
-  const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkPackage | null>(null);
+  const [showSubWorkPackageForm, setShowSubWorkPackageForm] = useState(false);
+  const [editingSubWorkPackage, setEditingSubWorkPackage] = useState<SubWorkPackage | null>(null);
 
   // 載入專案資料
   const loadProject = async () => {
@@ -64,14 +64,14 @@ export default function ProjectSubWorkpackagesPage() {
   };
 
   // 載入子工作包資料
-  const loadSubWorkpackages = async () => {
+  const loadSubWorkPackages = async () => {
     if (!projectId) return;
 
     try {
-      const subWorkpackagesData = await getSubWorkpackagesByProjectId(projectId);
-      setSubWorkpackages(subWorkpackagesData);
+      const subWorkPackagesData = await getSubWorkPackagesByProjectId(projectId);
+      setSubWorkPackages(subWorkPackagesData);
     } catch (err) {
-      logError(err as Error, { operation: 'fetch_subworkpackages', projectId });
+      logError(err as Error, { operation: 'fetch_subworkPackages', projectId });
     }
   };
 
@@ -81,72 +81,72 @@ export default function ProjectSubWorkpackagesPage() {
 
   useEffect(() => {
     if (project) {
-      loadSubWorkpackages();
+      loadSubWorkPackages();
     }
   }, [project]);
 
   // 處理新增子工作包
-  const handleCreateSubWorkpackage = async (subWorkpackageData: Partial<SubWorkPackage>) => {
+  const handleCreateSubWorkPackage = async (subWorkPackageData: Partial<SubWorkPackage>) => {
     if (!projectId || !project) return;
     
     setSubmitting(true);
     try {
       // 獲取第一個工作包的 ID
-      const workpackageId = project.workPackages[0]?.id;
-      if (!workpackageId) {
+      const workPackageId = project.workPackages[0]?.id;
+      if (!workPackageId) {
         throw new Error('專案中沒有可用的工作包');
       }
 
       // 創建子工作包
-      await createSubWorkpackage(workpackageId, subWorkpackageData as Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'>);
+      await createSubWorkPackage(workPackageId, subWorkPackageData as Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'>);
       
       // 重新載入子工作包列表
-      await loadSubWorkpackages();
-      setShowSubWorkpackageForm(false);
-      setEditingSubWorkpackage(null);
+      await loadSubWorkPackages();
+      setShowSubWorkPackageForm(false);
+      setEditingSubWorkPackage(null);
     } catch (err) {
-      logError(err as Error, { operation: 'create_subworkpackage', projectId });
+      logError(err as Error, { operation: 'create_subworkPackage', projectId });
     } finally {
       setSubmitting(false);
     }
   };
 
   // 處理編輯子工作包
-  const handleEditSubWorkpackage = async (subWorkpackageData: Partial<SubWorkPackage>) => {
-    if (!editingSubWorkpackage) return;
+  const handleEditSubWorkPackage = async (subWorkPackageData: Partial<SubWorkPackage>) => {
+    if (!editingSubWorkPackage) return;
     
     setSubmitting(true);
     try {
       // 更新子工作包
-      await updateSubWorkpackage(editingSubWorkpackage.id, subWorkpackageData);
+      await updateSubWorkPackage(editingSubWorkPackage.id, subWorkPackageData);
       
       // 重新載入子工作包列表
-      await loadSubWorkpackages();
-      setShowSubWorkpackageForm(false);
-      setEditingSubWorkpackage(null);
+      await loadSubWorkPackages();
+      setShowSubWorkPackageForm(false);
+      setEditingSubWorkPackage(null);
     } catch (err) {
-      logError(err as Error, { operation: 'update_subworkpackage', projectId });
+      logError(err as Error, { operation: 'update_subworkPackage', projectId });
     } finally {
       setSubmitting(false);
     }
   };
 
   // 處理刪除子工作包
-  const handleDeleteSubWorkpackage = async (subWorkpackageId: string) => {
+  const handleDeleteSubWorkPackage = async (subWorkPackageId: string) => {
     if (!projectId) return;
     
     try {
       // 刪除子工作包
-      await deleteSubWorkpackage(subWorkpackageId);
+      await deleteSubWorkPackage(subWorkPackageId);
       
       // 重新載入子工作包列表
-      await loadSubWorkpackages();
+      await loadSubWorkPackages();
     } catch (err) {
-      logError(err as Error, { operation: 'delete_subworkpackage', projectId });
+      logError(err as Error, { operation: 'delete_subworkPackage', projectId });
     }
   };
 
-  const handleViewSubWorkpackageDetails = (subWorkpackageId: string) => {
+  const handleViewSubWorkPackageDetails = (subWorkPackageId: string) => {
     // TODO: 實作查看子工作包詳情邏輯
   };
 
@@ -180,7 +180,7 @@ export default function ProjectSubWorkpackagesPage() {
         subtitle="管理專案中的子工作包和詳細任務"
       >
         <button
-          onClick={() => setShowSubWorkpackageForm(true)}
+          onClick={() => setShowSubWorkPackageForm(true)}
           className={projectStyles.button.primary}
         >
           新增子工作包
@@ -190,34 +190,34 @@ export default function ProjectSubWorkpackagesPage() {
       <DataLoader
         loading={loading}
         error={error ? new Error(error) : null}
-        data={subWorkpackages}
+        data={subWorkPackages}
       >
         {(data) => (
-          <SubWorkpackageList
-            subWorkpackages={data}
-            workpackageId={project.workPackages[0]?.id || ''}
-            onAddSubWorkpackage={() => setShowSubWorkpackageForm(true)}
-            onEditSubWorkpackage={(subWorkpackage) => {
-              setEditingSubWorkpackage(subWorkpackage);
-              setShowSubWorkpackageForm(true);
+          <SubWorkPackageList
+            subWorkPackages={data}
+            workPackageId={project.workPackages[0]?.id || ''}
+            onAddSubWorkPackage={() => setShowSubWorkPackageForm(true)}
+            onEditSubWorkPackage={(subWorkPackage) => {
+              setEditingSubWorkPackage(subWorkPackage);
+              setShowSubWorkPackageForm(true);
             }}
-            onDeleteSubWorkpackage={handleDeleteSubWorkpackage}
-            onViewSubWorkpackageDetails={handleViewSubWorkpackageDetails}
+            onDeleteSubWorkPackage={handleDeleteSubWorkPackage}
+            onViewSubWorkPackageDetails={handleViewSubWorkPackageDetails}
           />
         )}
       </DataLoader>
 
       {/* 子工作包表單模態框 */}
-      {showSubWorkpackageForm && (
+      {showSubWorkPackageForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <SubWorkpackageForm
-              subWorkpackage={editingSubWorkpackage || undefined}
-              workpackageId={project.workPackages[0]?.id || ''}
-              onSubmit={editingSubWorkpackage ? handleEditSubWorkpackage : handleCreateSubWorkpackage}
+            <SubWorkPackageForm
+              subWorkPackage={editingSubWorkPackage || undefined}
+              workPackageId={project.workPackages[0]?.id || ''}
+              onSubmit={editingSubWorkPackage ? handleEditSubWorkPackage : handleCreateSubWorkPackage}
               onCancel={() => {
-                setShowSubWorkpackageForm(false);
-                setEditingSubWorkpackage(null);
+                setShowSubWorkPackageForm(false);
+                setEditingSubWorkPackage(null);
               }}
               isSubmitting={submitting}
             />

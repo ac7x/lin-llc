@@ -96,7 +96,7 @@ export default function TemplateSelector({
             </p>
             
             <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
-              <span>子工作包: {template.subWorkpackages?.length || 0}</span>
+              <span>子工作包: {template.subWorkPackages?.length || 0}</span>
               <span>建立於: {formatDate(template.createdAt)}</span>
             </div>
           </div>

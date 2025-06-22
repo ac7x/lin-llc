@@ -15,7 +15,7 @@ import { cn, cardStyles, buttonStyles } from '@/utils/classNameUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
 
-import { WorkpackageList } from '../work-packages';
+import { WorkPackageList } from '../work-Packages';
 import ProjectEditModal from './ProjectEditModal';
 import ProjectInfoDisplay from './ProjectInfoDisplay';
 
@@ -30,7 +30,7 @@ interface ProjectInfoPageProps {
 }
 
 export default function ProjectInfoPage({ project, eligibleUsers }: ProjectInfoPageProps) {
-  const [activeTab, setActiveTab] = useState<'info' | 'workpackages'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'workPackages'>('info');
 
   return (
     <div className="space-y-6">
@@ -52,10 +52,10 @@ export default function ProjectInfoPage({ project, eligibleUsers }: ProjectInfoP
             專案資訊
           </button>
           <button
-            onClick={() => setActiveTab('workpackages')}
+            onClick={() => setActiveTab('workPackages')}
             className={cn(
               'px-4 py-2 rounded-lg font-medium transition-colors duration-200',
-              activeTab === 'workpackages'
+              activeTab === 'workPackages'
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             )}
@@ -73,10 +73,10 @@ export default function ProjectInfoPage({ project, eligibleUsers }: ProjectInfoP
           </div>
         )}
         
-        {activeTab === 'workpackages' && (
+        {activeTab === 'workPackages' && (
           <div className="p-6">
-        <WorkpackageList 
-              workpackages={project.workPackages}
+        <WorkPackageList 
+              workPackages={project.workPackages}
               projectId={project.id}
         />
           </div>

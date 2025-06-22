@@ -29,19 +29,19 @@ import { db } from '@/lib/firebase-client';
 import type { SubWorkPackage, TemplateToSubWorkPackageOptions } from '@/app/modules/projects/types';
 
 // 子工作包集合名稱
-const SUBWORKPACKAGE_COLLECTION = 'subworkpackages';
+const SUBWORKPACKAGE_COLLECTION = 'subworkPackages';
 
 /**
  * 新增子工作包
  */
-export const createSubWorkpackage = async (
-  workpackageId: string,
-  subWorkpackageData: Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'>
+export const createSubWorkPackage = async (
+  workPackageId: string,
+  subWorkPackageData: Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> => {
   try {
     const docRef = await addDoc(collection(db, SUBWORKPACKAGE_COLLECTION), {
-      ...subWorkpackageData,
-      workpackageId,
+      ...subWorkPackageData,
+      workPackageId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -56,12 +56,12 @@ export const createSubWorkpackage = async (
 /**
  * 更新子工作包
  */
-export const updateSubWorkpackage = async (
-  subWorkpackageId: string,
+export const updateSubWorkPackage = async (
+  subWorkPackageId: string,
   updateData: Partial<Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'>>
 ): Promise<void> => {
   try {
-    const docRef = doc(db, SUBWORKPACKAGE_COLLECTION, subWorkpackageId);
+    const docRef = doc(db, SUBWORKPACKAGE_COLLECTION, subWorkPackageId);
     await updateDoc(docRef, {
       ...updateData,
       updatedAt: serverTimestamp(),
@@ -75,9 +75,9 @@ export const updateSubWorkpackage = async (
 /**
  * 刪除子工作包
  */
-export const deleteSubWorkpackage = async (subWorkpackageId: string): Promise<void> => {
+export const deleteSubWorkPackage = async (subWorkPackageId: string): Promise<void> => {
   try {
-    const docRef = doc(db, SUBWORKPACKAGE_COLLECTION, subWorkpackageId);
+    const docRef = doc(db, SUBWORKPACKAGE_COLLECTION, subWorkPackageId);
     await deleteDoc(docRef);
   } catch (error) {
     console.error('刪除子工作包時發生錯誤:', error);
@@ -88,21 +88,21 @@ export const deleteSubWorkpackage = async (subWorkpackageId: string): Promise<vo
 /**
  * 根據工作包 ID 查詢子工作包
  */
-export const getSubWorkpackagesByWorkpackageId = async (workpackageId: string): Promise<SubWorkPackage[]> => {
+export const getSubWorkPackagesByWorkPackageId = async (workPackageId: string): Promise<SubWorkPackage[]> => {
   try {
     const q = query(
       collection(db, SUBWORKPACKAGE_COLLECTION),
-      where('workpackageId', '==', workpackageId)
+      where('workPackageId', '==', workPackageId)
       // 暫時移除 orderBy 以避免索引需求
       // orderBy('createdAt', 'asc')
     );
 
     const querySnapshot = await getDocs(q);
-    const subWorkpackages: SubWorkPackage[] = [];
+    const subWorkPackages: SubWorkPackage[] = [];
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      subWorkpackages.push({
+      subWorkPackages.push({
         id: doc.id,
         ...data,
         createdAt: data.createdAt?.toDate?.() || data.createdAt,
@@ -117,7 +117,7 @@ export const getSubWorkpackagesByWorkpackageId = async (workpackageId: string): 
     });
 
     // 在記憶體中按創建時間排序
-    return subWorkpackages.sort((a, b) => {
+    return subWorkPackages.sort((a, b) => {
       const getDate = (dateField: any): Date => {
         if (dateField instanceof Date) return dateField;
         if (dateField && typeof dateField === 'string') return new Date(dateField);
@@ -140,7 +140,7 @@ export const getSubWorkpackagesByWorkpackageId = async (workpackageId: string): 
 /**
  * 根據專案 ID 查詢所有子工作包
  */
-export const getSubWorkpackagesByProjectId = async (projectId: string): Promise<SubWorkPackage[]> => {
+export const getSubWorkPackagesByProjectId = async (projectId: string): Promise<SubWorkPackage[]> => {
   try {
     // 由於子工作包沒有 projectId 欄位，我們需要先查詢專案的工作包
     // 然後根據工作包 ID 查詢子工作包
@@ -158,27 +158,27 @@ export const getSubWorkpackagesByProjectId = async (projectId: string): Promise<
     }
 
     // 收集所有工作包的 ID
-    const workpackageIds = workPackages.map((wp: any) => wp.id).filter(Boolean);
+    const workPackageIds = workPackages.map((wp: any) => wp.id).filter(Boolean);
     
-    if (workpackageIds.length === 0) {
+    if (workPackageIds.length === 0) {
       return [];
     }
 
     // 查詢所有相關的子工作包
-    const subWorkpackages: SubWorkPackage[] = [];
+    const subWorkPackages: SubWorkPackage[] = [];
     
-    for (const workpackageId of workpackageIds) {
+    for (const workPackageId of workPackageIds) {
       try {
-        const workpackageSubWorkpackages = await getSubWorkpackagesByWorkpackageId(workpackageId);
-        subWorkpackages.push(...workpackageSubWorkpackages);
+        const workPackageSubWorkPackages = await getSubWorkPackagesByWorkPackageId(workPackageId);
+        subWorkPackages.push(...workPackageSubWorkPackages);
       } catch (error) {
-        console.warn(`查詢工作包 ${workpackageId} 的子工作包時發生錯誤:`, error);
+        console.warn(`查詢工作包 ${workPackageId} 的子工作包時發生錯誤:`, error);
         // 繼續查詢其他工作包
       }
     }
 
     // 按創建時間排序
-    return subWorkpackages.sort((a, b) => {
+    return subWorkPackages.sort((a, b) => {
       const getDate = (dateField: any): Date => {
         if (dateField instanceof Date) return dateField;
         if (dateField && typeof dateField === 'string') return new Date(dateField);
@@ -202,13 +202,13 @@ export const getSubWorkpackagesByProjectId = async (projectId: string): Promise<
 /**
  * 更新子工作包進度
  */
-export const updateSubWorkpackageProgress = async (
-  subWorkpackageId: string,
+export const updateSubWorkPackageProgress = async (
+  subWorkPackageId: string,
   progress: number,
   notes?: string
 ): Promise<void> => {
   try {
-    const docRef = doc(db, SUBWORKPACKAGE_COLLECTION, subWorkpackageId);
+    const docRef = doc(db, SUBWORKPACKAGE_COLLECTION, subWorkPackageId);
     
     const updateData: {
       progress: number;
@@ -231,7 +231,7 @@ export const updateSubWorkpackageProgress = async (
 
       // 這裡需要先獲取現有的進度歷史記錄，然後添加新記錄
       // 由於 Firestore 的限制，我們需要先讀取再更新
-      const docSnap = await getDocs(query(collection(db, SUBWORKPACKAGE_COLLECTION), where('__name__', '==', subWorkpackageId)));
+      const docSnap = await getDocs(query(collection(db, SUBWORKPACKAGE_COLLECTION), where('__name__', '==', subWorkPackageId)));
       if (!docSnap.empty) {
         const currentData = docSnap.docs[0].data();
         const progressHistory = currentData.progressHistory || [];
@@ -252,15 +252,15 @@ export const updateSubWorkpackageProgress = async (
  * 從模板創建子工作包
  */
 export const createSubWorkPackagesFromTemplate = async (
-  workpackageId: string,
+  workPackageId: string,
   templateItems: Array<{ name: string; description?: string; estimatedQuantity?: number; unit?: string }>,
   options: TemplateToSubWorkPackageOptions = {}
 ): Promise<string[]> => {
   try {
-    const subWorkpackageIds: string[] = [];
+    const subWorkPackageIds: string[] = [];
 
     for (const item of templateItems) {
-      const subWorkpackageData: Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'> = {
+      const subWorkPackageData: Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'> = {
         name: item.name,
         description: item.description || '',
         quantity: 0,
@@ -276,11 +276,11 @@ export const createSubWorkPackagesFromTemplate = async (
         status: 'draft',
       };
 
-      const subWorkpackageId = await createSubWorkpackage(workpackageId, subWorkpackageData);
-      subWorkpackageIds.push(subWorkpackageId);
+      const subWorkPackageId = await createSubWorkPackage(workPackageId, subWorkPackageData);
+      subWorkPackageIds.push(subWorkPackageId);
     }
 
-    return subWorkpackageIds;
+    return subWorkPackageIds;
   } catch (error) {
     console.error('從模板創建子工作包時發生錯誤:', error);
     throw new Error('從模板創建子工作包失敗');
@@ -296,7 +296,7 @@ export const batchUpdateSubWorkPackageStatus = async (
 ): Promise<void> => {
   try {
     const updatePromises = subWorkPackageIds.map(id =>
-      updateSubWorkpackage(id, { status })
+      updateSubWorkPackage(id, { status })
     );
     await Promise.all(updatePromises);
   } catch (error) {
@@ -308,16 +308,16 @@ export const batchUpdateSubWorkPackageStatus = async (
 /**
  * 獲取子工作包統計資訊
  */
-export const getSubWorkpackageStats = async (workpackageId: string) => {
+export const getSubWorkPackageStats = async (workPackageId: string) => {
   try {
-    const subWorkpackages = await getSubWorkpackagesByWorkpackageId(workpackageId);
+    const subWorkPackages = await getSubWorkPackagesByWorkPackageId(workPackageId);
     
-    const total = subWorkpackages.length;
-    const completed = subWorkpackages.filter(sub => sub.status === 'completed').length;
-    const inProgress = subWorkpackages.filter(sub => sub.status === 'in-progress').length;
-    const draft = subWorkpackages.filter(sub => sub.status === 'draft').length;
+    const total = subWorkPackages.length;
+    const completed = subWorkPackages.filter(sub => sub.status === 'completed').length;
+    const inProgress = subWorkPackages.filter(sub => sub.status === 'in-progress').length;
+    const draft = subWorkPackages.filter(sub => sub.status === 'draft').length;
     
-    const totalProgress = subWorkpackages.reduce((sum, sub) => sum + (sub.progress || 0), 0);
+    const totalProgress = subWorkPackages.reduce((sum, sub) => sum + (sub.progress || 0), 0);
     const averageProgress = total > 0 ? totalProgress / total : 0;
 
     return {

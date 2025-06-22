@@ -15,50 +15,50 @@ import { useState, useEffect } from 'react';
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { WorkPackage } from '@/app/modules/projects/types';
 
-interface WorkpackageFormProps {
-  workpackage?: WorkPackage;
+interface WorkPackageFormProps {
+  workPackage?: WorkPackage;
   projectId: string;
   onSubmit: (data: Partial<WorkPackage>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-export default function WorkpackageForm({
-  workpackage,
+export default function WorkPackageForm({
+  workPackage,
   projectId: _projectId,
   onSubmit,
   onCancel,
   isSubmitting = false,
-}: WorkpackageFormProps) {
+}: WorkPackageFormProps) {
   const [formData, setFormData] = useState({
-    name: workpackage?.name || '',
-    description: workpackage?.description || '',
-    status: workpackage?.status || 'draft',
-    priority: workpackage?.priority || 'medium',
-    riskLevel: workpackage?.riskLevel || 'low',
-    assignedTo: workpackage?.assignedTo || '',
-    estimatedHours: workpackage?.estimatedHours || 0,
-    budget: workpackage?.budget || 0,
-    category: workpackage?.category || '',
+    name: workPackage?.name || '',
+    description: workPackage?.description || '',
+    status: workPackage?.status || 'draft',
+    priority: workPackage?.priority || 'medium',
+    riskLevel: workPackage?.riskLevel || 'low',
+    assignedTo: workPackage?.assignedTo || '',
+    estimatedHours: workPackage?.estimatedHours || 0,
+    budget: workPackage?.budget || 0,
+    category: workPackage?.category || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (workpackage) {
+    if (workPackage) {
       setFormData({
-        name: workpackage.name || '',
-        description: workpackage.description || '',
-        status: workpackage.status || 'draft',
-        priority: workpackage.priority || 'medium',
-        riskLevel: workpackage.riskLevel || 'low',
-        assignedTo: workpackage.assignedTo || '',
-        estimatedHours: workpackage.estimatedHours || 0,
-        budget: workpackage.budget || 0,
-        category: workpackage.category || '',
+        name: workPackage.name || '',
+        description: workPackage.description || '',
+        status: workPackage.status || 'draft',
+        priority: workPackage.priority || 'medium',
+        riskLevel: workPackage.riskLevel || 'low',
+        assignedTo: workPackage.assignedTo || '',
+        estimatedHours: workPackage.estimatedHours || 0,
+        budget: workPackage.budget || 0,
+        category: workPackage.category || '',
       });
     }
-  }, [workpackage]);
+  }, [workPackage]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -88,7 +88,7 @@ export default function WorkpackageForm({
 
     const submitData: Partial<WorkPackage> = {
       ...formData,
-      subPackages: workpackage?.subPackages || [],
+      subPackages: workPackage?.subPackages || [],
     };
 
     onSubmit(submitData);
@@ -112,7 +112,7 @@ export default function WorkpackageForm({
   return (
     <div className={projectStyles.card.base}>
       <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6'>
-        {workpackage ? '編輯工作包' : '新增工作包'}
+        {workPackage ? '編輯工作包' : '新增工作包'}
       </h2>
 
       <form onSubmit={handleSubmit} className={projectStyles.form.container}>
@@ -293,7 +293,7 @@ export default function WorkpackageForm({
                 儲存中...
               </>
             ) : (
-              workpackage ? '更新工作包' : '新增工作包'
+              workPackage ? '更新工作包' : '新增工作包'
             )}
           </button>
         </div>

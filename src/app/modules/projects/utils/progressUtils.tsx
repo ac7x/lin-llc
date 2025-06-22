@@ -3,7 +3,7 @@
  * 提供專案與工作包進度計算功能與進度顯示元件
  * 功能：
  * - calculateProjectProgress: 根據工作包估算數量計算整體專案進度
- * - calculateWorkpackageProgress: 計算工作包進度
+ * - calculateWorkPackageProgress: 計算工作包進度
  * - ProjectProgressPercent: 顯示專案進度百分比的 React 元件
  * - ProgressBar: 顯示工作包進度條的 React 元件
  * - 整合專業化專案管理功能
@@ -12,7 +12,7 @@
 import type { ReactElement } from 'react';
 
 import { projectStyles } from '../styles';
-import { calculateProjectProgress, calculateWorkpackageProgress } from '../types';
+import { calculateProjectProgress, calculateWorkPackageProgress } from '../types';
 import type { Project, WorkPackage } from '../types';
 
 /**

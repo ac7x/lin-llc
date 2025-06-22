@@ -49,7 +49,7 @@ export interface DocumentUploadData {
   category: DocumentCategory;
   tags: string[];
   projectId: string;
-  workpackageId?: string;
+  workPackageId?: string;
   isPublic?: boolean;
   metadata?: Record<string, unknown>;
 }
@@ -116,7 +116,7 @@ export const createDocument = async (documentData: DocumentUploadData): Promise<
       tags: documentData.tags || [],
       description: documentData.description || '',
       projectId: documentData.projectId,
-      workpackageId: documentData.workpackageId || null,
+      workPackageId: documentData.workPackageId || null,
       isPublic: documentData.isPublic || false,
       metadata: documentData.metadata || {},
       createdAt: serverTimestamp(),
@@ -291,11 +291,11 @@ export const getDocumentsByProjectId = async (projectId: string): Promise<Docume
 /**
  * 根據工作包 ID 查詢文件
  */
-export const getDocumentsByWorkpackageId = async (workpackageId: string): Promise<DocumentFile[]> => {
+export const getDocumentsByWorkPackageId = async (workPackageId: string): Promise<DocumentFile[]> => {
   try {
     const q = query(
       collection(db, DOCUMENT_COLLECTION),
-      where('workpackageId', '==', workpackageId)
+      where('workPackageId', '==', workPackageId)
     );
 
     const querySnapshot = await getDocs(q);

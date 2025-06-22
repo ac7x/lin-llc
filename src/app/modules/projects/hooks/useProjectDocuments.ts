@@ -12,7 +12,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
   getDocumentsByProjectId, 
-  getDocumentsByWorkpackageId,
+  getDocumentsByWorkPackageId,
   createDocument,
   updateDocument,
   deleteDocument,
@@ -28,7 +28,7 @@ import { logError } from '@/utils/errorUtils';
 
 interface UseProjectDocumentsOptions {
   projectId?: string;
-  workpackageId?: string;
+  workPackageId?: string;
   autoLoad?: boolean;
 }
 
@@ -57,7 +57,7 @@ interface UseProjectDocumentsReturn {
 }
 
 export const useProjectDocuments = (options: UseProjectDocumentsOptions = {}): UseProjectDocumentsReturn => {
-  const { projectId, workpackageId, autoLoad = true } = options;
+  const { projectId, workPackageId, autoLoad = true } = options;
   
   const [documents, setDocuments] = useState<DocumentFile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,7 +66,7 @@ export const useProjectDocuments = (options: UseProjectDocumentsOptions = {}): U
 
   // 載入文件列表
   const loadDocuments = useCallback(async () => {
-    if (!projectId && !workpackageId) {
+    if (!projectId && !workPackageId) {
       setError('需要提供專案 ID 或工作包 ID');
       return;
     }
@@ -77,8 +77,8 @@ export const useProjectDocuments = (options: UseProjectDocumentsOptions = {}): U
     try {
       let documentsData: DocumentFile[];
       
-      if (workpackageId) {
-        documentsData = await getDocumentsByWorkpackageId(workpackageId);
+      if (workPackageId) {
+        documentsData = await getDocumentsByWorkPackageId(workPackageId);
       } else {
         documentsData = await getDocumentsByProjectId(projectId!);
       }
@@ -90,12 +90,12 @@ export const useProjectDocuments = (options: UseProjectDocumentsOptions = {}): U
       logError(err as Error, { 
         operation: 'load_documents', 
         projectId, 
-        workpackageId 
+        workPackageId 
       });
     } finally {
       setLoading(false);
     }
-  }, [projectId, workpackageId]);
+  }, [projectId, workPackageId]);
 
   // 上傳文件
   const uploadDocument = useCallback(async (data: DocumentUploadData): Promise<string> => {
@@ -271,10 +271,10 @@ export const useProjectDocuments = (options: UseProjectDocumentsOptions = {}): U
 
   // 自動載入
   useEffect(() => {
-    if (autoLoad && (projectId || workpackageId)) {
+    if (autoLoad && (projectId || workPackageId)) {
       loadDocuments();
     }
-  }, [autoLoad, projectId, workpackageId, loadDocuments]);
+  }, [autoLoad, projectId, workPackageId, loadDocuments]);
 
   return {
     // 狀態

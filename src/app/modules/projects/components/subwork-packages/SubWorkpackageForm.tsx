@@ -15,78 +15,78 @@ import { useState, useEffect } from 'react';
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { SubWorkPackage, PriorityLevel } from '@/app/modules/projects/types';
 
-interface SubWorkpackageFormProps {
-  subWorkpackage?: SubWorkPackage;
-  workpackageId: string;
+interface SubWorkPackageFormProps {
+  subWorkPackage?: SubWorkPackage;
+  workPackageId: string;
   onSubmit: (data: Partial<SubWorkPackage>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-export default function SubWorkpackageForm({
-  subWorkpackage,
-  workpackageId: _workpackageId,
+export default function SubWorkPackageForm({
+  subWorkPackage,
+  workPackageId: _workPackageId,
   onSubmit,
   onCancel,
   isSubmitting = false,
-}: SubWorkpackageFormProps) {
+}: SubWorkPackageFormProps) {
   const [formData, setFormData] = useState({
-    name: subWorkpackage?.name || '',
-    description: subWorkpackage?.description || '',
-    status: subWorkpackage?.status || 'draft',
-    priority: subWorkpackage?.priority || 'medium',
-    riskLevel: subWorkpackage?.riskLevel || 'low',
-    assignedTo: subWorkpackage?.assignedTo || '',
-    unit: subWorkpackage?.unit || '',
-    estimatedQuantity: subWorkpackage?.estimatedQuantity || 0,
-    actualQuantity: subWorkpackage?.actualQuantity || 0,
-    budget: subWorkpackage?.budget || 0,
-    estimatedHours: subWorkpackage?.estimatedHours || 0,
-    actualHours: subWorkpackage?.actualHours || 0,
-    plannedStartDate: subWorkpackage?.plannedStartDate ? 
-      (typeof subWorkpackage.plannedStartDate === 'object' && 'toDate' in subWorkpackage.plannedStartDate
-        ? (subWorkpackage.plannedStartDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
-        : subWorkpackage.plannedStartDate.toString()
+    name: subWorkPackage?.name || '',
+    description: subWorkPackage?.description || '',
+    status: subWorkPackage?.status || 'draft',
+    priority: subWorkPackage?.priority || 'medium',
+    riskLevel: subWorkPackage?.riskLevel || 'low',
+    assignedTo: subWorkPackage?.assignedTo || '',
+    unit: subWorkPackage?.unit || '',
+    estimatedQuantity: subWorkPackage?.estimatedQuantity || 0,
+    actualQuantity: subWorkPackage?.actualQuantity || 0,
+    budget: subWorkPackage?.budget || 0,
+    estimatedHours: subWorkPackage?.estimatedHours || 0,
+    actualHours: subWorkPackage?.actualHours || 0,
+    plannedStartDate: subWorkPackage?.plannedStartDate ? 
+      (typeof subWorkPackage.plannedStartDate === 'object' && 'toDate' in subWorkPackage.plannedStartDate
+        ? (subWorkPackage.plannedStartDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
+        : subWorkPackage.plannedStartDate.toString()
       ) : '',
-    plannedEndDate: subWorkpackage?.plannedEndDate ? 
-      (typeof subWorkpackage.plannedEndDate === 'object' && 'toDate' in subWorkpackage.plannedEndDate
-        ? (subWorkpackage.plannedEndDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
-        : subWorkpackage.plannedEndDate.toString()
+    plannedEndDate: subWorkPackage?.plannedEndDate ? 
+      (typeof subWorkPackage.plannedEndDate === 'object' && 'toDate' in subWorkPackage.plannedEndDate
+        ? (subWorkPackage.plannedEndDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
+        : subWorkPackage.plannedEndDate.toString()
       ) : '',
-    completionNotes: subWorkpackage?.completionNotes || '',
+    completionNotes: subWorkPackage?.completionNotes || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (subWorkpackage) {
+    if (subWorkPackage) {
       setFormData({
-        name: subWorkpackage.name || '',
-        description: subWorkpackage.description || '',
-        status: subWorkpackage.status || 'draft',
-        priority: subWorkpackage.priority || 'medium',
-        riskLevel: subWorkpackage.riskLevel || 'low',
-        assignedTo: subWorkpackage.assignedTo || '',
-        unit: subWorkpackage.unit || '',
-        estimatedQuantity: subWorkpackage.estimatedQuantity || 0,
-        actualQuantity: subWorkpackage.actualQuantity || 0,
-        budget: subWorkpackage.budget || 0,
-        estimatedHours: subWorkpackage.estimatedHours || 0,
-        actualHours: subWorkpackage.actualHours || 0,
-        plannedStartDate: subWorkpackage.plannedStartDate ? 
-          (typeof subWorkpackage.plannedStartDate === 'object' && 'toDate' in subWorkpackage.plannedStartDate
-            ? (subWorkpackage.plannedStartDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
-            : subWorkpackage.plannedStartDate.toString()
+        name: subWorkPackage.name || '',
+        description: subWorkPackage.description || '',
+        status: subWorkPackage.status || 'draft',
+        priority: subWorkPackage.priority || 'medium',
+        riskLevel: subWorkPackage.riskLevel || 'low',
+        assignedTo: subWorkPackage.assignedTo || '',
+        unit: subWorkPackage.unit || '',
+        estimatedQuantity: subWorkPackage.estimatedQuantity || 0,
+        actualQuantity: subWorkPackage.actualQuantity || 0,
+        budget: subWorkPackage.budget || 0,
+        estimatedHours: subWorkPackage.estimatedHours || 0,
+        actualHours: subWorkPackage.actualHours || 0,
+        plannedStartDate: subWorkPackage.plannedStartDate ? 
+          (typeof subWorkPackage.plannedStartDate === 'object' && 'toDate' in subWorkPackage.plannedStartDate
+            ? (subWorkPackage.plannedStartDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
+            : subWorkPackage.plannedStartDate.toString()
           ) : '',
-        plannedEndDate: subWorkpackage.plannedEndDate ? 
-          (typeof subWorkpackage.plannedEndDate === 'object' && 'toDate' in subWorkpackage.plannedEndDate
-            ? (subWorkpackage.plannedEndDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
-            : subWorkpackage.plannedEndDate.toString()
+        plannedEndDate: subWorkPackage.plannedEndDate ? 
+          (typeof subWorkPackage.plannedEndDate === 'object' && 'toDate' in subWorkPackage.plannedEndDate
+            ? (subWorkPackage.plannedEndDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
+            : subWorkPackage.plannedEndDate.toString()
           ) : '',
-        completionNotes: subWorkpackage.completionNotes || '',
+        completionNotes: subWorkPackage.completionNotes || '',
       });
     }
-  }, [subWorkpackage]);
+  }, [subWorkPackage]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -128,7 +128,7 @@ export default function SubWorkpackageForm({
 
     const submitData: Partial<SubWorkPackage> = {
       ...formData,
-      tasks: subWorkpackage?.tasks || [],
+      tasks: subWorkPackage?.tasks || [],
     };
 
     onSubmit(submitData);
@@ -152,7 +152,7 @@ export default function SubWorkpackageForm({
   return (
     <div className={projectStyles.card.base}>
       <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6'>
-        {subWorkpackage ? '編輯子工作包' : '新增子工作包'}
+        {subWorkPackage ? '編輯子工作包' : '新增子工作包'}
       </h2>
 
       <form onSubmit={handleSubmit} className={projectStyles.form.container}>
@@ -436,7 +436,7 @@ export default function SubWorkpackageForm({
                 儲存中...
               </>
             ) : (
-              subWorkpackage ? '更新子工作包' : '新增子工作包'
+              subWorkPackage ? '更新子工作包' : '新增子工作包'
             )}
           </button>
         </div>

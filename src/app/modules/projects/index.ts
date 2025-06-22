@@ -32,14 +32,14 @@ export { default as ProjectInfoDisplay } from './components/project/ProjectInfoD
 export { default as ProjectInfoPage } from './components/project/ProjectInfoPage';
 
 // 工作包組件
-export { default as WorkpackageCard } from './components/work-packages/WorkpackageCard';
-export { default as WorkpackageForm } from './components/work-packages/WorkpackageForm';
-export { default as WorkpackageList } from './components/work-packages/WorkpackageList';
+export { default as WorkPackageCard } from './components/work-Packages/WorkPackageCard';
+export { default as WorkPackageForm } from './components/work-Packages/WorkPackageForm';
+export { default as WorkPackageList } from './components/work-Packages/WorkPackageList';
 
 // 子工作包組件
-export { default as SubWorkpackageCard } from './components/subwork-packages/SubWorkpackageCard';
-export { default as SubWorkpackageForm } from './components/subwork-packages/SubWorkpackageForm';
-export { default as SubWorkpackageList } from './components/subwork-packages/SubWorkpackageList';
+export { default as SubWorkPackageCard } from './components/subwork-packages/SubWorkPackageCard';
+export { default as SubWorkPackageForm } from './components/subwork-packages/SubWorkPackageForm';
+export { default as SubWorkPackageList } from './components/subwork-packages/SubWorkPackageList';
 
 // 日誌組件
 export { default as JournalCard } from './components/journal/JournalCard';
@@ -92,7 +92,7 @@ export { useFilteredProjects, useProjectStats, useQualityScore } from './hooks/u
 
 export { 
   ProjectService, 
-  WorkpackageService, 
+  WorkPackageService, 
   JournalService, 
   IssueService, 
   TemplateService 
@@ -105,7 +105,7 @@ export {
 // 進度計算 - 從 types 檔案導入核心計算函數
 export { 
   calculateProjectProgress,
-  calculateWorkpackageProgress,
+  calculateWorkPackageProgress,
 } from './types';
 
 // 進度顯示組件 - 從 progressUtils 導入

@@ -16,24 +16,24 @@ import { useState } from 'react';
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { SubWorkPackage, PriorityLevel } from '@/app/modules/projects/types';
 
-interface SubWorkpackageCardProps {
-  subWorkpackage: SubWorkPackage;
-  workpackageId: string;
-  onEdit?: (subWorkpackage: SubWorkPackage) => void;
-  onDelete?: (subWorkpackageId: string) => void;
-  onViewDetails?: (subWorkpackageId: string) => void;
+interface SubWorkPackageCardProps {
+  subWorkPackage: SubWorkPackage;
+  workPackageId: string;
+  onEdit?: (subWorkPackage: SubWorkPackage) => void;
+  onDelete?: (subWorkPackageId: string) => void;
+  onViewDetails?: (subWorkPackageId: string) => void;
 }
 
-export default function SubWorkpackageCard({
-  subWorkpackage,
+export default function SubWorkPackageCard({
+  subWorkPackage,
   onEdit,
   onDelete,
-  workpackageId: _workpackageId,
-}: SubWorkpackageCardProps) {
+  workPackageId: _workPackageId,
+}: SubWorkPackageCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
   // 計算子工作包進度
-  const calculateSubWorkpackageProgress = (sub: SubWorkPackage): number => {
+  const calculateSubWorkPackageProgress = (sub: SubWorkPackage): number => {
     const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
     if (estimated === 0) return 0;
     
@@ -41,7 +41,7 @@ export default function SubWorkpackageCard({
     return Math.round((actual / estimated) * 100);
   };
   
-  const progress = calculateSubWorkpackageProgress(subWorkpackage);
+  const progress = calculateSubWorkPackageProgress(subWorkPackage);
 
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -103,34 +103,34 @@ export default function SubWorkpackageCard({
         <div className='flex-1'>
           <div className='flex items-center gap-2 mb-1'>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-              {subWorkpackage.name}
+              {subWorkPackage.name}
             </h3>
-            {subWorkpackage.priority && (
-              <span className={`text-xs font-medium ${getPriorityColor(subWorkpackage.priority)}`}>
-                {subWorkpackage.priority === 'critical' && '緊急'}
-                {subWorkpackage.priority === 'high' && '高'}
-                {subWorkpackage.priority === 'medium' && '中'}
-                {subWorkpackage.priority === 'low' && '低'}
+            {subWorkPackage.priority && (
+              <span className={`text-xs font-medium ${getPriorityColor(subWorkPackage.priority)}`}>
+                {subWorkPackage.priority === 'critical' && '緊急'}
+                {subWorkPackage.priority === 'high' && '高'}
+                {subWorkPackage.priority === 'medium' && '中'}
+                {subWorkPackage.priority === 'low' && '低'}
               </span>
             )}
           </div>
-          {subWorkpackage.description && (
+          {subWorkPackage.description && (
             <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
-              {subWorkpackage.description}
+              {subWorkPackage.description}
             </p>
           )}
           <div className='flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400'>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(subWorkpackage.status)}`}>
-              {getStatusText(subWorkpackage.status)}
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(subWorkPackage.status)}`}>
+              {getStatusText(subWorkPackage.status)}
             </span>
-            {subWorkpackage.estimatedQuantity && (
+            {subWorkPackage.estimatedQuantity && (
               <span>
-                數量: {subWorkpackage.actualQuantity || 0}/{subWorkpackage.estimatedQuantity}
-                {subWorkpackage.unit && ` ${subWorkpackage.unit}`}
+                數量: {subWorkPackage.actualQuantity || 0}/{subWorkPackage.estimatedQuantity}
+                {subWorkPackage.unit && ` ${subWorkPackage.unit}`}
               </span>
             )}
-            {subWorkpackage.assignedTo && (
-              <span>負責人: {subWorkpackage.assignedTo}</span>
+            {subWorkPackage.assignedTo && (
+              <span>負責人: {subWorkPackage.assignedTo}</span>
             )}
           </div>
         </div>
@@ -174,53 +174,53 @@ export default function SubWorkpackageCard({
             <div>
               <span className='text-gray-500 dark:text-gray-400'>預估工時:</span>
               <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                {subWorkpackage.estimatedHours || 0} 小時
+                {subWorkPackage.estimatedHours || 0} 小時
               </span>
             </div>
             <div>
               <span className='text-gray-500 dark:text-gray-400'>實際工時:</span>
               <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                {subWorkpackage.actualHours || 0} 小時
+                {subWorkPackage.actualHours || 0} 小時
               </span>
             </div>
             <div>
               <span className='text-gray-500 dark:text-gray-400'>預算:</span>
               <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                ${subWorkpackage.budget?.toLocaleString() || 0}
+                ${subWorkPackage.budget?.toLocaleString() || 0}
               </span>
             </div>
             <div>
               <span className='text-gray-500 dark:text-gray-400'>風險等級:</span>
               <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                {subWorkpackage.riskLevel || '低'}
+                {subWorkPackage.riskLevel || '低'}
               </span>
             </div>
-            {subWorkpackage.plannedStartDate && (
+            {subWorkPackage.plannedStartDate && (
               <div>
                 <span className='text-gray-500 dark:text-gray-400'>計劃開始:</span>
                 <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                  {subWorkpackage.plannedStartDate.toString()}
+                  {subWorkPackage.plannedStartDate.toString()}
                 </span>
               </div>
             )}
-            {subWorkpackage.plannedEndDate && (
+            {subWorkPackage.plannedEndDate && (
               <div>
                 <span className='text-gray-500 dark:text-gray-400'>計劃結束:</span>
                 <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                  {subWorkpackage.plannedEndDate.toString()}
+                  {subWorkPackage.plannedEndDate.toString()}
                 </span>
               </div>
             )}
           </div>
 
           {/* 任務預覽 */}
-          {subWorkpackage.tasks && subWorkpackage.tasks.length > 0 && (
+          {subWorkPackage.tasks && subWorkPackage.tasks.length > 0 && (
             <div className='mt-4'>
               <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                任務 ({subWorkpackage.tasks.length})
+                任務 ({subWorkPackage.tasks.length})
               </h4>
               <div className='space-y-2 max-h-32 overflow-y-auto'>
-                {subWorkpackage.tasks.slice(0, 3).map((task) => (
+                {subWorkPackage.tasks.slice(0, 3).map((task) => (
                   <div key={task.id} className='flex justify-between items-center text-xs'>
                     <span className='text-gray-600 dark:text-gray-400 truncate'>{task.name}</span>
                     <span className={`px-1 py-0.5 rounded text-xs ${
@@ -232,9 +232,9 @@ export default function SubWorkpackageCard({
                     </span>
                   </div>
                 ))}
-                {subWorkpackage.tasks.length > 3 && (
+                {subWorkPackage.tasks.length > 3 && (
                   <div className='text-xs text-gray-500 dark:text-gray-400 text-center'>
-                    還有 {subWorkpackage.tasks.length - 3} 個任務
+                    還有 {subWorkPackage.tasks.length - 3} 個任務
                   </div>
                 )}
               </div>
@@ -242,13 +242,13 @@ export default function SubWorkpackageCard({
           )}
 
           {/* 完工備註 */}
-          {subWorkpackage.completionNotes && (
+          {subWorkPackage.completionNotes && (
             <div className='mt-4'>
               <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 完工備註
               </h4>
               <p className='text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded'>
-                {subWorkpackage.completionNotes}
+                {subWorkPackage.completionNotes}
               </p>
             </div>
           )}
@@ -261,7 +261,7 @@ export default function SubWorkpackageCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onEdit?.(subWorkpackage);
+              onEdit?.(subWorkPackage);
             }}
             className="text-blue-600 hover:text-blue-800 text-sm font-medium"
           >
@@ -270,7 +270,7 @@ export default function SubWorkpackageCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onDelete?.(subWorkpackage.id);
+              onDelete?.(subWorkPackage.id);
             }}
             className="text-red-600 hover:text-red-800 text-sm font-medium"
           >

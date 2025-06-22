@@ -16,24 +16,24 @@ import { useState } from 'react';
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { WorkPackage } from '@/app/modules/projects/types';
 
-interface WorkpackageCardProps {
-  workpackage: WorkPackage;
+interface WorkPackageCardProps {
+  workPackage: WorkPackage;
   projectId: string;
-  onEdit?: (workpackage: WorkPackage) => void;
-  onDelete?: (workpackageId: string) => void;
-  onViewDetails?: (workpackageId: string) => void;
+  onEdit?: (workPackage: WorkPackage) => void;
+  onDelete?: (workPackageId: string) => void;
+  onViewDetails?: (workPackageId: string) => void;
 }
 
-export default function WorkpackageCard({
-  workpackage,
+export default function WorkPackageCard({
+  workPackage,
   onEdit,
   onDelete,
   projectId: _projectId,
-}: WorkpackageCardProps) {
+}: WorkPackageCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
   // 計算工作包進度
-  const calculateWorkpackageProgress = (wp: WorkPackage): number => {
+  const calculateWorkPackageProgress = (wp: WorkPackage): number => {
     if (!wp.subPackages || wp.subPackages.length === 0) return 0;
     
     let totalEstimated = 0;
@@ -52,9 +52,9 @@ export default function WorkpackageCard({
     return Math.round((totalActual / totalEstimated) * 100);
   };
   
-  const progress = calculateWorkpackageProgress(workpackage);
-  const subWorkpackageCount = workpackage.subPackages?.length || 0;
-  const completedSubWorkpackages = workpackage.subPackages?.filter(
+  const progress = calculateWorkPackageProgress(workPackage);
+  const subWorkPackageCount = workPackage.subPackages?.length || 0;
+  const completedSubWorkPackages = workPackage.subPackages?.filter(
     sub => sub.status === 'completed'
   ).length || 0;
 
@@ -97,20 +97,20 @@ export default function WorkpackageCard({
       <div className='flex justify-between items-start mb-4'>
         <div className='flex-1'>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1'>
-            {workpackage.name}
+            {workPackage.name}
           </h3>
-          {workpackage.description && (
+          {workPackage.description && (
             <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
-              {workpackage.description}
+              {workPackage.description}
             </p>
           )}
           <div className='flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400'>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(workpackage.status)}`}>
-              {getStatusText(workpackage.status)}
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(workPackage.status)}`}>
+              {getStatusText(workPackage.status)}
             </span>
-            <span>子工作包: {completedSubWorkpackages}/{subWorkpackageCount}</span>
-            {workpackage.assignedTo && (
-              <span>負責人: {workpackage.assignedTo}</span>
+            <span>子工作包: {completedSubWorkPackages}/{subWorkPackageCount}</span>
+            {workPackage.assignedTo && (
+              <span>負責人: {workPackage.assignedTo}</span>
             )}
           </div>
         </div>
@@ -154,37 +154,37 @@ export default function WorkpackageCard({
             <div>
               <span className='text-gray-500 dark:text-gray-400'>預估工時:</span>
               <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                {workpackage.estimatedHours || 0} 小時
+                {workPackage.estimatedHours || 0} 小時
               </span>
             </div>
             <div>
               <span className='text-gray-500 dark:text-gray-400'>實際工時:</span>
               <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                {workpackage.actualHours || 0} 小時
+                {workPackage.actualHours || 0} 小時
               </span>
             </div>
             <div>
               <span className='text-gray-500 dark:text-gray-400'>預算:</span>
               <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                ${workpackage.budget?.toLocaleString() || 0}
+                ${workPackage.budget?.toLocaleString() || 0}
               </span>
             </div>
             <div>
               <span className='text-gray-500 dark:text-gray-400'>風險等級:</span>
               <span className='ml-2 text-gray-900 dark:text-gray-100'>
-                {workpackage.riskLevel || '低'}
+                {workPackage.riskLevel || '低'}
               </span>
             </div>
           </div>
 
           {/* 子工作包預覽 */}
-          {subWorkpackageCount > 0 && (
+          {subWorkPackageCount > 0 && (
             <div className='mt-4'>
               <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                子工作包 ({subWorkpackageCount})
+                子工作包 ({subWorkPackageCount})
               </h4>
               <div className='space-y-2 max-h-32 overflow-y-auto'>
-                {workpackage.subPackages?.slice(0, 3).map((sub) => (
+                {workPackage.subPackages?.slice(0, 3).map((sub) => (
                   <div key={sub.id} className='flex justify-between items-center text-xs'>
                     <span className='text-gray-600 dark:text-gray-400 truncate'>{sub.name}</span>
                     <span className={`px-1 py-0.5 rounded text-xs ${getStatusColor(sub.status)}`}>
@@ -192,9 +192,9 @@ export default function WorkpackageCard({
                     </span>
                   </div>
                 ))}
-                {subWorkpackageCount > 3 && (
+                {subWorkPackageCount > 3 && (
                   <div className='text-xs text-gray-500 dark:text-gray-400 text-center'>
-                    還有 {subWorkpackageCount - 3} 個子工作包
+                    還有 {subWorkPackageCount - 3} 個子工作包
                   </div>
                 )}
               </div>
@@ -209,7 +209,7 @@ export default function WorkpackageCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onEdit?.(workpackage);
+              onEdit?.(workPackage);
             }}
             className="text-blue-600 hover:text-blue-800 text-sm font-medium"
           >
@@ -218,7 +218,7 @@ export default function WorkpackageCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onDelete?.(workpackage.id);
+              onDelete?.(workPackage.id);
             }}
             className="text-red-600 hover:text-red-800 text-sm font-medium"
           >

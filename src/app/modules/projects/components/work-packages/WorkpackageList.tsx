@@ -29,12 +29,12 @@ import type { WorkPackage } from '@/app/modules/projects/types';
 import { cn, buttonStyles, cardStyles } from '@/utils/classNameUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
-interface WorkpackageListProps {
-  workpackages: WorkPackage[];
+interface WorkPackageListProps {
+  workPackages: WorkPackage[];
   projectId: string;
 }
 
-const getWorkpackageProgress = (wp: WorkPackage): number => {
+const getWorkPackageProgress = (wp: WorkPackage): number => {
   if (!wp.subPackages || wp.subPackages.length === 0) {
     return wp.progress || 0;
   }
@@ -61,11 +61,11 @@ const getStatusColor = (status: string): string => {
   }
 };
 
-const SortableWorkpackageItem = ({ 
-  workpackage, 
+const SortableWorkPackageItem = ({ 
+  workPackage, 
   projectId 
 }: { 
-  workpackage: WorkPackage; 
+  workPackage: WorkPackage; 
   projectId: string; 
 }) => {
   const {
@@ -75,14 +75,14 @@ const SortableWorkpackageItem = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: workpackage.id || '' });
+  } = useSortable({ id: workPackage.id || '' });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  const progress = getWorkpackageProgress(workpackage);
+  const progress = getWorkPackageProgress(workPackage);
 
   return (
     <div
@@ -98,18 +98,18 @@ const SortableWorkpackageItem = ({
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {workpackage.name}
+            {workPackage.name}
           </h3>
           <p className="text-sm text-gray-600 mb-3">
-            {workpackage.description}
+            {workPackage.description}
           </p>
           
           <div className="flex items-center space-x-4 mb-3">
             <span className={cn(
               'px-2 py-1 text-xs font-medium rounded-full',
-              getStatusColor(workpackage.status || '')
+              getStatusColor(workPackage.status || '')
             )}>
-              {workpackage.status || '未知'}
+              {workPackage.status || '未知'}
             </span>
             <span className="text-sm text-gray-600">
               進度: {progress}%
@@ -147,11 +147,11 @@ const SortableWorkpackageItem = ({
       </div>
 
       {/* 子工作包列表 */}
-      {workpackage.subPackages && workpackage.subPackages.length > 0 && (
+      {workPackage.subPackages && workPackage.subPackages.length > 0 && (
         <div className="mt-4 pl-4 border-l-2 border-gray-200">
           <h4 className="text-sm font-medium text-gray-700 mb-2">子工作包</h4>
           <div className="space-y-2">
-            {workpackage.subPackages.map((subWp) => (
+            {workPackage.subPackages.map((subWp) => (
               <div key={subWp.id} className="bg-gray-50 rounded p-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-900">{subWp.name}</span>
@@ -168,7 +168,7 @@ const SortableWorkpackageItem = ({
   );
 };
 
-export default function WorkpackageList({ workpackages, projectId }: WorkpackageListProps) {
+export default function WorkPackageList({ workPackages, projectId }: WorkPackageListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -180,15 +180,15 @@ export default function WorkpackageList({ workpackages, projectId }: Workpackage
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      const oldIndex = workpackages.findIndex(wp => wp.id === active.id);
-      const newIndex = workpackages.findIndex(wp => wp.id === over?.id);
+      const oldIndex = workPackages.findIndex(wp => wp.id === active.id);
+      const newIndex = workPackages.findIndex(wp => wp.id === over?.id);
 
-      const newWorkpackages = arrayMove(workpackages, oldIndex, newIndex);
+      const newWorkPackages = arrayMove(workPackages, oldIndex, newIndex);
 
       try {
         const projectRef = doc(db, 'projects', projectId);
         await retry(() => updateDoc(projectRef, {
-          workpackages: newWorkpackages,
+          workPackages: newWorkPackages,
           updatedAt: new Date(),
         }), 3, 1000);
       } catch (error) {
@@ -197,7 +197,7 @@ export default function WorkpackageList({ workpackages, projectId }: Workpackage
     }
   };
 
-  if (workpackages.length === 0) {
+  if (workPackages.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">尚無工作包</p>
@@ -212,7 +212,7 @@ export default function WorkpackageList({ workpackages, projectId }: Workpackage
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
-          工作包列表 ({workpackages.length})
+          工作包列表 ({workPackages.length})
         </h3>
         <button className={buttonStyles.primary}>
           新增工作包
@@ -225,13 +225,13 @@ export default function WorkpackageList({ workpackages, projectId }: Workpackage
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={workpackages.map(wp => wp.id)}
+          items={workPackages.map(wp => wp.id)}
           strategy={verticalListSortingStrategy}
         >
-          {workpackages.map((workpackage) => (
-            <SortableWorkpackageItem
-              key={workpackage.id || ''}
-              workpackage={workpackage}
+          {workPackages.map((workPackage) => (
+            <SortableWorkPackageItem
+              key={workPackage.id || ''}
+              workPackage={workPackage}
               projectId={projectId}
             />
           ))}

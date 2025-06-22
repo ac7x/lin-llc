@@ -135,26 +135,26 @@ export function calculateProjectQualityScore(project: Project): number {
   if (workPackages.length === 0) return 0;
 
   let totalScore = 0;
-  let validWorkpackages = 0;
+  let validWorkPackages = 0;
 
   for (const wp of workPackages) {
     if (wp.qualityMetrics) {
-      const wpScore = calculateWorkpackageQualityScore(wp);
+      const wpScore = calculateWorkPackageQualityScore(wp);
       if (wpScore > 0) {
         totalScore += wpScore;
-        validWorkpackages++;
+        validWorkPackages++;
       }
     }
   }
 
-  if (validWorkpackages === 0) return 0;
-  return Math.round(totalScore / validWorkpackages);
+  if (validWorkPackages === 0) return 0;
+  return Math.round(totalScore / validWorkPackages);
 }
 
 /**
  * 計算工作包品質評分
  */
-export function calculateWorkpackageQualityScore(wp: WorkPackage): number {
+export function calculateWorkPackageQualityScore(wp: WorkPackage): number {
   if (!wp.qualityMetrics) return 0;
 
   const { inspectionPassRate, defectRate, reworkPercentage } = wp.qualityMetrics;

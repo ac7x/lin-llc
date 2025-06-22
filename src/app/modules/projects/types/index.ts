@@ -42,7 +42,7 @@ export type ProjectStatus =
   | 'cancelled'     // 已取消
   | 'archived';     // 已封存
 
-export type WorkpackageStatus =
+export type WorkPackageStatus =
   | 'draft'         // 草稿
   | 'planned'       // 已規劃
   | 'ready'         // 準備就緒
@@ -338,7 +338,7 @@ export interface WorkPackage extends BaseWithId {
   plannedEndDate?: DateField;
   estimatedStartDate?: DateField;
   estimatedEndDate?: DateField;
-  status?: WorkpackageStatus;
+  status?: WorkPackageStatus;
   progress?: number;
   assignedTo?: string | null;
   category?: string;
@@ -362,7 +362,7 @@ export interface WorkPackage extends BaseWithId {
   phase?: ProjectPhase;
 }
 
-export const calculateWorkpackageProgress = (wp: WorkPackage): number => {
+export const calculateWorkPackageProgress = (wp: WorkPackage): number => {
   if (!wp.subPackages || wp.subPackages.length === 0) {
     return wp.progress || 0;
   }
@@ -379,7 +379,7 @@ export const calculateWorkpackageProgress = (wp: WorkPackage): number => {
 // ============================================================================
 
 export interface ActivityLog extends BaseWithId {
-  workpackageId: string;
+  workPackageId: string;
   description: string;
   startTime: DateField;
   endTime: DateField;
@@ -412,7 +412,7 @@ export interface PhotoRecord extends BaseWithId {
   url: string;
   type: PhotoType;
   description: string;
-  workpackageId?: string;
+  workPackageId?: string;
   zoneId?: string;
   reportId?: string;
   createdBy: string;
@@ -496,7 +496,7 @@ export interface Template extends BaseWithId {
 }
 
 export type TemplateToSubWorkPackageOptions = {
-  workpackageId?: string;
+  workPackageId?: string;
   estimatedStartDate?: DateField;
   estimatedEndDate?: DateField;
   assignedTo?: string | null;
@@ -611,7 +611,7 @@ export const calculateProjectProgress = (project: Project): number => {
   }
   
   const totalProgress = project.workPackages.reduce((sum, wp) => {
-    return sum + calculateWorkpackageProgress(wp);
+    return sum + calculateWorkPackageProgress(wp);
   }, 0);
   
   return Math.round(totalProgress / project.workPackages.length);
@@ -760,7 +760,7 @@ export interface ProjectDocumentFile extends BaseWithId {
   tags: string[];
   description?: string;
   projectId: string;
-  workpackageId?: string;
+  workPackageId?: string;
   isPublic: boolean;
   metadata?: Record<string, unknown>;
 }
@@ -819,7 +819,7 @@ export interface BudgetItem extends BaseWithId {
   unit?: string;
   quantity?: number;
   unitPrice?: number;
-  workpackageId?: string;
+  workPackageId?: string;
   assignedTo?: string;
   priority: PriorityLevel;
   status: ItemStatus;
@@ -829,7 +829,7 @@ export interface BudgetItem extends BaseWithId {
 export interface CostRecord extends BaseWithId {
   projectId: string;
   budgetItemId?: string;
-  workpackageId?: string;
+  workPackageId?: string;
   description: string;
   amount: number;
   date: DateField;

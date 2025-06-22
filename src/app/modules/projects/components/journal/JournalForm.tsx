@@ -29,7 +29,7 @@ interface JournalEntry extends BaseWithId {
     name: string;
     url: string;
   }>;
-  relatedWorkpackages?: Array<{
+  relatedWorkPackages?: Array<{
     name: string;
     status?: string;
   }>;
@@ -116,7 +116,7 @@ export default function JournalForm({
       followUpActions: formData.followUpActions,
       date: new Date(),
       attachments: journalEntry?.attachments || [],
-      relatedWorkpackages: journalEntry?.relatedWorkpackages || [],
+      relatedWorkPackages: journalEntry?.relatedWorkPackages || [],
     };
 
     onSubmit(submitData);

@@ -14,35 +14,35 @@ import { useState, useMemo } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { SubWorkPackage } from '@/app/modules/projects/types';
-import SubWorkpackageCard from './SubWorkpackageCard';
+import SubWorkPackageCard from './SubWorkPackageCard';
 
-interface SubWorkpackageListProps {
-  subWorkpackages: SubWorkPackage[];
-  workpackageId: string;
-  onAddSubWorkpackage?: () => void;
-  onEditSubWorkpackage?: (subWorkpackage: SubWorkPackage) => void;
-  onDeleteSubWorkpackage?: (subWorkpackageId: string) => void;
-  onViewSubWorkpackageDetails?: (subWorkpackageId: string) => void;
+interface SubWorkPackageListProps {
+  subWorkPackages: SubWorkPackage[];
+  workPackageId: string;
+  onAddSubWorkPackage?: () => void;
+  onEditSubWorkPackage?: (subWorkPackage: SubWorkPackage) => void;
+  onDeleteSubWorkPackage?: (subWorkPackageId: string) => void;
+  onViewSubWorkPackageDetails?: (subWorkPackageId: string) => void;
 }
 
 type SortOption = 'name' | 'status' | 'priority' | 'progress' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-export default function SubWorkpackageList({
-  subWorkpackages,
-  workpackageId,
-  onAddSubWorkpackage,
-  onEditSubWorkpackage,
-  onDeleteSubWorkpackage,
-  onViewSubWorkpackageDetails,
-}: SubWorkpackageListProps) {
+export default function SubWorkPackageList({
+  subWorkPackages,
+  workPackageId,
+  onAddSubWorkPackage,
+  onEditSubWorkPackage,
+  onDeleteSubWorkPackage,
+  onViewSubWorkPackageDetails,
+}: SubWorkPackageListProps) {
   const [sortBy, setSortBy] = useState<SortOption>('priority');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   // 計算子工作包進度
-  const calculateSubWorkpackageProgress = (sub: SubWorkPackage): number => {
+  const calculateSubWorkPackageProgress = (sub: SubWorkPackage): number => {
     const estimated = typeof sub.estimatedQuantity === 'number' ? sub.estimatedQuantity : 0;
     if (estimated === 0) return 0;
     
@@ -51,8 +51,8 @@ export default function SubWorkpackageList({
   };
 
   // 篩選和排序子工作包
-  const filteredAndSortedSubWorkpackages = useMemo(() => {
-    const filtered = subWorkpackages.filter(sub => {
+  const filteredAndSortedSubWorkPackages = useMemo(() => {
+    const filtered = subWorkPackages.filter(sub => {
       // 狀態篩選
       if (statusFilter !== 'all' && sub.status !== statusFilter) {
         return false;
@@ -90,8 +90,8 @@ export default function SubWorkpackageList({
           bValue = b.priority || 0;
           break;
         case 'progress':
-          aValue = calculateSubWorkpackageProgress(a);
-          bValue = calculateSubWorkpackageProgress(b);
+          aValue = calculateSubWorkPackageProgress(a);
+          bValue = calculateSubWorkPackageProgress(b);
           break;
         case 'createdAt':
           aValue = a.createdAt ? 
@@ -120,15 +120,15 @@ export default function SubWorkpackageList({
     });
 
     return filtered;
-  }, [subWorkpackages, sortBy, sortDirection, statusFilter, searchTerm]);
+  }, [subWorkPackages, sortBy, sortDirection, statusFilter, searchTerm]);
 
   // 計算統計資訊
   const stats = useMemo(() => {
-    const total = subWorkpackages.length;
-    const completed = subWorkpackages.filter(sub => sub.status === 'completed').length;
-    const inProgress = subWorkpackages.filter(sub => sub.status === 'in-progress').length;
-    const onHold = subWorkpackages.filter(sub => sub.status === 'on-hold').length;
-    const totalProgress = subWorkpackages.reduce((sum, sub) => sum + calculateSubWorkpackageProgress(sub), 0);
+    const total = subWorkPackages.length;
+    const completed = subWorkPackages.filter(sub => sub.status === 'completed').length;
+    const inProgress = subWorkPackages.filter(sub => sub.status === 'in-progress').length;
+    const onHold = subWorkPackages.filter(sub => sub.status === 'on-hold').length;
+    const totalProgress = subWorkPackages.reduce((sum, sub) => sum + calculateSubWorkPackageProgress(sub), 0);
     const averageProgress = total > 0 ? Math.round(totalProgress / total) : 0;
 
     return {
@@ -138,7 +138,7 @@ export default function SubWorkpackageList({
       onHold,
       averageProgress,
     };
-  }, [subWorkpackages]);
+  }, [subWorkPackages]);
 
   const handleSort = (option: SortOption) => {
     if (sortBy === option) {
@@ -220,9 +220,9 @@ export default function SubWorkpackageList({
         </div>
 
         {/* 新增按鈕 */}
-        {onAddSubWorkpackage && (
+        {onAddSubWorkPackage && (
           <button
-            onClick={onAddSubWorkpackage}
+            onClick={onAddSubWorkPackage}
             className={projectStyles.button.primary}
           >
             <svg className='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -255,7 +255,7 @@ export default function SubWorkpackageList({
       </div>
 
       {/* 子工作包列表 */}
-      {filteredAndSortedSubWorkpackages.length === 0 ? (
+      {filteredAndSortedSubWorkPackages.length === 0 ? (
         <div className={projectStyles.card.base}>
           <div className='text-center py-8'>
             <svg className='w-12 h-12 text-gray-400 mx-auto mb-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -264,9 +264,9 @@ export default function SubWorkpackageList({
             <p className='text-gray-500 dark:text-gray-400 mb-2'>
               {searchTerm || statusFilter !== 'all' ? '沒有符合條件的子工作包' : '尚未建立子工作包'}
             </p>
-            {onAddSubWorkpackage && (
+            {onAddSubWorkPackage && (
               <button
-                onClick={onAddSubWorkpackage}
+                onClick={onAddSubWorkPackage}
                 className={projectStyles.button.outline}
               >
                 新增第一個子工作包
@@ -276,24 +276,24 @@ export default function SubWorkpackageList({
         </div>
       ) : (
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-          {filteredAndSortedSubWorkpackages.map((subWorkpackage) => (
-            <SubWorkpackageCard
-              key={subWorkpackage.id}
-              subWorkpackage={subWorkpackage}
-              workpackageId={workpackageId}
-              onEdit={onEditSubWorkpackage}
-              onDelete={onDeleteSubWorkpackage}
-              onViewDetails={onViewSubWorkpackageDetails}
+          {filteredAndSortedSubWorkPackages.map((subWorkPackage) => (
+            <SubWorkPackageCard
+              key={subWorkPackage.id}
+              subWorkPackage={subWorkPackage}
+              workPackageId={workPackageId}
+              onEdit={onEditSubWorkPackage}
+              onDelete={onDeleteSubWorkPackage}
+              onViewDetails={onViewSubWorkPackageDetails}
             />
           ))}
         </div>
       )}
 
       {/* 結果統計 */}
-      {filteredAndSortedSubWorkpackages.length > 0 && (
+      {filteredAndSortedSubWorkPackages.length > 0 && (
         <div className='text-sm text-gray-500 dark:text-gray-400 text-center'>
-          顯示 {filteredAndSortedSubWorkpackages.length} 個子工作包
-          {(searchTerm || statusFilter !== 'all') && ` (共 ${subWorkpackages.length} 個)`}
+          顯示 {filteredAndSortedSubWorkPackages.length} 個子工作包
+          {(searchTerm || statusFilter !== 'all') && ` (共 ${subWorkPackages.length} 個)`}
         </div>
       )}
     </div>

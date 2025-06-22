@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react';
 import { CalendarView } from '@/app/modules/projects/components/calendar';
 import { PageContainer, PageHeader } from '@/app/modules/projects/components/common';
 import { ProjectService } from '@/app/modules/projects/services/projectService';
-import { WorkpackageService } from '@/app/modules/projects/services/workpackageService';
+import { WorkPackageService } from '@/app/modules/projects/services/workPackageService';
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { Project, ProjectMilestone, WorkPackage } from '@/app/modules/projects/types';
 
@@ -25,7 +25,7 @@ export default function ProjectCalendarPage() {
   const projectId = params.project as string;
   
   const [project, setProject] = useState<Project | null>(null);
-  const [workpackages, setWorkpackages] = useState<WorkPackage[]>([]);
+  const [workPackages, setWorkPackages] = useState<WorkPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
@@ -37,13 +37,13 @@ export default function ProjectCalendarPage() {
         setIsLoading(true);
         
         // 並行載入專案和工作包資料
-        const [projectData, workpackagesData] = await Promise.all([
+        const [projectData, workPackagesData] = await Promise.all([
           ProjectService.getProjectById(projectId),
-          WorkpackageService.getWorkpackagesByProject(projectId)
+          WorkPackageService.getWorkPackagesByProject(projectId)
         ]);
 
         setProject(projectData);
-        setWorkpackages(workpackagesData);
+        setWorkPackages(workPackagesData);
       } catch (error) {
         console.error('載入專案資料失敗:', error);
       } finally {
@@ -57,60 +57,60 @@ export default function ProjectCalendarPage() {
   }, [projectId]);
 
   // 準備日曆事件資料
-  const calendarEvents = workpackages.flatMap(workpackage => {
+  const calendarEvents = workPackages.flatMap(workPackage => {
     const events = [];
 
     // 工作包開始日期
-    if (workpackage.estimatedStartDate) {
+    if (workPackage.estimatedStartDate) {
       events.push({
-        id: `${workpackage.id}-start`,
-        title: `${workpackage.name} - 開始`,
-        start: workpackage.estimatedStartDate,
-        end: workpackage.estimatedStartDate,
+        id: `${workPackage.id}-start`,
+        title: `${workPackage.name} - 開始`,
+        start: workPackage.estimatedStartDate,
+        end: workPackage.estimatedStartDate,
         color: 'blue',
         type: 'start',
-        workpackageId: workpackage.id,
+        workPackageId: workPackage.id,
       });
     }
 
     // 工作包結束日期
-    if (workpackage.estimatedEndDate) {
+    if (workPackage.estimatedEndDate) {
       events.push({
-        id: `${workpackage.id}-end`,
-        title: `${workpackage.name} - 結束`,
-        start: workpackage.estimatedEndDate,
-        end: workpackage.estimatedEndDate,
+        id: `${workPackage.id}-end`,
+        title: `${workPackage.name} - 結束`,
+        start: workPackage.estimatedEndDate,
+        end: workPackage.estimatedEndDate,
         color: 'red',
         type: 'end',
-        workpackageId: workpackage.id,
+        workPackageId: workPackage.id,
       });
     }
 
     // 子工作包事件
-    workpackage.subPackages?.forEach((subWorkpackage: import('@/app/modules/projects/types').SubWorkPackage) => {
-      if (subWorkpackage.estimatedStartDate) {
+    workPackage.subPackages?.forEach((subWorkPackage: import('@/app/modules/projects/types').SubWorkPackage) => {
+      if (subWorkPackage.estimatedStartDate) {
         events.push({
-          id: `${subWorkpackage.id}-start`,
-          title: `${subWorkpackage.name} - 開始`,
-          start: subWorkpackage.estimatedStartDate,
-          end: subWorkpackage.estimatedStartDate,
+          id: `${subWorkPackage.id}-start`,
+          title: `${subWorkPackage.name} - 開始`,
+          start: subWorkPackage.estimatedStartDate,
+          end: subWorkPackage.estimatedStartDate,
           color: 'green',
           type: 'sub-start',
-          workpackageId: workpackage.id,
-          subWorkpackageId: subWorkpackage.id,
+          workPackageId: workPackage.id,
+          subWorkPackageId: subWorkPackage.id,
         });
       }
 
-      if (subWorkpackage.estimatedEndDate) {
+      if (subWorkPackage.estimatedEndDate) {
         events.push({
-          id: `${subWorkpackage.id}-end`,
-          title: `${subWorkpackage.name} - 結束`,
-          start: subWorkpackage.estimatedEndDate,
-          end: subWorkpackage.estimatedEndDate,
+          id: `${subWorkPackage.id}-end`,
+          title: `${subWorkPackage.name} - 結束`,
+          start: subWorkPackage.estimatedEndDate,
+          end: subWorkPackage.estimatedEndDate,
           color: 'orange',
           type: 'sub-end',
-          workpackageId: workpackage.id,
-          subWorkpackageId: subWorkpackage.id,
+          workPackageId: workPackage.id,
+          subWorkPackageId: subWorkPackage.id,
         });
       }
     });
@@ -122,7 +122,7 @@ export default function ProjectCalendarPage() {
     // TODO: 實作里程碑點擊處理邏輯
   };
 
-  const handleWorkpackageClick = (workpackage: WorkPackage) => {
+  const handleWorkPackageClick = (workPackage: WorkPackage) => {
     // TODO: 實作工作包點擊處理邏輯
   };
 
@@ -246,11 +246,11 @@ export default function ProjectCalendarPage() {
         <div className={projectStyles.card.base}>
           <CalendarView
             milestones={[]}
-            workpackages={workpackages}
+            workPackages={workPackages}
             projectId={projectId}
             onDateClick={(date) => setSelectedDate(date)}
             onMilestoneClick={handleMilestoneClick}
-            onWorkpackageClick={handleWorkpackageClick}
+            onWorkPackageClick={handleWorkPackageClick}
           />
         </div>
 
@@ -286,19 +286,19 @@ export default function ProjectCalendarPage() {
               <div className='flex justify-between'>
                 <span className='text-sm text-gray-600 dark:text-gray-400'>總數</span>
                 <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                  {workpackages.length}
+                  {workPackages.length}
                 </span>
               </div>
               <div className='flex justify-between'>
                 <span className='text-sm text-gray-600 dark:text-gray-400'>進行中</span>
                 <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                  {workpackages.filter(wp => wp.status === 'in-progress').length}
+                  {workPackages.filter(wp => wp.status === 'in-progress').length}
                 </span>
               </div>
               <div className='flex justify-between'>
                 <span className='text-sm text-gray-600 dark:text-gray-400'>已完成</span>
                 <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                  {workpackages.filter(wp => wp.status === 'completed').length}
+                  {workPackages.filter(wp => wp.status === 'completed').length}
                 </span>
               </div>
             </div>

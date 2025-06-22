@@ -38,14 +38,14 @@ import {
   ProjectInfoDisplay,
   
   // 工作包組件
-  WorkpackageCard,
-  WorkpackageForm,
-  WorkpackageList,
+  WorkPackageCard,
+  WorkPackageForm,
+  WorkPackageList,
   
   // 子工作包組件
-  SubWorkpackageCard,
-  SubWorkpackageForm,
-  SubWorkpackageList,
+  SubWorkPackageCard,
+  SubWorkPackageForm,
+  SubWorkPackageList,
   
   // 日誌組件
   JournalCard,
@@ -89,7 +89,7 @@ import {
 // 導入服務
 import {
   ProjectService,
-  WorkpackageService,
+  WorkPackageService,
   IssueService,
   TemplateService,
 } from '@/app/modules/projects/services';
@@ -158,8 +158,8 @@ export default function TestPage() {
   // 真實數據狀態
   const [projects, setProjects] = useState<ProjectDocument[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectDocument | null>(null);
-  const [workpackages, setWorkpackages] = useState<WorkPackage[]>([]);
-  const [subWorkpackages, setSubWorkpackages] = useState<SubWorkPackage[]>([]);
+  const [workPackages, setWorkPackages] = useState<WorkPackage[]>([]);
+  const [subWorkPackages, setSubWorkPackages] = useState<SubWorkPackage[]>([]);
   const [issues, setIssues] = useState<IssueRecord[]>([]);
   const [_setExpenses, setExpenses] = useState<Expense[]>([]);
   const [_setMaterials, setMaterials] = useState<MaterialEntry[]>([]);
@@ -171,16 +171,16 @@ export default function TestPage() {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
-  const [showWorkpackageForm, setShowWorkpackageForm] = useState(false);
-  const [showSubWorkpackageForm, setShowSubWorkpackageForm] = useState(false);
+  const [showWorkPackageForm, setShowWorkPackageForm] = useState(false);
+  const [showSubWorkPackageForm, setShowSubWorkPackageForm] = useState(false);
   
   // 編輯狀態
   const [editingIssue, setEditingIssue] = useState<IssueRecord | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<MaterialEntry | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
-  const [editingWorkpackage, setEditingWorkpackage] = useState<WorkPackage | null>(null);
-  const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkPackage | null>(null);
+  const [editingWorkPackage, setEditingWorkPackage] = useState<WorkPackage | null>(null);
+  const [editingSubWorkPackage, setEditingSubWorkPackage] = useState<SubWorkPackage | null>(null);
 
   // 合約生成專案相關狀態
   const [_contracts, setContracts] = useState<Array<{
@@ -264,18 +264,18 @@ export default function TestPage() {
   // 載入專案詳細資料
   const loadProjectDetails = useCallback(async (projectId: string) => {
     try {
-      const [workpackagesData, issuesData] = await Promise.all([
-        WorkpackageService.getWorkpackagesByProject(projectId),
+      const [workPackagesData, issuesData] = await Promise.all([
+        WorkPackageService.getWorkPackagesByProject(projectId),
         IssueService.getIssuesByProject(projectId),
       ]);
       
-      setWorkpackages(workpackagesData);
+      setWorkPackages(workPackagesData);
       setIssues(issuesData);
       
       // 如果有工作包，載入第一個工作包的子工作包
-      if (workpackagesData.length > 0) {
+      if (workPackagesData.length > 0) {
         // 這裡需要實作載入子工作包的邏輯
-        setSubWorkpackages([]);
+        setSubWorkPackages([]);
       }
     } catch (err) {
       handleError(err as Error, 'load_project_details');
@@ -444,7 +444,7 @@ export default function TestPage() {
   };
 
   // 將合約項目轉換為工作包
-  const convertContractItemsToWorkpackages = (contractItems: ContractItem[]): WorkPackage[] => {
+  const convertContractItemsToWorkPackages = (contractItems: ContractItem[]): WorkPackage[] => {
     if (!contractItems || !Array.isArray(contractItems) || contractItems.length === 0) {
       return [];
     }
@@ -457,14 +457,14 @@ export default function TestPage() {
       const totalPrice = item.contractItemPrice * item.contractItemQuantity;
       
       // 建立更詳細的工作包名稱和描述
-      const workpackageName = `項目 ${item.contractItemId}`;
-      const workpackageDescription = `合約項目 ${item.contractItemId} - 數量: ${item.contractItemQuantity}${item.contractItemWeight ? `, 權重: ${item.contractItemWeight}` : ''}`;
+      const workPackageName = `項目 ${item.contractItemId}`;
+      const workPackageDescription = `合約項目 ${item.contractItemId} - 數量: ${item.contractItemQuantity}${item.contractItemWeight ? `, 權重: ${item.contractItemWeight}` : ''}`;
 
-      const workpackage: WorkPackage = {
+      const workPackage: WorkPackage = {
         id,
-        name: workpackageName,
-        description: workpackageDescription,
-        status: 'planned' as import('@/app/modules/projects/types').WorkpackageStatus,
+        name: workPackageName,
+        description: workPackageDescription,
+        status: 'planned' as import('@/app/modules/projects/types').WorkPackageStatus,
         progress: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -478,7 +478,7 @@ export default function TestPage() {
         ...(item.contractItemWeight && item.contractItemWeight < 0.3 ? { priority: 'low' as const } : {}),
       };
 
-      return workpackage;
+      return workPackage;
     });
   };
 
@@ -499,7 +499,7 @@ export default function TestPage() {
     await safeAsync(async () => {
       // 取得合約項目並轉換為工作包
       const contractItems = (selectedContract.raw.contractItems as ContractItem[]) || [];
-      const workpackages = convertContractItemsToWorkpackages(contractItems);
+      const workPackages = convertContractItemsToWorkPackages(contractItems);
 
       // 預設一個基本的分解資料，包含必要的節點欄位與可選欄位
       const decomposition = {
@@ -523,7 +523,7 @@ export default function TestPage() {
         updatedAt: Timestamp.now(),
         status: 'planning' as const,
         decomposition, // 專案分解資料
-        workpackages, // 將合約項目轉換後的工作包列表
+        workPackages, // 將合約項目轉換後的工作包列表
         // 初始化品質分數
         qualityScore: 10, // 初始品質分數為 10
         lastQualityAdjustment: Timestamp.now(), // 設置品質分數調整時間
@@ -721,26 +721,26 @@ export default function TestPage() {
             <DataLoader
               loading={loading}
               error={error ? new Error(error) : null}
-              data={workpackages}
+              data={workPackages}
             >
               {(data) => (
                 <div className="space-y-4">
-                  <WorkpackageList 
-                    workpackages={data} 
+                  <WorkPackageList 
+                    workPackages={data} 
                     projectId={selectedProject?.id || ''} 
                   />
                   
                   {/* 工作包卡片展示 */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.slice(0, 3).map((workpackage) => (
-                      <WorkpackageCard
-                        key={workpackage.id}
-                        workpackage={workpackage}
+                    {data.slice(0, 3).map((workPackage) => (
+                      <WorkPackageCard
+                        key={workPackage.id}
+                        workPackage={workPackage}
                         projectId={selectedProject?.id || ''}
-                        onEdit={(_workpackage) => {
+                        onEdit={(_workPackage) => {
                           // 處理編輯
                         }}
-                        onDelete={(_workpackageId) => {
+                        onDelete={(_workPackageId) => {
                           // 處理刪除
                         }}
                       />
@@ -758,33 +758,33 @@ export default function TestPage() {
             <DataLoader
               loading={loading}
               error={error ? new Error(error) : null}
-              data={subWorkpackages}
+              data={subWorkPackages}
             >
               {(data) => (
                 <div className="space-y-4">
-                  <SubWorkpackageList
-                    subWorkpackages={data}
-                    workpackageId={workpackages[0]?.id || ''}
-                    onAddSubWorkpackage={() => setShowSubWorkpackageForm(true)}
-                    onEditSubWorkpackage={(_subWorkpackage) => {
+                  <SubWorkPackageList
+                    subWorkPackages={data}
+                    workPackageId={workPackages[0]?.id || ''}
+                    onAddSubWorkPackage={() => setShowSubWorkPackageForm(true)}
+                    onEditSubWorkPackage={(_subWorkPackage) => {
                       // 處理編輯
                     }}
-                    onDeleteSubWorkpackage={(_subWorkpackageId) => {
+                    onDeleteSubWorkPackage={(_subWorkPackageId) => {
                       // 處理刪除
                     }}
                   />
 
                   {/* 子工作包卡片展示 */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.slice(0, 3).map((subWorkpackage) => (
-                      <SubWorkpackageCard
-                        key={subWorkpackage.id}
-                        subWorkpackage={subWorkpackage}
-                        workpackageId={workpackages[0]?.id || ''}
-                        onEdit={(_subWorkpackage) => {
+                    {data.slice(0, 3).map((subWorkPackage) => (
+                      <SubWorkPackageCard
+                        key={subWorkPackage.id}
+                        subWorkPackage={subWorkPackage}
+                        workPackageId={workPackages[0]?.id || ''}
+                        onEdit={(_subWorkPackage) => {
                           // 處理編輯
                         }}
-                        onDelete={(_subWorkpackageId) => {
+                        onDelete={(_subWorkPackageId) => {
                           // 處理刪除
                         }}
                       />
@@ -803,14 +803,14 @@ export default function TestPage() {
               <CalendarView
                 projectId={selectedProject.id}
                 milestones={selectedProject.milestones || []}
-                workpackages={workpackages}
+                workPackages={workPackages}
                 onDateClick={(_date) => {
                   // 處理日期點擊
                 }}
                 onMilestoneClick={(_milestone) => {
                   // 處理里程碑點擊
                 }}
-                onWorkpackageClick={(_workpackage) => {
+                onWorkPackageClick={(_workPackage) => {
                   // 處理工作包點擊
                 }}
               />
@@ -1438,7 +1438,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/modules/projects/features/${selectedProject.id}/work-packages`}
+                      src={`/modules/projects/features/${selectedProject.id}/work-Packages`}
                       title="工作包頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1447,7 +1447,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">工作包頁面</span>
                     <Link
-                      href={`/modules/projects/features/${selectedProject.id}/work-packages`}
+                      href={`/modules/projects/features/${selectedProject.id}/work-Packages`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >
@@ -1685,10 +1685,10 @@ export default function TestPage() {
                     return;
                   }
                   try {
-                    const workpackages = await WorkpackageService.getWorkpackagesByProject(selectedProject.id);
-                    alert(`載入 ${workpackages.length} 個工作包`);
+                    const workPackages = await WorkPackageService.getWorkPackagesByProject(selectedProject.id);
+                    alert(`載入 ${workPackages.length} 個工作包`);
                   } catch (error) {
-                    handleError(error as Error, 'get_workpackages');
+                    handleError(error as Error, 'get_workPackages');
                   }
                 }}
                 className={projectStyles.button.primary}
@@ -1750,8 +1750,8 @@ export default function TestPage() {
             </h3>
             <div className="p-4 border rounded-lg space-y-2">
               <p><strong>ProjectDocument:</strong> 專案主要型別（包含 id）</p>
-              <p><strong>Workpackage:</strong> 工作包型別</p>
-              <p><strong>SubWorkpackage:</strong> 子工作包型別</p>
+              <p><strong>WorkPackage:</strong> 工作包型別</p>
+              <p><strong>SubWorkPackage:</strong> 子工作包型別</p>
               <p><strong>IssueRecord:</strong> 問題記錄型別</p>
               <p><strong>Expense:</strong> 費用型別</p>
               <p><strong>MaterialEntry:</strong> 材料型別</p>
@@ -1968,24 +1968,24 @@ export default function TestPage() {
         </div>
       )}
 
-      {showWorkpackageForm && (
+      {showWorkPackageForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <WorkpackageForm
-              workpackage={editingWorkpackage || undefined}
+            <WorkPackageForm
+              workPackage={editingWorkPackage || undefined}
               projectId={selectedProject?.id || ''}
-              onSubmit={async (workpackageData) => {
+              onSubmit={async (workPackageData) => {
                 try {
                   // 這裡需要實作工作包服務
-                  setShowWorkpackageForm(false);
-                  setEditingWorkpackage(null);
+                  setShowWorkPackageForm(false);
+                  setEditingWorkPackage(null);
                 } catch (err) {
-                  handleError(err as Error, 'save_workpackage');
+                  handleError(err as Error, 'save_workPackage');
                 }
               }}
               onCancel={() => {
-                setShowWorkpackageForm(false);
-                setEditingWorkpackage(null);
+                setShowWorkPackageForm(false);
+                setEditingWorkPackage(null);
               }}
               isSubmitting={loading}
             />
@@ -1993,24 +1993,24 @@ export default function TestPage() {
         </div>
       )}
 
-      {showSubWorkpackageForm && (
+      {showSubWorkPackageForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <SubWorkpackageForm
-              subWorkpackage={editingSubWorkpackage || undefined}
-              workpackageId={workpackages[0]?.id || ''}
-              onSubmit={async (subWorkpackageData) => {
+            <SubWorkPackageForm
+              subWorkPackage={editingSubWorkPackage || undefined}
+              workPackageId={workPackages[0]?.id || ''}
+              onSubmit={async (subWorkPackageData) => {
                 try {
                   // 這裡需要實作子工作包服務
-                  setShowSubWorkpackageForm(false);
-                  setEditingSubWorkpackage(null);
+                  setShowSubWorkPackageForm(false);
+                  setEditingSubWorkPackage(null);
                 } catch (err) {
-                  handleError(err as Error, 'save_subworkpackage');
+                  handleError(err as Error, 'save_subworkPackage');
                 }
               }}
               onCancel={() => {
-                setShowSubWorkpackageForm(false);
-                setEditingSubWorkpackage(null);
+                setShowSubWorkPackageForm(false);
+                setEditingSubWorkPackage(null);
               }}
               isSubmitting={loading}
             />
@@ -2169,7 +2169,7 @@ export default function TestPage() {
               <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
                 工作包表單
               </h4>
-              <WorkpackageForm
+              <WorkPackageForm
                 projectId={selectedProject?.id || ''}
                 onSubmit={async (_data) => {
                   // 處理提交
@@ -2185,8 +2185,8 @@ export default function TestPage() {
               <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
                 子工作包表單
               </h4>
-              <SubWorkpackageForm
-                workpackageId={workpackages[0]?.id || ''}
+              <SubWorkPackageForm
+                workPackageId={workPackages[0]?.id || ''}
                 onSubmit={async (_data) => {
                   // 處理提交
                 }}

@@ -168,7 +168,7 @@ export class TemplateService {
   static convertTemplateToSubWorkPackages(
     template: Template,
     options: {
-      workpackageId?: string;
+      workPackageId?: string;
       estimatedStartDate?: Date;
       estimatedEndDate?: Date;
       assignedTo?: string | null;
@@ -177,7 +177,7 @@ export class TemplateService {
     return template.subWorkPackages.map((item, index) => ({
       ...item,
       id: `${template.id}_${index}`,
-      workpackageId: options.workpackageId,
+      workPackageId: options.workPackageId,
       estimatedStartDate: options.estimatedStartDate,
       estimatedEndDate: options.estimatedEndDate,
       assignedTo: options.assignedTo,

@@ -6,7 +6,7 @@
 // 進度相關 - 從 types 檔案導入核心計算函數
 export {
   calculateProjectProgress,
-  calculateWorkpackageProgress,
+  calculateWorkPackageProgress,
 } from '../types';
 
 // 進度相關 - 從 progressUtils 導入顯示組件
@@ -25,7 +25,7 @@ export {
   calculateProjectRiskLevel,
   getHighRiskItems,
   calculateProjectQualityScore,
-  calculateWorkpackageQualityScore,
+  calculateWorkPackageQualityScore,
   getUpcomingMilestones,
   getOverdueMilestones,
   calculateProjectHealthScore,

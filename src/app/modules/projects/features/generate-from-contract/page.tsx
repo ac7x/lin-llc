@@ -111,7 +111,7 @@ export default function GenerateFromContractPage() {
   }, [templatesSnapshot]);
 
   // 將合約項目轉換為工作包
-  const convertContractItemsToWorkpackages = (contractItems: ContractItem[]): WorkPackage[] => {
+  const convertContractItemsToWorkPackages = (contractItems: ContractItem[]): WorkPackage[] => {
     if (!contractItems || !Array.isArray(contractItems) || contractItems.length === 0) {
       return [];
     }
@@ -120,7 +120,7 @@ export default function GenerateFromContractPage() {
     return contractItems.map(item => {
       const id = nanoid(8); // 使用 nanoid 生成唯一 ID
 
-      const workpackage: WorkPackage = {
+      const workPackage: WorkPackage = {
         id,
         name: String(item.contractItemId),
         description: `合約項目 ${item.contractItemId}`,
@@ -135,18 +135,18 @@ export default function GenerateFromContractPage() {
         subPackages: [],
       };
 
-      return workpackage;
+      return workPackage;
     });
   };
 
   // 從模板創建工作包
-  const createWorkpackagesFromTemplate = async (template: Template, projectId: string): Promise<void> => {
-    if (!template.subWorkpackages || template.subWorkpackages.length === 0) {
+  const createWorkPackagesFromTemplate = async (template: Template, projectId: string): Promise<void> => {
+    if (!template.subWorkPackages || template.subWorkPackages.length === 0) {
       return;
     }
 
     // 這裡可以實作從模板創建工作包的邏輯
-    // 暫時留空，因為需要實作 WorkpackageService
+    // 暫時留空，因為需要實作 WorkPackageService
     console.log('從模板創建工作包:', template.name, projectId);
   };
 
@@ -163,7 +163,7 @@ export default function GenerateFromContractPage() {
     await safeAsync(async () => {
       // 取得合約項目並轉換為工作包
       const contractItems = (row.raw.contractItems as ContractItem[]) || [];
-      const workpackages = convertContractItemsToWorkpackages(contractItems);
+      const workPackages = convertContractItemsToWorkPackages(contractItems);
 
       // 計算專案時程
       const startDate = row.startDate || new Date();
@@ -192,7 +192,7 @@ export default function GenerateFromContractPage() {
         estimatedEndDate: endDate,
         estimatedBudget: row.contractValue,
         estimatedDuration: estimatedDuration,
-        workPackages: workpackages,
+        workPackages: workPackages,
         projectType: 'system',
         priority: 'medium',
         riskLevel: 'medium',
@@ -220,7 +220,7 @@ export default function GenerateFromContractPage() {
       if (selectedTemplate) {
         const template = templates.find(t => t.id === selectedTemplate);
         if (template) {
-          await createWorkpackagesFromTemplate(template, projectId);
+          await createWorkPackagesFromTemplate(template, projectId);
         }
       }
 
@@ -294,7 +294,7 @@ export default function GenerateFromContractPage() {
                   {template.description}
                 </p>
                 <div className='text-xs text-gray-500 dark:text-gray-400'>
-                  子工作包: {template.subWorkpackages?.length || 0}
+                  子工作包: {template.subWorkPackages?.length || 0}
                 </div>
               </div>
             ))}

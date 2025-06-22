@@ -4,7 +4,7 @@
  */
 
 export { ProjectService } from './projectService';
-export { WorkpackageService } from './workpackageService';
+export { WorkPackageService } from './workPackageService';
 export { JournalService } from './journalService';
 export { IssueService } from './issueService';
 export { TemplateService } from './templateService'; 

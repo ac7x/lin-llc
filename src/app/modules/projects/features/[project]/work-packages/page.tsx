@@ -15,8 +15,8 @@ import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
-import { WorkpackageList, WorkpackageForm } from '@/app/modules/projects/components/work-packages';
-import { WorkpackageService } from '@/app/modules/projects/services';
+import { WorkPackageList, WorkPackageForm } from '@/app/modules/projects/components/work-Packages';
+import { WorkPackageService } from '@/app/modules/projects/services';
 import type { Project, WorkPackage } from '@/app/modules/projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
@@ -25,16 +25,16 @@ interface ProjectWithId extends Project {
   id: string;
 }
 
-export default function ProjectWorkpackagesPage() {
+export default function ProjectWorkPackagesPage() {
   const params = useParams();
   const projectId = params.project as string;
   
   const [project, setProject] = useState<ProjectWithId | null>(null);
-  const [workpackages, setWorkpackages] = useState<WorkPackage[]>([]);
+  const [workPackages, setWorkPackages] = useState<WorkPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showWorkpackageForm, setShowWorkpackageForm] = useState(false);
-  const [editingWorkpackage, setEditingWorkpackage] = useState<WorkPackage | null>(null);
+  const [showWorkPackageForm, setShowWorkPackageForm] = useState(false);
+  const [editingWorkPackage, setEditingWorkPackage] = useState<WorkPackage | null>(null);
 
   // 載入專案資料
   const loadProject = async () => {
@@ -64,14 +64,14 @@ export default function ProjectWorkpackagesPage() {
   };
 
   // 載入工作包資料
-  const loadWorkpackages = async () => {
+  const loadWorkPackages = async () => {
     if (!projectId) return;
 
     try {
-      const workpackagesData = await WorkpackageService.getWorkpackagesByProject(projectId);
-      setWorkpackages(workpackagesData);
+      const workPackagesData = await WorkPackageService.getWorkPackagesByProject(projectId);
+      setWorkPackages(workPackagesData);
     } catch (err) {
-      logError(err as Error, { operation: 'fetch_workpackages', projectId });
+      logError(err as Error, { operation: 'fetch_workPackages', projectId });
     }
   };
 
@@ -81,47 +81,47 @@ export default function ProjectWorkpackagesPage() {
 
   useEffect(() => {
     if (project) {
-      loadWorkpackages();
+      loadWorkPackages();
     }
   }, [project]);
 
   // 處理新增工作包
-  const handleCreateWorkpackage = async (workpackageData: Partial<WorkPackage>) => {
+  const handleCreateWorkPackage = async (workPackageData: Partial<WorkPackage>) => {
     if (!projectId) return;
     
     try {
       // 這裡需要實作工作包服務的創建方法
-      await loadWorkpackages();
-      setShowWorkpackageForm(false);
-      setEditingWorkpackage(null);
+      await loadWorkPackages();
+      setShowWorkPackageForm(false);
+      setEditingWorkPackage(null);
     } catch (err) {
-      logError(err as Error, { operation: 'create_workpackage', projectId });
+      logError(err as Error, { operation: 'create_workPackage', projectId });
     }
   };
 
   // 處理編輯工作包
-  const handleEditWorkpackage = async (workpackageData: Partial<WorkPackage>) => {
-    if (!editingWorkpackage) return;
+  const handleEditWorkPackage = async (workPackageData: Partial<WorkPackage>) => {
+    if (!editingWorkPackage) return;
     
     try {
       // 這裡需要實作工作包服務的更新方法
-      await loadWorkpackages();
-      setShowWorkpackageForm(false);
-      setEditingWorkpackage(null);
+      await loadWorkPackages();
+      setShowWorkPackageForm(false);
+      setEditingWorkPackage(null);
     } catch (err) {
-      logError(err as Error, { operation: 'update_workpackage', projectId });
+      logError(err as Error, { operation: 'update_workPackage', projectId });
     }
   };
 
   // 處理刪除工作包
-  const handleDeleteWorkpackage = async (workpackageId: string) => {
+  const handleDeleteWorkPackage = async (workPackageId: string) => {
     if (!projectId) return;
     
     try {
       // 這裡需要實作工作包服務的刪除方法
-      await loadWorkpackages();
+      await loadWorkPackages();
     } catch (err) {
-      logError(err as Error, { operation: 'delete_workpackage', projectId });
+      logError(err as Error, { operation: 'delete_workPackage', projectId });
     }
   };
 
@@ -155,7 +155,7 @@ export default function ProjectWorkpackagesPage() {
         subtitle='管理專案的主要工作包'
       >
         <button
-          onClick={() => setShowWorkpackageForm(true)}
+          onClick={() => setShowWorkPackageForm(true)}
           className={projectStyles.button.primary}
         >
           新增工作包
@@ -165,12 +165,12 @@ export default function ProjectWorkpackagesPage() {
       <DataLoader
         loading={loading}
         error={error ? new Error(error) : null}
-        data={workpackages}
+        data={workPackages}
       >
         {(data) => (
           projectId && (
-            <WorkpackageList
-              workpackages={data}
+            <WorkPackageList
+              workPackages={data}
               projectId={projectId}
             />
           )
@@ -178,16 +178,16 @@ export default function ProjectWorkpackagesPage() {
       </DataLoader>
 
       {/* 工作包表單模態框 */}
-      {showWorkpackageForm && (
+      {showWorkPackageForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <WorkpackageForm
-              workpackage={editingWorkpackage || undefined}
+            <WorkPackageForm
+              workPackage={editingWorkPackage || undefined}
               projectId={projectId}
-              onSubmit={editingWorkpackage ? handleEditWorkpackage : handleCreateWorkpackage}
+              onSubmit={editingWorkPackage ? handleEditWorkPackage : handleCreateWorkPackage}
               onCancel={() => {
-                setShowWorkpackageForm(false);
-                setEditingWorkpackage(null);
+                setShowWorkPackageForm(false);
+                setEditingWorkPackage(null);
               }}
               isSubmitting={loading}
             />

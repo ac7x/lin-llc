@@ -17,26 +17,26 @@ import type { ProjectMilestone, WorkPackage } from '@/app/modules/projects/types
 
 interface CalendarViewProps {
   milestones?: ProjectMilestone[];
-  workpackages?: WorkPackage[];
+  workPackages?: WorkPackage[];
   projectId: string;
   onDateClick?: (date: Date) => void;
   onMilestoneClick?: (milestone: ProjectMilestone) => void;
-  onWorkpackageClick?: (workpackage: WorkPackage) => void;
+  onWorkPackageClick?: (workPackage: WorkPackage) => void;
 }
 
 interface CalendarEvent {
-  type: 'milestone' | 'workpackage-start' | 'workpackage-end';
+  type: 'milestone' | 'workPackage-start' | 'workPackage-end';
   data: ProjectMilestone | WorkPackage;
   color: string;
 }
 
 export default function CalendarView({
   milestones = [],
-  workpackages = [],
+  workPackages = [],
   projectId: _projectId,
   onDateClick,
   onMilestoneClick,
-  onWorkpackageClick,
+  onWorkPackageClick,
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<'month' | 'week'>('month');
@@ -103,21 +103,21 @@ export default function CalendarView({
     });
     
     // 檢查工作包開始日期
-    workpackages.forEach(workpackage => {
-      const startDate = workpackage.plannedStartDate;
+    workPackages.forEach(workPackage => {
+      const startDate = workPackage.plannedStartDate;
       if (startDate && isSameDay(date, startDate)) {
         events.push({
-          type: 'workpackage-start',
-          data: workpackage,
+          type: 'workPackage-start',
+          data: workPackage,
           color: 'bg-green-500',
         });
       }
       
-      const endDate = workpackage.plannedEndDate;
+      const endDate = workPackage.plannedEndDate;
       if (endDate && isSameDay(date, endDate)) {
         events.push({
-          type: 'workpackage-end',
-          data: workpackage,
+          type: 'workPackage-end',
+          data: workPackage,
           color: 'bg-red-500',
         });
       }
@@ -255,7 +255,7 @@ export default function CalendarView({
                         if (event.type === 'milestone') {
                           onMilestoneClick?.(event.data as ProjectMilestone);
                         } else {
-                          onWorkpackageClick?.(event.data as WorkPackage);
+                          onWorkPackageClick?.(event.data as WorkPackage);
                         }
                       }}
                       className={`

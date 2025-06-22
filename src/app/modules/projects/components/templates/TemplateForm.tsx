@@ -21,7 +21,7 @@ interface TemplateFormProps {
   isLoading?: boolean;
 }
 
-interface SubWorkpackageItem {
+interface SubWorkPackageItem {
   id: string;
   name: string;
   description: string;
@@ -41,7 +41,7 @@ export default function TemplateForm({
     category: '',
   });
 
-  const [subWorkpackages, setSubWorkpackages] = useState<SubWorkpackageItem[]>([]);
+  const [subWorkPackages, setSubWorkPackages] = useState<SubWorkPackageItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,8 +53,8 @@ export default function TemplateForm({
         description: template.description,
         category: template.category,
       });
-      setSubWorkpackages(
-        template.subWorkpackages?.map((item, index) => ({
+      setSubWorkPackages(
+        template.subWorkPackages?.map((item, index) => ({
           id: `temp-${index}`,
           name: item.name,
           description: item.description || '',
@@ -76,8 +76,8 @@ export default function TemplateForm({
       newErrors.category = '請選擇模板分類';
     }
 
-    if (subWorkpackages.length === 0) {
-      newErrors.subWorkpackages = '至少需要一個子工作包項目';
+    if (subWorkPackages.length === 0) {
+      newErrors.subWorkPackages = '至少需要一個子工作包項目';
     }
 
     setErrors(newErrors);
@@ -96,7 +96,7 @@ export default function TemplateForm({
         name: formData.name.trim(),
         description: formData.description.trim(),
         category: formData.category,
-        subWorkpackages: subWorkpackages.map(item => ({
+        subWorkPackages: subWorkPackages.map(item => ({
           id: `temp-${Date.now()}-${Math.random()}`,
           name: item.name,
           description: item.description,
@@ -117,23 +117,23 @@ export default function TemplateForm({
     }
   };
 
-  const addSubWorkpackage = () => {
-    const newItem: SubWorkpackageItem = {
+  const addSubWorkPackage = () => {
+    const newItem: SubWorkPackageItem = {
       id: `temp-${Date.now()}`,
       name: '',
       description: '',
       estimatedQuantity: 0,
       unit: '個',
     };
-    setSubWorkpackages([...subWorkpackages, newItem]);
+    setSubWorkPackages([...subWorkPackages, newItem]);
   };
 
-  const removeSubWorkpackage = (id: string) => {
-    setSubWorkpackages(subWorkpackages.filter(item => item.id !== id));
+  const removeSubWorkPackage = (id: string) => {
+    setSubWorkPackages(subWorkPackages.filter(item => item.id !== id));
   };
 
-  const updateSubWorkpackage = (id: string, field: keyof SubWorkpackageItem, value: string | number) => {
-    setSubWorkpackages(subWorkpackages.map(item =>
+  const updateSubWorkPackage = (id: string, field: keyof SubWorkPackageItem, value: string | number) => {
+    setSubWorkPackages(subWorkPackages.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
@@ -230,19 +230,19 @@ export default function TemplateForm({
                 </label>
                 <button
                   type='button'
-                  onClick={addSubWorkpackage}
+                  onClick={addSubWorkPackage}
                   className='px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800'
                 >
                   新增項目
                 </button>
               </div>
 
-              {errors.subWorkpackages && (
-                <p className='text-red-500 text-sm mb-2'>{errors.subWorkpackages}</p>
+              {errors.subWorkPackages && (
+                <p className='text-red-500 text-sm mb-2'>{errors.subWorkPackages}</p>
               )}
 
               <div className='space-y-4'>
-                {subWorkpackages.map((item, index) => (
+                {subWorkPackages.map((item, index) => (
                   <div
                     key={item.id}
                     className='border border-gray-200 dark:border-gray-700 rounded-lg p-4'
@@ -253,7 +253,7 @@ export default function TemplateForm({
                       </h4>
                       <button
                         type='button'
-                        onClick={() => removeSubWorkpackage(item.id)}
+                        onClick={() => removeSubWorkPackage(item.id)}
                         className='text-red-500 hover:text-red-700'
                       >
                         <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -270,7 +270,7 @@ export default function TemplateForm({
                         <input
                           type='text'
                           value={item.name}
-                          onChange={(e) => updateSubWorkpackage(item.id, 'name', e.target.value)}
+                          onChange={(e) => updateSubWorkPackage(item.id, 'name', e.target.value)}
                           className={projectStyles.form.input}
                           placeholder='輸入項目名稱'
                         />
@@ -283,7 +283,7 @@ export default function TemplateForm({
                         <input
                           type='text'
                           value={item.unit}
-                          onChange={(e) => updateSubWorkpackage(item.id, 'unit', e.target.value)}
+                          onChange={(e) => updateSubWorkPackage(item.id, 'unit', e.target.value)}
                           className={projectStyles.form.input}
                           placeholder='個、公尺、公斤等'
                         />
@@ -296,7 +296,7 @@ export default function TemplateForm({
                         <input
                           type='number'
                           value={item.estimatedQuantity}
-                          onChange={(e) => updateSubWorkpackage(item.id, 'estimatedQuantity', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => updateSubWorkPackage(item.id, 'estimatedQuantity', parseFloat(e.target.value) || 0)}
                           className={projectStyles.form.input}
                           placeholder='0'
                         />
@@ -308,7 +308,7 @@ export default function TemplateForm({
                         </label>
                         <textarea
                           value={item.description}
-                          onChange={(e) => updateSubWorkpackage(item.id, 'description', e.target.value)}
+                          onChange={(e) => updateSubWorkPackage(item.id, 'description', e.target.value)}
                           className={projectStyles.form.textarea}
                           placeholder='輸入項目描述'
                           rows={2}
@@ -319,7 +319,7 @@ export default function TemplateForm({
                 ))}
               </div>
 
-              {subWorkpackages.length === 0 && (
+              {subWorkPackages.length === 0 && (
                 <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
                   尚未添加任何子工作包項目
                 </div>
