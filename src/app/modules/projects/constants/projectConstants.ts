@@ -4,7 +4,8 @@ import type {
   ProjectPriority, 
   ProjectRiskLevel, 
   ProjectHealthLevel, 
-  ProjectPhase 
+  ProjectPhase,
+  PriorityLevel
 } from '../types';
 
 // ============================================================================
@@ -35,23 +36,23 @@ export const PROJECT_TYPE_OPTIONS = [
 // 專案優先級選項
 // ============================================================================
 
-export const PROJECT_PRIORITY_OPTIONS = [
+export const PROJECT_PRIORITY_OPTIONS: Array<{ value: PriorityLevel; label: string }> = [
   { value: 'low', label: '低' },
   { value: 'medium', label: '中' },
   { value: 'high', label: '高' },
   { value: 'critical', label: '緊急' },
-] as const;
+];
 
 // ============================================================================
 // 專案風險等級選項
 // ============================================================================
 
-export const PROJECT_RISK_LEVEL_OPTIONS = [
+export const PROJECT_RISK_LEVEL_OPTIONS: Array<{ value: PriorityLevel; label: string }> = [
   { value: 'low', label: '低風險' },
   { value: 'medium', label: '中風險' },
   { value: 'high', label: '高風險' },
   { value: 'critical', label: '極高風險' },
-] as const;
+];
 
 // ============================================================================
 // 專案健康度選項

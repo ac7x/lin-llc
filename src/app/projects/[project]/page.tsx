@@ -41,7 +41,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 // 獲取狀態顯示文字
-const getStatusDisplay = (status: any): string => {
+const getStatusDisplay = (status: Project['status']): string => {
   if (!status) return '未知';
   
   if (Array.isArray(status)) {

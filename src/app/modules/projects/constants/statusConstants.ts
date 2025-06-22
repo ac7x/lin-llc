@@ -1,6 +1,6 @@
 import type { 
   ProjectStatus, 
-  ProjectPriority, 
+  PriorityLevel, 
   ProjectRiskLevel, 
   ProjectHealthLevel, 
   ProjectPhase 
@@ -20,14 +20,14 @@ export const STATUS_LABELS: Record<ProjectStatus, string> = {
   archived: '已封存',
 };
 
-export const PRIORITY_LABELS: Record<ProjectPriority, string> = {
+export const PRIORITY_LABELS: Record<PriorityLevel, string> = {
   low: '低',
   medium: '中',
   high: '高',
   critical: '緊急',
 };
 
-export const RISK_LEVEL_LABELS: Record<ProjectRiskLevel, string> = {
+export const RISK_LEVEL_LABELS: Record<PriorityLevel, string> = {
   low: '低風險',
   medium: '中風險',
   high: '高風險',
@@ -64,14 +64,14 @@ export const STATUS_COLORS: Record<ProjectStatus, string> = {
   archived: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
 };
 
-export const PRIORITY_COLORS: Record<ProjectPriority, string> = {
+export const PRIORITY_COLORS: Record<PriorityLevel, string> = {
   low: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
   medium: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
   high: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
   critical: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
 };
 
-export const RISK_LEVEL_COLORS: Record<ProjectRiskLevel, string> = {
+export const RISK_LEVEL_COLORS: Record<PriorityLevel, string> = {
   low: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
   medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
   high: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
@@ -100,14 +100,14 @@ export const STATUS_ICONS: Record<ProjectStatus, string> = {
   archived: '📦',
 };
 
-export const PRIORITY_ICONS: Record<ProjectPriority, string> = {
+export const PRIORITY_ICONS: Record<PriorityLevel, string> = {
   low: '🔽',
   medium: '➡️',
   high: '🔼',
   critical: '🚨',
 };
 
-export const RISK_LEVEL_ICONS: Record<ProjectRiskLevel, string> = {
+export const RISK_LEVEL_ICONS: Record<PriorityLevel, string> = {
   low: '🟢',
   medium: '🟡',
   high: '🟠',

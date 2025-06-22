@@ -18,7 +18,8 @@ import type {
   ProjectPriority,
   ProjectHealthLevel,
   ProjectQualityMetrics,
-  ProjectFinancialMetrics
+  ProjectFinancialMetrics,
+  PriorityLevel
 } from '../types';
 import { calculateProjectProgress } from '../types';
 import { convertToDate } from './dateUtils';
@@ -385,7 +386,7 @@ export function calculateProjectPriorityScore(project: Project): number {
     critical: 15,
   };
   // 修正：確保 riskLevel 是 ProjectRiskLevel
-  const riskLevel = (['low', 'medium', 'high', 'critical'] as const).includes(project.riskLevel as ProjectRiskLevel)
+  const riskLevel: PriorityLevel = (['low', 'medium', 'high', 'critical'] as const).includes(project.riskLevel as ProjectRiskLevel)
     ? project.riskLevel as ProjectRiskLevel
     : 'low';
   score += riskScores[riskLevel];

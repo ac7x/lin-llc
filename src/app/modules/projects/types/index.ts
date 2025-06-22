@@ -16,6 +16,20 @@ export interface BaseWithId extends BaseWithDates {
 }
 
 // ============================================================================
+// 統一優先級和嚴重程度型別
+// ============================================================================
+
+export type PriorityLevel = 'low' | 'medium' | 'high' | 'critical';
+export type SeverityLevel = 'low' | 'medium' | 'high';
+
+// ============================================================================
+// 統一狀態型別
+// ============================================================================
+
+export type BudgetStatus = 'draft' | 'approved' | 'active' | 'closed';
+export type ItemStatus = 'active' | 'on_hold' | 'completed';
+
+// ============================================================================
 // 列舉型別定義
 // ============================================================================
 
@@ -47,14 +61,22 @@ export type SubWorkpackageStatus =
   | 'on-hold'       // 暫停中
   | 'cancelled';    // 已取消
 
-export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
+// 使用統一的優先級型別
+export type ProjectPriority = PriorityLevel;
+export type TaskPriority = SeverityLevel;
+export type IssueSeverity = SeverityLevel;
+export type RiskProbability = SeverityLevel;
+export type RiskImpact = SeverityLevel;
+export type ChangeImpact = SeverityLevel;
+export type AlertSeverity = PriorityLevel;
 
 export type ProjectType =
   | 'system'       // 系統工程
   | 'maintenance'  // 維護工程
   | 'transport';   // 搬運工程
 
-export type ProjectRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+// 使用統一的風險等級型別
+export type ProjectRiskLevel = PriorityLevel;
 
 export type ProjectHealthLevel = 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
 
@@ -69,23 +91,13 @@ export type PhotoType = 'progress' | 'issue' | 'material' | 'safety' | 'other';
 
 export type TaskStatus = 'pending' | 'in-progress' | 'completed';
 
-export type TaskPriority = 'low' | 'medium' | 'high';
-
 export type IssueType = 'quality' | 'safety' | 'progress' | 'other';
 
-export type IssueSeverity = 'low' | 'medium' | 'high';
-
 export type IssueStatus = 'open' | 'in-progress' | 'resolved';
-
-export type RiskProbability = 'low' | 'medium' | 'high';
-
-export type RiskImpact = 'low' | 'medium' | 'high';
 
 export type RiskStatus = 'identified' | 'monitoring' | 'mitigated' | 'closed';
 
 export type ChangeType = 'scope' | 'schedule' | 'cost' | 'quality' | 'risk';
-
-export type ChangeImpact = 'low' | 'medium' | 'high';
 
 export type ChangeStatus = 'proposed' | 'approved' | 'rejected' | 'implemented';
 
@@ -280,7 +292,7 @@ export interface SubWorkPackage extends BaseWithId {
   plannedEndDate?: DateField;
   status?: SubWorkpackageStatus;
   assignedTo?: string | null;
-  priority?: number;
+  priority?: PriorityLevel;
   estimatedQuantity?: number;
   actualQuantity?: number;
   unit?: string;
@@ -297,7 +309,7 @@ export interface SubWorkPackage extends BaseWithId {
   actualHours?: number;
   costVariance?: number;
   scheduleVariance?: number;
-  riskLevel?: 'low' | 'medium' | 'high';
+  riskLevel?: ProjectRiskLevel;
   dependencies?: string[];
 }
 
@@ -330,7 +342,7 @@ export interface WorkPackage extends BaseWithId {
   progress?: number;
   assignedTo?: string | null;
   category?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: PriorityLevel;
   qualityMetrics?: {
     inspectionPassRate: number;
     defectRate: number;
@@ -345,7 +357,7 @@ export interface WorkPackage extends BaseWithId {
   actualHours?: number;
   costVariance?: number;
   scheduleVariance?: number;
-  riskLevel?: 'low' | 'medium' | 'high';
+  riskLevel?: ProjectRiskLevel;
   dependencies?: string[];
   phase?: ProjectPhase;
 }
@@ -778,8 +790,6 @@ export type CostStatus = 'planned' | 'committed' | 'invoiced' | 'paid';
 
 export type AlertType = 'over_budget' | 'over_allocation' | 'cost_variance' | 'schedule_variance';
 
-export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
-
 export type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 
 export interface ProjectBudget extends BaseWithId {
@@ -794,7 +804,7 @@ export interface ProjectBudget extends BaseWithId {
   createdBy: string;
   approvedBy?: string;
   approvedDate?: DateField;
-  status: 'draft' | 'approved' | 'active' | 'closed';
+  status: BudgetStatus;
   notes?: string;
 }
 
@@ -811,8 +821,8 @@ export interface BudgetItem extends BaseWithId {
   unitPrice?: number;
   workpackageId?: string;
   assignedTo?: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'active' | 'on_hold' | 'completed';
+  priority: PriorityLevel;
+  status: ItemStatus;
   notes?: string;
 }
 

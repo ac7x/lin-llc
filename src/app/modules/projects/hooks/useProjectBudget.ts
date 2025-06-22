@@ -31,6 +31,7 @@ import type {
   BudgetAlert,
   BudgetStats,
   BudgetCategory,
+  PriorityLevel,
 } from '@/app/modules/projects/types';
 import { convertToDate } from '@/app/modules/projects/types';
 import { logError, safeAsync } from '@/utils/errorUtils';

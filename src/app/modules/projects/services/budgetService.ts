@@ -32,7 +32,8 @@ import type {
   CostRecord, 
   BudgetCategory,
   BudgetAlert,
-  BudgetStats 
+  BudgetStats,
+  PriorityLevel
 } from '@/app/modules/projects/types';
 
 // 預算集合名稱

@@ -3,7 +3,7 @@
  * 提供專案風險評估和分析功能
  */
 
-import type { ProjectRisk, ProjectRiskLevel } from '../types';
+import type { ProjectRisk, ProjectRiskLevel, PriorityLevel } from '../types';
 
 /**
  * 計算風險評分
