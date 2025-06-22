@@ -118,3 +118,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+export { geistSans, geistMono };
