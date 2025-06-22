@@ -1,7 +1,7 @@
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { FlatCompat } from '@eslint/eslintrc';
-import unicorn from 'eslint-plugin-unicorn';
+import unicornPlugin from 'eslint-plugin-unicorn';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,7 +31,7 @@ const eslintConfig = [
   },
   {
     plugins: {
-      unicorn, // 直接導入 unicorn 插件
+      unicorn: unicornPlugin, // 使用正確的插件導入方式
     },
     rules: {
       // React 相關規則
