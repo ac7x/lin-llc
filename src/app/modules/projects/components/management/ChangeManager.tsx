@@ -17,7 +17,6 @@ import type { ProjectChange } from '@/app/modules/projects/types';
 
 interface ChangeManagerProps {
   changes: ProjectChange[];
-  projectId: string;
   onAddChange?: () => void;
   onEditChange?: (change: ProjectChange) => void;
   onDeleteChange?: (changeId: string) => void;
@@ -29,11 +28,10 @@ type SortDirection = 'asc' | 'desc';
 
 export default function ChangeManager({
   changes,
-  projectId: _projectId,
   onAddChange,
   onEditChange,
   onDeleteChange,
-  onUpdateChangeStatus: _onUpdateChangeStatus,
+  onUpdateChangeStatus,
 }: ChangeManagerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -174,14 +172,10 @@ export default function ChangeManager({
 
   const getImpactText = (impact: string) => {
     switch (impact) {
-      case 'low':
-        return '低影響';
-      case 'medium':
-        return '中影響';
-      case 'high':
-        return '高影響';
-      default:
-        return impact;
+      case 'low': return '低';
+      case 'medium': return '中';
+      case 'high': return '高';
+      default: return impact;
     }
   };
 
@@ -417,7 +411,7 @@ export default function ChangeManager({
                     <td className={projectStyles.table.td}>
                       <select
                         value={change.status}
-                        onChange={(e) => _onUpdateChangeStatus?.(change.id, e.target.value)}
+                        onChange={(e) => onUpdateChangeStatus?.(change.id, e.target.value)}
                         className={`text-xs px-2 py-1 rounded-full font-medium border-0 ${getStatusColor(change.status)}`}
                       >
                         <option value='proposed'>已提出</option>

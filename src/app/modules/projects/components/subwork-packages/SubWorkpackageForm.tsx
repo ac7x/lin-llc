@@ -17,7 +17,6 @@ import type { SubWorkPackage, PriorityLevel } from '@/app/modules/projects/types
 
 interface SubWorkPackageFormProps {
   subWorkPackage?: SubWorkPackage;
-  workPackageId: string;
   onSubmit: (data: Partial<SubWorkPackage>) => void;
   onCancel: () => void;
   isSubmitting?: boolean;

@@ -127,29 +127,12 @@ export default function MilestoneTracker({
     }
   };
 
-  const _getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return '待完成';
-      case 'completed':
-        return '已完成';
-      case 'overdue':
-        return '已逾期';
-      default:
-        return status;
-    }
-  };
-
   const getTypeText = (type: string) => {
     switch (type) {
-      case 'start':
-        return '開始';
-      case 'intermediate':
-        return '中間';
-      case 'end':
-        return '結束';
-      default:
-        return type;
+      case 'start': return '開始';
+      case 'intermediate': return '中間';
+      case 'end': return '結束';
+      default: return type;
     }
   };
 

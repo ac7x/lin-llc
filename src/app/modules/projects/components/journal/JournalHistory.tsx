@@ -14,6 +14,7 @@ import { useState, useMemo } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { BaseWithId } from '@/app/modules/projects/types';
+import { convertToDate } from '@/app/modules/projects/types';
 
 // 日誌條目介面
 interface JournalEntry extends BaseWithId {
@@ -43,75 +44,62 @@ export default function JournalHistory({
   onDelete,
 }: JournalHistoryProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('date');
-  const [sortOrder, setSortOrder] = useState<SortDirection>('desc');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
-  // 統計資訊
+  // 計算統計資訊
   const stats = useMemo(() => {
     const total = journals.length;
-    const categories = journals.reduce((acc, entry) => {
-      acc[entry.category || '未分類'] = (acc[entry.category || '未分類'] || 0) + 1;
+    const categories = journals.reduce((acc, journal) => {
+      const category = journal.category || 'other';
+      acc[category] = (acc[category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    
+
     return { total, categories };
+  }, [journals]);
+
+  // 取得所有分類
+  const categories = useMemo(() => {
+    const categorySet = new Set<string>();
+    journals.forEach(journal => {
+      if (journal.category) {
+        categorySet.add(journal.category);
+      }
+    });
+    return Array.from(categorySet);
   }, [journals]);
 
   // 篩選和排序日誌
   const filteredAndSortedJournals = useMemo(() => {
-    const filtered = journals.filter(journal => {
-      const matchesSearch = journal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (journal.content && journal.content.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesCategory = categoryFilter === 'all' || journal.category === categoryFilter;
-      return matchesSearch && matchesCategory;
+    let filtered = journals;
+
+    // 搜尋篩選
+    if (searchTerm) {
+      filtered = filtered.filter(journal =>
+        journal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        journal.content?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // 分類篩選
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(journal => journal.category === categoryFilter);
+    }
+
+    // 按日期排序（最新的在前）
+    return filtered.sort((a, b) => {
+      const getDate = (date: string | Date | { toDate: () => Date }) => {
+        if (date instanceof Date) return date;
+        if (typeof date === 'string') return new Date(date);
+        if (typeof date === 'object' && 'toDate' in date) return date.toDate();
+        return new Date(0);
+      };
+      
+      const dateA = getDate(a.date);
+      const dateB = getDate(b.date);
+      return dateB.getTime() - dateA.getTime();
     });
-
-    // 排序
-    filtered.sort((a, b) => {
-      let aValue: string | number;
-      let bValue: string | number;
-
-      switch (sortBy) {
-        case 'date':
-          aValue = a.date instanceof Date ? a.date.getTime() : 
-                   typeof a.date === 'string' ? new Date(a.date).getTime() :
-                   a.date?.toDate?.()?.getTime() || 0;
-          bValue = b.date instanceof Date ? b.date.getTime() : 
-                   typeof b.date === 'string' ? new Date(b.date).getTime() :
-                   b.date?.toDate?.()?.getTime() || 0;
-          break;
-        case 'title':
-          aValue = a.title;
-          bValue = b.title;
-          break;
-        case 'priority':
-          aValue = a.priority || 0;
-          bValue = b.priority || 0;
-          break;
-        case 'category':
-          aValue = a.category || '';
-          bValue = b.category || '';
-          break;
-        default:
-          return 0;
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    return filtered;
-  }, [journals, searchTerm, categoryFilter, sortBy, sortOrder]);
-
-  // 獲取所有分類
-  const categories = useMemo(() => {
-    const uniqueCategories = new Set(journals.map(entry => entry.category).filter(Boolean));
-    return Array.from(uniqueCategories).sort();
-  }, [journals]);
+  }, [journals, searchTerm, categoryFilter]);
 
   const formatDate = (date: string | Date | { toDate: () => Date }) => {
     if (typeof date === 'string') {
@@ -161,19 +149,10 @@ export default function JournalHistory({
   };
 
   const getPriorityColor = (priority?: number) => {
-    if (!priority) return 'text-gray-400';
-    if (priority >= 8) return 'text-red-600 dark:text-red-400';
-    if (priority >= 5) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-green-600 dark:text-green-400';
-  };
-
-  const _handleSort = (option: SortOption) => {
-    if (sortBy === option) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(option);
-      setSortOrder('asc');
-    }
+    if (!priority) return 'text-gray-500';
+    if (priority >= 8) return 'text-red-600';
+    if (priority >= 6) return 'text-yellow-600';
+    return 'text-green-600';
   };
 
   return (
