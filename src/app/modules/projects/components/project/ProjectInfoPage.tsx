@@ -15,7 +15,7 @@ import { cn, cardStyles, buttonStyles } from '@/utils/classNameUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
 
-import { WorkPackageList } from '../work-Packages';
+import { WorkPackageList } from '../work-packages';
 import ProjectEditModal from './ProjectEditModal';
 import ProjectInfoDisplay from './ProjectInfoDisplay';
 

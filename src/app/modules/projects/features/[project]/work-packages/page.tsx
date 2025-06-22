@@ -15,7 +15,7 @@ import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
-import { WorkPackageList, WorkPackageForm } from '@/app/modules/projects/components/work-Packages';
+import { WorkPackageList, WorkPackageForm } from '@/app/modules/projects/components/work-packages';
 import { WorkPackageService } from '@/app/modules/projects/services';
 import type { Project, WorkPackage } from '@/app/modules/projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';

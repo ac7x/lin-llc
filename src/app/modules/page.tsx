@@ -1438,7 +1438,7 @@ export default function TestPage() {
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
                   <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
                     <iframe
-                      src={`/modules/projects/features/${selectedProject.id}/work-Packages`}
+                      src={`/modules/projects/features/${selectedProject.id}/work-packages`}
                       title="工作包頁面"
                       className="w-full h-full"
                       style={{ border: 'none' }}
@@ -1447,7 +1447,7 @@ export default function TestPage() {
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">工作包頁面</span>
                     <Link
-                      href={`/modules/projects/features/${selectedProject.id}/work-Packages`}
+                      href={`/modules/projects/features/${selectedProject.id}/work-packages`}
                       target="_blank"
                       className="text-blue-600 hover:underline text-sm"
                     >

@@ -32,9 +32,9 @@ export { default as ProjectInfoDisplay } from './components/project/ProjectInfoD
 export { default as ProjectInfoPage } from './components/project/ProjectInfoPage';
 
 // 工作包組件
-export { default as WorkPackageCard } from './components/work-Packages/WorkPackageCard';
-export { default as WorkPackageForm } from './components/work-Packages/WorkPackageForm';
-export { default as WorkPackageList } from './components/work-Packages/WorkPackageList';
+export { default as WorkPackageCard } from './components/work-packages/WorkPackageCard';
+export { default as WorkPackageForm } from './components/work-packages/WorkPackageForm';
+export { default as WorkPackageList } from './components/work-packages/WorkPackageList';
 
 // 子工作包組件
 export { default as SubWorkPackageCard } from './components/subwork-packages/SubWorkPackageCard';
