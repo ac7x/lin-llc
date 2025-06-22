@@ -736,7 +736,6 @@ export default function TestPage() {
                       <WorkPackageCard
                         key={workPackage.id}
                         workPackage={workPackage}
-                        projectId={selectedProject?.id || ''}
                         onEdit={(_workPackage) => {
                           // 處理編輯
                         }}
@@ -801,7 +800,6 @@ export default function TestPage() {
                 日曆視圖
               </h3>
               <CalendarView
-                projectId={selectedProject.id}
                 milestones={selectedProject.milestones || []}
                 workPackages={workPackages}
                 onDateClick={(_date) => {
@@ -827,7 +825,6 @@ export default function TestPage() {
                 <h4 className="font-medium mb-4">問題追蹤器</h4>
                 <IssueTracker
                   issues={issues}
-                  projectId={selectedProject?.id || ''}
                   onAddIssue={() => setShowIssueForm(true)}
                   onEditIssue={(_issue) => {
                     // 處理編輯
@@ -843,7 +840,6 @@ export default function TestPage() {
                 <h4 className="font-medium mb-4">風險管理器</h4>
                 <RiskManager
                   risks={selectedProject?.risks || []}
-                  projectId={selectedProject?.id || ''}
                   onAddRisk={() => {
                     // 處理新增風險
                   }}
@@ -1100,7 +1096,6 @@ export default function TestPage() {
                 {(data) => (
                   <IssueList
                     issues={data}
-                    projectId={selectedProject?.id || ''}
                     onEdit={(issue) => {
                       setEditingIssue(issue);
                       setShowIssueForm(true);
@@ -1138,7 +1133,6 @@ export default function TestPage() {
                 {(_data) => (
                   <ExpenseList
                     expenses={[]}
-                    projectId={selectedProject?.id || ''}
                     onEdit={(_expense) => {
                       // 處理編輯費用
                     }}
@@ -1176,7 +1170,6 @@ export default function TestPage() {
                 {(_data) => (
                   <MaterialList
                     materials={[]}
-                    projectId={selectedProject?.id || ''}
                     onEdit={(_material) => {
                       // 處理編輯材料
                     }}
@@ -1877,7 +1870,6 @@ export default function TestPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <IssueForm
               issue={editingIssue || undefined}
-              projectId={selectedProject?.id || ''}
               onSubmit={editingIssue ? handleEditIssue : handleCreateIssue}
               onCancel={() => {
                 setShowIssueForm(false);
@@ -1894,7 +1886,6 @@ export default function TestPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <ExpenseForm
               expense={editingExpense || undefined}
-              projectId={selectedProject?.id || ''}
               onSubmit={async (expenseData) => {
                 try {
                   // 這裡需要實作費用服務
@@ -1919,7 +1910,6 @@ export default function TestPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <MaterialForm
               material={editingMaterial || undefined}
-              projectId={selectedProject?.id || ''}
               onSubmit={async (materialData) => {
                 try {
                   // 這裡需要實作材料服務
@@ -1973,7 +1963,6 @@ export default function TestPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <WorkPackageForm
               workPackage={editingWorkPackage || undefined}
-              projectId={selectedProject?.id || ''}
               onSubmit={async (workPackageData) => {
                 try {
                   // 這裡需要實作工作包服務
@@ -1998,7 +1987,6 @@ export default function TestPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <SubWorkPackageForm
               subWorkPackage={editingSubWorkPackage || undefined}
-              workPackageId={workPackages[0]?.id || ''}
               onSubmit={async (subWorkPackageData) => {
                 try {
                   // 這裡需要實作子工作包服務
@@ -2170,7 +2158,6 @@ export default function TestPage() {
                 工作包表單
               </h4>
               <WorkPackageForm
-                projectId={selectedProject?.id || ''}
                 onSubmit={async (_data) => {
                   // 處理提交
                 }}
@@ -2186,7 +2173,6 @@ export default function TestPage() {
                 子工作包表單
               </h4>
               <SubWorkPackageForm
-                workPackageId={workPackages[0]?.id || ''}
                 onSubmit={async (_data) => {
                   // 處理提交
                 }}
@@ -2202,7 +2188,6 @@ export default function TestPage() {
                 問題表單
               </h4>
               <IssueForm
-                projectId={selectedProject?.id || ''}
                 onSubmit={handleCreateIssue}
                 onCancel={() => setShowIssueForm(false)}
                 isLoading={false}
@@ -2215,7 +2200,6 @@ export default function TestPage() {
                 日誌表單
               </h4>
               <JournalForm
-                projectId={selectedProject?.id || ''}
                 onSubmit={async (_data) => {
                   // 處理提交
                 }}
@@ -2231,7 +2215,6 @@ export default function TestPage() {
                 費用表單
               </h4>
               <ExpenseForm
-                projectId={selectedProject?.id || ''}
                 onSubmit={async (_expenseData) => {
                   // 處理提交
                 }}
@@ -2248,7 +2231,6 @@ export default function TestPage() {
                 材料表單
               </h4>
               <MaterialForm
-                projectId={selectedProject?.id || ''}
                 onSubmit={async (_materialData) => {
                   // 處理提交
                 }}
