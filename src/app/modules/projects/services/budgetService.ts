@@ -89,8 +89,7 @@ export const getProjectBudget = async (projectId: string): Promise<ProjectBudget
   try {
     const q = query(
       collection(db, BUDGET_COLLECTION),
-      where('projectId', '==', projectId),
-      orderBy('createdAt', 'desc')
+      where('projectId', '==', projectId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -99,18 +98,29 @@ export const getProjectBudget = async (projectId: string): Promise<ProjectBudget
       return null;
     }
 
-    const doc = querySnapshot.docs[0];
-    const data = doc.data();
-    
-    return {
-      id: doc.id,
-      ...data,
-      createdAt: data.createdAt?.toDate?.() || data.createdAt,
-      updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
-      startDate: data.startDate?.toDate?.() || data.startDate,
-      endDate: data.endDate?.toDate?.() || data.endDate,
-      approvedDate: data.approvedDate?.toDate?.() || data.approvedDate,
-    } as ProjectBudget;
+    // 在記憶體中按創建時間排序，取最新的
+    const budgets = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+        startDate: data.startDate?.toDate?.() || data.startDate,
+        endDate: data.endDate?.toDate?.() || data.endDate,
+        approvedDate: data.approvedDate?.toDate?.() || data.approvedDate,
+      } as ProjectBudget;
+    });
+
+    return budgets.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : 
+                   a.createdAt && typeof a.createdAt === 'object' && 'toDate' in a.createdAt ? 
+                   a.createdAt.toDate() : new Date(0);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : 
+                   b.createdAt && typeof b.createdAt === 'object' && 'toDate' in b.createdAt ? 
+                   b.createdAt.toDate() : new Date(0);
+      return dateB.getTime() - dateA.getTime(); // 降序排列，取最新的
+    })[0];
   } catch (error) {
     console.error('獲取專案預算時發生錯誤:', error);
     throw new Error('獲取專案預算失敗');
@@ -178,8 +188,7 @@ export const getBudgetItems = async (budgetId: string): Promise<BudgetItem[]> =>
   try {
     const q = query(
       collection(db, BUDGET_ITEMS_COLLECTION),
-      where('budgetId', '==', budgetId),
-      orderBy('createdAt', 'asc')
+      where('budgetId', '==', budgetId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -195,7 +204,16 @@ export const getBudgetItems = async (budgetId: string): Promise<BudgetItem[]> =>
       } as BudgetItem);
     });
 
-    return items;
+    // 在記憶體中按創建時間排序
+    return items.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : 
+                   a.createdAt && typeof a.createdAt === 'object' && 'toDate' in a.createdAt ? 
+                   a.createdAt.toDate() : new Date(0);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : 
+                   b.createdAt && typeof b.createdAt === 'object' && 'toDate' in b.createdAt ? 
+                   b.createdAt.toDate() : new Date(0);
+      return dateA.getTime() - dateB.getTime(); // 升序排列
+    });
   } catch (error) {
     console.error('獲取預算項目時發生錯誤:', error);
     throw new Error('獲取預算項目失敗');
@@ -263,8 +281,7 @@ export const getCostRecords = async (projectId: string): Promise<CostRecord[]> =
   try {
     const q = query(
       collection(db, COST_RECORDS_COLLECTION),
-      where('projectId', '==', projectId),
-      orderBy('date', 'desc')
+      where('projectId', '==', projectId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -282,7 +299,16 @@ export const getCostRecords = async (projectId: string): Promise<CostRecord[]> =
       } as CostRecord);
     });
 
-    return records;
+    // 在記憶體中按日期排序
+    return records.sort((a, b) => {
+      const dateA = a.date instanceof Date ? a.date : 
+                   a.date && typeof a.date === 'object' && 'toDate' in a.date ? 
+                   a.date.toDate() : new Date(0);
+      const dateB = b.date instanceof Date ? b.date : 
+                   b.date && typeof b.date === 'object' && 'toDate' in b.date ? 
+                   b.date.toDate() : new Date(0);
+      return dateB.getTime() - dateA.getTime(); // 降序排列
+    });
   } catch (error) {
     console.error('獲取成本記錄時發生錯誤:', error);
     throw new Error('獲取成本記錄失敗');

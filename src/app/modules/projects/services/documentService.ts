@@ -255,8 +255,7 @@ export const getDocumentsByProjectId = async (projectId: string): Promise<Docume
   try {
     const q = query(
       collection(db, DOCUMENT_COLLECTION),
-      where('projectId', '==', projectId),
-      orderBy('uploadedAt', 'desc')
+      where('projectId', '==', projectId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -273,7 +272,16 @@ export const getDocumentsByProjectId = async (projectId: string): Promise<Docume
       } as DocumentFile);
     });
 
-    return documents;
+    // 在記憶體中按上傳時間排序
+    return documents.sort((a, b) => {
+      const dateA = a.uploadedAt instanceof Date ? a.uploadedAt : 
+                   a.uploadedAt && typeof a.uploadedAt === 'object' && 'toDate' in a.uploadedAt ? 
+                   a.uploadedAt.toDate() : new Date(0);
+      const dateB = b.uploadedAt instanceof Date ? b.uploadedAt : 
+                   b.uploadedAt && typeof b.uploadedAt === 'object' && 'toDate' in b.uploadedAt ? 
+                   b.uploadedAt.toDate() : new Date(0);
+      return dateB.getTime() - dateA.getTime(); // 降序排列
+    });
   } catch (error) {
     console.error('查詢專案文件時發生錯誤:', error);
     throw new Error('查詢專案文件失敗');
@@ -287,8 +295,7 @@ export const getDocumentsByWorkpackageId = async (workpackageId: string): Promis
   try {
     const q = query(
       collection(db, DOCUMENT_COLLECTION),
-      where('workpackageId', '==', workpackageId),
-      orderBy('uploadedAt', 'desc')
+      where('workpackageId', '==', workpackageId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -305,7 +312,16 @@ export const getDocumentsByWorkpackageId = async (workpackageId: string): Promis
       } as DocumentFile);
     });
 
-    return documents;
+    // 在記憶體中按上傳時間排序
+    return documents.sort((a, b) => {
+      const dateA = a.uploadedAt instanceof Date ? a.uploadedAt : 
+                   a.uploadedAt && typeof a.uploadedAt === 'object' && 'toDate' in a.uploadedAt ? 
+                   a.uploadedAt.toDate() : new Date(0);
+      const dateB = b.uploadedAt instanceof Date ? b.uploadedAt : 
+                   b.uploadedAt && typeof b.uploadedAt === 'object' && 'toDate' in b.uploadedAt ? 
+                   b.uploadedAt.toDate() : new Date(0);
+      return dateB.getTime() - dateA.getTime(); // 降序排列
+    });
   } catch (error) {
     console.error('查詢工作包文件時發生錯誤:', error);
     throw new Error('查詢工作包文件失敗');
@@ -360,8 +376,7 @@ export const searchDocuments = async (
   try {
     let q = query(
       collection(db, DOCUMENT_COLLECTION),
-      where('projectId', '==', projectId),
-      orderBy('uploadedAt', 'desc')
+      where('projectId', '==', projectId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -379,7 +394,7 @@ export const searchDocuments = async (
     });
 
     // 在記憶體中進行篩選和搜尋
-    return documents.filter(doc => {
+    const filteredDocuments = documents.filter(doc => {
       // 搜尋詞篩選
       if (searchTerm) {
         const lowerSearchTerm = searchTerm.toLowerCase();
@@ -403,6 +418,17 @@ export const searchDocuments = async (
       }
 
       return true;
+    });
+
+    // 在記憶體中按上傳時間排序
+    return filteredDocuments.sort((a, b) => {
+      const dateA = a.uploadedAt instanceof Date ? a.uploadedAt : 
+                   a.uploadedAt && typeof a.uploadedAt === 'object' && 'toDate' in a.uploadedAt ? 
+                   a.uploadedAt.toDate() : new Date(0);
+      const dateB = b.uploadedAt instanceof Date ? b.uploadedAt : 
+                   b.uploadedAt && typeof b.uploadedAt === 'object' && 'toDate' in b.uploadedAt ? 
+                   b.uploadedAt.toDate() : new Date(0);
+      return dateB.getTime() - dateA.getTime(); // 降序排列
     });
   } catch (error) {
     console.error('搜尋文件時發生錯誤:', error);
