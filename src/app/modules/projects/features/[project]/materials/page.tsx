@@ -86,31 +86,29 @@ export default function ProjectMaterialsPage() {
     }
   }, [project]);
 
-  // 處理新增材料
-  const handleCreateMaterial = async (materialData: Omit<MaterialEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+  // 處理材料表單提交
+  const handleMaterialSubmit = async (materialData: Omit<MaterialEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!projectId) return;
     
     try {
-      // 這裡需要實作材料服務的創建方法
+      if (editingMaterial) {
+        // 編輯現有材料
+        // 這裡需要實作材料服務的更新方法
+        // await MaterialService.updateMaterial(editingMaterial.id, materialData);
+      } else {
+        // 新增材料
+        // 這裡需要實作材料服務的創建方法
+        // await MaterialService.createMaterial(projectId, materialData);
+      }
+      
       await loadMaterials();
       setShowMaterialForm(false);
       setEditingMaterial(null);
     } catch (err) {
-      logError(err as Error, { operation: 'create_material', projectId });
-    }
-  };
-
-  // 處理編輯材料
-  const handleEditMaterial = async (materialData: Partial<MaterialEntry>) => {
-    if (!editingMaterial) return;
-    
-    try {
-      // 這裡需要實作材料服務的更新方法
-      await loadMaterials();
-      setShowMaterialForm(false);
-      setEditingMaterial(null);
-    } catch (err) {
-      logError(err as Error, { operation: 'update_material', projectId });
+      logError(err as Error, { 
+        operation: editingMaterial ? 'update_material' : 'create_material', 
+        projectId 
+      });
     }
   };
 
@@ -188,7 +186,7 @@ export default function ProjectMaterialsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <MaterialForm
               material={editingMaterial || undefined}
-              onSubmit={editingMaterial ? handleEditMaterial : handleCreateMaterial}
+              onSubmit={handleMaterialSubmit}
               onCancel={() => {
                 setShowMaterialForm(false);
                 setEditingMaterial(null);

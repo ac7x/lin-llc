@@ -37,9 +37,11 @@ export { default as WorkPackageForm } from './components/work-packages/WorkPacka
 export { default as WorkPackageList } from './components/work-packages/WorkPackageList';
 
 // 子工作包組件
-export { default as SubWorkPackageCard } from './components/subwork-packages/SubWorkPackageCard';
-export { default as SubWorkPackageForm } from './components/subwork-packages/SubWorkPackageForm';
-export { default as SubWorkPackageList } from './components/subwork-packages/SubWorkPackageList';
+export { 
+  SubWorkPackageCard, 
+  SubWorkPackageForm, 
+  SubWorkPackageList 
+} from './components/subwork-packages';
 
 // 日誌組件
 export { default as JournalCard } from './components/journal/JournalCard';
