@@ -363,8 +363,7 @@ export const getBudgetAlerts = async (projectId: string): Promise<BudgetAlert[]>
   try {
     const q = query(
       collection(db, BUDGET_ALERTS_COLLECTION),
-      where('projectId', '==', projectId),
-      orderBy('createdAt', 'desc')
+      where('projectId', '==', projectId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -382,7 +381,16 @@ export const getBudgetAlerts = async (projectId: string): Promise<BudgetAlert[]>
       } as BudgetAlert);
     });
 
-    return alerts;
+    // 在記憶體中按創建時間排序
+    return alerts.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : 
+                   a.createdAt && typeof a.createdAt === 'object' && 'toDate' in a.createdAt ? 
+                   a.createdAt.toDate() : new Date(0);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : 
+                   b.createdAt && typeof b.createdAt === 'object' && 'toDate' in b.createdAt ? 
+                   b.createdAt.toDate() : new Date(0);
+      return dateB.getTime() - dateA.getTime(); // 降序排列
+    });
   } catch (error) {
     console.error('獲取預算警報時發生錯誤:', error);
     throw new Error('獲取預算警報失敗');
@@ -394,13 +402,31 @@ export const getBudgetAlerts = async (projectId: string): Promise<BudgetAlert[]>
  */
 export const getBudgetStats = async (projectId: string): Promise<BudgetStats> => {
   try {
-    const [budget, budgetItems, costRecords] = await Promise.all([
-      getProjectBudget(projectId),
-      getBudgetItems(projectId),
+    const budget = await getProjectBudget(projectId);
+    
+    // 如果沒有預算，返回空的統計資訊
+    if (!budget) {
+      return {
+        totalBudget: 0,
+        totalAllocated: 0,
+        totalSpent: 0,
+        totalCommitted: 0,
+        remainingBudget: 0,
+        availableBudget: 0,
+        budgetUtilization: 0,
+        allocationRate: 0,
+        categoryStats: {} as Record<BudgetCategory, { allocated: number; spent: number; committed: number }>,
+        recentCosts: [],
+        alerts: [],
+      };
+    }
+
+    const [budgetItems, costRecords] = await Promise.all([
+      getBudgetItems(budget.id),
       getCostRecords(projectId),
     ]);
 
-    const totalBudget = budget?.totalBudget || 0;
+    const totalBudget = budget.totalBudget || 0;
     const totalAllocated = budgetItems.reduce((sum, item) => sum + item.allocatedAmount, 0);
     const totalSpent = costRecords.reduce((sum, record) => sum + record.amount, 0);
     const totalCommitted = costRecords

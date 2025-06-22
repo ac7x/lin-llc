@@ -32,17 +32,27 @@ export class JournalService {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
-        where('projectId', '==', projectId),
-        orderBy('date', 'desc')
+        where('projectId', '==', projectId)
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
+      const reports = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
       })) as DailyReport[];
+
+      // 在記憶體中按日期排序
+      return reports.sort((a, b) => {
+        const dateA = a.date instanceof Date ? a.date : 
+                     a.date && typeof a.date === 'object' && 'toDate' in a.date ? 
+                     a.date.toDate() : new Date(0);
+        const dateB = b.date instanceof Date ? b.date : 
+                     b.date && typeof b.date === 'object' && 'toDate' in b.date ? 
+                     b.date.toDate() : new Date(0);
+        return dateB.getTime() - dateA.getTime(); // 降序排列
+      });
     } catch (error) {
       console.error('取得日誌列表失敗:', error);
       throw new Error('取得日誌列表失敗');
@@ -134,17 +144,27 @@ export class JournalService {
         collection(db, COLLECTION_NAME),
         where('projectId', '==', projectId),
         where('date', '>=', startDate),
-        where('date', '<=', endDate),
-        orderBy('date', 'desc')
+        where('date', '<=', endDate)
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
+      const reports = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
       })) as DailyReport[];
+
+      // 在記憶體中按日期排序
+      return reports.sort((a, b) => {
+        const dateA = a.date instanceof Date ? a.date : 
+                     a.date && typeof a.date === 'object' && 'toDate' in a.date ? 
+                     a.date.toDate() : new Date(0);
+        const dateB = b.date instanceof Date ? b.date : 
+                     b.date && typeof b.date === 'object' && 'toDate' in b.date ? 
+                     b.date.toDate() : new Date(0);
+        return dateB.getTime() - dateA.getTime(); // 降序排列
+      });
     } catch (error) {
       console.error('根據日期範圍取得日誌失敗:', error);
       throw new Error('根據日期範圍取得日誌失敗');

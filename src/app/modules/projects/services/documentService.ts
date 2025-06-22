@@ -335,8 +335,7 @@ export const getDocumentVersions = async (documentId: string): Promise<DocumentV
   try {
     const q = query(
       collection(db, DOCUMENT_VERSIONS_COLLECTION),
-      where('documentId', '==', documentId),
-      orderBy('version', 'desc')
+      where('documentId', '==', documentId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -357,7 +356,8 @@ export const getDocumentVersions = async (documentId: string): Promise<DocumentV
       } as DocumentVersion);
     });
 
-    return versions;
+    // 在記憶體中按版本號排序
+    return versions.sort((a, b) => b.version - a.version); // 降序排列
   } catch (error) {
     console.error('查詢文件版本歷史時發生錯誤:', error);
     throw new Error('查詢文件版本歷史失敗');
