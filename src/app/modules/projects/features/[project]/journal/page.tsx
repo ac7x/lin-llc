@@ -6,6 +6,8 @@
  * - 新增日誌
  * - 日誌分類
  * - 進度追蹤
+ * - 照片上傳
+ * - 天氣資訊
  */
 
 'use client';
@@ -15,7 +17,9 @@ import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
-import type { Project } from '@/app/modules/projects/types';
+import { JournalForm, JournalHistory } from '@/app/modules/projects/components/journal';
+import { JournalService } from '@/app/modules/projects/services';
+import type { Project, DailyReport } from '@/app/modules/projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
 
@@ -23,16 +27,11 @@ interface ProjectWithId extends Project {
   id: string;
 }
 
-// 簡化的日誌條目型別
-interface JournalEntry {
-  id: string;
-  title: string;
-  content?: string;
-  date: Date;
-  author?: string;
-  category?: string;
-  priority?: number;
-  tags?: string[];
+// 天氣資料介面
+interface WeatherData {
+  weather: string;
+  temperature: number;
+  rainfall: number;
 }
 
 export default function ProjectJournalPage() {
@@ -40,11 +39,12 @@ export default function ProjectJournalPage() {
   const projectId = params.project as string;
   
   const [project, setProject] = useState<ProjectWithId | null>(null);
-  const [journals, setJournals] = useState<JournalEntry[]>([]);
+  const [reports, setReports] = useState<DailyReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showJournalForm, setShowJournalForm] = useState(false);
-  const [editingJournal, setEditingJournal] = useState<JournalEntry | null>(null);
+  const [editingReport, setEditingReport] = useState<DailyReport | null>(null);
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
   // 載入專案資料
   const loadProject = async () => {
@@ -74,37 +74,68 @@ export default function ProjectJournalPage() {
   };
 
   // 載入日誌資料
-  const loadJournals = async () => {
+  const loadReports = async () => {
     if (!projectId) return;
 
     try {
-      // TODO: 實作從日誌服務獲取資料
-      // const journalsData = await JournalService.getDailyReportsByProject(projectId);
-      // setJournals(journalsData);
-      setJournals([]);
+      const reportsData = await JournalService.getDailyReportsByProject(projectId);
+      setReports(reportsData);
     } catch (err) {
-      logError(err as Error, { operation: 'fetch_journals', projectId });
+      logError(err as Error, { operation: 'fetch_reports', projectId });
     }
+  };
+
+  // 模擬天氣資料載入
+  const loadWeatherData = async () => {
+    // 這裡可以整合真實的天氣 API
+    setWeatherData({
+      weather: '晴天',
+      temperature: 25,
+      rainfall: 0,
+    });
   };
 
   useEffect(() => {
     loadProject();
+    loadWeatherData();
   }, [projectId]);
 
   useEffect(() => {
     if (project) {
-      loadJournals();
+      loadReports();
     }
   }, [project]);
 
+  // 處理新增日誌
+  const handleCreateReport = async (reportData: any) => {
+    try {
+      await loadReports(); // 重新載入日誌列表
+      setShowJournalForm(false);
+    } catch (err) {
+      logError(err as Error, { operation: 'create_report', projectId });
+    }
+  };
+
+  // 處理編輯日誌
+  const handleEditReport = async (reportData: any) => {
+    try {
+      await loadReports(); // 重新載入日誌列表
+      setShowJournalForm(false);
+      setEditingReport(null);
+    } catch (err) {
+      logError(err as Error, { operation: 'edit_report', projectId });
+    }
+  };
+
   // 處理刪除日誌
-  const handleDeleteJournal = async (journalId: string) => {
+  const handleDeleteReport = async (reportId: string) => {
     if (!projectId) return;
     
     try {
-      setJournals(prev => prev.filter(journal => journal.id !== journalId));
+      await JournalService.deleteDailyReport(reportId);
+      await loadReports(); // 重新載入日誌列表
     } catch (err) {
-      logError(err as Error, { operation: 'delete_journal', projectId });
+      logError(err as Error, { operation: 'delete_report', projectId });
     }
   };
 
@@ -148,99 +179,40 @@ export default function ProjectJournalPage() {
       <DataLoader
         loading={loading}
         error={error ? new Error(error) : null}
-        data={journals}
+        data={reports}
       >
         {(data) => (
-          <div className="space-y-4">
-            {data.map((journal) => (
-              <div key={journal.id} className={projectStyles.card.base}>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                      {journal.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {journal.date.toLocaleDateString('zh-TW')} - {journal.author}
-                    </p>
-                    {journal.content && (
-                      <p className="text-gray-700 dark:text-gray-300 mt-2">
-                        {journal.content}
-                      </p>
-                    )}
-                    {journal.tags && journal.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {journal.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/20 dark:text-blue-300"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex space-x-2 ml-4">
-                    <button
-                      onClick={() => handleDeleteJournal(journal.id)}
-                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                    >
-                      刪除
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <JournalHistory
+            reports={data}
+            onViewDetails={(reportId) => {
+              // 處理查看詳情
+              console.log('查看日誌詳情:', reportId);
+            }}
+            onEdit={(report) => {
+              setEditingReport(report);
+              setShowJournalForm(true);
+            }}
+            onDelete={handleDeleteReport}
+          />
         )}
       </DataLoader>
 
-      {/* 簡單的新增日誌表單 */}
+      {/* 日誌表單模態框 */}
       {showJournalForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              新增日誌
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  標題
-                </label>
-                <input
-                  type="text"
-                  className={projectStyles.form.input}
-                  placeholder="輸入日誌標題"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  內容
-                </label>
-                <textarea
-                  className={projectStyles.form.input}
-                  rows={4}
-                  placeholder="輸入日誌內容"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => setShowJournalForm(false)}
-                  className={projectStyles.button.outline}
-                >
-                  取消
-                </button>
-                <button
-                  onClick={() => {
-                    // 這裡可以實作新增日誌的邏輯
-                    setShowJournalForm(false);
-                  }}
-                  className={projectStyles.button.primary}
-                >
-                  新增
-                </button>
-              </div>
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <JournalForm
+              projectId={projectId}
+              projectData={project}
+              weatherData={weatherData}
+              journalEntry={editingReport as any}
+              onSubmit={editingReport ? handleEditReport : handleCreateReport}
+              onCancel={() => {
+                setShowJournalForm(false);
+                setEditingReport(null);
+              }}
+              isSubmitting={loading}
+            />
           </div>
         </div>
       )}

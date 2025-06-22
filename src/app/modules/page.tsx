@@ -2200,6 +2200,13 @@ export default function TestPage() {
                 日誌表單
               </h4>
               <JournalForm
+                projectId={selectedProject?.id || ''}
+                projectData={selectedProject || {}}
+                weatherData={{
+                  weather: '晴天',
+                  temperature: 25,
+                  rainfall: 0,
+                }}
                 onSubmit={async (_data) => {
                   // 處理提交
                 }}

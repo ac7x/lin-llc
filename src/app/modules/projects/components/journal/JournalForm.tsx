@@ -5,16 +5,20 @@
  * - 日誌標題和內容
  * - 分類和優先級
  * - 標籤管理
- * - 附件上傳
- * - 後續行動
+ * - 照片上傳
+ * - 進度更新
+ * - 天氣資訊
+ * - 出工人數
  */
 
 'use client';
 
 import { useState, useEffect, type ReactElement } from 'react';
+import Image from 'next/image';
 
 import { projectStyles } from '@/app/modules/projects/styles';
-import type { BaseWithId } from '@/app/modules/projects/types';
+import type { BaseWithId, WorkPackage, SubWorkPackage, PhotoType } from '@/app/modules/projects/types';
+import { JournalService } from '@/app/modules/projects/services';
 
 // 日誌條目介面
 interface JournalEntry extends BaseWithId {
@@ -40,7 +44,17 @@ interface JournalEntry extends BaseWithId {
   }>;
 }
 
+// 天氣資料介面
+interface WeatherData {
+  weather: string;
+  temperature: number;
+  rainfall: number;
+}
+
 interface JournalFormProps {
+  projectId: string;
+  projectData: any; // 專案資料
+  weatherData?: WeatherData | null;
   journalEntry?: JournalEntry;
   onSubmit: (data: Partial<JournalEntry>) => void;
   onCancel: () => void;
@@ -48,6 +62,9 @@ interface JournalFormProps {
 }
 
 export default function JournalForm({
+  projectId,
+  projectData,
+  weatherData,
   journalEntry,
   onSubmit,
   onCancel,
@@ -63,9 +80,29 @@ export default function JournalForm({
     followUpActions: journalEntry?.followUpActions || [],
     newAction: '',
     newActionAssignee: '',
+    // 新增欄位
+    workforceCount: 0,
+    weather: weatherData?.weather || '',
+    temperature: weatherData?.temperature || 0,
+    rainfall: weatherData?.rainfall || 0,
+    issues: '',
   });
 
+  // 照片上傳相關狀態
+  const [photoFiles, setPhotoFiles] = useState<(File | null)[]>([]);
+  const [photoDescriptions, setPhotoDescriptions] = useState<string[]>([]);
+  const [photoTypes, setPhotoTypes] = useState<PhotoType[]>([]);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+
+  // 進度更新相關狀態
+  const [progressInputs, setProgressInputs] = useState([
+    { workPackageId: '', subWorkPackageId: '', actualQuantity: 0 },
+  ]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const workPackages = projectData?.workPackages || [];
 
   useEffect(() => {
     if (journalEntry) {
@@ -79,9 +116,14 @@ export default function JournalForm({
         followUpActions: journalEntry.followUpActions || [],
         newAction: '',
         newActionAssignee: '',
+        workforceCount: 0,
+        weather: weatherData?.weather || '',
+        temperature: weatherData?.temperature || 0,
+        rainfall: weatherData?.rainfall || 0,
+        issues: '',
       });
     }
-  }, [journalEntry]);
+  }, [journalEntry, weatherData]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -94,30 +136,80 @@ export default function JournalForm({
       newErrors.priority = '優先級必須在 1-10 之間';
     }
 
+    if (formData.workforceCount < 0) {
+      newErrors.workforceCount = '出工人數不能為負數';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
     }
 
-    const submitData: Partial<JournalEntry> = {
-      title: formData.title,
-      content: formData.content,
-      category: formData.category,
-      priority: formData.priority,
-      tags: formData.tags,
-      followUpActions: formData.followUpActions,
-      date: new Date(),
-      attachments: journalEntry?.attachments || [],
-      relatedWorkPackages: journalEntry?.relatedWorkPackages || [],
-    };
+    setUploading(true);
 
-    onSubmit(submitData);
+    try {
+      // 準備照片檔案資料
+      const photoFilesData = photoFiles
+        .map((file, index) => {
+          if (!file) return null;
+          return {
+            file,
+            type: (photoTypes[index] || 'progress') as string,
+            description: photoDescriptions[index] || '',
+          };
+        })
+        .filter((item): item is { file: File; type: string; description: string } => item !== null);
+
+      // 準備進度更新資料
+      const progressUpdatesData = progressInputs
+        .filter(input => input.workPackageId && input.subWorkPackageId && input.actualQuantity > 0)
+        .map(input => ({
+          workPackageId: input.workPackageId,
+          subWorkPackageId: input.subWorkPackageId,
+          actualQuantity: input.actualQuantity,
+        }));
+
+      // 建立日誌記錄
+      const reportId = await JournalService.createDailyReport({
+        projectId,
+        date: new Date(),
+        weather: formData.weather,
+        temperature: formData.temperature,
+        rainfall: formData.rainfall,
+        workforceCount: formData.workforceCount,
+        description: formData.content || formData.title,
+        issues: formData.issues,
+        photoFiles: photoFilesData,
+        progressUpdates: progressUpdatesData,
+        projectData,
+      });
+
+      // 提交成功後的回調
+      const submitData: Partial<JournalEntry> = {
+        title: formData.title,
+        content: formData.content,
+        category: formData.category,
+        priority: formData.priority,
+        tags: formData.tags,
+        followUpActions: formData.followUpActions,
+        date: new Date(),
+        attachments: journalEntry?.attachments || [],
+        relatedWorkPackages: journalEntry?.relatedWorkPackages || [],
+      };
+
+      onSubmit(submitData);
+    } catch (error) {
+      console.error('提交日誌失敗:', error);
+      setErrors({ submit: '提交失敗，請重試' });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -134,6 +226,56 @@ export default function JournalForm({
     }
   };
 
+  // 照片上傳相關函數
+  const handleAddPhotoField = () => {
+    setPhotoFiles([...photoFiles, null]);
+    setPhotoDescriptions([...photoDescriptions, '']);
+    setPhotoTypes([...photoTypes, 'progress']);
+  };
+
+  const handlePhotoChange = (index: number, file: File) => {
+    const newFiles = [...photoFiles];
+    newFiles[index] = file;
+    setPhotoFiles(newFiles);
+  };
+
+  const handleDescriptionChange = (index: number, description: string) => {
+    const newDescriptions = [...photoDescriptions];
+    newDescriptions[index] = description;
+    setPhotoDescriptions(newDescriptions);
+  };
+
+  const handleTypeChange = (index: number, type: PhotoType) => {
+    const newTypes = [...photoTypes];
+    newTypes[index] = type;
+    setPhotoTypes(newTypes);
+  };
+
+  const handleRemovePhotoField = (index: number) => {
+    setPhotoFiles(photoFiles.filter((_, i) => i !== index));
+    setPhotoDescriptions(photoDescriptions.filter((_, i) => i !== index));
+    setPhotoTypes(photoTypes.filter((_, i) => i !== index));
+  };
+
+  // 進度更新相關函數
+  const handleAddProgressField = () => {
+    setProgressInputs([
+      ...progressInputs,
+      { workPackageId: '', subWorkPackageId: '', actualQuantity: 0 },
+    ]);
+  };
+
+  const handleProgressChange = (index: number, field: string, value: string | number) => {
+    const newInputs = [...progressInputs];
+    newInputs[index] = { ...newInputs[index], [field]: value };
+    setProgressInputs(newInputs);
+  };
+
+  const handleRemoveProgressField = (index: number) => {
+    setProgressInputs(progressInputs.filter((_, i) => i !== index));
+  };
+
+  // 標籤管理函數
   const addTag = () => {
     if (formData.newTag.trim() && !formData.tags.includes(formData.newTag.trim())) {
       setFormData(prev => ({
@@ -151,6 +293,7 @@ export default function JournalForm({
     }));
   };
 
+  // 後續行動函數
   const addFollowUpAction = () => {
     if (formData.newAction.trim()) {
       setFormData(prev => ({
@@ -188,12 +331,12 @@ export default function JournalForm({
   return (
     <div className={projectStyles.card.base}>
       <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6'>
-        {journalEntry ? '編輯日誌' : '新增日誌'}
+        {journalEntry ? '編輯日誌' : '新增工作日誌'}
       </h2>
 
       <form onSubmit={handleSubmit} className={projectStyles.form.container}>
+        {/* 基本資訊 */}
         <div className={projectStyles.form.group}>
-          {/* 標題 */}
           <div>
             <label className={projectStyles.form.label}>
               標題 <span className='text-red-500'>*</span>
@@ -210,23 +353,238 @@ export default function JournalForm({
             )}
           </div>
 
-          {/* 內容 */}
           <div>
             <label className={projectStyles.form.label}>
-              內容
+              工作內容
             </label>
             <textarea
               value={formData.content}
               onChange={(e) => handleInputChange('content', e.target.value)}
               className={projectStyles.form.textarea}
-              placeholder='請輸入日誌內容'
-              rows={6}
+              placeholder='請輸入今日工作內容'
+              rows={4}
             />
           </div>
         </div>
 
+        {/* 天氣和出工資訊 */}
         <div className={projectStyles.form.group}>
-          {/* 分類 */}
+          <div>
+            <label className={projectStyles.form.label}>
+              出工人數
+            </label>
+            <input
+              type='number'
+              value={formData.workforceCount}
+              onChange={(e) => handleInputChange('workforceCount', Number(e.target.value))}
+              className={`${projectStyles.form.input} ${errors.workforceCount ? 'border-red-500' : ''}`}
+              placeholder='0'
+              min='0'
+            />
+            {errors.workforceCount && (
+              <p className='text-red-500 text-sm mt-1'>{errors.workforceCount}</p>
+            )}
+          </div>
+
+          <div>
+            <label className={projectStyles.form.label}>
+              天氣狀況
+            </label>
+            <input
+              type='text'
+              value={formData.weather}
+              onChange={(e) => handleInputChange('weather', e.target.value)}
+              className={projectStyles.form.input}
+              placeholder='晴天、陰天、雨天等'
+            />
+          </div>
+
+          <div>
+            <label className={projectStyles.form.label}>
+              溫度 (°C)
+            </label>
+            <input
+              type='number'
+              value={formData.temperature}
+              onChange={(e) => handleInputChange('temperature', Number(e.target.value))}
+              className={projectStyles.form.input}
+              placeholder='25'
+            />
+          </div>
+
+          <div>
+            <label className={projectStyles.form.label}>
+              降雨量 (mm)
+            </label>
+            <input
+              type='number'
+              value={formData.rainfall}
+              onChange={(e) => handleInputChange('rainfall', Number(e.target.value))}
+              className={projectStyles.form.input}
+              placeholder='0'
+              min='0'
+            />
+          </div>
+        </div>
+
+        {/* 問題記錄 */}
+        <div className={projectStyles.form.group}>
+          <div>
+            <label className={projectStyles.form.label}>
+              問題記錄
+            </label>
+            <textarea
+              value={formData.issues}
+              onChange={(e) => handleInputChange('issues', e.target.value)}
+              className={projectStyles.form.textarea}
+              placeholder='記錄今日遇到的問題或注意事項'
+              rows={3}
+            />
+          </div>
+        </div>
+
+        {/* 進度更新 */}
+        <div className={projectStyles.form.group}>
+          <div className='flex justify-between items-center mb-4'>
+            <label className={projectStyles.form.label}>
+              進度更新
+            </label>
+            <button
+              type='button'
+              onClick={handleAddProgressField}
+              className={projectStyles.button.outline}
+            >
+              新增進度
+            </button>
+          </div>
+          
+          {progressInputs.map((input, index) => (
+            <div key={index} className='grid grid-cols-1 md:grid-cols-4 gap-2 mb-2 p-3 bg-gray-50 dark:bg-gray-700 rounded'>
+              <select
+                value={input.workPackageId}
+                onChange={(e) => handleProgressChange(index, 'workPackageId', e.target.value)}
+                className={projectStyles.form.select}
+              >
+                <option value=''>選擇工作包</option>
+                {workPackages.map((wp: WorkPackage) => (
+                  <option key={wp.id} value={wp.id}>
+                    {wp.name}
+                  </option>
+                ))}
+              </select>
+              
+              <select
+                value={input.subWorkPackageId}
+                onChange={(e) => handleProgressChange(index, 'subWorkPackageId', e.target.value)}
+                className={projectStyles.form.select}
+                disabled={!input.workPackageId}
+              >
+                <option value=''>選擇子工作包</option>
+                {input.workPackageId && workPackages
+                  .find((wp: WorkPackage) => wp.id === input.workPackageId)
+                  ?.subPackages?.map((sw: SubWorkPackage) => (
+                    <option key={sw.id} value={sw.id}>
+                      {sw.name}
+                    </option>
+                  ))}
+              </select>
+              
+              <input
+                type='number'
+                value={input.actualQuantity}
+                onChange={(e) => handleProgressChange(index, 'actualQuantity', Number(e.target.value))}
+                className={projectStyles.form.input}
+                placeholder='完成數量'
+                min='0'
+              />
+              
+              <button
+                type='button'
+                onClick={() => handleRemoveProgressField(index)}
+                className='text-red-500 hover:text-red-700'
+              >
+                刪除
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* 照片上傳 */}
+        <div className={projectStyles.form.group}>
+          <div className='flex justify-between items-center mb-4'>
+            <label className={projectStyles.form.label}>
+              照片記錄
+            </label>
+            <button
+              type='button'
+              onClick={handleAddPhotoField}
+              className={projectStyles.button.outline}
+            >
+              新增照片
+            </button>
+          </div>
+          
+          {photoFiles.map((file, index) => (
+            <div key={index} className='mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded'>
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-2 mb-2'>
+                <input
+                  type='file'
+                  accept='image/*'
+                  onChange={(e) => {
+                    const selectedFile = e.target.files?.[0];
+                    if (selectedFile) {
+                      handlePhotoChange(index, selectedFile);
+                    }
+                  }}
+                  className={projectStyles.form.input}
+                />
+                
+                <select
+                  value={photoTypes[index] || 'progress'}
+                  onChange={(e) => handleTypeChange(index, e.target.value as PhotoType)}
+                  className={projectStyles.form.select}
+                >
+                  <option value='progress'>進度照片</option>
+                  <option value='issue'>問題照片</option>
+                  <option value='material'>材料照片</option>
+                  <option value='safety'>安全照片</option>
+                  <option value='other'>其他</option>
+                </select>
+                
+                <input
+                  type='text'
+                  value={photoDescriptions[index] || ''}
+                  onChange={(e) => handleDescriptionChange(index, e.target.value)}
+                  className={projectStyles.form.input}
+                  placeholder='照片描述'
+                />
+                
+                <button
+                  type='button'
+                  onClick={() => handleRemovePhotoField(index)}
+                  className='text-red-500 hover:text-red-700'
+                >
+                  刪除
+                </button>
+              </div>
+              
+              {file && (
+                <div className='mt-2'>
+                  <Image
+                    src={URL.createObjectURL(file)}
+                    alt='預覽'
+                    width={200}
+                    height={150}
+                    className='rounded border'
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* 分類和優先級 */}
+        <div className={projectStyles.form.group}>
           <div>
             <label className={projectStyles.form.label}>
               分類
@@ -245,7 +603,6 @@ export default function JournalForm({
             </select>
           </div>
 
-          {/* 優先級 */}
           <div>
             <label className={projectStyles.form.label}>
               優先級 (1-10)
@@ -372,25 +729,32 @@ export default function JournalForm({
           </div>
         </div>
 
+        {/* 錯誤訊息 */}
+        {errors.submit && (
+          <div className='p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg'>
+            <p className='text-red-600 dark:text-red-400'>{errors.submit}</p>
+          </div>
+        )}
+
         {/* 操作按鈕 */}
         <div className='flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700'>
           <button
             type='button'
             onClick={onCancel}
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploading}
             className={`${projectStyles.button.outline} disabled:opacity-50`}
           >
             取消
           </button>
           <button
             type='submit'
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploading}
             className={`${projectStyles.button.primary} disabled:opacity-50 flex items-center`}
           >
-            {isSubmitting ? (
+            {isSubmitting || uploading ? (
               <>
                 <div className={`${projectStyles.loading.spinnerSmall} mr-2`}></div>
-                儲存中...
+                {uploading ? '上傳中...' : '儲存中...'}
               </>
             ) : (
               journalEntry ? '更新日誌' : '新增日誌'
