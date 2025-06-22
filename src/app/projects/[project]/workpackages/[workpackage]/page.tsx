@@ -86,7 +86,8 @@ const getSelectedTemplateFromStorage = (): Template | null => {
 
   try {
     return JSON.parse(stored) as Template;
-  } catch (_e) {
+  } catch (error) {
+    logError(error, { operation: 'parse_template_from_storage', stored });
     return null;
   }
 };

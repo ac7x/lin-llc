@@ -73,15 +73,17 @@ function SidebarContent() {
             setProjectsSnapshot(snapshot);
             setLoading(false);
           },
-          async (_firebaseError) => {
+          async (firebaseError) => {
             // 如果是索引錯誤或其他錯誤，記錄錯誤但不中斷應用
+            logError(firebaseError, { operation: 'fetch_projects', userId: user?.uid });
             setLoading(false);
             setError('無法載入專案資料，請檢查網路連線或稍後再試。');
           }
         );
 
         return () => unsubscribe();
-      } catch (_error) {
+      } catch (error) {
+        logError(error, { operation: 'setup_project_query', userId: user?.uid });
         setLoading(false);
         setError('無法設定專案查詢，請重新整理頁面。');
       }

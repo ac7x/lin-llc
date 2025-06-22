@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { cn, modalStyles, inputStyles, buttonStyles, loadingStyles } from '@/utils/classNameUtils';
+import { logError } from '@/utils/errorUtils';
 
 // Google Maps API Key
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o';
@@ -161,7 +162,8 @@ export default function AddressSelector({
           updateMarkerAndAddress(latitude, longitude);
         }
       },
-      (_error) => {
+      (error) => {
+        logError(error, { operation: 'get_current_location' });
         alert('無法獲取您的位置，請手動選擇地址');
       }
     );
@@ -193,8 +195,9 @@ export default function AddressSelector({
           }
         }
       );
-    } catch (_error) {
-      // 搜尋建議失敗，靜默處理
+    } catch (error) {
+      // 搜尋建議失敗，記錄錯誤並靜默處理
+      logError(error, { operation: 'search_suggestions', query });
       setSuggestions([]);
       setShowSuggestions(false);
     } finally {
