@@ -1,12 +1,4 @@
-import type { 
-  ProjectStatus, 
-  ProjectType, 
-  ProjectPriority, 
-  ProjectRiskLevel, 
-  ProjectHealthLevel, 
-  ProjectPhase,
-  PriorityLevel
-} from '../types';
+import type { ProjectStatus, ProjectType, PriorityLevel, ProjectHealthLevel, ProjectPhase } from '../types';
 
 // ============================================================================
 // 專案狀態選項
@@ -92,14 +84,12 @@ export const getTypeLabel = (type: ProjectType): string => {
   return option?.label || type;
 };
 
-export const getPriorityLabel = (priority: ProjectPriority): string => {
-  const option = PROJECT_PRIORITY_OPTIONS.find(opt => opt.value === priority);
-  return option?.label || priority;
+export const getPriorityLabel = (priority: PriorityLevel): string => {
+  return PROJECT_PRIORITY_OPTIONS.find(option => option.value === priority)?.label || '未知';
 };
 
-export const getRiskLevelLabel = (riskLevel: ProjectRiskLevel): string => {
-  const option = PROJECT_RISK_LEVEL_OPTIONS.find(opt => opt.value === riskLevel);
-  return option?.label || riskLevel;
+export const getRiskLevelLabel = (riskLevel: PriorityLevel): string => {
+  return PROJECT_RISK_LEVEL_OPTIONS.find(option => option.value === riskLevel)?.label || '未知';
 };
 
 export const getHealthLevelLabel = (healthLevel: ProjectHealthLevel): string => {

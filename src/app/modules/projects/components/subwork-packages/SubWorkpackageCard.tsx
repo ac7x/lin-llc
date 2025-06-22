@@ -14,7 +14,7 @@
 import { useState } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
-import type { SubWorkPackage } from '@/app/modules/projects/types';
+import type { SubWorkPackage, PriorityLevel } from '@/app/modules/projects/types';
 
 interface SubWorkpackageCardProps {
   subWorkpackage: SubWorkPackage;
@@ -81,11 +81,20 @@ export default function SubWorkpackageCard({
     }
   };
 
-  const getPriorityColor = (priority?: number) => {
+  const getPriorityColor = (priority?: PriorityLevel) => {
     if (!priority) return 'text-gray-400';
-    if (priority >= 8) return 'text-red-600 dark:text-red-400';
-    if (priority >= 5) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-green-600 dark:text-green-400';
+    switch (priority) {
+      case 'critical':
+        return 'text-red-600 dark:text-red-400';
+      case 'high':
+        return 'text-orange-600 dark:text-orange-400';
+      case 'medium':
+        return 'text-yellow-600 dark:text-yellow-400';
+      case 'low':
+        return 'text-green-600 dark:text-green-400';
+      default:
+        return 'text-gray-400';
+    }
   };
 
   return (
@@ -98,7 +107,10 @@ export default function SubWorkpackageCard({
             </h3>
             {subWorkpackage.priority && (
               <span className={`text-xs font-medium ${getPriorityColor(subWorkpackage.priority)}`}>
-                P{subWorkpackage.priority}
+                {subWorkpackage.priority === 'critical' && '緊急'}
+                {subWorkpackage.priority === 'high' && '高'}
+                {subWorkpackage.priority === 'medium' && '中'}
+                {subWorkpackage.priority === 'low' && '低'}
               </span>
             )}
           </div>

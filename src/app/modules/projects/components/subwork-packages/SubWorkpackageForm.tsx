@@ -13,7 +13,7 @@
 import { useState, useEffect } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
-import type { SubWorkPackage } from '@/app/modules/projects/types';
+import type { SubWorkPackage, PriorityLevel } from '@/app/modules/projects/types';
 
 interface SubWorkpackageFormProps {
   subWorkpackage?: SubWorkPackage;
@@ -34,12 +34,12 @@ export default function SubWorkpackageForm({
     name: subWorkpackage?.name || '',
     description: subWorkpackage?.description || '',
     status: subWorkpackage?.status || 'draft',
-    priority: subWorkpackage?.priority || 5,
+    priority: subWorkpackage?.priority || 'medium',
     riskLevel: subWorkpackage?.riskLevel || 'low',
     assignedTo: subWorkpackage?.assignedTo || '',
+    unit: subWorkpackage?.unit || '',
     estimatedQuantity: subWorkpackage?.estimatedQuantity || 0,
     actualQuantity: subWorkpackage?.actualQuantity || 0,
-    unit: subWorkpackage?.unit || '',
     budget: subWorkpackage?.budget || 0,
     estimatedHours: subWorkpackage?.estimatedHours || 0,
     actualHours: subWorkpackage?.actualHours || 0,
@@ -64,12 +64,12 @@ export default function SubWorkpackageForm({
         name: subWorkpackage.name || '',
         description: subWorkpackage.description || '',
         status: subWorkpackage.status || 'draft',
-        priority: subWorkpackage.priority || 5,
+        priority: subWorkpackage.priority || 'medium',
         riskLevel: subWorkpackage.riskLevel || 'low',
         assignedTo: subWorkpackage.assignedTo || '',
+        unit: subWorkpackage.unit || '',
         estimatedQuantity: subWorkpackage.estimatedQuantity || 0,
         actualQuantity: subWorkpackage.actualQuantity || 0,
-        unit: subWorkpackage.unit || '',
         budget: subWorkpackage.budget || 0,
         estimatedHours: subWorkpackage.estimatedHours || 0,
         actualHours: subWorkpackage.actualHours || 0,
@@ -92,7 +92,7 @@ export default function SubWorkpackageForm({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = '子工作包名稱為必填項目';
+      newErrors.name = '子工作包名稱不能為空';
     }
 
     if (formData.estimatedQuantity < 0) {
@@ -113,10 +113,6 @@ export default function SubWorkpackageForm({
 
     if (formData.budget < 0) {
       newErrors.budget = '預算不能為負數';
-    }
-
-    if (formData.priority < 1 || formData.priority > 10) {
-      newErrors.priority = '優先級必須在 1-10 之間';
     }
 
     setErrors(newErrors);
@@ -217,17 +213,18 @@ export default function SubWorkpackageForm({
           {/* 優先級 */}
           <div>
             <label className={projectStyles.form.label}>
-              優先級 (1-10)
+              優先級
             </label>
-            <input
-              type='number'
+            <select
               value={formData.priority}
-              onChange={(e) => handleInputChange('priority', Number(e.target.value))}
-              className={`${projectStyles.form.input} ${errors.priority ? 'border-red-500' : ''}`}
-              placeholder='5'
-              min='1'
-              max='10'
-            />
+              onChange={(e) => handleInputChange('priority', e.target.value)}
+              className={`${projectStyles.form.select} ${errors.priority ? 'border-red-500' : ''}`}
+            >
+              <option value='low'>低</option>
+              <option value='medium'>中</option>
+              <option value='high'>高</option>
+              <option value='critical'>緊急</option>
+            </select>
             {errors.priority && (
               <p className='text-red-500 text-sm mt-1'>{errors.priority}</p>
             )}

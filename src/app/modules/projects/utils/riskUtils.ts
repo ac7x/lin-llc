@@ -3,7 +3,7 @@
  * 提供專案風險評估和分析功能
  */
 
-import type { ProjectRisk, ProjectRiskLevel, PriorityLevel } from '../types';
+import type { ProjectRisk, PriorityLevel } from '../types';
 
 /**
  * 計算風險評分
@@ -18,7 +18,7 @@ export function calculateRiskScore(risk: ProjectRisk): number {
 /**
  * 取得風險等級
  */
-export function getRiskLevel(risk: ProjectRisk): ProjectRiskLevel {
+export function getRiskLevel(risk: ProjectRisk): PriorityLevel {
   const score = calculateRiskScore(risk);
   
   if (score >= 15) return 'critical';

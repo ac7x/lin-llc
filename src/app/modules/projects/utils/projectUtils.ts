@@ -9,17 +9,24 @@
  * - 專案健康度評估
  */
 
-import type { 
-  Project, 
-  WorkPackage, 
-  ProjectRisk, 
+import type {
+  Project,
+  ProjectRisk,
   ProjectMilestone,
-  ProjectRiskLevel,
-  ProjectPriority,
-  ProjectHealthLevel,
+  ProjectChange,
+  WorkPackage,
+  SubWorkPackage,
   ProjectQualityMetrics,
+  ProjectSafetyMetrics,
   ProjectFinancialMetrics,
-  PriorityLevel
+  PriorityLevel,
+  ProjectHealthLevel,
+  ProjectPhase,
+  ProjectStatus,
+  ProjectFilters,
+  ProjectSortOption,
+  ProjectStats,
+  ProjectMember,
 } from '../types';
 import { calculateProjectProgress } from '../types';
 import { convertToDate } from './dateUtils';
@@ -56,7 +63,7 @@ export function calculateCostPerformanceIndex(project: Project): number {
  * 計算專案整體風險等級
  * 基於所有風險項目的綜合評估
  */
-export function calculateProjectRiskLevel(risks: ProjectRisk[]): ProjectRiskLevel {
+export function calculateProjectRiskLevel(risks: ProjectRisk[]): PriorityLevel {
   if (!risks || risks.length === 0) return 'low';
 
   let totalRiskScore = 0;
@@ -370,7 +377,7 @@ export function calculateProjectPriorityScore(project: Project): number {
   let score = 0;
 
   // 基礎優先級分數
-  const priorityScores: Record<ProjectPriority, number> = {
+  const priorityScores: Record<PriorityLevel, number> = {
     low: 1,
     medium: 2,
     high: 3,
@@ -379,15 +386,15 @@ export function calculateProjectPriorityScore(project: Project): number {
   score += priorityScores[project.priority || 'medium'] * 10;
 
   // 風險等級影響
-  const riskScores: Record<ProjectRiskLevel, number> = {
+  const riskScores: Record<PriorityLevel, number> = {
     low: 0,
     medium: 5,
     high: 10,
     critical: 15,
   };
-  // 修正：確保 riskLevel 是 ProjectRiskLevel
-  const riskLevel: PriorityLevel = (['low', 'medium', 'high', 'critical'] as const).includes(project.riskLevel as ProjectRiskLevel)
-    ? project.riskLevel as ProjectRiskLevel
+  // 修正：確保 riskLevel 是 PriorityLevel
+  const riskLevel: PriorityLevel = (['low', 'medium', 'high', 'critical'] as const).includes(project.riskLevel as PriorityLevel)
+    ? project.riskLevel as PriorityLevel
     : 'low';
   score += riskScores[riskLevel];
 
