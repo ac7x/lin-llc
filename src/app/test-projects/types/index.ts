@@ -707,6 +707,165 @@ export interface ProjectMember {
 }
 
 // ============================================================================
+// 文件管理型別
+// ============================================================================
+
+export type DocumentCategory = 
+  | 'blueprint'      // 藍圖
+  | 'contract'       // 合約
+  | 'specification'  // 規格書
+  | 'report'         // 報告
+  | 'photo'          // 照片
+  | 'video'          // 影片
+  | 'drawing'        // 圖紙
+  | 'manual'         // 手冊
+  | 'certificate'    // 證書
+  | 'permit'         // 許可證
+  | 'invoice'        // 發票
+  | 'receipt'        // 收據
+  | 'other';         // 其他
+
+export interface DocumentVersion extends BaseWithId {
+  documentId: string;
+  version: number;
+  url: string;
+  uploadedAt: DateField;
+  uploadedBy: string;
+  changeLog: string;
+}
+
+export interface ProjectDocumentFile extends BaseWithId {
+  name: string;
+  originalName: string;
+  size: number;
+  type: string;
+  url: string;
+  thumbnailUrl?: string;
+  uploadedAt: DateField;
+  uploadedBy: string;
+  version: number;
+  category: DocumentCategory;
+  tags: string[];
+  description?: string;
+  projectId: string;
+  workpackageId?: string;
+  isPublic: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DocumentStats {
+  totalDocuments: number;
+  totalSize: number;
+  byCategory: Record<DocumentCategory, number>;
+  byType: Record<string, number>;
+  recentUploads: ProjectDocumentFile[];
+}
+
+// ============================================================================
+// 預算管理型別
+// ============================================================================
+
+export type BudgetCategory = 
+  | 'labor'         // 人工費用
+  | 'material'      // 材料費用
+  | 'equipment'     // 設備費用
+  | 'subcontract'   // 分包費用
+  | 'overhead'      // 間接費用
+  | 'contingency'   // 預備費用
+  | 'other';        // 其他費用
+
+export type CostStatus = 'planned' | 'committed' | 'invoiced' | 'paid';
+
+export type AlertType = 'over_budget' | 'over_allocation' | 'cost_variance' | 'schedule_variance';
+
+export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export type AlertStatus = 'active' | 'acknowledged' | 'resolved';
+
+export interface ProjectBudget extends BaseWithId {
+  projectId: string;
+  name: string;
+  description?: string;
+  totalBudget: number;
+  startDate: DateField;
+  endDate: DateField;
+  currency: string;
+  exchangeRate?: number;
+  createdBy: string;
+  approvedBy?: string;
+  approvedDate?: DateField;
+  status: 'draft' | 'approved' | 'active' | 'closed';
+  notes?: string;
+}
+
+export interface BudgetItem extends BaseWithId {
+  budgetId: string;
+  name: string;
+  description?: string;
+  category: BudgetCategory;
+  allocatedAmount: number;
+  spentAmount: number;
+  committedAmount: number;
+  unit?: string;
+  quantity?: number;
+  unitPrice?: number;
+  workpackageId?: string;
+  assignedTo?: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'active' | 'on_hold' | 'completed';
+  notes?: string;
+}
+
+export interface CostRecord extends BaseWithId {
+  projectId: string;
+  budgetItemId?: string;
+  workpackageId?: string;
+  description: string;
+  amount: number;
+  date: DateField;
+  category: BudgetCategory;
+  status: CostStatus;
+  invoiceNumber?: string;
+  supplier?: string;
+  recordedBy: string;
+  approvedBy?: string;
+  approvedDate?: DateField;
+  receiptUrl?: string;
+  notes?: string;
+}
+
+export interface BudgetAlert extends BaseWithId {
+  projectId: string;
+  type: AlertType;
+  severity: AlertSeverity;
+  message: string;
+  status: AlertStatus;
+  acknowledgedBy?: string;
+  acknowledgedDate?: DateField;
+  resolvedBy?: string;
+  resolvedDate?: DateField;
+  notes?: string;
+}
+
+export interface BudgetStats {
+  totalBudget: number;
+  totalAllocated: number;
+  totalSpent: number;
+  totalCommitted: number;
+  remainingBudget: number;
+  availableBudget: number;
+  budgetUtilization: number;
+  allocationRate: number;
+  categoryStats: Record<BudgetCategory, {
+    allocated: number;
+    spent: number;
+    committed: number;
+  }>;
+  recentCosts: CostRecord[];
+  alerts: BudgetAlert[];
+}
+
+// ============================================================================
 // Firestore 資料轉換器
 // ============================================================================
 

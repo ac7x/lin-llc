@@ -1475,6 +1475,53 @@ export default function TestPage() {
                     </Link>
                   </div>
                 </div>
+                {/* 專案文件頁面 */}
+                {selectedProject && (
+                  <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                    <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                      <iframe
+                        src={`/test-projects/${selectedProject.id}/document`}
+                        title="專案文件頁面"
+                        className="w-full h-full"
+                        style={{ border: 'none' }}
+                      />
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="font-medium mb-1">專案文件</span>
+                      <Link
+                        href={`/test-projects/${selectedProject.id}/document`}
+                        target="_blank"
+                        className="text-blue-600 hover:underline text-sm"
+                      >
+                        開新分頁檢視
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {/* 專案預算頁面 */}
+                {selectedProject && (
+                  <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
+                    <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                      <iframe
+                        src={`/test-projects/${selectedProject.id}/budget`}
+                        title="專案預算頁面"
+                        className="w-full h-full"
+                        style={{ border: 'none' }}
+                      />
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="font-medium mb-1">專案預算</span>
+                      <Link
+                        href={`/test-projects/${selectedProject.id}/budget`}
+                        target="_blank"
+                        className="text-blue-600 hover:underline text-sm"
+                      >
+                        開新分頁檢視
+                      </Link>
+                    </div>
+                  </div>
+                )}
 
                 {/* 專案列表頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">

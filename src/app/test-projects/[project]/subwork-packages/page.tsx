@@ -16,7 +16,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/test-projects/components/common';
 import { SubWorkpackageList, SubWorkpackageForm } from '@/app/test-projects/components/subwork-packages';
-import { getSubWorkpackagesByProjectId } from '@/app/test-projects/services/subworkpackageService';
+import { getSubWorkpackagesByProjectId, createSubWorkpackage, updateSubWorkpackage, deleteSubWorkpackage } from '@/app/test-projects/services/subworkpackageService';
 import type { Project, SubWorkPackage } from '@/app/test-projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/test-projects/styles';
@@ -31,6 +31,7 @@ export default function ProjectSubWorkpackagesPage() {
   const [project, setProject] = useState<ProjectWithId | null>(null);
   const [subWorkpackages, setSubWorkpackages] = useState<SubWorkPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSubWorkpackageForm, setShowSubWorkpackageForm] = useState(false);
   const [editingSubWorkpackage, setEditingSubWorkpackage] = useState<SubWorkPackage | null>(null);
@@ -86,15 +87,27 @@ export default function ProjectSubWorkpackagesPage() {
 
   // 處理新增子工作包
   const handleCreateSubWorkpackage = async (subWorkpackageData: Partial<SubWorkPackage>) => {
-    if (!projectId) return;
+    if (!projectId || !project) return;
     
+    setSubmitting(true);
     try {
-      // 這裡需要實作子工作包服務的創建方法
+      // 獲取第一個工作包的 ID
+      const workpackageId = project.workPackages[0]?.id;
+      if (!workpackageId) {
+        throw new Error('專案中沒有可用的工作包');
+      }
+
+      // 創建子工作包
+      await createSubWorkpackage(workpackageId, subWorkpackageData as Omit<SubWorkPackage, 'id' | 'createdAt' | 'updatedAt'>);
+      
+      // 重新載入子工作包列表
       await loadSubWorkpackages();
       setShowSubWorkpackageForm(false);
       setEditingSubWorkpackage(null);
     } catch (err) {
       logError(err as Error, { operation: 'create_subworkpackage', projectId });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -102,13 +115,19 @@ export default function ProjectSubWorkpackagesPage() {
   const handleEditSubWorkpackage = async (subWorkpackageData: Partial<SubWorkPackage>) => {
     if (!editingSubWorkpackage) return;
     
+    setSubmitting(true);
     try {
-      // 這裡需要實作子工作包服務的更新方法
+      // 更新子工作包
+      await updateSubWorkpackage(editingSubWorkpackage.id, subWorkpackageData);
+      
+      // 重新載入子工作包列表
       await loadSubWorkpackages();
       setShowSubWorkpackageForm(false);
       setEditingSubWorkpackage(null);
     } catch (err) {
       logError(err as Error, { operation: 'update_subworkpackage', projectId });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -117,7 +136,10 @@ export default function ProjectSubWorkpackagesPage() {
     if (!projectId) return;
     
     try {
-      // 這裡需要實作子工作包服務的刪除方法
+      // 刪除子工作包
+      await deleteSubWorkpackage(subWorkpackageId);
+      
+      // 重新載入子工作包列表
       await loadSubWorkpackages();
     } catch (err) {
       logError(err as Error, { operation: 'delete_subworkpackage', projectId });
@@ -197,7 +219,7 @@ export default function ProjectSubWorkpackagesPage() {
                 setShowSubWorkpackageForm(false);
                 setEditingSubWorkpackage(null);
               }}
-              isSubmitting={loading}
+              isSubmitting={submitting}
             />
           </div>
         </div>

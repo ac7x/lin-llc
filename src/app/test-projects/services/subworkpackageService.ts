@@ -21,7 +21,8 @@ import {
   orderBy,
   Timestamp,
   serverTimestamp,
-  FieldValue
+  FieldValue,
+  getDoc
 } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase-client';
@@ -126,32 +127,57 @@ export const getSubWorkpackagesByWorkpackageId = async (workpackageId: string): 
  */
 export const getSubWorkpackagesByProjectId = async (projectId: string): Promise<SubWorkPackage[]> => {
   try {
-    const q = query(
-      collection(db, SUBWORKPACKAGE_COLLECTION),
-      where('projectId', '==', projectId),
-      orderBy('createdAt', 'asc')
-    );
+    // 由於子工作包沒有 projectId 欄位，我們需要先查詢專案的工作包
+    // 然後根據工作包 ID 查詢子工作包
+    const projectDoc = await getDoc(doc(db, 'projects', projectId));
+    
+    if (!projectDoc.exists()) {
+      throw new Error('專案不存在');
+    }
 
-    const querySnapshot = await getDocs(q);
+    const projectData = projectDoc.data();
+    const workPackages = projectData.workPackages || [];
+    
+    if (workPackages.length === 0) {
+      return [];
+    }
+
+    // 收集所有工作包的 ID
+    const workpackageIds = workPackages.map((wp: any) => wp.id).filter(Boolean);
+    
+    if (workpackageIds.length === 0) {
+      return [];
+    }
+
+    // 查詢所有相關的子工作包
     const subWorkpackages: SubWorkPackage[] = [];
+    
+    for (const workpackageId of workpackageIds) {
+      try {
+        const workpackageSubWorkpackages = await getSubWorkpackagesByWorkpackageId(workpackageId);
+        subWorkpackages.push(...workpackageSubWorkpackages);
+      } catch (error) {
+        console.warn(`查詢工作包 ${workpackageId} 的子工作包時發生錯誤:`, error);
+        // 繼續查詢其他工作包
+      }
+    }
 
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      subWorkpackages.push({
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
-        actualStartDate: data.actualStartDate?.toDate?.() || data.actualStartDate,
-        actualEndDate: data.actualEndDate?.toDate?.() || data.actualEndDate,
-        plannedStartDate: data.plannedStartDate?.toDate?.() || data.plannedStartDate,
-        plannedEndDate: data.plannedEndDate?.toDate?.() || data.plannedEndDate,
-        estimatedStartDate: data.estimatedStartDate?.toDate?.() || data.estimatedStartDate,
-        estimatedEndDate: data.estimatedEndDate?.toDate?.() || data.estimatedEndDate,
-      } as SubWorkPackage);
+    // 按創建時間排序
+    return subWorkpackages.sort((a, b) => {
+      const getDate = (dateField: any): Date => {
+        if (dateField instanceof Date) return dateField;
+        if (dateField && typeof dateField === 'string') return new Date(dateField);
+        if (dateField && typeof dateField === 'object' && 'toDate' in dateField) {
+          return dateField.toDate();
+        }
+        return new Date(0);
+      };
+      
+      const dateA = getDate(a.createdAt);
+      const dateB = getDate(b.createdAt);
+      return dateA.getTime() - dateB.getTime();
     });
 
-    return subWorkpackages;
   } catch (error) {
     console.error('查詢專案子工作包時發生錯誤:', error);
     throw new Error('查詢專案子工作包失敗');
