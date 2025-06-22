@@ -8,7 +8,8 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 // @ts-ignore
-import { Network, DataSet } from 'vis-network';
+import { Network } from 'vis-network';
+import { DataSet } from 'vis-data';
 import 'vis-network/styles/vis-network.css';
 
 import { projectStyles } from '@/app/modules/projects/styles';
