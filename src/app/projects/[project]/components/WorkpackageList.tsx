@@ -24,6 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import { STATUS_LABELS, STATUS_COLORS } from '@/app/modules/projects/constants/statusConstants';
 import type { Workpackage } from '@/app/projects/types/project';
 import { doc, updateDoc, db } from '@/lib/firebase-client';
 import { cn, buttonStyles, cardStyles } from '@/utils/classNameUtils';
@@ -46,6 +47,14 @@ const getWorkpackageProgress = (wp: Workpackage): number => {
   }
   if (total === 0) return 0;
   return Math.round((done / total) * 100);
+};
+
+const getStatusDisplay = (status: string): string => {
+  return STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status || '未知';
+};
+
+const getStatusColor = (status: string): string => {
+  return STATUS_COLORS[status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800';
 };
 
 const SortableWorkpackage = ({ wp, projectId }: { wp: Workpackage; projectId: string }) => {
@@ -73,9 +82,8 @@ const SortableWorkpackage = ({ wp, projectId }: { wp: Workpackage; projectId: st
             進度: {getWorkpackageProgress(wp)}%
           </span>
           <span className='mx-2'>•</span>
-          <span className='inline-flex items-center'>
-            <span className='w-2 h-2 rounded-full bg-green-500 mr-2'></span>
-            狀態: {wp.status || ''}
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(wp.status || '')}`}>
+            {getStatusDisplay(wp.status || '')}
           </span>
         </div>
       </div>

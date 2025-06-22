@@ -385,6 +385,7 @@ export interface MaterialEntry extends BaseWithId {
 }
 
 export interface IssueRecord extends BaseWithId {
+  projectId: string;
   type: IssueType;
   description: string;
   severity: SeverityLevel;

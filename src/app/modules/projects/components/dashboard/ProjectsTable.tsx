@@ -1,7 +1,7 @@
 import { type ReactElement } from 'react';
 import Link from 'next/link';
 import { projectStyles } from '../../styles';
-import { STATUS_LABELS } from '../../constants/statusConstants';
+import { STATUS_LABELS, STATUS_COLORS } from '../../constants/statusConstants';
 import type { Project, ProjectStatus } from '@/app/modules/projects/types';
 import { convertToDate } from '@/app/modules/projects/types';
 
@@ -25,6 +25,14 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
       return status.length > 0 ? STATUS_LABELS[status[0] as ProjectStatus] || status[0] : '未知';
     }
     return STATUS_LABELS[status as ProjectStatus] || status || '未知';
+  };
+
+  // 處理狀態顏色
+  const getStatusColor = (status: Project['status']): string => {
+    if (Array.isArray(status)) {
+      return status.length > 0 ? STATUS_COLORS[status[0] as ProjectStatus] || 'bg-gray-100 text-gray-800' : 'bg-gray-100 text-gray-800';
+    }
+    return STATUS_COLORS[status as ProjectStatus] || 'bg-gray-100 text-gray-800';
   };
 
   // 處理專案名稱顯示邏輯
@@ -65,7 +73,7 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
                 </Link>
               </td>
               <td className={projectStyles.table.td}>
-                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 rounded-full">
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(project.status)}`}>
                   {getStatusDisplay(project.status)}
                 </span>
               </td>

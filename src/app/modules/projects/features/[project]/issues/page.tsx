@@ -34,6 +34,7 @@ export default function ProjectIssuesPage() {
   const [error, setError] = useState<string | null>(null);
   const [showIssueForm, setShowIssueForm] = useState(false);
   const [editingIssue, setEditingIssue] = useState<IssueRecord | null>(null);
+  const [availableUsers, setAvailableUsers] = useState<Array<{ uid: string; displayName: string; email: string }>>([]);
 
   // 載入專案資料
   const loadProject = async () => {
@@ -54,6 +55,16 @@ export default function ProjectIssuesPage() {
         ...projectData,
         id: projectDoc.id,
       });
+
+      // 載入專案成員作為可用用戶
+      const projectMembers = [
+        { uid: projectData.manager || '', displayName: '專案經理', email: '' },
+        { uid: projectData.supervisor || '', displayName: '監工', email: '' },
+        { uid: projectData.safetyOfficer || '', displayName: '安全官', email: '' },
+        { uid: projectData.costController || '', displayName: '成本控制員', email: '' },
+      ].filter(member => member.uid);
+      
+      setAvailableUsers(projectMembers);
     }, (error) => {
       setError(error instanceof Error ? error.message : '載入專案失敗');
       logError(error, { operation: 'fetch_project', projectId });
@@ -89,7 +100,10 @@ export default function ProjectIssuesPage() {
     if (!projectId) return;
     
     try {
-      await IssueService.createIssue(issueData);
+      await IssueService.createIssue({
+        ...issueData,
+        projectId,
+      });
       await loadIssues();
       setShowIssueForm(false);
       setEditingIssue(null);
@@ -181,7 +195,6 @@ export default function ProjectIssuesPage() {
         {(data) => (
           <IssueList
             issues={data}
-            projectId={projectId}
             onEdit={(issue) => {
               setEditingIssue(issue);
               setShowIssueForm(true);
@@ -190,6 +203,7 @@ export default function ProjectIssuesPage() {
             onAdd={() => setShowIssueForm(true)}
             onStatusChange={handleIssueStatusChange}
             isLoading={loading}
+            availableUsers={availableUsers}
           />
         )}
       </DataLoader>
@@ -200,13 +214,13 @@ export default function ProjectIssuesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <IssueForm
               issue={editingIssue || undefined}
-              projectId={projectId}
               onSubmit={editingIssue ? handleEditIssue : handleCreateIssue}
               onCancel={() => {
                 setShowIssueForm(false);
                 setEditingIssue(null);
               }}
               isLoading={loading}
+              availableUsers={availableUsers}
             />
           </div>
         </div>

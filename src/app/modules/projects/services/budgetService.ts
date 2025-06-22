@@ -34,7 +34,9 @@ import type {
   BudgetCategory,
   BudgetAlert,
   BudgetStats,
-  PriorityLevel
+  PriorityLevel,
+  Project,
+  WorkPackage
 } from '@/app/modules/projects/types';
 
 // 預算集合名稱
@@ -42,6 +44,58 @@ const BUDGET_COLLECTION = 'projectBudgets';
 const BUDGET_ITEMS_COLLECTION = 'budgetItems';
 const COST_RECORDS_COLLECTION = 'costRecords';
 const BUDGET_ALERTS_COLLECTION = 'budgetAlerts';
+
+/**
+ * 從工作包預算自動生成專案預算
+ */
+export const createBudgetFromWorkPackages = async (
+  projectId: string,
+  projectData: Project,
+  createdBy: string
+): Promise<string> => {
+  try {
+    // 計算工作包總預算
+    const totalBudget = projectData.workPackages.reduce((sum, wp) => sum + (wp.budget || 0), 0);
+    
+    // 創建預算記錄
+    const budgetData: Omit<ProjectBudget, 'id' | 'createdAt' | 'updatedAt'> = {
+      projectId,
+      name: `${projectData.projectName} - 專案預算`,
+      description: '從工作包預算自動生成的專案預算',
+      totalBudget,
+      startDate: projectData.startDate || new Date(),
+      endDate: projectData.estimatedEndDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      currency: 'TWD',
+      createdBy,
+      status: 'active',
+    };
+
+    const budgetId = await createProjectBudget(projectId, budgetData);
+
+    // 為每個工作包創建預算項目
+    for (const workPackage of projectData.workPackages) {
+      if (workPackage.budget && workPackage.budget > 0) {
+        await createBudgetItem(budgetId, {
+          budgetId,
+          name: workPackage.name,
+          description: workPackage.description || `工作包: ${workPackage.name}`,
+          category: 'labor' as BudgetCategory, // 預設為人工費用
+          allocatedAmount: workPackage.budget,
+          spentAmount: 0,
+          committedAmount: 0,
+          workPackageId: workPackage.id,
+          priority: workPackage.priority || 'medium' as PriorityLevel,
+          status: 'active',
+        });
+      }
+    }
+
+    return budgetId;
+  } catch (error) {
+    console.error('從工作包創建預算失敗:', error);
+    throw new Error(`從工作包創建預算失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
+  }
+};
 
 /**
  * 創建專案預算
@@ -381,29 +435,87 @@ export const getBudgetStats = async (projectId: string): Promise<BudgetStats> =>
   try {
     const budget = await getProjectBudget(projectId);
     
-    // 如果沒有預算，返回空的統計資訊
+    // 獲取專案資料以計算工作包預算
+    const projectDoc = await getDoc(doc(db, 'projects', projectId));
+    const projectData = projectDoc.exists() ? projectDoc.data() as Project : null;
+    
+    // 計算工作包總預算
+    const workPackagesTotalBudget = projectData?.workPackages?.reduce((sum, wp) => sum + (wp.budget || 0), 0) || 0;
+    
+    // 如果沒有預算記錄，但有工作包預算，使用工作包預算作為總預算
+    const totalBudget = budget?.totalBudget || workPackagesTotalBudget;
+    
+    // 如果沒有預算記錄，返回基於工作包的統計資訊
     if (!budget) {
+      const costRecords = await getCostRecords(projectId);
+      const totalSpent = costRecords.reduce((sum, record) => sum + record.amount, 0);
+      const totalCommitted = costRecords
+        .filter(record => record.status === 'committed')
+        .reduce((sum, record) => sum + record.amount, 0);
+      
+      const budgetUtilization = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+      const allocationRate = 100; // 工作包預算已全部分配
+      const remainingBudget = totalBudget - totalSpent;
+      const availableBudget = 0; // 工作包預算已全部分配
+
+      // 按分類統計（基於工作包）
+      const categoryStats: Record<BudgetCategory, { allocated: number; spent: number; committed: number }> = {
+        labor: { allocated: workPackagesTotalBudget, spent: 0, committed: 0 },
+        material: { allocated: 0, spent: 0, committed: 0 },
+        equipment: { allocated: 0, spent: 0, committed: 0 },
+        subcontract: { allocated: 0, spent: 0, committed: 0 },
+        overhead: { allocated: 0, spent: 0, committed: 0 },
+        contingency: { allocated: 0, spent: 0, committed: 0 },
+        other: { allocated: 0, spent: 0, committed: 0 },
+      };
+
+      // 計算各分類的實際支出
+      costRecords.forEach(record => {
+        const category = record.category;
+        if (categoryStats[category]) {
+          categoryStats[category].spent += record.amount;
+          if (record.status === 'committed') {
+            categoryStats[category].committed += record.amount;
+          }
+        }
+      });
+
+      // 生成警報
+      const alerts: BudgetAlert[] = [];
+      if (budgetUtilization > 90) {
+        alerts.push({
+          id: 'temp-alert-1',
+          projectId,
+          type: 'over_budget',
+          severity: 'high',
+          message: `預算使用率已達 ${budgetUtilization.toFixed(1)}%`,
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+
       return {
-        totalBudget: 0,
-        totalAllocated: 0,
-        totalSpent: 0,
-        totalCommitted: 0,
-        remainingBudget: 0,
-        availableBudget: 0,
-        budgetUtilization: 0,
-        allocationRate: 0,
-        categoryStats: {} as Record<BudgetCategory, { allocated: number; spent: number; committed: number }>,
-        recentCosts: [],
-        alerts: [],
+        totalBudget,
+        totalAllocated: workPackagesTotalBudget,
+        totalSpent,
+        totalCommitted,
+        remainingBudget,
+        availableBudget,
+        budgetUtilization,
+        allocationRate,
+        categoryStats,
+        recentCosts: costRecords.slice(0, 10),
+        alerts,
       };
     }
 
+    // 如果有預算記錄，使用預算記錄的統計
     const [budgetItems, costRecords] = await Promise.all([
       getBudgetItems(budget.id),
       getCostRecords(projectId),
     ]);
 
-    const totalBudget = budget.totalBudget || 0;
     const totalAllocated = budgetItems.reduce((sum, item) => sum + item.allocatedAmount, 0);
     const totalSpent = costRecords.reduce((sum, record) => sum + record.amount, 0);
     const totalCommitted = costRecords

@@ -7,4 +7,5 @@ export { ProjectService } from './projectService';
 export { WorkPackageService } from './workPackageService';
 export { JournalService } from './journalService';
 export { IssueService } from './issueService';
-export { TemplateService } from './templateService'; 
+export { TemplateService } from './templateService';
+export { createBudgetFromWorkPackages } from './budgetService'; 

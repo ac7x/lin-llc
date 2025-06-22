@@ -82,7 +82,7 @@ export class IssueService {
   /**
    * 建立新問題
    */
-  static async createIssue(issueData: Omit<IssueRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  static async createIssue(issueData: Omit<IssueRecord, 'id' | 'createdAt' | 'updatedAt'> & { projectId: string }): Promise<string> {
     try {
       const now = Timestamp.now();
       const docRef = await addDoc(collection(db, COLLECTION_NAME), {
@@ -202,6 +202,60 @@ export class IssueService {
     } catch (error) {
       console.error('根據嚴重程度取得問題失敗:', error);
       throw new Error('根據嚴重程度取得問題失敗');
+    }
+  }
+
+  /**
+   * 取得所有問題（用於管理員功能）
+   */
+  static async getAllIssues(): Promise<IssueRecord[]> {
+    try {
+      const q = query(
+        collection(db, COLLECTION_NAME),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const issues = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
+      })) as IssueRecord[];
+      
+      return issues;
+    } catch (error) {
+      console.error('取得所有問題失敗:', error);
+      throw new Error('取得所有問題失敗');
+    }
+  }
+
+  /**
+   * 根據負責人取得問題
+   */
+  static async getIssuesByAssignee(assignedTo: string): Promise<IssueRecord[]> {
+    try {
+      const q = query(
+        collection(db, COLLECTION_NAME),
+        where('assignedTo', '==', assignedTo)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const issues = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
+      })) as IssueRecord[];
+      
+      return issues.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
+        return dateB.getTime() - dateA.getTime();
+      });
+    } catch (error) {
+      console.error('根據負責人取得問題失敗:', error);
+      throw new Error('根據負責人取得問題失敗');
     }
   }
 } 

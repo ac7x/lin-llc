@@ -71,6 +71,11 @@ export { default as MilestoneTracker } from './components/management/MilestoneTr
 // 日曆組件
 export { default as CalendarView } from './components/calendar/CalendarView';
 
+// 預算組件
+export { default as BudgetForm } from './components/budget/BudgetForm';
+export { BudgetTracker } from './components/budget/BudgetTracker';
+export { CostAlert } from './components/budget/CostAlert';
+
 // 生成專案組件
 export { default as ContractSelector } from './components/generate-from-contract/ContractSelector';
 export { default as ProjectSetupForm } from './components/generate-from-contract/ProjectSetupForm';
@@ -95,7 +100,8 @@ export {
   WorkPackageService, 
   JournalService, 
   IssueService, 
-  TemplateService 
+  TemplateService,
+  createBudgetFromWorkPackages
 } from './services';
 
 // ============================================================================
@@ -211,6 +217,7 @@ export type {
   TaskStatus, 
   IssueType, 
   IssueStatus, 
+  IssueRecord,
   RiskStatus, 
   ChangeType, 
   ChangeStatus, 

@@ -15,8 +15,9 @@ import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
-import { BudgetTracker, CostAlert } from '@/app/modules/projects/components/budget';
+import { BudgetTracker, CostAlert, BudgetForm } from '@/app/modules/projects/components/budget';
 import { useProjectBudget } from '@/app/modules/projects/hooks/useProjectBudget';
+import { createBudgetFromWorkPackages } from '@/app/modules/projects/services/budgetService';
 import type { Project } from '@/app/modules/projects/types';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { projectStyles } from '@/app/modules/projects/styles';
@@ -31,6 +32,8 @@ export default function ProjectBudgetPage() {
   const [project, setProject] = useState<ProjectWithId | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
+  const [showCreateOptions, setShowCreateOptions] = useState(false);
 
   // 使用預算管理 Hook
   const {
@@ -126,6 +129,32 @@ export default function ProjectBudgetPage() {
     await checkAlerts();
   };
 
+  // 處理創建預算
+  const handleCreateBudget = async (budgetData: any) => {
+    try {
+      await createBudget(budgetData);
+      setShowBudgetForm(false);
+    } catch (err) {
+      logError(err as Error, { operation: 'create_budget', projectId });
+    }
+  };
+
+  // 處理從工作包創建預算
+  const handleCreateFromWorkPackages = async () => {
+    if (!project) return;
+    
+    try {
+      await createBudgetFromWorkPackages(projectId, project, 'current_user');
+      await refresh();
+      setShowCreateOptions(false);
+    } catch (err) {
+      logError(err as Error, { operation: 'create_budget_from_workpackages', projectId });
+    }
+  };
+
+  // 計算工作包總預算
+  const workPackagesTotalBudget = project?.workPackages?.reduce((sum, wp) => sum + (wp.budget || 0), 0) || 0;
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -179,15 +208,51 @@ export default function ProjectBudgetPage() {
             )}
           </button>
           {!budget && (
-            <button
-              onClick={() => {
-                // TODO: 實作創建預算功能
-                console.log('創建預算');
-              }}
-              className={projectStyles.button.primary}
-            >
-              創建預算
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowCreateOptions(!showCreateOptions)}
+                className={projectStyles.button.primary}
+              >
+                創建預算
+              </button>
+              
+              {/* 創建選項下拉選單 */}
+              {showCreateOptions && (
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                  <div className="p-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                      選擇創建方式
+                    </h4>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          setShowBudgetForm(true);
+                          setShowCreateOptions(false);
+                        }}
+                        className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="font-medium text-gray-900 dark:text-gray-100">手動創建預算</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          手動設定預算金額和項目
+                        </div>
+                      </button>
+                      
+                      {workPackagesTotalBudget > 0 && (
+                        <button
+                          onClick={handleCreateFromWorkPackages}
+                          className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <div className="font-medium text-gray-900 dark:text-gray-100">從工作包生成</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            基於工作包預算自動生成 (NT$ {workPackagesTotalBudget.toLocaleString()})
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </PageHeader>
@@ -324,20 +389,30 @@ export default function ProjectBudgetPage() {
         </div>
       )}
 
-      {/* 功能開發提示 */}
-      <div className="mt-6 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <div className="flex">
-          <svg className="w-5 h-5 text-blue-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">功能開發中</h3>
-            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              預算項目管理、成本記錄管理等功能正在開發中，敬請期待。
-            </p>
+      {/* 預算表單模態框 */}
+      {showBudgetForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <BudgetForm
+              projectId={projectId}
+              projectName={project.projectName}
+              workPackagesTotalBudget={workPackagesTotalBudget}
+              budget={budget || undefined}
+              onSubmit={handleCreateBudget}
+              onCancel={() => setShowBudgetForm(false)}
+              isLoading={submitting}
+            />
           </div>
         </div>
-      </div>
+      )}
+
+      {/* 點擊外部關閉下拉選單 */}
+      {showCreateOptions && (
+        <div 
+          className="fixed inset-0 z-5" 
+          onClick={() => setShowCreateOptions(false)}
+        />
+      )}
     </PageContainer>
   );
 }

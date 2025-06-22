@@ -28,6 +28,7 @@ import { doc, updateDoc, db } from '@/lib/firebase-client';
 import type { WorkPackage } from '@/app/modules/projects/types';
 import { cn, buttonStyles, cardStyles } from '@/utils/classNameUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { STATUS_LABELS, STATUS_COLORS } from '@/app/modules/projects/constants/statusConstants';
 
 interface WorkPackageListProps {
   workPackages: WorkPackage[];
@@ -46,19 +47,12 @@ const getWorkPackageProgress = (wp: WorkPackage): number => {
   return wp.subPackages.length > 0 ? Math.round(totalProgress / wp.subPackages.length) : 0;
 };
 
+const getStatusDisplay = (status: string): string => {
+  return STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status || '未知';
+};
+
 const getStatusColor = (status: string): string => {
-  switch (status) {
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'in-progress':
-      return 'bg-blue-100 text-blue-800';
-    case 'on-hold':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'not-started':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
+  return STATUS_COLORS[status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800';
 };
 
 const SortableWorkPackageItem = ({ 
@@ -109,7 +103,7 @@ const SortableWorkPackageItem = ({
               'px-2 py-1 text-xs font-medium rounded-full',
               getStatusColor(workPackage.status || '')
             )}>
-              {workPackage.status || '未知'}
+              {getStatusDisplay(workPackage.status || '')}
             </span>
             <span className="text-sm text-gray-600">
               進度: {progress}%
