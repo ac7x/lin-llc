@@ -15,7 +15,7 @@ import { collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 import { LoadingSpinner, DataLoader, PageContainer, PageHeader } from '@/app/modules/projects/components/common';
 import { ProjectsTable, ProjectStats } from '@/app/modules/projects/components/dashboard';
-import type { Project } from '@/app/modules/projects/types';
+import type { Project, ProjectStatus } from '@/app/modules/projects/types';
 
 interface ProjectWithId extends Project {
   id: string;
@@ -51,6 +51,14 @@ export default function ProjectPage() {
     fetchProject();
   }, [projectsSnapshot]);
 
+  // 檢查專案狀態的輔助函數
+  const hasStatus = (project: Project, targetStatus: ProjectStatus): boolean => {
+    if (Array.isArray(project.status)) {
+      return project.status.includes(targetStatus);
+    }
+    return project.status === targetStatus;
+  };
+
   return (
     <PageContainer>
       <PageHeader 
@@ -67,9 +75,9 @@ export default function ProjectPage() {
           <div className="space-y-6">
             <ProjectStats stats={{
               totalProjects: data.length,
-              activeProjects: data.filter(p => p.status === 'in-progress').length,
-              completedProjects: data.filter(p => p.status === 'completed').length,
-              onHoldProjects: data.filter(p => p.status === 'on-hold').length,
+              activeProjects: data.filter(p => hasStatus(p, 'in-progress')).length,
+              completedProjects: data.filter(p => hasStatus(p, 'completed')).length,
+              onHoldProjects: data.filter(p => hasStatus(p, 'on-hold')).length,
               overdueProjects: 0,
               totalQualityIssues: 0,
               averageQualityScore: 8.5,

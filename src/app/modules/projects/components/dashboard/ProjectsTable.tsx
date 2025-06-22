@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { projectStyles } from '../../styles';
-import type { Project } from '@/app/modules/projects/types';
+import { STATUS_LABELS } from '../../constants/statusConstants';
+import type { Project, ProjectStatus } from '@/app/modules/projects/types';
 import { convertToDate } from '@/app/modules/projects/types';
 
 interface ProjectsTableProps {
@@ -17,12 +18,12 @@ export default function ProjectsTable({ projects, showAdvancedColumns = false }:
     );
   }
 
-  // 處理 status 顯示邏輯
+  // 處理 status 顯示邏輯 - 使用中文標籤
   const getStatusDisplay = (status: Project['status']): string => {
     if (Array.isArray(status)) {
-      return status.length > 0 ? status[0] : '未知';
+      return status.length > 0 ? STATUS_LABELS[status[0] as ProjectStatus] || status[0] : '未知';
     }
-    return status || '未知';
+    return STATUS_LABELS[status as ProjectStatus] || status || '未知';
   };
 
   // 處理專案名稱顯示邏輯
