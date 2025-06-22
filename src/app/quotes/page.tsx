@@ -16,8 +16,8 @@ import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
-import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
+import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { db } from '@/lib/firebase-client';
 import { QuoteData } from '@/types/finance';
 import { safeToDate } from '@/utils/dateUtils';

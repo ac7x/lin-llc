@@ -21,7 +21,6 @@ const eslintConfig = [
       'src/lib/firebase-client.ts',
       'src/lib/firebase-config.ts',
       'src/lib/firebase-context.tsx',
-      'src/app/modules/**',
     ],
   },
   {
@@ -84,6 +83,43 @@ const eslintConfig = [
       'prefer-template': 'error',
       'object-shorthand': 'error',
       'prefer-arrow-callback': 'error',
+    },
+  },
+  {
+    files: ['src/app/modules/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'import/order': [
+        'error',
+        {
+          groups: [
+            'builtin',
+            'external',
+            'internal',
+            'parent',
+            'sibling',
+            'index',
+          ],
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: false,
+          },
+        },
+      ],
+      'import/no-unresolved': 'off',
+      'import/no-duplicates': 'off',
+      'prefer-const': 'off',
+      'no-var': 'off',
+      'no-console': 'off',
+      'no-debugger': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-var-requires': 'off',
+      quotes: 'off',
+      semi: 'off',
+      'prefer-template': 'off',
+      'object-shorthand': 'off',
+      'prefer-arrow-callback': 'off',
     },
   },
 ];
