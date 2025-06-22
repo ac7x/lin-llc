@@ -54,4 +54,160 @@ export {
   calculateProjectDuration,
   isProjectOverdue,
   getProjectsInDateRange,
-} from './dateUtils'; 
+} from './dateUtils';
+
+// 管理相關
+export {
+  ROLE_PERMISSIONS,
+  PERMISSION_CATEGORIES,
+  hasPermission,
+  hasAnyPermission,
+  hasAllPermissions,
+  getUserAllPermissions,
+  formatUserDisplayName,
+  formatUserRole,
+  formatPermission,
+  groupPermissionsByCategory,
+  calculateUserStats,
+  calculateProjectHealthScore as calculateAdminProjectHealthScore,
+  getProjectHealthLevel,
+  formatDate as formatAdminDate,
+  formatDateTime as formatAdminDateTime,
+  getTimeDifference as getAdminTimeDifference,
+  validateEmail as validateAdminEmail,
+  validateUserData,
+  generateUserId,
+  generateRoleId,
+  generatePermissionId,
+} from './adminUtils';
+
+// 分析相關
+export {
+  CHART_COLORS,
+  formatNumber,
+  formatCurrency,
+  formatPercentage,
+  formatDate as formatAnalyticsDate,
+  formatDateTime as formatAnalyticsDateTime,
+  getTimeDifference as getAnalyticsTimeDifference,
+  formatStatus,
+  formatProjectType,
+  getStatusColor,
+  getPriorityColor,
+  getProgressLevel,
+  getQualityLevel,
+  getPerformanceLevel,
+  generatePieChartData,
+  generateBarChartData,
+  generateLineChartData,
+  calculateSummaryStats,
+  generatePerformanceCards,
+  generateTrendAnalysis,
+  generateRecommendations,
+  validateAnalyticsData,
+  generateReportTitle,
+  generateReportDescription,
+} from './analyticsUtils';
+
+// 日曆相關
+export {
+  formatDate as formatCalendarDate,
+  formatTime,
+  formatDateTime as formatCalendarDateTime,
+  isSameDay,
+  isSameWeek,
+  isSameMonth,
+  isSameYear,
+  getMonthInfo,
+  getWeekInfo,
+  getMonthDays,
+  getWeekDays,
+  getDaysBetween,
+  getWorkDaysBetween,
+  isWorkDay,
+  isWeekend,
+  getNextWorkDay,
+  getPreviousWorkDay,
+  filterEventsByDateRange,
+  filterEventsByDate,
+  filterEventsByType,
+  getTodayEvents,
+  getUpcomingEvents,
+  getOverdueEvents,
+  getCalendarStats,
+  getDateRangeLabel,
+} from './calendarUtils';
+
+// Gemini AI 相關
+export {
+  formatProjectForAI,
+  formatWorkPackageForAI,
+  formatIssuesForAI,
+  formatWorkPackagesForAI,
+  generateHealthAnalysisPrompt,
+  generateWorkPackageAnalysisPrompt,
+  generateRiskAnalysisPrompt,
+  generateProgressReportPrompt,
+  generateSuggestionsPrompt,
+  generateQualityAnalysisPrompt,
+  validateAIResponse,
+  cleanAIResponse,
+  extractJSONFromResponse,
+} from './geminiUtils';
+
+// 個人資料相關
+export {
+  formatUserDisplayName as formatProfileDisplayName,
+  validateProfileData,
+  getDefaultPreferences,
+  getRoleDisplayName,
+  formatDate as formatProfileDate,
+} from './profileUtils';
+
+// 時程相關
+export {
+  getScheduleItemStatus,
+  getScheduleItemPriority,
+  getDaysUntilDeadline,
+  getScheduleItemDuration,
+  getScheduleItemRemainingTime,
+  getScheduleItemProgressPercentage,
+  getScheduleItemElapsedTime,
+  isCriticalPathItem,
+  getScheduleItemFloat,
+  getScheduleItemDependencies,
+  getScheduleItemSuccessors,
+  canScheduleItemStart,
+  getScheduleItemEarliestStart,
+  getScheduleItemLatestStart,
+  getScheduleItemTotalFloat,
+  isCriticalPathItemByFloat,
+  getScheduleItemCompletionRate,
+  getScheduleItemEfficiency,
+  getScheduleItemStatusColor,
+  getScheduleItemPriorityColor,
+  formatScheduleItemDuration,
+  formatScheduleItemRemainingTime,
+  getScheduleItemRiskLevel,
+} from './scheduleUtils';
+
+// 登入相關
+export {
+  validateEmail as validateSignInEmail,
+  getSignInErrorMessage,
+  isSignInError,
+  getSignInProviderName,
+  formatLastLoginTime,
+} from './signinUtils';
+
+// 類型匯出
+export type { 
+  DateRange,
+  MonthInfo,
+  WeekInfo,
+} from './calendarUtils';
+
+export type {
+  ScheduleItemStatus,
+  ScheduleItemPriority,
+} from './scheduleUtils'; 
