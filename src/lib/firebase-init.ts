@@ -2,14 +2,14 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 import { getAnalytics, isSupported as isAnalyticsSupported } from 'firebase/analytics';
 import { getPerformance } from 'firebase/performance';
 import { getRemoteConfig } from 'firebase/remote-config';
 import { initializeAppCheck, ReCaptchaV3Provider, AppCheck } from 'firebase/app-check';
-import { firebaseConfig, APP_CHECK_CONFIG } from './firebase-config';
+import { getStorage } from 'firebase/storage';
 import { logError } from '@/utils/errorUtils';
+import { firebaseConfig, APP_CHECK_CONFIG } from './firebase-config';
 
 // Firebase 應用程式初始化
 const app: FirebaseApp = initializeApp(firebaseConfig);
@@ -70,7 +70,9 @@ export {
   appCheck,
 };
 
-// 匯出初始化函數
-export default {
+// 命名變數後再導出
+const firebaseClientServices = {
   initializeClientServices,
 };
+
+export default firebaseClientServices;
