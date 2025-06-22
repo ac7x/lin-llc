@@ -258,3 +258,27 @@ export type {
   RemoteConfig,
   AppCheck,
 };
+
+/**
+ * 測試 App Check 功能
+ */
+export async function testAppCheck(): Promise<boolean> {
+  if (!isClient) {
+    console.warn('testAppCheck: 不在客戶端環境中');
+    return false;
+  }
+
+  try {
+    const token = await getAppCheckToken();
+    if (token) {
+      console.log('App Check 測試成功，token 長度:', token.length);
+      return true;
+    } else {
+      console.error('App Check 測試失敗：無法獲取 token');
+      return false;
+    }
+  } catch (error) {
+    console.error('App Check 測試失敗:', error);
+    return false;
+  }
+}

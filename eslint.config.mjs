@@ -19,7 +19,7 @@ const eslintConfig = [
   ),
   {
     plugins: {
-      import: require('eslint-plugin-import'),
+      import: 'eslint-plugin-import',
     },
     ignores: [
       'src/lib/firebase-client.ts',
