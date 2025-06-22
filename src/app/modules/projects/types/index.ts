@@ -61,22 +61,10 @@ export type SubWorkPackageStatus =
   | 'on-hold'       // 暫停中
   | 'cancelled';    // 已取消
 
-// 使用統一的優先級型別
-export type ProjectPriority = PriorityLevel;
-export type TaskPriority = SeverityLevel;
-export type IssueSeverity = SeverityLevel;
-export type RiskProbability = SeverityLevel;
-export type RiskImpact = SeverityLevel;
-export type ChangeImpact = SeverityLevel;
-export type AlertSeverity = PriorityLevel;
-
 export type ProjectType =
   | 'system'       // 系統工程
   | 'maintenance'  // 維護工程
   | 'transport';   // 搬運工程
-
-// 使用統一的風險等級型別
-export type ProjectRiskLevel = PriorityLevel;
 
 export type ProjectHealthLevel = 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
 
@@ -168,7 +156,7 @@ export interface Task extends BaseWithId {
   dueDate?: DateField;
   assignedTo?: string | null;
   completed: boolean;
-  priority?: TaskPriority;
+  priority?: SeverityLevel;
   estimatedHours?: number;
   actualHours?: number;
 }
@@ -206,9 +194,9 @@ export interface ProjectMilestone extends BaseWithId {
 export interface ProjectRisk extends BaseWithId {
   title: string;
   description: string;
-  probability: RiskProbability;
-  impact: RiskImpact;
-  riskLevel: ProjectRiskLevel;
+  probability: SeverityLevel;
+  impact: SeverityLevel;
+  riskLevel: PriorityLevel;
   mitigationPlan?: string;
   contingencyPlan?: string;
   status: RiskStatus;
@@ -227,7 +215,7 @@ export interface ProjectChange extends BaseWithId {
   title: string;
   description: string;
   type: ChangeType;
-  impact: ChangeImpact;
+  impact: SeverityLevel;
   status: ChangeStatus;
   requestedBy: string;
   approvedBy?: string;
@@ -248,7 +236,6 @@ export interface ProjectQualityMetrics {
   defectRate: number;
   customerSatisfaction?: number;
   reworkPercentage: number;
-  complianceScore: number;
   qualityAuditScore: number;
 }
 
@@ -309,7 +296,7 @@ export interface SubWorkPackage extends BaseWithId {
   actualHours?: number;
   costVariance?: number;
   scheduleVariance?: number;
-  riskLevel?: ProjectRiskLevel;
+  riskLevel?: PriorityLevel;
   dependencies?: string[];
 }
 
@@ -357,7 +344,7 @@ export interface WorkPackage extends BaseWithId {
   actualHours?: number;
   costVariance?: number;
   scheduleVariance?: number;
-  riskLevel?: ProjectRiskLevel;
+  riskLevel?: PriorityLevel;
   dependencies?: string[];
   phase?: ProjectPhase;
 }
@@ -400,7 +387,7 @@ export interface MaterialEntry extends BaseWithId {
 export interface IssueRecord extends BaseWithId {
   type: IssueType;
   description: string;
-  severity: IssueSeverity;
+  severity: SeverityLevel;
   status: IssueStatus;
   assignedTo: string | null;
   dueDate: DateField;
@@ -564,8 +551,8 @@ export interface Project extends BaseWithDates {
   // 專案分類
   projectType?: ProjectType | string[];
   type: string[];
-  priority?: ProjectPriority;
-  riskLevel?: ProjectRiskLevel | string;
+  priority?: PriorityLevel;
+  riskLevel?: PriorityLevel | string;
   risk: string;
   phase?: ProjectPhase;
   healthLevel?: ProjectHealthLevel;
@@ -634,8 +621,8 @@ export interface ProjectFilters {
   searchTerm: string;
   status?: ProjectStatus;
   projectType?: ProjectType;
-  priority?: ProjectPriority;
-  riskLevel?: ProjectRiskLevel;
+  priority?: PriorityLevel;
+  riskLevel?: PriorityLevel;
   healthLevel?: ProjectHealthLevel;
   phase?: ProjectPhase;
   manager?: string;
@@ -847,7 +834,7 @@ export interface CostRecord extends BaseWithId {
 export interface BudgetAlert extends BaseWithId {
   projectId: string;
   type: AlertType;
-  severity: AlertSeverity;
+  severity: PriorityLevel;
   message: string;
   status: AlertStatus;
   acknowledgedBy?: string;

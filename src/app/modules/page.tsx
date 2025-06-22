@@ -1769,8 +1769,8 @@ export default function TestPage() {
             <div className="p-4 border rounded-lg space-y-2">
               <p><strong>ProjectStatus:</strong> planning | approved | in-progress | on-hold | completed | cancelled | archived</p>
               <p><strong>ProjectType:</strong> system | maintenance | transport</p>
-              <p><strong>ProjectPriority:</strong> low | medium | high | critical</p>
-              <p><strong>ProjectRiskLevel:</strong> low | medium | high | critical</p>
+              <p><strong>PriorityLevel:</strong> low | medium | high | critical</p>
+              <p><strong>SeverityLevel:</strong> low | medium | high</p>
             </div>
           </section>
         </div>
