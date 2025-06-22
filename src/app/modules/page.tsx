@@ -874,15 +874,13 @@ export default function TestPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {/* 專案主頁 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}`}
-                        title="專案主頁"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}`}
+                      title="專案主頁"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案主頁</span>
@@ -898,15 +896,13 @@ export default function TestPage() {
 
                 {/* 日曆頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/calendar`}
-                        title="日曆頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/calendar`}
+                      title="日曆頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">日曆頁面</span>
@@ -922,15 +918,13 @@ export default function TestPage() {
 
                 {/* 費用頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/expenses`}
-                        title="費用頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/expenses`}
+                      title="費用頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">費用頁面</span>
@@ -946,15 +940,13 @@ export default function TestPage() {
 
                 {/* 問題頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/issues`}
-                        title="問題頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/issues`}
+                      title="問題頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">問題頁面</span>
@@ -970,15 +962,13 @@ export default function TestPage() {
 
                 {/* 日誌頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/journal`}
-                        title="日誌頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/journal`}
+                      title="日誌頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">日誌頁面</span>
@@ -994,15 +984,13 @@ export default function TestPage() {
 
                 {/* 材料頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/materials`}
-                        title="材料頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/materials`}
+                      title="材料頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">材料頁面</span>
@@ -1018,15 +1006,13 @@ export default function TestPage() {
 
                 {/* 子工作包頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/subwork-packages`}
-                        title="子工作包頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/subwork-packages`}
+                      title="子工作包頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">子工作包頁面</span>
@@ -1042,15 +1028,13 @@ export default function TestPage() {
 
                 {/* 工作包頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/work-packages`}
-                        title="工作包頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/work-packages`}
+                      title="工作包頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">工作包頁面</span>
@@ -1066,15 +1050,13 @@ export default function TestPage() {
 
                 {/* 專案文件頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/document`}
-                        title="專案文件頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/document`}
+                      title="專案文件頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案文件</span>
@@ -1090,15 +1072,13 @@ export default function TestPage() {
 
                 {/* Gemini AI 頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src={`/modules/projects/features/${selectedProject.id}/gemini`}
-                        title="Gemini AI 頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src={`/modules/projects/features/${selectedProject.id}/gemini`}
+                      title="Gemini AI 頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">AI 分析</span>
@@ -1122,15 +1102,13 @@ export default function TestPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {/* 專案管理頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src="/modules/projects/features/admin"
-                        title="專案管理頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/admin"
+                      title="專案管理頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案管理</span>
@@ -1146,15 +1124,13 @@ export default function TestPage() {
 
                 {/* 專案分析頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src="/modules/projects/features/analytics"
-                        title="專案分析頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/analytics"
+                      title="專案分析頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案分析</span>
@@ -1170,15 +1146,13 @@ export default function TestPage() {
 
                 {/* 合約管理頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src="/modules/projects/features/contracts"
-                        title="合約管理頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/contracts"
+                      title="合約管理頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">合約管理</span>
@@ -1194,15 +1168,13 @@ export default function TestPage() {
 
                 {/* 合約生成專案頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src="/modules/projects/features/generate-from-contract"
-                        title="合約生成專案頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/generate-from-contract"
+                      title="合約生成專案頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">合約生成專案</span>
@@ -1218,15 +1190,13 @@ export default function TestPage() {
 
                 {/* 專案列表頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src="/modules/projects/features/list"
-                        title="專案列表頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/list"
+                      title="專案列表頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">專案列表</span>
@@ -1242,15 +1212,13 @@ export default function TestPage() {
 
                 {/* 模板管理頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src="/modules/projects/features/templates"
-                        title="模板管理頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/templates"
+                      title="模板管理頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">模板管理</span>
@@ -1266,15 +1234,13 @@ export default function TestPage() {
 
                 {/* 個人資料頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src="/modules/projects/features/profile"
-                        title="個人資料頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/profile"
+                      title="個人資料頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">個人資料</span>
@@ -1290,15 +1256,13 @@ export default function TestPage() {
 
                 {/* 登入頁面 */}
                 <div className="border rounded-lg shadow bg-white dark:bg-gray-900 p-4 flex flex-col">
-                  <div className="relative w-full aspect-video mb-3 border rounded overflow-hidden">
-                    <div className="absolute inset-0 w-full h-full origin-top-left scale-75">
-                      <iframe
-                        src="/modules/projects/features/signin"
-                        title="登入頁面"
-                        className="w-full h-full"
-                        style={{ border: 'none' }}
-                      />
-                    </div>
+                  <div className="w-full h-48 mb-3 border rounded overflow-hidden bg-gray-50 dark:bg-gray-800">
+                    <iframe
+                      src="/modules/projects/features/signin"
+                      title="登入頁面"
+                      className="w-full h-full"
+                      style={{ border: 'none' }}
+                    />
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="font-medium mb-1">登入</span>
