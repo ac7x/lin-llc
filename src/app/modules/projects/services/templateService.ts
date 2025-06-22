@@ -16,7 +16,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import type { Template, SubWorkpackageTemplateItem } from '../types';
+import type { Template, SubWorkPackageTemplateItem } from '../types';
 
 const COLLECTION_NAME = 'templates';
 
@@ -165,7 +165,7 @@ export class TemplateService {
   /**
    * 將模板轉換為子工作包
    */
-  static convertTemplateToSubWorkpackages(
+  static convertTemplateToSubWorkPackages(
     template: Template,
     options: {
       workpackageId?: string;
@@ -173,8 +173,8 @@ export class TemplateService {
       estimatedEndDate?: Date;
       assignedTo?: string | null;
     } = {}
-  ): SubWorkpackageTemplateItem[] {
-    return template.subWorkpackages.map((item, index) => ({
+  ): SubWorkPackageTemplateItem[] {
+    return template.subWorkPackages.map((item, index) => ({
       ...item,
       id: `${template.id}_${index}`,
       workpackageId: options.workpackageId,

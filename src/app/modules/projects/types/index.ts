@@ -52,7 +52,7 @@ export type WorkpackageStatus =
   | 'on-hold'       // 暫停中
   | 'cancelled';    // 已取消
 
-export type SubWorkpackageStatus =
+export type SubWorkPackageStatus =
   | 'draft'         // 草稿
   | 'assigned'      // 已分配
   | 'in-progress'   // 執行中
@@ -290,7 +290,7 @@ export interface SubWorkPackage extends BaseWithId {
   actualEndDate?: DateField;
   plannedStartDate?: DateField;
   plannedEndDate?: DateField;
-  status?: SubWorkpackageStatus;
+  status?: SubWorkPackageStatus;
   assignedTo?: string | null;
   priority?: PriorityLevel;
   estimatedQuantity?: number;
@@ -313,7 +313,7 @@ export interface SubWorkPackage extends BaseWithId {
   dependencies?: string[];
 }
 
-export const calculateSubWorkpackageProgress = (sub: SubWorkPackage): number => {
+export const calculateSubWorkPackageProgress = (sub: SubWorkPackage): number => {
   if (!sub.tasks || sub.tasks.length === 0) {
     return sub.progress || 0;
   }
@@ -368,7 +368,7 @@ export const calculateWorkpackageProgress = (wp: WorkPackage): number => {
   }
   
   const totalProgress = wp.subPackages.reduce((sum, sub) => {
-    return sum + calculateSubWorkpackageProgress(sub);
+    return sum + calculateSubWorkPackageProgress(sub);
   }, 0);
   
   return Math.round(totalProgress / wp.subPackages.length);
@@ -475,7 +475,7 @@ export interface Expense extends BaseWithId {
 // 模板型別
 // ============================================================================
 
-export interface SubWorkpackageTemplateItem extends BaseWithId {
+export interface SubWorkPackageTemplateItem extends BaseWithId {
   name: string;
   description?: string;
   estimatedQuantity?: number;
@@ -491,11 +491,11 @@ export interface Template extends BaseWithId {
   name: string;
   description: string;
   category: string;
-  subWorkpackages: SubWorkpackageTemplateItem[];
+  subWorkPackages: SubWorkPackageTemplateItem[];
   createdBy: string;
 }
 
-export type TemplateToSubWorkpackageOptions = {
+export type TemplateToSubWorkPackageOptions = {
   workpackageId?: string;
   estimatedStartDate?: DateField;
   estimatedEndDate?: DateField;

@@ -26,7 +26,7 @@ import {
 } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase-client';
-import type { SubWorkPackage, TemplateToSubWorkpackageOptions } from '@/app/modules/projects/types';
+import type { SubWorkPackage, TemplateToSubWorkPackageOptions } from '@/app/modules/projects/types';
 
 // 子工作包集合名稱
 const SUBWORKPACKAGE_COLLECTION = 'subworkpackages';
@@ -251,10 +251,10 @@ export const updateSubWorkpackageProgress = async (
 /**
  * 從模板創建子工作包
  */
-export const createSubWorkpackagesFromTemplate = async (
+export const createSubWorkPackagesFromTemplate = async (
   workpackageId: string,
   templateItems: Array<{ name: string; description?: string; estimatedQuantity?: number; unit?: string }>,
-  options: TemplateToSubWorkpackageOptions = {}
+  options: TemplateToSubWorkPackageOptions = {}
 ): Promise<string[]> => {
   try {
     const subWorkpackageIds: string[] = [];
@@ -290,19 +290,18 @@ export const createSubWorkpackagesFromTemplate = async (
 /**
  * 批次更新子工作包狀態
  */
-export const batchUpdateSubWorkpackageStatus = async (
-  subWorkpackageIds: string[],
+export const batchUpdateSubWorkPackageStatus = async (
+  subWorkPackageIds: string[],
   status: SubWorkPackage['status']
 ): Promise<void> => {
   try {
-    const updatePromises = subWorkpackageIds.map(id =>
+    const updatePromises = subWorkPackageIds.map(id =>
       updateSubWorkpackage(id, { status })
     );
-
     await Promise.all(updatePromises);
   } catch (error) {
-    console.error('批次更新子工作包狀態時發生錯誤:', error);
-    throw new Error('批次更新子工作包狀態失敗');
+    console.error('批量更新子工作包狀態失敗:', error);
+    throw error;
   }
 };
 
