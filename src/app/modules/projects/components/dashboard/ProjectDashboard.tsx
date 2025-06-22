@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react';
 import { projectStyles } from '../../styles';
 import { STATUS_LABELS } from '../../constants/statusConstants';
 import type { Project, ProjectStatus } from '@/app/modules/projects/types';
@@ -6,7 +7,7 @@ interface ProjectDashboardProps {
   project?: Pick<Project, 'id' | 'projectName' | 'status' | 'progress'>;
 }
 
-export default function ProjectDashboard({ project }: ProjectDashboardProps) {
+export default function ProjectDashboard({ project }: ProjectDashboardProps): ReactElement {
   if (!project) {
     return (
       <div className={projectStyles.card.base}>

@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react';
 import { projectStyles } from '../../styles';
 
 interface PageContainerProps {
@@ -5,7 +6,7 @@ interface PageContainerProps {
   className?: string;
 }
 
-export default function PageContainer({ children, className = '' }: PageContainerProps) {
+export default function PageContainer({ children, className = '' }: PageContainerProps): ReactElement {
   return (
     <main className={`${projectStyles.page.container} ${className}`}>
       <div className={projectStyles.page.card}>

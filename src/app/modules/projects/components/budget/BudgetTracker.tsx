@@ -4,7 +4,7 @@
  * 顯示專案預算的概覽、統計資訊和趨勢分析
  */
 
-import React from 'react';
+import React, { type ReactElement } from 'react';
 import { formatDateDisplay } from '@/app/modules/projects/types';
 import type { BudgetStats, ProjectBudget } from '@/app/modules/projects/types';
 
@@ -15,12 +15,12 @@ interface BudgetTrackerProps {
   loading?: boolean;
 }
 
-export const BudgetTracker: React.FC<BudgetTrackerProps> = ({
+export const BudgetTracker = ({
   budget,
   stats,
   onRefresh,
   loading = false,
-}) => {
+}: BudgetTrackerProps): ReactElement => {
   if (!budget || !stats) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">

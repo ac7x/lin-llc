@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react';
 import { projectStyles } from '../../styles';
 
 interface ProjectStatsProps {
@@ -13,7 +14,7 @@ interface ProjectStatsProps {
   };
 }
 
-export default function ProjectStats({ stats }: ProjectStatsProps) {
+export default function ProjectStats({ stats }: ProjectStatsProps): ReactElement {
   if (!stats) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4 mb-6">

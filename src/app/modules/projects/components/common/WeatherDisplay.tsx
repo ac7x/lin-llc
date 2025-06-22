@@ -6,6 +6,7 @@
 
 'use client';
 
+import { type ReactElement } from 'react';
 import { cn, loadingStyles } from '@/utils/classNameUtils';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
 
@@ -50,7 +51,7 @@ export default function WeatherDisplay({
   loading, 
   error, 
   className 
-}: WeatherDisplayProps) {
+}: WeatherDisplayProps): ReactElement {
   if (loading) {
     return (
       <div className={cn('flex items-center space-x-2', className)}>

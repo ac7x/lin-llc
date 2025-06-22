@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react';
 import Link from 'next/link';
 import { projectStyles } from '../../styles';
 import { STATUS_LABELS } from '../../constants/statusConstants';
@@ -9,7 +10,7 @@ interface ProjectsTableProps {
   showAdvancedColumns?: boolean;
 }
 
-export default function ProjectsTable({ projects, showAdvancedColumns = false }: ProjectsTableProps) {
+export default function ProjectsTable({ projects, showAdvancedColumns = false }: ProjectsTableProps): ReactElement {
   if (projects.length === 0) {
     return (
       <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">

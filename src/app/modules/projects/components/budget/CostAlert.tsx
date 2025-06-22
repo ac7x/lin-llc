@@ -4,7 +4,7 @@
  * 顯示預算警報、成本異常和重要提醒
  */
 
-import React from 'react';
+import React, { type ReactElement } from 'react';
 import { formatDateDisplay } from '@/app/modules/projects/types';
 import type { BudgetAlert, BudgetStats } from '@/app/modules/projects/types';
 
@@ -15,12 +15,12 @@ interface CostAlertProps {
   onResolveAlert: (alertId: string) => void;
 }
 
-export const CostAlert: React.FC<CostAlertProps> = ({
+export const CostAlert = ({
   alerts,
   stats,
   onAcknowledgeAlert,
   onResolveAlert,
-}) => {
+}: CostAlertProps): ReactElement => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 border-red-200 dark:border-red-800';

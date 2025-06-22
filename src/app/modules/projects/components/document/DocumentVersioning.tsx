@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { DocumentVersion, ProjectDocumentFile } from '@/app/modules/projects/types';
 import { formatDateDisplay } from '@/app/modules/projects/types';
@@ -29,7 +29,7 @@ export default function DocumentVersioning({
   onUploadNewVersion,
   onVersionSelect,
   selectedVersion,
-}: DocumentVersioningProps) {
+}: DocumentVersioningProps): ReactElement {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [changeLog, setChangeLog] = useState('');

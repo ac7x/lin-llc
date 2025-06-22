@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react';
 import { projectStyles } from '../../styles';
 
 interface LoadingSpinnerProps {
@@ -5,7 +6,7 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-export default function LoadingSpinner({ size = 'medium', className = '' }: LoadingSpinnerProps) {
+export default function LoadingSpinner({ size = 'medium', className = '' }: LoadingSpinnerProps): ReactElement {
   const sizeClasses = {
     small: 'h-4 w-4',
     medium: 'h-8 w-8',

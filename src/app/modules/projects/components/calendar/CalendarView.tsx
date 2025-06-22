@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { ProjectMilestone, WorkPackage } from '@/app/modules/projects/types';
@@ -35,7 +35,7 @@ export default function CalendarView({
   onDateClick,
   onMilestoneClick,
   onWorkPackageClick,
-}: CalendarViewProps) {
+}: CalendarViewProps): ReactElement {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<'month' | 'week'>('month');
 

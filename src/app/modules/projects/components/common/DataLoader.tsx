@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react';
 import { projectStyles } from '../../styles';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -17,7 +18,7 @@ export default function DataLoader<T>({
   children,
   emptyMessage = '尚無資料',
   errorMessage = '載入失敗',
-}: DataLoaderProps<T>) {
+}: DataLoaderProps<T>): ReactElement {
   if (loading) {
     return (
       <div className={projectStyles.loading.container}>

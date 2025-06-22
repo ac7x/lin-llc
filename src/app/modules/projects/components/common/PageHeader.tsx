@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react';
 import { projectStyles } from '../../styles';
 
 interface PageHeaderProps {
@@ -6,7 +7,7 @@ interface PageHeaderProps {
   children?: React.ReactNode;
 }
 
-export default function PageHeader({ title, subtitle, children }: PageHeaderProps) {
+export default function PageHeader({ title, subtitle, children }: PageHeaderProps): ReactElement {
   return (
     <div className={projectStyles.page.header}>
       <div>

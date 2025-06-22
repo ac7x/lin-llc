@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ReactElement } from 'react';
 import { projectStyles } from '@/app/modules/projects/styles';
 import type { ProjectDocumentFile } from '@/app/modules/projects/types';
 
@@ -19,7 +19,7 @@ interface BlueprintViewerProps {
   onClose?: () => void;
 }
 
-export default function BlueprintViewer({ document: doc, onClose }: BlueprintViewerProps) {
+export default function BlueprintViewer({ document: doc, onClose }: BlueprintViewerProps): ReactElement {
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
