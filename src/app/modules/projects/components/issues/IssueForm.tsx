@@ -18,6 +18,7 @@ import { projectStyles } from '@/app/modules/projects/styles';
 import type { IssueRecord } from '@/app/modules/projects/types';
 
 interface IssueFormProps {
+  projectId: string;
   issue?: IssueRecord;
   onSubmit: (issue: Omit<IssueRecord, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   onCancel: () => void;
@@ -59,6 +60,7 @@ const formatDateField = (dateField: Timestamp | Date | string | null | undefined
 };
 
 export default function IssueForm({
+  projectId,
   issue,
   onSubmit,
   onCancel,
@@ -104,6 +106,7 @@ export default function IssueForm({
 
     try {
       await onSubmit({
+        projectId,
         type: formData.type,
         description: formData.description.trim(),
         severity: formData.severity,
