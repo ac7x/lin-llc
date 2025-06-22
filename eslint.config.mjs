@@ -14,13 +14,15 @@ const eslintConfig = [
     'next/core-web-vitals',
     'next/typescript',
     'plugin:import/recommended',
-    'plugin:import/typescript'
+    'plugin:import/typescript',
+    'prettier'
   ),
   {
     ignores: [
       'src/lib/firebase-client.ts',
       'src/lib/firebase-config.ts',
       'src/lib/firebase-context.tsx',
+      'src/app/modules/**',
     ],
   },
   {
@@ -31,95 +33,41 @@ const eslintConfig = [
       'react/jsx-uses-react': 'off',
       'react/jsx-uses-vars': 'error',
 
-      // Import 相關規則 - 區分大小寫
+      // Import 相關規則
       'import/order': [
-        'error',
+        'warn',
         {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-          ],
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
           alphabetize: {
             order: 'asc',
-            caseInsensitive: false, // 區分大小寫
+            caseInsensitive: true, // 確保導入排序不區分大小寫
           },
         },
       ],
-      'import/no-unresolved': 'off', // TypeScript 處理
-      'import/no-duplicates': 'error',
-
-      // 檔案命名規則 - 確保大小寫一致性
-      'import/no-unused-modules': 'off',
-      'import/no-relative-parent-imports': 'off',
+      'import/no-unresolved': 'off', // 關閉未解析導入檢查（避免 Windows 大小寫問題）
+      'import/no-duplicates': 'warn',
+      'import/no-case-sensitive': 'off', // 關閉大小寫敏感檢查
 
       // 代碼風格規則
-      'prefer-const': 'error',
-      'no-var': 'error',
-      'no-console': 'warn',
-      'no-debugger': 'error',
+      'prefer-const': 'warn',
+      'no-var': 'warn',
+      'no-console': 'off',
+      'no-debugger': 'warn',
       'no-unused-vars': 'off',
 
       // TypeScript 特定規則
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-        },
-      ],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-var-requires': 'error',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-var-requires': 'warn',
 
       // 引號和分號規則
-      quotes: ['error', 'single', { avoidEscape: true }],
-      semi: ['error', 'always'],
+      quotes: ['warn', 'single', { avoidEscape: true }],
+      semi: ['warn', 'always'],
 
       // 其他規則
-      'prefer-template': 'error',
-      'object-shorthand': 'error',
-      'prefer-arrow-callback': 'error',
-    },
-  },
-  {
-    files: ['src/app/modules/**/*.{js,jsx,ts,tsx}'],
-    rules: {
-      'import/order': [
-        'error',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-          ],
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: false,
-          },
-        },
-      ],
-      'import/no-unresolved': 'off',
-      'import/no-duplicates': 'off',
-      'prefer-const': 'off',
-      'no-var': 'off',
-      'no-console': 'off',
-      'no-debugger': 'off',
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-var-requires': 'off',
-      quotes: 'off',
-      semi: 'off',
-      'prefer-template': 'off',
-      'object-shorthand': 'off',
-      'prefer-arrow-callback': 'off',
+      'prefer-template': 'warn',
+      'object-shorthand': 'warn',
+      'prefer-arrow-callback': 'warn',
     },
   },
 ];

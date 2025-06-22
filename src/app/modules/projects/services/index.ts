@@ -5,7 +5,7 @@
 
 // 核心服務
 export { ProjectService } from './projectService';
-export { WorkPackageService } from './workPackageService';
+export { WorkPackageService } from './workpackageService';
 export { JournalService } from './journalService';
 export { IssueService } from './issueService';
 export { TemplateService } from './templateService';
