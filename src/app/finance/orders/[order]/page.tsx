@@ -419,7 +419,7 @@ export default function OrderDetailPage() {
             <button
               type='button'
               className='bg-blue-600 dark:bg-green-900 text-white dark:text-green-400 px-6 py-2 rounded'
-              onClick={() => router.push('/orders')}
+              onClick={() => router.push('/finance/orders')}
             >
               返回列表
             </button>
