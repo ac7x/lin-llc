@@ -1,17 +1,31 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { ReactNode } from 'react';
+
+interface ChartCardProps {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  className?: string;
+}
 
 /**
- * 顯示效率分析的長條圖 (佔位符)
+ * 顯示效率分析的長條圖
  */
-export function EfficiencyBarChart() {
+export function EfficiencyBarChart({
+  title,
+  description,
+  children,
+  className,
+}: ChartCardProps) {
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
-        <CardTitle>效率分析長條圖</CardTitle>
+        <CardTitle>{title}</CardTitle>
+        {description && (
+          <p className='text-sm text-muted-foreground'>{description}</p>
+        )}
       </CardHeader>
-      <CardContent className='flex h-64 items-center justify-center'>
-        <p className='text-muted-foreground'>Visx Bar Chart 將顯示於此</p>
-      </CardContent>
+      <CardContent>{children}</CardContent>
     </Card>
   );
 }

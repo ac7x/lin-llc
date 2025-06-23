@@ -1,17 +1,21 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { ReactNode } from 'react';
+
+interface ChartCardProps {
+  title: string;
+  children: ReactNode;
+}
 
 /**
- * 顯示人力趨勢的線圖 (佔位符)
+ * 顯示人力趨勢的線圖
  */
-export function WorkforceLineChart() {
+export function WorkforceLineChart({ title, children }: ChartCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>人力趨勢線圖</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className='flex h-64 items-center justify-center'>
-        <p className='text-muted-foreground'>Visx Line Chart 將顯示於此</p>
-      </CardContent>
+      <CardContent>{children}</CardContent>
     </Card>
   );
 }

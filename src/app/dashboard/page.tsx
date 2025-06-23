@@ -57,7 +57,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { db, collection } from '@/lib/firebase-client';
 import { safeToDate } from '@/utils/dateUtils';
 import { calculateProjectProgress } from '../projects/utils/progressUtils';
-import { StatCard } from './components/stats/StatCard';
+import { StatGrid } from './components/stats/StatGrid';
+import { ProgressRadarChart } from './components/charts/ProgressRadarChart';
+import { ActivityLog } from './components/logs/ActivityLog';
 
 // 抽取圖表顏色配置
 const CHART_COLORS = {
@@ -171,34 +173,53 @@ export default function DashboardPage() {
     [roleCounts]
   );
 
-  const statsList = [
-    {
-      title: '專案總數',
-      loading: projectsLoading,
-      error: projectsError,
-      value: projectsSnapshot?.size,
-    },
-    {
-      title: '合約總數',
-      loading: contractsLoading,
-      error: !!contractsError,
-      value: contractsSnapshot?.size,
-    },
-    {
-      title: '訂單總數',
-      loading: ordersLoading,
-      error: !!ordersError,
-      value: ordersSnapshot?.size,
-    },
-    {
-      title: '估價單總數',
-      loading: quotesLoading,
-      error: !!quotesError,
-      value: quotesSnapshot?.size,
-    },
-    { title: '工作包總數', loading: statsLoading, value: workpackagesCount },
-    { title: '子工作包總數', loading: statsLoading, value: subWorkpackagesCount },
-  ];
+  const statsList = useMemo(
+    () => [
+      {
+        title: '專案總數',
+        loading: projectsLoading,
+        error: !!projectsError,
+        value: projectsSnapshot?.size,
+      },
+      {
+        title: '合約總數',
+        loading: contractsLoading,
+        error: !!contractsError,
+        value: contractsSnapshot?.size,
+      },
+      {
+        title: '訂單總數',
+        loading: ordersLoading,
+        error: !!ordersError,
+        value: ordersSnapshot?.size,
+      },
+      {
+        title: '估價單總數',
+        loading: quotesLoading,
+        error: !!quotesError,
+        value: quotesSnapshot?.size,
+      },
+      { title: '工作包總數', loading: statsLoading, value: workpackagesCount },
+      { title: '子工作包總數', loading: statsLoading, value: subWorkpackagesCount },
+    ],
+    [
+      projectsLoading,
+      projectsError,
+      projectsSnapshot?.size,
+      contractsLoading,
+      contractsError,
+      contractsSnapshot?.size,
+      ordersLoading,
+      ordersError,
+      ordersSnapshot?.size,
+      quotesLoading,
+      quotesError,
+      quotesSnapshot?.size,
+      statsLoading,
+      workpackagesCount,
+      subWorkpackagesCount,
+    ]
+  );
 
   const workpackageProgressData = useMemo(() => {
     if (!projectsSnapshot) return [];
@@ -237,13 +258,11 @@ export default function DashboardPage() {
         projectData.reports &&
         Array.isArray(projectData.reports)
       ) {
-        const sortedReports = [...projectData.reports].sort(
-          (a, b) => {
-            const dateA = safeToDate(a.date);
-            const dateB = safeToDate(b.date);
-            return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
-          }
-        );
+        const sortedReports = [...projectData.reports].sort((a, b) => {
+          const dateA = safeToDate(a.date);
+          const dateB = safeToDate(b.date);
+          return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+        });
 
         const calculateRollingAverage = (index: number, windowSize: number = 3) => {
           const startIndex = Math.max(0, index - windowSize + 1);
@@ -299,9 +318,7 @@ export default function DashboardPage() {
   const efficiencyTrendData = useMemo(() => {
     return projectProgressData.map(item => {
       const efficiencyPerPerson =
-        item.workforce > 0
-          ? Number((item.efficiency / item.workforce).toFixed(2))
-          : 0;
+        item.workforce > 0 ? Number((item.efficiency / item.workforce).toFixed(2)) : 0;
       return {
         ...item,
         efficiency: efficiencyPerPerson,
@@ -375,7 +392,9 @@ export default function DashboardPage() {
                       cx='50%'
                       cy='50%'
                       outerRadius={90}
-                      label={({ name, value }) => `${value} ${ROLE_NAMES[name] || name}`}
+                      label={({ name, value }) =>
+                        `${value} ${ROLE_NAMES[name as keyof typeof ROLE_NAMES] || name}`
+                      }
                       labelLine={false}
                     >
                       {roleData.map((entry, index) => (
@@ -403,41 +422,28 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <div className='grid grid-cols-2 gap-3 lg:col-span-2 content-start'>
-            {statsList.map(({ title, loading, error, value }) => (
-              <StatCard
-                key={title}
-                title={title}
-                loading={loading}
-                error={error}
-                value={value?.toString()}
-              />
-            ))}
+          <div className='lg:col-span-2'>
+            <StatGrid stats={statsList.map(s => ({ ...s, value: s.value?.toString() }))} />
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>工作包進度分析</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width='100%' height={300}>
-              <RadarChart data={workpackageProgressData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey='name' />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                <Radar
-                  name='進度'
-                  dataKey='progress'
-                  stroke={CHART_COLORS.primary}
-                  fill={CHART_COLORS.primary}
-                  fillOpacity={0.6}
-                />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <ProgressRadarChart title='工作包進度分析'>
+          <ResponsiveContainer width='100%' height={300}>
+            <RadarChart data={workpackageProgressData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey='name' />
+              <PolarRadiusAxis angle={30} domain={[0, 100]} />
+              <Radar
+                name='進度'
+                dataKey='progress'
+                stroke={CHART_COLORS.primary}
+                fill={CHART_COLORS.primary}
+                fillOpacity={0.6}
+              />
+              <Tooltip />
+            </RadarChart>
+          </ResponsiveContainer>
+        </ProgressRadarChart>
 
         <Card>
           <CardHeader>
@@ -626,6 +632,7 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        <ActivityLog />
       </div>
     </main>
   );
