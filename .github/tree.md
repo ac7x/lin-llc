@@ -3,14 +3,13 @@
 │  │  page.tsx
 │  │
 │  ├─account
-│  │      page.tsx
-│  │
-│  ├─archive
-│  │  │  layout.tsx
 │  │  │  page.tsx
 │  │  │
-│  │  └─[type]
-│  │          page.tsx
+│  │  └─notifications
+│  │      │  page.tsx
+│  │      │
+│  │      └─components
+│  │              NotificationBell.tsx
 │  │
 │  ├─calendar
 │  │      page.tsx
@@ -21,31 +20,23 @@
 │  ├─finance
 │  │  │  layout.tsx
 │  │  │
-│  │  ├─contracts
+│  │  ├─archive
+│  │  │  │  layout.tsx
 │  │  │  │  page.tsx
 │  │  │  │
-│  │  │  ├─create
-│  │  │  │      page.tsx
-│  │  │  │
-│  │  │  └─[contract]
+│  │  │  └─[type]
 │  │  │          page.tsx
 │  │  │
-│  │  ├─orders
-│  │  │  │  page.tsx
-│  │  │  │
-│  │  │  ├─add
-│  │  │  │      page.tsx
-│  │  │  │
-│  │  │  └─[order]
-│  │  │          page.tsx
+│  │  ├─components
+│  │  │      FinanceListPage.tsx
 │  │  │
-│  │  └─quotes
+│  │  └─[type]
 │  │      │  page.tsx
 │  │      │
-│  │      ├─add
+│  │      ├─create
 │  │      │      page.tsx
 │  │      │
-│  │      └─[quote]
+│  │      └─[id]
 │  │              page.tsx
 │  │
 │  ├─gemini
@@ -54,15 +45,12 @@
 │  ├─management
 │  │  │  page.tsx
 │  │  │
-│  │  └─components
-│  │          RolePermissions.tsx
-│  │          UserList.tsx
-│  │
-│  ├─notifications
-│  │  │  page.tsx
+│  │  ├─components
+│  │  │      RolePermissions.tsx
+│  │  │      UserList.tsx
 │  │  │
-│  │  └─components
-│  │          NotificationBell.tsx
+│  │  └─send-notification
+│  │          page.tsx
 │  │
 │  ├─projects
 │  │  │  layout.tsx
@@ -130,10 +118,7 @@
 │  │          └─[workpackage]
 │  │                  page.tsx
 │  │
-│  ├─schedule
-│  │      page.tsx
-│  │
-│  └─send-notification
+│  └─schedule
 │          page.tsx
 │
 ├─components
@@ -145,9 +130,6 @@
 │  │      Tabs.tsx
 │  │      Unauthorized.tsx
 │  │      VisTimeline.tsx
-│  │
-│  ├─finance
-│  │      FinanceListPage.tsx
 │  │
 │  ├─pdf
 │  │      ContractPdfDocument.tsx
