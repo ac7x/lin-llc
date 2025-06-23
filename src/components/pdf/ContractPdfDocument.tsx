@@ -6,7 +6,7 @@
  */
 
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
-import type { ContractRow } from '@/app/finance/contracts/page';
+import type { ContractRow, ContractItem } from '@/types/finance';
 
 Font.register({
   family: 'NotoSerifTC',
@@ -69,7 +69,7 @@ export function ContractPdfDocument({
               <Text style={{ width: '20%' }}>數量</Text>
               <Text style={{ width: '30%' }}>權重</Text>
             </View>
-            {contractItems.map((item, idx) => (
+            {contractItems.map((item: ContractItem, idx) => (
               <View
                 key={item.contractItemId || idx}
                 style={{ flexDirection: 'row', marginBottom: 2 }}

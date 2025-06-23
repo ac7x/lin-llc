@@ -9,6 +9,8 @@ import type { ReactElement } from 'react';
 
 import type { Project, Workpackage } from '@/app/projects/types/project';
 import { ProjectProgressPercent } from '@/app/projects/utils/progressUtils';
+import { ArchiveNavGroup } from '@/components/common/ArchiveNavGroup';
+import { DynamicNavGroup } from '@/components/common/DynamicNavGroup';
 import { ModeToggle } from '@/components/common/ModeToggle';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -31,8 +33,6 @@ import { db } from '@/lib/firebase-client';
 import type { NavigationItem } from '@/types/navigation';
 import { modalStyles, inputStyles, buttonStyles } from '@/utils/classNameUtils';
 import { safeAsync, retry, getErrorMessage, logError } from '@/utils/errorUtils';
-import { DynamicNavGroup } from '@/components/common/DynamicNavGroup';
-import { ArchiveNavGroup } from '@/components/common/ArchiveNavGroup';
 
 // 專案導航組件
 function ProjectNavigation({ pathname }: { pathname: string }) {

@@ -16,9 +16,7 @@ import {
 
 export default function FinanceDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const type = params.type as 'contracts' | 'orders' | 'quotes';
-  const id = params.id as string;
 
   if (type === 'contracts') {
     return <ContractDetail />;

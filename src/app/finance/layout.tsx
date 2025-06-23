@@ -14,26 +14,28 @@ import { Unauthorized } from '@/components/common/Unauthorized';
 
 type FinancePermission = 'contracts' | 'orders' | 'quotes';
 
+const isValidFinancePermission = (type: string): type is FinancePermission => {
+  return ['contracts', 'orders', 'quotes'].includes(type);
+};
+
 export default function FinanceLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const requiredPermission = useMemo((): FinancePermission | null => {
-    if (pathname.startsWith('/finance/contracts')) {
-      return 'contracts';
-    }
-    if (pathname.startsWith('/finance/orders')) {
-      return 'orders';
-    }
-    if (pathname.startsWith('/finance/quotes')) {
-      return 'quotes';
+    const segments = pathname.split('/').filter(Boolean); // e.g., ['finance', 'contracts', '...']
+    if (segments.length >= 2 && segments[0] === 'finance') {
+      const type = segments[1];
+      if (isValidFinancePermission(type)) {
+        return type;
+      }
     }
     return null;
   }, [pathname]);
 
   if (!requiredPermission) {
-    // 此情況不應在財務部分的任何有效頁面中發生。
-    // 它是針對意外路由情境的後備方案。
-    return <Unauthorized message="您沒有權限存取此財務區塊" />;
+    // This case should not happen for any valid page within the finance section.
+    // It's a fallback for unexpected routing scenarios.
+    return <Unauthorized message='您沒有權限存取此財務區塊' />;
   }
 
   return (

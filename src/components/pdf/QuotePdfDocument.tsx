@@ -6,20 +6,13 @@
  */
 
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import { Timestamp } from 'firebase/firestore';
 
-import { formatLocalDate } from '@/utils/dateUtils';
-import { QuoteRow } from '@/app/finance/quotes/page';
+import { QuoteRow, QuoteItem } from '@/types/finance';
 
 Font.register({
   family: 'NotoSerifTC',
   src: '/fonts/NotoSerifTC-Regular.ttf',
 });
-
-const formatDate = (timestamp: Timestamp | null | undefined): string => {
-  if (!timestamp) return '';
-  return formatLocalDate(timestamp);
-};
 
 interface QuotePdfDocumentProps {
   quote: QuoteRow;
@@ -37,7 +30,7 @@ export const QuotePdfDocument = ({ quote }: QuotePdfDocumentProps) => (
       </View>
       <View style={styles.section}>
         <Text style={styles.subtitle}>估價項目</Text>
-        {quote.quoteItems.map((item, index) => (
+        {quote.quoteItems.map((item: QuoteItem, index) => (
           <View key={item.quoteItemId || index} style={{ flexDirection: 'row', marginBottom: 2 }}>
             <Text style={{ width: '30%' }}>{String(item.quoteItemId ?? '')}</Text>
             <Text style={{ width: '25%' }}>{String(item.quoteItemPrice ?? '')}</Text>

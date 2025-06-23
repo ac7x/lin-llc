@@ -11,7 +11,7 @@
 
 'use client';
 
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter, Roboto_Mono } from 'next/font/google';
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import React, { useEffect, useState } from 'react';
@@ -26,13 +26,13 @@ import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
 import { initializeClientServices } from '@/lib/firebase-init';
 import { ThemeProvider } from '@/providers/theme-provider';
 
-const geistSans = Geist({
+const geistSans = Inter({
   variable: '--font-geist-sans',
   weight: ['300', '400', '500', '700'],
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = Roboto_Mono({
   variable: '--font-geist-mono',
   weight: ['300', '400', '500', '700'],
   subsets: ['latin'],
