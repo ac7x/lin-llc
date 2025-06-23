@@ -28,7 +28,7 @@ import ProjectIssuesPage from './project-issues/page';
 import ProjectJournalPage from './project-journal/page';
 import ProjectMaterialsPage from './project-materials/page';
 import ProjectStoragePage from './project-storage/page';
-import SubWorkpackageSortingPage from './subworkpackages/page';
+import SubWorkpackageSortingPage from './subworkpackages/[subworkpackage]/page';
 
 // 狀態標籤對應
 const STATUS_LABELS: Record<string, string> = {

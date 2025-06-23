@@ -121,10 +121,10 @@
 │  │      ├─project-storage
 │  │      │      page.tsx
 │  │      │
+│  │      ├─subworkpackages
+│  │      │      page.tsx
+│  │      │
 │  │      └─workpackages
-│  │          ├─subworkpackages
-│  │          │      page.tsx
-│  │          │
 │  │          └─[workpackage]
 │  │                  page.tsx
 │  │

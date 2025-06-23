@@ -4,7 +4,7 @@
  * 提供專案中常用的驗證、格式化和工具函數
  */
 
-import type { ValidationError, ValidationResult, AppError } from '@/types/coding-standards';
+import type { ValidationError, ValidationResult, AppError } from '@/types/codingStandards';
 
 /**
  * 驗證電子郵件格式

@@ -28,12 +28,13 @@
       "@/constants/*": ["./src/constants/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/types/*": ["./src/types/*"],
-      "@/modules/*": ["./src/modules/*"]
+      "@/modules/*": ["./src/modules/*"],
+      "@/providers/*": ["./src/providers/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": [
-      "coding-standards",
+      "codingStandards",
       "timeline",
       "calendar",
       "navigation",
@@ -42,8 +43,8 @@
       "auth",
       "common",
       "archive",
-      "google-maps"    ]
+      "googleMaps"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/modules/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

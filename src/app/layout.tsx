@@ -5,7 +5,7 @@
  * - 字體設定（Geist Sans 和 Geist Mono）
  * - 深色模式支援
  * - reCAPTCHA 整合
- * - 底部導航列（僅登入用戶可見）
+ * - 響應式導航列（僅登入用戶可見）
  * - 全局驗證狀態
  */
 
@@ -24,6 +24,7 @@ import { useAppCheck } from '@/hooks/useAppCheck';
 import { useAuth } from '@/hooks/useAuth';
 import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
 import { initializeClientServices } from '@/lib/firebase-init';
+import { ThemeProvider } from '@/providers/theme-provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,22 +39,36 @@ const geistMono = Geist_Mono({
 });
 
 // 不需要驗證的路徑
-const PUBLIC_PATHS = ['/signin', '/signup', '/forgot-password'];
+const PUBLIC_PATHS = ['/signup', '/forgot-password'];
 
-export default function RootLayout({
-  children,
-}: {
+interface RootLayoutProps {
   children: ReactNode;
-}): ReactElement {
+}
+
+export default function RootLayout({ children }: RootLayoutProps): ReactElement {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { isInitialized, isValid, error } = useAppCheck();
 
   // 檢查是否在客戶端環境
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // 檢測設備類型
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    if (isClient) {
+      checkDevice();
+      window.addEventListener('resize', checkDevice);
+      return () => window.removeEventListener('resize', checkDevice);
+    }
+  }, [isClient]);
 
   // 初始化客戶端服務
   useEffect(() => {
@@ -76,10 +91,10 @@ export default function RootLayout({
             '--font-geist-sans': geistSans.variable,
             '--font-geist-mono': geistMono.variable,
           } as React.CSSProperties}
-          className='antialiased bg-white dark:bg-gray-900'
+          className='antialiased bg-background'
         >
           <div className='flex justify-center items-center min-h-screen'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400'></div>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
           </div>
         </body>
       </html>
@@ -94,7 +109,7 @@ export default function RootLayout({
             '--font-geist-sans': geistSans.variable,
             '--font-geist-mono': geistMono.variable,
           } as React.CSSProperties}
-          className='antialiased bg-white dark:bg-gray-900'
+          className='antialiased bg-background'
         >
           <Unauthorized
             message='安全驗證失敗，請重新載入頁面'
@@ -115,10 +130,10 @@ export default function RootLayout({
             '--font-geist-sans': geistSans.variable,
             '--font-geist-mono': geistMono.variable,
           } as React.CSSProperties}
-          className='antialiased bg-white dark:bg-gray-900'
+          className='antialiased bg-background'
         >
           <div className='flex justify-center items-center min-h-screen'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400'></div>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
           </div>
         </body>
       </html>
@@ -134,7 +149,7 @@ export default function RootLayout({
             '--font-geist-sans': geistSans.variable,
             '--font-geist-mono': geistMono.variable,
           } as React.CSSProperties}
-          className='antialiased bg-white dark:bg-gray-900'
+          className='antialiased bg-background'
         >
           <Unauthorized
             message='請先登入以訪問此頁面'
@@ -147,7 +162,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang='zh-TW'>
+    <html lang='zh-TW' suppressHydrationWarning>
       <head>
         {isClient && (
           <Script
@@ -161,10 +176,19 @@ export default function RootLayout({
           '--font-geist-sans': geistSans.variable,
           '--font-geist-mono': geistMono.variable,
         } as React.CSSProperties}
-        className='antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100'
+        className='antialiased bg-background text-foreground'
       >
-        <main className='pb-16'>{children}</main>
-        {user && <BottomNavigation />}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <main className={user ? (isMobile ? 'pb-16' : 'ml-64') : ''}>
+            {children}
+          </main>
+          {user && <BottomNavigation />}
+        </ThemeProvider>
       </body>
     </html>
   );
