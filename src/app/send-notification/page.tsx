@@ -483,7 +483,7 @@ export default function SendNotificationPage(): ReactElement {
             >
               → 通知中心（查看所有通知）
             </a>
-            <a href='/account ' className='block text-blue-600 dark:text-blue-400 hover:underline'>
+            <a href='/account' className='block text-blue-600 dark:text-blue-400 hover:underline'>
               → 個人資料（管理通知偏好）
             </a>
           </div>
