@@ -56,31 +56,6 @@ export {
   getProjectsInDateRange,
 } from './dateUtils';
 
-// 管理相關
-export {
-  ROLE_PERMISSIONS,
-  PERMISSION_CATEGORIES,
-  hasPermission,
-  hasAnyPermission,
-  hasAllPermissions,
-  getUserAllPermissions,
-  formatUserDisplayName,
-  formatUserRole,
-  formatPermission,
-  groupPermissionsByCategory,
-  calculateUserStats,
-  calculateProjectHealthScore as calculateAdminProjectHealthScore,
-  getProjectHealthLevel,
-  formatDate as formatAdminDate,
-  formatDateTime as formatAdminDateTime,
-  getTimeDifference as getAdminTimeDifference,
-  validateEmail as validateAdminEmail,
-  validateUserData,
-  generateUserId,
-  generateRoleId,
-  generatePermissionId,
-} from './adminUtils';
-
 // 分析相關
 export {
   CHART_COLORS,

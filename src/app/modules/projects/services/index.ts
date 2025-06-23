@@ -11,7 +11,6 @@ export { IssueService } from './issueService';
 export { TemplateService } from './templateService';
 
 // 管理服務
-export { AdminService } from './adminService';
 export { AnalyticsService } from './analyticsService';
 
 // 功能服務
