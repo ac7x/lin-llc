@@ -2,7 +2,7 @@
 // 這是一個 Server Component (預設)
 
 import { Inter } from 'next/font/google';
-import { FirebaseProvider } from './projects/components/firebase/FirebaseProvider'; // 調整路徑以符合您的項目結構
+import { FirebaseProvider } from '../modules/projects/components/firebase/FirebaseProvider'; // 調整路徑以符合您的項目結構
 
 const inter = Inter({ subsets: ['latin'] });
 

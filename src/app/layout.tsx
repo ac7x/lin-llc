@@ -1,30 +1,163 @@
-// app/layout.tsx
-// 這是一個 Server Component (預設)
+/**
+ * 根布局組件
+ *
+ * 提供整個應用程式的基本布局結構，包含：
+ * - 字體設定（Geist Sans 和 Geist Mono）
+ * - 深色模式支援
+ * - reCAPTCHA 整合
+ * - 底部導航列（僅登入用戶可見）
+ * - 全局驗證狀態
+ */
 
-import { Inter } from 'next/font/google';
-import { FirebaseProvider } from './modules/projects/components/firebase/FirebaseProvider'; // 調整路徑以符合您的項目結構
+'use client';
 
-const inter = Inter({ subsets: ['latin'] });
+import { Geist, Geist_Mono } from 'next/font/google';
+import { usePathname } from 'next/navigation';
+import Script from 'next/script';
+import React, { useEffect, useState } from 'react';
+import '../styles/globals.css';
+import type { ReactElement, ReactNode } from 'react';
 
-export const metadata = {
-  title: 'Firebase Admin + Auth + App Check Demo',
-  description: 'Next.js App Router with advanced Firebase security',
-};
+import { Unauthorized } from '@/components/common/Unauthorized';
+import BottomNavigation from '@/components/tabs/BottomNavigation';
+import { useAppCheck } from '@/hooks/useAppCheck';
+import { useAuth } from '@/hooks/useAuth';
+import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  weight: ['300', '400', '500', '700'],
+  subsets: ['latin'],
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  weight: ['300', '400', '500', '700'],
+  subsets: ['latin'],
+});
+
+// 不需要驗證的路徑
+const PUBLIC_PATHS = ['/signin', '/signup', '/forgot-password'];
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
-}) {
+  children: ReactNode;
+}): ReactElement {
+  const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
+  const { isInitialized, isValid, error } = useAppCheck();
+
+  // 檢查是否在客戶端環境
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // 檢查當前路徑是否需要驗證
+  const isPublicPath = PUBLIC_PATHS.includes(pathname);
+
+  // 檢查 App Check 狀態
+  if (!isInitialized) {
+    return (
+      <html lang='zh-TW'>
+        <body
+          style={{
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties}
+          className='antialiased bg-white dark:bg-gray-900'
+        >
+          <div className='flex justify-center items-center min-h-screen'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400'></div>
+          </div>
+        </body>
+      </html>
+    );
+  }
+
+  if (!isValid || error) {
+    return (
+      <html lang='zh-TW'>
+        <body
+          style={{
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties}
+          className='antialiased bg-white dark:bg-gray-900'
+        >
+          <Unauthorized
+            message='安全驗證失敗，請重新載入頁面'
+            showBackButton={false}
+            showSignInButton={false}
+          />
+        </body>
+      </html>
+    );
+  }
+
+  // 如果正在載入，顯示載入中狀態
+  if (loading) {
+    return (
+      <html lang='zh-TW'>
+        <body
+          style={{
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties}
+          className='antialiased bg-white dark:bg-gray-900'
+        >
+          <div className='flex justify-center items-center min-h-screen'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400'></div>
+          </div>
+        </body>
+      </html>
+    );
+  }
+
+  // 如果不是公開路徑且用戶未登入，顯示未授權頁面
+  if (!isPublicPath && !user) {
+    return (
+      <html lang='zh-TW'>
+        <body
+          style={{
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties}
+          className='antialiased bg-white dark:bg-gray-900'
+        >
+          <Unauthorized
+            message='請先登入以訪問此頁面'
+            showBackButton={false}
+            showSignInButton={true}
+          />
+        </body>
+      </html>
+    );
+  }
+
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        {/* 將整個應用程式包裹在 FirebaseProvider 中，以初始化客戶端 Firebase SDK */}
-        {/* FirebaseProvider 是一個 Client Component，因此它會在瀏覽器端執行 */}
-        <FirebaseProvider>
-          {children}
-        </FirebaseProvider>
+    <html lang='zh-TW'>
+      <head>
+        {isClient && (
+          <Script
+            src={`https://www.google.com/recaptcha/api.js?render=${APP_CHECK_CONFIG.SITE_KEY}`}
+            strategy='beforeInteractive'
+          />
+        )}
+      </head>
+      <body
+        style={{
+          '--font-geist-sans': geistSans.variable,
+          '--font-geist-mono': geistMono.variable,
+        } as React.CSSProperties}
+        className='antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100'
+      >
+        <main className='pb-16'>{children}</main>
+        {user && <BottomNavigation />}
       </body>
     </html>
   );
 }
+
+export { geistSans, geistMono };
