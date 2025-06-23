@@ -1,12 +1,16 @@
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { FlatCompat } from '@eslint/eslintrc';
+import importPlugin from 'eslint-plugin-import'; 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
+  recommendedConfig: {
+    import: importPlugin.configs.recommended, 
+  },
 });
 
 const eslintConfig = [
@@ -26,6 +30,12 @@ const eslintConfig = [
     ],
   },
   {
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
     rules: {
       // ===== React 規則 =====
       'react/react-in-jsx-scope': 'off', // 在 React 17+ 中不再需要，關閉此規則
@@ -36,7 +46,6 @@ const eslintConfig = [
       // ===== Import 規則 =====
       'import/no-unresolved': 'off', // 關閉 import/no-unresolved，因為它可能與路徑別名衝突
       'import/no-duplicates': 'warn', // 警告：不允許多次從同一個模組導入
-      'import/no-case-sensitive': 'off', // 關閉大小寫敏感路徑檢查
 
       // ===== JavaScript/TypeScript 基礎規則 =====
       'prefer-const': 'warn', // 警告：建議使用 const 而不是 let，如果變數未被重新賦值
@@ -49,11 +58,15 @@ const eslintConfig = [
       '@typescript-eslint/no-unused-vars': 'warn', // 警告：檢查未使用的 TypeScript 變數
       '@typescript-eslint/no-explicit-any': 'off', // 暫時允許使用 any 型別，但建議未來修復
       '@typescript-eslint/no-var-requires': 'warn', // 警告：禁止使用 require() 語法，建議使用 ES6 import
+      '@typescript-eslint/no-floating-promises': 'error',
 
       // ===== 程式碼風格建議 =====
       'prefer-template': 'warn', // 警告：建議使用模板字串而不是字串串接
       'object-shorthand': 'warn', // 警告：建議使用物件簡寫語法
       'prefer-arrow-callback': 'warn', // 警告：建議使用箭頭函式作為回呼函式
+
+      '@next/next/no-html-link-for-pages': 'error',
+      '@next/next/no-img-element': 'error',
     },
   },
 ];
