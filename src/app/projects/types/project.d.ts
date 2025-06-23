@@ -214,6 +214,24 @@ export interface ProjectFinancialMetrics {
   varianceAtCompletion: number; // 完工差異
 }
 
+/**
+ * 發包資訊
+ */
+export interface SubcontractInfo {
+  subcontractor?: string; // 承包商
+  amount?: number; // 發包金額
+  date?: DateField; // 發包日期
+  notes?: string; // 發包備註
+}
+
+/**
+ * 驗收資訊
+ */
+export interface AcceptanceInfo {
+  status: 'pending' | 'approved' | 'rejected'; // 驗收狀態
+  date?: DateField; // 驗收日期
+  notes?: string; // 驗收備註
+}
 
 export interface SubWorkpackage extends BaseWithDates {
   id: string; // 子工作包唯一識別碼
@@ -245,6 +263,10 @@ export interface SubWorkpackage extends BaseWithDates {
   scheduleVariance?: number; // 時程差異
   riskLevel?: 'low' | 'medium' | 'high'; // 風險等級
   dependencies?: string[]; // 依賴的其他子工作包ID
+  photos?: PhotoRecord[]; // 照片記錄
+  issues?: IssueRecord[]; // 問題記錄
+  subcontract?: SubcontractInfo; // 發包資訊
+  acceptance?: AcceptanceInfo; // 驗收資訊
 }
 
 export interface Workpackage extends BaseWithDates {
