@@ -86,7 +86,7 @@ export default function OrderAddPage() {
         clientPhone,
         clientEmail,
       }), 3, 1000);
-      router.push('/finance/orders');
+      router.push('/orders');
     }, (error) => {
       alert(`建立訂單失敗：${getErrorMessage(error)}`);
       logError(error, { operation: 'add_order' });
@@ -273,7 +273,7 @@ export default function OrderAddPage() {
           <button
             type='button'
             className='bg-gray-300 dark:bg-gray-800 text-black dark:text-gray-100 px-6 py-2 rounded'
-            onClick={() => router.push('/finance/orders')}
+            onClick={() => router.push('/orders')}
           >
             返回列表
           </button>

@@ -549,7 +549,7 @@ export default function BottomNavigation(): ReactElement | null {
           <DynamicNavGroup
             groupLabel="合約管理"
             collectionName="contracts"
-            basePath="/finance/contracts"
+            basePath="/contracts"
             labelField="contractName"
             createLabel="新增合約"
             createPathSuffix="create"
@@ -557,14 +557,14 @@ export default function BottomNavigation(): ReactElement | null {
           <DynamicNavGroup
             groupLabel="訂單管理"
             collectionName="orders"
-            basePath="/finance/orders"
+            basePath="/orders"
             labelField="orderName"
             createLabel="新增訂單"
           />
           <DynamicNavGroup
             groupLabel="報價單管理"
             collectionName="quotes"
-            basePath="/finance/quotes"
+            basePath="/quotes"
             labelField="quoteName"
             createLabel="新增報價單"
           />

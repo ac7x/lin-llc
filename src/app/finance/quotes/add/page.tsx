@@ -90,7 +90,7 @@ export default function QuoteAddPage() {
         status: 'draft',
         createdBy: user.uid,
       }), 3, 1000);
-      router.push('/finance/quotes');
+      router.push('/quotes');
     }, (error) => {
       alert(`建立報價單失敗，請稍後再試：${getErrorMessage(error)}`);
       logError(error, { operation: 'create_quote', userId: user.uid });
@@ -304,7 +304,7 @@ export default function QuoteAddPage() {
               <button
                 type='button'
                 className='bg-gray-500 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2'
-                onClick={() => router.push('/finance/quotes')}
+                onClick={() => router.push('/quotes')}
               >
                 取消
               </button>

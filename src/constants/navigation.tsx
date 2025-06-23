@@ -67,7 +67,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'quotes',
     name: '報價',
-    path: '/finance/quotes',
+    path: '/quotes',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
@@ -82,7 +82,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'orders',
     name: '訂單',
-    path: '/finance/orders',
+    path: '/orders',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
@@ -97,7 +97,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'contracts',
     name: '合約',
-    path: '/finance/contracts',
+    path: '/contracts',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path

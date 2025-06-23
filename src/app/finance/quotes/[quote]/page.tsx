@@ -438,7 +438,7 @@ export default function QuoteDetailPage() {
             <button
               type='button'
               className='px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500'
-              onClick={() => router.push('/finance/quotes')}
+              onClick={() => router.push('/quotes')}
             >
               返回
             </button>
