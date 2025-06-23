@@ -11,9 +11,6 @@
 │  │      └─components
 │  │              NotificationBell.tsx
 │  │
-│  ├─calendar
-│  │      page.tsx
-│  │
 │  ├─dashboard
 │  │      page.tsx
 │  │
@@ -52,74 +49,78 @@
 │  │  └─send-notification
 │  │          page.tsx
 │  │
-│  ├─projects
-│  │  │  layout.tsx
-│  │  │  page.tsx
-│  │  │
-│  │  ├─components
-│  │  │      AddressSelector.tsx
-│  │  │      DataLoader.tsx
-│  │  │      ProjectDashboard.tsx
-│  │  │      ProjectsTable.tsx
-│  │  │      WeatherDisplay.tsx
-│  │  │
-│  │  ├─hooks
-│  │  │      useFilteredProjects.ts
-│  │  │
-│  │  ├─import
+│  ├─planning
+│  │  ├─calendar
 │  │  │      page.tsx
 │  │  │
-│  │  ├─templates
-│  │  │      page.tsx
-│  │  │
-│  │  ├─types
-│  │  │      project.d.ts
-│  │  │
-│  │  ├─utils
-│  │  │      progressUtils.tsx
-│  │  │      projectUtils.ts
-│  │  │
-│  │  └─[project]
-│  │      │  page.tsx
-│  │      │
-│  │      ├─components
-│  │      │      ProjectEditModal.tsx
-│  │      │      ProjectInfoDisplay.tsx
-│  │      │      ProjectInfoPage.tsx
-│  │      │      WorkpackageList.tsx
-│  │      │
-│  │      ├─project-calendar
-│  │      │      page.tsx
-│  │      │
-│  │      ├─project-expenses
-│  │      │      page.tsx
-│  │      │
-│  │      ├─project-issues
-│  │      │      page.tsx
-│  │      │
-│  │      ├─project-journal
-│  │      │  │  page.tsx
-│  │      │  │
-│  │      │  └─components
-│  │      │          JournalForm.tsx
-│  │      │          JournalHistory.tsx
-│  │      │
-│  │      ├─project-materials
-│  │      │      page.tsx
-│  │      │
-│  │      ├─project-storage
-│  │      │      page.tsx
-│  │      │
-│  │      ├─subworkpackages
-│  │      │  └─[subworkpackage]
-│  │      │          page.tsx
-│  │      │
-│  │      └─workpackages
-│  │          └─[workpackage]
-│  │                  page.tsx
+│  │  └─schedule
+│  │          page.tsx
 │  │
-│  └─schedule
-│          page.tsx
+│  └─projects
+│      │  layout.tsx
+│      │  page.tsx
+│      │
+│      ├─components
+│      │      AddressSelector.tsx
+│      │      DataLoader.tsx
+│      │      ProjectDashboard.tsx
+│      │      ProjectsTable.tsx
+│      │      WeatherDisplay.tsx
+│      │
+│      ├─hooks
+│      │      useFilteredProjects.ts
+│      │
+│      ├─import
+│      │      page.tsx
+│      │
+│      ├─templates
+│      │      page.tsx
+│      │
+│      ├─types
+│      │      project.d.ts
+│      │
+│      ├─utils
+│      │      progressUtils.tsx
+│      │      projectUtils.ts
+│      │
+│      └─[project]
+│          │  page.tsx
+│          │
+│          ├─components
+│          │      ProjectEditModal.tsx
+│          │      ProjectInfoDisplay.tsx
+│          │      ProjectInfoPage.tsx
+│          │      WorkpackageList.tsx
+│          │
+│          ├─project-calendar
+│          │      page.tsx
+│          │
+│          ├─project-expenses
+│          │      page.tsx
+│          │
+│          ├─project-issues
+│          │      page.tsx
+│          │
+│          ├─project-journal
+│          │  │  page.tsx
+│          │  │
+│          │  └─components
+│          │          JournalForm.tsx
+│          │          JournalHistory.tsx
+│          │
+│          ├─project-materials
+│          │      page.tsx
+│          │
+│          ├─project-storage
+│          │      page.tsx
+│          │
+│          └─workpackages
+│              └─[workpackage]
+│                  │  page.tsx
+│                  │
+│                  └─subworkpackages
+│                      └─[subworkpackage]
+│                              page.tsx
 │
 ├─components
 │  ├─common
