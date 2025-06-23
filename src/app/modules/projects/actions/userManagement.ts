@@ -2,7 +2,7 @@
 
 import * as admin from 'firebase-admin';
 import { adminAuth, adminAppCheck } from '../utils/firebaseAdmin';
-import { UserRole, hasRequiredRole } from '../types/roles';
+import { UserRole, hasRequiredRole, ROLE_LEVELS } from '../types/roles';
 import { initializeServerApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
 
@@ -251,6 +251,170 @@ export async function syncUserProfile(
     return { status: 'success', message: 'User profile synced successfully.' };
   } catch (error: any) {
     console.error("Error in syncUserProfile:", error.message);
+    return { status: 'error', message: error.message };
+  }
+}
+
+// 啟用或停用用戶
+export async function toggleUserStatus(
+  targetUid: string,
+  isActive: boolean,
+  appCheckToken: string,
+  idToken: string
+) {
+  try {
+    const { role: callerRole } = await verifyRequest(appCheckToken, idToken);
+    
+    if (!hasRequiredRole(callerRole, UserRole.ADMIN)) {
+      throw new Error("Permission denied: Only ADMIN or higher can toggle user status.");
+    }
+
+    const serverApp = initializeServerApp(firebaseConfig, {
+      appCheckToken,
+      authIdToken: idToken,
+    });
+    const db = getFirestore(serverApp);
+    
+    await updateDoc(doc(db, 'users', targetUid), {
+      isActive,
+      updatedAt: new Date(),
+    });
+    
+    // 如果停用用戶，同時在 Firebase Auth 中停用
+    if (!isActive && adminAuth) {
+      await adminAuth.updateUser(targetUid, { disabled: true });
+    } else if (isActive && adminAuth) {
+      await adminAuth.updateUser(targetUid, { disabled: false });
+    }
+    
+    return { 
+      status: 'success', 
+      message: `User ${isActive ? 'activated' : 'deactivated'} successfully.` 
+    };
+  } catch (error: any) {
+    console.error("Error in toggleUserStatus:", error.message);
+    return { status: 'error', message: error.message };
+  }
+}
+
+// 批量更新用戶角色
+export async function batchUpdateUserRoles(
+  updates: Array<{ uid: string; role: UserRole }>,
+  appCheckToken: string,
+  idToken: string
+) {
+  try {
+    const { role: callerRole } = await verifyRequest(appCheckToken, idToken);
+    
+    if (!hasRequiredRole(callerRole, UserRole.ADMIN)) {
+      throw new Error("Permission denied: Only ADMIN or higher can batch update roles.");
+    }
+
+    const serverApp = initializeServerApp(firebaseConfig, {
+      appCheckToken,
+      authIdToken: idToken,
+    });
+    const db = getFirestore(serverApp);
+    
+    const results = [];
+    
+    for (const update of updates) {
+      try {
+        // 檢查權限
+        const targetLevel = ROLE_LEVELS[update.role];
+        const callerLevel = ROLE_LEVELS[callerRole];
+        
+        if (callerLevel < targetLevel) {
+          results.push({
+            uid: update.uid,
+            status: 'error',
+            message: `Cannot set role ${update.role} higher than your own ${callerRole}`
+          });
+          continue;
+        }
+        
+        // 更新 Firestore
+        await updateDoc(doc(db, 'users', update.uid), {
+          role: update.role,
+          updatedAt: new Date(),
+        });
+        
+        // 更新 Firebase Auth 自訂聲明
+        if (adminAuth) {
+          await adminAuth.setCustomUserClaims(update.uid, { role: update.role });
+          await adminAuth.revokeRefreshTokens(update.uid);
+        }
+        
+        results.push({
+          uid: update.uid,
+          status: 'success',
+          message: `Role updated to ${update.role}`
+        });
+      } catch (error: any) {
+        results.push({
+          uid: update.uid,
+          status: 'error',
+          message: error.message
+        });
+      }
+    }
+    
+    return { status: 'success', results };
+  } catch (error: any) {
+    console.error("Error in batchUpdateUserRoles:", error.message);
+    return { status: 'error', message: error.message };
+  }
+}
+
+// 獲取用戶統計資料
+export async function getUserStats(appCheckToken: string, idToken: string) {
+  try {
+    const { role: callerRole } = await verifyRequest(appCheckToken, idToken);
+    
+    if (!hasRequiredRole(callerRole, UserRole.MANAGER)) {
+      throw new Error("Permission denied: Only MANAGER or higher can view user stats.");
+    }
+
+    const serverApp = initializeServerApp(firebaseConfig, {
+      appCheckToken,
+      authIdToken: idToken,
+    });
+    const db = getFirestore(serverApp);
+    
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    
+    const stats = {
+      total: 0,
+      active: 0,
+      inactive: 0,
+      byRole: {} as Record<UserRole, number>,
+      recentLogins: 0, // 最近7天登入的用戶
+    };
+    
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    usersSnapshot.forEach((doc) => {
+      const data = doc.data();
+      stats.total++;
+      
+      if (data.isActive) {
+        stats.active++;
+      } else {
+        stats.inactive++;
+      }
+      
+      const role = data.role as UserRole;
+      stats.byRole[role] = (stats.byRole[role] || 0) + 1;
+      
+      if (data.lastLoginAt?.toDate() > sevenDaysAgo) {
+        stats.recentLogins++;
+      }
+    });
+    
+    return { status: 'success', stats };
+  } catch (error: any) {
+    console.error("Error in getUserStats:", error.message);
     return { status: 'error', message: error.message };
   }
 } 
