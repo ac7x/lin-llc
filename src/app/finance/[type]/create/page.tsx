@@ -94,7 +94,9 @@ function ImportContractPage() {
       setContractQuoteIds(quoteIds);
     };
 
-    loadContractIds();
+    loadContractIds().catch(error => {
+      logError(error, { operation: 'load_contract_ids' });
+    });
   }, []);
 
   const orderRows: RowBase[] = useMemo(() => {

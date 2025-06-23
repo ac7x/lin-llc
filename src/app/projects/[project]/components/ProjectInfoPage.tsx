@@ -71,7 +71,7 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
       });
     };
 
-    fetchMembers();
+    void fetchMembers();
   }, []);
 
   return (

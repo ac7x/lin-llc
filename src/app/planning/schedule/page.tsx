@@ -164,7 +164,9 @@ export default function ProjectsPage() {
       }
       setAllItems(all);
       setItems(all);
-    })();
+    })().catch(error => {
+      logError(error, { operation: 'fetch_schedule_data' });
+    });
   }, []);
 
   const toggleKeyword = (keyword: string) => {
@@ -230,9 +232,9 @@ export default function ProjectsPage() {
               const container = timelineContainerRef.current;
               if (container) {
                 if (document.fullscreenElement) {
-                  document.exitFullscreen();
+                  document.exitFullscreen().catch(err => console.error(err));
                 } else {
-                  container.requestFullscreen();
+                  container.requestFullscreen().catch(err => console.error(err));
                 }
               }
             }}

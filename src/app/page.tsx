@@ -133,7 +133,7 @@ export default function HomePage(): ReactElement {
 
   useEffect(() => {
     if (user && !isDeveloper) {
-      checkCanPost(user);
+      void checkCanPost(user);
     } else {
       setCanPost(isDeveloper);
     }
@@ -209,7 +209,7 @@ export default function HomePage(): ReactElement {
 
       {user && (
         <form
-          onSubmit={handleSubmit}
+          onSubmit={e => void handleSubmit(e)}
           className='mb-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md'
         >
           {isDeveloper && (

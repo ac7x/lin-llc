@@ -213,7 +213,13 @@ export default function ArchivePage() {
         setHasArchivePermission(ok);
         setPermissionChecked(true);
       }
-    })();
+    })().catch(error => {
+      logError(error, { operation: 'check_archive_permission' });
+      if (mounted) {
+        setHasArchivePermission(false);
+        setPermissionChecked(true);
+      }
+    });
     return () => {
       mounted = false;
     };
@@ -269,7 +275,7 @@ export default function ArchivePage() {
       }
     };
 
-    fetchRetentionDays();
+    void fetchRetentionDays();
   }, [type]);
 
   // 獲取封存資料

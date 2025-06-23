@@ -447,7 +447,7 @@ export default function ProjectExpensesPage() {
                       </button>
                       <button
                         className='p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200'
-                        onClick={() => handleDeleteExpense(expense.expenseId)}
+                        onClick={() => void handleDeleteExpense(expense.expenseId)}
                         title='刪除'
                       >
                         <svg
@@ -482,7 +482,7 @@ export default function ProjectExpensesPage() {
             <form
               onSubmit={e => {
                 e.preventDefault();
-                handleSaveExpense();
+                void handleSaveExpense();
               }}
               className='space-y-4'
             >
