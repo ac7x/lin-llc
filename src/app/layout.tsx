@@ -17,7 +17,6 @@ import Script from 'next/script';
 import React, { useEffect, useState } from 'react';
 import '../styles/globals.css';
 import type { ReactElement, ReactNode } from 'react';
-import { ThemeProvider } from "@/providers/theme-provider"
 
 import { Unauthorized } from '@/components/common/Unauthorized';
 import BottomNavigation from '@/components/tabs/BottomNavigation';
@@ -25,6 +24,7 @@ import { useAppCheck } from '@/hooks/useAppCheck';
 import { useAuth } from '@/hooks/useAuth';
 import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
 import { initializeClientServices } from '@/lib/firebase-init';
+import { ThemeProvider } from '@/providers/theme-provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

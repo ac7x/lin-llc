@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 
 import type { Project, Workpackage } from '@/app/projects/types/project';
 import { ProjectProgressPercent } from '@/app/projects/utils/progressUtils';
+import { ModeToggle } from '@/components/common/ModeToggle';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Sidebar,
@@ -23,6 +24,7 @@ import {
   SidebarMenuSub,
   SidebarProvider,
   SidebarTrigger,
+  SidebarRail,
 } from '@/components/ui/sidebar';
 import { navigationItems } from '@/constants/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -533,6 +535,10 @@ export default function BottomNavigation(): ReactElement | null {
             })}
           </ul>
         </div>
+        {/* 移動端主題切換按鈕 */}
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+          <ModeToggle />
+        </div>
       </nav>
     );
   }
@@ -540,13 +546,16 @@ export default function BottomNavigation(): ReactElement | null {
   // 桌面版本 - 側邊導航
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar className="fixed left-0 top-0 h-full w-64 bg-background border-r border-border z-40">
+      <Sidebar className="fixed left-0 top-0 h-full w-64 bg-background border-r border-border z-40" collapsible="icon">
         <SidebarHeader className="border-b border-border p-4">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
               LIN LLC
             </h1>
-            <SidebarTrigger className="h-8 w-8" />
+            <div className="flex items-center gap-2">
+              <ModeToggle />
+              <SidebarTrigger className="h-8 w-8" />
+            </div>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -560,6 +569,7 @@ export default function BottomNavigation(): ReactElement | null {
           {isProjectPage && <ProjectNavigation pathname={pathname} />}
           {!isProjectPage && <ProjectTreeNavigation pathname={pathname} />}
         </SidebarContent>
+        <SidebarRail />
       </Sidebar>
     </SidebarProvider>
   );
