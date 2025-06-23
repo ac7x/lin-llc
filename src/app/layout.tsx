@@ -17,6 +17,7 @@ import Script from 'next/script';
 import React, { useEffect, useState } from 'react';
 import '../styles/globals.css';
 import type { ReactElement, ReactNode } from 'react';
+import { ThemeProvider } from "@/providers/theme-provider"
 
 import { Unauthorized } from '@/components/common/Unauthorized';
 import BottomNavigation from '@/components/tabs/BottomNavigation';
@@ -40,11 +41,11 @@ const geistMono = Geist_Mono({
 // 不需要驗證的路徑
 const PUBLIC_PATHS = ['/signup', '/forgot-password'];
 
-export default function RootLayout({
-  children,
-}: {
+interface RootLayoutProps {
   children: ReactNode;
-}): ReactElement {
+}
+
+export default function RootLayout({ children }: RootLayoutProps): ReactElement {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
@@ -161,7 +162,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang='zh-TW'>
+    <html lang='zh-TW' suppressHydrationWarning>
       <head>
         {isClient && (
           <Script
@@ -177,10 +178,17 @@ export default function RootLayout({
         } as React.CSSProperties}
         className='antialiased bg-background text-foreground'
       >
-        <main className={user ? (isMobile ? 'pb-16' : 'ml-64') : ''}>
-          {children}
-        </main>
-        {user && <BottomNavigation />}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <main className={user ? (isMobile ? 'pb-16' : 'ml-64') : ''}>
+            {children}
+          </main>
+          {user && <BottomNavigation />}
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -28,7 +28,8 @@
       "@/constants/*": ["./src/constants/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/types/*": ["./src/types/*"],
-      "@/modules/*": ["./src/modules/*"]
+      "@/modules/*": ["./src/modules/*"],
+      "@/providers/*": ["./src/providers/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
