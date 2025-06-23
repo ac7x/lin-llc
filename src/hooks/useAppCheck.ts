@@ -34,7 +34,7 @@ export const useAppCheck = () => {
       }
     };
 
-    validateAppCheck();
+    void validateAppCheck();
   }, []);
 
   /**

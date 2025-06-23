@@ -82,7 +82,7 @@ export default function ProjectCalendarPage() {
       });
       setLoading(false);
     };
-    fetchAllWorkpackages();
+    void fetchAllWorkpackages();
   }, []);
 
   const EventComponent = ({ event }: { event: CalendarEvent }) => {
@@ -138,11 +138,15 @@ ${progressText}`);
     if (!calendarContainerRef.current) return;
     if (!isFullscreen) {
       if (calendarContainerRef.current.requestFullscreen) {
-        calendarContainerRef.current.requestFullscreen();
+        calendarContainerRef.current.requestFullscreen().catch(err => {
+          console.error('Error attempting to enable full-screen mode:', err);
+        });
       }
     } else {
       if (document.exitFullscreen) {
-        document.exitFullscreen();
+        document.exitFullscreen().catch(err => {
+          console.error('Error attempting to exit full-screen mode:', err);
+        });
       }
     }
   };

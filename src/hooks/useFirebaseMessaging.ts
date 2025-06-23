@@ -62,7 +62,7 @@ export function useFirebaseMessaging(): UseFirebaseMessagingReturn {
   }, [isClient]);
 
   useEffect(() => {
-    initMessaging();
+    void initMessaging();
   }, [initMessaging]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {

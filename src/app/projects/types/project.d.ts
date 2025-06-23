@@ -48,7 +48,11 @@ export type SubWorkpackageStatus =
 /**
  * 專案優先級枚舉
  */
-export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
+export type ProjectPriority = 
+  | 'low'       // 低
+  | 'medium'    // 中
+  | 'high'      // 高
+  | 'critical'; // 緊急
 
 /**
  * 專案類型枚舉
@@ -61,12 +65,21 @@ export type ProjectType =
 /**
  * 專案風險等級
  */
-export type ProjectRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+export type ProjectRiskLevel = 
+  | 'low'       // 低
+  | 'medium'    // 中
+  | 'high'      // 高
+  | 'critical'; // 緊急
 
 /**
  * 專案健康度等級
  */
-export type ProjectHealthLevel = 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+export type ProjectHealthLevel = 
+  | 'excellent' // 優良
+  | 'good'      // 良好
+  | 'fair'      // 一般
+  | 'poor'      // 差
+  | 'critical'; // 危急
 
 /**
  * 專案階段枚舉
@@ -96,9 +109,9 @@ export interface Task extends BaseWithDates {
 }
 
 export interface ProgressHistoryRecord {
-  date: DateField;
-  doneCount: number;
-  percent: number;
+  date: DateField; // 日期
+  doneCount: number; // 完成數量
+  percent: number; // 完成百分比
   notes?: string; // 進度備註
   updatedBy: string; // 更新者
 }
@@ -107,13 +120,13 @@ export interface ProgressHistoryRecord {
  * 專案里程碑
  */
 export interface ProjectMilestone extends BaseWithDates {
-  id: string;
-  name: string;
-  description?: string;
-  targetDate: DateField;
-  actualDate?: DateField;
-  status: 'pending' | 'completed' | 'overdue';
-  type: 'start' | 'intermediate' | 'end';
+  id: string; // 里程碑唯一識別碼
+  name: string; // 里程碑名稱
+  description?: string; // 里程碑描述
+  targetDate: DateField; // 目標日期
+  actualDate?: DateField; // 實際完成日期
+  status: 'pending' | 'completed' | 'overdue'; // 狀態
+  type: 'start' | 'intermediate' | 'end'; // 類型
   dependencies?: string[]; // 依賴的其他里程碑ID
   completionCriteria?: string; // 完成標準
   responsiblePerson?: string; // 負責人
@@ -125,17 +138,17 @@ export interface ProjectMilestone extends BaseWithDates {
  * 專案風險記錄
  */
 export interface ProjectRisk extends BaseWithDates {
-  id: string;
-  title: string;
-  description: string;
-  probability: 'low' | 'medium' | 'high';
-  impact: 'low' | 'medium' | 'high';
-  riskLevel: ProjectRiskLevel;
-  mitigationPlan?: string;
-  contingencyPlan?: string;
-  status: 'identified' | 'monitoring' | 'mitigated' | 'closed';
-  assignedTo?: string;
-  dueDate?: DateField;
+  id: string; // 風險唯一識別碼
+  title: string; // 風險標題
+  description: string; // 風險描述
+  probability: 'low' | 'medium' | 'high'; // 發生機率
+  impact: 'low' | 'medium' | 'high'; // 影響程度
+  riskLevel: ProjectRiskLevel; // 風險等級
+  mitigationPlan?: string; // 緩解計畫
+  contingencyPlan?: string; // 應變計畫
+  status: 'identified' | 'monitoring' | 'mitigated' | 'closed'; // 狀態
+  assignedTo?: string; // 負責人
+  dueDate?: DateField; // 處理期限
   cost?: number; // 風險成本
   probabilityPercentage?: number; // 發生機率百分比
   impactScore?: number; // 影響分數 1-10
@@ -145,16 +158,16 @@ export interface ProjectRisk extends BaseWithDates {
  * 專案變更記錄
  */
 export interface ProjectChange extends BaseWithDates {
-  id: string;
-  title: string;
-  description: string;
-  type: 'scope' | 'schedule' | 'cost' | 'quality' | 'risk';
-  impact: 'low' | 'medium' | 'high';
-  status: 'proposed' | 'approved' | 'rejected' | 'implemented';
-  requestedBy: string;
-  approvedBy?: string;
-  approvedDate?: DateField;
-  implementationDate?: DateField;
+  id: string; // 變更唯一識別碼
+  title: string; // 變更標題
+  description: string; // 變更描述
+  type: 'scope' | 'schedule' | 'cost' | 'quality' | 'risk'; // 變更類型
+  impact: 'low' | 'medium' | 'high'; // 影響程度
+  status: 'proposed' | 'approved' | 'rejected' | 'implemented'; // 狀態
+  requestedBy: string; // 申請人
+  approvedBy?: string; // 核准人
+  approvedDate?: DateField; // 核准日期
+  implementationDate?: DateField; // 實施日期
   costImpact?: number; // 成本影響
   scheduleImpact?: number; // 時程影響（天數）
   scopeImpact?: string; // 範圍影響描述
@@ -201,58 +214,78 @@ export interface ProjectFinancialMetrics {
   varianceAtCompletion: number; // 完工差異
 }
 
+/**
+ * 發包資訊
+ */
+export interface SubcontractInfo {
+  subcontractor?: string; // 承包商
+  amount?: number; // 發包金額
+  date?: DateField; // 發包日期
+  notes?: string; // 發包備註
+}
+
+/**
+ * 驗收資訊
+ */
+export interface AcceptanceInfo {
+  status: 'pending' | 'approved' | 'rejected'; // 驗收狀態
+  date?: DateField; // 驗收日期
+  notes?: string; // 驗收備註
+}
+
 export interface SubWorkpackage extends BaseWithDates {
-  id: string;
-  name: string;
-  description?: string;
-  actualStartDate?: DateField;
-  actualEndDate?: DateField;
-  plannedStartDate?: DateField;
-  plannedEndDate?: DateField;
-  status?: SubWorkpackageStatus;
-  progress?: number;
-  assignedTo?: string | null;
-  priority?: number;
-  estimatedQuantity?: number;
-  actualQuantity?: number;
-  unit?: string;
-  budget?: number;
-  estimatedStartDate?: DateField;
-  estimatedEndDate?: DateField;
-  progressHistory?: ProgressHistoryRecord[];
-  tasks?: Task[];
-  // 新增專業化欄位
+  id: string; // 子工作包唯一識別碼
+  name: string; // 子工作包名稱
+  description?: string; // 子工作包描述
+  actualStartDate?: DateField; // 實際開始日期
+  actualEndDate?: DateField; // 實際結束日期
+  plannedStartDate?: DateField; // 計劃開始日期
+  plannedEndDate?: DateField; // 計劃結束日期
+  status?: SubWorkpackageStatus; // 子工作包狀態
+  progress?: number; // 進度百分比
+  assignedTo?: string | null; // 分配對象
+  priority?: number; // 優先級
+  estimatedQuantity?: number; // 預估數量
+  actualQuantity?: number; // 實際數量
+  unit?: string; // 單位
+  budget?: number; // 預算
+  estimatedStartDate?: DateField; // 預計開始日期
+  estimatedEndDate?: DateField; // 預計結束日期
+  progressHistory?: ProgressHistoryRecord[]; // 進度歷史記錄
+  tasks?: Task[]; // 任務清單
   qualityScore?: number; // 品質評分 1-10
   safetyIncidents?: number; // 安全事故次數
   reworkCount?: number; // 重工次數
   completionNotes?: string; // 完工備註
-  // 新增進階欄位
   estimatedHours?: number; // 預估工時
   actualHours?: number; // 實際工時
   costVariance?: number; // 成本差異
   scheduleVariance?: number; // 時程差異
   riskLevel?: 'low' | 'medium' | 'high'; // 風險等級
   dependencies?: string[]; // 依賴的其他子工作包ID
+  photos?: PhotoRecord[]; // 照片記錄
+  issues?: IssueRecord[]; // 問題記錄
+  subcontract?: SubcontractInfo; // 發包資訊
+  acceptance?: AcceptanceInfo; // 驗收資訊
 }
 
 export interface Workpackage extends BaseWithDates {
-  id: string;
-  name: string;
-  description?: string;
-  actualStartDate?: DateField;
-  actualEndDate?: DateField;
-  plannedStartDate?: DateField;
-  plannedEndDate?: DateField;
-  estimatedStartDate?: DateField;
-  estimatedEndDate?: DateField;
-  status?: WorkpackageStatus;
-  progress?: number;
-  assignedTo?: string | null;
-  budget?: number;
-  category?: string;
-  priority?: 'low' | 'medium' | 'high';
-  subWorkpackages: SubWorkpackage[];
-  // 新增專業化欄位
+  id: string; // 工作包唯一識別碼
+  name: string; // 工作包名稱
+  description?: string; // 工作包描述
+  actualStartDate?: DateField; // 實際開始日期
+  actualEndDate?: DateField; // 實際結束日期
+  plannedStartDate?: DateField; // 計劃開始日期
+  plannedEndDate?: DateField; // 計劃結束日期
+  estimatedStartDate?: DateField; // 預計開始日期
+  estimatedEndDate?: DateField; // 預計結束日期
+  status?: WorkpackageStatus; // 工作包狀態
+  progress?: number; // 進度百分比
+  assignedTo?: string | null; // 分配對象
+  budget?: number; // 預算
+  category?: string; // 類別
+  priority?: 'low' | 'medium' | 'high'; // 優先級
+  subWorkpackages: SubWorkpackage[]; // 子工作包清單
   qualityMetrics?: {
     inspectionPassRate: number; // 檢驗通過率
     defectRate: number; // 缺陷率
@@ -263,7 +296,6 @@ export interface Workpackage extends BaseWithDates {
     safetyAuditScore: number; // 安全稽核分數
     trainingHours: number; // 訓練時數
   };
-  // 新增進階欄位
   estimatedHours?: number; // 預估工時
   actualHours?: number; // 實際工時
   costVariance?: number; // 成本差異
@@ -274,82 +306,83 @@ export interface Workpackage extends BaseWithDates {
 }
 
 export interface DailyReport extends BaseWithDates {
-  id: string;
-  date: DateField;
-  weather: string;
-  temperature: number;
-  rainfall: number;
-  workforceCount: number;
-  materials: MaterialEntry[];
-  activities: ActivityLog[];
-  issues?: IssueRecord[] | string;
-  photos: PhotoRecord[];
-  createdBy: string;
-  description?: string; // 新增，對應 UI 的工作描述
-  projectProgress?: number; // 新增，記錄當日專案總進度
+  id: string; // 日報唯一識別碼
+  date: DateField; // 日期
+  weather: string; // 天氣
+  temperature: number; // 溫度
+  rainfall: number; // 降雨量
+  workforceCount: number; // 工人數量
+  materials: MaterialEntry[]; // 材料使用記錄
+  activities: ActivityLog[]; // 活動日誌
+  issues?: IssueRecord[] | string; // 問題記錄
+  photos: PhotoRecord[]; // 照片記錄
+  createdBy: string; // 建立者
+  description?: string; // 對應 UI 的工作描述
+  projectProgress?: number; // 記錄當日專案總進度
 }
 
 export interface ActivityLog extends BaseWithDates {
-  id: string;
-  workpackageId: string;
-  description: string;
-  startTime: DateField;
-  endTime: DateField;
-  workforce: number;
-  progress: number;
-  notes: string;
+  id: string; // 活動日誌唯一識別碼
+  workpackageId: string; // 關聯的工作包ID
+  description: string; // 活動描述
+  startTime: DateField; // 開始時間
+  endTime: DateField; // 結束時間
+  workforce: number; // 投入人力
+  progress: number; // 進度
+  notes: string; // 備註
 }
 
 export interface MaterialEntry extends BaseWithDates {
-  materialId: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  supplier: string;
-  notes: string;
+  materialId: string; // 材料ID
+  name: string; // 材料名稱
+  quantity: number; // 數量
+  unit: string; // 單位
+  supplier: string; // 供應商
+  notes: string; // 備註
 }
 
 export interface IssueRecord extends BaseWithDates {
-  id: string;
-  type: 'quality' | 'safety' | 'progress' | 'other';
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  status: 'open' | 'in-progress' | 'resolved';
-  assignedTo: string | null;
-  dueDate: DateField;
-  resolution?: string;
+  id: string; // 問題唯一識別碼
+  type: 'quality' | 'safety' | 'progress' | 'other'; // 問題類型
+  description: string; // 問題描述
+  severity: 'low' | 'medium' | 'high'; // 嚴重性
+  status: 'open' | 'in-progress' | 'resolved'; // 狀態
+  assignedTo: string | null; // 負責人
+  dueDate: DateField; // 處理期限
+  resolution?: string; // 解決方案
   resolved?: boolean; // 允許 resolved 屬性，與現有程式一致
 }
 
 export interface PhotoRecord extends BaseWithDates {
-  id: string;
-  url: string;
-  type: PhotoType;
-  description: string;
-  workpackageId?: string;
-  zoneId?: string;
-  reportId?: string;
-  createdBy: string;
+  id: string; // 照片唯一識別碼
+  url: string; // 照片URL
+  type: PhotoType; // 照片類型
+  description: string; // 照片描述
+  workpackageId?: string; // 關聯的工作包ID
+  zoneId?: string; // 關聯的區域ID
+  reportId?: string; // 關聯的日報ID
+  createdBy: string; // 上傳者
 }
 
 export interface Zone extends BaseWithDates {
-  zoneId: string;
-  zoneName: string;
-  desc?: string;
-  order?: number;
+  zoneId: string; // 區域ID
+  zoneName: string; // 區域名稱
+  desc?: string; // 描述
+  order?: number; // 排序
 }
 
 export interface Expense extends BaseWithDates {
-  id: string;
-  description: string;
-  amount: number;
-  date: DateField;
-  category: string;
-  createdBy: string;
-  updatedBy: string;
+  id: string; // 費用唯一識別碼
+  description: string; // 費用描述
+  amount: number; // 金額
+  date: DateField; // 日期
+  category: string; // 類別
+  createdBy: string; // 建立者
+  updatedBy: string; // 更新者
 }
 
 export interface Project extends BaseWithDates {
+  id?: string; // Firestore Document ID
   projectId?: string; // 專案唯一識別碼（可選）
   projectName: string; // 專案名稱
   contractId?: string; // 合約 ID（可選）
@@ -377,7 +410,6 @@ export interface Project extends BaseWithDates {
   expenses?: Expense[]; // 專案的費用清單（可選）
   roles?: string[]; // 專案的角色權限清單（可選）
   archivedAt?: DateField | null; // 封存日期
-  // 新增專業化欄位
   projectType?: ProjectType; // 專案類型
   priority?: ProjectPriority; // 專案優先級
   riskLevel?: ProjectRiskLevel; // 風險等級
@@ -387,7 +419,6 @@ export interface Project extends BaseWithDates {
   qualityMetrics?: ProjectQualityMetrics; // 專案品質指標
   safetyMetrics?: ProjectSafetyMetrics; // 專案安全指標
   financialMetrics?: ProjectFinancialMetrics; // 專案財務指標
-  // 新增進階欄位
   phase?: ProjectPhase; // 專案階段
   healthLevel?: ProjectHealthLevel; // 專案健康度等級
   estimatedBudget?: number; // 預估預算
@@ -403,7 +434,6 @@ export interface Project extends BaseWithDates {
   nextReviewDate?: DateField; // 下次審查日期
   lastReviewDate?: DateField; // 上次審查日期
   reviewFrequency?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly'; // 審查頻率
-  // 新增品質分數追蹤欄位
   qualityScore?: number; // 即時品質分數 (0-10)，初始值為 10
   lastQualityAdjustment?: DateField; // 上次品質分數調整時間
 }
@@ -411,25 +441,25 @@ export interface Project extends BaseWithDates {
 // ===== Template 型別區 =====
 
 export interface SubWorkpackageTemplateItem extends BaseWithDates {
-  id: string;
-  name: string;
-  description?: string;
-  estimatedQuantity?: number;
-  unit?: string;
-  tasks?: {
-    name: string;
-    description?: string;
+  id: string; // 範本項目唯一識別碼
+  name: string; // 項目名稱
+  description?: string; // 項目描述
+  estimatedQuantity?: number; // 預估數量
+  unit?: string; // 單位
+  tasks?: { // 預設任務
+    name: string; // 任務名稱
+    description?: string; // 任務描述
   }[];
-  createdBy: string;
+  createdBy: string; // 建立者
 }
 
 export interface Template extends BaseWithDates {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  subWorkpackages: SubWorkpackageTemplateItem[];
-  createdBy: string;
+  id: string; // 範本唯一識別碼
+  name: string; // 範本名稱
+  description: string; // 範本描述
+  category: string; // 範本類別
+  subWorkpackages: SubWorkpackageTemplateItem[]; // 子工作包範本項目清單
+  createdBy: string; // 建立者
 }
 
 /**
@@ -440,14 +470,14 @@ export interface Template extends BaseWithDates {
  * - assignedTo: 負責人（可選）
  */
 export type TemplateToSubWorkpackageOptions = {
-  workpackageId?: string;
-  estimatedStartDate?: DateField;
-  estimatedEndDate?: DateField;
-  assignedTo?: string | null;
+  workpackageId?: string; // 應用於指定的工作包 ID
+  estimatedStartDate?: DateField; // 預計開始日期
+  estimatedEndDate?: DateField; // 預計結束日期
+  assignedTo?: string | null; // 分配對象
 };
 
 export interface ProjectDocument extends Project {
-  id: string;
-  idx: number;
-  createdAt: string; // 已經格式化
+  id: string; // 文件ID
+  idx: number; // 索引或編號
+  createdAt: string; // 建立時間（已格式化）
 }

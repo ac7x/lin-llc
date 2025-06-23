@@ -213,7 +213,13 @@ export default function ArchivePage() {
         setHasArchivePermission(ok);
         setPermissionChecked(true);
       }
-    })();
+    })().catch(error => {
+      logError(error, { operation: 'check_archive_permission' });
+      if (mounted) {
+        setHasArchivePermission(false);
+        setPermissionChecked(true);
+      }
+    });
     return () => {
       mounted = false;
     };
@@ -225,26 +231,24 @@ export default function ArchivePage() {
       const result = await safeAsync(
         async () => {
           const docRef = doc(db, 'settings', 'archive');
-          const snapshot = await retry(
-            async () => {
-              const doc = await getDoc(docRef);
-              if (!doc.exists()) {
-                throw createError(
-                  ErrorCode.DATA_NOT_FOUND,
-                  '封存設定不存在',
-                  ErrorSeverity.LOW,
-                  { settingsPath: 'settings/archive' }
-                );
-              }
-              return doc;
-            },
-            3,
-            1000
-          );
-          
+          const snapshot = await retry(() => getDoc(docRef), 3, 1000);
+
+          if (!snapshot.exists() || typeof snapshot.data()?.retentionDays !== 'number') {
+            if (!snapshot.exists()) {
+              console.warn(
+                "Firestore document 'settings/archive' not found. Using default retention days (3650)."
+              );
+            } else {
+              console.warn(
+                "Invalid 'retentionDays' in 'settings/archive'. Using default retention days (3650)."
+              );
+            }
+            return 3650; // Return default value directly
+          }
+
           const data = snapshot.data();
-          const retentionDays = typeof data.retentionDays === 'number' ? data.retentionDays : 3650;
-          
+          const retentionDays = data.retentionDays;
+
           if (retentionDays < 0) {
             throw createError(
               ErrorCode.DATA_INVALID,
@@ -253,26 +257,26 @@ export default function ArchivePage() {
               { retentionDays }
             );
           }
-          
+
           return retentionDays;
         },
-        (error) => {
+        error => {
           logError(error, {
             operation: 'fetch_retention_days',
             archiveType: type,
           });
-          // 使用預設值
-          setArchiveRetentionDays(3650);
+          // In case of other errors (e.g., permissions), use default value
+          return 3650;
         }
       );
-      
+
       if (result !== null) {
         setArchiveRetentionDays(result);
       }
     };
-    
-    fetchRetentionDays();
-  }, [type]); // 添加 type 依賴
+
+    void fetchRetentionDays();
+  }, [type]);
 
   // 獲取封存資料
   const [dataSnapshot, dataLoading, dataError] = useCollection(

@@ -144,7 +144,7 @@ export function useNotifications(
     );
 
     // 載入未讀數量
-    safeAsync(async () => {
+    void safeAsync(async () => {
       const count = await getUnreadNotificationCount(user.uid);
       setUnreadCount(count);
       setLoading(false);
@@ -274,7 +274,7 @@ export function useUnreadNotificationCount(): {
     );
 
     // 初始載入未讀數量
-    safeAsync(async () => {
+    void safeAsync(async () => {
       const count = await getUnreadNotificationCount(user.uid);
       setUnreadCount(count);
       setLoading(false);

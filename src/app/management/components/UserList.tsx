@@ -13,11 +13,17 @@ export default function UserList() {
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
-      const snap = await getDocs(collection(db, 'members'));
-      setUsers(snap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AppUser)));
-      setLoading(false);
+      try {
+        const snap = await getDocs(collection(db, 'members'));
+        setUsers(snap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AppUser)));
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+        setMessage('無法載入用戶列表');
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchUsers();
+    void fetchUsers();
   }, []);
 
   const handleRoleChange = async (uid: string, newRole: RoleKey) => {
@@ -58,7 +64,7 @@ export default function UserList() {
                 <td className='px-4 py-2'>
                   <select
                     value={user.currentRole}
-                    onChange={e => handleRoleChange(user.uid, e.target.value as RoleKey)}
+                    onChange={e => void handleRoleChange(user.uid, e.target.value as RoleKey)}
                     disabled={savingId === user.uid}
                     className='border rounded px-2 py-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100'
                   >

@@ -3,49 +3,67 @@
 │  │  page.tsx
 │  │
 │  ├─account
-│  │      page.tsx
-│  │
-│  ├─archive
-│  │  │  layout.tsx
 │  │  │  page.tsx
 │  │  │
-│  │  └─[type]
-│  │          page.tsx
-│  │
-│  ├─calendar
-│  │      page.tsx
+│  │  └─notifications
+│  │      │  page.tsx
+│  │      │
+│  │      └─components
+│  │              NotificationBell.tsx
 │  │
 │  ├─dashboard
-│  │      page.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  ├─components
+│  │  │  ├─charts
+│  │  │  │      EfficiencyBarChart.tsx
+│  │  │  │      PersonnelPieChart.tsx
+│  │  │  │      ProgressRadarChart.tsx
+│  │  │  │      WorkforceLineChart.tsx
+│  │  │  │
+│  │  │  ├─layout
+│  │  │  │      DashboardLayout.tsx
+│  │  │  │      ProjectAnalysisCard.tsx
+│  │  │  │      SidebarNav.tsx
+│  │  │  │
+│  │  │  ├─logs
+│  │  │  │      ActivityLog.tsx
+│  │  │  │      LogFilter.tsx
+│  │  │  │
+│  │  │  └─stats
+│  │  │          StatCard.tsx
+│  │  │          StatGrid.tsx
+│  │  │
+│  │  ├─hooks
+│  │  │      useLogData.ts
+│  │  │      useProjectData.ts
+│  │  │
+│  │  ├─types
+│  │  │      dashboard.d.ts
+│  │  │
+│  │  └─utils
+│  │          chartUtils.ts
+│  │          logUtils.ts
 │  │
 │  ├─finance
 │  │  │  layout.tsx
 │  │  │
-│  │  ├─contracts
+│  │  ├─archive
 │  │  │  │  page.tsx
 │  │  │  │
-│  │  │  ├─create
-│  │  │  │      page.tsx
-│  │  │  │
-│  │  │  └─[contract]
+│  │  │  └─[type]
 │  │  │          page.tsx
 │  │  │
-│  │  ├─orders
-│  │  │  │  page.tsx
-│  │  │  │
-│  │  │  ├─add
-│  │  │  │      page.tsx
-│  │  │  │
-│  │  │  └─[order]
-│  │  │          page.tsx
+│  │  ├─components
+│  │  │      FinanceListPage.tsx
 │  │  │
-│  │  └─quotes
+│  │  └─[type]
 │  │      │  page.tsx
 │  │      │
-│  │      ├─add
+│  │      ├─create
 │  │      │      page.tsx
 │  │      │
-│  │      └─[quote]
+│  │      └─[id]
 │  │              page.tsx
 │  │
 │  ├─gemini
@@ -54,87 +72,85 @@
 │  ├─management
 │  │  │  page.tsx
 │  │  │
-│  │  └─components
-│  │          RolePermissions.tsx
-│  │          UserList.tsx
-│  │
-│  ├─notifications
-│  │  │  page.tsx
-│  │  │
-│  │  └─components
-│  │          NotificationBell.tsx
-│  │
-│  ├─projects
-│  │  │  layout.tsx
-│  │  │  page.tsx
-│  │  │
 │  │  ├─components
-│  │  │      AddressSelector.tsx
-│  │  │      DataLoader.tsx
-│  │  │      ProjectDashboard.tsx
-│  │  │      ProjectsTable.tsx
-│  │  │      WeatherDisplay.tsx
+│  │  │      RolePermissions.tsx
+│  │  │      UserList.tsx
 │  │  │
-│  │  ├─hooks
-│  │  │      useFilteredProjects.ts
-│  │  │
-│  │  ├─import
+│  │  └─send-notification
+│  │          page.tsx
+│  │
+│  ├─planning
+│  │  ├─calendar
 │  │  │      page.tsx
 │  │  │
-│  │  ├─templates
-│  │  │      page.tsx
-│  │  │
-│  │  ├─types
-│  │  │      project.d.ts
-│  │  │
-│  │  ├─utils
-│  │  │      progressUtils.tsx
-│  │  │      projectUtils.ts
-│  │  │
-│  │  └─[project]
-│  │      │  page.tsx
-│  │      │
-│  │      ├─components
-│  │      │      ProjectEditModal.tsx
-│  │      │      ProjectInfoDisplay.tsx
-│  │      │      ProjectInfoPage.tsx
-│  │      │      WorkpackageList.tsx
-│  │      │
-│  │      ├─project-calendar
-│  │      │      page.tsx
-│  │      │
-│  │      ├─project-expenses
-│  │      │      page.tsx
-│  │      │
-│  │      ├─project-issues
-│  │      │      page.tsx
-│  │      │
-│  │      ├─project-journal
-│  │      │  │  page.tsx
-│  │      │  │
-│  │      │  └─components
-│  │      │          JournalForm.tsx
-│  │      │          JournalHistory.tsx
-│  │      │
-│  │      ├─project-materials
-│  │      │      page.tsx
-│  │      │
-│  │      ├─project-storage
-│  │      │      page.tsx
-│  │      │
-│  │      ├─subworkpackages
-│  │      │  └─[subworkpackage]
-│  │      │          page.tsx
-│  │      │
-│  │      └─workpackages
-│  │          └─[workpackage]
-│  │                  page.tsx
+│  │  └─schedule
+│  │          page.tsx
 │  │
-│  ├─schedule
-│  │      page.tsx
-│  │
-│  └─send-notification
-│          page.tsx
+│  └─projects
+│      │  layout.tsx
+│      │  page.tsx
+│      │
+│      ├─components
+│      │      AddressSelector.tsx
+│      │      DataLoader.tsx
+│      │      ProjectDashboard.tsx
+│      │      ProjectsTable.tsx
+│      │      WeatherDisplay.tsx
+│      │
+│      ├─hooks
+│      │      useFilteredProjects.ts
+│      │
+│      ├─import
+│      │      page.tsx
+│      │
+│      ├─templates
+│      │      page.tsx
+│      │
+│      ├─types
+│      │      project.d.ts
+│      │
+│      ├─utils
+│      │      progressUtils.tsx
+│      │      projectUtils.ts
+│      │
+│      └─[project]
+│          │  page.tsx
+│          │
+│          ├─components
+│          │      ProjectEditModal.tsx
+│          │      ProjectInfoDisplay.tsx
+│          │      ProjectInfoPage.tsx
+│          │      WorkpackageList.tsx
+│          │
+│          ├─project-calendar
+│          │      page.tsx
+│          │
+│          ├─project-expenses
+│          │      page.tsx
+│          │
+│          ├─project-issues
+│          │      page.tsx
+│          │
+│          ├─project-journal
+│          │  │  page.tsx
+│          │  │
+│          │  └─components
+│          │          JournalForm.tsx
+│          │          JournalHistory.tsx
+│          │
+│          ├─project-materials
+│          │      page.tsx
+│          │
+│          ├─project-storage
+│          │      page.tsx
+│          │
+│          └─workpackages
+│              └─[workpackage]
+│                  │  page.tsx
+│                  │
+│                  └─subworkpackages
+│                      └─[subworkpackage]
+│                              page.tsx
 │
 ├─components
 │  ├─common
@@ -145,9 +161,6 @@
 │  │      Tabs.tsx
 │  │      Unauthorized.tsx
 │  │      VisTimeline.tsx
-│  │
-│  ├─finance
-│  │      FinanceListPage.tsx
 │  │
 │  ├─pdf
 │  │      ContractPdfDocument.tsx
@@ -162,6 +175,7 @@
 │          accordion.tsx
 │          alert-dialog.tsx
 │          alert.tsx
+│          aspect-ratio.tsx
 │          avatar.tsx
 │          badge.tsx
 │          breadcrumb.tsx
@@ -172,12 +186,21 @@
 │          chart.tsx
 │          checkbox.tsx
 │          collapsible.tsx
+│          command.tsx
 │          dialog.tsx
+│          drawer.tsx
 │          dropdown-menu.tsx
+│          hover-card.tsx
 │          input.tsx
 │          label.tsx
+│          menubar.tsx
+│          navigation-menu.tsx
+│          pagination.tsx
+│          popover.tsx
 │          progress.tsx
 │          radio-group.tsx
+│          resizable.tsx
+│          scroll-area.tsx
 │          select.tsx
 │          separator.tsx
 │          sheet.tsx
@@ -189,6 +212,8 @@
 │          table.tsx
 │          tabs.tsx
 │          textarea.tsx
+│          toggle-group.tsx
+│          toggle.tsx
 │          tooltip.tsx
 │
 ├─constants

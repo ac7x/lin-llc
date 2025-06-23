@@ -77,7 +77,7 @@ export default function AddressSelector({
       }
     };
 
-    loadGoogleMaps();
+    void loadGoogleMaps();
   }, []);
 
   // 地理編碼
@@ -336,7 +336,7 @@ export default function AddressSelector({
                       value={searchTerm}
                       onChange={(e) => {
                         setSearchTerm(e.target.value);
-                        searchSuggestions(e.target.value);
+                        void searchSuggestions(e.target.value);
                       }}
                       placeholder='搜尋地址或地點...'
                       className={inputStyles.base}

@@ -19,7 +19,7 @@ export const PAGE_PERMISSIONS = [
     id: 'calendar',
     name: '行事曆',
     description: '查看和管理行事曆',
-    path: '/calendar',
+    path: '/planning/calendar',
   },
   // AI 功能
   {
@@ -69,7 +69,7 @@ export const PAGE_PERMISSIONS = [
     id: 'schedule',
     name: '排程管理',
     description: '管理排程相關功能',
-    path: '/schedule',
+    path: '/planning/schedule',
   },
   {
     id: 'orders',

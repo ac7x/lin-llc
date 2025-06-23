@@ -28,7 +28,6 @@ import ProjectIssuesPage from './project-issues/page';
 import ProjectJournalPage from './project-journal/page';
 import ProjectMaterialsPage from './project-materials/page';
 import ProjectStoragePage from './project-storage/page';
-import SubWorkpackageSortingPage from './subworkpackages/[subworkpackage]/page';
 
 // 狀態標籤對應
 const STATUS_LABELS: Record<string, string> = {
@@ -81,7 +80,6 @@ export default function ProjectDetailPage() {
           { key: 'journal', label: '工作日誌', content: <ProjectJournalPage /> },
           { key: 'calendar', label: '行程', content: <ProjectCalendarPage /> },
           { key: 'issues', label: '問題追蹤', content: <ProjectIssuesPage /> },
-          { key: 'subworkpackages', label: '子工作包排序', content: <SubWorkpackageSortingPage /> },
           { key: 'materials', label: '材料管理', content: <ProjectMaterialsPage /> },
           { key: 'expenses', label: '費用管理', content: <ProjectExpensesPage /> },
           { key: 'storage', label: '儲存空間', content: <ProjectStoragePage /> },

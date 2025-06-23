@@ -132,9 +132,9 @@ export default function ProjectCalendarPage() {
           webkitRequestFullscreen?: () => Promise<void>;
         };
         if (elem.requestFullscreen) {
-          elem.requestFullscreen();
+          elem.requestFullscreen().catch(console.error);
         } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
+          elem.webkitRequestFullscreen().catch(console.error);
         }
         setFullscreen(true);
       }
@@ -143,9 +143,9 @@ export default function ProjectCalendarPage() {
         webkitExitFullscreen?: () => Promise<void>;
       };
       if (doc.exitFullscreen) {
-        doc.exitFullscreen();
+        doc.exitFullscreen().catch(console.error);
       } else if (doc.webkitExitFullscreen) {
-        doc.webkitExitFullscreen();
+        doc.webkitExitFullscreen().catch(console.error);
       }
       setFullscreen(false);
     }

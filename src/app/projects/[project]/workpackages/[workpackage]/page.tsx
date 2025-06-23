@@ -199,7 +199,7 @@ export default function WorkpackageDetailPage() {
       });
       setLoadingTemplates(false);
     };
-    if (showTemplateModal && templates.length === 0) loadTemplates();
+    if (showTemplateModal && templates.length === 0) void loadTemplates();
   }, [showTemplateModal, templates.length]);
 
   if (loading) return <div>載入中...</div>;
@@ -975,7 +975,7 @@ export default function WorkpackageDetailPage() {
                           <form
                             onSubmit={e => {
                               e.preventDefault();
-                              handleAddFromTemplate(selectedTemplate);
+                              void handleAddFromTemplate(selectedTemplate);
                             }}
                           >
                             <ul className='list-disc pl-6 space-y-2'>

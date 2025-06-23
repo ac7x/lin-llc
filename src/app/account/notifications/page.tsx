@@ -81,9 +81,9 @@ function NotificationItem({ notification, onMarkAsRead, onArchive }: Notificatio
     setIsProcessing(false);
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (!notification.isRead) {
-      handleMarkAsRead();
+      await handleMarkAsRead();
     }
 
     // 如果有動作 URL，則導航到該頁面
@@ -160,7 +160,7 @@ function NotificationItem({ notification, onMarkAsRead, onArchive }: Notificatio
             <button
               onClick={e => {
                 e.stopPropagation();
-                handleMarkAsRead();
+                void handleMarkAsRead();
               }}
               disabled={isProcessing}
               className='p-1 text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-50'
@@ -177,7 +177,7 @@ function NotificationItem({ notification, onMarkAsRead, onArchive }: Notificatio
           <button
             onClick={e => {
               e.stopPropagation();
-              handleArchive();
+              void handleArchive();
             }}
             disabled={isProcessing}
             className='p-1 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50'
