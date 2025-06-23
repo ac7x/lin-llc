@@ -32,37 +32,6 @@ import type { NavigationItem } from '@/types/navigation';
 import { modalStyles, inputStyles, buttonStyles } from '@/utils/classNameUtils';
 import { safeAsync, retry, getErrorMessage, logError } from '@/utils/errorUtils';
 
-// 專案樹狀結構數據
-const projectTreeData = [
-  {
-    name: '專案管理',
-    items: [
-      {
-        name: '進行中專案',
-        items: [
-          { name: '專案 A', path: '/projects/project-a' },
-          { name: '專案 B', path: '/projects/project-b' },
-        ],
-      },
-      {
-        name: '已完成專案',
-        items: [
-          { name: '專案 C', path: '/projects/project-c' },
-          { name: '專案 D', path: '/projects/project-d' },
-        ],
-      },
-    ],
-  },
-  {
-    name: '工作包',
-    items: [
-      { name: '設計階段', path: '/workpackages/design' },
-      { name: '施工階段', path: '/workpackages/construction' },
-      { name: '驗收階段', path: '/workpackages/acceptance' },
-    ],
-  },
-];
-
 // 專案導航組件
 function ProjectNavigation({ pathname }: { pathname: string }) {
   const { user } = useAuth();
@@ -251,6 +220,17 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={pathname === `/projects/${project.id}`}
+                            className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+                          >
+                            <Link href={`/projects/${project.id}`}>
+                              <span className="pl-6 truncate">專案總覽</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
                         {project.workpackages?.map(wp => {
                           const hasSubWps = wp.subWorkpackages && wp.subWorkpackages.length > 0;
                           return (
@@ -437,50 +417,6 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
   );
 }
 
-// 樹狀組件
-function TreeItem({ item, pathname }: { item: any; pathname: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const hasChildren = item.items && item.items.length > 0;
-
-  if (!hasChildren) {
-    return (
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          asChild
-          isActive={pathname === item.path}
-          className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
-        >
-          <Link href={item.path}>
-            <File className="w-4 h-4" />
-            {item.name}
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  }
-
-  return (
-    <SidebarMenuItem>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="group/collapsible [&[data-state=open]>svg:first-child]:rotate-90">
-            <ChevronRight className="w-4 h-4 transition-transform" />
-            <Folder className="w-4 h-4" />
-            {item.name}
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {item.items.map((subItem: any, index: number) => (
-              <TreeItem key={index} item={subItem} pathname={pathname} />
-            ))}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarMenuItem>
-  );
-}
-
 // 主要導航組件
 function MainNavigation({ pathname, filteredNavigationItems }: { 
   pathname: string; 
@@ -514,22 +450,6 @@ function MainNavigation({ pathname, filteredNavigationItems }: {
   );
 }
 
-// 專案樹狀導航組件
-function ProjectTreeNavigation({ pathname }: { pathname: string }) {
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>專案結構</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {projectTreeData.map((item, index) => (
-            <TreeItem key={index} item={item} pathname={pathname} />
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
-}
-
 export default function BottomNavigation(): ReactElement | null {
   const pathname = usePathname();
   const { user, hasPermission } = useAuth();
@@ -539,9 +459,6 @@ export default function BottomNavigation(): ReactElement | null {
   const filteredNavigationItems = navigationItems.filter((item: NavigationItem) =>
     hasPermission(item.id)
   );
-
-  // 檢查是否在專案頁面
-  const isProjectPage = pathname.startsWith('/projects');
 
   // 檢測設備類型
   useEffect(() => {
@@ -623,9 +540,8 @@ export default function BottomNavigation(): ReactElement | null {
             filteredNavigationItems={filteredNavigationItems} 
           />
           
-          {/* 根據當前頁面顯示相應的詳細導航 */}
-          {isProjectPage && <ProjectNavigation pathname={pathname} />}
-          {!isProjectPage && <ProjectTreeNavigation pathname={pathname} />}
+          {/* 專案導航 */}
+          <ProjectNavigation pathname={pathname} />
         </SidebarContent>
         <SidebarRail />
       </Sidebar>
