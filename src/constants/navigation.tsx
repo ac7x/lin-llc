@@ -35,7 +35,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'schedule',
     name: '排程',
-    path: '/schedule',
+    path: '/planning/schedule',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
@@ -50,7 +50,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'calendar',
     name: '行事曆',
-    path: '/calendar',
+    path: '/planning/calendar',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
