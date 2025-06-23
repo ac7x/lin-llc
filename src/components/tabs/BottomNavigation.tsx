@@ -274,13 +274,14 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
                                         <SidebarMenuItem key={subWp.id}>
                                           <SidebarMenuButton
                                             asChild
-                                            isActive={pathname.includes(
-                                              `/subworkpackages/${subWp.id}`
-                                            )}
+                                            isActive={
+                                              pathname ===
+                                              `/projects/${project.id}/workpackages/${wp.id}/subworkpackages/${subWp.id}`
+                                            }
                                             className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
                                           >
                                             <Link
-                                              href={`/projects/${project.id}/subworkpackages/${subWp.id}`}
+                                              href={`/projects/${project.id}/workpackages/${wp.id}/subworkpackages/${subWp.id}`}
                                             >
                                               <File className="w-4 h-4 ml-6" />
                                               <span className="truncate">{subWp.name}</span>
