@@ -33,7 +33,7 @@
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": [
-      "coding-standards",
+      "codingStandards",
       "timeline",
       "calendar",
       "navigation",
@@ -42,7 +42,7 @@
       "auth",
       "common",
       "archive",
-      "google-maps"    ]
+      "googleMaps"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/modules/**/*.ts"],
   "exclude": ["node_modules"]

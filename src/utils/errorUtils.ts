@@ -4,7 +4,7 @@
  * 提供統一的錯誤處理、錯誤創建、錯誤分類和日誌記錄功能
  */
 
-import type { AppError, ValidationError, ValidationResult } from '@/types/coding-standards';
+import type { AppError, ValidationError, ValidationResult } from '@/types/codingStandards';
 
 // 錯誤代碼枚舉
 export enum ErrorCode {
