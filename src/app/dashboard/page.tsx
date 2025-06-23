@@ -36,16 +36,28 @@ import {
 
 import { Workpackage, Project } from '@/app/projects/types/project';
 import { Unauthorized } from '@/components/common/Unauthorized';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ROLE_HIERARCHY, ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db, collection } from '@/lib/firebase-client';
 import { safeToDate } from '@/utils/dateUtils';
 import { calculateProjectProgress } from '../projects/utils/progressUtils';
-
-// 抽取共用樣式
-const cardStyles = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6';
-const titleStyles =
-  'text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-4';
+import { StatCard } from './components/stats/StatCard';
 
 // 抽取圖表顏色配置
 const CHART_COLORS = {
@@ -77,30 +89,10 @@ const LoadingSpinner = () => (
 
 // 錯誤狀態組件
 const ErrorMessage = ({ message }: { message: string }) => (
-  <div className='text-red-500 text-center py-4'>錯誤: {message}</div>
-);
-
-// 統計卡片元件
-interface StatCardProps {
-  title: string;
-  loading: boolean;
-  error?: { message: string } | null;
-  value: number | undefined;
-}
-
-const StatCard = ({ title, loading, error, value }: StatCardProps) => (
-  <section className={`flex-1 min-w-[120px] ${cardStyles} text-center`}>
-    <div className='text-sm text-gray-600 dark:text-gray-400 mb-1'>{title}</div>
-    <div className='text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center justify-center h-10'>
-      {loading ? (
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
-      ) : error ? (
-        <span className='text-red-500 text-sm'>錯誤</span>
-      ) : (
-        (value ?? 0)
-      )}
-    </div>
-  </section>
+  <Alert variant='destructive'>
+    <AlertTitle>錯誤</AlertTitle>
+    <AlertDescription>{message}</AlertDescription>
+  </Alert>
 );
 
 export default function DashboardPage() {
@@ -189,14 +181,19 @@ export default function DashboardPage() {
     {
       title: '合約總數',
       loading: contractsLoading,
-      error: contractsError,
+      error: !!contractsError,
       value: contractsSnapshot?.size,
     },
-    { title: '訂單總數', loading: ordersLoading, error: ordersError, value: ordersSnapshot?.size },
+    {
+      title: '訂單總數',
+      loading: ordersLoading,
+      error: !!ordersError,
+      value: ordersSnapshot?.size,
+    },
     {
       title: '估價單總數',
       loading: quotesLoading,
-      error: quotesError,
+      error: !!quotesError,
       value: quotesSnapshot?.size,
     },
     { title: '工作包總數', loading: statsLoading, value: workpackagesCount },
@@ -349,305 +346,286 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className='max-w-4xl mx-auto mb-20'>
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
-        <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent mb-6'>
-          管理儀表板
-        </h1>
+    <main className='max-w-4xl mx-auto mb-20 p-4 sm:p-6 lg:p-8'>
+      <div className='space-y-6'>
+        <div className='space-y-1'>
+          <h1 className='text-2xl font-bold tracking-tight'>管理儀表板</h1>
+          <p className='text-muted-foreground'>查看系統活動、專案進度與財務概覽。</p>
+        </div>
 
-        <div className='flex gap-6 flex-col md:flex-row'>
-          <section className={`flex-1 min-w-[320px] ${cardStyles}`}>
-            <h3 className={titleStyles}>人員分布</h3>
-            {usersLoading ? (
-              <LoadingSpinner />
-            ) : usersError ? (
-              <ErrorMessage message={usersError.message} />
-            ) : (
-              <ResponsiveContainer width='100%' height={260}>
-                <PieChart>
-                  <Pie
-                    data={roleData}
-                    dataKey='value'
-                    nameKey='name'
-                    cx='50%'
-                    cy='50%'
-                    outerRadius={90}
-                    label={({ name, value }) => `${value} ${name}`}
-                    labelLine={false}
-                  >
-                    {roleData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={CHART_COLORS.pie[index % CHART_COLORS.pie.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <text
-                    x='50%'
-                    y='50%'
-                    textAnchor='middle'
-                    dominantBaseline='middle'
-                    fontSize='28'
-                    fontWeight='bold'
-                    fill='#2a4d8f'
-                  >
-                    {usersSnapshot?.size ?? 0}
-                  </text>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </section>
+        <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+          <Card className='lg:col-span-1'>
+            <CardHeader>
+              <CardTitle>人員分布</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {usersLoading ? (
+                <div className='flex items-center justify-center h-[260px]'>
+                  <Skeleton className='h-48 w-48 rounded-full' />
+                </div>
+              ) : usersError ? (
+                <ErrorMessage message={usersError.message} />
+              ) : (
+                <ResponsiveContainer width='100%' height={260}>
+                  <PieChart>
+                    <Pie
+                      data={roleData}
+                      dataKey='value'
+                      nameKey='name'
+                      cx='50%'
+                      cy='50%'
+                      outerRadius={90}
+                      label={({ name, value }) => `${value} ${ROLE_NAMES[name] || name}`}
+                      labelLine={false}
+                    >
+                      {roleData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={CHART_COLORS.pie[index % CHART_COLORS.pie.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <text
+                      x='50%'
+                      y='50%'
+                      textAnchor='middle'
+                      dominantBaseline='middle'
+                      fontSize='28'
+                      fontWeight='bold'
+                      fill='hsl(var(--primary))'
+                    >
+                      {usersSnapshot?.size ?? 0}
+                    </text>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className='flex gap-3 flex-wrap'>
+          <div className='grid grid-cols-2 gap-3 lg:col-span-2 content-start'>
             {statsList.map(({ title, loading, error, value }) => (
-              <StatCard key={title} title={title} loading={loading} error={error} value={value} />
+              <StatCard
+                key={title}
+                title={title}
+                loading={loading}
+                error={error}
+                value={value?.toString()}
+              />
             ))}
           </div>
         </div>
 
-        <section className={`mt-8 ${cardStyles}`}>
-          <h3 className={titleStyles}>工作包進度分析</h3>
-          <ResponsiveContainer width='100%' height={300}>
-            <RadarChart data={workpackageProgressData}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey='name' />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} />
-              <Radar
-                name='進度'
-                dataKey='progress'
-                stroke={CHART_COLORS.primary}
-                fill={CHART_COLORS.primary}
-                fillOpacity={0.6}
-              />
-              <Tooltip />
-            </RadarChart>
-          </ResponsiveContainer>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>工作包進度分析</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width='100%' height={300}>
+              <RadarChart data={workpackageProgressData}>
+                <PolarGrid />
+                <PolarAngleAxis dataKey='name' />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                <Radar
+                  name='進度'
+                  dataKey='progress'
+                  stroke={CHART_COLORS.primary}
+                  fill={CHART_COLORS.primary}
+                  fillOpacity={0.6}
+                />
+                <Tooltip />
+              </RadarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        <section className={`mt-8 ${cardStyles}`}>
-          <div className='flex justify-between items-center mb-4'>
-            <h3 className={titleStyles}>專案進度與人力分析</h3>
-            <select
-              value={selectedProject}
-              onChange={e => setSelectedProject(e.target.value)}
-              className='px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
-            >
-              {projectsSnapshot?.docs.map(doc => {
-                const projectData = doc.data() as Project;
-                return (
-                  <option key={doc.id} value={projectData.projectName}>
-                    {projectData.projectName}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          {projectProgressData.length > 0 ? (
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700'>
-                <h4 className='text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400'>
-                  進度與每日增長
-                </h4>
-                <ResponsiveContainer width='100%' height={300}>
-                  <ComposedChart data={projectProgressData}>
-                    <CartesianGrid strokeDasharray='3 3' stroke='#eee' />
-                    <XAxis {...chartConfig.dateAxis} dataKey='date' />
-                    <YAxis
-                      yAxisId='progress'
-                      label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
-                      domain={[0, 100]}
-                      ticks={[0, 25, 50, 75, 100]}
-                    />
-                    <YAxis
-                      yAxisId='growth'
-                      orientation='right'
-                      label={{ value: '每日增長 (%)', angle: 90, position: 'insideRight' }}
-                      domain={[-50, 50]}
-                      ticks={[-50, -25, 0, 25, 50]}
-                    />
-                    <Tooltip {...chartConfig.tooltip} />
-                    <Legend />
-                    <Line
-                      type='monotone'
-                      dataKey='progress'
-                      name='進度'
-                      stroke={CHART_COLORS.primary}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
-                      yAxisId='progress'
-                    />
-                    <Line
-                      type='monotone'
-                      dataKey='dailyGrowth'
-                      name='每日增長'
-                      stroke={CHART_COLORS.secondary}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
-                      yAxisId='growth'
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
+        <Card>
+          <CardHeader>
+            <div className='flex flex-wrap items-center justify-between gap-4'>
+              <div>
+                <CardTitle>專案進度與人力分析</CardTitle>
+                <CardDescription>選擇一個專案以查看詳細數據</CardDescription>
               </div>
-
-              <div className='bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700'>
-                <h4 className='text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400'>
-                  人力與效率分析
-                </h4>
-                <ResponsiveContainer width='100%' height={300}>
-                  <ComposedChart data={projectProgressData}>
-                    <CartesianGrid strokeDasharray='3 3' stroke='#eee' />
-                    <XAxis {...chartConfig.dateAxis} dataKey='date' />
-                    <YAxis
-                      yAxisId='workforce'
-                      label={{ value: '人力 (人)', angle: -90, position: 'insideLeft' }}
-                      domain={[0, 20]}
-                      allowDataOverflow={true}
-                    />
-                    <YAxis
-                      yAxisId='efficiency'
-                      orientation='right'
-                      label={{ value: '效率 (%)', angle: 90, position: 'insideRight' }}
-                      domain={[0, 100]}
-                      ticks={[0, 25, 50, 75, 100]}
-                    />
-                    <Tooltip {...chartConfig.tooltip} />
-                    <Legend />
-                    <Bar
-                      dataKey='workforce'
-                      name='人力'
-                      fill={CHART_COLORS.bar}
-                      barSize={12}
-                      yAxisId='workforce'
-                      label={{
-                        position: 'center',
-                        fill: '#fff',
-                        fontSize: 10,
-                        formatter: (value: number) => `${value}人`,
-                      }}
-                    />
-                    <Line
-                      type='monotone'
-                      dataKey='efficiency'
-                      name='人力效率'
-                      stroke={CHART_COLORS.tertiary}
-                      strokeWidth={2}
-                      dot={false}
-                      yAxisId='efficiency'
-                    />
-                    <Line
-                      type='monotone'
-                      dataKey='averageWorkforce'
-                      name='人力均值'
-                      stroke='#FF69B4'
-                      strokeWidth={2}
-                      dot={false}
-                      yAxisId='workforce'
-                      strokeDasharray='5 5'
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className='bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700'>
-                <h4 className='text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400'>
-                  效率趨勢分析
-                </h4>
-                <ResponsiveContainer width='100%' height={300}>
-                  <ComposedChart data={projectProgressData}>
-                    <CartesianGrid strokeDasharray='3 3' stroke='#eee' />
-                    <XAxis {...chartConfig.dateAxis} dataKey='date' />
-                    <YAxis
-                      yAxisId='efficiency'
-                      label={{ value: '效率 (%)', angle: -90, position: 'insideLeft' }}
-                      domain={[0, 100]}
-                      ticks={[0, 25, 50, 75, 100]}
-                    />
-                    <Tooltip {...chartConfig.tooltip} />
-                    <Legend />
-                    <Line
-                      type='monotone'
-                      dataKey='efficiency'
-                      name='人力效率'
-                      stroke={CHART_COLORS.tertiary}
-                      strokeWidth={2}
-                      dot={false}
-                      yAxisId='efficiency'
-                    />
-                    <Line
-                      type='monotone'
-                      dataKey='efficiency'
-                      name='效率均值'
-                      stroke='#FFD700'
-                      strokeWidth={2}
-                      dot={false}
-                      yAxisId='efficiency'
-                      strokeDasharray='5 5'
-                      data={efficiencyTrendData}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className='bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700'>
-                <h4 className='text-lg font-semibold mb-4 text-blue-600 dark:text-blue-400'>
-                  工作狀態分析
-                </h4>
-                <ResponsiveContainer width='100%' height={300}>
-                  <ComposedChart data={projectProgressData}>
-                    <CartesianGrid strokeDasharray='3 3' stroke='#eee' />
-                    <XAxis {...chartConfig.dateAxis} dataKey='date' />
-                    <YAxis
-                      yAxisId='progress'
-                      label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
-                      domain={[0, 100]}
-                      ticks={[0, 25, 50, 75, 100]}
-                    />
-                    <YAxis
-                      yAxisId='workforce'
-                      orientation='right'
-                      label={{ value: '人力 (人)', angle: 90, position: 'insideRight' }}
-                      domain={[0, 20]}
-                      allowDataOverflow={true}
-                    />
-                    <Tooltip {...chartConfig.tooltip} />
-                    <Legend />
-                    <Line
-                      type='monotone'
-                      dataKey='progress'
-                      name='進度'
-                      stroke={CHART_COLORS.primary}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
-                      yAxisId='progress'
-                    />
-                    <Bar
-                      dataKey='workforce'
-                      name='人力'
-                      fill={CHART_COLORS.bar}
-                      barSize={12}
-                      yAxisId='workforce'
-                      label={{
-                        position: 'center',
-                        fill: '#fff',
-                        fontSize: 10,
-                        formatter: (value: number) => `${value}人`,
-                      }}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
+              <Select value={selectedProject} onValueChange={setSelectedProject}>
+                <SelectTrigger className='w-[200px]'>
+                  <SelectValue placeholder='選擇專案' />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectsSnapshot?.docs.map(doc => {
+                    const projectData = doc.data() as Project;
+                    return (
+                      <SelectItem key={doc.id} value={projectData.projectName}>
+                        {projectData.projectName}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <div className='flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400'>
-              無可用數據
-            </div>
-          )}
-        </section>
+          </CardHeader>
+
+          <CardContent>
+            {projectProgressData.length > 0 ? (
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>進度與每日增長</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width='100%' height={300}>
+                      <ComposedChart data={projectProgressData}>
+                        <CartesianGrid strokeDasharray='3 3' />
+                        <XAxis {...chartConfig.dateAxis} dataKey='date' />
+                        <YAxis
+                          yAxisId='progress'
+                          label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
+                          domain={[0, 100]}
+                          ticks={[0, 25, 50, 75, 100]}
+                        />
+                        <YAxis
+                          yAxisId='growth'
+                          orientation='right'
+                          label={{ value: '每日增長 (%)', angle: 90, position: 'insideRight' }}
+                          domain={[-50, 50]}
+                          ticks={[-50, -25, 0, 25, 50]}
+                        />
+                        <Tooltip {...chartConfig.tooltip} />
+                        <Legend />
+                        <Line
+                          type='monotone'
+                          dataKey='progress'
+                          name='進度'
+                          stroke={CHART_COLORS.primary}
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                          yAxisId='progress'
+                        />
+                        <Line
+                          type='monotone'
+                          dataKey='dailyGrowth'
+                          name='每日增長'
+                          stroke={CHART_COLORS.secondary}
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                          yAxisId='growth'
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>人力與效率分析</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width='100%' height={300}>
+                      <ComposedChart data={projectProgressData}>
+                        <CartesianGrid strokeDasharray='3 3' />
+                        <XAxis {...chartConfig.dateAxis} dataKey='date' />
+                        <YAxis
+                          yAxisId='workforce'
+                          label={{ value: '人力 (人)', angle: -90, position: 'insideLeft' }}
+                          domain={[0, 20]}
+                          allowDataOverflow={true}
+                        />
+                        <YAxis
+                          yAxisId='efficiency'
+                          orientation='right'
+                          label={{ value: '效率 (%)', angle: 90, position: 'insideRight' }}
+                          domain={[0, 100]}
+                          ticks={[0, 25, 50, 75, 100]}
+                        />
+                        <Tooltip {...chartConfig.tooltip} />
+                        <Legend />
+                        <Bar
+                          dataKey='workforce'
+                          name='人力'
+                          fill={CHART_COLORS.bar}
+                          barSize={12}
+                          yAxisId='workforce'
+                          label={{
+                            position: 'center',
+                            fill: '#fff',
+                            fontSize: 10,
+                            formatter: (value: number) => `${value}人`,
+                          }}
+                        />
+                        <Line
+                          type='monotone'
+                          dataKey='efficiency'
+                          name='人力效率'
+                          stroke={CHART_COLORS.tertiary}
+                          strokeWidth={2}
+                          dot={false}
+                          yAxisId='efficiency'
+                        />
+                        <Line
+                          type='monotone'
+                          dataKey='averageWorkforce'
+                          name='人力均值'
+                          stroke='#FF69B4'
+                          strokeWidth={2}
+                          dot={false}
+                          yAxisId='workforce'
+                          strokeDasharray='5 5'
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card className='md:col-span-2'>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>效率趨勢分析</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width='100%' height={300}>
+                      <ComposedChart data={projectProgressData}>
+                        <CartesianGrid strokeDasharray='3 3' />
+                        <XAxis {...chartConfig.dateAxis} dataKey='date' />
+                        <YAxis
+                          yAxisId='efficiency'
+                          label={{ value: '效率 (%)', angle: -90, position: 'insideLeft' }}
+                          domain={[0, 100]}
+                          ticks={[0, 25, 50, 75, 100]}
+                        />
+                        <Tooltip {...chartConfig.tooltip} />
+                        <Legend />
+                        <Line
+                          type='monotone'
+                          dataKey='efficiency'
+                          name='人力效率'
+                          stroke={CHART_COLORS.tertiary}
+                          strokeWidth={2}
+                          dot={false}
+                          yAxisId='efficiency'
+                        />
+                        <Line
+                          type='monotone'
+                          dataKey='efficiency'
+                          name='效率均值'
+                          stroke='#FFD700'
+                          strokeWidth={2}
+                          dot={false}
+                          yAxisId='efficiency'
+                          strokeDasharray='5 5'
+                          data={efficiencyTrendData}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className='flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400'>
+                無可用數據，或請先選擇一個專案。
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
