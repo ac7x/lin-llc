@@ -21,6 +21,14 @@ import { db, doc, collection, getDoc } from '@/lib/firebase-client';
 import type { OrderData } from '@/types/finance';
 import { safeToDate } from '@/utils/dateUtils';
 
+export type OrderRow = Omit<OrderData, 'createdAt' | 'updatedAt'> & {
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  idx: number;
+  docId: string;
+  daysAgo: number | string;
+};
+
 export default function OrdersPage() {
   const [ordersSnapshot, loading, error] = useCollection(
     collection(db, 'finance', 'default', 'orders')
@@ -60,15 +68,15 @@ export default function OrdersPage() {
         ? Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24))
         : '-';
       return {
+        ...data,
         idx: idx + 1,
         orderId: data.orderId || order.id,
         orderName: data.orderName || data.orderId || order.id,
         clientName: data.clientName ?? '-',
-        orderPrice: data.orderPrice ?? '-',
+        orderPrice: data.orderPrice ?? 0,
         createdAt: createdAtDate,
         updatedAt: updatedAtDate,
         daysAgo,
-        raw: data,
         docId: order.id,
       };
     });
@@ -99,18 +107,10 @@ export default function OrdersPage() {
   };
 
   // 匯出 PDF
-  const handleExportPdf = async (row: Record<string, unknown>) => {
-    const docRef = doc(db, 'finance', 'default', 'orders', String(row.orderId));
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) {
-      alert('找不到該訂單');
-      return;
-    }
-    const data = docSnap.data();
-    // 保持原始的 Timestamp 格式，PDF 元件將負責處理
+  const handleExportPdf = async (row: OrderRow) => {
     generatePdfBlob(
-      <OrderPdfDocument order={data} />,
-      `${data.orderName || data.orderId || '訂單'}.pdf`
+      <OrderPdfDocument order={row} />,
+      `${row.orderName || row.orderId || '訂單'}.pdf`
     );
   };
 

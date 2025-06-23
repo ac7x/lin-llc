@@ -25,5 +25,5 @@ export default function ArchiveLayout({ children }: ArchiveLayoutProps): ReactEl
     return <Unauthorized message='您沒有權限訪問封存功能，請聯繫管理員以獲取訪問權限' />;
   }
 
-  return <div className='p-6'>{children}</div>;
+  return <>{children}</>;
 }

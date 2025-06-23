@@ -6,25 +6,23 @@
  */
 
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
-import { Timestamp } from 'firebase/firestore';
-
-import { formatLocalDate } from '@/utils/dateUtils';
+import type { ContractRow } from '@/app/finance/contracts/page';
 
 Font.register({
   family: 'NotoSerifTC',
   src: '/fonts/NotoSerifTC-Regular.ttf',
 });
 
-const formatDate = (timestamp: Timestamp | null | undefined): string => {
-  if (!timestamp) return '';
-  return formatLocalDate(timestamp);
+const formatDate = (date: Date | null): string => {
+  if (!date) return '-';
+  return date.toLocaleDateString();
 };
 
 export function ContractPdfDocument({
   contract,
   qrCodeDataUrl,
 }: {
-  contract: Record<string, unknown>;
+  contract: ContractRow;
   qrCodeDataUrl?: string;
 }) {
   const contractItems = Array.isArray(contract.contractItems) ? contract.contractItems : [];
@@ -56,10 +54,10 @@ export function ContractPdfDocument({
           <Text>電話: {String(contract.clientPhone ?? '')}</Text>
           <Text>Email: {String(contract.clientEmail ?? '')}</Text>
           <Text>
-            建立日期: {formatDate(contract.createdAt as Timestamp | null | undefined) ?? '-'}
+            建立日期: {formatDate(contract.createdAt)}
           </Text>
           <Text>
-            修改日期: {formatDate(contract.updatedAt as Timestamp | null | undefined) ?? '-'}
+            修改日期: {formatDate(contract.updatedAt)}
           </Text>
         </View>
         {contractItems.length > 0 && (

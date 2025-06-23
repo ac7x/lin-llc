@@ -2,6 +2,9 @@
 │  │  layout.tsx
 │  │  page.tsx
 │  │
+│  ├─account
+│  │      page.tsx
+│  │
 │  ├─archive
 │  │  │  layout.tsx
 │  │  │  page.tsx
@@ -10,29 +13,45 @@
 │  │          page.tsx
 │  │
 │  ├─calendar
-│  │      layout.tsx
 │  │      page.tsx
-│  │
-│  ├─contracts
-│  │  │  layout.tsx
-│  │  │  page.tsx
-│  │  │
-│  │  ├─create
-│  │  │      page.tsx
-│  │  │
-│  │  └─[contract]
-│  │          page.tsx
 │  │
 │  ├─dashboard
-│  │      layout.tsx
 │  │      page.tsx
 │  │
+│  ├─finance
+│  │  │  layout.tsx
+│  │  │
+│  │  ├─contracts
+│  │  │  │  page.tsx
+│  │  │  │
+│  │  │  ├─create
+│  │  │  │      page.tsx
+│  │  │  │
+│  │  │  └─[contract]
+│  │  │          page.tsx
+│  │  │
+│  │  ├─orders
+│  │  │  │  page.tsx
+│  │  │  │
+│  │  │  ├─add
+│  │  │  │      page.tsx
+│  │  │  │
+│  │  │  └─[order]
+│  │  │          page.tsx
+│  │  │
+│  │  └─quotes
+│  │      │  page.tsx
+│  │      │
+│  │      ├─add
+│  │      │      page.tsx
+│  │      │
+│  │      └─[quote]
+│  │              page.tsx
+│  │
 │  ├─gemini
-│  │      layout.tsx
 │  │      page.tsx
 │  │
 │  ├─management
-│  │  │  layout.tsx
 │  │  │  page.tsx
 │  │  │
 │  │  └─components
@@ -40,39 +59,21 @@
 │  │          UserList.tsx
 │  │
 │  ├─notifications
-│  │  │  layout.tsx
 │  │  │  page.tsx
 │  │  │
 │  │  └─components
 │  │          NotificationBell.tsx
-│  │
-│  ├─orders
-│  │  │  layout.tsx
-│  │  │  page.tsx
-│  │  │
-│  │  ├─add
-│  │  │      page.tsx
-│  │  │
-│  │  └─[order]
-│  │          page.tsx
-│  │
-│  ├─profile
-│  │      layout.tsx
-│  │      page.tsx
 │  │
 │  ├─projects
 │  │  │  layout.tsx
 │  │  │  page.tsx
 │  │  │
 │  │  ├─components
-│  │  │  │  AddressSelector.tsx
-│  │  │  │  DataLoader.tsx
-│  │  │  │  ProjectDashboard.tsx
-│  │  │  │  ProjectsTable.tsx
-│  │  │  │  WeatherDisplay.tsx
-│  │  │  │
-│  │  │  └─layout
-│  │  │          PageLayout.tsx
+│  │  │      AddressSelector.tsx
+│  │  │      DataLoader.tsx
+│  │  │      ProjectDashboard.tsx
+│  │  │      ProjectsTable.tsx
+│  │  │      WeatherDisplay.tsx
 │  │  │
 │  │  ├─hooks
 │  │  │      useFilteredProjects.ts
@@ -122,39 +123,31 @@
 │  │      │      page.tsx
 │  │      │
 │  │      ├─subworkpackages
-│  │      │      page.tsx
+│  │      │  └─[subworkpackage]
+│  │      │          page.tsx
 │  │      │
 │  │      └─workpackages
 │  │          └─[workpackage]
 │  │                  page.tsx
 │  │
-│  ├─quotes
-│  │  │  layout.tsx
-│  │  │  page.tsx
-│  │  │
-│  │  ├─add
-│  │  │      page.tsx
-│  │  │
-│  │  └─[quote]
-│  │          page.tsx
-│  │
 │  ├─schedule
-│  │      layout.tsx
 │  │      page.tsx
 │  │
-│  ├─send-notification
-│  │      layout.tsx
-│  │      page.tsx
-│  │
-│  └─signin
+│  └─send-notification
 │          page.tsx
 │
 ├─components
 │  ├─common
+│  │      ArchiveNavGroup.tsx
+│  │      DynamicNavGroup.tsx
+│  │      ModeToggle.tsx
 │  │      PermissionCheck.tsx
 │  │      Tabs.tsx
 │  │      Unauthorized.tsx
 │  │      VisTimeline.tsx
+│  │
+│  ├─finance
+│  │      FinanceListPage.tsx
 │  │
 │  ├─pdf
 │  │      ContractPdfDocument.tsx
@@ -162,8 +155,41 @@
 │  │      pdfUtils.ts
 │  │      QuotePdfDocument.tsx
 │  │
-│  └─tabs
-│          BottomNavigation.tsx
+│  ├─tabs
+│  │      BottomNavigation.tsx
+│  │
+│  └─ui
+│          accordion.tsx
+│          alert-dialog.tsx
+│          alert.tsx
+│          avatar.tsx
+│          badge.tsx
+│          breadcrumb.tsx
+│          button.tsx
+│          calendar.tsx
+│          card.tsx
+│          carousel.tsx
+│          chart.tsx
+│          checkbox.tsx
+│          collapsible.tsx
+│          dialog.tsx
+│          dropdown-menu.tsx
+│          input.tsx
+│          label.tsx
+│          progress.tsx
+│          radio-group.tsx
+│          select.tsx
+│          separator.tsx
+│          sheet.tsx
+│          sidebar.tsx
+│          skeleton.tsx
+│          slider.tsx
+│          sonner.tsx
+│          switch.tsx
+│          table.tsx
+│          tabs.tsx
+│          textarea.tsx
+│          tooltip.tsx
 │
 ├─constants
 │      navigation.tsx
@@ -171,6 +197,7 @@
 │      roles.ts
 │
 ├─hooks
+│      use-mobile.ts
 │      useAppCheck.ts
 │      useAuth.ts
 │      useFirebaseMessaging.ts
@@ -181,6 +208,10 @@
 │      firebase-config.ts
 │      firebase-init.ts
 │      firebase-notifications.ts
+│      utils.ts
+│
+├─providers
+│      theme-provider.tsx
 │
 ├─styles
 │      globals.css
@@ -190,10 +221,10 @@
 │      archive.d.ts
 │      auth.d.ts
 │      calendar.d.ts
-│      coding-standards.d.ts
+│      codingStandards.d.ts
 │      common.d.ts
 │      finance.d.ts
-│      google-maps.d.ts
+│      googleMaps.d.ts
 │      navigation.d.ts
 │      notification.d.ts
 │      timeline.d.ts

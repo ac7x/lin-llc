@@ -28,7 +28,6 @@
       "@/constants/*": ["./src/constants/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/types/*": ["./src/types/*"],
-      "@/modules/*": ["./src/modules/*"],
       "@/providers/*": ["./src/providers/*"]
     },
     "forceConsistentCasingInFileNames": true,
