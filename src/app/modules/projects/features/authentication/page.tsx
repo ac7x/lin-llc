@@ -56,7 +56,7 @@ export default function AuthenticationPage() {
       
       if (result.status === 'success' && result.users) {
         // 轉換用戶資料以符合 User 介面，將 undefined 轉換為 null
-        const formattedUsers: User[] = result.users.map(user => ({
+        const formattedUsers: User[] = result.users.map((user: any) => ({
           uid: user.uid,
           email: user.email || null,
           displayName: user.displayName || null,

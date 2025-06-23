@@ -88,7 +88,7 @@ export async function getAllUsers(appCheckToken: string, idToken: string) {
 
     // 執行業務邏輯：使用 adminAuth 獲取所有使用者
     const listUsersResult = await adminAuth.listUsers(1000); // 每次最多獲取 1000 個使用者
-    const users = listUsersResult.users.map(user => ({
+    const users = listUsersResult.users.map((user: admin.auth.UserRecord) => ({
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
