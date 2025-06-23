@@ -1,4 +1,3 @@
-// src/app/modules/projects/features/authentication/page.tsx
 "use client"; // 這是一個客戶端組件
 
 import { useFirebase } from '../../components/firebase/FirebaseProvider'; // 導入您的 Firebase Context Hook
@@ -7,7 +6,7 @@ import { useRouter } from 'next/navigation'; // 導入 Next.js 導航鉤子
 import { useEffect } from 'react';
 
 export default function AuthenticationPage() {
-  const { currentUser, currentRole, signInWithGoogle, signOutUser, loading } = useFirebase();
+  const { currentUser, currentRole, signInWithGoogle, signOutUser, loading, isSigningIn } = useFirebase();
   const router = useRouter();
 
   // 可選：如果使用者已經登入，可以將他們重定向到主頁或其他地方
@@ -66,10 +65,24 @@ export default function AuthenticationPage() {
             console.log("Google Sign-In successful on page.");
           }
         }}
-        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+        disabled={isSigningIn}
+        style={{ 
+          padding: '10px 20px', 
+          backgroundColor: isSigningIn ? '#6c757d' : '#007bff', 
+          color: 'white', 
+          border: 'none', 
+          borderRadius: '5px', 
+          cursor: isSigningIn ? 'not-allowed' : 'pointer',
+          opacity: isSigningIn ? 0.6 : 1
+        }}
       >
-        使用 Google 登入
+        {isSigningIn ? '登入中...' : '使用 Google 登入'}
       </button>
+      {isSigningIn && (
+        <p style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
+          正在開啟 Google 登入視窗，請稍候...
+        </p>
+      )}
       {/* 這裡可以添加其他登入方式或註冊選項 */}
     </div>
   );
