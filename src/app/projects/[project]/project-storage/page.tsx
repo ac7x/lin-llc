@@ -188,7 +188,7 @@ export default function ProjectStoragePage() {
 
   // 初始載入
   useEffect(() => {
-    loadFiles();
+    void loadFiles();
   }, [loadFiles]);
 
   if (loading) {

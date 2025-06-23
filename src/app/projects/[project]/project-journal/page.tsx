@@ -62,7 +62,9 @@ export default function ProjectJournalPage() {
       }
     };
 
-    void loadWeather();
+    (async () => {
+      await loadWeather();
+    })();
   }, [projectRegion]);
 
   if (loading) return <div className='p-4'>載入中...</div>;

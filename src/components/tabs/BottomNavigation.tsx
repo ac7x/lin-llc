@@ -93,7 +93,7 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
       }
     };
 
-    fetchProjects();
+    void fetchProjects();
   }, [user?.uid, user?.currentRole]);
 
   const toggleOpen = (projectId: string) => {
@@ -336,7 +336,7 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
             <form
               onSubmit={e => {
                 e.preventDefault();
-                handleAddWorkpackage();
+                void handleAddWorkpackage();
               }}
               className='space-y-4'
             >

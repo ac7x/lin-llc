@@ -17,7 +17,7 @@ import { useMemo } from 'react';
 import { useDocument } from 'react-firebase-hooks/firestore';
 
 import { DataLoader } from '@/app/projects/components/DataLoader';
-import type { Project, SubWorkpackage, Workpackage } from '@/app/projects/types/project';
+import type { Project, SubWorkpackage } from '@/app/projects/types/project';
 import { ProgressBarWithPercent } from '@/app/projects/utils/progressUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,7 +43,7 @@ const findSubWorkpackageData = (
 
 export default function SubWorkpackageDetailPage() {
   const params = useParams();
-  const { user } = useAuth();
+  useAuth();
   const projectId = params.project as string;
   const workpackageId = params.workpackage as string;
   const subworkpackageId = params.subworkpackage as string;
