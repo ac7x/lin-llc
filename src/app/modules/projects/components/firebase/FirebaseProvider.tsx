@@ -6,6 +6,10 @@ import { initializeApp, FirebaseApp } from "firebase/app";
 // 從 firebase/app-check 導入 AppCheck 類型和 getToken 函數
 import { initializeAppCheck, ReCaptchaV3Provider, AppCheck, getToken } from "firebase/app-check";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, User, Auth, IdTokenResult } from "firebase/auth";
+// 添加 Firestore 導入
+import { getFirestore, Firestore, connectFirestoreEmulator } from "firebase/firestore";
+// 添加 Firebase Storage 導入
+import { getStorage, FirebaseStorage } from "firebase/storage";
 import { UserRole, hasRequiredRole, ROLE_LEVELS } from '../../types/roles'; // 導入角色定義
 import { syncUserProfile, getUserProfile, type UserProfile } from '../../actions/userManagement'; // 導入用戶管理功能
 
@@ -13,6 +17,8 @@ import { syncUserProfile, getUserProfile, type UserProfile } from '../../actions
 interface FirebaseContextType {
   firebaseApp: FirebaseApp | null;
   authInstance: Auth | null;
+  firestoreInstance: Firestore | null; // 添加 Firestore 實例
+  storageInstance: FirebaseStorage | null; // 添加 Storage 實例
   currentUser: User | null;
   currentUserClaims: IdTokenResult['claims'] | null; // 用於儲存用戶的自訂聲明
   currentRole: UserRole; // 解析後的用戶角色
@@ -32,6 +38,8 @@ interface FirebaseContextType {
 const FirebaseContext = createContext<FirebaseContextType>({
   firebaseApp: null,
   authInstance: null,
+  firestoreInstance: null, // 添加 Firestore 實例
+  storageInstance: null, // 添加 Storage 實例
   currentUser: null,
   currentUserClaims: null,
   currentRole: UserRole.GUEST,
@@ -53,6 +61,8 @@ export const useFirebase = () => useContext(FirebaseContext);
 export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [firebaseApp, setFirebaseApp] = useState<FirebaseApp | null>(null);
   const [authInstance, setAuthInstance] = useState<Auth | null>(null);
+  const [firestoreInstance, setFirestoreInstance] = useState<Firestore | null>(null); // 添加 Firestore 狀態
+  const [storageInstance, setStorageInstance] = useState<FirebaseStorage | null>(null); // 添加 Storage 狀態
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentUserClaims, setCurrentUserClaims] = useState<IdTokenResult['claims'] | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -148,6 +158,26 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
 
     const auth = getAuth(app);
     setAuthInstance(auth);
+
+    // 初始化 Firestore
+    const firestore = getFirestore(app);
+    setFirestoreInstance(firestore);
+
+    // 初始化 Storage
+    const storage = getStorage(app);
+    setStorageInstance(storage);
+
+    // 在開發環境中連接到 Firestore 模擬器
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      try {
+        // 連接到 Firestore 模擬器
+        connectFirestoreEmulator(firestore, 'localhost', 8080);
+        console.log('Connected to Firestore emulator');
+      } catch (error) {
+        // 如果已經連接或連接失敗，只記錄警告
+        console.warn('Firestore emulator connection failed or already connected:', error);
+      }
+    }
 
     // 監聽使用者登入狀態和獲取 ID Token Claims
     const unsubscribeAuth = auth.onIdTokenChanged(async (user) => {
@@ -295,6 +325,8 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
       value={{
         firebaseApp,
         authInstance,
+        firestoreInstance,
+        storageInstance,
         currentUser,
         currentUserClaims,
         currentRole,

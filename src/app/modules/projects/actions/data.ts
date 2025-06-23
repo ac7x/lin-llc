@@ -37,6 +37,12 @@ async function verifyRequest(appCheckToken: string, idToken: string): Promise<{
   if (!appCheckToken) {
     throw new Error("App Check token missing.");
   }
+  
+  // 檢查 Firebase Admin SDK 是否正確初始化
+  if (!adminAppCheck) {
+    throw new Error("Firebase App Check not properly initialized.");
+  }
+  
   try {
     await adminAppCheck.verifyToken(appCheckToken);
     // console.log("Server Action: App Check token valid.");
@@ -49,6 +55,12 @@ async function verifyRequest(appCheckToken: string, idToken: string): Promise<{
   if (!idToken) {
     throw new Error("ID token missing.");
   }
+  
+  // 檢查 Firebase Admin SDK 是否正確初始化
+  if (!adminAuth) {
+    throw new Error("Firebase Admin Auth not properly initialized.");
+  }
+  
   let decodedToken: admin.auth.DecodedIdToken;
   try {
     decodedToken = await adminAuth.verifyIdToken(idToken);
