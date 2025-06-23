@@ -69,7 +69,11 @@ import {
   ref,
   uploadBytesResumable,
   getDownloadURL,
+  deleteObject,
+  listAll,
+  getMetadata,
   FirebaseStorage,
+  StorageReference,
 } from 'firebase/storage';
 
 // Functions 相關型別
@@ -149,6 +153,9 @@ export {
   ref,
   uploadBytesResumable,
   getDownloadURL,
+  deleteObject,
+  listAll,
+  getMetadata,
   collection,
   doc,
   getDoc,
@@ -182,6 +189,7 @@ export type {
   DocumentData,
   DocumentReference,
   FirebaseStorage,
+  StorageReference,
   Functions,
   Analytics,
   RemoteConfig,
