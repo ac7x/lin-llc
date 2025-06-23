@@ -50,7 +50,7 @@ const AccountPage = () => {
   const handleSignOut = useCallback(async () => {
     await safeAsync(async () => {
       await signOut(auth);
-      router.push('/account ');
+      router.push('/account');
     }, (error) => {
       logError(error, { operation: 'sign_out', user: user?.uid });
       // 不顯示錯誤給用戶，僅記錄

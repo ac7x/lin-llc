@@ -39,7 +39,7 @@ const geistMono = Roboto_Mono({
 });
 
 // 不需要驗證的路徑
-const PUBLIC_PATHS = ['/signup', '/forgot-password'];
+const PUBLIC_PATHS = ['/account'];
 
 interface RootLayoutProps {
   children: ReactNode;
@@ -73,93 +73,51 @@ export default function RootLayout({ children }: RootLayoutProps): ReactElement 
   // 初始化客戶端服務
   useEffect(() => {
     if (isClient) {
-      initializeClientServices().catch((error) => {
+      initializeClientServices().catch(error => {
         console.error('初始化客戶端服務失敗:', error);
       });
     }
   }, [isClient]);
 
-  // 檢查當前路徑是否需要驗證
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
+  const showUnauthorized = !isPublicPath && !user;
 
-  // 檢查 App Check 狀態
-  if (!isInitialized) {
-    return (
-      <html lang='zh-TW'>
-        <body
-          style={{
-            '--font-geist-sans': geistSans.variable,
-            '--font-geist-mono': geistMono.variable,
-          } as React.CSSProperties}
-          className='antialiased bg-background'
-        >
-          <div className='flex justify-center items-center min-h-screen'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-          </div>
-        </body>
-      </html>
-    );
-  }
+  const renderContent = () => {
+    if (!isInitialized || loading) {
+      return (
+        <div className='flex justify-center items-center min-h-screen'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+        </div>
+      );
+    }
 
-  if (!isValid || error) {
-    return (
-      <html lang='zh-TW'>
-        <body
-          style={{
-            '--font-geist-sans': geistSans.variable,
-            '--font-geist-mono': geistMono.variable,
-          } as React.CSSProperties}
-          className='antialiased bg-background'
-        >
-          <Unauthorized
-            message='安全驗證失敗，請重新載入頁面'
-            showBackButton={false}
-            showSignInButton={false}
-          />
-        </body>
-      </html>
-    );
-  }
+    if (!isValid || error) {
+      return (
+        <Unauthorized
+          message='安全驗證失敗，請重新載入頁面'
+          showBackButton={false}
+          showSignInButton={false}
+        />
+      );
+    }
 
-  // 如果正在載入，顯示載入中狀態
-  if (loading) {
-    return (
-      <html lang='zh-TW'>
-        <body
-          style={{
-            '--font-geist-sans': geistSans.variable,
-            '--font-geist-mono': geistMono.variable,
-          } as React.CSSProperties}
-          className='antialiased bg-background'
-        >
-          <div className='flex justify-center items-center min-h-screen'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-          </div>
-        </body>
-      </html>
-    );
-  }
+    if (showUnauthorized) {
+      return (
+        <Unauthorized
+          message='請先登入以訪問此頁面'
+          showBackButton={false}
+          showSignInButton={true}
+        />
+      );
+    }
 
-  // 如果不是公開路徑且用戶未登入，顯示未授權頁面
-  if (!isPublicPath && !user) {
     return (
-      <html lang='zh-TW'>
-        <body
-          style={{
-            '--font-geist-sans': geistSans.variable,
-            '--font-geist-mono': geistMono.variable,
-          } as React.CSSProperties}
-          className='antialiased bg-background'
-        >
-          <Unauthorized
-            message='請先登入以訪問此頁面'
-            showBackButton={false}
-            showSignInButton={true}
-          />
-        </body>
-      </html>
+      <>
+        <main className={user ? (isMobile ? 'pb-16' : 'ml-64') : ''}>{children}</main>
+        {user && <BottomNavigation />}
+      </>
     );
-  }
+  };
 
   return (
     <html lang='zh-TW' suppressHydrationWarning>
@@ -172,22 +130,21 @@ export default function RootLayout({ children }: RootLayoutProps): ReactElement 
         )}
       </head>
       <body
-        style={{
-          '--font-geist-sans': geistSans.variable,
-          '--font-geist-mono': geistMono.variable,
-        } as React.CSSProperties}
+        style={
+          {
+            '--font-geist-sans': geistSans.variable,
+            '--font-geist-mono': geistMono.variable,
+          } as React.CSSProperties
+        }
         className='antialiased bg-background text-foreground'
       >
         <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
+          attribute='class'
+          defaultTheme='system'
           enableSystem
           disableTransitionOnChange
         >
-          <main className={user ? (isMobile ? 'pb-16' : 'ml-64') : ''}>
-            {children}
-          </main>
-          {user && <BottomNavigation />}
+          {renderContent()}
         </ThemeProvider>
       </body>
     </html>
