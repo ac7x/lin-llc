@@ -6,7 +6,7 @@
  */
 
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import { Timestamp } from 'firebase/firestore';
+import type { OrderRow } from '@/app/finance/orders/page';
 
 import { formatLocalDate } from '@/utils/dateUtils';
 
@@ -15,12 +15,12 @@ Font.register({
   src: '/fonts/NotoSerifTC-Regular.ttf',
 });
 
-const formatDate = (timestamp: Timestamp | null | undefined): string => {
-  if (!timestamp) return '';
-  return formatLocalDate(timestamp);
+const formatDate = (date: Date | null): string => {
+  if (!date) return '-';
+  return date.toLocaleDateString();
 };
 
-export function OrderPdfDocument({ order }: { order: Record<string, unknown> }) {
+export function OrderPdfDocument({ order }: { order: OrderRow }) {
   const orderItems = Array.isArray(order.orderItems) ? order.orderItems : [];
   return (
     <Document>
@@ -34,10 +34,10 @@ export function OrderPdfDocument({ order }: { order: Record<string, unknown> }) 
           <Text>Email: {String(order.clientEmail ?? '')}</Text>
           <Text>價格: {String(order.orderPrice ?? '')}</Text>
           <Text>
-            建立日期: {formatDate(order.createdAt as Timestamp | null | undefined) ?? '-'}
+            建立日期: {formatDate(order.createdAt)}
           </Text>
           <Text>
-            修改日期: {formatDate(order.updatedAt as Timestamp | null | undefined) ?? '-'}
+            修改日期: {formatDate(order.updatedAt)}
           </Text>
         </View>
         {orderItems.length > 0 && (
