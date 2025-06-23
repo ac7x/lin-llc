@@ -9,47 +9,85 @@ service cloud.firestore {
       return permission in userPermissions;
     }
 
-    // 用戶資料規則
+    // 輔助函數：檢查用戶角色等級
+    function hasRoleLevel(requiredRole) {
+      let userRole = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      let roleLevels = {
+        'guest': 0,
+        'temporary': 10,
+        'helper': 20,
+        'user': 30,
+        'coord': 40,
+        'safety': 50,
+        'foreman': 60,
+        'vendor': 70,
+        'finance': 80,
+        'manager': 90,
+        'admin': 100,
+        'owner': 110
+      };
+      return roleLevels[userRole] >= roleLevels[requiredRole];
+    }
+
+    // 用戶資料規則 - 新的 users 集合
     match /users/{userId} {
+      // 用戶可以讀取自己的資料
       allow read: if request.auth != null && (
         request.auth.uid == userId ||
-        hasPermission('user.view')
+        hasRoleLevel('manager')
+      );
+      
+      // 用戶可以更新自己的基本資料（除了角色）
+      allow update: if request.auth != null && (
+        request.auth.uid == userId ||
+        hasRoleLevel('admin')
+      );
+      
+      // 只有管理員可以創建和刪除用戶資料
+      allow create, delete: if request.auth != null && hasRoleLevel('admin');
+    }
+
+    // 舊的 members 集合（向後相容）
+    match /members/{memberId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == memberId ||
+        hasRoleLevel('manager')
       );
       allow write: if request.auth != null && (
-        request.auth.uid == userId ||
-        hasPermission('user.edit')
+        request.auth.uid == memberId ||
+        hasRoleLevel('admin')
       );
-      allow delete: if request.auth != null && hasPermission('user.delete');
+      allow delete: if request.auth != null && hasRoleLevel('admin');
     }
     
     // 專案規則
     match /projects/{projectId} {
-      allow read: if request.auth != null && hasPermission('project.view');
-      allow create: if request.auth != null && hasPermission('project.create');
-      allow update: if request.auth != null && hasPermission('project.edit');
-      allow delete: if request.auth != null && hasPermission('project.delete');
+      allow read: if request.auth != null && hasRoleLevel('user');
+      allow create: if request.auth != null && hasRoleLevel('foreman');
+      allow update: if request.auth != null && hasRoleLevel('foreman');
+      allow delete: if request.auth != null && hasRoleLevel('admin');
     }
 
     // 工作包規則
     match /workpackages/{workpackageId} {
-      allow read: if request.auth != null && hasPermission('workpackage.view');
-      allow create: if request.auth != null && hasPermission('workpackage.create');
-      allow update: if request.auth != null && hasPermission('workpackage.edit');
-      allow delete: if request.auth != null && hasPermission('workpackage.delete');
+      allow read: if request.auth != null && hasRoleLevel('user');
+      allow create: if request.auth != null && hasRoleLevel('foreman');
+      allow update: if request.auth != null && hasRoleLevel('foreman');
+      allow delete: if request.auth != null && hasRoleLevel('admin');
     }
 
     // 財務相關規則
     match /finance/{document=**} {
-      allow read: if request.auth != null && hasPermission('finance.view');
-      allow create: if request.auth != null && hasPermission('finance.create');
-      allow update: if request.auth != null && hasPermission('finance.edit');
-      allow delete: if request.auth != null && hasPermission('finance.delete');
+      allow read: if request.auth != null && hasRoleLevel('finance');
+      allow create: if request.auth != null && hasRoleLevel('finance');
+      allow update: if request.auth != null && hasRoleLevel('finance');
+      allow delete: if request.auth != null && hasRoleLevel('admin');
     }
 
     // 系統設定規則
     match /settings/{settingId} {
-      allow read: if request.auth != null && hasPermission('system.view');
-      allow write: if request.auth != null && hasPermission('system.edit');
+      allow read: if request.auth != null && hasRoleLevel('manager');
+      allow write: if request.auth != null && hasRoleLevel('admin');
     }
     
     // 通知規則
@@ -58,12 +96,50 @@ service cloud.firestore {
         request.auth.uid == resource.data.userId;
       allow create: if request.auth != null && (
         request.auth.uid == request.resource.data.userId ||
-        hasPermission('user.edit')
+        hasRoleLevel('manager')
       );
       allow update: if request.auth != null && 
         request.auth.uid == resource.data.userId &&
         request.resource.data.keys().hasAll(['isArchived']) &&
         request.resource.data.isArchived == true;
+    }
+
+    // 日誌規則
+    match /journal/{document=**} {
+      allow read: if request.auth != null && hasRoleLevel('user');
+      allow create: if request.auth != null && hasRoleLevel('user');
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        hasRoleLevel('manager')
+      );
+      allow delete: if request.auth != null && hasRoleLevel('admin');
+    }
+
+    // 材料規則
+    match /materials/{document=**} {
+      allow read: if request.auth != null && hasRoleLevel('user');
+      allow create: if request.auth != null && hasRoleLevel('foreman');
+      allow update: if request.auth != null && hasRoleLevel('foreman');
+      allow delete: if request.auth != null && hasRoleLevel('admin');
+    }
+
+    // 費用規則
+    match /expenses/{document=**} {
+      allow read: if request.auth != null && hasRoleLevel('finance');
+      allow create: if request.auth != null && hasRoleLevel('foreman');
+      allow update: if request.auth != null && hasRoleLevel('finance');
+      allow delete: if request.auth != null && hasRoleLevel('admin');
+    }
+
+    // 問題追蹤規則
+    match /issues/{document=**} {
+      allow read: if request.auth != null && hasRoleLevel('user');
+      allow create: if request.auth != null && hasRoleLevel('user');
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.reportedBy ||
+        hasRoleLevel('manager')
+      );
+      allow delete: if request.auth != null && hasRoleLevel('admin');
     }
   }
 }

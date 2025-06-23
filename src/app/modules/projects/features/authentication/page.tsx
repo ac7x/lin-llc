@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useFirebase } from '../../components/firebase/FirebaseProvider';
 import { UserRole, hasRequiredRole } from '../../types/roles';
 import { setUserRole, getAllUsers } from '../../actions/admin';
+import { updateUserProfile, type UserProfile } from '../../actions/userManagement';
 import { LoadingSpinner, PageContainer, PageHeader } from '../../components/common';
 import { projectStyles } from '../../styles';
 
@@ -26,8 +27,10 @@ export default function AuthenticationPage() {
   const { 
     currentUser, 
     currentRole, 
+    userProfile,
     getTokensForServerAction, 
     refreshIdToken,
+    refreshUserProfile,
     loading: firebaseLoading 
   } = useFirebase();
   
@@ -38,6 +41,13 @@ export default function AuthenticationPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [newRole, setNewRole] = useState<UserRole>(UserRole.USER);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    displayName: '',
+    department: '',
+    position: '',
+    phoneNumber: '',
+  });
 
   // 載入用戶列表
   const loadUsers = useCallback(async () => {
@@ -111,12 +121,55 @@ export default function AuthenticationPage() {
     }
   }, [currentUser, getTokensForServerAction, loadUsers, refreshIdToken]);
 
+  // 更新用戶資料
+  const handleUpdateProfile = useCallback(async (updates: Partial<UserProfile>) => {
+    if (!currentUser) return;
+
+    setLoading(true);
+    setActionResult(null);
+    
+    try {
+      const tokens = await getTokensForServerAction();
+      if (!tokens?.idToken || !tokens?.appCheckToken) {
+        throw new Error('無法獲取認證令牌');
+      }
+
+      const result = await updateUserProfile(currentUser.uid, updates, tokens.appCheckToken, tokens.idToken);
+      
+      if (result.status === 'success') {
+        setActionResult({ status: 'success', message: result.message });
+        await refreshUserProfile();
+        setShowProfileModal(false);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '更新用戶資料失敗';
+      setActionResult({ status: 'error', message: errorMessage });
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser, getTokensForServerAction, refreshUserProfile]);
+
   // 打開角色設置模態框
   const openRoleModal = useCallback((user: User) => {
     setSelectedUser(user);
     setNewRole(user.role);
     setShowRoleModal(true);
   }, []);
+
+  // 打開資料編輯模態框
+  const openProfileModal = useCallback(() => {
+    if (userProfile) {
+      setProfileForm({
+        displayName: userProfile.displayName,
+        department: userProfile.department || '',
+        position: userProfile.position || '',
+        phoneNumber: userProfile.phoneNumber || '',
+      });
+    }
+    setShowProfileModal(true);
+  }, [userProfile]);
 
   // 確認角色設置
   const confirmRoleChange = useCallback(async () => {
@@ -126,6 +179,11 @@ export default function AuthenticationPage() {
     setShowRoleModal(false);
     setSelectedUser(null);
   }, [selectedUser, newRole, handleSetUserRole]);
+
+  // 確認資料更新
+  const confirmProfileUpdate = useCallback(async () => {
+    await handleUpdateProfile(profileForm);
+  }, [profileForm, handleUpdateProfile]);
 
   // 初始化載入
   useEffect(() => {
@@ -190,6 +248,13 @@ export default function AuthenticationPage() {
           >
             {loading ? '載入中...' : '重新載入'}
           </button>
+          <button
+            onClick={openProfileModal}
+            disabled={loading}
+            className={projectStyles.button.primary}
+          >
+            編輯個人資料
+          </button>
         </div>
       </PageHeader>
 
@@ -226,6 +291,19 @@ export default function AuthenticationPage() {
           <div>
             <span className="text-blue-700">角色:</span> {currentRole}
           </div>
+          {userProfile && (
+            <>
+              <div>
+                <span className="text-blue-700">部門:</span> {userProfile.department || '未設定'}
+              </div>
+              <div>
+                <span className="text-blue-700">職位:</span> {userProfile.position || '未設定'}
+              </div>
+              <div>
+                <span className="text-blue-700">電話:</span> {userProfile.phoneNumber || '未設定'}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -379,6 +457,85 @@ export default function AuthenticationPage() {
                   className={projectStyles.button.primary}
                 >
                   {loading ? '設置中...' : '確認設置'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 個人資料編輯模態框 */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-900">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                編輯個人資料
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    顯示名稱
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.displayName}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, displayName: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    部門
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.department}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, department: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    職位
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.position}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, position: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    電話號碼
+                  </label>
+                  <input
+                    type="tel"
+                    value={profileForm.phoneNumber}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className={projectStyles.button.outline}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={confirmProfileUpdate}
+                  disabled={loading}
+                  className={projectStyles.button.primary}
+                >
+                  {loading ? '更新中...' : '確認更新'}
                 </button>
               </div>
             </div>

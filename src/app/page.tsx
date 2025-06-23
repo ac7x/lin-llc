@@ -6,7 +6,15 @@ import { useRouter } from 'next/navigation'; // 導入 Next.js 導航鉤子
 import { useEffect } from 'react';
 
 export default function AuthenticationPage() {
-  const { currentUser, currentRole, signInWithGoogle, signOutUser, loading, isSigningIn } = useFirebase();
+  const { 
+    currentUser, 
+    currentRole, 
+    userProfile,
+    signInWithGoogle, 
+    signOutUser, 
+    loading, 
+    isSigningIn 
+  } = useFirebase();
   const router = useRouter();
 
   // 可選：如果使用者已經登入，可以將他們重定向到主頁或其他地方
@@ -24,17 +32,71 @@ export default function AuthenticationPage() {
   // 如果使用者已登入
   if (currentUser) {
     return (
-      <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <div style={{ padding: '20px', maxWidth: '800px', margin: 'auto', border: '1px solid #ccc', borderRadius: '8px' }}>
         <h1>您已登入</h1>
-        <p>Email: {currentUser.email}</p>
-        <p>UID: {currentUser.uid}</p>
-        <p>您的角色: {currentRole}</p>
+        
+        {/* 基本用戶資訊 */}
+        <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '5px' }}>
+          <h3>基本資訊</h3>
+          <p>Email: {currentUser.email}</p>
+          <p>UID: {currentUser.uid}</p>
+          <p>您的角色: {currentRole}</p>
+        </div>
+
+        {/* Firestore 用戶資料 */}
+        {userProfile && (
+          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', borderRadius: '5px' }}>
+            <h3>Firestore 用戶資料</h3>
+            <p>顯示名稱: {userProfile.displayName}</p>
+            <p>部門: {userProfile.department || '未設定'}</p>
+            <p>職位: {userProfile.position || '未設定'}</p>
+            <p>電話: {userProfile.phoneNumber || '未設定'}</p>
+            <p>狀態: {userProfile.isActive ? '啟用' : '停用'}</p>
+            <p>建立時間: {userProfile.createdAt?.toLocaleDateString()}</p>
+            <p>最後更新: {userProfile.updatedAt?.toLocaleDateString()}</p>
+            {userProfile.lastLoginAt && (
+              <p>最後登入: {userProfile.lastLoginAt.toLocaleDateString()}</p>
+            )}
+          </div>
+        )}
+
         <button
           onClick={signOutUser}
           style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
         >
           登出
         </button>
+
+        {/* 導航按鈕 */}
+        <div style={{ marginTop: '20px' }}>
+          <button
+            onClick={() => router.push('/modules/projects/features/authentication')}
+            style={{ 
+              marginRight: '10px',
+              padding: '10px 20px', 
+              backgroundColor: '#007bff', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '5px', 
+              cursor: 'pointer' 
+            }}
+          >
+            用戶管理
+          </button>
+          <button
+            onClick={() => router.push('/modules/projects/features/profile')}
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: '#28a745', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '5px', 
+              cursor: 'pointer' 
+            }}
+          >
+            個人資料
+          </button>
+        </div>
 
         {/* 範例：根據權限顯示不同內容 */}
         {currentRole === UserRole.ADMIN && (
