@@ -2,37 +2,75 @@
 import * as admin from 'firebase-admin';
 import { UserRole, ROLE_LEVELS } from '../types/roles'; // 導入您的 UserRole 和 ROLE_LEVELS
 
-// 確保 Admin SDK 只初始化一次
-if (!admin.apps.length) {
-  let credential;
-  // 根據環境變數選擇憑證類型
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
-    // 方式二：使用服務帳戶金鑰檔案
-    // 注意：require() 在 ESM 環境下可能需要特別處理或改用動態 import
-    // 在 Next.js Server Actions 中，require 通常是可用的
-    // 但為避免運行時錯誤，請確保該路徑存在且檔案可讀
-    credential = admin.credential.cert(require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH));
-  } else if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-    // 方式三：使用服務帳戶金鑰 JSON 字符串
-    credential = admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON));
-  } else {
-    // 方式一：使用 Application Default Credentials (推薦用於 Google Cloud 環境)
-    // 這會自動尋找 GOOGLE_APPLICATION_CREDENTIALS 環境變數指向的檔案
-    credential = admin.credential.applicationDefault();
+// 初始化 Firebase Admin SDK 的函數
+function initializeFirebaseAdmin(): admin.app.App {
+  // 檢查是否已經初始化
+  const existingApp = admin.apps[0];
+  if (existingApp) {
+    return existingApp;
   }
 
-  admin.initializeApp({
+  let credential;
+  
+  // 根據環境變數選擇憑證類型
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    // 使用服務帳戶金鑰 JSON 字符串
+    try {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+      credential = admin.credential.cert(serviceAccount);
+    } catch (error) {
+      console.error('Error parsing FIREBASE_SERVICE_ACCOUNT_JSON:', error);
+      throw new Error('Invalid FIREBASE_SERVICE_ACCOUNT_JSON format');
+    }
+  } else if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
+    // 使用服務帳戶金鑰檔案路徑
+    try {
+      // 在 Next.js 環境中使用動態 import 或 require
+      const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH);
+      credential = admin.credential.cert(serviceAccount);
+    } catch (error) {
+      console.error('Error loading service account from path:', error);
+      throw new Error('Failed to load service account from path');
+    }
+  } else {
+    // 使用 Application Default Credentials
+    try {
+      credential = admin.credential.applicationDefault();
+    } catch (error) {
+      console.error('Error using application default credentials:', error);
+      throw new Error('Failed to initialize Firebase Admin SDK with default credentials');
+    }
+  }
+
+  // 初始化 Firebase Admin SDK
+  const app = admin.initializeApp({
     credential: credential,
-    projectId: process.env.FIREBASE_PROJECT_ID, // 確保設置了這個環境變數
+    projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   });
 
-  console.log("Firebase Admin SDK initialized.");
+  console.log("Firebase Admin SDK initialized successfully.");
+  return app;
 }
 
-// 導出 admin.auth() 和 admin.appCheck() 實例，方便在 Server Actions 中使用
-// 確保它們是被初始化後的實例
-export const adminAuth = admin.auth();
-export const adminAppCheck = admin.appCheck();
+// 初始化並獲取實例
+let adminApp: admin.app.App | null = null;
+let adminAuthInstance: admin.auth.Auth | null = null;
+let adminAppCheckInstance: admin.appCheck.AppCheck | null = null;
+
+try {
+  adminApp = initializeFirebaseAdmin();
+  adminAuthInstance = adminApp.auth();
+  adminAppCheckInstance = adminApp.appCheck();
+} catch (error) {
+  console.error('Failed to initialize Firebase Admin SDK:', error);
+  // 提供 fallback 實例以避免運行時錯誤
+  adminAuthInstance = null;
+  adminAppCheckInstance = null;
+}
+
+// 導出實例
+export const adminAuth = adminAuthInstance;
+export const adminAppCheck = adminAppCheckInstance;
 
 /**
  * 設定使用者的自訂角色。僅限擁有足夠權限的使用者呼叫此函數。
@@ -45,10 +83,14 @@ export async function setCustomUserRole(
   role: UserRole,
   callerRole: UserRole // 這裡確保 callerRole 是 UserRole 類型
 ): Promise<void> {
+  // 檢查 Firebase Admin SDK 是否正確初始化
+  if (!adminAuth || !adminAuth.setCustomUserClaims) {
+    throw new Error('Firebase Admin SDK not properly initialized');
+  }
+
   // 實作權限檢查：只有 ADMIN 或 OWNER 才能設定角色
   const callerLevel = ROLE_LEVELS[callerRole];
   const adminLevel = ROLE_LEVELS[UserRole.ADMIN];
-  const ownerLevel = ROLE_LEVELS[UserRole.OWNER];
   const targetLevel = ROLE_LEVELS[role];
 
   // 檢查呼叫者的權限是否足夠執行設定角色的操作

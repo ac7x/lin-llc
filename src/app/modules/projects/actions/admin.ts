@@ -20,6 +20,12 @@ async function verifyAdminRequest(appCheckToken: string, idToken: string): Promi
   if (!appCheckToken) {
     throw new Error("App Check token missing.");
   }
+  
+  // 檢查 Firebase Admin SDK 是否正確初始化
+  if (!adminAppCheck) {
+    throw new Error("Firebase App Check not properly initialized.");
+  }
+  
   try {
     await adminAppCheck.verifyToken(appCheckToken);
     // console.log("Server Action: App Check token valid.");
@@ -32,6 +38,12 @@ async function verifyAdminRequest(appCheckToken: string, idToken: string): Promi
   if (!idToken) {
     throw new Error("ID token missing.");
   }
+  
+  // 檢查 Firebase Admin SDK 是否正確初始化
+  if (!adminAuth) {
+    throw new Error("Firebase Admin Auth not properly initialized.");
+  }
+  
   let decodedToken: admin.auth.DecodedIdToken;
   try {
     decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -84,6 +96,11 @@ export async function getAllUsers(appCheckToken: string, idToken: string) {
     // 權限判斷: 只有 MANAGER 及以上角色才能獲取所有使用者列表
     if (!hasRequiredRole(callerRole, UserRole.MANAGER)) {
       throw new Error("Permission denied: Only MANAGER or higher can view all users.");
+    }
+
+    // 檢查 Firebase Admin SDK 是否正確初始化
+    if (!adminAuth) {
+      throw new Error("Firebase Admin Auth not properly initialized.");
     }
 
     // 執行業務邏輯：使用 adminAuth 獲取所有使用者

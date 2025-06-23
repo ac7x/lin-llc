@@ -42,6 +42,11 @@ async function verifyRequest(appCheckToken: string, idToken: string): Promise<{
   if (!appCheckToken) throw new Error("App Check token missing.");
   if (!idToken) throw new Error("ID token missing.");
   
+  // 檢查 Firebase Admin SDK 是否正確初始化
+  if (!adminAuth || !adminAppCheck) {
+    throw new Error("Firebase Admin SDK not properly initialized.");
+  }
+  
   try {
     await adminAppCheck.verifyToken(appCheckToken);
     const decodedToken = await adminAuth.verifyIdToken(idToken);
@@ -137,7 +142,7 @@ export async function updateUserProfile(
     delete updateData.createdAt;
     
     // 如果更新角色，同時更新 Firebase Auth 的自訂聲明
-    if (updates.role && hasRequiredRole(callerRole, UserRole.ADMIN)) {
+    if (updates.role && hasRequiredRole(callerRole, UserRole.ADMIN) && adminAuth) {
       await adminAuth.setCustomUserClaims(targetUid, { role: updates.role });
       await adminAuth.revokeRefreshTokens(targetUid);
     }
