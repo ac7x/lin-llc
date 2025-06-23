@@ -1,13 +1,14 @@
 'use client';
 
+import { collection, doc, getDoc, onSnapshot, query, setDoc, Timestamp, where } from 'firebase/firestore';
 import { ChevronRight, File, Folder } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRef, useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { collection, deleteDoc, doc, getDoc, onSnapshot, query, setDoc, Timestamp, where } from 'firebase/firestore';
 
+import type { Project, Workpackage } from '@/app/projects/types/project';
+import { ProjectProgressPercent } from '@/app/projects/utils/progressUtils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Sidebar,
@@ -25,13 +26,10 @@ import {
 } from '@/components/ui/sidebar';
 import { navigationItems } from '@/constants/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import type { NavigationItem } from '@/types/navigation';
 import { db } from '@/lib/firebase-client';
-import { navigationStyles, modalStyles, inputStyles, cn, buttonStyles } from '@/utils/classNameUtils';
+import type { NavigationItem } from '@/types/navigation';
+import { modalStyles, inputStyles, buttonStyles } from '@/utils/classNameUtils';
 import { safeAsync, retry, getErrorMessage, logError } from '@/utils/errorUtils';
-import type { Project, Workpackage } from '@/app/projects/types/project';
-import { ProjectProgressPercent, ProgressBar } from '@/app/projects/utils/progressUtils';
-import { calculateWorkpackageProgress } from '@/app/projects/utils/projectUtils';
 
 // 專案樹狀結構數據
 const projectTreeData = [
