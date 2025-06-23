@@ -114,7 +114,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'notifications',
     name: '通知',
-    path: '/notifications',
+    path: '/account/notifications',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
@@ -129,7 +129,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'send-notification',
     name: '發送通知',
-    path: '/send-notification',
+    path: '/management/send-notification',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
@@ -184,7 +184,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'archive',
     name: '封存',
-    path: '/archive',
+    path: '/finance/archive',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
