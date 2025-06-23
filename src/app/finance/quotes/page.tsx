@@ -14,7 +14,7 @@
 import Link from 'next/link';
 import { DocumentData, Timestamp } from 'firebase/firestore';
 
-import { FinanceListPage, Column } from '@/components/finance/FinanceListPage';
+import { FinanceListPage, Column } from '@/app/finance/components/FinanceListPage';
 import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
 import { QuoteData } from '@/types/finance';

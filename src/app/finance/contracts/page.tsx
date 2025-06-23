@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { DocumentData, Timestamp } from 'firebase/firestore';
 
-import { FinanceListPage, Column } from '@/components/finance/FinanceListPage';
+import { FinanceListPage, Column } from '@/app/finance/components/FinanceListPage';
 import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
 import { ContractData } from '@/types/finance';
