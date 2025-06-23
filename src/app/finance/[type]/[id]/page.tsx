@@ -1123,5 +1123,3 @@ function QuoteDetail() {
     </main>
   );
 }
-
-</rewritten_file>

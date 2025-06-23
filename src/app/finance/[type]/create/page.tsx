@@ -985,5 +985,3 @@ function QuoteAddPage() {
   );
 }
 // #endregion
-
-</rewritten_file>
