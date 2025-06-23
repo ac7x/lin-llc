@@ -70,6 +70,7 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  const [wpOpenMap, setWpOpenMap] = useState<Record<string, boolean>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [newWorkpackage, setNewWorkpackage] = useState({
@@ -126,6 +127,10 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
 
   const toggleOpen = (projectId: string) => {
     setOpenMap(prev => ({ ...prev, [projectId]: !prev[projectId] }));
+  };
+
+  const toggleWpOpen = (workpackageId: string) => {
+    setWpOpenMap(prev => ({ ...prev, [workpackageId]: !prev[workpackageId] }));
   };
 
   const handleAddWorkpackage = async () => {
@@ -246,24 +251,79 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {project.workpackages?.map(wp => (
-                          <SidebarMenuItem key={wp.id}>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={pathname.includes(`/workpackages/${wp.id}`)}
-                              className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
-                            >
-                              <Link href={`/projects/${project.id}/workpackages/${wp.id}`}>
-                                <File className="w-4 h-4" />
-                                <span className="truncate">{wp.name}</span>
-                                <span className="text-xs text-gray-500 flex-shrink-0">
-                                  {(wp.subWorkpackages?.length || 0) > 0 &&
-                                    `(${wp.subWorkpackages?.length})`}
-                                </span>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))}
+                        {project.workpackages?.map(wp => {
+                          const hasSubWps = wp.subWorkpackages && wp.subWorkpackages.length > 0;
+                          return (
+                            <SidebarMenuItem key={wp.id}>
+                              {hasSubWps ? (
+                                <Collapsible
+                                  open={wpOpenMap[wp.id]}
+                                  onOpenChange={() => toggleWpOpen(wp.id)}
+                                >
+                                  <CollapsibleTrigger asChild>
+                                    <SidebarMenuButton className="group/collapsible [&[data-state=open]>svg:first-child]:rotate-90">
+                                      <ChevronRight className="w-4 h-4 transition-transform" />
+                                      <Folder className="w-4 h-4" />
+                                      <span className="truncate">{wp.name}</span>
+                                      <span className="text-xs text-gray-500 flex-shrink-0">
+                                        {`(${wp.subWorkpackages.length})`}
+                                      </span>
+                                    </SidebarMenuButton>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                    <SidebarMenuSub>
+                                      <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                          asChild
+                                          isActive={
+                                            pathname ===
+                                            `/projects/${project.id}/workpackages/${wp.id}`
+                                          }
+                                          className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+                                        >
+                                          <Link
+                                            href={`/projects/${project.id}/workpackages/${wp.id}`}
+                                          >
+                                            <span className="pl-6 truncate">工作包概覽</span>
+                                          </Link>
+                                        </SidebarMenuButton>
+                                      </SidebarMenuItem>
+                                      {wp.subWorkpackages.map(subWp => (
+                                        <SidebarMenuItem key={subWp.id}>
+                                          <SidebarMenuButton
+                                            asChild
+                                            isActive={pathname.includes(
+                                              `/subworkpackages/${subWp.id}`
+                                            )}
+                                            className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+                                          >
+                                            <Link
+                                              href={`/projects/${project.id}/subworkpackages/${subWp.id}`}
+                                            >
+                                              <File className="w-4 h-4 ml-6" />
+                                              <span className="truncate">{subWp.name}</span>
+                                            </Link>
+                                          </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                      ))}
+                                    </SidebarMenuSub>
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              ) : (
+                                <SidebarMenuButton
+                                  asChild
+                                  isActive={pathname.includes(`/workpackages/${wp.id}`)}
+                                  className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+                                >
+                                  <Link href={`/projects/${project.id}/workpackages/${wp.id}`}>
+                                    <File className="w-4 h-4" />
+                                    <span className="truncate">{wp.name}</span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              )}
+                            </SidebarMenuItem>
+                          );
+                        })}
                         <SidebarMenuItem>
                           <SidebarMenuButton
                             onClick={() => {
