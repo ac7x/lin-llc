@@ -19,7 +19,6 @@ export { CalendarService } from './calendarService';
 export { ScheduleService } from './scheduleService';
 export { GeminiService } from './geminiService';
 export { ProfileService } from './profileService';
-export { SignInService } from './signinService';
 
 // 文件服務
 export { 
@@ -70,7 +69,6 @@ export {
 } from './subworkpackageService';
 
 // 類型匯出
-export type { SignInResult } from './signinService';
 export type { UserProfile } from './profileService';
 export type { CalendarEventData } from './calendarService';
 export type { ScheduleItem, ScheduleDependency, ScheduleStats } from './scheduleService';

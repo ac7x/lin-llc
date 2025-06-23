@@ -191,15 +191,6 @@ export {
   getScheduleItemRiskLevel,
 } from './scheduleUtils';
 
-// 登入相關
-export {
-  validateEmail as validateSignInEmail,
-  getSignInErrorMessage,
-  isSignInError,
-  getSignInProviderName,
-  formatLastLoginTime,
-} from './signinUtils';
-
 // 類型匯出
 export type { 
   DateRange,
