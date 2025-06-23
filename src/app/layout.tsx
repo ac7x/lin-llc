@@ -38,7 +38,7 @@ const geistMono = Geist_Mono({
 });
 
 // 不需要驗證的路徑
-const PUBLIC_PATHS = ['/signin', '/signup', '/forgot-password'];
+const PUBLIC_PATHS = ['/signup', '/forgot-password'];
 
 export default function RootLayout({
   children,

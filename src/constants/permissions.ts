@@ -12,7 +12,7 @@ export const PAGE_PERMISSIONS = [
     id: 'profile',
     name: '個人資料',
     description: '管理個人資料',
-    path: '/profile',
+    path: '/account ',
   },
   // 行事曆功能
   {
