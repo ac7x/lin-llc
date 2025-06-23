@@ -31,6 +31,8 @@ import { db } from '@/lib/firebase-client';
 import type { NavigationItem } from '@/types/navigation';
 import { modalStyles, inputStyles, buttonStyles } from '@/utils/classNameUtils';
 import { safeAsync, retry, getErrorMessage, logError } from '@/utils/errorUtils';
+import { DynamicNavGroup } from '@/components/common/DynamicNavGroup';
+import { ArchiveNavGroup } from '@/components/common/ArchiveNavGroup';
 
 // 專案導航組件
 function ProjectNavigation({ pathname }: { pathname: string }) {
@@ -542,6 +544,33 @@ export default function BottomNavigation(): ReactElement | null {
           
           {/* 專案導航 */}
           <ProjectNavigation pathname={pathname} />
+
+          {/* 財務導航 */}
+          <DynamicNavGroup
+            groupLabel="合約管理"
+            collectionName="contracts"
+            basePath="/contracts"
+            labelField="contractName"
+            createLabel="新增合約"
+            createPathSuffix="create"
+          />
+          <DynamicNavGroup
+            groupLabel="訂單管理"
+            collectionName="orders"
+            basePath="/orders"
+            labelField="orderName"
+            createLabel="新增訂單"
+          />
+          <DynamicNavGroup
+            groupLabel="報價單管理"
+            collectionName="quotes"
+            basePath="/quotes"
+            labelField="quoteName"
+            createLabel="新增報價單"
+          />
+
+          {/* 封存導航 */}
+          <ArchiveNavGroup />
         </SidebarContent>
         <SidebarRail />
       </Sidebar>
