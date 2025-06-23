@@ -17,11 +17,13 @@
 │  │  ├─components
 │  │  │  ├─charts
 │  │  │  │      EfficiencyBarChart.tsx
+│  │  │  │      PersonnelPieChart.tsx
 │  │  │  │      ProgressRadarChart.tsx
 │  │  │  │      WorkforceLineChart.tsx
 │  │  │  │
 │  │  │  ├─layout
 │  │  │  │      DashboardLayout.tsx
+│  │  │  │      ProjectAnalysisCard.tsx
 │  │  │  │      SidebarNav.tsx
 │  │  │  │
 │  │  │  ├─logs
