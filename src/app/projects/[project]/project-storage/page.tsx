@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   ref, 
   uploadBytesResumable, 
@@ -12,7 +13,6 @@ import {
   StorageReference,
   storage
 } from '@/lib/firebase-client';
-import { useAuth } from '@/hooks/useAuth';
 import { logError, getErrorMessage } from '@/utils/errorUtils';
 
 interface StorageFile {
