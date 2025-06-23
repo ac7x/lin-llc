@@ -6,9 +6,7 @@
  */
 
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import type { OrderRow } from '@/app/finance/orders/page';
-
-import { formatLocalDate } from '@/utils/dateUtils';
+import type { OrderRow, OrderItem } from '@/types/finance';
 
 Font.register({
   family: 'NotoSerifTC',
@@ -48,7 +46,7 @@ export function OrderPdfDocument({ order }: { order: OrderRow }) {
               <Text style={{ width: '30%' }}>單價</Text>
               <Text style={{ width: '30%' }}>數量</Text>
             </View>
-            {orderItems.map((item, idx) => (
+            {orderItems.map((item: OrderItem, idx) => (
               <View key={item.orderItemId || idx} style={{ flexDirection: 'row', marginBottom: 2 }}>
                 <Text style={{ width: '40%' }}>{String(item.orderItemId ?? '')}</Text>
                 <Text style={{ width: '30%' }}>{String(item.orderItemPrice ?? '')}</Text>

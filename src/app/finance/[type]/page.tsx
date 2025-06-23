@@ -1,8 +1,8 @@
 'use client';
 
+import { DocumentData } from 'firebase/firestore';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { DocumentData } from 'firebase/firestore';
 import { ReactElement } from 'react';
 
 import {
@@ -13,33 +13,17 @@ import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
 import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
 import { generatePdfBlob } from '@/components/pdf/pdfUtils';
 import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
-import { ContractData, OrderData, QuoteData } from '@/types/finance';
+import {
+  ContractData,
+  OrderData,
+  QuoteData,
+  ContractRow,
+  OrderRow,
+  QuoteRow,
+} from '@/types/finance';
 import { safeToDate } from '@/utils/dateUtils';
 
 // #region Type Definitions
-export type ContractRow = Omit<ContractData, 'createdAt' | 'updatedAt'> & {
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  idx: number;
-  docId: string;
-  daysAgo: number | string;
-};
-
-export type OrderRow = Omit<OrderData, 'createdAt' | 'updatedAt'> & {
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  idx: number;
-  docId: string;
-  daysAgo: number | string;
-};
-
-export type QuoteRow = Omit<QuoteData, 'createdAt' | 'updatedAt'> & {
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  idx: number;
-  docId: string;
-  daysAgo: number | string;
-};
 // #endregion
 
 // #region Process Data Functions
@@ -225,8 +209,6 @@ const financeConfig: Record<
         title='合約列表'
         collectionName='contracts'
         columns={getContractColumns('/finance/contracts')}
-        basePath='/finance/contracts'
-        idField='contractId'
         nameField='contractName'
         clientField='clientName'
         processData={processContractData}
@@ -239,8 +221,6 @@ const financeConfig: Record<
         title='訂單列表'
         collectionName='orders'
         columns={getOrderColumns('/finance/orders')}
-        basePath='/finance/orders'
-        idField='orderId'
         nameField='orderName'
         clientField='clientName'
         processData={processOrderData}
@@ -253,8 +233,6 @@ const financeConfig: Record<
         title='報價單列表'
         collectionName='quotes'
         columns={getQuoteColumns('/finance/quotes')}
-        basePath='/finance/quotes'
-        idField='quoteId'
         nameField='quoteName'
         clientField='clientName'
         processData={processQuoteData}

@@ -120,3 +120,27 @@ export interface ExpenseData extends BaseWithDates {
   notes?: string; // 備註（可選）
   expenseName?: string; // 支出名稱（對應專案名稱，可選）
 }
+
+export type ContractRow = Omit<ContractData, 'createdAt' | 'updatedAt'> & {
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  idx: number;
+  docId: string;
+  daysAgo: number | string;
+};
+
+export type OrderRow = Omit<OrderData, 'createdAt' | 'updatedAt'> & {
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  idx: number;
+  docId: string;
+  daysAgo: number | string;
+};
+
+export type QuoteRow = Omit<QuoteData, 'createdAt' | 'updatedAt'> & {
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  idx: number;
+  docId: string;
+  daysAgo: number | string;
+};

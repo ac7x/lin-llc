@@ -1,12 +1,10 @@
 'use client';
 
-import Link from 'next/link';
-import { useState, useMemo, ReactNode } from 'react';
-import { useCollection } from 'react-firebase-hooks/firestore';
 import { collection, DocumentData } from 'firebase/firestore';
+import { ReactNode, useMemo, useState } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
 
 import { db } from '@/lib/firebase-client';
-import { safeToDate } from '@/utils/dateUtils';
 
 export interface Column<T> {
   key: keyof T | 'actions';
@@ -19,8 +17,6 @@ interface FinanceListPageProps<T> {
   title: string;
   collectionName: string;
   columns: Column<T>[];
-  basePath: string;
-  idField: keyof T;
   nameField: keyof T;
   clientField?: keyof T;
   processData?: (doc: DocumentData) => T;
@@ -30,8 +26,6 @@ export function FinanceListPage<T extends DocumentData>({
   title,
   collectionName,
   columns,
-  basePath,
-  idField,
   nameField,
   clientField,
   processData,
@@ -105,7 +99,7 @@ export function FinanceListPage<T extends DocumentData>({
       return (value as Date).toLocaleDateString();
     }
     return value as ReactNode;
-  }
+  };
 
   return (
     <main className='max-w-6xl mx-auto'>
