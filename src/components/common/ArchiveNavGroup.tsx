@@ -16,11 +16,11 @@ import {
 export function ArchiveNavGroup() {
   const pathname = usePathname();
   const navs = [
-    { label: '封存總覽', href: '/archive', icon: <FolderArchive className="w-4 h-4 mr-3" /> },
-    { label: '封存訂單', href: '/archive/orders', icon: <Archive className="w-4 h-4 mr-3 ml-4" /> },
-    { label: '封存估價單', href: '/archive/quotes', icon: <Archive className="w-4 h-4 mr-3 ml-4" /> },
-    { label: '封存合約', href: '/archive/contracts', icon: <Archive className="w-4 h-4 mr-3 ml-4" /> },
-    { label: '封存專案', href: '/archive/projects', icon: <Archive className="w-4 h-4 mr-3 ml-4" /> },
+    { label: '封存總覽', href: '/finance/archive', icon: <FolderArchive className="w-4 h-4 mr-3" /> },
+    { label: '封存訂單', href: '/finance/archive/orders', icon: <Archive className="w-4 h-4 mr-3 ml-4" /> },
+    { label: '封存估價單', href: '/finance/archive/quotes', icon: <Archive className="w-4 h-4 mr-3 ml-4" /> },
+    { label: '封存合約', href: '/finance/archive/contracts', icon: <Archive className="w-4 h-4 mr-3 ml-4" /> },
+    { label: '封存專案', href: '/finance/archive/projects', icon: <Archive className="w-4 h-4 mr-3 ml-4" /> },
   ];
 
   return (

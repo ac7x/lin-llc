@@ -184,7 +184,7 @@ export const navigationItems: NavigationItem[] = [
   {
     id: 'archive',
     name: '封存',
-    path: '/archive',
+    path: '/finance/archive',
     icon: (
       <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path
