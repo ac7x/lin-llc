@@ -3,9 +3,8 @@
 
 import { useEffect, useState, createContext, useContext, ReactNode, useCallback } from 'react';
 import { initializeApp, FirebaseApp } from "firebase/app";
-// 從 firebase/app-check 導入 AppCheck 類型
-// 不再導入 getAppCheck 或 getToken 函數，直接依賴 AppCheck 實例
-import { initializeAppCheck, ReCaptchaV3Provider, AppCheck } from "firebase/app-check";
+// 從 firebase/app-check 導入 AppCheck 類型和 getToken 函數
+import { initializeAppCheck, ReCaptchaV3Provider, AppCheck, getToken } from "firebase/app-check";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, User, Auth, IdTokenResult } from "firebase/auth";
 import { UserRole, hasRequiredRole, ROLE_LEVELS } from '../../types/roles'; // 導入角色定義
 
@@ -23,6 +22,7 @@ interface FirebaseContextType {
   getTokensForServerAction: () => Promise<{ idToken: string | null; appCheckToken: string | null; } | null>;
   refreshIdToken: () => Promise<void>; // 用於手動刷新 ID Token (當自訂聲明被修改時)
   loading: boolean; // Firebase 服務初始化和使用者狀態加載中
+  isSigningIn: boolean; // 登入進行中狀態
 }
 
 // 建立 Context
@@ -39,6 +39,7 @@ const FirebaseContext = createContext<FirebaseContextType>({
   getTokensForServerAction: async () => null,
   refreshIdToken: async () => {},
   loading: true,
+  isSigningIn: false,
 });
 
 // 自定義 Hook，方便在客戶端組件中使用 Firebase Context
@@ -51,6 +52,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [currentUserClaims, setCurrentUserClaims] = useState<IdTokenResult['claims'] | null>(null);
   const [appCheckInstance, setAppCheckInstance] = useState<AppCheck | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSigningIn, setIsSigningIn] = useState(false); // 添加登入狀態追蹤
 
   // 初始化 Firebase App, Auth, App Check
   useEffect(() => {
@@ -97,12 +99,15 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
 
     // 初始化 App Check (僅在瀏覽器環境中)
     if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
-      const appCheck = initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY),
-        isTokenAutoRefreshEnabled: true,
-        // debug: process.env.NODE_ENV === 'development', // 僅在開發環境啟用偵錯
-      });
-      setAppCheckInstance(appCheck);
+      try {
+        const appCheck = initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY),
+          isTokenAutoRefreshEnabled: true,
+        });
+        setAppCheckInstance(appCheck);
+      } catch (error) {
+        console.error("App Check 初始化失敗:", error);
+      }
     } else {
       setLoading(false); // 如果 App Check 無法初始化，也要設置 loading 為 false
     }
@@ -114,27 +119,60 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
 
   // Google 登入方法
   const signInWithGoogle = useCallback(async () => {
-    if (!authInstance || !appCheckInstance) { // 這裡確保 appCheckInstance 已初始化
-      console.warn("Firebase Auth or App Check not initialized.");
+    if (!authInstance || !appCheckInstance) {
+      console.error("Firebase Auth 或 App Check 未初始化");
       return null;
     }
+
+    // 防止重複點擊
+    if (isSigningIn) {
+      console.log("登入進行中，請稍候...");
+      return null;
+    }
+
+    setIsSigningIn(true);
+
     try {
       const provider = new GoogleAuthProvider();
+      // 添加額外的範圍（可選）
+      provider.addScope('email');
+      provider.addScope('profile');
+      
       const result = await signInWithPopup(authInstance, provider);
       const user = result.user;
 
-      const idToken = await user.getIdToken(); // 獲取使用者 ID Token
-      // 直接從 appCheckInstance 獲取令牌。如果 TypeScript 仍報錯，使用 `as any`
-      const appCheckTokenResult = await (appCheckInstance as any).getToken(true);
-      const appCheckToken = appCheckTokenResult.token;
+      const idToken = await user.getIdToken();
+      
+      // 使用正確的 Firebase v11 API 獲取 App Check Token
+      let appCheckToken: string | null = null;
+      try {
+        const tokenResult = await getToken(appCheckInstance, /* forceRefresh */ true);
+        appCheckToken = tokenResult.token;
+      } catch (appCheckError) {
+        console.error("App Check Token 獲取失敗:", appCheckError);
+      }
 
-      console.log("Google Sign-In successful. ID Token acquired, App Check Token acquired.");
       return { idToken, appCheckToken };
-    } catch (error) {
-      console.error("Google Sign-In or token retrieval failed:", error);
-      return null;
+    } catch (error: any) {
+      // 處理特定的 Firebase 錯誤
+      if (error.code === 'auth/cancelled-popup-request') {
+        console.log("登入彈出視窗被取消，可能是重複點擊或彈出視窗被阻擋");
+        return null;
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        console.log("用戶關閉了登入彈出視窗");
+        return null;
+      } else if (error.code === 'auth/popup-blocked') {
+        console.error("登入彈出視窗被瀏覽器阻擋，請允許彈出視窗");
+        alert("請允許瀏覽器彈出視窗以完成登入");
+        return null;
+      } else {
+        console.error("Google 登入失敗:", error);
+        return null;
+      }
+    } finally {
+      setIsSigningIn(false);
     }
-  }, [authInstance, appCheckInstance]); // 依賴 appCheckInstance
+  }, [authInstance, appCheckInstance, isSigningIn]);
 
   // 登出方法
   const signOutUser = useCallback(async () => {
@@ -150,21 +188,21 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
 
   // 獲取 App Check 和 ID 令牌以傳遞給 Server Action
   const getTokensForServerAction = useCallback(async () => {
-    if (!authInstance || !appCheckInstance || !currentUser) { // 這裡確保 appCheckInstance 已初始化
+    if (!authInstance || !appCheckInstance || !currentUser) {
       console.warn("User not logged in or Firebase services not ready.");
       return null;
     }
     try {
       const idToken = await currentUser.getIdToken();
-      // 直接從 appCheckInstance 獲取令牌。如果 TypeScript 仍報錯，使用 `as any`
-      const appCheckTokenResult = await (appCheckInstance as any).getToken(true);
+      // 使用正確的 Firebase v11 API 獲取 App Check Token
+      const appCheckTokenResult = await getToken(appCheckInstance, true);
       const appCheckToken = appCheckTokenResult.token;
       return { idToken, appCheckToken };
     } catch (error) {
       console.error("Failed to get tokens for server action:", error);
       return null;
     }
-  }, [authInstance, appCheckInstance, currentUser]); // 依賴 appCheckInstance
+  }, [authInstance, appCheckInstance, currentUser]);
 
   // 手動刷新 ID Token (當自訂聲明在後端被修改時，前端需要刷新才能獲取最新聲明)
   const refreshIdToken = useCallback(async () => {
@@ -207,6 +245,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         getTokensForServerAction,
         refreshIdToken,
         loading,
+        isSigningIn,
       }}
     >
       {children}

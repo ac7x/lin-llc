@@ -42,9 +42,7 @@
       "auth",
       "common",
       "archive",
-      "google-maps",
-      "env",
-      "grecaptcha"
+      "google-maps"
     ]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/modules/**/*.ts"],
