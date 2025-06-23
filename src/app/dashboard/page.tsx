@@ -299,6 +299,19 @@ export default function DashboardPage() {
     return progressData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [projectsSnapshot, selectedProject]);
 
+  const efficiencyTrendData = useMemo(() => {
+    return projectProgressData.map(item => {
+      const efficiencyPerPerson =
+        item.workforce > 0
+          ? Number((item.efficiency / item.workforce).toFixed(2))
+          : 0;
+      return {
+        ...item,
+        efficiency: efficiencyPerPerson,
+      };
+    });
+  }, [projectProgressData]);
+
   const chartConfig = useMemo(
     () => ({
       dateAxis: {
@@ -423,7 +436,7 @@ export default function DashboardPage() {
               {projectsSnapshot?.docs.map(doc => {
                 const projectData = doc.data() as Project;
                 return (
-                  <option key={projectData.projectName} value={projectData.projectName}>
+                  <option key={doc.id} value={projectData.projectName}>
                     {projectData.projectName}
                   </option>
                 );
@@ -573,16 +586,7 @@ export default function DashboardPage() {
                       dot={false}
                       yAxisId='efficiency'
                       strokeDasharray='5 5'
-                      data={projectProgressData.map(item => {
-                        const efficiencyPerPerson =
-                          item.workforce > 0
-                            ? Number((item.efficiency / item.workforce).toFixed(2))
-                            : 0;
-                        return {
-                          ...item,
-                          efficiency: efficiencyPerPerson,
-                        };
-                      })}
+                      data={efficiencyTrendData}
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
