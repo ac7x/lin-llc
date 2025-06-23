@@ -93,13 +93,13 @@ export const PAGE_PERMISSIONS = [
     id: 'notifications',
     name: '通知管理',
     description: '管理通知相關功能',
-    path: '/notifications',
+    path: '/account/notifications',
   },
   {
     id: 'send-notification',
     name: '發送通知',
     description: '發送系統通知',
-    path: '/send-notification',
+    path: '/management/send-notification',
   },
   {
     id: 'management',

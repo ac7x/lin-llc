@@ -108,7 +108,7 @@ export function NotificationSummary({ className = '' }: NotificationSummaryProps
 
   return (
     <Link
-      href='/notifications'
+      href='/account/notifications'
       className={`flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors ${className}`}
     >
       <BellIcon className='h-4 w-4' />

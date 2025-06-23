@@ -22,7 +22,7 @@ import {
 } from '@heroicons/react/24/outline';
 import React, { useState, ReactElement } from 'react';
 
-import { NotificationBell } from '@/app/notifications/components/NotificationBell';
+import { NotificationBell } from '@/app/account/notifications/components/NotificationBell';
 import { useAuth } from '@/hooks/useAuth';
 import { Timestamp } from '@/lib/firebase-client';
 import { createNotification } from '@/lib/firebase-notifications';
