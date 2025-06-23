@@ -560,6 +560,7 @@ export default function BottomNavigation(): ReactElement | null {
             basePath="/finance/orders"
             labelField="orderName"
             createLabel="新增訂單"
+            createPathSuffix="create"
           />
           <DynamicNavGroup
             groupLabel="報價單管理"
@@ -567,6 +568,7 @@ export default function BottomNavigation(): ReactElement | null {
             basePath="/finance/quotes"
             labelField="quoteName"
             createLabel="新增報價單"
+            createPathSuffix="create"
           />
 
           {/* 封存導航 */}
