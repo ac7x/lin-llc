@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRef, useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { collection, deleteDoc, doc, getDoc, onSnapshot, query, setDoc, Timestamp, where } from 'firebase/firestore';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -24,6 +26,12 @@ import {
 import { navigationItems } from '@/constants/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import type { NavigationItem } from '@/types/navigation';
+import { db } from '@/lib/firebase-client';
+import { navigationStyles, modalStyles, inputStyles, cn, buttonStyles } from '@/utils/classNameUtils';
+import { safeAsync, retry, getErrorMessage, logError } from '@/utils/errorUtils';
+import type { Project, Workpackage } from '@/app/projects/types/project';
+import { ProjectProgressPercent, ProgressBar } from '@/app/projects/utils/progressUtils';
+import { calculateWorkpackageProgress } from '@/app/projects/utils/projectUtils';
 
 // 專案樹狀結構數據
 const projectTreeData = [
@@ -55,6 +63,320 @@ const projectTreeData = [
     ],
   },
 ];
+
+// 專案導航組件
+function ProjectNavigation({ pathname }: { pathname: string }) {
+  const { user } = useAuth();
+  const [projectsSnapshot, setProjectsSnapshot] = useState<import('firebase/firestore').QuerySnapshot | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [newWorkpackage, setNewWorkpackage] = useState({
+    name: '',
+    description: '',
+    category: '',
+    budget: '',
+  });
+
+  useEffect(() => {
+    if (!user?.uid) {
+      return;
+    }
+
+    const fetchProjects = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        let q;
+        
+        if (user.currentRole && !['manager', 'admin', 'owner'].includes(user.currentRole)) {
+          q = query(
+            collection(db, 'projects'),
+            where('owner', '==', user.uid)
+          );
+        } else {
+          q = query(collection(db, 'projects'));
+        }
+
+        const unsubscribe = onSnapshot(
+          q,
+          snapshot => {
+            setProjectsSnapshot(snapshot);
+            setLoading(false);
+          },
+          async (firebaseError) => {
+            logError(firebaseError, { operation: 'fetch_projects', userId: user?.uid });
+            setLoading(false);
+            setError('無法載入專案資料，請檢查網路連線或稍後再試。');
+          }
+        );
+
+        return () => unsubscribe();
+      } catch (error) {
+        logError(error, { operation: 'setup_project_query', userId: user?.uid });
+        setLoading(false);
+        setError('無法設定專案查詢，請重新整理頁面。');
+      }
+    };
+
+    fetchProjects();
+  }, [user?.uid, user?.currentRole]);
+
+  const toggleOpen = (projectId: string) => {
+    setOpenMap(prev => ({ ...prev, [projectId]: !prev[projectId] }));
+  };
+
+  const handleAddWorkpackage = async () => {
+    if (!selectedProjectId || !newWorkpackage.name.trim()) return;
+
+    await safeAsync(async () => {
+      const workpackageData: Workpackage = {
+        id: crypto.randomUUID(),
+        name: newWorkpackage.name,
+        description: newWorkpackage.description,
+        category: newWorkpackage.category,
+        budget: newWorkpackage.budget ? parseFloat(newWorkpackage.budget) : undefined,
+        subWorkpackages: [],
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      const projectRef = doc(db, 'projects', selectedProjectId);
+      const projectDoc = await retry(() => getDoc(projectRef), 3, 1000);
+      
+      if (!projectDoc.exists()) {
+        throw new Error('專案不存在');
+      }
+
+      const projectData = projectDoc.data() as Project;
+      const updatedWorkpackages = [...(projectData.workpackages || []), workpackageData];
+
+      await retry(() => setDoc(projectRef, {
+        ...projectData,
+        workpackages: updatedWorkpackages,
+        updatedAt: Timestamp.now(),
+      }, { merge: true }), 3, 1000);
+
+      setNewWorkpackage({ name: '', description: '', category: '', budget: '' });
+      setShowCreateModal(false);
+      setSelectedProjectId('');
+    }, (error) => {
+      alert(`建立工作包失敗: ${getErrorMessage(error)}`);
+      logError(error, { operation: 'create_workpackage', projectId: selectedProjectId });
+    });
+  };
+
+  const navs = [
+    { href: '/projects', label: '專案列表', icon: '📋' },
+    { href: '/projects/import', label: '匯入專案', icon: '📥' },
+    { href: '/projects/templates', label: '範本管理', icon: '📄' },
+  ];
+
+  const projects =
+    (projectsSnapshot?.docs.map((docSnapshot: import('firebase/firestore').QueryDocumentSnapshot) => ({
+      id: docSnapshot.id,
+      ...docSnapshot.data(),
+    })) as (Project & { id: string })[]) || [];
+
+  return (
+    <>
+      <SidebarGroup>
+        <SidebarGroupLabel>專案管理</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {navs.map(nav => (
+              <SidebarMenuItem key={nav.href}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === nav.href}
+                  className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+                >
+                  <Link href={nav.href}>
+                    <span className="mr-3">{nav.icon}</span>
+                    {nav.label}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>專案列表</SidebarGroupLabel>
+        <SidebarGroupContent>
+          {loading ? (
+            <div className='flex items-center justify-center py-8'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+            </div>
+          ) : error ? (
+            <div className='flex flex-col items-center justify-center py-8 text-center'>
+              <div className='text-red-400 text-6xl mb-4'>⚠️</div>
+              <p className='text-red-600 dark:text-red-400 text-sm mb-2'>載入專案時發生錯誤</p>
+              <p className='text-gray-500 dark:text-gray-400 text-xs mb-4'>{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className='mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm'
+              >
+                重新整理
+              </button>
+            </div>
+          ) : projects.length === 0 ? (
+            <div className='flex flex-col items-center justify-center py-8 text-center'>
+              <div className='text-gray-400 text-6xl mb-4'>📋</div>
+              <p className='text-gray-500 dark:text-gray-400 text-sm mb-2'>目前沒有專案</p>
+              <p className='text-gray-400 dark:text-gray-500 text-xs'>請先建立專案或從合約匯入</p>
+            </div>
+          ) : (
+            <SidebarMenu>
+              {projects.map(project => (
+                <SidebarMenuItem key={project.id}>
+                  <Collapsible open={openMap[project.id]} onOpenChange={() => toggleOpen(project.id)}>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="group/collapsible [&[data-state=open]>svg:first-child]:rotate-90">
+                        <ChevronRight className="w-4 h-4 transition-transform" />
+                        <Folder className="w-4 h-4" />
+                        <span className="truncate">
+                          {project.projectName || project.projectId || project.id}
+                        </span>
+                        <ProjectProgressPercent project={project} />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {project.workpackages?.map(wp => (
+                          <SidebarMenuItem key={wp.id}>
+                            <SidebarMenuButton
+                              asChild
+                              isActive={pathname.includes(`/workpackages/${wp.id}`)}
+                              className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+                            >
+                              <Link href={`/projects/${project.id}/workpackages/${wp.id}`}>
+                                <File className="w-4 h-4" />
+                                <span className="truncate">{wp.name}</span>
+                                <span className="text-xs text-gray-500 flex-shrink-0">
+                                  {(wp.subWorkpackages?.length || 0) > 0 &&
+                                    `(${wp.subWorkpackages?.length})`}
+                                </span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            onClick={() => {
+                              setSelectedProjectId(project.id);
+                              setShowCreateModal(true);
+                            }}
+                          >
+                            <span className="mr-2">+</span> 新增工作包
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          )}
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {showCreateModal && projectsSnapshot && (
+        <div className={modalStyles.overlay}>
+          <div className={modalStyles.container}>
+            <h2 className={modalStyles.title}>
+              建立工作包
+            </h2>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleAddWorkpackage();
+              }}
+              className='space-y-4'
+            >
+              <div>
+                <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+                  工作包名稱
+                </label>
+                <input
+                  type='text'
+                  className={inputStyles.base}
+                  value={newWorkpackage.name}
+                  onChange={e => setNewWorkpackage(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+                  描述
+                </label>
+                <textarea
+                  className={inputStyles.base}
+                  value={newWorkpackage.description}
+                  onChange={e =>
+                    setNewWorkpackage(prev => ({ ...prev, description: e.target.value }))
+                  }
+                  rows={3}
+                />
+              </div>
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+                    類別
+                  </label>
+                  <input
+                    type='text'
+                    className={inputStyles.base}
+                    value={newWorkpackage.category}
+                    onChange={e =>
+                      setNewWorkpackage(prev => ({ ...prev, category: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300'>
+                    預算
+                  </label>
+                  <input
+                    type='number'
+                    className={inputStyles.base}
+                    value={newWorkpackage.budget}
+                    onChange={e =>
+                      setNewWorkpackage(prev => ({ ...prev, budget: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className='flex justify-end gap-3 pt-4'>
+                <button
+                  type='button'
+                  className={buttonStyles.outline}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setNewWorkpackage({ name: '', description: '', category: '', budget: '' });
+                  }}
+                >
+                  取消
+                </button>
+                <button
+                  type='submit'
+                  className={buttonStyles.primary}
+                  disabled={!newWorkpackage.name.trim()}
+                >
+                  建立
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 // 樹狀組件
 function TreeItem({ item, pathname }: { item: any; pathname: string }) {
@@ -159,6 +481,9 @@ export default function BottomNavigation(): ReactElement | null {
     hasPermission(item.id)
   );
 
+  // 檢查是否在專案頁面
+  const isProjectPage = pathname.startsWith('/projects');
+
   // 檢測設備類型
   useEffect(() => {
     const checkDevice = () => {
@@ -227,11 +552,15 @@ export default function BottomNavigation(): ReactElement | null {
           </div>
         </SidebarHeader>
         <SidebarContent>
+          {/* 主要導航 */}
           <MainNavigation 
             pathname={pathname} 
             filteredNavigationItems={filteredNavigationItems} 
           />
-          <ProjectTreeNavigation pathname={pathname} />
+          
+          {/* 根據當前頁面顯示相應的詳細導航 */}
+          {isProjectPage && <ProjectNavigation pathname={pathname} />}
+          {!isProjectPage && <ProjectTreeNavigation pathname={pathname} />}
         </SidebarContent>
       </Sidebar>
     </SidebarProvider>
