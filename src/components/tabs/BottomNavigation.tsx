@@ -23,7 +23,6 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarProvider,
-  SidebarTrigger,
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { navigationItems } from '@/constants/navigation';
@@ -548,13 +547,12 @@ export default function BottomNavigation(): ReactElement | null {
     <SidebarProvider defaultOpen={true}>
       <Sidebar className="fixed left-0 top-0 h-full w-64 bg-background border-r border-border z-40" collapsible="icon">
         <SidebarHeader className="border-b border-border p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center transition-all duration-200">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent transition-all duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:hidden">
               LIN LLC
             </h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 group-data-[collapsible=icon]:gap-0 transition-all duration-200">
               <ModeToggle />
-              <SidebarTrigger className="h-8 w-8" />
             </div>
           </div>
         </SidebarHeader>
