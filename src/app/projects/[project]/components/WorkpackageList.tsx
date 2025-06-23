@@ -24,11 +24,34 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { STATUS_LABELS, STATUS_COLORS } from '@/app/modules/projects/constants/statusConstants';
 import type { Workpackage } from '@/app/projects/types/project';
 import { doc, updateDoc, db } from '@/lib/firebase-client';
 import { cn, buttonStyles, cardStyles } from '@/utils/classNameUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+
+// 工作包狀態標籤
+const STATUS_LABELS: Record<string, string> = {
+  draft: '草稿',
+  planned: '已規劃',
+  ready: '準備就緒',
+  'in-progress': '執行中',
+  review: '審查中',
+  completed: '已完成',
+  'on-hold': '暫停中',
+  cancelled: '已取消',
+};
+
+// 工作包狀態顏色
+const STATUS_COLORS: Record<string, string> = {
+  draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  planned: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
+  ready: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
+  'in-progress': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
+  review: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300',
+  completed: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
+  'on-hold': 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300',
+  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
+};
 
 interface WorkpackageListProps {
   workpackages: Workpackage[];

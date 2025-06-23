@@ -1,224 +1,209 @@
-│  page.tsx
+├─app
+│  │  layout.tsx
+│  │  page.tsx
+│  │
+│  ├─archive
+│  │  │  layout.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  └─[type]
+│  │          page.tsx
+│  │
+│  ├─calendar
+│  │      layout.tsx
+│  │      page.tsx
+│  │
+│  ├─contracts
+│  │  │  layout.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  ├─create
+│  │  │      page.tsx
+│  │  │
+│  │  └─[contract]
+│  │          page.tsx
+│  │
+│  ├─dashboard
+│  │      layout.tsx
+│  │      page.tsx
+│  │
+│  ├─gemini
+│  │      layout.tsx
+│  │      page.tsx
+│  │
+│  ├─management
+│  │  │  layout.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  └─components
+│  │          RolePermissions.tsx
+│  │          UserList.tsx
+│  │
+│  ├─notifications
+│  │  │  layout.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  └─components
+│  │          NotificationBell.tsx
+│  │
+│  ├─orders
+│  │  │  layout.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  ├─add
+│  │  │      page.tsx
+│  │  │
+│  │  └─[order]
+│  │          page.tsx
+│  │
+│  ├─profile
+│  │      layout.tsx
+│  │      page.tsx
+│  │
+│  ├─projects
+│  │  │  layout.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  ├─components
+│  │  │  │  AddressSelector.tsx
+│  │  │  │  DataLoader.tsx
+│  │  │  │  ProjectDashboard.tsx
+│  │  │  │  ProjectsTable.tsx
+│  │  │  │  WeatherDisplay.tsx
+│  │  │  │
+│  │  │  └─layout
+│  │  │          PageLayout.tsx
+│  │  │
+│  │  ├─hooks
+│  │  │      useFilteredProjects.ts
+│  │  │
+│  │  ├─import
+│  │  │      page.tsx
+│  │  │
+│  │  ├─templates
+│  │  │      page.tsx
+│  │  │
+│  │  ├─types
+│  │  │      project.d.ts
+│  │  │
+│  │  ├─utils
+│  │  │      progressUtils.tsx
+│  │  │      projectUtils.ts
+│  │  │
+│  │  └─[project]
+│  │      │  page.tsx
+│  │      │
+│  │      ├─components
+│  │      │      ProjectEditModal.tsx
+│  │      │      ProjectInfoDisplay.tsx
+│  │      │      ProjectInfoPage.tsx
+│  │      │      WorkpackageList.tsx
+│  │      │
+│  │      ├─project-calendar
+│  │      │      page.tsx
+│  │      │
+│  │      ├─project-expenses
+│  │      │      page.tsx
+│  │      │
+│  │      ├─project-issues
+│  │      │      page.tsx
+│  │      │
+│  │      ├─project-journal
+│  │      │  │  page.tsx
+│  │      │  │
+│  │      │  └─components
+│  │      │          JournalForm.tsx
+│  │      │          JournalHistory.tsx
+│  │      │
+│  │      ├─project-materials
+│  │      │      page.tsx
+│  │      │
+│  │      ├─project-storage
+│  │      │      page.tsx
+│  │      │
+│  │      └─workpackages
+│  │          ├─subworkpackages
+│  │          │      page.tsx
+│  │          │
+│  │          └─[workpackage]
+│  │                  page.tsx
+│  │
+│  ├─quotes
+│  │  │  layout.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  ├─add
+│  │  │      page.tsx
+│  │  │
+│  │  └─[quote]
+│  │          page.tsx
+│  │
+│  ├─schedule
+│  │      layout.tsx
+│  │      page.tsx
+│  │
+│  ├─send-notification
+│  │      layout.tsx
+│  │      page.tsx
+│  │
+│  └─signin
+│          page.tsx
 │
-└─projects
-    │  index.ts
-    │
-    ├─components
-    │  │  index.ts
-    │  │
-    │  ├─admin
-    │  ├─analytics
-    │  ├─budget
-    │  │      BudgetForm.tsx
-    │  │      BudgetTracker.tsx
-    │  │      CostAlert.tsx
-    │  │      index.ts
-    │  │
-    │  ├─calendar
-    │  │      CalendarView.tsx
-    │  │      index.ts
-    │  │
-    │  ├─common
-    │  │      AddressSelector.tsx
-    │  │      DataLoader.tsx
-    │  │      index.ts
-    │  │      LoadingSpinner.tsx
-    │  │      PageContainer.tsx
-    │  │      PageHeader.tsx
-    │  │      WeatherDisplay.tsx
-    │  │
-    │  ├─contracts
-    │  ├─dashboard
-    │  │      index.ts
-    │  │      ProjectDashboard.tsx
-    │  │      ProjectsTable.tsx
-    │  │      ProjectStats.tsx
-    │  │
-    │  ├─document
-    │  │      BlueprintViewer.tsx
-    │  │      DocumentVersioning.tsx
-    │  │      index.ts
-    │  │
-    │  ├─expenses
-    │  │      ExpenseForm.tsx
-    │  │      ExpenseList.tsx
-    │  │      index.ts
-    │  │
-    │  ├─gemini
-    │  │      index.ts
-    │  │      ProjectAnalysisDisplay.tsx
-    │  │      ProjectGeminiChat.tsx
-    │  │
-    │  ├─generate-from-contract
-    │  │      ContractSelector.tsx
-    │  │      index.ts
-    │  │      ProjectSetupForm.tsx
-    │  │      TemplateSelector.tsx
-    │  │
-    │  ├─issues
-    │  │      index.ts
-    │  │      IssueForm.tsx
-    │  │      IssueList.tsx
-    │  │
-    │  ├─journal
-    │  │      index.ts
-    │  │      JournalCard.tsx
-    │  │      JournalForm.tsx
-    │  │      JournalHistory.tsx
-    │  │
-    │  ├─management
-    │  │      ChangeManager.tsx
-    │  │      index.ts
-    │  │      IssueTracker.tsx
-    │  │      MilestoneTracker.tsx
-    │  │      RiskManager.tsx
-    │  │
-    │  ├─materials
-    │  │      index.ts
-    │  │      MaterialForm.tsx
-    │  │      MaterialList.tsx
-    │  │
-    │  ├─project
-    │  │      index.ts
-    │  │      ProjectEditModal.tsx
-    │  │      ProjectInfoDisplay.tsx
-    │  │      ProjectInfoPage.tsx
-    │  │
-    │  ├─schedule
-    │  │      GanttChart.tsx
-    │  │      index.ts
-    │  │      MilestoneMarker.tsx
-    │  │      ScheduleForm.tsx
-    │  │      ScheduleList.tsx
-    │  │      TaskDependencyGraph.tsx
-    │  │
-    │  ├─subwork-packages
-    │  │      index.ts
-    │  │      SubWorkPackageCard.tsx
-    │  │      SubWorkPackageForm.tsx
-    │  │      SubWorkPackageList.tsx
-    │  │
-    │  ├─templates
-    │  │      index.ts
-    │  │      TemplateCard.tsx
-    │  │      TemplateForm.tsx
-    │  │
-    │  └─work-packages
-    │          index.ts
-    │          WorkPackageCard.tsx
-    │          WorkPackageForm.tsx
-    │          WorkPackageList.tsx
-    │
-    ├─constants
-    │      index.ts
-    │      projectConstants.ts
-    │      statusConstants.ts
-    │      validationRules.ts
-    │
-    ├─features
-    │  ├─admin
-    │  │      page.tsx
-    │  │
-    │  ├─analytics
-    │  │      page.tsx
-    │  │
-    │  ├─contracts
-    │  │      page.tsx
-    │  │
-    │  ├─generate-from-contract
-    │  │      page.tsx
-    │  │
-    │  ├─list
-    │  │      page.tsx
-    │  │
-    │  ├─templates
-    │  │      page.tsx
-    │  │
-    │  └─[project]
-    │      │  page.tsx
-    │      │
-    │      ├─budget
-    │      │      page.tsx
-    │      │
-    │      ├─calendar
-    │      │      page.tsx
-    │      │
-    │      ├─document
-    │      │      page.tsx
-    │      │
-    │      ├─expenses
-    │      │      page.tsx
-    │      │
-    │      ├─gemini
-    │      │      page.tsx
-    │      │
-    │      ├─issues
-    │      │      page.tsx
-    │      │
-    │      ├─journal
-    │      │      page.tsx
-    │      │
-    │      ├─materials
-    │      │      page.tsx
-    │      │
-    │      ├─schedule
-    │      │      page.tsx
-    │      │
-    │      ├─subwork-packages
-    │      │      page.tsx
-    │      │
-    │      └─work-packages
-    │              page.tsx
-    │
-    ├─hooks
-    │      index.ts
-    │      useFilteredProjects.ts
-    │      useProjectActions.ts
-    │      useProjectAdmin.ts
-    │      useProjectAnalytics.ts
-    │      useProjectBudget.ts
-    │      useProjectCalendar.ts
-    │      useProjectContracts.ts
-    │      useProjectDocuments.ts
-    │      useProjectErrorHandler.ts
-    │      useProjectForm.ts
-    │      useProjectGemini.ts
-    │      useProjectSchedule.ts
-    │      useProjectState.ts
-    │
-    ├─services
-    │      adminService.ts
-    │      analyticsService.ts
-    │      budgetService.ts
-    │      calendarService.ts
-    │      contractService.ts
-    │      documentService.ts
-    │      geminiService.ts
-    │      index.ts
-    │      issueService.ts
-    │      journalService.ts
-    │      projectService.ts
-    │      scheduleService.ts
-    │      subWorkPackageService.ts
-    │      templateService.ts
-    │      workPackageService.ts
-    │
-    ├─styles
-    │      index.ts
-    │
-    ├─types
-    │      index.ts
-    │
-    └─utils
-            adminUtils.ts
-            analyticsUtils.ts
-            calendarUtils.ts
-            contractUtils.ts
-            dateUtils.ts
-            geminiUtils.ts
-            index.ts
-            progressUtils.tsx
-            projectUtils.ts
-            qualityUtils.ts
-            riskUtils.ts
-            scheduleUtils.ts
+├─components
+│  ├─common
+│  │      PermissionCheck.tsx
+│  │      Tabs.tsx
+│  │      Unauthorized.tsx
+│  │      VisTimeline.tsx
+│  │
+│  ├─pdf
+│  │      ContractPdfDocument.tsx
+│  │      OrderPdfDocument.tsx
+│  │      pdfUtils.ts
+│  │      QuotePdfDocument.tsx
+│  │
+│  └─tabs
+│          BottomNavigation.tsx
+│
+├─constants
+│      navigation.tsx
+│      permissions.ts
+│      roles.ts
+│
+├─hooks
+│      useAppCheck.ts
+│      useAuth.ts
+│      useFirebaseMessaging.ts
+│      useNotifications.ts
+│
+├─lib
+│      firebase-client.ts
+│      firebase-config.ts
+│      firebase-init.ts
+│      firebase-notifications.ts
+│
+├─styles
+│      globals.css
+│      react-big-calendar.css
+│
+├─types
+│      archive.d.ts
+│      auth.d.ts
+│      calendar.d.ts
+│      coding-standards.d.ts
+│      common.d.ts
+│      finance.d.ts
+│      google-maps.d.ts
+│      navigation.d.ts
+│      notification.d.ts
+│      timeline.d.ts
+│
+└─utils
+        calendarUtils.ts
+        classNameUtils.ts
+        codingStandards.ts
+        colorUtils.ts
+        dateUtils.ts
+        errorUtils.ts
+        taiwanCityUtils.ts
+        timelineUtils.ts
