@@ -92,7 +92,7 @@ export default function ContractDetailPage() {
               訂單
               <button
                 className='ml-2 text-blue-600 hover:underline dark:text-blue-400'
-                onClick={() => router.push(`/orders/${data.sourceId}`)}
+                onClick={() => router.push(`/finance/orders/${data.sourceId}`)}
               >
                 {data.sourceId}
               </button>
@@ -102,7 +102,7 @@ export default function ContractDetailPage() {
               估價單
               <button
                 className='ml-2 text-green-600 hover:underline dark:text-green-400'
-                onClick={() => router.push(`/quotes/${data.sourceId}`)}
+                onClick={() => router.push(`/finance/quotes/${data.sourceId}`)}
               >
                 {data.sourceId}
               </button>
@@ -155,7 +155,7 @@ export default function ContractDetailPage() {
       </div>
       <button
         className='bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600'
-        onClick={() => router.push('/contracts')}
+        onClick={() => router.push('/finance/contracts')}
       >
         返回列表
       </button>

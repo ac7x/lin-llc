@@ -1,33 +1,32 @@
 /**
- * 合約列表頁面
+ * 報價單列表頁面
  *
- * 顯示所有合約的列表，提供以下功能：
- * - 合約搜尋
+ * 顯示所有報價單的列表，提供以下功能：
+ * - 報價單搜尋
  * - 多欄位排序
  * - PDF 匯出
- * - 合約詳細資訊查看
- * - 合約狀態追蹤
+ * - 報價單詳細資訊查看
+ * - 報價單狀態追蹤
  */
 
 'use client';
 
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection } from 'firebase/firestore';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
-import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
 import { generatePdfBlob } from '@/components/pdf/pdfUtils';
-import { useAuth } from '@/hooks/useAuth';
-import { db , collection } from '@/lib/firebase-client';
-import { ContractData } from '@/types/finance';
+import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
+import { db } from '@/lib/firebase-client';
+import { QuoteData } from '@/types/finance';
 import { safeToDate } from '@/utils/dateUtils';
 
-export default function ContractsPage() {
-  useAuth(); // 僅用於權限與登入狀態，不再解構 db
-  const [contractsSnapshot, loading, error] = useCollection(
-    collection(db, 'finance', 'default', 'contracts')
+export default function QuotesPage() {
+  const [quotesSnapshot, loading, error] = useCollection(
+    collection(db, 'finance', 'default', 'quotes')
   );
+
   // 搜尋與排序狀態
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<string>('');
@@ -41,21 +40,21 @@ export default function ContractsPage() {
       (_a: Record<string, unknown>, _b: Record<string, unknown>) => number
     > = {
       idx: (_a, _b) => (_a.idx as number) - (_b.idx as number),
-      contractName: (_a, _b) =>
-        ((_a.contractName as string) || '').localeCompare((_b.contractName as string) || ''),
+      quoteName: (_a, _b) =>
+        ((_a.quoteName as string) || '').localeCompare((_b.quoteName as string) || ''),
       clientName: (_a, _b) =>
         ((_a.clientName as string) || '').localeCompare((_b.clientName as string) || ''),
-      contractPrice: (_a, _b) => (Number(_a.contractPrice) || 0) - (Number(_b.contractPrice) || 0),
+      quotePrice: (_a, _b) => (Number(_a.quotePrice) || 0) - (Number(_b.quotePrice) || 0),
       createdAt: (_a, _b) =>
         ((_a.createdAt as Date)?.getTime?.() || 0) - ((_b.createdAt as Date)?.getTime?.() || 0),
       updatedAt: (_a, _b) =>
         ((_a.updatedAt as Date)?.getTime?.() || 0) - ((_b.updatedAt as Date)?.getTime?.() || 0),
       daysAgo: (_a, _b) => ((_a.daysAgo as number) || 0) - ((_b.daysAgo as number) || 0),
     };
-    if (!contractsSnapshot) return [];
-    let arr = contractsSnapshot.docs.map((contract, idx) => {
+    if (!quotesSnapshot) return [];
+    let arr = quotesSnapshot.docs.map((quote, idx) => {
       // 型別明確化
-      const data = contract.data() as ContractData;
+      const data = quote.data() as QuoteData;
       const createdAtDate = safeToDate(data.createdAt);
       const updatedAtDate = safeToDate(data.updatedAt);
       const daysAgo = createdAtDate
@@ -63,15 +62,15 @@ export default function ContractsPage() {
         : '-';
       return {
         idx: idx + 1,
-        contractId: data.contractId || contract.id,
-        contractName: data.contractName || data.contractId || contract.id,
+        quoteId: data.quoteId || quote.id,
+        quoteName: data.quoteName || data.quoteId || quote.id,
         clientName: data.clientName ?? '-',
-        contractPrice: data.contractPrice ?? '-',
+        quotePrice: data.quotePrice ?? '-',
         createdAt: createdAtDate,
         updatedAt: updatedAtDate,
         daysAgo,
         raw: data,
-        docId: contract.id,
+        docId: quote.id,
       };
     });
     // 搜尋
@@ -79,7 +78,7 @@ export default function ContractsPage() {
       const s = search.trim().toLowerCase();
       arr = arr.filter(
         (r: Record<string, unknown>) =>
-          String(r.contractName).toLowerCase().includes(s) ||
+          String(r.quoteName).toLowerCase().includes(s) ||
           String(r.clientName).toLowerCase().includes(s)
       );
     }
@@ -89,7 +88,7 @@ export default function ContractsPage() {
       if (!sortAsc) arr.reverse();
     }
     return arr;
-  }, [contractsSnapshot, search, sortKey, sortAsc]);
+  }, [quotesSnapshot, search, sortKey, sortAsc]);
 
   // 排序點擊
   const handleSort = (key: string) => {
@@ -102,43 +101,56 @@ export default function ContractsPage() {
 
   // 匯出 PDF
   const handleExportPdf = async (row: Record<string, unknown>) => {
-    const docRef = doc(db, 'finance', 'default', 'contracts', String(row.contractId));
+    const docRef = doc(db, 'finance', 'default', 'quotes', String(row.quoteId));
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) {
-      alert('找不到該合約');
+      alert('找不到該報價單');
       return;
     }
     const data = docSnap.data();
     // 保持原始的 Timestamp 格式，PDF 元件將負責處理
     generatePdfBlob(
-      <ContractPdfDocument contract={data} />,
-      `${data.contractName || data.contractId || '合約'}.pdf`
+      <QuotePdfDocument quote={data} />,
+      `${data.quoteName || data.quoteId || '報價單'}.pdf`
     );
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <main className='max-w-6xl mx-auto'>
-        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700'>
+      <main className='max-w-4xl mx-auto'>
+        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
           <div className='flex items-center justify-center py-8'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
           </div>
         </div>
       </main>
     );
+  }
+
+  if (error) {
+    return (
+      <main className='max-w-4xl mx-auto'>
+        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6'>
+          <div className='text-center py-8'>
+            <p className='text-red-500'>載入報價單時發生錯誤: {error.message}</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className='max-w-6xl mx-auto'>
       <div className='bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700'>
         <div className='p-6 border-b border-gray-200 dark:border-gray-700'>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>合約列表</h1>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>報價單列表</h1>
         </div>
         <div className='p-6'>
           <div className='mb-6'>
             <input
               type='text'
               className='w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200'
-              placeholder='搜尋合約名稱或客戶名稱'
+              placeholder='搜尋報價單名稱或客戶名稱'
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -155,9 +167,9 @@ export default function ContractsPage() {
                   </th>
                   <th
                     className='px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 cursor-pointer'
-                    onClick={() => handleSort('contractName')}
+                    onClick={() => handleSort('quoteName')}
                   >
-                    合約名稱 {sortKey === 'contractName' ? (sortAsc ? '▲' : '▼') : ''}
+                    報價單名稱 {sortKey === 'quoteName' ? (sortAsc ? '▲' : '▼') : ''}
                   </th>
                   <th
                     className='px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 cursor-pointer'
@@ -167,9 +179,9 @@ export default function ContractsPage() {
                   </th>
                   <th
                     className='px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 cursor-pointer'
-                    onClick={() => handleSort('contractPrice')}
+                    onClick={() => handleSort('quotePrice')}
                   >
-                    價格 {sortKey === 'contractPrice' ? (sortAsc ? '▲' : '▼') : ''}
+                    價格 {sortKey === 'quotePrice' ? (sortAsc ? '▲' : '▼') : ''}
                   </th>
                   <th
                     className='px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 cursor-pointer'
@@ -215,20 +227,20 @@ export default function ContractsPage() {
                     const format = (d: Date | null) => (d ? d.toLocaleDateString() : '-');
                     return (
                       <tr
-                        key={row.contractId as string}
+                        key={row.quoteId as string}
                         className='hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200'
                       >
                         <td className='px-4 py-3 text-gray-900 dark:text-gray-100'>
                           {row.idx as number}
                         </td>
                         <td className='px-4 py-3 text-gray-900 dark:text-gray-100'>
-                          {row.contractName as string}
+                          {row.quoteName as string}
                         </td>
                         <td className='px-4 py-3 text-gray-900 dark:text-gray-100'>
                           {row.clientName as string}
                         </td>
                         <td className='px-4 py-3 text-gray-900 dark:text-gray-100'>
-                          {row.contractPrice as number}
+                          {row.quotePrice as number}
                         </td>
                         <td className='px-4 py-3 text-gray-900 dark:text-gray-100'>
                           {format(row.createdAt as Date | null)}
@@ -242,7 +254,7 @@ export default function ContractsPage() {
                         <td className='px-4 py-3'>
                           <div className='flex items-center gap-3'>
                             <Link
-                              href={`/contracts/${row.contractId}`}
+                              href={`/finance/quotes/${row.quoteId}`}
                               className='text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium'
                             >
                               查看
@@ -264,7 +276,7 @@ export default function ContractsPage() {
                       colSpan={8}
                       className='px-4 py-8 text-center text-gray-500 dark:text-gray-400'
                     >
-                      尚無合約
+                      尚無報價單
                     </td>
                   </tr>
                 )}
