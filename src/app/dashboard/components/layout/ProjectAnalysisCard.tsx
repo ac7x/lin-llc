@@ -107,7 +107,7 @@ export function ProjectAnalysisCard({
             </SelectTrigger>
             <SelectContent>
               {projects.map(project => (
-                <SelectItem key={project.projectName} value={project.projectName}>
+                <SelectItem key={project.id ?? project.projectName} value={project.projectName}>
                   {project.projectName}
                 </SelectItem>
               ))}
@@ -129,13 +129,11 @@ export function ProjectAnalysisCard({
                     <CartesianGrid strokeDasharray='3 3' />
                     <XAxis {...chartConfig.dateAxis} dataKey='date' />
                     <YAxis
-                      key='progress-y-axis'
                       yAxisId='progress'
                       label={{ value: '進度 (%)', angle: -90, position: 'insideLeft' }}
                       domain={[0, 100]}
                     />
                     <YAxis
-                      key='growth-y-axis'
                       yAxisId='growth'
                       orientation='right'
                       label={{ value: '每日增長 (%)', angle: 90, position: 'insideRight' }}
@@ -143,7 +141,6 @@ export function ProjectAnalysisCard({
                     <Tooltip {...chartConfig.tooltip} />
                     <Legend />
                     <Line
-                      key='progress-line'
                       type='monotone'
                       dataKey='progress'
                       name='進度'
@@ -151,7 +148,6 @@ export function ProjectAnalysisCard({
                       yAxisId='progress'
                     />
                     <Line
-                      key='daily-growth-line'
                       type='monotone'
                       dataKey='dailyGrowth'
                       name='每日增長'
@@ -173,21 +169,18 @@ export function ProjectAnalysisCard({
                     <CartesianGrid strokeDasharray='3 3' />
                     <XAxis {...chartConfig.dateAxis} dataKey='date' />
                     <YAxis
-                      key='workforce-y-axis'
                       yAxisId='workforce'
                       label={{ value: '人力 (人)', angle: -90, position: 'insideLeft' }}
                     />
                     <YAxis
-                      key='efficiency-y-axis'
                       yAxisId='efficiency'
                       orientation='right'
                       label={{ value: '效率 (%)', angle: 90, position: 'insideRight' }}
                     />
                     <Tooltip {...chartConfig.tooltip} />
                     <Legend />
-                    <Bar key='workforce-bar' dataKey='workforce' name='人力' fill={CHART_COLORS.bar} yAxisId='workforce' />
+                    <Bar dataKey='workforce' name='人力' fill={CHART_COLORS.bar} yAxisId='workforce' />
                     <Line
-                      key='efficiency-line'
                       type='monotone'
                       dataKey='efficiency'
                       name='人力效率'
@@ -195,7 +188,6 @@ export function ProjectAnalysisCard({
                       yAxisId='efficiency'
                     />
                     <Line
-                      key='avg-workforce-line'
                       type='monotone'
                       dataKey='averageWorkforce'
                       name='人力均值'
@@ -224,7 +216,6 @@ export function ProjectAnalysisCard({
                     <Tooltip {...chartConfig.tooltip} />
                     <Legend />
                     <Line
-                      key='efficiency-trend-line'
                       type='monotone'
                       dataKey='efficiency'
                       name='人力效率'
@@ -232,7 +223,6 @@ export function ProjectAnalysisCard({
                       yAxisId='efficiency'
                     />
                     <Line
-                      key='avg-efficiency-line'
                       type='monotone'
                       dataKey='averageEfficiency'
                       name='效率均值'

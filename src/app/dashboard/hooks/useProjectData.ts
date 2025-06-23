@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useCollection } from 'react-firebase-hooks/firestore';
+import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 
 import { Workpackage, Project } from '@/app/projects/types/project';
-import { calculateProjectProgress } from '@/app/projects/utils/progressUtils';
+import { calculateProjectProgress } from '@/app/projects/utils/projectUtils';
 import { ROLE_HIERARCHY } from '@/constants/roles';
 import { db, collection } from '@/lib/firebase-client';
 import { safeToDate } from '@/utils/dateUtils';
+import { query, where, getDocs } from 'firebase/firestore';
 
 /**
  * 獲取儀表板所需全部數據的自訂 Hook
@@ -218,7 +219,12 @@ export function useProjectData(selectedProject: string | null) {
     workpackageProgressData,
     projectProgressData,
     efficiencyTrendData,
-    projects: projectsSnapshot?.docs.map(doc => doc.data() as Project) || [],
+    projects:
+      projectsSnapshot?.docs.map(doc => {
+        const projectData = doc.data() as Project;
+        projectData.id = doc.id;
+        return projectData;
+      }) || [],
     totalUsers: usersSnapshot?.size ?? 0,
     // 載入狀態
     loading: {

@@ -382,6 +382,7 @@ export interface Expense extends BaseWithDates {
 }
 
 export interface Project extends BaseWithDates {
+  id?: string; // Firestore Document ID
   projectId?: string; // 專案唯一識別碼（可選）
   projectName: string; // 專案名稱
   contractId?: string; // 合約 ID（可選）
