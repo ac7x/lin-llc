@@ -31,16 +31,6 @@ const eslintConfig = [
       'react/prop-types': 'off',
       'react/jsx-uses-react': 'off',
       'react/jsx-uses-vars': 'error',
-      'import/order': [
-        'warn',
-        {
-          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
-        },
-      ],
       'import/no-unresolved': 'off',
       'import/no-duplicates': 'warn',
       'import/no-case-sensitive': 'off',
@@ -52,8 +42,6 @@ const eslintConfig = [
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-var-requires': 'warn',
-      quotes: ['warn', 'single', { avoidEscape: true }],
-      semi: ['warn', 'always'],
       'prefer-template': 'warn',
       'object-shorthand': 'warn',
       'prefer-arrow-callback': 'warn',

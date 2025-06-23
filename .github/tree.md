@@ -12,13 +12,41 @@
 │  │              NotificationBell.tsx
 │  │
 │  ├─dashboard
-│  │      page.tsx
+│  │  │  page.tsx
+│  │  │
+│  │  ├─components
+│  │  │  ├─charts
+│  │  │  │      EfficiencyBarChart.tsx
+│  │  │  │      ProgressRadarChart.tsx
+│  │  │  │      WorkforceLineChart.tsx
+│  │  │  │
+│  │  │  ├─layout
+│  │  │  │      DashboardLayout.tsx
+│  │  │  │      SidebarNav.tsx
+│  │  │  │
+│  │  │  ├─logs
+│  │  │  │      ActivityLog.tsx
+│  │  │  │      LogFilter.tsx
+│  │  │  │
+│  │  │  └─stats
+│  │  │          StatCard.tsx
+│  │  │          StatGrid.tsx
+│  │  │
+│  │  ├─hooks
+│  │  │      useLogData.ts
+│  │  │      useProjectData.ts
+│  │  │
+│  │  ├─types
+│  │  │      dashboard.d.ts
+│  │  │
+│  │  └─utils
+│  │          chartUtils.ts
+│  │          logUtils.ts
 │  │
 │  ├─finance
 │  │  │  layout.tsx
 │  │  │
 │  │  ├─archive
-│  │  │  │  layout.tsx
 │  │  │  │  page.tsx
 │  │  │  │
 │  │  │  └─[type]
@@ -145,6 +173,7 @@
 │          accordion.tsx
 │          alert-dialog.tsx
 │          alert.tsx
+│          aspect-ratio.tsx
 │          avatar.tsx
 │          badge.tsx
 │          breadcrumb.tsx
@@ -155,12 +184,21 @@
 │          chart.tsx
 │          checkbox.tsx
 │          collapsible.tsx
+│          command.tsx
 │          dialog.tsx
+│          drawer.tsx
 │          dropdown-menu.tsx
+│          hover-card.tsx
 │          input.tsx
 │          label.tsx
+│          menubar.tsx
+│          navigation-menu.tsx
+│          pagination.tsx
+│          popover.tsx
 │          progress.tsx
 │          radio-group.tsx
+│          resizable.tsx
+│          scroll-area.tsx
 │          select.tsx
 │          separator.tsx
 │          sheet.tsx
@@ -172,6 +210,8 @@
 │          table.tsx
 │          tabs.tsx
 │          textarea.tsx
+│          toggle-group.tsx
+│          toggle.tsx
 │          tooltip.tsx
 │
 ├─constants
