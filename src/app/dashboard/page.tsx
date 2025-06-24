@@ -36,11 +36,11 @@ import {
 
 import { Workpackage, Project } from '@/app/projects/types/project';
 import { Unauthorized } from '@/components/common/Unauthorized';
-import { ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db, collection } from '@/lib/firebase-client';
 import { safeToDate } from '@/utils/dateUtils';
 import { calculateProjectProgress } from '../projects/utils/progressUtils';
+import { getRoleDisplayName } from '@/utils/roleUtils';
 
 // 抽取共用樣式
 const cardStyles = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6';
@@ -323,7 +323,7 @@ export default function DashboardPage() {
   if (!hasPermission('dashboard')) {
     let roleName = '未知角色';
     if (user?.currentRole) {
-      roleName = user.currentRole in ROLE_NAMES ? ROLE_NAMES[user.currentRole as keyof typeof ROLE_NAMES] : user.currentRole;
+      roleName = getRoleDisplayName(user.currentRole);
     }
     return <Unauthorized message={`您目前的角色 (${roleName}) 沒有權限訪問儀表板`} />;
   }

@@ -17,10 +17,11 @@ import { collection, getDocs } from 'firebase/firestore';
 import AddressSelector from '@/app/projects/components/AddressSelector';
 import { useQualityScore } from '@/app/projects/hooks/useFilteredProjects';
 import type { Project } from '@/app/projects/types/project';
-import { ROLE_NAMES, type CustomRole } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
 import { cn, getQualityColor } from '@/utils/classNameUtils';
 import { formatLocalDate } from '@/utils/dateUtils';
+import { loadCustomRoles, getRoleDisplayName } from '@/utils/roleUtils';
+import type { CustomRole } from '@/constants/roles';
 import { db } from '@/lib/firebase-client';
 
 interface ProjectInfoDisplayProps {
@@ -45,33 +46,17 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
   
   // 載入自訂角色以取得角色名稱
   useEffect(() => {
-    const loadCustomRoles = async () => {
+    const loadRoles = async () => {
       try {
-        const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
-        const roles: CustomRole[] = [];
-        rolesSnapshot.forEach(doc => {
-          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
-        });
+        const roles = await loadCustomRoles();
         setCustomRoles(roles);
       } catch (error) {
         console.error('Failed to load custom roles:', error);
       }
     };
 
-    void loadCustomRoles();
+    void loadRoles();
   }, []);
-
-  // 取得角色顯示名稱
-  const getRoleDisplayName = (roleId: string): string => {
-    // 檢查是否為標準角色
-    if (roleId in ROLE_NAMES) {
-      return ROLE_NAMES[roleId as keyof typeof ROLE_NAMES];
-    }
-    
-    // 檢查是否為自訂角色
-    const customRole = customRoles.find(r => r.id === roleId);
-    return customRole ? customRole.name : roleId;
-  };
 
   const getUserDisplayName = (uid: string | undefined): string => {
     if (!uid) return '未分配';
@@ -84,7 +69,7 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
     if (!user) return '未知用戶';
     
     // 使用 currentRole 而不是舊的 roles 陣列
-    return `${user.displayName} (${getRoleDisplayName(user.currentRole || 'guest')})`;
+    return `${user.displayName} (${getRoleDisplayName(user.currentRole || 'guest', customRoles)})`;
   };
 
   // 使用品質分數 hook

@@ -37,13 +37,24 @@ const convertFirebaseUserToAppUser = async (firebaseUser: FirebaseUser): Promise
   
   if (userDoc.exists()) {
     const userData = userDoc.data() as Record<string, any>;
+    const currentRole = userData.currentRole || 'guest';
+    
+    // 取得權限：如果是標準角色使用預設權限，否則使用用戶的權限陣列
+    let permissions: PermissionId[];
+    if (currentRole === 'owner' || currentRole === 'guest') {
+      permissions = ROLE_PERMISSIONS[currentRole as RoleKey];
+    } else {
+      // 自訂角色：使用用戶的權限陣列
+      permissions = userData.permissions || ROLE_PERMISSIONS.guest;
+    }
+    
     return {
       uid: firebaseUser.uid,
       email: firebaseUser.email || '',
       displayName: firebaseUser.displayName || '',
       photoURL: firebaseUser.photoURL || undefined,
-      currentRole: userData.currentRole || 'guest',
-      permissions: userData.permissions || ROLE_PERMISSIONS.guest,
+      currentRole,
+      permissions,
       createdAt: userData.createdAt?.toDate() || new Date(),
       updatedAt: userData.updatedAt?.toDate() || new Date(),
       lastLoginAt: userData.lastLoginAt?.toDate(),
@@ -55,6 +66,7 @@ const convertFirebaseUserToAppUser = async (firebaseUser: FirebaseUser): Promise
       emergencyContact: userData.emergencyContact,
       address: userData.address,
       preferences: userData.preferences,
+      notificationSettings: userData.notificationSettings,
     };
   }
   

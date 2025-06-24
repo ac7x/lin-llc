@@ -10,8 +10,8 @@
  */
 import type { ReactElement, ReactNode } from 'react';
 
-import { ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
+import { getRoleDisplayName } from '@/utils/roleUtils';
 import type { PermissionId } from '@/constants/permissions';
 
 import { Unauthorized } from './Unauthorized';
@@ -40,14 +40,7 @@ export function PermissionCheck({
   if (!hasPermission(requiredPermission as PermissionId)) {
     let roleName = '未知';
     if (user?.currentRole) {
-      // 檢查是否為標準角色
-      if (user.currentRole in ROLE_NAMES) {
-        roleName = ROLE_NAMES[user.currentRole as keyof typeof ROLE_NAMES];
-      } else {
-        // 檢查是否為自訂角色
-        const customRole = user.currentRole in ROLE_NAMES ? null : user.currentRole;
-        roleName = customRole ? customRole : user.currentRole;
-      }
+      roleName = getRoleDisplayName(user.currentRole);
     }
     
     return (

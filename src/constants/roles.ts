@@ -3,13 +3,7 @@
  * 簡化為只有擁有者和訪客兩種初始角色
  */
 
-// 角色階層定義
-export const ROLE_HIERARCHY = {
-  owner: 0, // 擁有者 - 全部權限
-  guest: 99, // 訪客 - 最低權限
-} as const;
-
-export type RoleKey = keyof typeof ROLE_HIERARCHY;
+export type RoleKey = 'owner' | 'guest';
 
 export const ROLE_NAMES: Record<RoleKey, string> = {
   owner: '擁有者',
@@ -21,9 +15,10 @@ export interface CustomRole {
   id: string;
   name: string;
   level: number; // 1-98 之間
-  permissions: string[];
+  permissions: string[]; // 使用新的權限ID陣列
   createdAt: string;
   createdBy: string;
+  updatedAt?: string;
 }
 
 export type Role = RoleKey | string; // 支援自訂角色ID

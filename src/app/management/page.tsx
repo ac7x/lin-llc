@@ -14,9 +14,10 @@ import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
-import { ROLE_NAMES, type RoleKey, type CustomRole } from '@/constants/roles';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { loadCustomRoles, getRoleDisplayName, getRoleOptions, clearRoleCache } from '@/utils/roleUtils';
 import type { AppUser } from '@/types/auth';
+import type { CustomRole } from '@/constants/roles';
 
 interface UserWithRole extends Omit<AppUser, 'currentRole'> {
   roleDisplayName: string;
@@ -38,11 +39,7 @@ export default function ManagementPage() {
       setLoadingUsers(true);
       await safeAsync(async () => {
         // 載入自訂角色
-        const rolesSnapshot = await retry(() => getDocs(collection(db, 'customRoles')), 3, 1000);
-        const roles: CustomRole[] = [];
-        rolesSnapshot.forEach(doc => {
-          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
-        });
+        const roles = await loadCustomRoles();
         setCustomRoles(roles);
 
         // 載入用戶
@@ -54,20 +51,15 @@ export default function ManagementPage() {
           
           // 判斷是否為自訂角色
           const customRole = roles.find(r => r.id === currentRole);
-          const isCustomRole = !!customRole;
+          const isCustomRoleFlag = !!customRole;
           
           // 取得角色顯示名稱
-          let roleDisplayName: string;
-          if (isCustomRole) {
-            roleDisplayName = customRole.name;
-          } else {
-            roleDisplayName = ROLE_NAMES[currentRole as RoleKey] || currentRole;
-          }
+          const roleDisplayName = getRoleDisplayName(currentRole, roles);
 
           usersData.push({
             ...userData,
             roleDisplayName,
-            isCustomRole,
+            isCustomRole: isCustomRoleFlag,
             currentRole,
           });
         });
@@ -93,43 +85,29 @@ export default function ManagementPage() {
       setUsers(prev => prev.map(u => {
         if (u.uid === uid) {
           const customRole = customRoles.find(r => r.id === newRole);
-          const isCustomRole = !!customRole;
-          const roleDisplayName = isCustomRole 
-            ? customRole.name 
-            : ROLE_NAMES[newRole as RoleKey] || newRole;
+          const isCustomRoleFlag = !!customRole;
+          const roleDisplayName = getRoleDisplayName(newRole, customRoles);
           
           return {
             ...u,
             currentRole: newRole,
             roleDisplayName,
-            isCustomRole,
+            isCustomRole: isCustomRoleFlag,
           };
         }
         return u;
       }));
       
       setMessage('角色已更新');
+      
+      // 清除角色快取，確保下次載入時取得最新資料
+      clearRoleCache();
     }, (error) => {
       setMessage(`更新失敗: ${getErrorMessage(error)}`);
       logError(error, { operation: 'update_user_role', userId: uid });
     });
     
     setSavingId(null);
-  };
-
-  // 取得所有可用角色選項
-  const getRoleOptions = () => {
-    const options = [
-      { value: 'owner', label: '擁有者' },
-      { value: 'guest', label: '訪客' },
-    ];
-    
-    // 加入自訂角色
-    customRoles.forEach(role => {
-      options.push({ value: role.id, label: role.name });
-    });
-    
-    return options;
   };
 
   if (loading || loadingUsers) {
@@ -199,7 +177,7 @@ export default function ManagementPage() {
                       disabled={savingId === user.uid}
                       className='px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50'
                     >
-                      {getRoleOptions().map(option => (
+                      {getRoleOptions(customRoles).map(option => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>

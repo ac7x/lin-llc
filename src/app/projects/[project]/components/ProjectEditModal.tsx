@@ -15,7 +15,6 @@ import { useState, useEffect } from 'react';
 
 import AddressSelector from '@/app/projects/components/AddressSelector';
 import type { Project } from '@/app/projects/types/project';
-import { ROLE_NAMES, type CustomRole } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
@@ -23,6 +22,8 @@ import { cn, modalStyles, formStyles, inputStyles, buttonStyles, loadingStyles, 
 import { formatDateForInput } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 import { TaiwanCityList } from '@/utils/taiwanCityUtils';
+import { loadCustomRoles, getRoleDisplayName } from '@/utils/roleUtils';
+import type { CustomRole } from '@/constants/roles';
 
 interface ProjectEditModalProps {
   project: Project;
@@ -51,33 +52,17 @@ export default function ProjectEditModal({
 
   // 載入自訂角色以取得角色名稱
   useEffect(() => {
-    const loadCustomRoles = async () => {
+    const loadRoles = async () => {
       try {
-        const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
-        const roles: CustomRole[] = [];
-        rolesSnapshot.forEach(doc => {
-          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
-        });
+        const roles = await loadCustomRoles();
         setCustomRoles(roles);
       } catch (error) {
         console.error('Failed to load custom roles:', error);
       }
     };
 
-    void loadCustomRoles();
+    void loadRoles();
   }, []);
-
-  // 取得角色顯示名稱
-  const getRoleDisplayName = (roleId: string): string => {
-    // 檢查是否為標準角色
-    if (roleId in ROLE_NAMES) {
-      return ROLE_NAMES[roleId as keyof typeof ROLE_NAMES];
-    }
-    
-    // 檢查是否為自訂角色
-    const customRole = customRoles.find(r => r.id === roleId);
-    return customRole ? customRole.name : roleId;
-  };
 
   // 檢查預算權限的函數
   const canEditBudget = (): boolean => {
@@ -171,7 +156,7 @@ export default function ProjectEditModal({
                 </option>
                 {eligibleUsers.managers.map(user => (
                   <option key={user.uid} value={user.uid}>
-                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest')})
+                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest', customRoles)})
                   </option>
                 ))}
               </select>
@@ -190,7 +175,7 @@ export default function ProjectEditModal({
                 </option>
                 {eligibleUsers.supervisors.map(user => (
                   <option key={user.uid} value={user.uid}>
-                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest')})
+                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest', customRoles)})
                   </option>
                 ))}
               </select>
@@ -209,7 +194,7 @@ export default function ProjectEditModal({
                 </option>
                 {eligibleUsers.safetyOfficers.map(user => (
                   <option key={user.uid} value={user.uid}>
-                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest')})
+                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest', customRoles)})
                   </option>
                 ))}
               </select>
@@ -228,7 +213,7 @@ export default function ProjectEditModal({
                 </option>
                 {eligibleUsers.costControllers.map(user => (
                   <option key={user.uid} value={user.uid}>
-                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest')})
+                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest', customRoles)})
                   </option>
                 ))}
               </select>

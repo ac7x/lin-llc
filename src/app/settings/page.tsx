@@ -19,6 +19,7 @@ import { db } from '@/lib/firebase-client';
 import { ALL_PERMISSIONS, PERMISSION_CATEGORIES } from '@/constants/permissions';
 import type { CustomRole } from '@/constants/roles';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { loadCustomRoles, clearRoleCache } from '@/utils/roleUtils';
 
 interface RoleFormData {
   name: string;
@@ -50,14 +51,10 @@ export default function SettingsPage() {
 
   // 載入自訂角色
   useEffect(() => {
-    const loadCustomRoles = async () => {
+    const loadRoles = async () => {
       setLoadingRoles(true);
       await safeAsync(async () => {
-        const rolesSnapshot = await retry(() => getDocs(collection(db, 'customRoles')), 3, 1000);
-        const roles: CustomRole[] = [];
-        rolesSnapshot.forEach(doc => {
-          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
-        });
+        const roles = await loadCustomRoles();
         setCustomRoles(roles.sort((a, b) => a.level - b.level));
       }, (error) => {
         logError(error, { operation: 'load_custom_roles' });
@@ -66,7 +63,7 @@ export default function SettingsPage() {
     };
 
     if (user && hasPermission('settings')) {
-      void loadCustomRoles();
+      void loadRoles();
     }
   }, [user, hasPermission]);
 
@@ -86,16 +83,15 @@ export default function SettingsPage() {
       await retry(() => addDoc(collection(db, 'customRoles'), roleData), 3, 1000);
       
       // 重新載入角色列表
-      const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
-      const roles: CustomRole[] = [];
-      rolesSnapshot.forEach(doc => {
-        roles.push({ id: doc.id, ...doc.data() } as CustomRole);
-      });
+      const roles = await loadCustomRoles();
       setCustomRoles(roles.sort((a, b) => a.level - b.level));
       
       // 重置表單
       setFormData({ name: '', level: 1, permissions: [] });
       setShowCreateForm(false);
+      
+      // 清除角色快取
+      clearRoleCache();
     }, (error) => {
       alert(`建立角色失敗: ${getErrorMessage(error)}`);
       logError(error, { operation: 'create_custom_role' });
@@ -116,16 +112,15 @@ export default function SettingsPage() {
       }), 3, 1000);
 
       // 重新載入角色列表
-      const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
-      const roles: CustomRole[] = [];
-      rolesSnapshot.forEach(doc => {
-        roles.push({ id: doc.id, ...doc.data() } as CustomRole);
-      });
+      const roles = await loadCustomRoles();
       setCustomRoles(roles.sort((a, b) => a.level - b.level));
 
       // 重置表單
       setFormData({ name: '', level: 1, permissions: [] });
       setEditingRole(null);
+      
+      // 清除角色快取
+      clearRoleCache();
     }, (error) => {
       alert(`更新角色失敗: ${getErrorMessage(error)}`);
       logError(error, { operation: 'update_custom_role' });
@@ -139,12 +134,11 @@ export default function SettingsPage() {
       await retry(() => deleteDoc(doc(db, 'customRoles', roleId)), 3, 1000);
       
       // 重新載入角色列表
-      const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
-      const roles: CustomRole[] = [];
-      rolesSnapshot.forEach(doc => {
-        roles.push({ id: doc.id, ...doc.data() } as CustomRole);
-      });
+      const roles = await loadCustomRoles();
       setCustomRoles(roles.sort((a, b) => a.level - b.level));
+      
+      // 清除角色快取
+      clearRoleCache();
     }, (error) => {
       alert(`刪除角色失敗: ${getErrorMessage(error)}`);
       logError(error, { operation: 'delete_custom_role' });
