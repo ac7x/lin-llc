@@ -180,18 +180,20 @@ export default function SettingsPage() {
   };
 
   // 客戶端權限檢查
-  if (typeof window !== 'undefined') {
-    if (loading) {
-      return (
-        <div className='flex justify-center items-center min-h-screen'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
-        </div>
-      );
-    }
+  if (typeof window === 'undefined') {
+    return null; // 預渲染時不顯示任何內容
+  }
 
-    if (!user || !hasPermission('settings')) {
-      return <Unauthorized message='您沒有權限訪問系統設定' />;
-    }
+  if (loading) {
+    return (
+      <div className='flex justify-center items-center min-h-screen'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+      </div>
+    );
+  }
+
+  if (!user || !hasPermission('settings')) {
+    return <Unauthorized message='您沒有權限訪問系統設定' />;
   }
 
   return (
