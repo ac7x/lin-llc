@@ -7,8 +7,7 @@ import {
   getRedirectResult,
   onAuthStateChanged,
   User,
-  AuthError,
-  browserPopupRedirectResolver
+  AuthError
 } from 'firebase/auth';
 import { getAppCheck } from '@/lib/firebase-init';
 

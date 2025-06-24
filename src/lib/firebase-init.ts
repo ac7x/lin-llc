@@ -2,12 +2,12 @@
 import { getAnalytics, isSupported as isAnalyticsSupported } from 'firebase/analytics';
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { initializeAppCheck, ReCaptchaV3Provider, AppCheck } from 'firebase/app-check';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getPerformance } from 'firebase/performance';
 import { getRemoteConfig } from 'firebase/remote-config';
-import { getStorage } from 'firebase/storage';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { firebaseConfig, APP_CHECK_CONFIG } from './firebase-config';
 
 // Firebase 應用程式初始化
@@ -34,6 +34,10 @@ export const initializeClientServices = async (): Promise<void> => {
   if (isClientServicesInitialized) return; // 已經初始化過
 
   try {
+    // 設定 Auth 穩定性選項
+    auth.useDeviceLanguage();
+    auth.settings.appVerificationDisabledForTesting = false;
+
     // Analytics 初始化
     const analyticsSupported = await isAnalyticsSupported();
     if (analyticsSupported) {
@@ -47,12 +51,26 @@ export const initializeClientServices = async (): Promise<void> => {
 
     // Remote Config 初始化
     remoteConfig = getRemoteConfig(app);
+    remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1小時
 
     // App Check 初始化 - 強制模式
     appCheck = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
       isTokenAutoRefreshEnabled: true,
     });
+
+    // 開發環境模擬器連接（可選）
+    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_EMULATORS === 'true') {
+      try {
+        connectAuthEmulator(auth, 'http://localhost:9099');
+        connectFirestoreEmulator(db, 'localhost', 8080);
+        connectFunctionsEmulator(functions, 'localhost', 5001);
+        connectStorageEmulator(storage, 'localhost', 9199);
+        console.log('已連接到 Firebase 模擬器');
+      } catch (emulatorError) {
+        console.warn('模擬器連接失敗:', emulatorError);
+      }
+    }
 
     isClientServicesInitialized = true;
     console.log('Firebase 客戶端服務初始化完成，App Check 已啟用強制模式');
@@ -82,6 +100,13 @@ export const getAppCheckSync = (): AppCheck | null => {
   return appCheck;
 };
 
+/**
+ * 檢查客戶端服務是否已初始化
+ */
+export const isClientServicesReady = (): boolean => {
+  return isClientServicesInitialized;
+};
+
 // 匯出服務實例
 export {
   app as firebaseApp,
@@ -100,6 +125,7 @@ const firebaseClientServices = {
   initializeClientServices,
   getAppCheck,
   getAppCheckSync,
+  isClientServicesReady,
 };
 
 export default firebaseClientServices;
