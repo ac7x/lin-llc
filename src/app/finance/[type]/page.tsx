@@ -9,10 +9,10 @@ import {
   FinanceListPage,
   Column,
 } from '@/app/finance/components/FinanceListPage';
-import { ContractPdfDocument } from '@/components/pdf/ContractPdfDocument';
-import { OrderPdfDocument } from '@/components/pdf/OrderPdfDocument';
-import { generatePdfBlob } from '@/components/pdf/pdfUtils';
-import { QuotePdfDocument } from '@/components/pdf/QuotePdfDocument';
+import { ContractPdfDocument } from '@/app/finance/pdf/ContractPdfDocument';
+import { OrderPdfDocument } from '@/app/finance/pdf/OrderPdfDocument';
+import { generatePdfBlob } from '@/app/finance/pdf/pdfUtils';
+import { QuotePdfDocument } from '@/app/finance/pdf/QuotePdfDocument';
 import {
   ContractData,
   OrderData,
