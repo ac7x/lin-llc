@@ -14,6 +14,7 @@ import { db } from '@/lib/firebase-init';
 import type { UserProfile } from '@/types';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { SkillTagsInput } from '@/components/ui/skill-tags-input';
 
 export default function AccountPage() {
   const { user, loading, error, signOut } = useGoogleAuth();
@@ -71,6 +72,7 @@ export default function AccountPage() {
         alias: editAlias.trim(),
         phone: editPhone.trim(),
         lineId: editLineId.trim(),
+        skills: profile?.skills || [],
         updatedAt: new Date().toISOString(),
       });
       setProfile(prev => prev ? { ...prev, alias: editAlias, phone: editPhone, lineId: editLineId } : prev);
@@ -321,20 +323,13 @@ export default function AccountPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="skills">技能標籤</Label>
-                  <Input
-                    id="skills"
-                    value={profile?.skills?.join(', ') || ''}
-                    onChange={(e) => {
-                      const skills = e.target.value
-                        .split(',')
-                        .map(s => s.trim())
-                        .filter(s => s.length > 0);
-                      setProfile(prev => prev ? { ...prev, skills } : prev);
-                    }}
-                    placeholder="請輸入技能標籤，用逗號分隔（例：JavaScript, React, TypeScript）"
+                  <SkillTagsInput
+                    value={profile?.skills || []}
+                    onChange={skills => setProfile(prev => prev ? { ...prev, skills } : prev)}
+                    placeholder="輸入技能後按 Enter 或逗號新增，可移除"
                   />
                   <p className="text-xs text-muted-foreground">
-                    技能標籤用逗號分隔，系統會自動去除空白
+                    按 Enter 或逗號新增，點擊 X 可移除
                   </p>
                   {/* 顯示當前技能標籤 */}
                   {profile?.skills && profile.skills.length > 0 && (
