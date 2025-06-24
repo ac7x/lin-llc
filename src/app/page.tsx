@@ -6,9 +6,9 @@ import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
+  const { user, userLoading } = useAuth();
 
-  if (loading) {
+  if (userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex items-center space-x-2">

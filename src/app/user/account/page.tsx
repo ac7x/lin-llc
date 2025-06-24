@@ -1,45 +1,39 @@
 'use client';
 
-import { useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
-import { useAuthRedirect } from '@/hooks/use-auth-redirect';
+import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 
 export default function AccountPage() {
   const { user, loading, error, signOut } = useGoogleAuth();
-  const { loading: redirectLoading, error: redirectError } = useAuthRedirect();
-
-  // 初始化客戶端服務
-  useEffect(() => {
-    const initializeServices = async () => {
-      try {
-        const { initializeClientServices } = await import('@/lib/firebase-init');
-        await initializeClientServices();
-      } catch (error) {
-        console.error('初始化客戶端服務失敗:', error);
-      }
-    };
-
-    void initializeServices();
-  }, []);
+  const { 
+    userLoading, 
+    appCheckInitialized, 
+    appCheckValid, 
+    appCheckError,
+    appCheckLoading 
+  } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
   };
 
   // 顯示載入狀態
-  if (loading || redirectLoading) {
+  if (loading || userLoading || !appCheckInitialized || appCheckLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="ml-2 text-sm text-muted-foreground">正在載入...</span>
+              <span className="ml-2 text-sm text-muted-foreground">
+                {!appCheckInitialized ? '正在初始化安全驗證...' : 
+                 appCheckLoading ? '正在驗證安全狀態...' : '正在載入...'}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -60,10 +54,10 @@ export default function AccountPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* 錯誤訊息 */}
-            {(error || redirectError) && (
+            {(error || appCheckError) && (
               <Alert variant="destructive">
                 <AlertDescription>
-                  {error || redirectError}
+                  {error || appCheckError}
                 </AlertDescription>
               </Alert>
             )}
@@ -171,12 +165,20 @@ export default function AccountPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                <div className={`flex items-center justify-between p-3 rounded-lg ${
+                  appCheckValid ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'
+                }`}>
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className={`w-2 h-2 rounded-full ${
+                      appCheckValid ? 'bg-green-500' : 'bg-red-500'
+                    }`}></div>
                     <span className="text-sm font-medium">App Check 保護</span>
                   </div>
-                  <span className="text-xs text-green-600">已啟用</span>
+                  <span className={`text-xs ${
+                    appCheckValid ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {appCheckValid ? '已啟用' : '未通過'}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">

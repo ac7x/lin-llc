@@ -62,7 +62,7 @@ const eslintConfig = [
 
       // ===== 程式碼風格建議 =====
       'prefer-template': 'warn', // 警告：建議使用模板字串而不是字串串接
-      'object-shorthand': 'warn', // 警告：建議使用物件簡寫語法
+      'object-shorthand': 'off', // 警告：建議使用物件簡寫語法
       'prefer-arrow-callback': 'warn', // 警告：建議使用箭頭函式作為回呼函式
 
       '@next/next/no-html-link-for-pages': 'error',
