@@ -223,7 +223,10 @@ export class PermissionService {
       const rolesRef = collection(db, 'roles');
       const rolesSnapshot = await getDocs(rolesRef);
       
-      return rolesSnapshot.docs.map(doc => doc.data() as Role);
+      const roles = rolesSnapshot.docs.map(doc => doc.data() as Role);
+      
+      // 按照 level 排序：0 (擁有者) -> 1 (管理員) -> 2 (經理) -> 3 (一般用戶) -> 99 (訪客)
+      return roles.sort((a, b) => a.level - b.level);
     } catch (error) {
       console.error('獲取所有角色失敗:', error);
       throw error;
@@ -238,7 +241,21 @@ export class PermissionService {
       const permissionsRef = collection(db, 'permissions');
       const permissionsSnapshot = await getDocs(permissionsRef);
       
-      return permissionsSnapshot.docs.map(doc => doc.data() as Permission);
+      const permissions = permissionsSnapshot.docs.map(doc => doc.data() as Permission);
+      
+      // 按照 category 和 id 排序
+      const categoryOrder = ['system', 'settings', 'user', 'finance', 'project'];
+      
+      return permissions.sort((a, b) => {
+        const aCategoryIndex = categoryOrder.indexOf(a.category);
+        const bCategoryIndex = categoryOrder.indexOf(b.category);
+        
+        if (aCategoryIndex !== bCategoryIndex) {
+          return aCategoryIndex - bCategoryIndex;
+        }
+        
+        return a.id.localeCompare(b.id);
+      });
     } catch (error) {
       console.error('獲取所有權限失敗:', error);
       throw error;
