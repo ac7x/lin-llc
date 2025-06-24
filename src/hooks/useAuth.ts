@@ -88,6 +88,23 @@ const convertFirebaseUserToAppUser = async (firebaseUser: FirebaseUser): Promise
 // 權限驗證 Hook
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
+  
+  // 處理預渲染情況
+  if (typeof window === 'undefined') {
+    // 伺服器端預渲染時返回預設值
+    return {
+      user: null,
+      loading: true,
+      error: null,
+      signInWithGoogle: async () => {},
+      signOut: async () => {},
+      hasPermission: () => false,
+      hasAnyPermission: () => false,
+      hasAllPermissions: () => false,
+      refreshUser: async () => {},
+    };
+  }
+  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

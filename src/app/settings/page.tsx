@@ -179,11 +179,6 @@ export default function SettingsPage() {
     }));
   };
 
-  // 客戶端權限檢查
-  if (typeof window === 'undefined') {
-    return null; // 預渲染時不顯示任何內容
-  }
-
   if (loading) {
     return (
       <div className='flex justify-center items-center min-h-screen'>
