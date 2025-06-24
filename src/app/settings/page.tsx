@@ -8,10 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePermission } from '@/hooks/use-permission';
 import { PermissionGuard } from '@/components/permission-guard';
-import { Role, Permission, UserProfile } from '@/types';
-import { isOwner } from '@/lib/env-config';
+import { Role } from '@/types';
+import { isOwner, validateEnvConfig } from '@/lib/env-config';
 import { initializePermissions, checkInitialization } from '@/lib/permission-init';
-import { validateEnvConfig } from '@/lib/env-config';
 
 export default function SettingsPage() {
   const {
@@ -24,10 +23,7 @@ export default function SettingsPage() {
     createCustomRole,
     updateRolePermissions,
     deleteCustomRole,
-    assignUserRole,
     loadRoles,
-    loadPermissions,
-    loadUserData,
   } = usePermission();
 
   const [initializing, setInitializing] = useState(false);

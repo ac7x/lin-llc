@@ -7,9 +7,7 @@ import {
   query, 
   where, 
   updateDoc, 
-  deleteDoc,
-  serverTimestamp,
-  Timestamp 
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { 
@@ -56,20 +54,25 @@ export class PermissionService {
       
       if (userDoc.exists()) {
         // 更新現有用戶資料
-        await updateDoc(userRef, {
+        const updateData: Partial<UserProfile> = {
           displayName,
-          photoURL,
           lastLoginAt: now,
           loginCount: (userDoc.data()?.loginCount || 0) + 1,
           updatedAt: now,
-        });
+        };
+        
+        // 只有當 photoURL 有值時才包含
+        if (photoURL !== undefined) {
+          updateData.photoURL = photoURL;
+        }
+        
+        await updateDoc(userRef, updateData);
       } else {
         // 創建新用戶資料
         const userProfile: UserProfile = {
           uid,
           email,
           displayName,
-          photoURL,
           roleId,
           isActive: true,
           createdAt: now,
@@ -77,6 +80,11 @@ export class PermissionService {
           lastLoginAt: now,
           loginCount: 1,
         };
+        
+        // 只有當 photoURL 有值時才包含
+        if (photoURL) {
+          userProfile.photoURL = photoURL;
+        }
         
         await setDoc(userRef, userProfile);
         
@@ -100,16 +108,20 @@ export class PermissionService {
   ): Promise<void> {
     try {
       const userRoleRef = doc(db, 'userRoles', uid);
-      const userRole: UserRole = {
+      const userRoleData: UserRole = {
         uid,
         roleId,
         assignedBy,
         assignedAt: new Date().toISOString(),
-        expiresAt,
         isActive: true,
       };
       
-      await setDoc(userRoleRef, userRole);
+      // 只有當 expiresAt 有值時才包含
+      if (expiresAt) {
+        userRoleData.expiresAt = expiresAt;
+      }
+      
+      await setDoc(userRoleRef, userRoleData);
     } catch (error) {
       console.error('分配用戶角色失敗:', error);
       throw error;

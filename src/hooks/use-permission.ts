@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { permissionService } from '@/lib/permission-service';
-import { PermissionCheck, Role, Permission, UserProfile } from '@/types';
+import { Role, Permission, UserProfile, UserRole } from '@/types';
 import { isOwner } from '@/lib/env-config';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase-init';
 
 interface UsePermissionReturn {
   // 權限檢查
@@ -187,11 +189,10 @@ export function usePermission(): UsePermissionReturn {
     expiresAt?: string
   ): Promise<void> => {
     if (!user?.uid) throw new Error('用戶未登入');
-    
     try {
       await permissionService.assignUserRole(uid, roleId, user.uid, expiresAt);
-    } catch (err) {
-      throw err instanceof Error ? err : new Error('分配角色失敗');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('分配角色失敗');
     }
   }, [user?.uid]);
 
