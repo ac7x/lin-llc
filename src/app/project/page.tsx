@@ -43,9 +43,9 @@ import {
   FileIcon
 } from 'lucide-react';
 
-interface Subpackage { name: string }
-interface Task { subpackages: Subpackage[] }
-interface Package { name: string; tasks: Task[] }
+interface Task { name: string }
+interface Subpackage { tasks: Task[] }
+interface Package { name: string; subpackages: Subpackage[] }
 interface Project {
   id: string;
   name: string;
@@ -76,12 +76,8 @@ export default function ProjectListPage() {
         const packages = Array.isArray(data.packages) 
           ? data.packages.map((pkg: any) => ({
               name: pkg.name || '',
-              tasks: Array.isArray(pkg.tasks) 
-                ? pkg.tasks.map((task: any) => ({
-                    subpackages: Array.isArray(task.subpackages) 
-                      ? task.subpackages.map((sub: any) => ({ name: sub.name || '' }))
-                      : []
-                  }))
+              subpackages: Array.isArray(pkg.subpackages) 
+                ? pkg.subpackages.map((sub: any) => ({ tasks: Array.isArray(sub.tasks) ? sub.tasks.map((task: any) => ({ name: task.name || '' })) : [] }))
                 : []
             }))
           : [];
@@ -143,7 +139,7 @@ export default function ProjectListPage() {
       if (!project) return;
       const updatedPackages = [
         ...project.packages,
-        { name: pkgName.trim(), tasks: [] }
+        { name: pkgName.trim(), subpackages: [] }
       ];
       await updateProjectPackages(projectId, updatedPackages);
       setPkgInputs(prev => ({ ...prev, [projectId]: '' }));
@@ -152,16 +148,16 @@ export default function ProjectListPage() {
     }
   };
 
-  // 新增任務
-  const handleAddTask = async (projectId: string, pkgIdx: number, taskName: string) => {
-    if (!taskName.trim()) return;
+  // 新增子工作包
+  const handleAddSubpackage = async (projectId: string, pkgIdx: number, subName: string) => {
+    if (!subName.trim()) return;
     setLoading(true);
     try {
       const project = projects.find(p => p.id === projectId);
       if (!project) return;
       const updatedPackages = project.packages.map((pkg, idx) =>
         idx === pkgIdx
-          ? { ...pkg, tasks: [...pkg.tasks, { subpackages: [] }] }
+          ? { ...pkg, subpackages: [...pkg.subpackages, { tasks: [] }] }
           : pkg
       );
       await updateProjectPackages(projectId, updatedPackages);
@@ -174,9 +170,9 @@ export default function ProjectListPage() {
     }
   };
 
-  // 新增子工作包
-  const handleAddSubpackage = async (projectId: string, pkgIdx: number, taskIdx: number, subName: string) => {
-    if (!subName.trim()) return;
+  // 新增任務
+  const handleAddTask = async (projectId: string, pkgIdx: number, subIdx: number, taskName: string) => {
+    if (!taskName.trim()) return;
     setLoading(true);
     try {
       const project = projects.find(p => p.id === projectId);
@@ -185,10 +181,10 @@ export default function ProjectListPage() {
         i === pkgIdx
           ? {
               ...pkg,
-              tasks: pkg.tasks.map((task, j) =>
-                j === taskIdx
-                  ? { ...task, subpackages: [...task.subpackages, { name: subName.trim() }] }
-                  : task
+              subpackages: pkg.subpackages.map((sub, j) =>
+                j === subIdx
+                  ? { ...sub, tasks: [...sub.tasks, { name: taskName.trim() }] }
+                  : sub
               )
             }
           : pkg
@@ -198,7 +194,7 @@ export default function ProjectListPage() {
         ...prev,
         [projectId]: {
           ...prev[projectId],
-          [pkgIdx]: { ...prev[projectId]?.[pkgIdx], [taskIdx]: '' }
+          [pkgIdx]: { ...prev[projectId]?.[pkgIdx], [subIdx]: '' }
         }
       }));
     } finally {
@@ -350,7 +346,7 @@ export default function ProjectListPage() {
                             <CheckSquareIcon className="h-5 w-5 text-green-500" />
                             <div>
                               <p className="text-2xl font-bold">
-                                {selectedProject.packages?.reduce((total, pkg) => total + (pkg.tasks?.length || 0), 0) || 0}
+                                {selectedProject.packages?.reduce((total, pkg) => total + (pkg.subpackages?.length || 0), 0) || 0}
                               </p>
                               <p className="text-sm text-muted-foreground">任務</p>
                             </div>
@@ -365,8 +361,8 @@ export default function ProjectListPage() {
                             <div>
                               <p className="text-2xl font-bold">
                                 {selectedProject.packages?.reduce((total, pkg) => 
-                                  total + pkg.tasks?.reduce((taskTotal, task) => 
-                                    taskTotal + (task.subpackages?.length || 0), 0
+                                  total + pkg.subpackages?.reduce((taskTotal, task) => 
+                                    taskTotal + task.tasks?.length || 0, 0
                                   ), 0
                                 ) || 0}
                               </p>
@@ -399,12 +395,12 @@ export default function ProjectListPage() {
                         <p><strong>專案名稱：</strong>{selectedProject.name}</p>
                         <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
                         <p><strong>總任務數：</strong>
-                          {selectedProject.packages?.reduce((total, pkg) => total + (pkg.tasks?.length || 0), 0) || 0}
+                          {selectedProject.packages?.reduce((total, pkg) => total + (pkg.subpackages?.length || 0), 0) || 0}
                         </p>
                         <p><strong>總子工作包數：</strong>
                           {selectedProject.packages?.reduce((total, pkg) => 
-                            total + pkg.tasks?.reduce((taskTotal, task) => 
-                              taskTotal + (task.subpackages?.length || 0), 0
+                            total + pkg.subpackages?.reduce((taskTotal, task) => 
+                              taskTotal + task.tasks?.length || 0, 0
                             ), 0
                           ) || 0}
                         </p>
@@ -453,8 +449,8 @@ interface ProjectTreeProps {
   selectedProject: Project | null;
   onSelectProject: (project: Project) => void;
   onAddPackage: (projectId: string, pkgName: string) => Promise<void>;
-  onAddTask: (projectId: string, pkgIdx: number, taskName: string) => Promise<void>;
-  onAddSubpackage: (projectId: string, pkgIdx: number, taskIdx: number, subName: string) => Promise<void>;
+  onAddTask: (projectId: string, pkgIdx: number, subIdx: number, taskName: string) => Promise<void>;
+  onAddSubpackage: (projectId: string, pkgIdx: number, subName: string) => Promise<void>;
   pkgInputs: Record<string, string>;
   setPkgInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   taskInputs: Record<string, Record<number, string>>;
@@ -559,14 +555,14 @@ function ProjectTree({
                       <PackageIcon className="h-3 w-3" />
                       <span className="truncate text-sm">{pkg.name}</span>
                       <span className="ml-auto text-xs text-muted-foreground">
-                        {pkg.tasks?.length || 0}
+                        {pkg.subpackages?.length || 0}
                       </span>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub className="mx-1 border-l border-border/20">
                       {/* 子工作包列表 */}
-                      {pkg.tasks?.map((task, taskIdx) => (
+                      {pkg.subpackages?.map((sub, taskIdx) => (
                         <SidebarMenuItem key={taskIdx}>
                           <Collapsible
                             className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
@@ -581,18 +577,18 @@ function ProjectTree({
                                 <ListIcon className="h-3 w-3" />
                                 <span className="truncate text-xs">子工作包 {taskIdx + 1}</span>
                                 <span className="ml-auto text-xs text-muted-foreground">
-                                  {task.subpackages?.length || 0}
+                                  {sub.tasks?.length || 0}
                                 </span>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <SidebarMenuSub className="mx-1 border-l border-border/10">
                                 {/* 任務列表 */}
-                                {task.subpackages?.map((sub, subIdx) => (
+                                {sub.tasks?.map((task, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
                                     <SidebarMenuButton className="pl-2">
                                       <CheckSquareIcon className="h-3 w-3" />
-                                      <span className="truncate text-xs">{sub.name}</span>
+                                      <span className="truncate text-xs">{task.name}</span>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
@@ -617,7 +613,7 @@ function ProjectTree({
                                           className="flex-1 text-xs h-6"
                                           onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
-                                              void onAddSubpackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
+                                              void onAddTask(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
                                               setShowSubInputs(prev => ({
                                                 ...prev,
                                                 [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
@@ -628,7 +624,7 @@ function ProjectTree({
                                         <Button
                                           size="sm"
                                           onClick={() => {
-                                            void onAddSubpackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
+                                            void onAddTask(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
                                             setShowSubInputs(prev => ({
                                               ...prev,
                                               [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
@@ -673,7 +669,7 @@ function ProjectTree({
                                 className="flex-1 text-xs h-6"
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
-                                    void onAddTask(project.id, pkgIdx, taskInputs[project.id]?.[pkgIdx] || '');
+                                    void onAddSubpackage(project.id, pkgIdx, taskInputs[project.id]?.[pkgIdx] || '');
                                     setShowTaskInputs(prev => ({ ...prev, [pkgIdx]: false }));
                                   }
                                 }}
@@ -681,7 +677,7 @@ function ProjectTree({
                               <Button
                                 size="sm"
                                 onClick={() => {
-                                  void onAddTask(project.id, pkgIdx, taskInputs[project.id]?.[pkgIdx] || '');
+                                  void onAddSubpackage(project.id, pkgIdx, taskInputs[project.id]?.[pkgIdx] || '');
                                   setShowTaskInputs(prev => ({ ...prev, [pkgIdx]: false }));
                                 }}
                                 disabled={loading || !(taskInputs[project.id]?.[pkgIdx] || '').trim()}
