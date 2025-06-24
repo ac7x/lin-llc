@@ -10,6 +10,7 @@ import {
   AuthError
 } from 'firebase/auth';
 import { getAppCheck } from '@/lib/firebase-init';
+import { permissionService } from '@/lib/permission-service';
 
 interface UseGoogleAuthReturn {
   user: User | null;
@@ -32,9 +33,24 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
   // 監聽認證狀態變化
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
+      
+      // 當用戶登入時，自動創建或更新用戶資料
+      if (user) {
+        try {
+          await permissionService.createOrUpdateUserProfile(
+            user.uid,
+            user.email || '',
+            user.displayName || '未知用戶',
+            user.photoURL || undefined
+          );
+          console.log('用戶資料已更新到數據庫');
+        } catch (err) {
+          console.error('更新用戶資料失敗:', err);
+        }
+      }
     });
 
     return () => unsubscribe();
@@ -47,6 +63,19 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         const result = await getRedirectResult(auth);
         if (result) {
           console.log('重定向登入成功:', result.user.email);
+          
+          // 重定向登入成功後，自動創建或更新用戶資料
+          try {
+            await permissionService.createOrUpdateUserProfile(
+              result.user.uid,
+              result.user.email || '',
+              result.user.displayName || '未知用戶',
+              result.user.photoURL || undefined
+            );
+            console.log('重定向登入用戶資料已更新到數據庫');
+          } catch (err) {
+            console.error('重定向登入更新用戶資料失敗:', err);
+          }
         }
       } catch (err) {
         const authError = err as AuthError;
@@ -117,8 +146,21 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
       // 嘗試彈窗登入
       try {
-        await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, provider);
         console.log('彈窗登入成功');
+        
+        // 登入成功後，自動創建或更新用戶資料
+        try {
+          await permissionService.createOrUpdateUserProfile(
+            result.user.uid,
+            result.user.email || '',
+            result.user.displayName || '未知用戶',
+            result.user.photoURL || undefined
+          );
+          console.log('彈窗登入用戶資料已更新到數據庫');
+        } catch (err) {
+          console.error('彈窗登入更新用戶資料失敗:', err);
+        }
       } catch (popupError) {
         const popupAuthError = popupError as AuthError;
         

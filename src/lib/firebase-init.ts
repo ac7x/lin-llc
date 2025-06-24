@@ -72,6 +72,18 @@ export const initializeClientServices = async (): Promise<void> => {
       }
     }
 
+    // 初始化權限系統（僅在客戶端）
+    try {
+      const { checkInitialization, initializePermissions } = await import('./permission-init');
+      const needsInit = await checkInitialization();
+      if (needsInit) {
+        await initializePermissions();
+        console.log('權限系統初始化完成');
+      }
+    } catch (permissionError) {
+      console.warn('權限系統初始化失敗:', permissionError);
+    }
+
     isClientServicesInitialized = true;
     console.log('Firebase 客戶端服務初始化完成，App Check 已啟用強制模式');
   } catch (error) {
