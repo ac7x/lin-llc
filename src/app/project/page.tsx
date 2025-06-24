@@ -5,7 +5,6 @@ import { db } from '@/lib/firebase-init';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import {
   Sidebar,
   SidebarContent,
@@ -31,16 +30,14 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import { 
-  PlusIcon, 
-  FolderIcon, 
-  PackageIcon, 
-  CheckSquareIcon, 
+import {
   ChevronRightIcon,
-  ChevronDownIcon,
-  SettingsIcon,
+  FolderIcon,
+  PackageIcon,
   ListIcon,
-  FileIcon
+  CheckSquareIcon,
+  PlusIcon,
+  SettingsIcon,
 } from 'lucide-react';
 
 interface Task { name: string }
