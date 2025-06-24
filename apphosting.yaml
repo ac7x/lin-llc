@@ -46,16 +46,6 @@ env:
     availability:
       - BUILD
       - RUNTIME
-  - variable: NEXT_PUBLIC_OPENWEATHERMAP_API_KEY
-    value: "75d07b2345362f4603a113aee9c6747c"
-    availability:
-      - BUILD
-      - RUNTIME
-  - variable: NEXT_PUBLIC_USE_FIREBASE_EMULATOR
-    value: "true"
-    availability:
-      - BUILD
-      - RUNTIME
   - variable: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
     value: "6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg"
     availability:
@@ -68,6 +58,11 @@ env:
       - RUNTIME
   - variable: NEXT_PUBLIC_OWNER_UID
     value: "plP5ioFRW2RwmgLZj2QOpryAj242"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_OPENWEATHERMAP_API_KEY
+    value: "75d07b2345362f4603a113aee9c6747c"
     availability:
       - BUILD
       - RUNTIME
