@@ -1,16 +1,15 @@
-﻿
-import type { ReactNode } from 'react';
+﻿import type { ReactNode } from 'react';
 
 export default function ProjectLayout({
-  children,      // 預設 slot，對應 /project/page.tsx
+  children,      // /project/page.tsx
   main,          // @main slot
   package: pkg,  // @package slot
   subpackage,    // @subpackage slot
 }: {
   children: ReactNode;
-  main: ReactNode;
-  package: ReactNode;
-  subpackage: ReactNode;
+  main?: ReactNode;
+  package?: ReactNode;
+  subpackage?: ReactNode;
 }) {
   return (
     <div className="flex flex-col h-full">
