@@ -544,7 +544,7 @@ export default function ProjectListPage() {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          <ResizableHandle withHandle className="w-2 bg-gray-200 hover:bg-blue-500 transition-colors" />
 
           <ResizablePanel defaultSize={30}>
             <div className="h-full border-l bg-muted/10 p-4">
