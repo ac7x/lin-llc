@@ -38,6 +38,9 @@ export default function SettingsPage() {
   const [editingRoleDescription, setEditingRoleDescription] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState<string>('');
   const [editingDescriptionValue, setEditingDescriptionValue] = useState<string>('');
+  const [editingMatrixRoleName, setEditingMatrixRoleName] = useState<string | null>(null);
+  const [editingMatrixNameValue, setEditingMatrixNameValue] = useState<string>('');
+  const [currentTab, setCurrentTab] = useState<string>('overview');
 
   // 初始化權限系統
   useEffect(() => {
@@ -220,6 +223,27 @@ export default function SettingsPage() {
     }
   };
 
+  // 處理權限矩陣中角色名稱編輯
+  const handleMatrixRoleNameEdit = async (roleId: string, newName: string) => {
+    if (!newName.trim()) return;
+    
+    try {
+      const role = allRoles.find(r => r.id === roleId);
+      if (!role || !role.isCustom) return;
+      
+      // 更新角色名稱
+      await updateRoleName(roleId, newName.trim());
+      
+      // 重新載入角色列表
+      await loadRoles();
+      
+      setEditingMatrixRoleName(null);
+      setEditingMatrixNameValue('');
+    } catch (err) {
+      console.error('更新角色名稱失敗:', err);
+    }
+  };
+
   // 顯示載入狀態
   if (loading || initializing) {
     return (
@@ -300,7 +324,7 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">管理權限、角色和系統配置</p>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">概覽</TabsTrigger>
             <TabsTrigger value="roles">角色管理</TabsTrigger>
@@ -557,7 +581,45 @@ export default function SettingsPage() {
                         {allRoles.map((role) => (
                           <th key={role.id} className="text-center p-2">
                             <div className="flex flex-col items-center">
-                              <span className="font-medium">{role.name}</span>
+                              {/* 角色名稱編輯 */}
+                              {role.isCustom && editingMatrixRoleName === role.id ? (
+                                <Input
+                                  value={editingMatrixNameValue}
+                                  onChange={(e) => setEditingMatrixNameValue(e.target.value)}
+                                  onBlur={() => {
+                                    if (editingMatrixNameValue.trim()) {
+                                      void handleMatrixRoleNameEdit(editingMatrixRoleName, editingMatrixNameValue);
+                                    } else {
+                                      setEditingMatrixRoleName(null);
+                                      setEditingMatrixNameValue('');
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      if (editingMatrixNameValue.trim()) {
+                                        void handleMatrixRoleNameEdit(editingMatrixRoleName, editingMatrixNameValue);
+                                      }
+                                    } else if (e.key === 'Escape') {
+                                      setEditingMatrixRoleName(null);
+                                      setEditingMatrixNameValue('');
+                                    }
+                                  }}
+                                  className="h-6 text-xs font-medium text-center"
+                                  autoFocus
+                                />
+                              ) : (
+                                <span 
+                                  className={`font-medium ${role.isCustom ? 'cursor-pointer hover:text-primary' : ''}`}
+                                  onClick={() => {
+                                    if (role.isCustom) {
+                                      setEditingMatrixRoleName(role.id);
+                                      setEditingMatrixNameValue(role.name);
+                                    }
+                                  }}
+                                >
+                                  {role.name}
+                                </span>
+                              )}
                               <span className="text-xs text-muted-foreground">
                                 {role.isCustom ? '自定義' : '系統'}
                               </span>
