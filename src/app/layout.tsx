@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 import { AuthProvider } from '@/context/auth-context';
+import { BottomNavigation } from '@/components/ui/bottom-navigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,7 +20,10 @@ export default function RootLayout({
     <html lang="zh-TW">
       <body className={inter.className}>
         <AuthProvider>
-          {children}
+          <div className="pb-20">
+            {children}
+          </div>
+          <BottomNavigation />
         </AuthProvider>
       </body>
     </html>
