@@ -9,7 +9,9 @@ import {
   CheckSquare, 
   Settings, 
   Home,
-  User
+  User,
+  BarChart3,
+  Bell
 } from 'lucide-react';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { useEffect, useState } from 'react';
@@ -32,6 +34,12 @@ const navigationItems: BottomNavigationItem[] = [
     permission: 'navigation:home',
   },
   {
+    href: '/dashboard',
+    label: '儀表板',
+    icon: BarChart3,
+    permission: 'dashboard:read',
+  },
+  {
     href: '/project',
     label: '專案',
     icon: FolderOpen,
@@ -42,6 +50,12 @@ const navigationItems: BottomNavigationItem[] = [
     label: '任務',
     icon: CheckSquare,
     permission: 'navigation:task',
+  },
+  {
+    href: '/user/account/notifications',
+    label: '通知',
+    icon: Bell,
+    permission: 'notification:read',
   },
   {
     href: '/user/account',

@@ -40,6 +40,13 @@ export const DEFAULT_PERMISSIONS: Permission[] = [
   { id: 'navigation:task', name: '任務導航', description: '顯示任務導航項目', resource: 'navigation', action: 'task', category: 'navigation' },
   { id: 'navigation:account', name: '帳戶導航', description: '顯示帳戶導航項目', resource: 'navigation', action: 'account', category: 'navigation' },
   { id: 'navigation:settings', name: '設定導航', description: '顯示設定導航項目', resource: 'navigation', action: 'settings', category: 'navigation' },
+  
+  // 儀表板權限
+  { id: 'dashboard:read', name: '查看儀表板', description: '查看系統儀表板', resource: 'dashboard', action: 'read', category: 'dashboard' },
+  
+  // 通知權限
+  { id: 'notification:read', name: '查看通知', description: '查看個人通知', resource: 'notification', action: 'read', category: 'notification' },
+  { id: 'notification:write', name: '管理通知', description: '管理通知設定', resource: 'notification', action: 'write', category: 'notification' },
 ];
 
 /**
@@ -66,6 +73,8 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
       'settings:read', 'settings:write',
       'system:read',
       'navigation:home', 'navigation:project', 'navigation:task', 'navigation:account', 'navigation:settings',
+      'dashboard:read',
+      'notification:read', 'notification:write',
     ],
     isCustom: false,
   },
@@ -80,6 +89,8 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
       'user:read',
       'settings:read',
       'navigation:home', 'navigation:project', 'navigation:task', 'navigation:account',
+      'dashboard:read',
+      'notification:read',
     ],
     isCustom: false,
   },
@@ -92,6 +103,8 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
       'finance:read',
       'project:read', 'project:write',
       'navigation:home', 'navigation:project', 'navigation:task', 'navigation:account',
+      'dashboard:read',
+      'notification:read',
     ],
     isCustom: false,
   },
