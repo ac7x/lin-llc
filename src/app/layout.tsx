@@ -21,7 +21,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { Unauthorized } from '@/components/common/Unauthorized';
 import BottomNavigation from '@/components/tabs/BottomNavigation';
 import { useAppCheck } from '@/hooks/useAppCheck';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, AuthProvider } from '@/hooks/useAuth';
 import { APP_CHECK_CONFIG } from '@/lib/firebase-config';
 import { initializeClientServices } from '@/lib/firebase-init';
 import { ThemeProvider } from '@/providers/theme-provider';
@@ -45,7 +45,8 @@ interface RootLayoutProps {
   children: ReactNode;
 }
 
-export default function RootLayout({ children }: RootLayoutProps): ReactElement {
+// 內部組件，使用 useAuth
+function AppContent({ children }: { children: ReactNode }): ReactElement {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
@@ -119,6 +120,17 @@ export default function RootLayout({ children }: RootLayoutProps): ReactElement 
     );
   };
 
+  return renderContent();
+}
+
+export default function RootLayout({ children }: RootLayoutProps): ReactElement {
+  const [isClient, setIsClient] = useState(false);
+
+  // 檢查是否在客戶端環境
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <html lang='zh-TW' suppressHydrationWarning>
       <head>
@@ -144,7 +156,9 @@ export default function RootLayout({ children }: RootLayoutProps): ReactElement 
           enableSystem
           disableTransitionOnChange
         >
-          {renderContent()}
+          <AuthProvider>
+            <AppContent>{children}</AppContent>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
