@@ -47,11 +47,13 @@ export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
+  alias?: string; // 別名
   photoURL?: string;
   roleId: string;
   department?: string;
   position?: string;
   phone?: string;
+  lineId?: string; // Line ID
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

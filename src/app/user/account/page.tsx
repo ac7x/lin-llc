@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,10 +8,21 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { useAuthRedirect } from '@/hooks/use-auth-redirect';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase-init';
+import type { UserProfile } from '@/types';
 
 export default function AccountPage() {
   const { user, loading, error, signOut } = useGoogleAuth();
   const { loading: redirectLoading, error: redirectError } = useAuthRedirect();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [editAlias, setEditAlias] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editLineId, setEditLineId] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSuccess, setEditSuccess] = useState(false);
+  const aliasInputRef = useRef<HTMLInputElement>(null);
 
   // 初始化客戶端服務
   useEffect(() => {
@@ -27,8 +38,46 @@ export default function AccountPage() {
     void initializeServices();
   }, []);
 
+  // 載入 Firestore 個人資料
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        const data = snap.data() as UserProfile;
+        setProfile(data);
+        setEditAlias(data.alias || '');
+        setEditPhone(data.phone || '');
+        setEditLineId(data.lineId || '');
+      }
+    };
+    fetchProfile();
+  }, [user]);
+
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  // 編輯個人資料
+  const handleProfileSave = async () => {
+    if (!user) return;
+    setEditLoading(true);
+    setEditSuccess(false);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        alias: editAlias.trim(),
+        phone: editPhone.trim(),
+        lineId: editLineId.trim(),
+        updatedAt: new Date().toISOString(),
+      });
+      setProfile(prev => prev ? { ...prev, alias: editAlias, phone: editPhone, lineId: editLineId } : prev);
+      setEditSuccess(true);
+      setTimeout(() => setEditSuccess(false), 2000);
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   // 顯示載入狀態
@@ -229,6 +278,59 @@ export default function AccountPage() {
                   🔔 通知設定
                 </Button>
               </Link>
+            </CardContent>
+          </Card>
+
+          {/* 個人資料編輯卡片 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>個人資料</CardTitle>
+              <CardDescription>您可以自訂顯示名稱、聯絡電話與 Line ID</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs mb-1">別名（顯示名稱）</label>
+                  <Input
+                    ref={aliasInputRef}
+                    value={editAlias}
+                    onChange={e => setEditAlias(e.target.value)}
+                    placeholder="輸入您的別名"
+                    maxLength={30}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1">聯絡電話</label>
+                  <Input
+                    value={editPhone}
+                    onChange={e => setEditPhone(e.target.value)}
+                    placeholder="輸入您的聯絡電話"
+                    maxLength={20}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1">Line ID</label>
+                  <Input
+                    value={editLineId}
+                    onChange={e => setEditLineId(e.target.value)}
+                    placeholder="輸入您的 Line ID"
+                    maxLength={30}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 mt-2">
+                <Button onClick={handleProfileSave} disabled={editLoading}>
+                  {editLoading ? '儲存中...' : '儲存變更'}
+                </Button>
+                {editSuccess && <span className="text-green-600 text-xs">已儲存！</span>}
+              </div>
+              {profile && (
+                <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                  <div>目前顯示名稱：<span className="font-medium">{profile.alias || '未設定'}</span></div>
+                  <div>目前聯絡電話：<span className="font-medium">{profile.phone || '未設定'}</span></div>
+                  <div>目前 Line ID：<span className="font-medium">{profile.lineId || '未設定'}</span></div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -278,23 +278,23 @@ export default function SettingsPage() {
     if (!editingUser) return;
     setEditUserLoading(true);
     try {
-      // 更新 Firestore 用戶 displayName/isActive
+      // 更新 Firestore 用戶 displayName/isActive/alias/phone/lineId
       await updateDoc(doc(db, 'users', editingUser.uid), {
         displayName: editUserName.trim(),
+        alias: editingUser.alias?.trim() || '',
+        phone: editingUser.phone?.trim() || '',
+        lineId: editingUser.lineId?.trim() || '',
         isActive: editUserActive,
         updatedAt: new Date().toISOString(),
       });
-      
       // 更新角色
       if (editUserRole !== editingUser.roleId) {
         await assignUserRole(editingUser.uid, editUserRole, editingUser.uid);
-        
         // 同時更新用戶資料中的 roleId
         await updateDoc(doc(db, 'users', editingUser.uid), {
           roleId: editUserRole,
         });
       }
-      
       await loadAllUsers();
       handleEditUserClose();
     } catch (e) {
@@ -957,6 +957,11 @@ export default function SettingsPage() {
                                   登入 {user.loginCount} 次
                                 </span>
                               </div>
+                              <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                                <div>別名：<span className="font-medium">{user.alias || '未設定'}</span></div>
+                                <div>電話：<span className="font-medium">{user.phone || '未設定'}</span></div>
+                                <div>Line ID：<span className="font-medium">{user.lineId || '未設定'}</span></div>
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -999,6 +1004,18 @@ export default function SettingsPage() {
                     <div>
                       <label className="block text-xs mb-1">名稱</label>
                       <Input value={editUserName} onChange={e => setEditUserName(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">別名</label>
+                      <Input value={editingUser?.alias || ''} onChange={e => setEditingUser(prev => prev ? { ...prev, alias: e.target.value } : prev)} />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">聯絡電話</label>
+                      <Input value={editingUser?.phone || ''} onChange={e => setEditingUser(prev => prev ? { ...prev, phone: e.target.value } : prev)} />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">Line ID</label>
+                      <Input value={editingUser?.lineId || ''} onChange={e => setEditingUser(prev => prev ? { ...prev, lineId: e.target.value } : prev)} />
                     </div>
                     <div>
                       <label className="block text-xs mb-1">Email</label>
