@@ -552,7 +552,7 @@ function ProjectTree({
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                       onClick={() => togglePackageExpanded(pkgIdx)}
-                      className="pl-6"
+                      className="pl-4"
                     >
                       <ChevronRightIcon className="transition-transform h-3 w-3" />
                       <PackageIcon className="h-3 w-3" />
@@ -574,7 +574,7 @@ function ProjectTree({
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
                                 onClick={() => toggleTaskExpanded(pkgIdx, taskIdx)}
-                                className="pl-8"
+                                className="pl-6"
                               >
                                 <ChevronRightIcon className="transition-transform h-3 w-3" />
                                 <CheckSquareIcon className="h-3 w-3" />
@@ -589,7 +589,7 @@ function ProjectTree({
                                 {/* 子工作包列表 */}
                                 {task.subpackages?.map((sub, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
-                                    <SidebarMenuButton className="pl-10">
+                                    <SidebarMenuButton className="pl-8">
                                       <FileIcon className="h-3 w-3" />
                                       <span className="truncate">{sub.name}</span>
                                     </SidebarMenuButton>
@@ -597,7 +597,7 @@ function ProjectTree({
                                 ))}
                                 {/* 新增子工作包按鈕 */}
                                 <SidebarMenuItem>
-                                  <div className="pl-10 pr-4 py-1">
+                                  <div className="pl-8 pr-2 py-1">
                                     {showSubInputs[pkgIdx]?.[taskIdx] ? (
                                       <div className="flex gap-1">
                                         <Input
@@ -659,7 +659,7 @@ function ProjectTree({
                       ))}
                       {/* 新增任務按鈕 */}
                       <SidebarMenuItem>
-                        <div className="pl-6 pr-4 py-1">
+                        <div className="pl-4 pr-2 py-1">
                           {showTaskInputs[pkgIdx] ? (
                             <div className="flex gap-1">
                               <Input
@@ -709,7 +709,7 @@ function ProjectTree({
             ))}
             {/* 新增工作包按鈕 */}
             <SidebarMenuItem>
-              <div className="pl-4 pr-4 py-1">
+              <div className="pl-2 pr-2 py-1">
                 {showPackageInput ? (
                   <div className="flex gap-1">
                     <Input
