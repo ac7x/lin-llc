@@ -221,14 +221,14 @@ export default function ProjectListPage() {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
-        <Sidebar>
+        <Sidebar className="z-50">
           <SidebarHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-2">
               <FolderIcon className="h-5 w-5" />
               <h2 className="text-lg font-semibold">專案管理</h2>
             </div>
           </SidebarHeader>
-          <SidebarContent>
+          <SidebarContent className="pb-20">
             {/* 建立專案表單 */}
             <SidebarGroup>
               <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
@@ -552,11 +552,11 @@ function ProjectTree({
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                       onClick={() => togglePackageExpanded(pkgIdx)}
-                      className="pl-4"
+                      className="pl-3"
                     >
                       <ChevronRightIcon className="transition-transform h-3 w-3" />
                       <PackageIcon className="h-3 w-3" />
-                      <span className="truncate">{pkg.name}</span>
+                      <span className="truncate text-sm">{pkg.name}</span>
                       <span className="ml-auto text-xs text-muted-foreground">
                         {pkg.tasks?.length || 0}
                       </span>
@@ -574,11 +574,11 @@ function ProjectTree({
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
                                 onClick={() => toggleTaskExpanded(pkgIdx, taskIdx)}
-                                className="pl-6"
+                                className="pl-5"
                               >
                                 <ChevronRightIcon className="transition-transform h-3 w-3" />
                                 <CheckSquareIcon className="h-3 w-3" />
-                                <span className="truncate">任務 {taskIdx + 1}</span>
+                                <span className="truncate text-xs">任務 {taskIdx + 1}</span>
                                 <span className="ml-auto text-xs text-muted-foreground">
                                   {task.subpackages?.length || 0}
                                 </span>
@@ -589,15 +589,15 @@ function ProjectTree({
                                 {/* 子工作包列表 */}
                                 {task.subpackages?.map((sub, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
-                                    <SidebarMenuButton className="pl-8">
+                                    <SidebarMenuButton className="pl-7">
                                       <FileIcon className="h-3 w-3" />
-                                      <span className="truncate">{sub.name}</span>
+                                      <span className="truncate text-xs">{sub.name}</span>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
                                 {/* 新增子工作包按鈕 */}
                                 <SidebarMenuItem>
-                                  <div className="pl-8 pr-2 py-1">
+                                  <div className="pl-7 pr-1 py-1">
                                     {showSubInputs[pkgIdx]?.[taskIdx] ? (
                                       <div className="flex gap-1">
                                         <Input
@@ -659,7 +659,7 @@ function ProjectTree({
                       ))}
                       {/* 新增任務按鈕 */}
                       <SidebarMenuItem>
-                        <div className="pl-4 pr-2 py-1">
+                        <div className="pl-3 pr-1 py-1">
                           {showTaskInputs[pkgIdx] ? (
                             <div className="flex gap-1">
                               <Input
@@ -709,7 +709,7 @@ function ProjectTree({
             ))}
             {/* 新增工作包按鈕 */}
             <SidebarMenuItem>
-              <div className="pl-2 pr-2 py-1">
+              <div className="pl-1 pr-1 py-1">
                 {showPackageInput ? (
                   <div className="flex gap-1">
                     <Input

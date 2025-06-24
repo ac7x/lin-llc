@@ -144,7 +144,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 
   return (
     <nav className={cn(
-      'fixed bottom-0 left-0 right-0 z-50',
+      'fixed bottom-0 left-0 right-0 z-40',
       'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
       'border-t border-border/50 shadow-lg',
       'flex items-center justify-around px-2 py-2',
