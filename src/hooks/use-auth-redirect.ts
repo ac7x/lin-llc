@@ -46,6 +46,12 @@ export function useAuthRedirect(): UseAuthRedirectReturn {
           case 'auth/weak-password':
             setError('密碼強度不足');
             break;
+          case 'auth/requires-recent-login':
+            setError('需要重新登入以驗證身份');
+            break;
+          case 'auth/unauthorized-domain':
+            setError('此網域未授權進行登入');
+            break;
           default:
             setError(authError.message || '登入失敗');
         }

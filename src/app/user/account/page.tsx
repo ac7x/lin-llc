@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,10 +8,23 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { useAuthRedirect } from '@/hooks/use-auth-redirect';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase-init';
+import type { UserProfile } from '@/app/settings/types';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { SkillTagsInput } from '@/components/ui/skill-tags-input';
 
 export default function AccountPage() {
   const { user, loading, error, signOut } = useGoogleAuth();
   const { loading: redirectLoading, error: redirectError } = useAuthRedirect();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [editAlias, setEditAlias] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editLineId, setEditLineId] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSuccess, setEditSuccess] = useState(false);
 
   // 初始化客戶端服務
   useEffect(() => {
@@ -27,8 +40,47 @@ export default function AccountPage() {
     void initializeServices();
   }, []);
 
+  // 載入 Firestore 個人資料
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        const data = snap.data() as UserProfile;
+        setProfile(data);
+        setEditAlias(data.alias || '');
+        setEditPhone(data.phone || '');
+        setEditLineId(data.lineId || '');
+      }
+    };
+    void fetchProfile();
+  }, [user]);
+
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  // 編輯個人資料
+  const handleProfileSave = async () => {
+    if (!user) return;
+    setEditLoading(true);
+    setEditSuccess(false);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        alias: editAlias.trim(),
+        phone: editPhone.trim(),
+        lineId: editLineId.trim(),
+        skills: profile?.skills || [],
+        updatedAt: new Date().toISOString(),
+      });
+      setProfile(prev => prev ? { ...prev, alias: editAlias, phone: editPhone, lineId: editLineId } : prev);
+      setEditSuccess(true);
+      setTimeout(() => setEditSuccess(false), 2000);
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   // 顯示載入狀態
@@ -229,6 +281,81 @@ export default function AccountPage() {
                   🔔 通知設定
                 </Button>
               </Link>
+            </CardContent>
+          </Card>
+
+          {/* 個人資料編輯卡片 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>個人資料</CardTitle>
+              <CardDescription>您可以自訂顯示名稱、聯絡電話與 Line ID</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="alias">別名</Label>
+                    <Input
+                      id="alias"
+                      value={profile?.alias || ''}
+                      onChange={(e) => setProfile(prev => prev ? { ...prev, alias: e.target.value } : prev)}
+                      placeholder="請輸入別名"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">聯絡電話</Label>
+                    <Input
+                      id="phone"
+                      value={profile?.phone || ''}
+                      onChange={(e) => setProfile(prev => prev ? { ...prev, phone: e.target.value } : prev)}
+                      placeholder="請輸入聯絡電話"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lineId">Line ID</Label>
+                  <Input
+                    id="lineId"
+                    value={profile?.lineId || ''}
+                    onChange={(e) => setProfile(prev => prev ? { ...prev, lineId: e.target.value } : prev)}
+                    placeholder="請輸入 Line ID"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="skills">技能標籤</Label>
+                  <SkillTagsInput
+                    value={profile?.skills || []}
+                    onChange={skills => setProfile(prev => prev ? { ...prev, skills } : prev)}
+                    placeholder="輸入技能後按 Enter 或逗號新增，可移除"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    按 Enter 或逗號新增，點擊 X 可移除
+                  </p>
+                  {/* 顯示當前技能標籤 */}
+                  {profile?.skills && profile.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {profile.skills.map((skill, index) => (
+                        <Badge key={index} variant="secondary">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 mt-2">
+                <Button onClick={handleProfileSave} disabled={editLoading}>
+                  {editLoading ? '儲存中...' : '儲存變更'}
+                </Button>
+                {editSuccess && <span className="text-green-600 text-xs">已儲存！</span>}
+              </div>
+              {profile && (
+                <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                  <div>目前顯示名稱：<span className="font-medium">{profile.alias || '未設定'}</span></div>
+                  <div>目前聯絡電話：<span className="font-medium">{profile.phone || '未設定'}</span></div>
+                  <div>目前 Line ID：<span className="font-medium">{profile.lineId || '未設定'}</span></div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

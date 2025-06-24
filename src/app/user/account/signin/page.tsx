@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { useAuthRedirect } from '@/hooks/use-auth-redirect';
 export default function SignInPage() {
   const { user, loading, error, signInWithGoogle, signOut } = useGoogleAuth();
   const { loading: redirectLoading, error: redirectError } = useAuthRedirect();
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // 初始化客戶端服務
   useEffect(() => {
@@ -27,11 +28,25 @@ export default function SignInPage() {
   }, []);
 
   const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
+    setIsRetrying(true);
+    try {
+      await signInWithGoogle();
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await signInWithGoogle();
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   // 顯示載入狀態
@@ -105,8 +120,17 @@ export default function SignInPage() {
           {/* 錯誤訊息 */}
           {(error || redirectError) && (
             <Alert variant="destructive">
-              <AlertDescription>
-                {error || redirectError}
+              <AlertDescription className="space-y-2">
+                <p>{error || redirectError}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRetry}
+                  disabled={isRetrying}
+                  className="mt-2"
+                >
+                  {isRetrying ? '重試中...' : '重試登入'}
+                </Button>
               </AlertDescription>
             </Alert>
           )}
@@ -116,7 +140,7 @@ export default function SignInPage() {
             onClick={handleGoogleSignIn} 
             variant="outline" 
             className="w-full h-12"
-            disabled={loading}
+            disabled={loading || isRetrying}
           >
             <svg 
               className="w-5 h-5 mr-2" 
@@ -139,14 +163,25 @@ export default function SignInPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            {loading ? '登入中...' : '使用 Google 登入'}
+            {loading || isRetrying ? '登入中...' : '使用 Google 登入'}
           </Button>
 
-          {/* 安全提示 */}
-          <div className="text-xs text-muted-foreground text-center">
-            <p>此登入過程受到 App Check 保護</p>
-            <p>您的資料安全是我們的首要任務</p>
+          {/* 登入提示 */}
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>• 如果彈出視窗被阻擋，系統會自動使用重定向登入</p>
+            <p>• 此登入過程受到 App Check 保護</p>
+            <p>• 您的資料安全是我們的首要任務</p>
           </div>
+
+          {/* 故障排除提示 */}
+          {error && (
+            <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted rounded-lg">
+              <p className="font-medium">故障排除：</p>
+              <p>• 請確保允許彈出視窗</p>
+              <p>• 檢查網路連線是否穩定</p>
+              <p>• 清除瀏覽器快取後重試</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
