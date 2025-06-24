@@ -18,7 +18,14 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarMenuSub,
+  SidebarRail,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -29,10 +36,11 @@ import {
   FolderIcon, 
   PackageIcon, 
   CheckSquareIcon, 
-  ChevronDownIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
   SettingsIcon,
-  ListIcon
+  ListIcon,
+  FileIcon
 } from 'lucide-react';
 
 interface Subpackage { name: string }
@@ -56,8 +64,6 @@ export default function ProjectListPage() {
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskInputs, setTaskInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
-  const [expandedPackages, setExpandedPackages] = useState<Record<string, Set<number>>>({});
-  const [expandedTasks, setExpandedTasks] = useState<Record<string, Record<number, Set<number>>>>({});
 
   // 載入專案列表
   useEffect(() => {
@@ -212,36 +218,6 @@ export default function ProjectListPage() {
     }
   };
 
-  // 切換工作包展開狀態
-  const togglePackageExpanded = (projectId: string, pkgIdx: number) => {
-    setExpandedPackages(prev => {
-      const newSet = new Set(prev[projectId] || []);
-      if (newSet.has(pkgIdx)) {
-        newSet.delete(pkgIdx);
-      } else {
-        newSet.add(pkgIdx);
-      }
-      return { ...prev, [projectId]: newSet };
-    });
-  };
-
-  // 切換任務展開狀態
-  const toggleTaskExpanded = (projectId: string, pkgIdx: number, taskIdx: number) => {
-    setExpandedTasks(prev => {
-      const projectTasks = prev[projectId] || {};
-      const packageTasks = new Set(projectTasks[pkgIdx] || []);
-      if (packageTasks.has(taskIdx)) {
-        packageTasks.delete(taskIdx);
-      } else {
-        packageTasks.add(taskIdx);
-      }
-      return {
-        ...prev,
-        [projectId]: { ...projectTasks, [pkgIdx]: packageTasks }
-      };
-    });
-  };
-
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -254,208 +230,70 @@ export default function ProjectListPage() {
           </SidebarHeader>
           <SidebarContent>
             {/* 建立專案表單 */}
-            <div className="p-4 border-b">
-              <Input
-                placeholder="專案名稱"
-                value={projectName}
-                onChange={e => setProjectName(e.target.value)}
-                className="mb-2"
-              />
-              <Input
-                placeholder="專案描述（選填）"
-                value={projectDescription}
-                onChange={e => setProjectDescription(e.target.value)}
-                className="mb-2"
-              />
-              <Button 
-                onClick={handleCreateProject} 
-                disabled={loading || !projectName.trim()}
-                className="w-full"
-                size="sm"
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                {loading ? '建立中...' : '建立專案'}
-              </Button>
-              {success && (
-                <p className="text-green-600 text-center mt-2 text-sm">專案建立成功！</p>
-              )}
-            </div>
-
-            {/* 專案列表 */}
-            <SidebarMenu>
-              {projects.map(project => (
-                <SidebarMenuItem key={project.id}>
-                  <SidebarMenuButton
-                    isActive={selectedProject?.id === project.id}
-                    onClick={() => setSelectedProject(project)}
-                    tooltip={project.description}
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
+                建立專案
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <div className="p-4 space-y-2">
+                  <Input
+                    placeholder="專案名稱"
+                    value={projectName}
+                    onChange={e => setProjectName(e.target.value)}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="專案描述（選填）"
+                    value={projectDescription}
+                    onChange={e => setProjectDescription(e.target.value)}
+                    className="text-sm"
+                  />
+                  <Button 
+                    onClick={handleCreateProject} 
+                    disabled={loading || !projectName.trim()}
+                    className="w-full"
+                    size="sm"
                   >
-                    <FolderIcon className="h-4 w-4" />
-                    <span className="truncate">{project.name}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    {loading ? '建立中...' : '建立專案'}
+                  </Button>
+                  {success && (
+                    <p className="text-green-600 text-center text-xs">專案建立成功！</p>
+                  )}
+                </div>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-            {/* 選中專案的工作包管理 */}
-            {selectedProject && (
-              <SidebarGroup>
-                <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
-                  工作包管理
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  {/* 新增工作包 */}
-                  <div className="px-4 py-2 border-b">
-                    <div className="flex gap-2 mb-2">
-                      <Input
-                        placeholder="新增工作包"
-                        value={pkgInputs[selectedProject.id] || ''}
-                        onChange={e => setPkgInputs(prev => ({ ...prev, [selectedProject.id]: e.target.value }))}
-                        className="flex-1 text-sm"
-                        size={20}
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddPackage(selectedProject.id, pkgInputs[selectedProject.id] || '')}
-                        disabled={loading || !(pkgInputs[selectedProject.id] || '').trim()}
-                        className="px-2"
-                      >
-                        <PlusIcon className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* 工作包列表 */}
-                  <div className="space-y-1">
-                    {selectedProject.packages?.map((pkg, pkgIdx) => {
-                      const isExpanded = expandedPackages[selectedProject.id]?.has(pkgIdx);
-                      return (
-                        <div key={pkgIdx} className="border-b">
-                          {/* 工作包標題 */}
-                          <button
-                            onClick={() => togglePackageExpanded(selectedProject.id, pkgIdx)}
-                            className="w-full px-4 py-2 text-left hover:bg-muted/50 flex items-center gap-2 text-sm"
-                          >
-                            {isExpanded ? (
-                              <ChevronDownIcon className="h-3 w-3" />
-                            ) : (
-                              <ChevronRightIcon className="h-3 w-3" />
-                            )}
-                            <PackageIcon className="h-3 w-3" />
-                            <span className="truncate">{pkg.name}</span>
-                            <span className="ml-auto text-xs text-muted-foreground">
-                              {pkg.tasks?.length || 0}
-                            </span>
-                          </button>
-
-                          {/* 工作包內容 */}
-                          {isExpanded && (
-                            <div className="bg-muted/20">
-                              {/* 新增任務 */}
-                              <div className="px-4 py-2 border-b">
-                                <div className="flex gap-2">
-                                  <Input
-                                    placeholder="新增任務"
-                                    value={taskInputs[selectedProject.id]?.[pkgIdx] || ''}
-                                    onChange={e => setTaskInputs(prev => ({
-                                      ...prev,
-                                      [selectedProject.id]: { ...prev[selectedProject.id], [pkgIdx]: e.target.value }
-                                    }))}
-                                    className="flex-1 text-xs"
-                                    size={15}
-                                  />
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleAddTask(selectedProject.id, pkgIdx, taskInputs[selectedProject.id]?.[pkgIdx] || '')}
-                                    disabled={loading || !(taskInputs[selectedProject.id]?.[pkgIdx] || '').trim()}
-                                    className="px-2"
-                                  >
-                                    <PlusIcon className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {/* 任務列表 */}
-                              <div className="space-y-1">
-                                {pkg.tasks?.map((task, taskIdx) => {
-                                  const isTaskExpanded = expandedTasks[selectedProject.id]?.[pkgIdx]?.has(taskIdx);
-                                  return (
-                                    <div key={taskIdx} className="border-b">
-                                      {/* 任務標題 */}
-                                      <button
-                                        onClick={() => toggleTaskExpanded(selectedProject.id, pkgIdx, taskIdx)}
-                                        className="w-full px-6 py-1.5 text-left hover:bg-muted/30 flex items-center gap-2 text-xs"
-                                      >
-                                        {isTaskExpanded ? (
-                                          <ChevronDownIcon className="h-2.5 w-2.5" />
-                                        ) : (
-                                          <ChevronRightIcon className="h-2.5 w-2.5" />
-                                        )}
-                                        <CheckSquareIcon className="h-2.5 w-2.5" />
-                                        <span className="truncate">任務 {taskIdx + 1}</span>
-                                        <span className="ml-auto text-xs text-muted-foreground">
-                                          {task.subpackages?.length || 0}
-                                        </span>
-                                      </button>
-
-                                      {/* 任務內容 */}
-                                      {isTaskExpanded && (
-                                        <div className="bg-muted/10">
-                                          {/* 新增子工作包 */}
-                                          <div className="px-6 py-1.5 border-b">
-                                            <div className="flex gap-2">
-                                              <Input
-                                                placeholder="新增子工作包"
-                                                value={subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || ''}
-                                                onChange={e => setSubInputs(prev => ({
-                                                  ...prev,
-                                                  [selectedProject.id]: {
-                                                    ...prev[selectedProject.id],
-                                                    [pkgIdx]: {
-                                                      ...prev[selectedProject.id]?.[pkgIdx],
-                                                      [taskIdx]: e.target.value
-                                                    }
-                                                  }
-                                                }))}
-                                                className="flex-1 text-xs"
-                                                size={12}
-                                              />
-                                              <Button
-                                                size="sm"
-                                                onClick={() => handleAddSubpackage(selectedProject.id, pkgIdx, taskIdx, subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || '')}
-                                                disabled={loading || !(subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
-                                                className="px-1.5"
-                                              >
-                                                <PlusIcon className="h-2.5 w-2.5" />
-                                              </Button>
-                                            </div>
-                                          </div>
-
-                                          {/* 子工作包列表 */}
-                                          <div className="px-6 py-1">
-                                            {task.subpackages?.map((sub, subIdx) => (
-                                              <div key={subIdx} className="flex items-center gap-2 py-0.5 text-xs">
-                                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                                <span className="truncate">{sub.name}</span>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )}
+            {/* 專案樹狀結構 */}
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
+                專案列表
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {projects.map(project => (
+                    <ProjectTree 
+                      key={project.id} 
+                      project={project}
+                      selectedProject={selectedProject}
+                      onSelectProject={setSelectedProject}
+                      onAddPackage={handleAddPackage}
+                      onAddTask={handleAddTask}
+                      onAddSubpackage={handleAddSubpackage}
+                      pkgInputs={pkgInputs}
+                      setPkgInputs={setPkgInputs}
+                      taskInputs={taskInputs}
+                      setTaskInputs={setTaskInputs}
+                      subInputs={subInputs}
+                      setSubInputs={setSubInputs}
+                      loading={loading}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </SidebarContent>
+          <SidebarRail />
         </Sidebar>
 
         <ResizablePanelGroup
@@ -606,5 +444,314 @@ export default function ProjectListPage() {
         </ResizablePanelGroup>
       </div>
     </SidebarProvider>
+  );
+}
+
+// ProjectTree 組件 - 實現樹狀結構
+interface ProjectTreeProps {
+  project: Project;
+  selectedProject: Project | null;
+  onSelectProject: (project: Project) => void;
+  onAddPackage: (projectId: string, pkgName: string) => Promise<void>;
+  onAddTask: (projectId: string, pkgIdx: number, taskName: string) => Promise<void>;
+  onAddSubpackage: (projectId: string, pkgIdx: number, taskIdx: number, subName: string) => Promise<void>;
+  pkgInputs: Record<string, string>;
+  setPkgInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  taskInputs: Record<string, Record<number, string>>;
+  setTaskInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, string>>>>;
+  subInputs: Record<string, Record<number, Record<number, string>>>;
+  setSubInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, Record<number, string>>>>>;
+  loading: boolean;
+}
+
+function ProjectTree({
+  project,
+  selectedProject,
+  onSelectProject,
+  onAddPackage,
+  onAddTask,
+  onAddSubpackage,
+  pkgInputs,
+  setPkgInputs,
+  taskInputs,
+  setTaskInputs,
+  subInputs,
+  setSubInputs,
+  loading
+}: ProjectTreeProps) {
+  const [expandedPackages, setExpandedPackages] = useState<Set<number>>(new Set());
+  const [expandedTasks, setExpandedTasks] = useState<Record<number, Set<number>>>({});
+  const [showPackageInput, setShowPackageInput] = useState(false);
+  const [showTaskInputs, setShowTaskInputs] = useState<Record<number, boolean>>({});
+  const [showSubInputs, setShowSubInputs] = useState<Record<number, Record<number, boolean>>>({});
+
+  const togglePackageExpanded = (pkgIdx: number) => {
+    setExpandedPackages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(pkgIdx)) {
+        newSet.delete(pkgIdx);
+      } else {
+        newSet.add(pkgIdx);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleTaskExpanded = (pkgIdx: number, taskIdx: number) => {
+    setExpandedTasks(prev => {
+      const packageTasks = new Set(prev[pkgIdx] || []);
+      if (packageTasks.has(taskIdx)) {
+        packageTasks.delete(taskIdx);
+      } else {
+        packageTasks.add(taskIdx);
+      }
+      return { ...prev, [pkgIdx]: packageTasks };
+    });
+  };
+
+  const handleAddPackageClick = () => {
+    setShowPackageInput(true);
+  };
+
+  const handleAddTaskClick = (pkgIdx: number) => {
+    setShowTaskInputs(prev => ({ ...prev, [pkgIdx]: true }));
+  };
+
+  const handleAddSubClick = (pkgIdx: number, taskIdx: number) => {
+    setShowSubInputs(prev => ({
+      ...prev,
+      [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: true }
+    }));
+  };
+
+  return (
+    <SidebarMenuItem>
+      <Collapsible
+        className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+        defaultOpen={selectedProject?.id === project.id}
+      >
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            isActive={selectedProject?.id === project.id}
+            onClick={() => onSelectProject(project)}
+          >
+            <ChevronRightIcon className="transition-transform h-4 w-4" />
+            <FolderIcon className="h-4 w-4" />
+            <span className="truncate">{project.name}</span>
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {/* 工作包列表 */}
+            {project.packages?.map((pkg, pkgIdx) => (
+              <SidebarMenuItem key={pkgIdx}>
+                <Collapsible
+                  className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+                  defaultOpen={expandedPackages.has(pkgIdx)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      onClick={() => togglePackageExpanded(pkgIdx)}
+                      className="pl-6"
+                    >
+                      <ChevronRightIcon className="transition-transform h-3 w-3" />
+                      <PackageIcon className="h-3 w-3" />
+                      <span className="truncate">{pkg.name}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {pkg.tasks?.length || 0}
+                      </span>
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {/* 任務列表 */}
+                      {pkg.tasks?.map((task, taskIdx) => (
+                        <SidebarMenuItem key={taskIdx}>
+                          <Collapsible
+                            className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+                            defaultOpen={expandedTasks[pkgIdx]?.has(taskIdx)}
+                          >
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton
+                                onClick={() => toggleTaskExpanded(pkgIdx, taskIdx)}
+                                className="pl-8"
+                              >
+                                <ChevronRightIcon className="transition-transform h-3 w-3" />
+                                <CheckSquareIcon className="h-3 w-3" />
+                                <span className="truncate">任務 {taskIdx + 1}</span>
+                                <span className="ml-auto text-xs text-muted-foreground">
+                                  {task.subpackages?.length || 0}
+                                </span>
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <SidebarMenuSub>
+                                {/* 子工作包列表 */}
+                                {task.subpackages?.map((sub, subIdx) => (
+                                  <SidebarMenuItem key={subIdx}>
+                                    <SidebarMenuButton className="pl-10">
+                                      <FileIcon className="h-3 w-3" />
+                                      <span className="truncate">{sub.name}</span>
+                                    </SidebarMenuButton>
+                                  </SidebarMenuItem>
+                                ))}
+                                {/* 新增子工作包按鈕 */}
+                                <SidebarMenuItem>
+                                  <div className="pl-10 pr-4 py-1">
+                                    {showSubInputs[pkgIdx]?.[taskIdx] ? (
+                                      <div className="flex gap-1">
+                                        <Input
+                                          placeholder="子工作包名稱"
+                                          value={subInputs[project.id]?.[pkgIdx]?.[taskIdx] || ''}
+                                          onChange={e => setSubInputs(prev => ({
+                                            ...prev,
+                                            [project.id]: {
+                                              ...prev[project.id],
+                                              [pkgIdx]: {
+                                                ...prev[project.id]?.[pkgIdx],
+                                                [taskIdx]: e.target.value
+                                              }
+                                            }
+                                          }))}
+                                          className="flex-1 text-xs h-6"
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              void onAddSubpackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
+                                              setShowSubInputs(prev => ({
+                                                ...prev,
+                                                [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
+                                              }));
+                                            }
+                                          }}
+                                        />
+                                        <Button
+                                          size="sm"
+                                          onClick={() => {
+                                            void onAddSubpackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
+                                            setShowSubInputs(prev => ({
+                                              ...prev,
+                                              [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
+                                            }));
+                                          }}
+                                          disabled={loading || !(subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
+                                          className="h-6 w-6 p-0"
+                                        >
+                                          <PlusIcon className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleAddSubClick(pkgIdx, taskIdx)}
+                                        className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                                      >
+                                        <PlusIcon className="h-3 w-3 mr-1" />
+                                        新增子工作包
+                                      </Button>
+                                    )}
+                                  </div>
+                                </SidebarMenuItem>
+                              </SidebarMenuSub>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </SidebarMenuItem>
+                      ))}
+                      {/* 新增任務按鈕 */}
+                      <SidebarMenuItem>
+                        <div className="pl-6 pr-4 py-1">
+                          {showTaskInputs[pkgIdx] ? (
+                            <div className="flex gap-1">
+                              <Input
+                                placeholder="任務名稱"
+                                value={taskInputs[project.id]?.[pkgIdx] || ''}
+                                onChange={e => setTaskInputs(prev => ({
+                                  ...prev,
+                                  [project.id]: { ...prev[project.id], [pkgIdx]: e.target.value }
+                                }))}
+                                className="flex-1 text-xs h-6"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    void onAddTask(project.id, pkgIdx, taskInputs[project.id]?.[pkgIdx] || '');
+                                    setShowTaskInputs(prev => ({ ...prev, [pkgIdx]: false }));
+                                  }
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  void onAddTask(project.id, pkgIdx, taskInputs[project.id]?.[pkgIdx] || '');
+                                  setShowTaskInputs(prev => ({ ...prev, [pkgIdx]: false }));
+                                }}
+                                disabled={loading || !(taskInputs[project.id]?.[pkgIdx] || '').trim()}
+                                className="h-6 w-6 p-0"
+                              >
+                                <PlusIcon className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleAddTaskClick(pkgIdx)}
+                              className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                            >
+                              <PlusIcon className="h-3 w-3 mr-1" />
+                              新增任務
+                            </Button>
+                          )}
+                        </div>
+                      </SidebarMenuItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarMenuItem>
+            ))}
+            {/* 新增工作包按鈕 */}
+            <SidebarMenuItem>
+              <div className="pl-4 pr-4 py-1">
+                {showPackageInput ? (
+                  <div className="flex gap-1">
+                    <Input
+                      placeholder="工作包名稱"
+                      value={pkgInputs[project.id] || ''}
+                      onChange={e => setPkgInputs(prev => ({ ...prev, [project.id]: e.target.value }))}
+                      className="flex-1 text-xs h-6"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          void onAddPackage(project.id, pkgInputs[project.id] || '');
+                          setShowPackageInput(false);
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        void onAddPackage(project.id, pkgInputs[project.id] || '');
+                        setShowPackageInput(false);
+                      }}
+                      disabled={loading || !(pkgInputs[project.id] || '').trim()}
+                      className="h-6 w-6 p-0"
+                    >
+                      <PlusIcon className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleAddPackageClick}
+                    className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                  >
+                    <PlusIcon className="h-3 w-3 mr-1" />
+                    新增工作包
+                  </Button>
+                )}
+              </div>
+            </SidebarMenuItem>
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuItem>
   );
 } 
