@@ -1,6 +1,5 @@
 'use client';
 
-import type { User } from 'firebase/auth';
 import Image from 'next/image';
 import { useState, useEffect, useCallback, type ReactElement } from 'react';
 

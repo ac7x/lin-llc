@@ -9,13 +9,9 @@
  * - 若有權限，則正常渲染子組件
  */
 import type { ReactElement, ReactNode } from 'react';
-import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
 
 import { ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
-import { db } from '@/lib/firebase-client';
-import type { CustomRole } from '@/constants/roles';
 import type { PermissionId } from '@/constants/permissions';
 
 import { Unauthorized } from './Unauthorized';

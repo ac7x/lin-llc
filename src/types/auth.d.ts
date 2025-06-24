@@ -43,6 +43,15 @@ export interface AppUser {
       sms: boolean;
     };
   };
+  notificationSettings?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+    projectUpdates: boolean;
+    systemAlerts: boolean;
+    dailyReports: boolean;
+    weeklySummaries: boolean;
+  };
 }
 
 // 認證狀態介面

@@ -179,16 +179,19 @@ export default function SettingsPage() {
     }));
   };
 
-  if (loading) {
-    return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
-      </div>
-    );
-  }
+  // 客戶端權限檢查
+  if (typeof window !== 'undefined') {
+    if (loading) {
+      return (
+        <div className='flex justify-center items-center min-h-screen'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+        </div>
+      );
+    }
 
-  if (!user || !hasPermission('settings')) {
-    return <Unauthorized message='您沒有權限訪問系統設定' />;
+    if (!user || !hasPermission('settings')) {
+      return <Unauthorized message='您沒有權限訪問系統設定' />;
+    }
   }
 
   return (

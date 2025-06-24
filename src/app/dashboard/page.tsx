@@ -36,9 +36,9 @@ import {
 
 import { Workpackage, Project } from '@/app/projects/types/project';
 import { Unauthorized } from '@/components/common/Unauthorized';
-import { ROLE_HIERARCHY, ROLE_NAMES, type CustomRole } from '@/constants/roles';
+import { ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
-import { db, collection, getDocs } from '@/lib/firebase-client';
+import { db, collection } from '@/lib/firebase-client';
 import { safeToDate } from '@/utils/dateUtils';
 import { calculateProjectProgress } from '../projects/utils/progressUtils';
 

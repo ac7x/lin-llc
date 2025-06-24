@@ -19,6 +19,8 @@ import { db, doc, updateDoc } from '@/lib/firebase-client';
 import { TimelineGroup, TimelineItem } from '@/types/timeline';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
 import { timestampToDate, dateToTimestamp, toDate } from '@/utils/timelineUtils';
+import { useAuth } from '@/hooks/useAuth';
+import { Unauthorized } from '@/components/common/Unauthorized';
 
 // 專案排程頁面使用的特定 item 類型，擴充通用 TimelineItem
 interface ScheduleTimelineItem extends TimelineItem {
@@ -32,6 +34,7 @@ interface ScheduleTimelineItem extends TimelineItem {
 }
 
 export default function ProjectsPage() {
+  const { user, loading, hasPermission } = useAuth();
   const [groups, setGroups] = useState<TimelineGroup[]>([]);
   const [allItems, setAllItems] = useState<ScheduleTimelineItem[]>([]);
   const [items, setItems] = useState<ScheduleTimelineItem[]>([]);
@@ -218,6 +221,19 @@ export default function ProjectsPage() {
     const success = await handleItemMove(item);
     callback(success ? item : null);
   };
+
+  // 檢查權限（在所有 hooks 之後）
+  if (loading) {
+    return (
+      <div className='flex justify-center items-center min-h-screen'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+      </div>
+    );
+  }
+
+  if (!user || !hasPermission('schedule')) {
+    return <Unauthorized message='您沒有權限訪問排程功能' />;
+  }
 
   return (
     <main className='max-w-4xl mx-auto'>

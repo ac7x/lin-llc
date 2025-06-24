@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactElement } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactElement } from 'react';
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactElement }): ReactEle
     }, (error) => {
       const message = getErrorMessage(error);
       setError(message);
-      logError('Google sign in failed', error);
+      logError('Google sign in failed', error as Record<string, unknown> | undefined);
     });
   };
 
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactElement }): ReactEle
     }, (error) => {
       const message = getErrorMessage(error);
       setError(message);
-      logError('Sign out failed', error);
+      logError('Sign out failed', error as Record<string, unknown> | undefined);
     });
   };
 
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactElement }): ReactEle
     }, (error) => {
       const message = getErrorMessage(error);
       setError(message);
-      logError('Refresh user failed', error);
+      logError('Refresh user failed', error as Record<string, unknown> | undefined);
     });
   };
 
@@ -169,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactElement }): ReactEle
       }, (error) => {
         const message = getErrorMessage(error);
         setError(message);
-        logError('Auth state change failed', error);
+        logError('Auth state change failed', error as Record<string, unknown> | undefined);
         setLoading(false);
       });
     });
