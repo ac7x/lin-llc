@@ -125,9 +125,9 @@ export default function SettingsPage() {
     const role = allRoles.find(r => r.id === roleId);
     if (!role) return;
 
-    // 檢查是否為系統預設角色且非擁有者
-    if (!role.isCustom && roleId !== 'owner') {
-      console.warn('無法修改系統預設角色的權限');
+    // 檢查是否為 owner（owner 權限不可調整）
+    if (roleId === 'owner') {
+      console.warn('無法修改擁有者的權限');
       return;
     }
 
@@ -411,7 +411,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle>權限對照表</CardTitle>
                 <CardDescription>
-                  點擊 ✓ 或 ✗ 來切換權限（僅限自定義角色和擁有者）
+                  點擊 ✓ 或 ✗ 來切換權限（擁有者權限不可調整）
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -443,7 +443,7 @@ export default function SettingsPage() {
                           </td>
                           {allRoles.map((role) => {
                             const hasPermission = role.permissions.includes(permission.id);
-                            const canEdit = role.isCustom || role.id === 'owner';
+                            const canEdit = role.id !== 'owner'; // 除了 owner 都可以編輯
                             const loadingKey = `${role.id}-${permission.id}`;
                             const isLoading = matrixLoading.has(loadingKey);
                             

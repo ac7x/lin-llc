@@ -90,10 +90,7 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
     name: '訪客',
     description: '訪客用戶，僅有查看權限',
     level: 99,
-    permissions: [
-      'finance:read',
-      'project:read',
-    ],
+    permissions: [],
     isCustom: false,
   },
 ];
