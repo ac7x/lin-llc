@@ -52,7 +52,7 @@ export default function AccountPage() {
         setEditLineId(data.lineId || '');
       }
     };
-    fetchProfile();
+    void fetchProfile();
   }, [user]);
 
   const handleSignOut = async () => {

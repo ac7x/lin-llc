@@ -1,19 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult,
-  onAuthStateChanged,
-  User,
   AuthError
 } from 'firebase/auth';
 import { getAppCheck } from '@/lib/firebase-init';
 import { permissionService } from '@/lib/permission-service';
+import { useAuth } from '@/context/auth-context';
 
 interface UseGoogleAuthReturn {
-  user: User | null;
+  user: any;
   loading: boolean;
   error: string | null;
   signInWithGoogle: () => Promise<void>;
@@ -21,71 +19,15 @@ interface UseGoogleAuthReturn {
 }
 
 export function useGoogleAuth(): UseGoogleAuthReturn {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth(); // 使用全域認證狀態
   const [error, setError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   const auth = getAuth();
   
   // 設定彈窗解析器以提高穩定性
   auth.useDeviceLanguage();
   auth.settings.appVerificationDisabledForTesting = false;
-
-  // 監聽認證狀態變化
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      setLoading(false);
-      
-      // 當用戶登入時，自動創建或更新用戶資料
-      if (user) {
-        try {
-          await permissionService.createOrUpdateUserProfile(
-            user.uid,
-            user.email || '',
-            user.displayName || '未知用戶',
-            user.photoURL || undefined
-          );
-          console.log('用戶資料已更新到數據庫');
-        } catch (err) {
-          console.error('更新用戶資料失敗:', err);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, [auth]);
-
-  // 處理重定向結果
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          console.log('重定向登入成功:', result.user.email);
-          
-          // 重定向登入成功後，自動創建或更新用戶資料
-          try {
-            await permissionService.createOrUpdateUserProfile(
-              result.user.uid,
-              result.user.email || '',
-              result.user.displayName || '未知用戶',
-              result.user.photoURL || undefined
-            );
-            console.log('重定向登入用戶資料已更新到數據庫');
-          } catch (err) {
-            console.error('重定向登入更新用戶資料失敗:', err);
-          }
-        }
-      } catch (err) {
-        const authError = err as AuthError;
-        console.error('重定向登入錯誤:', authError);
-        setError(getErrorMessage(authError));
-      }
-    };
-
-    void handleRedirectResult();
-  }, [auth]);
 
   // 統一的錯誤訊息處理
   const getErrorMessage = (authError: AuthError): string => {
@@ -124,7 +66,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
   // 穩健的 Google 登入函數
   const signInWithGoogle = useCallback(async () => {
     try {
-      setLoading(true);
+      setAuthLoading(true);
       setError(null);
 
       // 初始化 App Check
@@ -182,14 +124,14 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       console.error('Google 登入錯誤:', authError);
       setError(getErrorMessage(authError));
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   }, [auth]);
 
   // 登出函數
   const signOut = useCallback(async () => {
     try {
-      setLoading(true);
+      setAuthLoading(true);
       setError(null);
       await auth.signOut();
       console.log('登出成功');
@@ -198,15 +140,15 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       console.error('登出錯誤:', authError);
       setError('登出失敗，請重試');
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   }, [auth]);
 
   return {
     user,
-    loading,
+    loading: loading || authLoading, // 合併全域 loading 和本地 auth loading
     error,
     signInWithGoogle,
-    signOut
+    signOut,
   };
 } 

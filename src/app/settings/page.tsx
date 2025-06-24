@@ -443,14 +443,35 @@ export default function SettingsPage() {
                     {allUsers
                       .sort((a: UserProfile, b: UserProfile) => new Date(b.lastLoginAt).getTime() - new Date(a.lastLoginAt).getTime())
                       .slice(0, 3)
-                      .map((user: UserProfile) => (
-                        <div key={user.uid} className="flex items-center justify-between text-sm">
-                          <span className="truncate">{user.displayName}</span>
-                          <span className="text-muted-foreground">
-                            {new Date(user.lastLoginAt).toLocaleDateString('zh-TW')}
-                          </span>
-                        </div>
-                      ))}
+                      .map((user: UserProfile) => {
+                        const online = isUserOnline(user.lastActivityAt, user.lastLoginAt);
+                        return (
+                          <div key={user.uid} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center space-x-2">
+                              <div className="relative">
+                                <div className="w-4 h-4 bg-muted rounded-full flex items-center justify-center">
+                                  <span className="text-xs font-medium">
+                                    {user.displayName.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                {/* 在線狀態指示器 */}
+                                <div className={`absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-white ${
+                                  online ? 'bg-green-500' : 'bg-gray-400'
+                                }`} />
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <span className="truncate">{user.displayName}</span>
+                                <Badge variant={online ? "default" : "outline"} className="text-xs">
+                                  {online ? '在線' : '離線'}
+                                </Badge>
+                              </div>
+                            </div>
+                            <span className="text-muted-foreground">
+                              {new Date(user.lastLoginAt).toLocaleDateString('zh-TW')}
+                            </span>
+                          </div>
+                        );
+                      })}
                   </div>
                 </CardContent>
               </Card>
@@ -548,16 +569,28 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     {allUsers.slice(0, 5).map((user: UserProfile) => {
                       const userRole = allRoles.find((role: Role) => role.id === user.roleId);
+                      const online = isUserOnline(user.lastActivityAt, user.lastLoginAt);
                       return (
                         <div key={user.uid} className="flex items-center justify-between p-2 border rounded">
                           <div className="flex items-center space-x-2">
-                            <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
-                              <span className="text-xs font-medium">
-                                {user.displayName.charAt(0).toUpperCase()}
-                              </span>
+                            <div className="relative">
+                              <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                                <span className="text-xs font-medium">
+                                  {user.displayName.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              {/* 在線狀態指示器 */}
+                              <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
+                                online ? 'bg-green-500' : 'bg-gray-400'
+                              }`} />
                             </div>
                             <div>
-                              <span className="font-medium text-sm">{user.displayName}</span>
+                              <div className="flex items-center space-x-1">
+                                <span className="font-medium text-sm">{user.displayName}</span>
+                                <Badge variant={online ? "default" : "outline"} className="text-xs">
+                                  {online ? '在線' : '離線'}
+                                </Badge>
+                              </div>
                               <span className="text-xs text-muted-foreground block">{userRole?.name}</span>
                             </div>
                           </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import { User, onAuthStateChanged, getRedirectResult } from 'firebase/auth';
+import { permissionService } from '@/lib/permission-service';
 
 interface AuthContextType {
   user: User | null;
@@ -30,10 +31,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { getAuth } = await import('firebase/auth');
         const auth = getAuth();
         
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        // 處理重定向結果
+        const handleRedirectResult = async () => {
+          try {
+            const result = await getRedirectResult(auth);
+            if (result) {
+              console.log('重定向登入成功:', result.user.email);
+              
+              // 重定向登入成功後，自動創建或更新用戶資料
+              try {
+                await permissionService.createOrUpdateUserProfile(
+                  result.user.uid,
+                  result.user.email || '',
+                  result.user.displayName || '未知用戶',
+                  result.user.photoURL || undefined
+                );
+                console.log('重定向登入用戶資料已更新到數據庫');
+              } catch (err) {
+                console.error('重定向登入更新用戶資料失敗:', err);
+              }
+            }
+          } catch (err) {
+            console.error('重定向登入錯誤:', err);
+          }
+        };
+
+        // 先處理重定向結果
+        await handleRedirectResult();
+        
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
           setUser(user);
           setLoading(false);
           setInitialized(true);
+          
+          // 當用戶登入時，自動創建或更新用戶資料
+          if (user) {
+            try {
+              await permissionService.createOrUpdateUserProfile(
+                user.uid,
+                user.email || '',
+                user.displayName || '未知用戶',
+                user.photoURL || undefined
+              );
+              console.log('用戶資料已更新到數據庫');
+            } catch (err) {
+              console.error('更新用戶資料失敗:', err);
+            }
+          }
         });
 
         return unsubscribe;
