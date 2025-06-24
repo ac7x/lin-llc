@@ -408,7 +408,6 @@ export interface Project extends BaseWithDates {
   materials?: MaterialEntry[]; // 專案的材料清單（可選）
   issues?: IssueRecord[]; // 專案的問題清單（可選）
   expenses?: Expense[]; // 專案的費用清單（可選）
-  roles?: string[]; // 專案的角色權限清單（可選）
   archivedAt?: DateField | null; // 封存日期
   projectType?: ProjectType; // 專案類型
   priority?: ProjectPriority; // 專案優先級

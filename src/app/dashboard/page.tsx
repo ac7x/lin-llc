@@ -106,7 +106,6 @@ const StatCard = ({ title, loading, error, value }: StatCardProps) => (
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading, hasPermission } = useAuth();
-  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
 
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [workpackagesCount, setWorkpackagesCount] = useState<number>(0);
@@ -157,28 +156,6 @@ export default function DashboardPage() {
       setStatsLoading(false);
     }
   }, [projectsSnapshot, projectsLoading, projectsError]);
-
-  const roleCounts: Record<string, number> = Object.keys(ROLE_HIERARCHY).reduce(
-    (acc, role) => {
-      acc[role] = 0;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-  if (usersSnapshot && !usersLoading && !usersError) {
-    usersSnapshot.docs.forEach(doc => {
-      const userData = doc.data();
-      const role = userData.currentRole || 'guest';
-      if (roleCounts.hasOwnProperty(role)) {
-        roleCounts[role] += 1;
-      }
-    });
-  }
-
-  const roleData = useMemo(
-    () => Object.entries(roleCounts).map(([role, count]) => ({ name: role, value: count })),
-    [roleCounts]
-  );
 
   const statsList = [
     {
@@ -323,35 +300,17 @@ export default function DashboardPage() {
     []
   );
 
-  // 載入自訂角色以取得角色名稱
-  useEffect(() => {
-    const loadCustomRoles = async () => {
-      try {
-        const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
-        const roles: CustomRole[] = [];
-        rolesSnapshot.forEach((doc: any) => {
-          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
-        });
-        setCustomRoles(roles);
-      } catch (error) {
-        console.error('Failed to load custom roles:', error);
-      }
-    };
-
-    void loadCustomRoles();
-  }, []);
-
-  // 取得角色顯示名稱
-  const getRoleDisplayName = (roleId: string): string => {
-    // 檢查是否為標準角色
-    if (roleId in ROLE_NAMES) {
-      return ROLE_NAMES[roleId as keyof typeof ROLE_NAMES];
-    }
-    
-    // 檢查是否為自訂角色
-    const customRole = customRoles.find(r => r.id === roleId);
-    return customRole ? customRole.name : roleId;
-  };
+  // 人員分布統計（僅根據 currentRole 統計）
+  const roleData = useMemo(() => {
+    if (!usersSnapshot || usersLoading || usersError) return [];
+    const counts: Record<string, number> = {};
+    usersSnapshot.docs.forEach(doc => {
+      const userData = doc.data();
+      const role = userData.currentRole || 'guest';
+      counts[role] = (counts[role] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [usersSnapshot, usersLoading, usersError]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -364,7 +323,7 @@ export default function DashboardPage() {
   if (!hasPermission('dashboard')) {
     let roleName = '未知角色';
     if (user?.currentRole) {
-      roleName = getRoleDisplayName(user.currentRole);
+      roleName = user.currentRole in ROLE_NAMES ? ROLE_NAMES[user.currentRole as keyof typeof ROLE_NAMES] : user.currentRole;
     }
     return <Unauthorized message={`您目前的角色 (${roleName}) 沒有權限訪問儀表板`} />;
   }

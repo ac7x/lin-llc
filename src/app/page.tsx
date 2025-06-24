@@ -20,6 +20,7 @@ import {
 } from '@/lib/firebase-client';
 import { safeToDate } from '@/utils/dateUtils';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import type { AppUser } from '@/types/auth';
 
 
 // 定義留言訊息的結構
@@ -54,8 +55,7 @@ export default function HomePage(): ReactElement {
   // 檢查目前使用者是否為開發者
   useEffect(() => {
     if (user) {
-      const developerRoles = ['admin', 'developer'];
-      setIsDeveloper(developerRoles.includes(user.currentRole || ''));
+      setIsDeveloper(user.currentRole === 'developer');
     } else {
       setIsDeveloper(false);
     }
@@ -108,7 +108,7 @@ export default function HomePage(): ReactElement {
   }, []);
 
   // 檢查使用者是否可以發文
-  const checkCanPost = useCallback(async (currentUser: User) => {
+  const checkCanPost = useCallback(async (currentUser: AppUser) => {
     const postQuery = query(
       collection(db, 'feedback'),
       where('userId', '==', currentUser.uid),
