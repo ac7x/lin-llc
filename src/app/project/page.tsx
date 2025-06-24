@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase-init';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 import {
   Sidebar,
   SidebarContent,
@@ -533,6 +534,9 @@ function ProjectTree({
             <ChevronRightIcon className="transition-transform h-4 w-4" />
             <FolderIcon className="h-4 w-4" />
             <span className="truncate">{project.name}</span>
+            <Link href={`/project/${project.id}`} className="ml-auto p-1 hover:bg-accent rounded">
+              <ChevronRightIcon className="h-3 w-3" />
+            </Link>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -555,6 +559,9 @@ function ProjectTree({
                       <span className="ml-auto text-xs text-muted-foreground">
                         {pkg.subpackages?.length || 0}
                       </span>
+                      <Link href={`/project/${project.id}/package/${pkgIdx}`} className="ml-1 p-1 hover:bg-accent rounded">
+                        <ChevronRightIcon className="h-3 w-3" />
+                      </Link>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -577,6 +584,9 @@ function ProjectTree({
                                 <span className="ml-auto text-xs text-muted-foreground">
                                   {sub.taskpackages?.length || 0}
                                 </span>
+                                <Link href={`/project/${project.id}/package/${pkgIdx}/subpackage/${taskIdx}`} className="ml-1 p-1 hover:bg-accent rounded">
+                                  <ChevronRightIcon className="h-3 w-3" />
+                                </Link>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
@@ -587,6 +597,9 @@ function ProjectTree({
                                     <SidebarMenuButton className="pl-2">
                                       <CheckSquareIcon className="h-3 w-3" />
                                       <span className="truncate text-xs">{task.name}</span>
+                                      <Link href={`/project/${project.id}/package/${pkgIdx}/subpackage/${taskIdx}/taskpackage/${subIdx}`} className="ml-auto p-1 hover:bg-accent rounded">
+                                        <ChevronRightIcon className="h-3 w-3" />
+                                      </Link>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
