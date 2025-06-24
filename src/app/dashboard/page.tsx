@@ -168,7 +168,7 @@ export default function DashboardPage() {
   if (usersSnapshot && !usersLoading && !usersError) {
     usersSnapshot.docs.forEach(doc => {
       const userData = doc.data();
-      const role = userData.roles?.[0] || userData.currentRole || 'guest';
+      const role = userData.currentRole || 'guest';
       if (roleCounts.hasOwnProperty(role)) {
         roleCounts[role] += 1;
       }

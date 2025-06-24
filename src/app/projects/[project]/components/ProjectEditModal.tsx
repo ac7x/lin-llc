@@ -169,10 +169,9 @@ export default function ProjectEditModal({
                 <option key='manager-empty' value=''>
                   請選擇
                 </option>
-                {(eligibleUsers.managers || []).map((user, index) => (
-                  <option key={`manager-${user.uid}-${index}`} value={user.uid}>
-                    {user.displayName} (
-                    {getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})
+                {eligibleUsers.managers.map(user => (
+                  <option key={user.uid} value={user.uid}>
+                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest')})
                   </option>
                 ))}
               </select>
@@ -189,10 +188,9 @@ export default function ProjectEditModal({
                 <option key='supervisor-empty' value=''>
                   請選擇
                 </option>
-                {(eligibleUsers.supervisors || []).map((user, index) => (
-                  <option key={`supervisor-${user.uid}-${index}`} value={user.uid}>
-                    {user.displayName} (
-                    {getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})
+                {eligibleUsers.supervisors.map(user => (
+                  <option key={user.uid} value={user.uid}>
+                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest')})
                   </option>
                 ))}
               </select>
@@ -209,10 +207,9 @@ export default function ProjectEditModal({
                 <option key='safety-empty' value=''>
                   請選擇
                 </option>
-                {(eligibleUsers.safetyOfficers || []).map((user, index) => (
-                  <option key={`safety-${user.uid}-${index}`} value={user.uid}>
-                    {user.displayName} (
-                    {getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})
+                {eligibleUsers.safetyOfficers.map(user => (
+                  <option key={user.uid} value={user.uid}>
+                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest')})
                   </option>
                 ))}
               </select>
@@ -229,10 +226,9 @@ export default function ProjectEditModal({
                 <option key='cost-empty' value=''>
                   請選擇
                 </option>
-                {(eligibleUsers.costControllers || []).map((user, index) => (
-                  <option key={`cost-${user.uid}-${index}`} value={user.uid}>
-                    {user.displayName} (
-                    {getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})
+                {eligibleUsers.costControllers.map(user => (
+                  <option key={user.uid} value={user.uid}>
+                    {user.displayName} ({getRoleDisplayName(user.currentRole || 'guest')})
                   </option>
                 ))}
               </select>

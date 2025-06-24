@@ -8,12 +8,6 @@ import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
 import { db } from '@/lib/firebase-client';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
-interface RolePermissionData {
-  role: RoleKey;
-  pagePermissions: Array<{ id: string; name: string; description: string; path: string }>;
-  updatedAt: string;
-}
-
 export default function RolePermissionsComponent(): ReactElement {
   const [selectedRole, setSelectedRole] = useState<RoleKey>('guest');
   const [isSaving, setIsSaving] = useState(false);
@@ -26,20 +20,11 @@ export default function RolePermissionsComponent(): ReactElement {
     const fetchRolePermissions = async (): Promise<void> => {
       setIsLoading(true);
       await safeAsync(async () => {
-        const managementRef = collection(db, 'management');
-        const snapshot = await retry(() => getDocs(managementRef), 3, 1000);
-
+        // 直接使用常數定義的權限，不再依賴 management 集合
         const newPermissions: Record<RoleKey, string[]> = {} as Record<RoleKey, string[]>;
         for (const role in DEFAULT_ROLE_PERMISSIONS) {
           newPermissions[role as RoleKey] = [...DEFAULT_ROLE_PERMISSIONS[role as RoleKey]];
         }
-
-        snapshot.docs.forEach(doc => {
-          const data = doc.data() as RolePermissionData;
-          if (data.role && data.pagePermissions) {
-            newPermissions[data.role] = data.pagePermissions.map(p => p.id);
-          }
-        });
         setRolePermissions(newPermissions);
       }, (error) => {
         logError(error, { operation: 'fetch_role_permissions' });
@@ -82,21 +67,8 @@ export default function RolePermissionsComponent(): ReactElement {
   const handleSave = async (): Promise<void> => {
     setIsSaving(true);
     await safeAsync(async () => {
-      const permissionsToSave = (rolePermissions[selectedRole] || [])
-        .map(id => {
-          return (
-            PAGE_PERMISSIONS.find(p => p.id === id) || { id, name: id, description: '', path: '' }
-          );
-        })
-        .filter(p => p.id);
-
-      const roleDocRef = doc(db, 'management', selectedRole);
-      await retry(() => setDoc(roleDocRef, {
-        role: selectedRole,
-        pagePermissions: permissionsToSave,
-        updatedAt: new Date().toISOString(),
-      }), 3, 1000);
-      alert('權限已儲存');
+      // 更新常數定義（這裡只是 UI 展示，實際權限由常數控制）
+      alert('注意：權限設定已更新，但實際權限仍由系統常數控制。如需修改權限，請更新 constants/permissions.ts 檔案。');
     }, (error) => {
       alert(`儲存失敗: ${getErrorMessage(error)}`);
       logError(error, { operation: 'save_role_permissions', role: selectedRole });
@@ -144,6 +116,12 @@ export default function RolePermissionsComponent(): ReactElement {
             {isSaving ? '儲存中...' : '儲存變更'}
           </button>
         </div>
+      </div>
+
+      <div className='mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800 rounded-lg'>
+        <p className='text-sm'>
+          <strong>注意：</strong>此頁面僅供查看權限設定。實際權限由系統常數控制，如需修改請更新 <code>src/constants/permissions.ts</code> 檔案。
+        </p>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4'>

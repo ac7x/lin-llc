@@ -63,13 +63,16 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
       try {
         let q;
         
-        if (user.currentRole && !['manager', 'admin', 'owner'].includes(user.currentRole)) {
+        // 使用新的權限系統檢查是否有專案管理權限
+        if (user.currentRole === 'owner') {
+          // 擁有者可以看到所有專案
+          q = query(collection(db, 'projects'));
+        } else {
+          // 其他角色只能看到自己擁有的專案
           q = query(
             collection(db, 'projects'),
             where('owner', '==', user.uid)
           );
-        } else {
-          q = query(collection(db, 'projects'));
         }
 
         const unsubscribe = onSnapshot(

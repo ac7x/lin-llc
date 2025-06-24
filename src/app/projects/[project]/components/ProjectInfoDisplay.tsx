@@ -21,7 +21,6 @@ import { ROLE_NAMES, type CustomRole } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
 import { cn, getQualityColor } from '@/utils/classNameUtils';
 import { formatLocalDate } from '@/utils/dateUtils';
-import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 
 interface ProjectInfoDisplayProps {
@@ -75,13 +74,17 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
   };
 
   const getUserDisplayName = (uid: string | undefined): string => {
-    if (!uid) return '-';
-    const user = eligibleUsers.managers.find(u => u.uid === uid) || 
-                 eligibleUsers.supervisors.find(u => u.uid === uid) || 
-                 eligibleUsers.safetyOfficers.find(u => u.uid === uid) || 
-                 eligibleUsers.costControllers.find(u => u.uid === uid);
+    if (!uid) return '未分配';
+    const user = eligibleUsers.costControllers
+      .concat(eligibleUsers.supervisors)
+      .concat(eligibleUsers.safetyOfficers)
+      .concat(eligibleUsers.managers)
+      .find(u => u.uid === uid);
+    
     if (!user) return '未知用戶';
-    return `${user.displayName} (${getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})`;
+    
+    // 使用 currentRole 而不是舊的 roles 陣列
+    return `${user.displayName} (${getRoleDisplayName(user.currentRole || 'guest')})`;
   };
 
   // 使用品質分數 hook

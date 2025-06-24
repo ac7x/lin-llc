@@ -22,15 +22,7 @@ import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils'
 
 const roleDisplayNames: Record<string, string> = {
   owner: '擁有者',
-  admin: '管理員',
-  finance: '財務',
-  user: '一般用戶',
-  helper: '助手',
-  temporary: '臨時用戶',
-  coord: '協調員',
-  safety: '安全員',
-  foreman: '工頭',
-  vendor: '供應商',
+  guest: '訪客',
 } as const;
 
 const AccountPage = () => {

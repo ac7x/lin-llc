@@ -49,19 +49,19 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
           ...doc.data(),
         })) as AppUser[];
 
-        // 根據角色分類用戶
+        // 根據 currentRole 分類用戶（移除舊的 roles 陣列依賴）
         const categorizedUsers = {
           costControllers: users.filter(
-            user => user.roles?.includes('finance') || user.currentRole === 'finance'
+            user => user.currentRole === 'owner' || user.currentRole === 'cost-controller'
           ),
           supervisors: users.filter(
-            user => user.roles?.includes('foreman') || user.currentRole === 'foreman'
+            user => user.currentRole === 'owner' || user.currentRole === 'supervisor'
           ),
           safetyOfficers: users.filter(
-            user => user.roles?.includes('safety') || user.currentRole === 'safety'
+            user => user.currentRole === 'owner' || user.currentRole === 'safety-officer'
           ),
           managers: users.filter(
-            user => user.roles?.includes('manager') || user.currentRole === 'manager'
+            user => user.currentRole === 'owner' || user.currentRole === 'project-manager'
           ),
         };
 

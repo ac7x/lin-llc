@@ -1,44 +1,35 @@
-import { FirebaseError } from 'firebase/app';
-import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
+import { useState, useEffect } from 'react';
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, getIdToken } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
-import { useState, useEffect, useCallback } from 'react';
+import { FirebaseError } from 'firebase/app';
 
+import { auth, db } from '@/lib/firebase-client';
 import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
 import { type RoleKey, type CustomRole } from '@/constants/roles';
-import {
-  auth,
-  db,
-  GoogleAuthProvider,
-  getIdToken,
-  User,
-} from '@/lib/firebase-client';
-import type { AuthState, UseAuthReturn, PermissionCheckOptions, AuthError } from '@/types/auth';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import type { AuthError, AuthState, UseAuthReturn, PermissionCheckOptions } from '@/types/auth';
 
 const arrayToPermissionRecord = (permissions: readonly string[]): Record<string, boolean> => {
-  return permissions.reduce(
-    (acc, permission) => {
-      acc[permission] = true;
-      return acc;
-    },
-    {} as Record<string, boolean>
-  );
+  const record: Record<string, boolean> = {};
+  permissions.forEach(permission => {
+    record[permission] = true;
+  });
+  return record;
 };
 
 const arePermissionsEqual = (
   p1?: Record<string, boolean>,
   p2?: Record<string, boolean>
 ): boolean => {
-  if (!p1 || !p2) return p1 === p2;
-  const keys1 = Object.keys(p1).sort();
-  const keys2 = Object.keys(p2).sort();
+  if (!p1 && !p2) return true;
+  if (!p1 || !p2) return false;
+  
+  const keys1 = Object.keys(p1);
+  const keys2 = Object.keys(p2);
+  
   if (keys1.length !== keys2.length) return false;
-  for (let i = 0; i < keys1.length; i++) {
-    if (keys1[i] !== keys2[i] || p1[keys1[i]] !== p2[keys2[i]]) {
-      return false;
-    }
-  }
-  return true;
+  
+  return keys1.every(key => p1[key] === p2[key]);
 };
 
 const createInitialRolePermissions = (): Record<RoleKey, Record<string, boolean>> => {
@@ -76,30 +67,6 @@ export const useAuth = (): UseAuthReturn => {
   // 取得環境變數中的擁有者 UID
   const OWNER_UID = process.env.NEXT_PUBLIC_OWNER_UID;
 
-  const getStandardPermissions = useCallback(async (): Promise<
-    Record<RoleKey, Record<string, boolean>>
-  > => {
-    const permissionRecords = createInitialRolePermissions();
-    
-    await safeAsync(async () => {
-      const managementRef = collection(db, 'management');
-      const snapshot = await getDocs(managementRef);
-
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.role && data.pagePermissions) {
-          const role = data.role as RoleKey;
-          const permissions = data.pagePermissions.map((p: { id: string }) => p.id);
-          permissionRecords[role] = arrayToPermissionRecord(permissions);
-        }
-      });
-    }, (error) => {
-      logError(error, { operation: 'get_standard_permissions' });
-    });
-    
-    return permissionRecords;
-  }, []);
-
   useEffect(() => {
     let isMounted = true;
 
@@ -108,7 +75,7 @@ export const useAuth = (): UseAuthReturn => {
 
       if (currentUser) {
         await safeAsync(async () => {
-          const standardPermissions = await getStandardPermissions();
+          const standardPermissions = createInitialRolePermissions();
           const customPermissions = await getCustomRolePermissions();
           const memberRef = doc(db, 'members', currentUser.uid);
           const memberDoc = await getDoc(memberRef);
@@ -138,8 +105,16 @@ export const useAuth = (): UseAuthReturn => {
               permissionsForRole = customPermissions[userRole];
             }
 
-            const userPermsForRole = memberData.rolePermissions?.[userRole];
+            // 如果沒有找到權限，使用 guest 權限作為預設
+            if (!permissionsForRole) {
+              userRole = 'guest';
+              permissionsForRole = standardPermissions['guest'];
+              await setDoc(memberRef, { currentRole: 'guest' }, { merge: true });
+              memberData.currentRole = 'guest';
+            }
 
+            // 更新用戶權限（如果權限不匹配）
+            const userPermsForRole = memberData.rolePermissions?.[userRole];
             if (permissionsForRole && !arePermissionsEqual(permissionsForRole, userPermsForRole)) {
               const updatedRolePermissions = {
                 ...(memberData.rolePermissions || {}),
@@ -148,9 +123,22 @@ export const useAuth = (): UseAuthReturn => {
               await setDoc(memberRef, { rolePermissions: updatedRolePermissions }, { merge: true });
               memberData.rolePermissions = updatedRolePermissions;
             }
+
+            if (isMounted) {
+              setAuthState(prev => ({
+                ...prev,
+                user: {
+                  ...currentUser,
+                  currentRole: userRole,
+                  rolePermissions: memberData.rolePermissions || { [userRole]: permissionsForRole },
+                },
+                loading: false,
+                error: null,
+              }));
+            }
           } else if (isOwnerByEnv) {
             // 如果用戶不存在於 members 集合，但符合擁有者 UID，則建立擁有者帳號
-            const ownerPermissions = standardPermissions['owner'] || {};
+            const ownerPermissions = standardPermissions['owner'];
             const memberData = {
               email: currentUser.email,
               displayName: currentUser.displayName,
@@ -174,20 +162,32 @@ export const useAuth = (): UseAuthReturn => {
                 error: null,
               }));
             }
-            return;
-          }
-
-          if (isMounted) {
-            setAuthState(prev => ({
-              ...prev,
-              user: {
-                ...currentUser,
-                currentRole: memberData?.currentRole || 'guest',
-                rolePermissions: memberData?.rolePermissions || createInitialRolePermissions(),
-              },
-              loading: false,
-              error: null,
-            }));
+          } else {
+            // 新用戶，建立 guest 帳號
+            const guestPermissions = standardPermissions['guest'];
+            const memberData = {
+              email: currentUser.email,
+              displayName: currentUser.displayName,
+              photoURL: currentUser.photoURL,
+              createdAt: new Date().toISOString(),
+              lastLoginAt: new Date().toISOString(),
+              rolePermissions: { guest: guestPermissions },
+              currentRole: 'guest',
+            };
+            await setDoc(memberRef, memberData);
+            
+            if (isMounted) {
+              setAuthState(prev => ({
+                ...prev,
+                user: {
+                  ...currentUser,
+                  currentRole: 'guest',
+                  rolePermissions: { guest: guestPermissions },
+                },
+                loading: false,
+                error: null,
+              }));
+            }
           }
         }, (error) => {
           if (isMounted) {
@@ -219,7 +219,7 @@ export const useAuth = (): UseAuthReturn => {
       isMounted = false;
       unsubscribe();
     };
-  }, [getStandardPermissions, OWNER_UID]);
+  }, [OWNER_UID]);
 
   const signInWithGoogle = async (): Promise<void> => {
     await safeAsync(async () => {
@@ -230,7 +230,7 @@ export const useAuth = (): UseAuthReturn => {
 
       const memberRef = doc(db, 'members', result.user.uid);
       const memberDoc = await retry(() => getDoc(memberRef), 3, 1000);
-      const standardPermissions = await getStandardPermissions();
+      const standardPermissions = createInitialRolePermissions();
       
       // 檢查是否為環境變數指定的擁有者
       const isOwnerByEnv = OWNER_UID && result.user.uid === OWNER_UID;
@@ -238,7 +238,7 @@ export const useAuth = (): UseAuthReturn => {
       if (!memberDoc.exists()) {
         // 如果是擁有者，設定為 owner 角色，否則設定為 guest
         const defaultRole = isOwnerByEnv ? 'owner' : 'guest';
-        const defaultPermissions = standardPermissions[defaultRole] || {};
+        const defaultPermissions = standardPermissions[defaultRole];
         const memberData = {
           email: result.user.email,
           displayName: result.user.displayName,
@@ -332,12 +332,9 @@ export const useAuth = (): UseAuthReturn => {
 
   const hasPermission = (permissionId: string): boolean => {
     const user = authState.user;
-    if (!user?.currentRole || !user.rolePermissions) {
-      return false;
-    }
-
-    const permissionsForCurrentRole = user.rolePermissions[user.currentRole];
-    return !!permissionsForCurrentRole?.[permissionId];
+    if (!user || !user.currentRole) return false;
+    
+    return user.rolePermissions?.[user.currentRole]?.[permissionId] === true;
   };
 
   const getCurrentRole = (): string | undefined => {
