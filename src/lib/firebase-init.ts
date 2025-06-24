@@ -8,7 +8,6 @@ import { getFunctions } from 'firebase/functions';
 import { getPerformance } from 'firebase/performance';
 import { getRemoteConfig } from 'firebase/remote-config';
 import { getStorage } from 'firebase/storage';
-import { logError } from '@/utils/errorUtils';
 import { firebaseConfig, APP_CHECK_CONFIG } from './firebase-config';
 
 // Firebase 應用程式初始化
@@ -49,15 +48,16 @@ export const initializeClientServices = async (): Promise<void> => {
     // Remote Config 初始化
     remoteConfig = getRemoteConfig(app);
 
-    // App Check 初始化
+    // App Check 初始化 - 強制模式
     appCheck = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
       isTokenAutoRefreshEnabled: true,
     });
 
     isClientServicesInitialized = true;
+    console.log('Firebase 客戶端服務初始化完成，App Check 已啟用強制模式');
   } catch (error) {
-    logError(error, { operation: 'initialize_client_services' });
+    console.error('Firebase 客戶端服務初始化失敗:', error);
     throw error;
   }
 };

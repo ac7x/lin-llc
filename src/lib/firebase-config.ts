@@ -16,24 +16,16 @@ export const firebaseConfig = {
   measurementId: 'G-62JEHK00G8',
 };
 
-// Collection 名稱常數
-export const COLLECTIONS = {
-  NOTIFICATIONS: 'notifications',
-  USERS: 'users',
-} as const;
-
 // reCAPTCHA 相關配置
 export const RECAPTCHA_CONFIG = {
   SITE_KEY: '6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg',
   SECRET_KEY: '6LepxlYrAAAAABPi52vTvGsVP4BpZh4UPPu_WNLQ',
 } as const;
 
-// Firebase Emulator 配置
-export const FIREBASE_EMULATOR = {
-  ENABLED: process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true',
-} as const;
-
 // App Check 配置
 export const APP_CHECK_CONFIG = {
   SITE_KEY: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LepxlYrAAAAAMxGh5307zIOJHz1PKrVDgZHgKwg',
 };
+
+// Google Maps API 金鑰，用於地圖服務的存取
+export const GOOGLE_MAPS_API_KEY = 'AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o';
