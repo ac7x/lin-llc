@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
 import { usePermission } from '@/hooks/use-permission';
 import { PermissionGuard } from '@/components/permission-guard';
 import { Role } from '@/types';
@@ -22,6 +23,8 @@ export default function SettingsPage() {
     error,
     createCustomRole,
     updateRolePermissions,
+    updateRoleName,
+    updateRoleDescription,
     deleteCustomRole,
     loadRoles,
   } = usePermission();
@@ -31,6 +34,10 @@ export default function SettingsPage() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [matrixLoading, setMatrixLoading] = useState<Set<string>>(new Set());
+  const [editingRoleName, setEditingRoleName] = useState<string | null>(null);
+  const [editingRoleDescription, setEditingRoleDescription] = useState<string | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState<string>('');
+  const [editingDescriptionValue, setEditingDescriptionValue] = useState<string>('');
 
   // 初始化權限系統
   useEffect(() => {
@@ -160,6 +167,56 @@ export default function SettingsPage() {
         newSet.delete(loadingKey);
         return newSet;
       });
+    }
+  };
+
+  // 處理角色名稱編輯
+  const handleRoleNameEdit = async (roleId: string, newName: string) => {
+    if (!newName.trim()) return;
+    
+    try {
+      const role = allRoles.find(r => r.id === roleId);
+      if (!role || !role.isCustom) return;
+      
+      // 更新角色名稱
+      await updateRoleName(roleId, newName.trim());
+      
+      // 重新載入角色列表
+      await loadRoles();
+      
+      // 如果正在編輯的是選中的角色，更新選中狀態
+      if (selectedRole?.id === roleId) {
+        setSelectedRole(prev => prev ? { ...prev, name: newName.trim() } : null);
+      }
+      
+      setEditingRoleName(null);
+      setEditingNameValue('');
+    } catch (err) {
+      console.error('更新角色名稱失敗:', err);
+    }
+  };
+
+  // 處理角色描述編輯
+  const handleRoleDescriptionEdit = async (roleId: string, newDescription: string) => {
+    try {
+      const role = allRoles.find(r => r.id === roleId);
+      if (!role || !role.isCustom) return;
+      
+      // 更新角色描述
+      await updateRoleDescription(roleId, newDescription.trim());
+      
+      // 重新載入角色列表
+      await loadRoles();
+      
+      // 如果正在編輯的是選中的角色，更新選中狀態
+      if (selectedRole?.id === roleId) {
+        setSelectedRole(prev => prev ? { ...prev, description: newDescription.trim() } : null);
+      }
+      
+      setEditingRoleDescription(null);
+      setEditingDescriptionValue('');
+    } catch (err) {
+      console.error('更新角色描述失敗:', err);
     }
   };
 
@@ -332,9 +389,86 @@ export default function SettingsPage() {
                         onClick={() => handleRoleSelect(role)}
                       >
                         <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{role.name}</h4>
-                            <p className="text-sm text-muted-foreground">{role.description}</p>
+                          <div className="flex-1">
+                            {/* 角色名稱 */}
+                            {role.isCustom && editingRoleName === role.id ? (
+                              <div className="mb-2">
+                                <Input
+                                  value={editingNameValue}
+                                  onChange={(e) => setEditingNameValue(e.target.value)}
+                                  onBlur={() => {
+                                    if (editingNameValue.trim()) {
+                                      void handleRoleNameEdit(editingRoleName, editingNameValue);
+                                    } else {
+                                      setEditingRoleName(null);
+                                      setEditingNameValue('');
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      if (editingNameValue.trim()) {
+                                        void handleRoleNameEdit(editingRoleName, editingNameValue);
+                                      }
+                                    } else if (e.key === 'Escape') {
+                                      setEditingRoleName(null);
+                                      setEditingNameValue('');
+                                    }
+                                  }}
+                                  className="h-8 text-sm font-medium"
+                                  autoFocus
+                                />
+                              </div>
+                            ) : (
+                              <h4 
+                                className={`font-medium ${role.isCustom ? 'cursor-pointer hover:text-primary' : ''}`}
+                                onClick={(e) => {
+                                  if (role.isCustom) {
+                                    e.stopPropagation();
+                                    setEditingRoleName(role.id);
+                                    setEditingNameValue(role.name);
+                                  }
+                                }}
+                              >
+                                {role.name}
+                              </h4>
+                            )}
+                            
+                            {/* 角色描述 */}
+                            {role.isCustom && editingRoleDescription === role.id ? (
+                              <div className="mb-2">
+                                <Input
+                                  value={editingDescriptionValue}
+                                  onChange={(e) => setEditingDescriptionValue(e.target.value)}
+                                  onBlur={() => {
+                                    void handleRoleDescriptionEdit(editingRoleDescription, editingDescriptionValue);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      void handleRoleDescriptionEdit(editingRoleDescription, editingDescriptionValue);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingRoleDescription(null);
+                                      setEditingDescriptionValue('');
+                                    }
+                                  }}
+                                  className="h-8 text-sm"
+                                  autoFocus
+                                />
+                              </div>
+                            ) : (
+                              <p 
+                                className={`text-sm text-muted-foreground ${role.isCustom ? 'cursor-pointer hover:text-primary' : ''}`}
+                                onClick={(e) => {
+                                  if (role.isCustom) {
+                                    e.stopPropagation();
+                                    setEditingRoleDescription(role.id);
+                                    setEditingDescriptionValue(role.description);
+                                  }
+                                }}
+                              >
+                                {role.description}
+                              </p>
+                            )}
+                            
                             <div className="flex gap-1 mt-2">
                               <Badge variant="outline">等級 {role.level}</Badge>
                               {role.isCustom && <Badge variant="secondary">自定義</Badge>}

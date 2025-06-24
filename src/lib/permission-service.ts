@@ -299,6 +299,72 @@ export class PermissionService {
   }
 
   /**
+   * 更新角色名稱
+   */
+  async updateRoleName(
+    roleId: string, 
+    name: string, 
+    updatedBy: string
+  ): Promise<void> {
+    try {
+      const roleRef = doc(db, 'roles', roleId);
+      const roleDoc = await getDoc(roleRef);
+      
+      if (!roleDoc.exists()) {
+        throw new Error('角色不存在');
+      }
+      
+      const role = roleDoc.data() as Role;
+      
+      if (!role.isCustom) {
+        throw new Error('無法修改系統預設角色');
+      }
+      
+      await updateDoc(roleRef, {
+        name,
+        updatedAt: new Date().toISOString(),
+        updatedBy,
+      });
+    } catch (error) {
+      console.error('更新角色名稱失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新角色描述
+   */
+  async updateRoleDescription(
+    roleId: string, 
+    description: string, 
+    updatedBy: string
+  ): Promise<void> {
+    try {
+      const roleRef = doc(db, 'roles', roleId);
+      const roleDoc = await getDoc(roleRef);
+      
+      if (!roleDoc.exists()) {
+        throw new Error('角色不存在');
+      }
+      
+      const role = roleDoc.data() as Role;
+      
+      if (!role.isCustom) {
+        throw new Error('無法修改系統預設角色');
+      }
+      
+      await updateDoc(roleRef, {
+        description,
+        updatedAt: new Date().toISOString(),
+        updatedBy,
+      });
+    } catch (error) {
+      console.error('更新角色描述失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 刪除自定義角色
    */
   async deleteCustomRole(roleId: string): Promise<void> {

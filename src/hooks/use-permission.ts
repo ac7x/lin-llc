@@ -22,6 +22,8 @@ interface UsePermissionReturn {
   // 角色操作
   createCustomRole: (role: Omit<Role, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>) => Promise<string>;
   updateRolePermissions: (roleId: string, permissions: string[]) => Promise<void>;
+  updateRoleName: (roleId: string, name: string) => Promise<void>;
+  updateRoleDescription: (roleId: string, description: string) => Promise<void>;
   deleteCustomRole: (roleId: string) => Promise<void>;
   assignUserRole: (uid: string, roleId: string, expiresAt?: string) => Promise<void>;
   
@@ -203,6 +205,34 @@ export function usePermission(): UsePermissionReturn {
     }
   }, [user?.uid, loadRoles]);
 
+  // 更新角色名稱
+  const updateRoleName = useCallback(async (
+    roleId: string, 
+    name: string
+  ): Promise<void> => {
+    if (!user?.uid) throw new Error('用戶未登入');
+    
+    try {
+      await permissionService.updateRoleName(roleId, name, user.uid);
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('更新角色名稱失敗');
+    }
+  }, [user?.uid]);
+
+  // 更新角色描述
+  const updateRoleDescription = useCallback(async (
+    roleId: string, 
+    description: string
+  ): Promise<void> => {
+    if (!user?.uid) throw new Error('用戶未登入');
+    
+    try {
+      await permissionService.updateRoleDescription(roleId, description, user.uid);
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('更新角色描述失敗');
+    }
+  }, [user?.uid]);
+
   // 刪除自定義角色
   const deleteCustomRole = useCallback(async (roleId: string): Promise<void> => {
     try {
@@ -247,6 +277,8 @@ export function usePermission(): UsePermissionReturn {
     error,
     createCustomRole,
     updateRolePermissions,
+    updateRoleName,
+    updateRoleDescription,
     deleteCustomRole,
     assignUserRole,
     loadRoles,
