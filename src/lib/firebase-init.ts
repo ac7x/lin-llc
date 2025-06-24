@@ -74,7 +74,7 @@ export const initializeClientServices = async (): Promise<void> => {
 
     // 初始化權限系統（僅在客戶端）
     try {
-      const { checkInitialization, initializePermissions } = await import('./permission-init');
+      const { checkInitialization, initializePermissions } = await import('../app/settings/lib/permission-init');
       const needsInit = await checkInitialization();
       if (needsInit) {
         await initializePermissions();

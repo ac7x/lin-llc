@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { permissionService } from '@/lib/permission-service';
+import { permissionService } from '@/app/settings/lib/permission-service';
 import { Role, Permission, UserProfile } from '@/types';
-import { isOwner } from '@/lib/env-config';
+import { isOwner } from '@/app/settings/lib/env-config';
 
 interface UsePermissionReturn {
   // 權限檢查

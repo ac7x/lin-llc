@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePermission } from '@/hooks/use-permission';
-import { isOwner } from '@/lib/env-config';
+import { isOwner } from '@/app/settings/lib/env-config';
 
 interface PermissionGuardProps {
   permission: string;

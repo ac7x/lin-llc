@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, getRedirectResult } from 'firebase/auth';
-import { permissionService } from '@/lib/permission-service';
+import { permissionService } from '@/app/settings/lib/permission-service';
 
 interface AuthContextType {
   user: User | null;
