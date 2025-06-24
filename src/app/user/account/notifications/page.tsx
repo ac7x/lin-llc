@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase-init';
 
 interface Notification {
   id: string;
@@ -24,29 +26,16 @@ export default function NotificationsPage() {
       setLoading(false);
       return;
     }
-
-    // 模擬載入通知資料
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        title: '任務指派',
-        message: '您已被指派新的子工作包任務',
-        type: 'info',
-        createdAt: new Date().toISOString(),
-        isRead: false,
-      },
-      {
-        id: '2',
-        title: '專案更新',
-        message: '專案進度已更新',
-        type: 'success',
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        isRead: true,
-      },
-    ];
-
-    setNotifications(mockNotifications);
-    setLoading(false);
+    void (async () => {
+      const q = query(
+        collection(db, 'notifications'),
+        where('targetUid', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const snap = await getDocs(q);
+      setNotifications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification)));
+      setLoading(false);
+    })();
   }, [user]);
 
   if (!user) {
