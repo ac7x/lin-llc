@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { usePermission } from '@/app/settings/hooks/use-permission';
 import { PermissionGuard } from '@/app/settings/components/permission-guard';
-import { Role, Permission } from '@/types';
+import { Role, Permission } from '@/app/settings/types';
 import { isOwner, validateEnvConfig } from '@/app/settings/lib/env-config';
 import { initializePermissions, checkInitialization } from '@/app/settings/lib/permission-init';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';

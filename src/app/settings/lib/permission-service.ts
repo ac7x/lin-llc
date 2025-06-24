@@ -19,7 +19,7 @@ import {
   UserProfile, 
   PermissionCheck,
   DataScope
-} from '@/types';
+} from '@/app/settings/types';
 import { isOwner, getDefaultRoleId, envConfig } from '@/app/settings/lib/env-config';
 
 /**

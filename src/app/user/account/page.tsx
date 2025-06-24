@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/app/settings/types';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { SkillTagsInput } from '@/components/ui/skill-tags-input';
