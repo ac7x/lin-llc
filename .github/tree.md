@@ -2,174 +2,61 @@
 │  │  layout.tsx
 │  │  page.tsx
 │  │
-│  ├─account
-│  │  │  page.tsx
-│  │  │
-│  │  └─notifications
-│  │      │  page.tsx
-│  │      │
-│  │      └─components
-│  │              NotificationBell.tsx
-│  │
 │  ├─dashboard
-│  │  │  page.tsx
-│  │  │
-│  │  ├─components
-│  │  │  ├─charts
-│  │  │  │      EfficiencyBarChart.tsx
-│  │  │  │      PersonnelPieChart.tsx
-│  │  │  │      ProgressRadarChart.tsx
-│  │  │  │      WorkforceLineChart.tsx
-│  │  │  │
-│  │  │  ├─layout
-│  │  │  │      DashboardLayout.tsx
-│  │  │  │      ProjectAnalysisCard.tsx
-│  │  │  │      SidebarNav.tsx
-│  │  │  │
-│  │  │  ├─logs
-│  │  │  │      ActivityLog.tsx
-│  │  │  │      LogFilter.tsx
-│  │  │  │
-│  │  │  └─stats
-│  │  │          StatCard.tsx
-│  │  │          StatGrid.tsx
-│  │  │
-│  │  ├─hooks
-│  │  │      useLogData.ts
-│  │  │      useProjectData.ts
-│  │  │
-│  │  ├─types
-│  │  │      dashboard.d.ts
-│  │  │
-│  │  └─utils
-│  │          chartUtils.ts
-│  │          logUtils.ts
-│  │
-│  ├─finance
-│  │  │  layout.tsx
-│  │  │
-│  │  ├─archive
-│  │  │  │  page.tsx
-│  │  │  │
-│  │  │  └─[type]
-│  │  │          page.tsx
-│  │  │
-│  │  ├─components
-│  │  │      FinanceListPage.tsx
-│  │  │
-│  │  └─[type]
-│  │      │  page.tsx
-│  │      │
-│  │      ├─create
-│  │      │      page.tsx
-│  │      │
-│  │      └─[id]
-│  │              page.tsx
-│  │
-│  ├─gemini
 │  │      page.tsx
 │  │
-│  ├─management
+│  ├─project
 │  │  │  page.tsx
 │  │  │
 │  │  ├─components
-│  │  │      RolePermissions.tsx
-│  │  │      UserList.tsx
-│  │  │
-│  │  └─send-notification
-│  │          page.tsx
+│  │  │  ├─Journal
+│  │  │  ├─storage
+│  │  │  └─template
+│  │  └─[projectId]
+│  │      │  page.tsx
+│  │      │
+│  │      └─package
+│  │          └─[packageId]
+│  │              │  page.tsx
+│  │              │
+│  │              └─subpackage
+│  │                  └─[subpackageId]
+│  │                          page.tsx
 │  │
-│  ├─planning
-│  │  ├─calendar
-│  │  │      page.tsx
+│  ├─settings
+│  │  │  page.tsx
 │  │  │
-│  │  └─schedule
-│  │          page.tsx
+│  │  ├─components
+│  │  │      permission-guard.tsx
+│  │  │
+│  │  ├─hooks
+│  │  │      use-permission.ts
+│  │  │
+│  │  ├─lib
+│  │  │      env-config.ts
+│  │  │      permission-init.ts
+│  │  │      permission-service.ts
+│  │  │
+│  │  ├─service
+│  │  └─types
+│  │          index.ts
 │  │
-│  └─projects
-│      │  layout.tsx
-│      │  page.tsx
-│      │
-│      ├─components
-│      │      AddressSelector.tsx
-│      │      DataLoader.tsx
-│      │      ProjectDashboard.tsx
-│      │      ProjectsTable.tsx
-│      │      WeatherDisplay.tsx
-│      │
-│      ├─hooks
-│      │      useFilteredProjects.ts
-│      │
-│      ├─import
-│      │      page.tsx
-│      │
-│      ├─templates
-│      │      page.tsx
-│      │
-│      ├─types
-│      │      project.d.ts
-│      │
-│      ├─utils
-│      │      progressUtils.tsx
-│      │      projectUtils.ts
-│      │
-│      └─[project]
+│  └─user
+│      └─account
 │          │  page.tsx
 │          │
-│          ├─components
-│          │      ProjectEditModal.tsx
-│          │      ProjectInfoDisplay.tsx
-│          │      ProjectInfoPage.tsx
-│          │      WorkpackageList.tsx
-│          │
-│          ├─project-calendar
+│          ├─notifications
 │          │      page.tsx
 │          │
-│          ├─project-expenses
+│          ├─signin
 │          │      page.tsx
 │          │
-│          ├─project-issues
-│          │      page.tsx
-│          │
-│          ├─project-journal
-│          │  │  page.tsx
-│          │  │
-│          │  └─components
-│          │          JournalForm.tsx
-│          │          JournalHistory.tsx
-│          │
-│          ├─project-materials
-│          │      page.tsx
-│          │
-│          ├─project-storage
-│          │      page.tsx
-│          │
-│          └─workpackages
-│              └─[workpackage]
-│                  │  page.tsx
-│                  │
-│                  └─subworkpackages
-│                      └─[subworkpackage]
-│                              page.tsx
+│          └─task
+│                  page.tsx
 │
 ├─components
-│  ├─common
-│  │      ArchiveNavGroup.tsx
-│  │      DynamicNavGroup.tsx
-│  │      ModeToggle.tsx
-│  │      PermissionCheck.tsx
-│  │      Tabs.tsx
-│  │      Unauthorized.tsx
-│  │      VisTimeline.tsx
-│  │
-│  ├─pdf
-│  │      ContractPdfDocument.tsx
-│  │      OrderPdfDocument.tsx
-│  │      pdfUtils.ts
-│  │      QuotePdfDocument.tsx
-│  │
-│  ├─tabs
-│  │      BottomNavigation.tsx
+│  │  app-sidebar.tsx
+│  │  page.tsx
 │  │
 │  └─ui
 │          accordion.tsx
@@ -178,6 +65,7 @@
 │          aspect-ratio.tsx
 │          avatar.tsx
 │          badge.tsx
+│          bottom-navigation.tsx
 │          breadcrumb.tsx
 │          button.tsx
 │          calendar.tsx
@@ -190,6 +78,7 @@
 │          dialog.tsx
 │          drawer.tsx
 │          dropdown-menu.tsx
+│          form.tsx
 │          hover-card.tsx
 │          input.tsx
 │          label.tsx
@@ -206,60 +95,33 @@
 │          sheet.tsx
 │          sidebar.tsx
 │          skeleton.tsx
+│          skill-tags-input.tsx
 │          slider.tsx
 │          sonner.tsx
 │          switch.tsx
 │          table.tsx
 │          tabs.tsx
 │          textarea.tsx
+│          theme-provider.tsx
 │          toggle-group.tsx
 │          toggle.tsx
 │          tooltip.tsx
 │
-├─constants
-│      navigation.tsx
-│      permissions.ts
-│      roles.ts
+├─context
+│      auth-context.tsx
 │
 ├─hooks
+│      use-auth-redirect.ts
+│      use-google-auth.ts
 │      use-mobile.ts
-│      useAppCheck.ts
-│      useAuth.ts
-│      useFirebaseMessaging.ts
-│      useNotifications.ts
 │
 ├─lib
-│      firebase-client.ts
 │      firebase-config.ts
 │      firebase-init.ts
-│      firebase-notifications.ts
 │      utils.ts
-│
-├─providers
-│      theme-provider.tsx
 │
 ├─styles
 │      globals.css
-│      react-big-calendar.css
 │
-├─types
-│      archive.d.ts
-│      auth.d.ts
-│      calendar.d.ts
-│      codingStandards.d.ts
-│      common.d.ts
-│      finance.d.ts
-│      googleMaps.d.ts
-│      navigation.d.ts
-│      notification.d.ts
-│      timeline.d.ts
-│
-└─utils
-        calendarUtils.ts
-        classNameUtils.ts
-        codingStandards.ts
-        colorUtils.ts
-        dateUtils.ts
-        errorUtils.ts
-        taiwanCityUtils.ts
-        timelineUtils.ts
+└─types
+        index.ts
