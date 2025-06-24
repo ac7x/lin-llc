@@ -1,4 +1,4 @@
-name: Smart Sync or PR
+name: Auto Sync from Upstream
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync-or-pr:
+  sync:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,35 +23,16 @@ jobs:
           git remote add upstream https://github.com/ac7x/lin-llc.git
           git fetch upstream
 
-      - name: Check divergence
-        id: divergence
+      - name: Check if behind
+        id: check
         run: |
           git fetch origin main
-          git fetch upstream main
-
           BEHIND=$(git rev-list --left-right --count origin/main...upstream/main | awk '{print $2}')
-          AHEAD=$(git rev-list --left-right --count origin/main...upstream/main | awk '{print $1}')
-          
-          echo "ahead=$AHEAD" >> $GITHUB_OUTPUT
           echo "behind=$BEHIND" >> $GITHUB_OUTPUT
 
       - name: Sync from upstream if behind
-        if: steps.divergence.outputs.behind != '0'
+        if: steps.check.outputs.behind != '0'
         run: |
           git checkout main
           git merge upstream/main --allow-unrelated-histories || true
           git push origin main
-
-      - name: Create Pull Request to upstream if ahead
-        if: steps.divergence.outputs.ahead != '0'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: "Sync: Update upstream from fork"
-          commit-message: "Proposed sync from ac484 fork to upstream"
-          base: main
-          body: |
-            This PR was automatically generated because the fork has commits ahead of upstream.
-          branch: sync-to-upstream
-          push-to-fork: false
-          repository: ac7x/lin-llc
