@@ -565,7 +565,7 @@ function ProjectTree({
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub className="mx-1 border-l border-border/20">
-                      {/* 任務列表 */}
+                      {/* 子工作包列表 */}
                       {pkg.tasks?.map((task, taskIdx) => (
                         <SidebarMenuItem key={taskIdx}>
                           <Collapsible
@@ -578,8 +578,8 @@ function ProjectTree({
                                 className="pl-2"
                               >
                                 <ChevronRightIcon className="transition-transform h-3 w-3" />
-                                <CheckSquareIcon className="h-3 w-3" />
-                                <span className="truncate text-xs">任務 {taskIdx + 1}</span>
+                                <ListIcon className="h-3 w-3" />
+                                <span className="truncate text-xs">子工作包 {taskIdx + 1}</span>
                                 <span className="ml-auto text-xs text-muted-foreground">
                                   {task.subpackages?.length || 0}
                                 </span>
@@ -587,22 +587,22 @@ function ProjectTree({
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <SidebarMenuSub className="mx-1 border-l border-border/10">
-                                {/* 子工作包列表 */}
+                                {/* 任務列表 */}
                                 {task.subpackages?.map((sub, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
                                     <SidebarMenuButton className="pl-2">
-                                      <FileIcon className="h-3 w-3" />
+                                      <CheckSquareIcon className="h-3 w-3" />
                                       <span className="truncate text-xs">{sub.name}</span>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
-                                {/* 新增子工作包按鈕 */}
+                                {/* 新增任務按鈕 */}
                                 <SidebarMenuItem>
                                   <div className="pl-2 pr-1 py-1">
                                     {showSubInputs[pkgIdx]?.[taskIdx] ? (
                                       <div className="flex gap-1">
                                         <Input
-                                          placeholder="子工作包名稱"
+                                          placeholder="任務名稱"
                                           value={subInputs[project.id]?.[pkgIdx]?.[taskIdx] || ''}
                                           onChange={e => setSubInputs(prev => ({
                                             ...prev,
@@ -648,7 +648,7 @@ function ProjectTree({
                                         className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
                                       >
                                         <PlusIcon className="h-3 w-3 mr-1" />
-                                        新增子工作包
+                                        新增任務
                                       </Button>
                                     )}
                                   </div>
@@ -658,13 +658,13 @@ function ProjectTree({
                           </Collapsible>
                         </SidebarMenuItem>
                       ))}
-                      {/* 新增任務按鈕 */}
+                      {/* 新增子工作包按鈕 */}
                       <SidebarMenuItem>
                         <div className="pl-1 pr-1 py-1">
                           {showTaskInputs[pkgIdx] ? (
                             <div className="flex gap-1">
                               <Input
-                                placeholder="任務名稱"
+                                placeholder="子工作包名稱"
                                 value={taskInputs[project.id]?.[pkgIdx] || ''}
                                 onChange={e => setTaskInputs(prev => ({
                                   ...prev,
@@ -698,7 +698,7 @@ function ProjectTree({
                               className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
                             >
                               <PlusIcon className="h-3 w-3 mr-1" />
-                              新增任務
+                              新增子工作包
                             </Button>
                           )}
                         </div>
