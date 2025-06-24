@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/context/auth-provider';
 import { signOut } from '@/lib/firebase-auth';
 import { Button } from '@/components/ui/button';
@@ -26,9 +27,11 @@ export default function AccountPage() {
         <h1 className="text-2xl mb-4">歡迎, {user.displayName}</h1>
         <p className="mb-2">Email: {user.email}</p>
         {user.photoURL && (
-          <img
+          <Image
             src={user.photoURL}
             alt="User Avatar"
+            width={96}
+            height={96}
             className="w-24 h-24 rounded-full mx-auto mb-4"
           />
         )}
