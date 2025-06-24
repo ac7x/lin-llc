@@ -16,7 +16,7 @@ import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase
 import { Unauthorized } from '@/components/common/Unauthorized';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
-import { PAGE_PERMISSIONS, PERMISSION_CATEGORIES } from '@/constants/permissions';
+import { ALL_PERMISSIONS, PERMISSION_CATEGORIES } from '@/constants/permissions';
 import type { CustomRole } from '@/constants/roles';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
 
@@ -28,7 +28,7 @@ interface RoleFormData {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -39,14 +39,14 @@ export default function SettingsPage() {
     permissions: [],
   });
 
-  // 檢查是否為擁有者
+  // 檢查是否有系統設定權限
   useEffect(() => {
     if (!loading && user) {
-      if (user.currentRole !== 'owner') {
+      if (!hasPermission('settings')) {
         router.push('/dashboard');
       }
     }
-  }, [loading, user, router]);
+  }, [loading, user, router, hasPermission]);
 
   // 載入自訂角色
   useEffect(() => {
@@ -65,10 +65,10 @@ export default function SettingsPage() {
       setLoadingRoles(false);
     };
 
-    if (user?.currentRole === 'owner') {
+    if (user && hasPermission('settings')) {
       void loadCustomRoles();
     }
-  }, [user]);
+  }, [user, hasPermission]);
 
   const handleCreateRole = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,8 +187,8 @@ export default function SettingsPage() {
     );
   }
 
-  if (!user || user.currentRole !== 'owner') {
-    return <Unauthorized message='只有擁有者可以訪問系統設定' />;
+  if (!user || !hasPermission('settings')) {
+    return <Unauthorized message='您沒有權限訪問系統設定' />;
   }
 
   return (
@@ -317,7 +317,7 @@ export default function SettingsPage() {
 
                   {/* 詳細權限列表 */}
                   <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2'>
-                    {PAGE_PERMISSIONS.map(permission => (
+                    {ALL_PERMISSIONS.map(permission => (
                       <label key={permission.id} className='flex items-center text-sm'>
                         <input
                           type='checkbox'

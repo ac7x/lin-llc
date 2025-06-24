@@ -1,142 +1,63 @@
 /**
  * 身份驗證和用戶相關型別定義
- * 包含用戶資料、裝置資訊、權限管理等資料結構
+ * 包含用戶資料、權限管理等資料結構
  * 用於管理系統中的用戶資料和相關功能
  */
 
-import { type User, type UserMetadata } from 'firebase/auth';
-import { type FieldValue } from 'firebase/firestore';
+import type { PermissionId } from '@/constants/permissions';
 
-import { type RoleKey } from '@/constants/roles';
-import type { NotificationSettings } from '@/types/notification';
-
-// 基本權限介面
-export interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  path: string;
-}
-
-// 角色權限介面
-export interface RolePermission {
-  role: RoleKey;
-  pagePermissions: Permission[];
-  updatedAt: string;
-}
-
-// 用戶裝置資訊
-export type UserDevice = {
-  deviceId: string; // Firebase Installation ID
-  fcmToken?: string; // FCM Token
-  deviceType: 'web' | 'mobile' | 'tablet';
-  browser?: string;
-  os?: string;
-  lastActive: string;
+// 用戶資料介面
+export interface AppUser {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  currentRole: string; // 角色ID
+  permissions: PermissionId[]; // 直接權限清單
+  createdAt: Date;
+  updatedAt: Date;
+  lastLoginAt?: Date;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-// 擴展 Firebase User 型別，包含自定義聲明
-export interface UserWithClaims extends User {
-  customClaims?: {
-    role?: string;
-    roles?: string[];
-    permissions?: string[];
+  phoneNumber?: string;
+  department?: string;
+  position?: string;
+  employeeId?: string;
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
+  address?: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  preferences?: {
+    theme: 'light' | 'dark' | 'system';
+    language: 'zh-TW' | 'en-US';
+    notifications: {
+      email: boolean;
+      push: boolean;
+      sms: boolean;
+    };
   };
 }
 
-// 擴展 Firebase User 型別
-export interface AppUser extends UserWithClaims {
-  role?: string;
-  roles?: string[];
-  permissions?: string[];
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-  lastLoginAt?: string | Date;
-  disabled?: boolean;
-  metadata: UserMetadata;
-  notificationSettings?: NotificationSettings;
-  fcmTokens?: string[];
-  currentRole?: string; // 支援自訂角色ID
-  rolePermissions?: Record<string, Record<string, boolean>>; // 支援自訂角色
-}
-
-// 用於寫入的 AppUser 型別
-export type AppUserWrite = Omit<AppUser, 'createdAt' | 'updatedAt' | 'lastLoginAt'> & {
-  createdAt: FieldValue;
-  updatedAt: FieldValue;
-  lastLoginAt: FieldValue;
-};
-
-// 權限驗證結果介面
-export interface AuthResult {
-  isAuthenticated: boolean;
-  hasPermission: boolean;
-  user: AppUser | null;
-  error?: string;
-}
-
-// 權限檢查選項介面
-export interface PermissionCheckOptions {
-  requiredRole?: string; // 支援自訂角色ID
-  requiredPermissions?: string[];
-  checkAll?: boolean;
-}
-
-// 權限驗證錯誤型別
-export type AuthError = {
-  code: string;
-  message: string;
-  details?: unknown;
-};
-
-// 權限驗證狀態型別
-export type AuthState = {
+// 認證狀態介面
+export interface AuthState {
   user: AppUser | null;
   loading: boolean;
-  error: AuthError | null;
-};
+  error: string | null;
+}
 
-// 權限驗證 Hook 回傳值介面
-export interface UseAuthReturn {
-  user: AppUser | null;
-  loading: boolean;
-  error: AuthError | null;
+// 認證上下文介面
+export interface AuthContextType extends AuthState {
   signInWithGoogle: () => Promise<void>;
-  checkPermission: (options: PermissionCheckOptions) => Promise<boolean>;
-  hasPermission: (permissionId: string) => boolean;
-  getCurrentRole: () => string | undefined; // 支援自訂角色ID
-  getRolePermissions: () => Record<string, Record<string, boolean>> | undefined; // 支援自訂角色
-}
-
-// 權限驗證上下文型別
-export interface AuthContextType extends UseAuthReturn {
   signOut: () => Promise<void>;
-  updateUserRole: (role: string) => Promise<void>; // 支援自訂角色ID
-  updateUserPermissions: (permissions: Record<string, boolean>) => Promise<void>;
-}
-
-// 簡化的角色定義
-export type Role = 'owner' | 'guest' | string; // 支援自訂角色
-
-// 統一權限定義
-export interface UnifiedPermission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  type: 'system' | 'navigation' | 'feature';
-  roles: Role[];
-  parentId?: string;
-  children?: string[];
-  icon?: string;
-  path?: string;
-}
-
-// 權限檢查結果型別
-export interface PermissionCheckResult {
-  hasPermission: boolean;
-  message?: string;
+  hasPermission: (permissionId: PermissionId) => boolean;
+  hasAnyPermission: (permissionIds: PermissionId[]) => boolean;
+  hasAllPermissions: (permissionIds: PermissionId[]) => boolean;
+  refreshUser: () => Promise<void>;
 }

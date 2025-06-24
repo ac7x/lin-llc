@@ -1,190 +1,145 @@
 'use client';
 
-import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { useState, useEffect, ReactElement } from 'react';
 
-import { PAGE_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
+import { ALL_PERMISSIONS, ROLE_PERMISSIONS, type PermissionId } from '@/constants/permissions';
 import { type RoleKey, ROLE_NAMES } from '@/constants/roles';
-import { db } from '@/lib/firebase-client';
-import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
+import { logError, safeAsync } from '@/utils/errorUtils';
 
 export default function RolePermissionsComponent(): ReactElement {
   const [selectedRole, setSelectedRole] = useState<RoleKey>('guest');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [rolePermissions, setRolePermissions] = useState<Record<RoleKey, string[]>>(
-    {} as Record<RoleKey, string[]>
+  const [permissionSettings, setPermissionSettings] = useState<Record<RoleKey, PermissionId[]>>(
+    {} as Record<RoleKey, PermissionId[]>
   );
 
   useEffect(() => {
-    const fetchRolePermissions = async (): Promise<void> => {
+    const loadPermissionSettings = async () => {
       setIsLoading(true);
       await safeAsync(async () => {
-        // 直接使用常數定義的權限，不再依賴 management 集合
-        const newPermissions: Record<RoleKey, string[]> = {} as Record<RoleKey, string[]>;
-        for (const role in DEFAULT_ROLE_PERMISSIONS) {
-          newPermissions[role as RoleKey] = [...DEFAULT_ROLE_PERMISSIONS[role as RoleKey]];
-        }
-        setRolePermissions(newPermissions);
+        // 載入預設角色權限
+        setPermissionSettings(ROLE_PERMISSIONS);
+        setIsLoading(false);
       }, (error) => {
-        logError(error, { operation: 'fetch_role_permissions' });
+        logError(error, { operation: 'load_permission_settings' });
+        setIsLoading(false);
       });
-      setIsLoading(false);
     };
 
-    void fetchRolePermissions();
+    void loadPermissionSettings();
   }, []);
 
-  const handlePermissionChange = (permissionId: string, checked: boolean): void => {
-    const currentPermissions = rolePermissions[selectedRole] || [];
-    let newPermissions: string[];
-
-    if (checked) {
-      newPermissions = [...currentPermissions, permissionId];
-    } else {
-      newPermissions = currentPermissions.filter(p => p !== permissionId);
-    }
-
-    setRolePermissions(prev => ({ ...prev, [selectedRole]: newPermissions }));
+  const handlePermissionToggle = (permissionId: PermissionId) => {
+    setPermissionSettings(prev => {
+      const currentPermissions = prev[selectedRole] || [];
+      const newPermissions = currentPermissions.includes(permissionId)
+        ? currentPermissions.filter(p => p !== permissionId)
+        : [...currentPermissions, permissionId];
+      
+      return {
+        ...prev,
+        [selectedRole]: newPermissions,
+      };
+    });
   };
 
-  const handleArchiveToggle = (checked: boolean): void => {
-    const currentPermissions = rolePermissions[selectedRole] || [];
-    let newPermissions: string[];
-
-    if (checked) {
-      newPermissions = [...currentPermissions, 'archive'];
-    } else {
-      newPermissions = currentPermissions.filter(p => !p.startsWith('archive'));
-    }
-
-    setRolePermissions(prev => ({
-      ...prev,
-      [selectedRole]: newPermissions,
-    }));
-  };
-
-  const handleSave = async (): Promise<void> => {
+  const handleSave = async () => {
     setIsSaving(true);
     await safeAsync(async () => {
-      // 更新常數定義（這裡只是 UI 展示，實際權限由常數控制）
-      alert('注意：權限設定已更新，但實際權限仍由系統常數控制。如需修改權限，請更新 constants/permissions.ts 檔案。');
+      // 這裡可以實作儲存到 Firestore 的邏輯
+      // 目前只是更新本地狀態
+      console.log('Saving permission settings:', permissionSettings);
+      setIsSaving(false);
     }, (error) => {
-      alert(`儲存失敗: ${getErrorMessage(error)}`);
-      logError(error, { operation: 'save_role_permissions', role: selectedRole });
+      logError(error, { operation: 'save_permission_settings' });
+      setIsSaving(false);
     });
-    setIsSaving(false);
   };
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
-        <span className='ml-4 text-gray-700 dark:text-gray-300'>正在載入權限設定...</span>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-lg">載入中...</div>
       </div>
     );
   }
 
-  const isArchiveEnabled = rolePermissions[selectedRole]?.includes('archive') ?? false;
-  const archivePermissions = PAGE_PERMISSIONS.filter(
-    p => p.id.startsWith('archive-') && p.id !== 'archive'
-  );
-  const nonArchivePermissions = PAGE_PERMISSIONS.filter(p => !p.id.startsWith('archive-'));
-
   return (
-    <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
-        <h2 className='text-xl font-bold text-gray-800 dark:text-white'>角色權限管理</h2>
-        <div className='flex items-center space-x-4'>
-          <select
-            value={selectedRole}
-            onChange={e => setSelectedRole(e.target.value as RoleKey)}
-            className='form-select block w-48 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
-            disabled={isSaving}
-          >
-            {Object.entries(ROLE_NAMES).map(([key, name]) => (
-              <option key={key} value={key}>
-                {name}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleSave}
-            className='px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed'
-            disabled={isSaving}
-          >
-            {isSaving ? '儲存中...' : '儲存變更'}
-          </button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          角色權限管理
+        </h2>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isSaving ? '儲存中...' : '儲存變更'}
+        </button>
       </div>
 
-      <div className='mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800 rounded-lg'>
-        <p className='text-sm'>
-          <strong>注意：</strong>此頁面僅供查看權限設定。實際權限由系統常數控制，如需修改請更新 <code>src/constants/permissions.ts</code> 檔案。
-        </p>
-      </div>
-
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4'>
-        {nonArchivePermissions.map(permission => (
-          <div key={permission.id} className='flex items-center'>
-            <input
-              type='checkbox'
-              id={`perm-${permission.id}`}
-              className='form-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-offset-gray-800'
-              checked={rolePermissions[selectedRole]?.includes(permission.id) ?? false}
-              onChange={e => handlePermissionChange(permission.id, e.target.checked)}
-              disabled={isSaving}
-            />
-            <label
-              htmlFor={`perm-${permission.id}`}
-              className='ml-3 text-gray-700 dark:text-gray-300 select-none'
-            >
-              {permission.name}
-            </label>
-          </div>
-        ))}
-
-        <div className='col-span-full border-t border-gray-200 dark:border-gray-700 my-4'></div>
-
-        <div className='col-span-full'>
-          <div className='flex items-center'>
-            <input
-              type='checkbox'
-              id='perm-archive'
-              className='form-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-offset-gray-800'
-              checked={isArchiveEnabled}
-              onChange={e => handleArchiveToggle(e.target.checked)}
-              disabled={isSaving}
-            />
-            <label
-              htmlFor='perm-archive'
-              className='ml-3 font-semibold text-gray-800 dark:text-gray-200 select-none'
-            >
-              啟用封存功能
-            </label>
-          </div>
-        </div>
-
-        {isArchiveEnabled &&
-          archivePermissions.map(permission => (
-            <div key={permission.id} className='flex items-center ml-8'>
-              <input
-                type='checkbox'
-                id={`perm-${permission.id}`}
-                className='form-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-offset-gray-800'
-                checked={rolePermissions[selectedRole]?.includes(permission.id) ?? false}
-                onChange={e => handlePermissionChange(permission.id, e.target.checked)}
-                disabled={isSaving}
-              />
-              <label
-                htmlFor={`perm-${permission.id}`}
-                className='ml-3 text-gray-700 dark:text-gray-300 select-none'
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* 角色選擇 */}
+        <div className="lg:col-span-1">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+            選擇角色
+          </h3>
+          <div className="space-y-2">
+            {Object.keys(ROLE_NAMES).map((roleKey) => (
+              <button
+                key={roleKey}
+                onClick={() => setSelectedRole(roleKey as RoleKey)}
+                className={`w-full text-left p-3 rounded-md transition-colors ${
+                  selectedRole === roleKey
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+                    : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
               >
-                {permission.name}
-              </label>
-            </div>
-          ))}
+                <div className="font-medium">{ROLE_NAMES[roleKey as RoleKey]}</div>
+                <div className="text-sm opacity-75">
+                  {permissionSettings[roleKey as RoleKey]?.length || 0} 個權限
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 權限列表 */}
+        <div className="lg:col-span-3">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+            {ROLE_NAMES[selectedRole]} 權限設定
+          </h3>
+          <div className="space-y-4">
+            {ALL_PERMISSIONS.map((permission) => (
+              <div
+                key={permission.id}
+                className="flex items-start space-x-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+              >
+                <input
+                  type="checkbox"
+                  id={permission.id}
+                  checked={permissionSettings[selectedRole]?.includes(permission.id) || false}
+                  onChange={() => handlePermissionToggle(permission.id)}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <div className="flex-1">
+                  <label
+                    htmlFor={permission.id}
+                    className="block text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer"
+                  >
+                    {permission.name}
+                  </label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {permission.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+} 

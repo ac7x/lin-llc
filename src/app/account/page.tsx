@@ -69,7 +69,7 @@ const AccountPage = () => {
 
           {error && (
             <div className='p-4 text-red-700 bg-red-100 rounded-md dark:bg-red-900/50 dark:text-red-300'>
-              {error.message}
+              {error}
             </div>
           )}
 

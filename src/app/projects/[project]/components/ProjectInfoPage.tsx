@@ -13,6 +13,7 @@ import { collection, query, getDocs, db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
 import { cn, cardStyles, buttonStyles } from '@/utils/classNameUtils';
 import { logError, safeAsync, retry } from '@/utils/errorUtils';
+import { useAuth } from '@/hooks/useAuth';
 
 import ProjectEditModal from './ProjectEditModal';
 import ProjectInfoDisplay from './ProjectInfoDisplay';
@@ -25,6 +26,7 @@ interface ProjectInfoPageProps {
 }
 
 export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageProps) {
+  const { hasPermission } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [eligibleUsers, setEligibleUsers] = useState<{
     costControllers: AppUser[];
@@ -49,19 +51,19 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
           ...doc.data(),
         })) as AppUser[];
 
-        // 根據 currentRole 分類用戶（移除舊的 roles 陣列依賴）
+        // 根據權限分類用戶，而不是硬編碼角色
         const categorizedUsers = {
-          costControllers: users.filter(
-            user => user.currentRole === 'owner' || user.currentRole === 'cost-controller'
+          costControllers: users.filter(user => 
+            hasPermission('projects-edit') || user.currentRole === 'owner'
           ),
-          supervisors: users.filter(
-            user => user.currentRole === 'owner' || user.currentRole === 'supervisor'
+          supervisors: users.filter(user => 
+            hasPermission('projects-edit') || user.currentRole === 'owner'
           ),
-          safetyOfficers: users.filter(
-            user => user.currentRole === 'owner' || user.currentRole === 'safety-officer'
+          safetyOfficers: users.filter(user => 
+            hasPermission('projects-edit') || user.currentRole === 'owner'
           ),
-          managers: users.filter(
-            user => user.currentRole === 'owner' || user.currentRole === 'project-manager'
+          managers: users.filter(user => 
+            hasPermission('projects-edit') || user.currentRole === 'owner'
           ),
         };
 
@@ -72,7 +74,7 @@ export default function ProjectInfoPage({ project, projectId }: ProjectInfoPageP
     };
 
     void fetchMembers();
-  }, []);
+  }, [hasPermission]);
 
   return (
     <div className={cardStyles.base}>

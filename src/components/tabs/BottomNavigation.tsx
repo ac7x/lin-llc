@@ -36,7 +36,7 @@ import { safeAsync, retry, getErrorMessage, logError } from '@/utils/errorUtils'
 
 // 專案導航組件
 function ProjectNavigation({ pathname }: { pathname: string }) {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [projectsSnapshot, setProjectsSnapshot] = useState<import('firebase/firestore').QuerySnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +64,7 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
         let q;
         
         // 使用新的權限系統檢查是否有專案管理權限
-        if (user.currentRole === 'owner') {
+        if (hasPermission('management')) {
           // 擁有者可以看到所有專案
           q = query(collection(db, 'projects'));
         } else {
@@ -97,7 +97,7 @@ function ProjectNavigation({ pathname }: { pathname: string }) {
     };
 
     void fetchProjects();
-  }, [user?.uid, user?.currentRole]);
+  }, [user?.uid, user?.currentRole, hasPermission]);
 
   const toggleOpen = (projectId: string) => {
     setOpenMap(prev => ({ ...prev, [projectId]: !prev[projectId] }));
@@ -463,7 +463,7 @@ export default function BottomNavigation(): ReactElement | null {
   const [isMobile, setIsMobile] = useState(false);
 
   const filteredNavigationItems = navigationItems.filter((item: NavigationItem) =>
-    hasPermission(item.id)
+    hasPermission(item.id as any)
   );
 
   // 檢測設備類型
