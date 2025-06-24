@@ -1,11 +1,15 @@
 import { 
   doc, 
-  setDoc, 
+  collection, 
   getDoc, 
   getDocs, 
-  collection, 
+  setDoc, 
   updateDoc, 
-  deleteDoc
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit
 } from 'firebase/firestore';
 import { db } from './firebase-init';
 import { 
@@ -14,10 +18,9 @@ import {
   UserRole, 
   UserProfile, 
   PermissionCheck,
-  DataScope 
+  DataScope
 } from '@/types';
-import { isOwner, getDefaultRoleId } from './env-config';
-import { envConfig } from './env-config';
+import { isOwner, getDefaultRoleId, envConfig } from './env-config';
 
 /**
  * 權限管理服務
