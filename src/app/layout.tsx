@@ -1,32 +1,26 @@
-// src/app/layout.tsx
-'use client'; // 確保這是 Client Component
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import '@/styles/globals.css';
+import { AuthProvider } from '@/context/auth-context';
 
-import { useEffect } from 'react';
-import { initializeClientServices } from '@/lib/firebase-init';
-import { logError } from '@/utils/errorUtils';
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'LIN LLC - 企業管理系統',
+  description: '現代化的企業管理平台，提供財務、專案和 AI 助手功能',
+};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    // 初始化 Firebase 客戶端服務（包括 App Check）
-    const initializeAppCheck = async () => {
-      try {
-        await initializeClientServices();
-      } catch (error) {
-        logError(error, { operation: 'initialize_app_check' });
-      }
-    };
-
-    initializeAppCheck();
-  }, []);
-
   return (
     <html lang="zh-TW">
-      <body>
-        {children}
+      <body className={inter.className}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
