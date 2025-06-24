@@ -37,6 +37,7 @@ export default function SettingsPage() {
     loadRoles,
     loadAllUsers,
     assignUserRole,
+    isUserOnline,
   } = usePermission();
 
   const [initializing, setInitializing] = useState(false);
@@ -281,11 +282,19 @@ export default function SettingsPage() {
       await updateDoc(doc(db, 'users', editingUser.uid), {
         displayName: editUserName.trim(),
         isActive: editUserActive,
+        updatedAt: new Date().toISOString(),
       });
+      
       // 更新角色
       if (editUserRole !== editingUser.roleId) {
         await assignUserRole(editingUser.uid, editUserRole, editingUser.uid);
+        
+        // 同時更新用戶資料中的 roleId
+        await updateDoc(doc(db, 'users', editingUser.uid), {
+          roleId: editUserRole,
+        });
       }
+      
       await loadAllUsers();
       handleEditUserClose();
     } catch (e) {
@@ -889,13 +898,15 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     {allUsers.map((user: UserProfile) => {
                       const userRole = allRoles.find((role: Role) => role.id === user.roleId);
+                      const online = isUserOnline(user.lastActivityAt, user.lastLoginAt);
+                      
                       return (
                         <div
                           key={user.uid}
                           className="flex items-center justify-between p-4 border rounded-lg"
                         >
                           <div className="flex items-center space-x-4">
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 relative">
                               {user.photoURL ? (
                                 <Image
                                   src={user.photoURL}
@@ -911,6 +922,10 @@ export default function SettingsPage() {
                                   </span>
                                 </div>
                               )}
+                              {/* 在線狀態指示器 */}
+                              <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                                online ? 'bg-green-500' : 'bg-gray-400'
+                              }`} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center space-x-2">
@@ -927,6 +942,9 @@ export default function SettingsPage() {
                                     停用
                                   </Badge>
                                 )}
+                                <Badge variant={online ? "default" : "outline"} className="text-xs">
+                                  {online ? '在線' : '離線'}
+                                </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground truncate">
                                 {user.email}
@@ -945,6 +963,9 @@ export default function SettingsPage() {
                             <div className="text-right text-xs text-muted-foreground">
                               <div>註冊: {new Date(user.createdAt).toLocaleDateString('zh-TW')}</div>
                               <div>最後登入: {new Date(user.lastLoginAt).toLocaleDateString('zh-TW')}</div>
+                              {user.lastActivityAt && (
+                                <div>最後活動: {new Date(user.lastActivityAt).toLocaleDateString('zh-TW')}</div>
+                              )}
                             </div>
                             <PermissionGuard permission="user:write">
                               <Button

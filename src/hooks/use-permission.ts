@@ -33,6 +33,10 @@ interface UsePermissionReturn {
   loadPermissions: () => Promise<void>;
   loadUserData: () => Promise<void>;
   loadAllUsers: () => Promise<void>;
+  
+  // 新增方法
+  updateUserActivity: () => Promise<void>;
+  isUserOnline: (lastActivityAt?: string, lastLoginAt?: string) => boolean;
 }
 
 export function usePermission(): UsePermissionReturn {
@@ -141,6 +145,37 @@ export function usePermission(): UsePermissionReturn {
       setLoading(false);
     }
   }, []);
+
+  // 更新用戶活動時間
+  const updateUserActivity = useCallback(async () => {
+    if (!user?.uid) return;
+    
+    try {
+      await permissionService.updateUserActivity(user.uid);
+    } catch (err) {
+      console.error('更新用戶活動時間失敗:', err);
+    }
+  }, [user?.uid]);
+
+  // 檢查用戶是否在線
+  const isUserOnline = useCallback((lastActivityAt?: string, lastLoginAt?: string): boolean => {
+    return permissionService.isUserOnline(lastActivityAt, lastLoginAt);
+  }, []);
+
+  // 定期更新用戶活動時間
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    // 初始更新
+    void updateUserActivity();
+    
+    // 每分鐘更新一次活動時間
+    const interval = setInterval(() => {
+      void updateUserActivity();
+    }, 60000); // 60秒
+    
+    return () => clearInterval(interval);
+  }, [user?.uid, updateUserActivity]);
 
   // 權限檢查函數
   const checkPermission = useCallback(async (permissionId: string): Promise<boolean> => {
@@ -305,5 +340,7 @@ export function usePermission(): UsePermissionReturn {
     loadPermissions,
     loadUserData,
     loadAllUsers,
+    updateUserActivity,
+    isUserOnline,
   };
 } 

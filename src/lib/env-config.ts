@@ -9,8 +9,11 @@ export const envConfig: EnvironmentConfig = {
   OWNER_UID: process.env.NEXT_PUBLIC_OWNER_UID || 'your-owner-uid-here',
   
   // 預設角色 ID
-  DEFAULT_ROLE_ID: 'default',
+  DEFAULT_ROLE_ID: 'user',
   GUEST_ROLE_ID: 'guest',
+  
+  // 用戶在線狀態配置
+  ONLINE_TIMEOUT_MINUTES: 5, // 5分鐘內有活動視為在線
 };
 
 /**

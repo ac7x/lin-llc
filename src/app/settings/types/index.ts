@@ -57,6 +57,8 @@ export interface UserProfile {
   updatedAt: string;
   lastLoginAt: string;
   loginCount: number;
+  lastActivityAt?: string; // 最後活動時間
+  isOnline?: boolean; // 是否在線
 }
 
 // 權限檢查結果
@@ -71,6 +73,7 @@ export interface EnvironmentConfig {
   OWNER_UID: string;
   DEFAULT_ROLE_ID: string;
   GUEST_ROLE_ID: string;
+  ONLINE_TIMEOUT_MINUTES: number;
 }
 
 // 權限矩陣型別

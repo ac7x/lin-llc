@@ -17,6 +17,7 @@ import {
   DataScope 
 } from '@/types';
 import { isOwner, getDefaultRoleId } from './env-config';
+import { envConfig } from './env-config';
 
 /**
  * 權限管理服務
@@ -270,7 +271,23 @@ export class PermissionService {
       const usersRef = collection(db, 'users');
       const usersSnapshot = await getDocs(usersRef);
       
-      return usersSnapshot.docs.map(doc => doc.data() as UserProfile);
+      const users = usersSnapshot.docs.map(doc => doc.data() as UserProfile);
+      
+      // 檢查並更新在線狀態
+      const now = new Date();
+      const onlineTimeoutMs = envConfig.ONLINE_TIMEOUT_MINUTES * 60 * 1000;
+      
+      const updatedUsers = users.map(user => {
+        const lastActivity = user.lastActivityAt ? new Date(user.lastActivityAt) : new Date(user.lastLoginAt);
+        const isOnline = (now.getTime() - lastActivity.getTime()) < onlineTimeoutMs;
+        
+        return {
+          ...user,
+          isOnline,
+        };
+      });
+      
+      return updatedUsers;
     } catch (error) {
       console.error('獲取所有用戶失敗:', error);
       throw error;
@@ -410,6 +427,36 @@ export class PermissionService {
       console.error('獲取用戶資料範圍失敗:', error);
       return { uid, scope: 'own' };
     }
+  }
+
+  /**
+   * 更新用戶活動時間
+   */
+  async updateUserActivity(uid: string): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const now = new Date().toISOString();
+      
+      await updateDoc(userRef, {
+        lastActivityAt: now,
+      });
+    } catch (error) {
+      console.error('更新用戶活動時間失敗:', error);
+      // 不拋出錯誤，避免影響主要功能
+    }
+  }
+
+  /**
+   * 檢查用戶是否在線
+   */
+  isUserOnline(lastActivityAt?: string, lastLoginAt?: string): boolean {
+    if (!lastActivityAt && !lastLoginAt) return false;
+    
+    const now = new Date();
+    const lastActivity = lastActivityAt ? new Date(lastActivityAt) : new Date(lastLoginAt!);
+    const onlineTimeoutMs = envConfig.ONLINE_TIMEOUT_MINUTES * 60 * 1000;
+    
+    return (now.getTime() - lastActivity.getTime()) < onlineTimeoutMs;
   }
 }
 
