@@ -24,6 +24,7 @@ interface BottomNavigationItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   permission: string;
+  exact?: boolean;
 }
 
 const navigationItems: BottomNavigationItem[] = [
@@ -32,42 +33,49 @@ const navigationItems: BottomNavigationItem[] = [
     label: '首頁',
     icon: Home,
     permission: 'navigation:home',
+    exact: true,
   },
   {
     href: '/dashboard',
     label: '儀表板',
     icon: BarChart3,
     permission: 'dashboard:read',
+    exact: true,
   },
   {
     href: '/project',
     label: '專案',
     icon: FolderOpen,
     permission: 'navigation:project',
+    exact: false,
   },
   {
     href: '/user/account/task',
     label: '任務',
     icon: CheckSquare,
     permission: 'navigation:task',
+    exact: true,
   },
   {
     href: '/user/account/notifications',
     label: '通知',
     icon: Bell,
     permission: 'notification:read',
+    exact: true,
   },
   {
     href: '/user/account',
     label: '帳戶',
     icon: User,
     permission: 'navigation:account',
+    exact: true,
   },
   {
     href: '/settings',
     label: '設定',
     icon: Settings,
     permission: 'navigation:settings',
+    exact: true,
   },
 ];
 
@@ -142,8 +150,9 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
       className
     )}>
       {authorizedItems.map((item) => {
-        const isActive = pathname === item.href || 
-          (item.href !== '/' && pathname.startsWith(item.href));
+        const isActive = item.exact !== false
+          ? pathname === item.href
+          : (pathname === item.href || pathname.startsWith(item.href + '/'));
         
         return (
           <Link key={item.href} href={item.href}>
