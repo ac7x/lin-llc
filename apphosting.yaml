@@ -66,3 +66,8 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  - variable: NEXT_PUBLIC_OWNER_UID
+    value: "plP5ioFRW2RwmgLZj2QOpryAj242"
+    availability:
+      - BUILD
+      - RUNTIME

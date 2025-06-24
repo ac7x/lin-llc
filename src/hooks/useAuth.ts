@@ -73,6 +73,9 @@ export const useAuth = (): UseAuthReturn => {
     error: null,
   });
 
+  // 取得環境變數中的擁有者 UID
+  const OWNER_UID = process.env.NEXT_PUBLIC_OWNER_UID;
+
   const getStandardPermissions = useCallback(async (): Promise<
     Record<RoleKey, Record<string, boolean>>
   > => {
@@ -111,8 +114,20 @@ export const useAuth = (): UseAuthReturn => {
           const memberDoc = await getDoc(memberRef);
           const memberData = memberDoc.data();
 
+          // 檢查是否為環境變數指定的擁有者
+          const isOwnerByEnv = OWNER_UID && currentUser.uid === OWNER_UID;
+          
           if (memberData) {
-            const userRole = memberData.currentRole as string;
+            let userRole = memberData.currentRole as string;
+            
+            // 如果是環境變數指定的擁有者，強制設定為 owner 角色
+            if (isOwnerByEnv && userRole !== 'owner') {
+              userRole = 'owner';
+              // 更新資料庫中的角色
+              await setDoc(memberRef, { currentRole: 'owner' }, { merge: true });
+              memberData.currentRole = 'owner';
+            }
+
             let permissionsForRole: Record<string, boolean> | undefined;
 
             // 檢查是否為標準角色
@@ -133,6 +148,33 @@ export const useAuth = (): UseAuthReturn => {
               await setDoc(memberRef, { rolePermissions: updatedRolePermissions }, { merge: true });
               memberData.rolePermissions = updatedRolePermissions;
             }
+          } else if (isOwnerByEnv) {
+            // 如果用戶不存在於 members 集合，但符合擁有者 UID，則建立擁有者帳號
+            const ownerPermissions = standardPermissions['owner'] || {};
+            const memberData = {
+              email: currentUser.email,
+              displayName: currentUser.displayName,
+              photoURL: currentUser.photoURL,
+              createdAt: new Date().toISOString(),
+              lastLoginAt: new Date().toISOString(),
+              rolePermissions: { owner: ownerPermissions },
+              currentRole: 'owner',
+            };
+            await setDoc(memberRef, memberData);
+            
+            if (isMounted) {
+              setAuthState(prev => ({
+                ...prev,
+                user: {
+                  ...currentUser,
+                  currentRole: 'owner',
+                  rolePermissions: { owner: ownerPermissions },
+                },
+                loading: false,
+                error: null,
+              }));
+            }
+            return;
           }
 
           if (isMounted) {
@@ -177,7 +219,7 @@ export const useAuth = (): UseAuthReturn => {
       isMounted = false;
       unsubscribe();
     };
-  }, [getStandardPermissions]);
+  }, [getStandardPermissions, OWNER_UID]);
 
   const signInWithGoogle = async (): Promise<void> => {
     await safeAsync(async () => {
@@ -190,26 +232,47 @@ export const useAuth = (): UseAuthReturn => {
       const memberDoc = await retry(() => getDoc(memberRef), 3, 1000);
       const standardPermissions = await getStandardPermissions();
       
+      // 檢查是否為環境變數指定的擁有者
+      const isOwnerByEnv = OWNER_UID && result.user.uid === OWNER_UID;
+      
       if (!memberDoc.exists()) {
-        const guestPermissions = standardPermissions['guest'] || {};
+        // 如果是擁有者，設定為 owner 角色，否則設定為 guest
+        const defaultRole = isOwnerByEnv ? 'owner' : 'guest';
+        const defaultPermissions = standardPermissions[defaultRole] || {};
         const memberData = {
           email: result.user.email,
           displayName: result.user.displayName,
           photoURL: result.user.photoURL,
           createdAt: new Date().toISOString(),
           lastLoginAt: new Date().toISOString(),
-          rolePermissions: { guest: guestPermissions },
-          currentRole: 'guest',
+          rolePermissions: { [defaultRole]: defaultPermissions },
+          currentRole: defaultRole,
         };
         await retry(() => setDoc(memberRef, memberData), 3, 1000);
       } else {
-        await retry(() => setDoc(
-          memberRef,
-          {
-            lastLoginAt: new Date().toISOString(),
-          },
-          { merge: true }
-        ), 3, 1000);
+        // 如果用戶已存在，檢查是否需要更新為擁有者角色
+        const memberData = memberDoc.data();
+        let currentRole = memberData.currentRole || 'guest';
+        
+        if (isOwnerByEnv && currentRole !== 'owner') {
+          currentRole = 'owner';
+          await retry(() => setDoc(
+            memberRef,
+            {
+              currentRole: 'owner',
+              lastLoginAt: new Date().toISOString(),
+            },
+            { merge: true }
+          ), 3, 1000);
+        } else {
+          await retry(() => setDoc(
+            memberRef,
+            {
+              lastLoginAt: new Date().toISOString(),
+            },
+            { merge: true }
+          ), 3, 1000);
+        }
       }
     }, (error) => {
       let authError: AuthError;

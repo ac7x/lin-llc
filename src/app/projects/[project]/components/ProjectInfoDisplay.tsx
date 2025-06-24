@@ -17,7 +17,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import AddressSelector from '@/app/projects/components/AddressSelector';
 import { useQualityScore } from '@/app/projects/hooks/useFilteredProjects';
 import type { Project } from '@/app/projects/types/project';
-import { ROLE_NAMES, type RoleKey, type CustomRole } from '@/constants/roles';
+import { ROLE_NAMES, type CustomRole } from '@/constants/roles';
 import type { AppUser } from '@/types/auth';
 import { cn, getQualityColor } from '@/utils/classNameUtils';
 import { formatLocalDate } from '@/utils/dateUtils';
@@ -35,11 +35,9 @@ interface ProjectInfoDisplayProps {
 }
 
 export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectInfoDisplayProps) {
-  const { user, hasPermission } = useAuth();
   const [showAddressMap, setShowAddressMap] = useState(false);
   const [currentAddress, setCurrentAddress] = useState(project.address || '');
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
-  const [loadingRoles, setLoadingRoles] = useState(true);
   
   // 同步專案地址變化
   useEffect(() => {
@@ -58,8 +56,6 @@ export default function ProjectInfoDisplay({ project, eligibleUsers }: ProjectIn
         setCustomRoles(roles);
       } catch (error) {
         console.error('Failed to load custom roles:', error);
-      } finally {
-        setLoadingRoles(false);
       }
     };
 

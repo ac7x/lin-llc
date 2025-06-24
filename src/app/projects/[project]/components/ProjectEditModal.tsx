@@ -15,7 +15,7 @@ import { useState, useEffect } from 'react';
 
 import AddressSelector from '@/app/projects/components/AddressSelector';
 import type { Project } from '@/app/projects/types/project';
-import { ROLE_NAMES, type RoleKey, type CustomRole } from '@/constants/roles';
+import { ROLE_NAMES, type CustomRole } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
@@ -44,11 +44,10 @@ export default function ProjectEditModal({
   onClose,
   eligibleUsers,
 }: ProjectEditModalProps) {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentAddress, setCurrentAddress] = useState<string>(project.address || '');
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
-  const [loadingRoles, setLoadingRoles] = useState(true);
 
   // 載入自訂角色以取得角色名稱
   useEffect(() => {
@@ -62,8 +61,6 @@ export default function ProjectEditModal({
         setCustomRoles(roles);
       } catch (error) {
         console.error('Failed to load custom roles:', error);
-      } finally {
-        setLoadingRoles(false);
       }
     };
 
