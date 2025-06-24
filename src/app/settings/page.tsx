@@ -30,6 +30,7 @@ export default function SettingsPage() {
   const [initError, setInitError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [matrixLoading, setMatrixLoading] = useState<Set<string>>(new Set());
 
   // 初始化權限系統
   useEffect(() => {
@@ -116,6 +117,49 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error('刪除角色失敗:', err);
+    }
+  };
+
+  // 處理權限矩陣中的權限切換
+  const handleMatrixPermissionToggle = async (roleId: string, permissionId: string) => {
+    const role = allRoles.find(r => r.id === roleId);
+    if (!role) return;
+
+    // 檢查是否為系統預設角色且非擁有者
+    if (!role.isCustom && roleId !== 'owner') {
+      console.warn('無法修改系統預設角色的權限');
+      return;
+    }
+
+    const loadingKey = `${roleId}-${permissionId}`;
+    setMatrixLoading(prev => new Set(prev).add(loadingKey));
+
+    try {
+      const currentPermissions = [...role.permissions];
+      const hasPermission = currentPermissions.includes(permissionId);
+      
+      let newPermissions: string[];
+      if (hasPermission) {
+        // 移除權限
+        newPermissions = currentPermissions.filter(p => p !== permissionId);
+      } else {
+        // 添加權限
+        newPermissions = [...currentPermissions, permissionId];
+      }
+
+      await updateRolePermissions(roleId, newPermissions);
+      
+      // 重新載入角色列表來更新狀態
+      await loadRoles();
+      
+    } catch (err) {
+      console.error('更新權限失敗:', err);
+    } finally {
+      setMatrixLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(loadingKey);
+        return newSet;
+      });
     }
   };
 
@@ -367,7 +411,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle>權限對照表</CardTitle>
                 <CardDescription>
-                  顯示各角色擁有的權限
+                  點擊 ✓ 或 ✗ 來切換權限（僅限自定義角色和擁有者）
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -378,7 +422,12 @@ export default function SettingsPage() {
                         <th className="text-left p-2">權限</th>
                         {allRoles.map((role) => (
                           <th key={role.id} className="text-center p-2">
-                            {role.name}
+                            <div className="flex flex-col items-center">
+                              <span className="font-medium">{role.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {role.isCustom ? '自定義' : '系統'}
+                              </span>
+                            </div>
                           </th>
                         ))}
                       </tr>
@@ -392,15 +441,45 @@ export default function SettingsPage() {
                               <div className="text-sm text-muted-foreground">{permission.description}</div>
                             </div>
                           </td>
-                          {allRoles.map((role) => (
-                            <td key={role.id} className="text-center p-2">
-                              {role.permissions.includes(permission.id) ? (
-                                <Badge variant="default">✓</Badge>
-                              ) : (
-                                <Badge variant="outline">✗</Badge>
-                              )}
-                            </td>
-                          ))}
+                          {allRoles.map((role) => {
+                            const hasPermission = role.permissions.includes(permission.id);
+                            const canEdit = role.isCustom || role.id === 'owner';
+                            const loadingKey = `${role.id}-${permission.id}`;
+                            const isLoading = matrixLoading.has(loadingKey);
+                            
+                            return (
+                              <td key={role.id} className="text-center p-2">
+                                {canEdit ? (
+                                  <button
+                                    onClick={() => handleMatrixPermissionToggle(role.id, permission.id)}
+                                    disabled={isLoading}
+                                    className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all ${
+                                      hasPermission
+                                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                    } ${
+                                      isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                                    }`}
+                                  >
+                                    {isLoading ? (
+                                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                      <span className="text-sm font-medium">
+                                        {hasPermission ? '✓' : '✗'}
+                                      </span>
+                                    )}
+                                  </button>
+                                ) : (
+                                  <Badge 
+                                    variant={hasPermission ? "default" : "outline"}
+                                    className="cursor-default"
+                                  >
+                                    {hasPermission ? '✓' : '✗'}
+                                  </Badge>
+                                )}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </tbody>
