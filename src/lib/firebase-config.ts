@@ -1,3 +1,4 @@
+// src/lib/firebase-config.ts
 /**
  * Firebase 應用程式配置檔案
  * 定義 Firebase 專案的基本設定和常數
