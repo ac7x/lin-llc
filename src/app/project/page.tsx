@@ -457,8 +457,11 @@ export default function ProjectListPage() {
           </SidebarContent>
         </Sidebar>
 
-        <ResizablePanelGroup direction="horizontal">
-          <ResizablePanel defaultSize={70}>
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="min-h-[200px] w-full rounded-lg border"
+        >
+          <ResizablePanel defaultSize={50}>
             <div className="flex h-full flex-col">
               <header className="border-b px-6 py-4">
                 <div className="flex items-center gap-2">
@@ -543,33 +546,61 @@ export default function ProjectListPage() {
               </div>
             </div>
           </ResizablePanel>
-
-          <ResizableHandle withHandle className="w-2 bg-gray-200 hover:bg-blue-500 transition-colors" />
-
-          <ResizablePanel defaultSize={30}>
-            <div className="h-full border-l bg-muted/10 p-4">
-              <h3 className="font-semibold mb-4">專案概覽</h3>
-              {selectedProject ? (
-                <div className="space-y-4">
-                  <div className="text-sm">
-                    <p><strong>專案名稱：</strong>{selectedProject.name}</p>
-                    <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
-                    <p><strong>總任務數：</strong>
-                      {selectedProject.packages?.reduce((total, pkg) => total + (pkg.tasks?.length || 0), 0) || 0}
-                    </p>
-                    <p><strong>總子工作包數：</strong>
-                      {selectedProject.packages?.reduce((total, pkg) => 
-                        total + pkg.tasks?.reduce((taskTotal, task) => 
-                          taskTotal + (task.subpackages?.length || 0), 0
-                        ), 0
-                      ) || 0}
-                    </p>
+          
+          <ResizableHandle withHandle />
+          
+          <ResizablePanel defaultSize={50}>
+            <ResizablePanelGroup direction="vertical">
+              <ResizablePanel defaultSize={25}>
+                <div className="flex h-full items-center justify-center p-6">
+                  <div className="text-center">
+                    <h3 className="font-semibold mb-2">專案概覽</h3>
+                    {selectedProject ? (
+                      <div className="text-sm space-y-1">
+                        <p><strong>專案名稱：</strong>{selectedProject.name}</p>
+                        <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
+                        <p><strong>總任務數：</strong>
+                          {selectedProject.packages?.reduce((total, pkg) => total + (pkg.tasks?.length || 0), 0) || 0}
+                        </p>
+                        <p><strong>總子工作包數：</strong>
+                          {selectedProject.packages?.reduce((total, pkg) => 
+                            total + pkg.tasks?.reduce((taskTotal, task) => 
+                              taskTotal + (task.subpackages?.length || 0), 0
+                            ), 0
+                          ) || 0}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">選擇專案以查看概覽</p>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <p className="text-gray-500 text-sm">選擇專案以查看概覽</p>
-              )}
-            </div>
+              </ResizablePanel>
+              
+              <ResizableHandle withHandle />
+              
+              <ResizablePanel defaultSize={75}>
+                <div className="flex h-full items-center justify-center p-6">
+                  <div className="text-center">
+                    <h3 className="font-semibold mb-2">詳細資訊</h3>
+                    {selectedProject ? (
+                      <div className="text-sm space-y-1">
+                        <p><strong>建立時間：</strong></p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
+                        </p>
+                        <p><strong>專案描述：</strong></p>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedProject.description || '無描述'}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">選擇專案以查看詳細資訊</p>
+                    )}
+                  </div>
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
