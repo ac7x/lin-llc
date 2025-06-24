@@ -10,9 +10,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { usePermission } from '@/hooks/use-permission';
 import { PermissionGuard } from '@/components/permission-guard';
-import { Role } from '@/types';
+import { Role, Permission } from '@/types';
 import { isOwner, validateEnvConfig } from '@/lib/env-config';
 import { initializePermissions, checkInitialization } from '@/lib/permission-init';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import type { UserProfile } from '@/app/settings/types';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase-init';
 
 export default function SettingsPage() {
   const {
@@ -29,6 +35,8 @@ export default function SettingsPage() {
     updateRoleDescription,
     deleteCustomRole,
     loadRoles,
+    loadAllUsers,
+    assignUserRole,
   } = usePermission();
 
   const [initializing, setInitializing] = useState(false);
@@ -43,6 +51,11 @@ export default function SettingsPage() {
   const [editingMatrixRoleName, setEditingMatrixRoleName] = useState<string | null>(null);
   const [editingMatrixNameValue, setEditingMatrixNameValue] = useState<string>('');
   const [currentTab, setCurrentTab] = useState<string>('overview');
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editUserName, setEditUserName] = useState('');
+  const [editUserRole, setEditUserRole] = useState('');
+  const [editUserActive, setEditUserActive] = useState(true);
+  const [editUserLoading, setEditUserLoading] = useState(false);
 
   // 初始化權限系統
   useEffect(() => {
@@ -246,6 +259,43 @@ export default function SettingsPage() {
     }
   };
 
+  const handleEditUserOpen = (user: UserProfile) => {
+    setEditingUser(user);
+    setEditUserName(user.displayName);
+    setEditUserRole(user.roleId);
+    setEditUserActive(user.isActive !== false);
+  };
+
+  const handleEditUserClose = () => {
+    setEditingUser(null);
+    setEditUserName('');
+    setEditUserRole('');
+    setEditUserActive(true);
+  };
+
+  const handleEditUserSave = async () => {
+    if (!editingUser) return;
+    setEditUserLoading(true);
+    try {
+      // 更新 Firestore 用戶 displayName/isActive
+      await updateDoc(doc(db, 'users', editingUser.uid), {
+        displayName: editUserName.trim(),
+        isActive: editUserActive,
+      });
+      // 更新角色
+      if (editUserRole !== editingUser.roleId) {
+        await assignUserRole(editingUser.uid, editUserRole, editingUser.uid);
+      }
+      await loadAllUsers();
+      handleEditUserClose();
+    } catch (e) {
+      // TODO: 顯示錯誤訊息
+      console.error(e);
+    } finally {
+      setEditUserLoading(false);
+    }
+  };
+
   // 顯示載入狀態
   if (loading || initializing) {
     return (
@@ -368,22 +418,159 @@ export default function SettingsPage() {
                     <p className="text-sm">
                       <span className="font-medium">權限總數:</span> {allPermissions.length}
                     </p>
+                    <p className="text-sm">
+                      <span className="font-medium">用戶總數:</span> {allUsers.length}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <PermissionGuard permission="settings:admin" requireOwner>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>系統管理</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Button onClick={handleCreateRole} className="w-full">
-                      創建新角色
+              <Card>
+                <CardHeader>
+                  <CardTitle>最近上線</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {allUsers
+                      .sort((a: UserProfile, b: UserProfile) => new Date(b.lastLoginAt).getTime() - new Date(a.lastLoginAt).getTime())
+                      .slice(0, 3)
+                      .map((user: UserProfile) => (
+                        <div key={user.uid} className="flex items-center justify-between text-sm">
+                          <span className="truncate">{user.displayName}</span>
+                          <span className="text-muted-foreground">
+                            {new Date(user.lastLoginAt).toLocaleDateString('zh-TW')}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* 常用功能 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>常用功能</CardTitle>
+                <CardDescription>快速存取常用管理功能</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Button
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center space-y-2"
+                    onClick={() => setCurrentTab('roles')}
+                  >
+                    <div className="text-2xl">👥</div>
+                    <span className="text-sm">角色管理</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center space-y-2"
+                    onClick={() => setCurrentTab('permissions')}
+                  >
+                    <div className="text-2xl">🔐</div>
+                    <span className="text-sm">權限矩陣</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center space-y-2"
+                    onClick={() => setCurrentTab('users')}
+                  >
+                    <div className="text-2xl">👤</div>
+                    <span className="text-sm">用戶管理</span>
+                  </Button>
+                  
+                  <PermissionGuard permission="settings:admin" requireOwner>
+                    <Button
+                      variant="outline"
+                      className="h-20 flex flex-col items-center justify-center space-y-2"
+                      onClick={handleCreateRole}
+                    >
+                      <div className="text-2xl">➕</div>
+                      <span className="text-sm">創建角色</span>
                     </Button>
-                  </CardContent>
-                </Card>
-              </PermissionGuard>
+                  </PermissionGuard>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 簡易版清單 */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>角色清單</CardTitle>
+                  <CardDescription>系統中的所有角色</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {allRoles.slice(0, 5).map((role: Role) => (
+                      <div key={role.id} className="flex items-center justify-between p-2 border rounded">
+                        <div>
+                          <span className="font-medium">{role.name}</span>
+                          <span className="text-sm text-muted-foreground ml-2">等級 {role.level}</span>
+                        </div>
+                        <Badge variant={role.isCustom ? "secondary" : "outline"}>
+                          {role.isCustom ? '自定義' : '系統'}
+                        </Badge>
+                      </div>
+                    ))}
+                    {allRoles.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setCurrentTab('roles')}
+                      >
+                        查看更多 ({allRoles.length - 5} 個)
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>用戶清單</CardTitle>
+                  <CardDescription>系統中的所有用戶</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {allUsers.slice(0, 5).map((user: UserProfile) => {
+                      const userRole = allRoles.find((role: Role) => role.id === user.roleId);
+                      return (
+                        <div key={user.uid} className="flex items-center justify-between p-2 border rounded">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                              <span className="text-xs font-medium">
+                                {user.displayName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-sm">{user.displayName}</span>
+                              <span className="text-xs text-muted-foreground block">{userRole?.name}</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(user.lastLoginAt).toLocaleDateString('zh-TW')}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {allUsers.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setCurrentTab('users')}
+                      >
+                        查看更多 ({allUsers.length - 5} 個)
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -406,7 +593,7 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {allRoles.map((role) => (
+                    {allRoles.map((role: Role) => (
                       <div
                         key={role.id}
                         className={`p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -523,9 +710,9 @@ export default function SettingsPage() {
 
               {/* 角色權限編輯 */}
               {selectedRole && (
-                <Card>
+                <Card className="w-full">
                   <CardHeader>
-                    <CardTitle>編輯角色權限</CardTitle>
+                    <CardTitle>角色權限設定</CardTitle>
                     <CardDescription>{selectedRole.name}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -533,7 +720,7 @@ export default function SettingsPage() {
                       <div className="space-y-2">
                         <h4 className="font-medium">權限設定</h4>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
-                          {allPermissions.map((permission) => (
+                          {allPermissions.map((permission: Permission) => (
                             <div key={permission.id} className="flex items-center space-x-2">
                               <input
                                 type="checkbox"
@@ -580,7 +767,7 @@ export default function SettingsPage() {
                     <thead>
                       <tr className="border-b">
                         <th className="text-left p-2">權限</th>
-                        {allRoles.map((role) => (
+                        {allRoles.map((role: Role) => (
                           <th key={role.id} className="text-center p-2">
                             <div className="flex flex-col items-center">
                               {/* 角色名稱編輯 */}
@@ -631,7 +818,7 @@ export default function SettingsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {allPermissions.map((permission) => (
+                      {allPermissions.map((permission: Permission) => (
                         <tr key={permission.id} className="border-b">
                           <td className="p-2">
                             <div>
@@ -639,7 +826,7 @@ export default function SettingsPage() {
                               <div className="text-sm text-muted-foreground">{permission.description}</div>
                             </div>
                           </td>
-                          {allRoles.map((role) => {
+                          {allRoles.map((role: Role) => {
                             const hasPermission = role.permissions.includes(permission.id);
                             const canEdit = role.id !== 'owner'; // 除了 owner 都可以編輯
                             const loadingKey = `${role.id}-${permission.id}`;
@@ -691,7 +878,6 @@ export default function SettingsPage() {
           <TabsContent value="users" className="space-y-6">
             <PermissionGuard permission="user:read">
               <h2 className="text-2xl font-bold">用戶管理</h2>
-              
               <Card>
                 <CardHeader>
                   <CardTitle>用戶列表</CardTitle>
@@ -701,8 +887,8 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {allUsers.map((user) => {
-                      const userRole = allRoles.find(role => role.id === user.roleId);
+                    {allUsers.map((user: UserProfile) => {
+                      const userRole = allRoles.find((role: Role) => role.id === user.roleId);
                       return (
                         <div
                           key={user.uid}
@@ -764,10 +950,7 @@ export default function SettingsPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  // TODO: 實現用戶編輯功能
-                                  console.log('編輯用戶:', user.uid);
-                                }}
+                                onClick={() => handleEditUserOpen(user)}
                               >
                                 編輯
                               </Button>
@@ -785,6 +968,47 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+              {/* 編輯用戶 Dialog */}
+              <Dialog open={!!editingUser} onOpenChange={open => !open && handleEditUserClose()}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>編輯用戶</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs mb-1">名稱</label>
+                      <Input value={editUserName} onChange={e => setEditUserName(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">Email</label>
+                      <Input value={editingUser?.email || ''} disabled />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">角色</label>
+                      <Select value={editUserRole} onValueChange={setEditUserRole}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="選擇角色" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allRoles.map((role: Role) => (
+                            <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs">啟用狀態</label>
+                      <Switch checked={editUserActive} onCheckedChange={setEditUserActive} />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={handleEditUserClose} disabled={editUserLoading}>取消</Button>
+                    <Button onClick={handleEditUserSave} disabled={editUserLoading || !editUserName.trim() || !editUserRole}>
+                      {editUserLoading ? <span className="animate-spin mr-2">⏳</span> : null}儲存
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </PermissionGuard>
           </TabsContent>
         </Tabs>
