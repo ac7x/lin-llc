@@ -20,6 +20,7 @@ import type { UserProfile } from '@/app/settings/types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
 import { Label } from '@/components/ui/label';
+import { SkillTagsInput } from '@/components/ui/skill-tags-input';
 
 export default function SettingsPage() {
   const {
@@ -279,12 +280,13 @@ export default function SettingsPage() {
     if (!editingUser) return;
     setEditUserLoading(true);
     try {
-      // 更新 Firestore 用戶 displayName/isActive/alias/phone/lineId
+      // 更新 Firestore 用戶 displayName/isActive/alias/phone/lineId/skills
       await updateDoc(doc(db, 'users', editingUser.uid), {
         displayName: editUserName.trim(),
         alias: editingUser.alias?.trim() || '',
         phone: editingUser.phone?.trim() || '',
         lineId: editingUser.lineId?.trim() || '',
+        skills: editingUser.skills || [],
         isActive: editUserActive,
         updatedAt: new Date().toISOString(),
       });
@@ -1093,21 +1095,25 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="skills">技能標籤</Label>
-                      <Input
-                        id="skills"
-                        value={editingUser?.skills?.join(', ') || ''}
-                        onChange={(e) => {
-                          const skills = e.target.value
-                            .split(',')
-                            .map(s => s.trim())
-                            .filter(s => s.length > 0);
-                          setEditingUser(prev => prev ? { ...prev, skills } : prev);
-                        }}
-                        placeholder="請輸入技能標籤，用逗號分隔（例：JavaScript, React, TypeScript）"
+                      <SkillTagsInput
+                        value={editingUser?.skills || []}
+                        onChange={skills => setEditingUser(prev => prev ? { ...prev, skills } : prev)}
+                        placeholder="輸入技能後按 Enter 或逗號新增，可移除"
+                        disabled={editUserLoading}
                       />
                       <p className="text-xs text-muted-foreground">
-                        技能標籤用逗號分隔，系統會自動去除空白
+                        按 Enter 或逗號新增，點擊 X 可移除
                       </p>
+                      {/* 顯示當前技能標籤 */}
+                      {editingUser?.skills && editingUser.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {editingUser.skills.map((skill, index) => (
+                            <Badge key={index} variant="secondary">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <label className="text-xs">啟用狀態</label>
