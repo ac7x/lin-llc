@@ -542,7 +542,7 @@ function ProjectTree({
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <SidebarMenuSub className="mx-1 border-l-0">
+          <SidebarMenuSub className="mx-1 border-l border-border/30">
             {/* 工作包列表 */}
             {project.packages?.map((pkg, pkgIdx) => (
               <SidebarMenuItem key={pkgIdx}>
@@ -564,7 +564,7 @@ function ProjectTree({
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <SidebarMenuSub className="mx-1 border-l-0">
+                    <SidebarMenuSub className="mx-1 border-l border-border/20">
                       {/* 任務列表 */}
                       {pkg.tasks?.map((task, taskIdx) => (
                         <SidebarMenuItem key={taskIdx}>
@@ -586,7 +586,7 @@ function ProjectTree({
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
-                              <SidebarMenuSub className="mx-1 border-l-0">
+                              <SidebarMenuSub className="mx-1 border-l border-border/10">
                                 {/* 子工作包列表 */}
                                 {task.subpackages?.map((sub, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
