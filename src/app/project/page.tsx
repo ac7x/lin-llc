@@ -534,6 +534,7 @@ function ProjectTree({
           <SidebarMenuButton
             isActive={selectedProject?.id === project.id}
             onClick={() => onSelectProject(project)}
+            className="pl-2"
           >
             <ChevronRightIcon className="transition-transform h-4 w-4" />
             <FolderIcon className="h-4 w-4" />
@@ -541,7 +542,7 @@ function ProjectTree({
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <SidebarMenuSub>
+          <SidebarMenuSub className="mx-1 border-l-0">
             {/* 工作包列表 */}
             {project.packages?.map((pkg, pkgIdx) => (
               <SidebarMenuItem key={pkgIdx}>
@@ -552,7 +553,7 @@ function ProjectTree({
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                       onClick={() => togglePackageExpanded(pkgIdx)}
-                      className="pl-3"
+                      className="pl-2"
                     >
                       <ChevronRightIcon className="transition-transform h-3 w-3" />
                       <PackageIcon className="h-3 w-3" />
@@ -574,7 +575,7 @@ function ProjectTree({
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
                                 onClick={() => toggleTaskExpanded(pkgIdx, taskIdx)}
-                                className="pl-3"
+                                className="pl-2"
                               >
                                 <ChevronRightIcon className="transition-transform h-3 w-3" />
                                 <CheckSquareIcon className="h-3 w-3" />
@@ -589,7 +590,7 @@ function ProjectTree({
                                 {/* 子工作包列表 */}
                                 {task.subpackages?.map((sub, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
-                                    <SidebarMenuButton className="pl-3">
+                                    <SidebarMenuButton className="pl-2">
                                       <FileIcon className="h-3 w-3" />
                                       <span className="truncate text-xs">{sub.name}</span>
                                     </SidebarMenuButton>
@@ -597,7 +598,7 @@ function ProjectTree({
                                 ))}
                                 {/* 新增子工作包按鈕 */}
                                 <SidebarMenuItem>
-                                  <div className="pl-3 pr-1 py-1">
+                                  <div className="pl-2 pr-1 py-1">
                                     {showSubInputs[pkgIdx]?.[taskIdx] ? (
                                       <div className="flex gap-1">
                                         <Input
