@@ -33,6 +33,13 @@ export const DEFAULT_PERMISSIONS: Permission[] = [
   { id: 'system:read', name: '查看系統', description: '查看系統資訊', resource: 'system', action: 'read', category: 'system' },
   { id: 'system:write', name: '編輯系統', description: '編輯系統設定', resource: 'system', action: 'write', category: 'system' },
   { id: 'system:admin', name: '系統管理', description: '完整系統管理權限', resource: 'system', action: 'admin', category: 'system' },
+  
+  // 底部導航權限控制
+  { id: 'navigation:home', name: '首頁導航', description: '顯示首頁導航項目', resource: 'navigation', action: 'home', category: 'navigation' },
+  { id: 'navigation:project', name: '專案導航', description: '顯示專案導航項目', resource: 'navigation', action: 'project', category: 'navigation' },
+  { id: 'navigation:task', name: '任務導航', description: '顯示任務導航項目', resource: 'navigation', action: 'task', category: 'navigation' },
+  { id: 'navigation:account', name: '帳戶導航', description: '顯示帳戶導航項目', resource: 'navigation', action: 'account', category: 'navigation' },
+  { id: 'navigation:settings', name: '設定導航', description: '顯示設定導航項目', resource: 'navigation', action: 'settings', category: 'navigation' },
 ];
 
 /**
@@ -58,6 +65,7 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
       'user:read', 'user:write',
       'settings:read', 'settings:write',
       'system:read',
+      'navigation:home', 'navigation:project', 'navigation:task', 'navigation:account', 'navigation:settings',
     ],
     isCustom: false,
   },
@@ -71,6 +79,7 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
       'project:read', 'project:write',
       'user:read',
       'settings:read',
+      'navigation:home', 'navigation:project', 'navigation:task', 'navigation:account',
     ],
     isCustom: false,
   },
@@ -82,6 +91,7 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
     permissions: [
       'finance:read',
       'project:read', 'project:write',
+      'navigation:home', 'navigation:project', 'navigation:task', 'navigation:account',
     ],
     isCustom: false,
   },
@@ -90,7 +100,9 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
     name: '訪客',
     description: '訪客用戶，僅有查看權限',
     level: 99,
-    permissions: [],
+    permissions: [
+      'navigation:home',
+    ],
     isCustom: false,
   },
 ];

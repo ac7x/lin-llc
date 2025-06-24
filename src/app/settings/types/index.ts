@@ -18,7 +18,7 @@ export interface Permission {
   description: string;
   resource: string;
   action: string;
-  category: 'finance' | 'project' | 'settings' | 'user' | 'system';
+  category: 'finance' | 'project' | 'settings' | 'user' | 'system' | 'navigation';
 }
 
 export interface Role {
