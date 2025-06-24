@@ -6,7 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { usePermission } from '@/hooks/use-permission';
+import { usePermission } from '@/app/settings/hooks/use-permission';
 import { useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';

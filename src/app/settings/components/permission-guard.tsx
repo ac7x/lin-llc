@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { usePermission } from '@/hooks/use-permission';
+import { usePermission } from '@/app/settings/hooks/use-permission';
 import { isOwner } from '@/app/settings/lib/env-config';
 
 interface PermissionGuardProps {
