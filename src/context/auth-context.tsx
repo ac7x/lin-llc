@@ -45,10 +45,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    const unsubscribe = initializeAuth();
+    let unsubscribe: (() => void) | undefined;
+
+    void initializeAuth().then((unsub) => {
+      unsubscribe = unsub;
+    });
     
     return () => {
-      unsubscribe.then(unsub => unsub());
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, []);
 
