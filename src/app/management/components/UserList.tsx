@@ -1,32 +1,42 @@
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
+import { ROLE_NAMES, type CustomRole } from '@/constants/roles';
 import { db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
 
 export default function UserList() {
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
+        // 載入自訂角色
+        const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
+        const roles: CustomRole[] = [];
+        rolesSnapshot.forEach(doc => {
+          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
+        });
+        setCustomRoles(roles);
+
+        // 載入用戶
         const snap = await getDocs(collection(db, 'members'));
         setUsers(snap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AppUser)));
       } catch (error) {
-        console.error('Failed to fetch users:', error);
+        console.error('Failed to fetch data:', error);
         setMessage('無法載入用戶列表');
       } finally {
         setLoading(false);
       }
     };
-    void fetchUsers();
+    void fetchData();
   }, []);
 
-  const handleRoleChange = async (uid: string, newRole: RoleKey) => {
+  const handleRoleChange = async (uid: string, newRole: string) => {
     setSavingId(uid);
     setMessage('');
     try {
@@ -37,6 +47,33 @@ export default function UserList() {
       setMessage('更新失敗');
     }
     setSavingId(null);
+  };
+
+  // 取得角色顯示名稱
+  const getRoleDisplayName = (roleId: string): string => {
+    // 檢查是否為標準角色
+    if (roleId in ROLE_NAMES) {
+      return ROLE_NAMES[roleId as keyof typeof ROLE_NAMES];
+    }
+    
+    // 檢查是否為自訂角色
+    const customRole = customRoles.find(r => r.id === roleId);
+    return customRole ? customRole.name : roleId;
+  };
+
+  // 取得所有可用角色選項
+  const getRoleOptions = () => {
+    const options = [
+      { value: 'owner', label: '擁有者' },
+      { value: 'guest', label: '訪客' },
+    ];
+    
+    // 加入自訂角色
+    customRoles.forEach(role => {
+      options.push({ value: role.id, label: role.name });
+    });
+    
+    return options;
   };
 
   if (loading) return <div className='p-4'>載入中...</div>;
@@ -60,16 +97,16 @@ export default function UserList() {
               <tr key={user.uid} className='border-b border-gray-200 dark:border-gray-700'>
                 <td className='px-4 py-2'>{user.displayName || '-'}</td>
                 <td className='px-4 py-2'>{user.email || '-'}</td>
-                <td className='px-4 py-2'>{ROLE_NAMES[user.currentRole as RoleKey] || user.currentRole}</td>
+                <td className='px-4 py-2'>{getRoleDisplayName(user.currentRole || 'guest')}</td>
                 <td className='px-4 py-2'>
                   <select
-                    value={user.currentRole}
-                    onChange={e => void handleRoleChange(user.uid, e.target.value as RoleKey)}
+                    value={user.currentRole || 'guest'}
+                    onChange={e => void handleRoleChange(user.uid, e.target.value)}
                     disabled={savingId === user.uid}
                     className='border rounded px-2 py-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100'
                   >
-                    {Object.entries(ROLE_NAMES).map(([key, name]) => (
-                      <option key={key} value={key}>{name}</option>
+                    {getRoleOptions().map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
                 </td>

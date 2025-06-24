@@ -10,12 +10,12 @@
 
 'use client';
 
-import { doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { useState } from 'react';
+import { doc, updateDoc, Timestamp, collection, getDocs } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 
 import AddressSelector from '@/app/projects/components/AddressSelector';
 import type { Project } from '@/app/projects/types/project';
-import { ROLE_NAMES, type RoleKey } from '@/constants/roles';
+import { ROLE_NAMES, type RoleKey, type CustomRole } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase-client';
 import type { AppUser } from '@/types/auth';
@@ -44,9 +44,43 @@ export default function ProjectEditModal({
   onClose,
   eligibleUsers,
 }: ProjectEditModalProps) {
+  const { user, hasPermission } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState(project.address || '');
-  const { user } = useAuth();
+  const [currentAddress, setCurrentAddress] = useState<string>(project.address || '');
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+
+  // 載入自訂角色以取得角色名稱
+  useEffect(() => {
+    const loadCustomRoles = async () => {
+      try {
+        const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
+        const roles: CustomRole[] = [];
+        rolesSnapshot.forEach(doc => {
+          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
+        });
+        setCustomRoles(roles);
+      } catch (error) {
+        console.error('Failed to load custom roles:', error);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+
+    void loadCustomRoles();
+  }, []);
+
+  // 取得角色顯示名稱
+  const getRoleDisplayName = (roleId: string): string => {
+    // 檢查是否為標準角色
+    if (roleId in ROLE_NAMES) {
+      return ROLE_NAMES[roleId as keyof typeof ROLE_NAMES];
+    }
+    
+    // 檢查是否為自訂角色
+    const customRole = customRoles.find(r => r.id === roleId);
+    return customRole ? customRole.name : roleId;
+  };
 
   // 檢查預算權限的函數
   const canEditBudget = (): boolean => {
@@ -141,7 +175,7 @@ export default function ProjectEditModal({
                 {(eligibleUsers.managers || []).map((user, index) => (
                   <option key={`manager-${user.uid}-${index}`} value={user.uid}>
                     {user.displayName} (
-                    {ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
+                    {getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})
                   </option>
                 ))}
               </select>
@@ -161,7 +195,7 @@ export default function ProjectEditModal({
                 {(eligibleUsers.supervisors || []).map((user, index) => (
                   <option key={`supervisor-${user.uid}-${index}`} value={user.uid}>
                     {user.displayName} (
-                    {ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
+                    {getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})
                   </option>
                 ))}
               </select>
@@ -181,7 +215,7 @@ export default function ProjectEditModal({
                 {(eligibleUsers.safetyOfficers || []).map((user, index) => (
                   <option key={`safety-${user.uid}-${index}`} value={user.uid}>
                     {user.displayName} (
-                    {ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
+                    {getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})
                   </option>
                 ))}
               </select>
@@ -201,7 +235,7 @@ export default function ProjectEditModal({
                 {(eligibleUsers.costControllers || []).map((user, index) => (
                   <option key={`cost-${user.uid}-${index}`} value={user.uid}>
                     {user.displayName} (
-                    {ROLE_NAMES[(user.roles?.[0] || user.currentRole) as RoleKey]})
+                    {getRoleDisplayName(user.roles?.[0] || user.currentRole || 'guest')})
                   </option>
                 ))}
               </select>

@@ -36,9 +36,9 @@ import {
 
 import { Workpackage, Project } from '@/app/projects/types/project';
 import { Unauthorized } from '@/components/common/Unauthorized';
-import { ROLE_HIERARCHY, ROLE_NAMES } from '@/constants/roles';
+import { ROLE_HIERARCHY, ROLE_NAMES, type CustomRole } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
-import { db, collection } from '@/lib/firebase-client';
+import { db, collection, getDocs } from '@/lib/firebase-client';
 import { safeToDate } from '@/utils/dateUtils';
 import { calculateProjectProgress } from '../projects/utils/progressUtils';
 
@@ -106,6 +106,7 @@ const StatCard = ({ title, loading, error, value }: StatCardProps) => (
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading, hasPermission } = useAuth();
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
 
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [workpackagesCount, setWorkpackagesCount] = useState<number>(0);
@@ -322,6 +323,36 @@ export default function DashboardPage() {
     []
   );
 
+  // 載入自訂角色以取得角色名稱
+  useEffect(() => {
+    const loadCustomRoles = async () => {
+      try {
+        const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
+        const roles: CustomRole[] = [];
+        rolesSnapshot.forEach((doc: any) => {
+          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
+        });
+        setCustomRoles(roles);
+      } catch (error) {
+        console.error('Failed to load custom roles:', error);
+      }
+    };
+
+    void loadCustomRoles();
+  }, []);
+
+  // 取得角色顯示名稱
+  const getRoleDisplayName = (roleId: string): string => {
+    // 檢查是否為標準角色
+    if (roleId in ROLE_NAMES) {
+      return ROLE_NAMES[roleId as keyof typeof ROLE_NAMES];
+    }
+    
+    // 檢查是否為自訂角色
+    const customRole = customRoles.find(r => r.id === roleId);
+    return customRole ? customRole.name : roleId;
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -331,7 +362,10 @@ export default function DashboardPage() {
   }
 
   if (!hasPermission('dashboard')) {
-    const roleName = user.currentRole ? ROLE_NAMES[user.currentRole] : '未知角色';
+    let roleName = '未知角色';
+    if (user?.currentRole) {
+      roleName = getRoleDisplayName(user.currentRole);
+    }
     return <Unauthorized message={`您目前的角色 (${roleName}) 沒有權限訪問儀表板`} />;
   }
 

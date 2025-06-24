@@ -1,53 +1,35 @@
 /**
  * 角色相關常數定義
- * 包含角色階層、角色名稱和角色檢查等常數
+ * 簡化為只有擁有者和訪客兩種初始角色
  */
 
-// 角色階層定義，給訪客一個最低的階層數字，比如 0 或 0.5
+// 角色階層定義
 export const ROLE_HIERARCHY = {
-  guest: 0, // 訪客
-  temporary: 1, // 臨時員工
-  helper: 2, // 助理
-  user: 3, // 一般員工
-  coord: 4, // 協調員
-  safety: 5, // 安全主管
-  foreman: 6, // 工頭
-  vendor: 7, // 供應商
-  finance: 8, // 財務（會計）
-  manager: 9, // 經理（專案經理／工地經理）
-  admin: 10, // 系統管理員
-  owner: 11, // 擁有者
+  owner: 0, // 擁有者 - 全部權限
+  guest: 99, // 訪客 - 最低權限
 } as const;
 
 export type RoleKey = keyof typeof ROLE_HIERARCHY;
 
 export const ROLE_NAMES: Record<RoleKey, string> = {
-  guest: '訪客',
-  temporary: '臨時員工',
-  helper: '助理',
-  user: '一般員工',
-  coord: '協調員',
-  safety: '安全主管',
-  foreman: '工頭',
-  vendor: '供應商',
-  finance: '財務',
-  manager: '經理',
-  admin: '系統管理員',
   owner: '擁有者',
+  guest: '訪客',
 } as const;
 
+// 自訂角色類型（由擁有者建立）
+export interface CustomRole {
+  id: string;
+  name: string;
+  level: number; // 1-98 之間
+  permissions: string[];
+  createdAt: string;
+  createdBy: string;
+}
+
+export type Role = RoleKey | string; // 支援自訂角色ID
+
+// 角色檢查常數
 export const ROLE_CHECKS = {
-  guest: 'isGuest',
   owner: 'isOwner',
-  admin: 'isAdmin',
-  finance: 'isFinance',
-  user: 'isUser',
-  helper: 'isHelper',
-  temporary: 'isTemporary',
-  coord: 'isCoord',
-  safety: 'isSafety',
-  foreman: 'isForeman',
-  vendor: 'isVendor',
+  guest: 'isGuest',
 } as const;
-
-export type Role = RoleKey;

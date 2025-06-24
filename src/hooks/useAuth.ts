@@ -1,18 +1,16 @@
 import { FirebaseError } from 'firebase/app';
 import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { useState, useEffect, useCallback } from 'react';
 
 import { DEFAULT_ROLE_PERMISSIONS } from '@/constants/permissions';
-import { type RoleKey } from '@/constants/roles';
+import { type RoleKey, type CustomRole } from '@/constants/roles';
 import {
   auth,
   db,
   GoogleAuthProvider,
   getIdToken,
   User,
-  collection,
-  getDocs,
 } from '@/lib/firebase-client';
 import type { AuthState, UseAuthReturn, PermissionCheckOptions, AuthError } from '@/types/auth';
 import { getErrorMessage, logError, safeAsync, retry } from '@/utils/errorUtils';
@@ -49,6 +47,23 @@ const createInitialRolePermissions = (): Record<RoleKey, Record<string, boolean>
     permissions[role] = arrayToPermissionRecord(DEFAULT_ROLE_PERMISSIONS[role]);
   });
   return permissions;
+};
+
+// 獲取自訂角色權限
+const getCustomRolePermissions = async (): Promise<Record<string, Record<string, boolean>>> => {
+  const customPermissions: Record<string, Record<string, boolean>> = {};
+  
+  await safeAsync(async () => {
+    const customRolesSnapshot = await retry(() => getDocs(collection(db, 'customRoles')), 3, 1000);
+    customRolesSnapshot.forEach(doc => {
+      const roleData = doc.data() as CustomRole;
+      customPermissions[roleData.id] = arrayToPermissionRecord(roleData.permissions);
+    });
+  }, (error) => {
+    logError(error, { operation: 'get_custom_role_permissions' });
+  });
+  
+  return customPermissions;
 };
 
 export const useAuth = (): UseAuthReturn => {
@@ -91,19 +106,29 @@ export const useAuth = (): UseAuthReturn => {
       if (currentUser) {
         await safeAsync(async () => {
           const standardPermissions = await getStandardPermissions();
+          const customPermissions = await getCustomRolePermissions();
           const memberRef = doc(db, 'members', currentUser.uid);
           const memberDoc = await getDoc(memberRef);
           const memberData = memberDoc.data();
 
           if (memberData) {
-            const userRole = memberData.currentRole as RoleKey;
-            const standardPermsForRole = standardPermissions[userRole];
+            const userRole = memberData.currentRole as string;
+            let permissionsForRole: Record<string, boolean> | undefined;
+
+            // 檢查是否為標準角色
+            if (userRole in standardPermissions) {
+              permissionsForRole = standardPermissions[userRole as RoleKey];
+            } else if (userRole in customPermissions) {
+              // 檢查是否為自訂角色
+              permissionsForRole = customPermissions[userRole];
+            }
+
             const userPermsForRole = memberData.rolePermissions?.[userRole];
 
-            if (!arePermissionsEqual(standardPermsForRole, userPermsForRole)) {
+            if (permissionsForRole && !arePermissionsEqual(permissionsForRole, userPermsForRole)) {
               const updatedRolePermissions = {
                 ...(memberData.rolePermissions || {}),
-                [userRole]: standardPermsForRole,
+                [userRole]: permissionsForRole,
               };
               await setDoc(memberRef, { rolePermissions: updatedRolePermissions }, { merge: true });
               memberData.rolePermissions = updatedRolePermissions;
@@ -225,11 +250,11 @@ export const useAuth = (): UseAuthReturn => {
       if (requiredPermissions && requiredPermissions.length > 0) {
         if (checkAll) {
           return requiredPermissions.every(
-            permission => user.rolePermissions?.[user.currentRole as RoleKey]?.[permission] === true
+            permission => user.rolePermissions?.[user.currentRole || '']?.[permission] === true
           );
         }
         return requiredPermissions.some(
-          permission => user.rolePermissions?.[user.currentRole as RoleKey]?.[permission] === true
+          permission => user.rolePermissions?.[user.currentRole || '']?.[permission] === true
         );
       }
 
@@ -252,11 +277,11 @@ export const useAuth = (): UseAuthReturn => {
     return !!permissionsForCurrentRole?.[permissionId];
   };
 
-  const getCurrentRole = (): RoleKey | undefined => {
+  const getCurrentRole = (): string | undefined => {
     return authState.user?.currentRole;
   };
 
-  const getRolePermissions = (): Record<RoleKey, Record<string, boolean>> | undefined => {
+  const getRolePermissions = (): Record<string, Record<string, boolean>> | undefined => {
     return authState.user?.rolePermissions;
   };
 

@@ -59,8 +59,8 @@ export interface AppUser extends UserWithClaims {
   metadata: UserMetadata;
   notificationSettings?: NotificationSettings;
   fcmTokens?: string[];
-  currentRole?: RoleKey;
-  rolePermissions?: Record<RoleKey, Record<string, boolean>>;
+  currentRole?: string; // 支援自訂角色ID
+  rolePermissions?: Record<string, Record<string, boolean>>; // 支援自訂角色
 }
 
 // 用於寫入的 AppUser 型別
@@ -80,7 +80,7 @@ export interface AuthResult {
 
 // 權限檢查選項介面
 export interface PermissionCheckOptions {
-  requiredRole?: RoleKey;
+  requiredRole?: string; // 支援自訂角色ID
   requiredPermissions?: string[];
   checkAll?: boolean;
 }
@@ -107,29 +107,19 @@ export interface UseAuthReturn {
   signInWithGoogle: () => Promise<void>;
   checkPermission: (options: PermissionCheckOptions) => Promise<boolean>;
   hasPermission: (permissionId: string) => boolean;
-  getCurrentRole: () => RoleKey | undefined;
-  getRolePermissions: () => Record<RoleKey, Record<string, boolean>> | undefined;
+  getCurrentRole: () => string | undefined; // 支援自訂角色ID
+  getRolePermissions: () => Record<string, Record<string, boolean>> | undefined; // 支援自訂角色
 }
 
 // 權限驗證上下文型別
 export interface AuthContextType extends UseAuthReturn {
   signOut: () => Promise<void>;
-  updateUserRole: (role: RoleKey) => Promise<void>;
-  updateUserPermissions: (permissions: Record<RoleKey, boolean>) => Promise<void>;
+  updateUserRole: (role: string) => Promise<void>; // 支援自訂角色ID
+  updateUserPermissions: (permissions: Record<string, boolean>) => Promise<void>;
 }
 
-// 所有角色定義
-export type Role =
-  | 'owner'
-  | 'admin'
-  | 'finance'
-  | 'user'
-  | 'helper'
-  | 'temporary'
-  | 'coord'
-  | 'safety'
-  | 'foreman'
-  | 'vendor';
+// 簡化的角色定義
+export type Role = 'owner' | 'guest' | string; // 支援自訂角色
 
 // 統一權限定義
 export interface UnifiedPermission {

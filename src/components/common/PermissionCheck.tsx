@@ -9,9 +9,13 @@
  * - 若有權限，則正常渲染子組件
  */
 import type { ReactElement, ReactNode } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
 
 import { ROLE_NAMES } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
+import { db } from '@/lib/firebase-client';
+import type { CustomRole } from '@/constants/roles';
 
 import { Unauthorized } from './Unauthorized';
 
@@ -27,8 +31,34 @@ export function PermissionCheck({
   unauthorizedMessage,
 }: PermissionCheckProps): ReactElement {
   const { user, loading, hasPermission } = useAuth();
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
 
-  if (loading) {
+  // 載入自訂角色以取得角色名稱
+  useEffect(() => {
+    const loadCustomRoles = async () => {
+      try {
+        const rolesSnapshot = await getDocs(collection(db, 'customRoles'));
+        const roles: CustomRole[] = [];
+        rolesSnapshot.forEach(doc => {
+          roles.push({ id: doc.id, ...doc.data() } as CustomRole);
+        });
+        setCustomRoles(roles);
+      } catch (error) {
+        console.error('Failed to load custom roles:', error);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+
+    if (user?.currentRole && !ROLE_NAMES[user.currentRole as keyof typeof ROLE_NAMES]) {
+      void loadCustomRoles();
+    } else {
+      setLoadingRoles(false);
+    }
+  }, [user]);
+
+  if (loading || loadingRoles) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
         <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
@@ -37,7 +67,18 @@ export function PermissionCheck({
   }
 
   if (!hasPermission(requiredPermission)) {
-    const roleName = user?.currentRole ? ROLE_NAMES[user.currentRole] : '未知';
+    let roleName = '未知';
+    if (user?.currentRole) {
+      // 檢查是否為標準角色
+      if (user.currentRole in ROLE_NAMES) {
+        roleName = ROLE_NAMES[user.currentRole as keyof typeof ROLE_NAMES];
+      } else {
+        // 檢查是否為自訂角色
+        const customRole = customRoles.find(r => r.id === user.currentRole);
+        roleName = customRole ? customRole.name : user.currentRole;
+      }
+    }
+    
     return (
       <Unauthorized
         message={unauthorizedMessage || `您目前的角色 (${roleName}) 沒有權限訪問此功能。`}
