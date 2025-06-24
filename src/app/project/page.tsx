@@ -244,369 +244,367 @@ export default function ProjectListPage() {
 
   return (
     <SidebarProvider>
-      <AspectRatio ratio={16 / 9} className="h-screen">
-        <div className="flex h-full">
-          <Sidebar>
-            <SidebarHeader className="border-b px-6 py-4">
-              <div className="flex items-center gap-2">
-                <FolderIcon className="h-5 w-5" />
-                <h2 className="text-lg font-semibold">專案管理</h2>
-              </div>
-            </SidebarHeader>
-            <SidebarContent>
-              {/* 建立專案表單 */}
-              <div className="p-4 border-b">
-                <Input
-                  placeholder="專案名稱"
-                  value={projectName}
-                  onChange={e => setProjectName(e.target.value)}
-                  className="mb-2"
-                />
-                <Input
-                  placeholder="專案描述（選填）"
-                  value={projectDescription}
-                  onChange={e => setProjectDescription(e.target.value)}
-                  className="mb-2"
-                />
-                <Button 
-                  onClick={handleCreateProject} 
-                  disabled={loading || !projectName.trim()}
-                  className="w-full"
-                  size="sm"
-                >
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  {loading ? '建立中...' : '建立專案'}
-                </Button>
-                {success && (
-                  <p className="text-green-600 text-center mt-2 text-sm">專案建立成功！</p>
-                )}
-              </div>
+      <div className="flex h-screen w-full">
+        <Sidebar>
+          <SidebarHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-2">
+              <FolderIcon className="h-5 w-5" />
+              <h2 className="text-lg font-semibold">專案管理</h2>
+            </div>
+          </SidebarHeader>
+          <SidebarContent>
+            {/* 建立專案表單 */}
+            <div className="p-4 border-b">
+              <Input
+                placeholder="專案名稱"
+                value={projectName}
+                onChange={e => setProjectName(e.target.value)}
+                className="mb-2"
+              />
+              <Input
+                placeholder="專案描述（選填）"
+                value={projectDescription}
+                onChange={e => setProjectDescription(e.target.value)}
+                className="mb-2"
+              />
+              <Button 
+                onClick={handleCreateProject} 
+                disabled={loading || !projectName.trim()}
+                className="w-full"
+                size="sm"
+              >
+                <PlusIcon className="h-4 w-4 mr-2" />
+                {loading ? '建立中...' : '建立專案'}
+              </Button>
+              {success && (
+                <p className="text-green-600 text-center mt-2 text-sm">專案建立成功！</p>
+              )}
+            </div>
 
-              {/* 專案列表 */}
-              <SidebarMenu>
-                {projects.map(project => (
-                  <SidebarMenuItem key={project.id}>
-                    <SidebarMenuButton
-                      isActive={selectedProject?.id === project.id}
-                      onClick={() => setSelectedProject(project)}
-                      tooltip={project.description}
-                    >
-                      <FolderIcon className="h-4 w-4" />
-                      <span className="truncate">{project.name}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
+            {/* 專案列表 */}
+            <SidebarMenu>
+              {projects.map(project => (
+                <SidebarMenuItem key={project.id}>
+                  <SidebarMenuButton
+                    isActive={selectedProject?.id === project.id}
+                    onClick={() => setSelectedProject(project)}
+                    tooltip={project.description}
+                  >
+                    <FolderIcon className="h-4 w-4" />
+                    <span className="truncate">{project.name}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
 
-              {/* 選中專案的工作包管理 */}
-              {selectedProject && (
-                <SidebarGroup>
-                  <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
-                    工作包管理
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    {/* 新增工作包 */}
-                    <div className="px-4 py-2 border-b">
-                      <div className="flex gap-2 mb-2">
-                        <Input
-                          placeholder="新增工作包"
-                          value={pkgInputs[selectedProject.id] || ''}
-                          onChange={e => setPkgInputs(prev => ({ ...prev, [selectedProject.id]: e.target.value }))}
-                          className="flex-1 text-sm"
-                          size={20}
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddPackage(selectedProject.id, pkgInputs[selectedProject.id] || '')}
-                          disabled={loading || !(pkgInputs[selectedProject.id] || '').trim()}
-                          className="px-2"
-                        >
-                          <PlusIcon className="h-3 w-3" />
-                        </Button>
-                      </div>
+            {/* 選中專案的工作包管理 */}
+            {selectedProject && (
+              <SidebarGroup>
+                <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
+                  工作包管理
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  {/* 新增工作包 */}
+                  <div className="px-4 py-2 border-b">
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        placeholder="新增工作包"
+                        value={pkgInputs[selectedProject.id] || ''}
+                        onChange={e => setPkgInputs(prev => ({ ...prev, [selectedProject.id]: e.target.value }))}
+                        className="flex-1 text-sm"
+                        size={20}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddPackage(selectedProject.id, pkgInputs[selectedProject.id] || '')}
+                        disabled={loading || !(pkgInputs[selectedProject.id] || '').trim()}
+                        className="px-2"
+                      >
+                        <PlusIcon className="h-3 w-3" />
+                      </Button>
                     </div>
+                  </div>
 
-                    {/* 工作包列表 */}
-                    <div className="space-y-1">
-                      {selectedProject.packages?.map((pkg, pkgIdx) => {
-                        const isExpanded = expandedPackages[selectedProject.id]?.has(pkgIdx);
-                        return (
-                          <div key={pkgIdx} className="border-b">
-                            {/* 工作包標題 */}
-                            <button
-                              onClick={() => togglePackageExpanded(selectedProject.id, pkgIdx)}
-                              className="w-full px-4 py-2 text-left hover:bg-muted/50 flex items-center gap-2 text-sm"
-                            >
-                              {isExpanded ? (
-                                <ChevronDownIcon className="h-3 w-3" />
-                              ) : (
-                                <ChevronRightIcon className="h-3 w-3" />
-                              )}
-                              <PackageIcon className="h-3 w-3" />
-                              <span className="truncate">{pkg.name}</span>
-                              <span className="ml-auto text-xs text-muted-foreground">
-                                {pkg.tasks?.length || 0}
-                              </span>
-                            </button>
+                  {/* 工作包列表 */}
+                  <div className="space-y-1">
+                    {selectedProject.packages?.map((pkg, pkgIdx) => {
+                      const isExpanded = expandedPackages[selectedProject.id]?.has(pkgIdx);
+                      return (
+                        <div key={pkgIdx} className="border-b">
+                          {/* 工作包標題 */}
+                          <button
+                            onClick={() => togglePackageExpanded(selectedProject.id, pkgIdx)}
+                            className="w-full px-4 py-2 text-left hover:bg-muted/50 flex items-center gap-2 text-sm"
+                          >
+                            {isExpanded ? (
+                              <ChevronDownIcon className="h-3 w-3" />
+                            ) : (
+                              <ChevronRightIcon className="h-3 w-3" />
+                            )}
+                            <PackageIcon className="h-3 w-3" />
+                            <span className="truncate">{pkg.name}</span>
+                            <span className="ml-auto text-xs text-muted-foreground">
+                              {pkg.tasks?.length || 0}
+                            </span>
+                          </button>
 
-                            {/* 工作包內容 */}
-                            {isExpanded && (
-                              <div className="bg-muted/20">
-                                {/* 新增任務 */}
-                                <div className="px-4 py-2 border-b">
-                                  <div className="flex gap-2">
-                                    <Input
-                                      placeholder="新增任務"
-                                      value={taskInputs[selectedProject.id]?.[pkgIdx] || ''}
-                                      onChange={e => setTaskInputs(prev => ({
-                                        ...prev,
-                                        [selectedProject.id]: { ...prev[selectedProject.id], [pkgIdx]: e.target.value }
-                                      }))}
-                                      className="flex-1 text-xs"
-                                      size={15}
-                                    />
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleAddTask(selectedProject.id, pkgIdx, taskInputs[selectedProject.id]?.[pkgIdx] || '')}
-                                      disabled={loading || !(taskInputs[selectedProject.id]?.[pkgIdx] || '').trim()}
-                                      className="px-2"
-                                    >
-                                      <PlusIcon className="h-3 w-3" />
-                                    </Button>
-                                  </div>
+                          {/* 工作包內容 */}
+                          {isExpanded && (
+                            <div className="bg-muted/20">
+                              {/* 新增任務 */}
+                              <div className="px-4 py-2 border-b">
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="新增任務"
+                                    value={taskInputs[selectedProject.id]?.[pkgIdx] || ''}
+                                    onChange={e => setTaskInputs(prev => ({
+                                      ...prev,
+                                      [selectedProject.id]: { ...prev[selectedProject.id], [pkgIdx]: e.target.value }
+                                    }))}
+                                    className="flex-1 text-xs"
+                                    size={15}
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleAddTask(selectedProject.id, pkgIdx, taskInputs[selectedProject.id]?.[pkgIdx] || '')}
+                                    disabled={loading || !(taskInputs[selectedProject.id]?.[pkgIdx] || '').trim()}
+                                    className="px-2"
+                                  >
+                                    <PlusIcon className="h-3 w-3" />
+                                  </Button>
                                 </div>
+                              </div>
 
-                                {/* 任務列表 */}
-                                <div className="space-y-1">
-                                  {pkg.tasks?.map((task, taskIdx) => {
-                                    const isTaskExpanded = expandedTasks[selectedProject.id]?.[pkgIdx]?.has(taskIdx);
-                                    return (
-                                      <div key={taskIdx} className="border-b">
-                                        {/* 任務標題 */}
-                                        <button
-                                          onClick={() => toggleTaskExpanded(selectedProject.id, pkgIdx, taskIdx)}
-                                          className="w-full px-6 py-1.5 text-left hover:bg-muted/30 flex items-center gap-2 text-xs"
-                                        >
-                                          {isTaskExpanded ? (
-                                            <ChevronDownIcon className="h-2.5 w-2.5" />
-                                          ) : (
-                                            <ChevronRightIcon className="h-2.5 w-2.5" />
-                                          )}
-                                          <CheckSquareIcon className="h-2.5 w-2.5" />
-                                          <span className="truncate">任務 {taskIdx + 1}</span>
-                                          <span className="ml-auto text-xs text-muted-foreground">
-                                            {task.subpackages?.length || 0}
-                                          </span>
-                                        </button>
+                              {/* 任務列表 */}
+                              <div className="space-y-1">
+                                {pkg.tasks?.map((task, taskIdx) => {
+                                  const isTaskExpanded = expandedTasks[selectedProject.id]?.[pkgIdx]?.has(taskIdx);
+                                  return (
+                                    <div key={taskIdx} className="border-b">
+                                      {/* 任務標題 */}
+                                      <button
+                                        onClick={() => toggleTaskExpanded(selectedProject.id, pkgIdx, taskIdx)}
+                                        className="w-full px-6 py-1.5 text-left hover:bg-muted/30 flex items-center gap-2 text-xs"
+                                      >
+                                        {isTaskExpanded ? (
+                                          <ChevronDownIcon className="h-2.5 w-2.5" />
+                                        ) : (
+                                          <ChevronRightIcon className="h-2.5 w-2.5" />
+                                        )}
+                                        <CheckSquareIcon className="h-2.5 w-2.5" />
+                                        <span className="truncate">任務 {taskIdx + 1}</span>
+                                        <span className="ml-auto text-xs text-muted-foreground">
+                                          {task.subpackages?.length || 0}
+                                        </span>
+                                      </button>
 
-                                        {/* 任務內容 */}
-                                        {isTaskExpanded && (
-                                          <div className="bg-muted/10">
-                                            {/* 新增子工作包 */}
-                                            <div className="px-6 py-1.5 border-b">
-                                              <div className="flex gap-2">
-                                                <Input
-                                                  placeholder="新增子工作包"
-                                                  value={subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || ''}
-                                                  onChange={e => setSubInputs(prev => ({
-                                                    ...prev,
-                                                    [selectedProject.id]: {
-                                                      ...prev[selectedProject.id],
-                                                      [pkgIdx]: {
-                                                        ...prev[selectedProject.id]?.[pkgIdx],
-                                                        [taskIdx]: e.target.value
-                                                      }
+                                      {/* 任務內容 */}
+                                      {isTaskExpanded && (
+                                        <div className="bg-muted/10">
+                                          {/* 新增子工作包 */}
+                                          <div className="px-6 py-1.5 border-b">
+                                            <div className="flex gap-2">
+                                              <Input
+                                                placeholder="新增子工作包"
+                                                value={subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || ''}
+                                                onChange={e => setSubInputs(prev => ({
+                                                  ...prev,
+                                                  [selectedProject.id]: {
+                                                    ...prev[selectedProject.id],
+                                                    [pkgIdx]: {
+                                                      ...prev[selectedProject.id]?.[pkgIdx],
+                                                      [taskIdx]: e.target.value
                                                     }
-                                                  }))}
-                                                  className="flex-1 text-xs"
-                                                  size={12}
-                                                />
-                                                <Button
-                                                  size="sm"
-                                                  onClick={() => handleAddSubpackage(selectedProject.id, pkgIdx, taskIdx, subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || '')}
-                                                  disabled={loading || !(subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
-                                                  className="px-1.5"
-                                                >
-                                                  <PlusIcon className="h-2.5 w-2.5" />
-                                                </Button>
-                                              </div>
-                                            </div>
-
-                                            {/* 子工作包列表 */}
-                                            <div className="px-6 py-1">
-                                              {task.subpackages?.map((sub, subIdx) => (
-                                                <div key={subIdx} className="flex items-center gap-2 py-0.5 text-xs">
-                                                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                                  <span className="truncate">{sub.name}</span>
-                                                </div>
-                                              ))}
+                                                  }
+                                                }))}
+                                                className="flex-1 text-xs"
+                                                size={12}
+                                              />
+                                              <Button
+                                                size="sm"
+                                                onClick={() => handleAddSubpackage(selectedProject.id, pkgIdx, taskIdx, subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || '')}
+                                                disabled={loading || !(subInputs[selectedProject.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
+                                                className="px-1.5"
+                                              >
+                                                <PlusIcon className="h-2.5 w-2.5" />
+                                              </Button>
                                             </div>
                                           </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              )}
-            </SidebarContent>
-          </Sidebar>
 
-          <ResizablePanelGroup
-            direction="horizontal"
-            className="min-h-[200px] w-full rounded-lg border"
-          >
-            <ResizablePanel defaultSize={50}>
-              <div className="flex h-full flex-col">
-                <header className="border-b px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <SidebarTrigger />
-                    <h1 className="text-xl font-semibold">
-                      {selectedProject ? selectedProject.name : '選擇專案'}
-                    </h1>
+                                          {/* 子工作包列表 */}
+                                          <div className="px-6 py-1">
+                                            {task.subpackages?.map((sub, subIdx) => (
+                                              <div key={subIdx} className="flex items-center gap-2 py-0.5 text-xs">
+                                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                                <span className="truncate">{sub.name}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                </header>
-                
-                <div className="flex-1 overflow-auto p-6">
-                  {selectedProject ? (
-                    <div className="space-y-6">
-                      {/* 專案資訊 */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <SettingsIcon className="h-5 w-5" />
-                            專案資訊
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-gray-600 mb-2">{selectedProject.description || '無描述'}</p>
-                          <p className="text-sm text-gray-400">
-                            建立時間：{new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
-                          </p>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+          </SidebarContent>
+        </Sidebar>
+
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="flex-1 min-h-0"
+        >
+          <ResizablePanel defaultSize={50} minSize={30}>
+            <div className="flex h-full flex-col">
+              <header className="border-b px-6 py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="flex items-center gap-2">
+                  <SidebarTrigger />
+                  <h1 className="text-xl font-semibold">
+                    {selectedProject ? selectedProject.name : '選擇專案'}
+                  </h1>
+                </div>
+              </header>
+              
+              <div className="flex-1 overflow-auto p-6">
+                {selectedProject ? (
+                  <div className="space-y-6">
+                    {/* 專案資訊 */}
+                    <Card className="border-0 shadow-sm">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <SettingsIcon className="h-5 w-5" />
+                          專案資訊
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-600 mb-2">{selectedProject.description || '無描述'}</p>
+                        <p className="text-sm text-gray-400">
+                          建立時間：{new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    {/* 專案概覽卡片 */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card className="border-0 shadow-sm">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-2">
+                            <PackageIcon className="h-5 w-5 text-blue-500" />
+                            <div>
+                              <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
+                              <p className="text-sm text-muted-foreground">工作包</p>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
-
-                      {/* 專案概覽卡片 */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="flex items-center gap-2">
-                              <PackageIcon className="h-5 w-5 text-blue-500" />
-                              <div>
-                                <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
-                                <p className="text-sm text-muted-foreground">工作包</p>
-                              </div>
+                      
+                      <Card className="border-0 shadow-sm">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-2">
+                            <CheckSquareIcon className="h-5 w-5 text-green-500" />
+                            <div>
+                              <p className="text-2xl font-bold">
+                                {selectedProject.packages?.reduce((total, pkg) => total + (pkg.tasks?.length || 0), 0) || 0}
+                              </p>
+                              <p className="text-sm text-muted-foreground">任務</p>
                             </div>
-                          </CardContent>
-                        </Card>
-                        
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="flex items-center gap-2">
-                              <CheckSquareIcon className="h-5 w-5 text-green-500" />
-                              <div>
-                                <p className="text-2xl font-bold">
-                                  {selectedProject.packages?.reduce((total, pkg) => total + (pkg.tasks?.length || 0), 0) || 0}
-                                </p>
-                                <p className="text-sm text-muted-foreground">任務</p>
-                              </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card className="border-0 shadow-sm">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-2">
+                            <ListIcon className="h-5 w-5 text-purple-500" />
+                            <div>
+                              <p className="text-2xl font-bold">
+                                {selectedProject.packages?.reduce((total, pkg) => 
+                                  total + pkg.tasks?.reduce((taskTotal, task) => 
+                                    taskTotal + (task.subpackages?.length || 0), 0
+                                  ), 0
+                                ) || 0}
+                              </p>
+                              <p className="text-sm text-muted-foreground">子工作包</p>
                             </div>
-                          </CardContent>
-                        </Card>
-                        
-                        <Card>
-                          <CardContent className="pt-6">
-                            <div className="flex items-center gap-2">
-                              <ListIcon className="h-5 w-5 text-purple-500" />
-                              <div>
-                                <p className="text-2xl font-bold">
-                                  {selectedProject.packages?.reduce((total, pkg) => 
-                                    total + pkg.tasks?.reduce((taskTotal, task) => 
-                                      taskTotal + (task.subpackages?.length || 0), 0
-                                    ), 0
-                                  ) || 0}
-                                </p>
-                                <p className="text-sm text-muted-foreground">子工作包</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <p className="text-gray-500">請選擇一個專案</p>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">請選擇一個專案</p>
+                  </div>
+                )}
               </div>
-            </ResizablePanel>
-            
-            <ResizableHandle withHandle />
-            
-            <ResizablePanel defaultSize={50}>
-              <ResizablePanelGroup direction="vertical">
-                <ResizablePanel defaultSize={25}>
-                  <div className="flex h-full items-center justify-center p-6">
-                    <div className="text-center">
-                      <h3 className="font-semibold mb-2">專案概覽</h3>
-                      {selectedProject ? (
-                        <div className="text-sm space-y-1">
-                          <p><strong>專案名稱：</strong>{selectedProject.name}</p>
-                          <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
-                          <p><strong>總任務數：</strong>
-                            {selectedProject.packages?.reduce((total, pkg) => total + (pkg.tasks?.length || 0), 0) || 0}
-                          </p>
-                          <p><strong>總子工作包數：</strong>
-                            {selectedProject.packages?.reduce((total, pkg) => 
-                              total + pkg.tasks?.reduce((taskTotal, task) => 
-                                taskTotal + (task.subpackages?.length || 0), 0
-                              ), 0
-                            ) || 0}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-gray-500">選擇專案以查看概覽</p>
-                      )}
-                    </div>
+            </div>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle className="w-1 bg-border hover:bg-border/80 transition-colors" />
+          
+          <ResizablePanel defaultSize={50} minSize={20}>
+            <ResizablePanelGroup direction="vertical">
+              <ResizablePanel defaultSize={25} minSize={15}>
+                <div className="flex h-full items-center justify-center p-6 bg-muted/5">
+                  <div className="text-center">
+                    <h3 className="font-semibold mb-2">專案概覽</h3>
+                    {selectedProject ? (
+                      <div className="text-sm space-y-1">
+                        <p><strong>專案名稱：</strong>{selectedProject.name}</p>
+                        <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
+                        <p><strong>總任務數：</strong>
+                          {selectedProject.packages?.reduce((total, pkg) => total + (pkg.tasks?.length || 0), 0) || 0}
+                        </p>
+                        <p><strong>總子工作包數：</strong>
+                          {selectedProject.packages?.reduce((total, pkg) => 
+                            total + pkg.tasks?.reduce((taskTotal, task) => 
+                              taskTotal + (task.subpackages?.length || 0), 0
+                            ), 0
+                          ) || 0}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">選擇專案以查看概覽</p>
+                    )}
                   </div>
-                </ResizablePanel>
-                
-                <ResizableHandle withHandle />
-                
-                <ResizablePanel defaultSize={75}>
-                  <div className="flex h-full items-center justify-center p-6">
-                    <div className="text-center">
-                      <h3 className="font-semibold mb-2">詳細資訊</h3>
-                      {selectedProject ? (
-                        <div className="text-sm space-y-1">
-                          <p><strong>建立時間：</strong></p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
-                          </p>
-                          <p><strong>專案描述：</strong></p>
-                          <p className="text-xs text-muted-foreground">
-                            {selectedProject.description || '無描述'}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-gray-500">選擇專案以查看詳細資訊</p>
-                      )}
-                    </div>
+                </div>
+              </ResizablePanel>
+              
+              <ResizableHandle withHandle className="h-1 bg-border hover:bg-border/80 transition-colors" />
+              
+              <ResizablePanel defaultSize={75} minSize={25}>
+                <div className="flex h-full items-center justify-center p-6 bg-muted/10">
+                  <div className="text-center">
+                    <h3 className="font-semibold mb-2">詳細資訊</h3>
+                    {selectedProject ? (
+                      <div className="text-sm space-y-1">
+                        <p><strong>建立時間：</strong></p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
+                        </p>
+                        <p><strong>專案描述：</strong></p>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedProject.description || '無描述'}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">選擇專案以查看詳細資訊</p>
+                    )}
                   </div>
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </div>
-      </AspectRatio>
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
     </SidebarProvider>
   );
 } 
