@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { permissionService } from '@/lib/permission-service';
-import { Role, Permission, UserProfile, UserRole } from '@/types';
+import { Role, Permission, UserProfile } from '@/types';
 import { isOwner } from '@/lib/env-config';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
 
 interface UsePermissionReturn {
   // 權限檢查
@@ -51,10 +49,43 @@ export function usePermission(): UsePermissionReturn {
       setLoading(true);
       setError(null);
       
-      const permissionCheck = await permissionService.checkUserPermission(user.uid, 'system:read');
-      setUserRole(permissionCheck.role);
-      setUserProfile(permissionCheck.userProfile);
+      console.log('開始載入用戶資料，UID:', user.uid);
+      console.log('環境變數 OWNER_UID:', process.env.NEXT_PUBLIC_OWNER_UID);
+      console.log('是否為擁有者:', isOwner(user.uid));
+      
+      // 檢查是否為擁有者
+      if (isOwner(user.uid)) {
+        console.log('用戶為擁有者，載入擁有者角色');
+        // 擁有者直接載入擁有者角色
+        const ownerRole = await permissionService.getAllRoles().then(roles => 
+          roles.find(role => role.id === 'owner')
+        );
+        
+        if (ownerRole) {
+          setUserRole(ownerRole);
+          console.log('擁有者角色已載入:', ownerRole);
+        }
+        
+        // 載入或創建擁有者用戶資料
+        const userProfile = await permissionService.getAllUsers().then(users => 
+          users.find(u => u.uid === user.uid)
+        );
+        
+        if (userProfile) {
+          setUserProfile(userProfile);
+          console.log('擁有者用戶資料已載入:', userProfile);
+        } else {
+          console.log('擁有者用戶資料不存在，將在下次登入時創建');
+        }
+      } else {
+        console.log('用戶非擁有者，檢查權限');
+        const permissionCheck = await permissionService.checkUserPermission(user.uid, 'system:read');
+        setUserRole(permissionCheck.role);
+        setUserProfile(permissionCheck.userProfile);
+        console.log('權限檢查結果:', permissionCheck);
+      }
     } catch (err) {
+      console.error('載入用戶資料失敗:', err);
       setError(err instanceof Error ? err.message : '載入用戶資料失敗');
     } finally {
       setLoading(false);

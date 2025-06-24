@@ -159,6 +159,15 @@ export default function SettingsPage() {
 
   // 檢查權限
   if (!userProfile || (!isOwner(userProfile.uid) && !userRole?.permissions.includes('settings:read'))) {
+    console.log('權限檢查失敗:');
+    console.log('- userProfile:', userProfile);
+    console.log('- userProfile?.uid:', userProfile?.uid);
+    console.log('- 環境變數 NEXT_PUBLIC_OWNER_UID:', process.env.NEXT_PUBLIC_OWNER_UID);
+    console.log('- isOwner(userProfile?.uid):', userProfile?.uid ? isOwner(userProfile.uid) : 'N/A');
+    console.log('- userRole:', userRole);
+    console.log('- userRole?.permissions:', userRole?.permissions);
+    console.log('- 是否有 settings:read 權限:', userRole?.permissions.includes('settings:read'));
+    
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
@@ -168,6 +177,15 @@ export default function SettingsPage() {
               您沒有權限訪問此頁面
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p>用戶 ID: {userProfile?.uid || '未載入'}</p>
+              <p>擁有者 ID: {process.env.NEXT_PUBLIC_OWNER_UID || '未設定'}</p>
+              <p>是否為擁有者: {userProfile?.uid ? (isOwner(userProfile.uid) ? '是' : '否') : '未知'}</p>
+              <p>用戶角色: {userRole?.name || '未載入'}</p>
+              <p>權限數量: {userRole?.permissions.length || 0}</p>
+            </div>
+          </CardContent>
         </Card>
       </div>
     );
