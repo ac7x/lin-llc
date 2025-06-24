@@ -4,9 +4,37 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { usePermission } from '@/hooks/use-permission';
+import { useEffect } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { zhTW } from 'date-fns/locale';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
+  const { 
+    userProfile, 
+    allUsers, 
+    loadAllUsers, 
+    pointsLeaderboard, 
+    loadPointsLeaderboard,
+    userPoints,
+    loadUserPoints
+  } = usePermission();
+
+  useEffect(() => {
+    if (userProfile?.uid) {
+      void loadAllUsers();
+      void loadPointsLeaderboard(10);
+      void loadUserPoints(userProfile.uid);
+    }
+  }, [userProfile?.uid, loadAllUsers, loadPointsLeaderboard, loadUserPoints]);
+
+  const onlineUsers = allUsers.filter(user => user.isOnline);
+  const recentUsers = allUsers
+    .sort((a, b) => new Date(b.lastLoginAt).getTime() - new Date(a.lastLoginAt).getTime())
+    .slice(0, 5);
 
   if (loading) {
     return (
@@ -175,6 +203,163 @@ export default function HomePage() {
             </Card>
           </div>
         )}
+
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">企業管理系統</h1>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">積分: {userPoints}</Badge>
+              {userProfile?.isOnline && (
+                <Badge variant="default" className="bg-green-500">在線</Badge>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* 用戶總數 */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">用戶總數</CardTitle>
+                <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{allUsers.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  活躍用戶: {allUsers.filter(u => u.isActive).length}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* 在線用戶 */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">在線用戶</CardTitle>
+                <svg className="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{onlineUsers.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  活躍度: {allUsers.length > 0 ? Math.round((onlineUsers.length / allUsers.length) * 100) : 0}%
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* 用戶積分 */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">我的積分</CardTitle>
+                <svg className="h-4 w-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">{userPoints}</div>
+                <p className="text-xs text-muted-foreground">
+                  排名: {pointsLeaderboard.findIndex(u => u.uid === userProfile?.uid) + 1 || '未上榜'}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* 系統狀態 */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">系統狀態</CardTitle>
+                <svg className="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">正常</div>
+                <p className="text-xs text-muted-foreground">
+                  最後更新: {new Date().toLocaleTimeString('zh-TW')}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 積分排行榜 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>積分排行榜</CardTitle>
+                <CardDescription>前 10 名用戶積分排行</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {pointsLeaderboard.map((user, index) => (
+                    <div key={user.uid} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold">
+                          {index + 1}
+                        </div>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user.photoURL} alt={user.displayName} />
+                          <AvatarFallback>{user.displayName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{user.displayName}</p>
+                          <p className="text-sm text-muted-foreground">積分: {user.points}</p>
+                        </div>
+                      </div>
+                      {index < 3 && (
+                        <Badge variant={index === 0 ? "default" : index === 1 ? "secondary" : "outline"}>
+                          {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                  {pointsLeaderboard.length === 0 && (
+                    <p className="text-center text-muted-foreground py-4">暫無積分數據</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 最近上線 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>最近上線</CardTitle>
+                <CardDescription>最近登入的用戶</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentUsers.map((user) => (
+                    <div key={user.uid} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user.photoURL} alt={user.displayName} />
+                          <AvatarFallback>{user.displayName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{user.displayName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDistanceToNow(new Date(user.lastLoginAt), { 
+                              addSuffix: true, 
+                              locale: zhTW 
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {user.isOnline && (
+                          <Badge variant="default" className="bg-green-500">在線</Badge>
+                        )}
+                        <Badge variant="outline">積分: {user.points || 0}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                  {recentUsers.length === 0 && (
+                    <p className="text-center text-muted-foreground py-4">暫無用戶數據</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
     </div>
   );

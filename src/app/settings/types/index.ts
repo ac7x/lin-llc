@@ -54,6 +54,8 @@ export interface UserProfile {
   position?: string;
   phone?: string;
   lineId?: string; // Line ID
+  skills?: string[]; // 技能標籤陣列
+  points?: number; // 積分
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

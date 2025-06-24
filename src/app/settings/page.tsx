@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import type { UserProfile } from '@/app/settings/types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
+import { Label } from '@/components/ui/label';
 
 export default function SettingsPage() {
   const {
@@ -994,7 +995,18 @@ export default function SettingsPage() {
                                 <div>別名：<span className="font-medium">{user.alias || '未設定'}</span></div>
                                 <div>電話：<span className="font-medium">{user.phone || '未設定'}</span></div>
                                 <div>Line ID：<span className="font-medium">{user.lineId || '未設定'}</span></div>
+                                <div>積分：<span className="font-medium">{user.points || 0}</span></div>
                               </div>
+                              {/* 技能標籤 */}
+                              {user.skills && user.skills.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {user.skills.map((skill, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {skill}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -1035,20 +1047,32 @@ export default function SettingsPage() {
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs mb-1">名稱</label>
-                      <Input value={editUserName} onChange={e => setEditUserName(e.target.value)} />
+                      <label className="block text-xs mb-1">顯示名稱</label>
+                      <Input value={editingUser?.displayName || ''} onChange={e => setEditingUser(prev => prev ? { ...prev, displayName: e.target.value } : prev)} />
                     </div>
                     <div>
                       <label className="block text-xs mb-1">別名</label>
                       <Input value={editingUser?.alias || ''} onChange={e => setEditingUser(prev => prev ? { ...prev, alias: e.target.value } : prev)} />
                     </div>
-                    <div>
-                      <label className="block text-xs mb-1">聯絡電話</label>
-                      <Input value={editingUser?.phone || ''} onChange={e => setEditingUser(prev => prev ? { ...prev, phone: e.target.value } : prev)} />
-                    </div>
-                    <div>
-                      <label className="block text-xs mb-1">Line ID</label>
-                      <Input value={editingUser?.lineId || ''} onChange={e => setEditingUser(prev => prev ? { ...prev, lineId: e.target.value } : prev)} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">聯絡電話</Label>
+                        <Input
+                          id="phone"
+                          value={editingUser?.phone || ''}
+                          onChange={e => setEditingUser(prev => prev ? { ...prev, phone: e.target.value } : prev)}
+                          placeholder="請輸入聯絡電話"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lineId">Line ID</Label>
+                        <Input
+                          id="lineId"
+                          value={editingUser?.lineId || ''}
+                          onChange={e => setEditingUser(prev => prev ? { ...prev, lineId: e.target.value } : prev)}
+                          placeholder="請輸入 Line ID"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs mb-1">Email</label>
@@ -1066,6 +1090,24 @@ export default function SettingsPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="skills">技能標籤</Label>
+                      <Input
+                        id="skills"
+                        value={editingUser?.skills?.join(', ') || ''}
+                        onChange={(e) => {
+                          const skills = e.target.value
+                            .split(',')
+                            .map(s => s.trim())
+                            .filter(s => s.length > 0);
+                          setEditingUser(prev => prev ? { ...prev, skills } : prev);
+                        }}
+                        placeholder="請輸入技能標籤，用逗號分隔（例：JavaScript, React, TypeScript）"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        技能標籤用逗號分隔，系統會自動去除空白
+                      </p>
                     </div>
                     <div className="flex items-center justify-between">
                       <label className="text-xs">啟用狀態</label>

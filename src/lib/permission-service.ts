@@ -461,6 +461,122 @@ export class PermissionService {
     
     return (now.getTime() - lastActivity.getTime()) < onlineTimeoutMs;
   }
+
+  // 更新用戶在線狀態
+  async updateUserOnlineStatus(uid: string, isOnline: boolean): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', uid);
+      await updateDoc(userRef, {
+        isOnline,
+        lastActivityAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('更新用戶在線狀態失敗:', error);
+      throw error;
+    }
+  }
+
+  // 獲取用戶積分
+  async getUserPoints(uid: string): Promise<number> {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      if (userDoc.exists()) {
+        return userDoc.data().points || 0;
+      }
+      return 0;
+    } catch (error) {
+      console.error('獲取用戶積分失敗:', error);
+      return 0;
+    }
+  }
+
+  // 更新用戶積分
+  async updateUserPoints(uid: string, points: number, reason?: string): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', uid);
+      await updateDoc(userRef, {
+        points,
+        updatedAt: new Date().toISOString()
+      });
+
+      // 記錄積分變更歷史
+      const pointsHistoryRef = doc(collection(db, 'pointsHistory'));
+      await setDoc(pointsHistoryRef, {
+        uid,
+        points,
+        reason: reason || '積分更新',
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('更新用戶積分失敗:', error);
+      throw error;
+    }
+  }
+
+  // 增加用戶積分
+  async addUserPoints(uid: string, pointsToAdd: number, reason?: string): Promise<void> {
+    try {
+      const currentPoints = await this.getUserPoints(uid);
+      await this.updateUserPoints(uid, currentPoints + pointsToAdd, reason);
+    } catch (error) {
+      console.error('增加用戶積分失敗:', error);
+      throw error;
+    }
+  }
+
+  // 獲取積分排行榜
+  async getPointsLeaderboard(limitCount: number = 10): Promise<Array<{ uid: string; displayName: string; points: number; photoURL?: string }>> {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(
+        usersRef,
+        where('isActive', '==', true),
+        orderBy('points', 'desc'),
+        limit(limitCount)
+      );
+      
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          uid: doc.id,
+          displayName: data.displayName || '未知用戶',
+          points: data.points || 0,
+          photoURL: data.photoURL
+        };
+      });
+    } catch (error) {
+      console.error('獲取積分排行榜失敗:', error);
+      return [];
+    }
+  }
+
+  // 獲取積分歷史記錄
+  async getPointsHistory(uid: string, limitCount: number = 20): Promise<Array<{ points: number; reason: string; createdAt: string }>> {
+    try {
+      const historyRef = collection(db, 'pointsHistory');
+      const q = query(
+        historyRef,
+        where('uid', '==', uid),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          points: data.points || 0,
+          reason: data.reason || '積分更新',
+          createdAt: data.createdAt
+        };
+      });
+    } catch (error) {
+      console.error('獲取積分歷史記錄失敗:', error);
+      return [];
+    }
+  }
 }
 
 // 導出單例實例

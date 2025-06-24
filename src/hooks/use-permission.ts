@@ -37,6 +37,16 @@ interface UsePermissionReturn {
   // 新增方法
   updateUserActivity: () => Promise<void>;
   isUserOnline: (lastActivityAt?: string, lastLoginAt?: string) => boolean;
+  
+  // 積分相關
+  allUsersLoading: boolean;
+  pointsLeaderboard: Array<{ uid: string; displayName: string; points: number; photoURL?: string }>;
+  pointsHistory: Array<{ points: number; reason: string; createdAt: string }>;
+  userPoints: number;
+  loadPointsLeaderboard: (limitCount?: number) => Promise<void>;
+  loadUserPoints: (uid: string) => Promise<void>;
+  loadPointsHistory: (uid: string, limitCount?: number) => Promise<void>;
+  addUserPoints: (uid: string, pointsToAdd: number, reason?: string) => Promise<void>;
 }
 
 export function usePermission(): UsePermissionReturn {
@@ -46,6 +56,10 @@ export function usePermission(): UsePermissionReturn {
   const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
+  const [allUsersLoading, setAllUsersLoading] = useState(false);
+  const [pointsLeaderboard, setPointsLeaderboard] = useState<Array<{ uid: string; displayName: string; points: number; photoURL?: string }>>([]);
+  const [pointsHistory, setPointsHistory] = useState<Array<{ points: number; reason: string; createdAt: string }>>([]);
+  const [userPoints, setUserPoints] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permissionCache, setPermissionCache] = useState<Map<string, boolean>>(new Map());
@@ -133,18 +147,63 @@ export function usePermission(): UsePermissionReturn {
 
   // 載入所有用戶
   const loadAllUsers = useCallback(async () => {
+    if (!userProfile?.uid) return;
+    
+    setAllUsersLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-      
       const users = await permissionService.getAllUsers();
       setAllUsers(users);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '載入用戶失敗');
+    } catch (error) {
+      console.error('載入所有用戶失敗:', error);
     } finally {
-      setLoading(false);
+      setAllUsersLoading(false);
+    }
+  }, [userProfile?.uid]);
+
+  // 載入積分排行榜
+  const loadPointsLeaderboard = useCallback(async (limitCount: number = 10) => {
+    try {
+      const leaderboard = await permissionService.getPointsLeaderboard(limitCount);
+      setPointsLeaderboard(leaderboard);
+    } catch (error) {
+      console.error('載入積分排行榜失敗:', error);
     }
   }, []);
+
+  // 載入用戶積分
+  const loadUserPoints = useCallback(async (uid: string) => {
+    try {
+      const points = await permissionService.getUserPoints(uid);
+      setUserPoints(points);
+    } catch (error) {
+      console.error('載入用戶積分失敗:', error);
+    }
+  }, []);
+
+  // 載入積分歷史記錄
+  const loadPointsHistory = useCallback(async (uid: string, limitCount: number = 20) => {
+    try {
+      const history = await permissionService.getPointsHistory(uid, limitCount);
+      setPointsHistory(history);
+    } catch (error) {
+      console.error('載入積分歷史記錄失敗:', error);
+    }
+  }, []);
+
+  // 增加用戶積分
+  const addUserPoints = useCallback(async (uid: string, pointsToAdd: number, reason?: string) => {
+    try {
+      await permissionService.addUserPoints(uid, pointsToAdd, reason);
+      // 重新載入相關資料
+      if (uid === userProfile?.uid) {
+        await loadUserPoints(uid);
+      }
+      await loadPointsLeaderboard();
+    } catch (error) {
+      console.error('增加用戶積分失敗:', error);
+      throw error;
+    }
+  }, [userProfile?.uid, loadUserPoints, loadPointsLeaderboard]);
 
   // 更新用戶活動時間
   const updateUserActivity = useCallback(async () => {
@@ -342,5 +401,13 @@ export function usePermission(): UsePermissionReturn {
     loadAllUsers,
     updateUserActivity,
     isUserOnline,
+    allUsersLoading,
+    pointsLeaderboard,
+    pointsHistory,
+    userPoints,
+    loadPointsLeaderboard,
+    loadUserPoints,
+    loadPointsHistory,
+    addUserPoints,
   };
 } 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
 import type { UserProfile } from '@/types';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 export default function AccountPage() {
   const { user, loading, error, signOut } = useGoogleAuth();
@@ -22,7 +24,6 @@ export default function AccountPage() {
   const [editLineId, setEditLineId] = useState('');
   const [editLoading, setEditLoading] = useState(false);
   const [editSuccess, setEditSuccess] = useState(false);
-  const aliasInputRef = useRef<HTMLInputElement>(null);
 
   // 初始化客戶端服務
   useEffect(() => {
@@ -288,34 +289,63 @@ export default function AccountPage() {
               <CardDescription>您可以自訂顯示名稱、聯絡電話與 Line ID</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs mb-1">別名（顯示名稱）</label>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="alias">別名</Label>
+                    <Input
+                      id="alias"
+                      value={profile?.alias || ''}
+                      onChange={(e) => setProfile(prev => prev ? { ...prev, alias: e.target.value } : prev)}
+                      placeholder="請輸入別名"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">聯絡電話</Label>
+                    <Input
+                      id="phone"
+                      value={profile?.phone || ''}
+                      onChange={(e) => setProfile(prev => prev ? { ...prev, phone: e.target.value } : prev)}
+                      placeholder="請輸入聯絡電話"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lineId">Line ID</Label>
                   <Input
-                    ref={aliasInputRef}
-                    value={editAlias}
-                    onChange={e => setEditAlias(e.target.value)}
-                    placeholder="輸入您的別名"
-                    maxLength={30}
+                    id="lineId"
+                    value={profile?.lineId || ''}
+                    onChange={(e) => setProfile(prev => prev ? { ...prev, lineId: e.target.value } : prev)}
+                    placeholder="請輸入 Line ID"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs mb-1">聯絡電話</label>
+                <div className="space-y-2">
+                  <Label htmlFor="skills">技能標籤</Label>
                   <Input
-                    value={editPhone}
-                    onChange={e => setEditPhone(e.target.value)}
-                    placeholder="輸入您的聯絡電話"
-                    maxLength={20}
+                    id="skills"
+                    value={profile?.skills?.join(', ') || ''}
+                    onChange={(e) => {
+                      const skills = e.target.value
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                      setProfile(prev => prev ? { ...prev, skills } : prev);
+                    }}
+                    placeholder="請輸入技能標籤，用逗號分隔（例：JavaScript, React, TypeScript）"
                   />
-                </div>
-                <div>
-                  <label className="block text-xs mb-1">Line ID</label>
-                  <Input
-                    value={editLineId}
-                    onChange={e => setEditLineId(e.target.value)}
-                    placeholder="輸入您的 Line ID"
-                    maxLength={30}
-                  />
+                  <p className="text-xs text-muted-foreground">
+                    技能標籤用逗號分隔，系統會自動去除空白
+                  </p>
+                  {/* 顯示當前技能標籤 */}
+                  {profile?.skills && profile.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {profile.skills.map((skill, index) => (
+                        <Badge key={index} variant="secondary">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center space-x-2 mt-2">
