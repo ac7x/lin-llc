@@ -14,6 +14,7 @@ interface UsePermissionReturn {
   userProfile: UserProfile | null;
   allRoles: Role[];
   allPermissions: Permission[];
+  allUsers: UserProfile[];
   
   // 載入狀態
   loading: boolean;
@@ -31,6 +32,7 @@ interface UsePermissionReturn {
   loadRoles: () => Promise<void>;
   loadPermissions: () => Promise<void>;
   loadUserData: () => Promise<void>;
+  loadAllUsers: () => Promise<void>;
 }
 
 export function usePermission(): UsePermissionReturn {
@@ -39,6 +41,7 @@ export function usePermission(): UsePermissionReturn {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permissionCache, setPermissionCache] = useState<Map<string, boolean>>(new Map());
@@ -119,6 +122,21 @@ export function usePermission(): UsePermissionReturn {
       setAllPermissions(permissions);
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入權限失敗');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 載入所有用戶
+  const loadAllUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const users = await permissionService.getAllUsers();
+      setAllUsers(users);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '載入用戶失敗');
     } finally {
       setLoading(false);
     }
@@ -263,8 +281,9 @@ export function usePermission(): UsePermissionReturn {
       void loadUserData();
       void loadRoles();
       void loadPermissions();
+      void loadAllUsers();
     }
-  }, [user?.uid, loadUserData, loadRoles, loadPermissions]);
+  }, [user?.uid, loadUserData, loadRoles, loadPermissions, loadAllUsers]);
 
   return {
     checkPermission,
@@ -273,6 +292,7 @@ export function usePermission(): UsePermissionReturn {
     userProfile,
     allRoles,
     allPermissions,
+    allUsers,
     loading,
     error,
     createCustomRole,
@@ -284,5 +304,6 @@ export function usePermission(): UsePermissionReturn {
     loadRoles,
     loadPermissions,
     loadUserData,
+    loadAllUsers,
   };
 } 

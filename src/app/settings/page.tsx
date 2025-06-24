@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,6 +20,7 @@ export default function SettingsPage() {
     userProfile,
     allRoles,
     allPermissions,
+    allUsers,
     loading,
     error,
     createCustomRole,
@@ -689,9 +691,100 @@ export default function SettingsPage() {
           <TabsContent value="users" className="space-y-6">
             <PermissionGuard permission="user:read">
               <h2 className="text-2xl font-bold">用戶管理</h2>
-              <p className="text-muted-foreground">
-                此功能需要額外的用戶管理組件實現
-              </p>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>用戶列表</CardTitle>
+                  <CardDescription>
+                    系統中的所有用戶 ({allUsers.length} 個用戶)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {allUsers.map((user) => {
+                      const userRole = allRoles.find(role => role.id === user.roleId);
+                      return (
+                        <div
+                          key={user.uid}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0">
+                              {user.photoURL ? (
+                                <Image
+                                  src={user.photoURL}
+                                  alt={user.displayName}
+                                  width={40}
+                                  height={40}
+                                  className="w-10 h-10 rounded-full"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                                  <span className="text-sm font-medium">
+                                    {user.displayName.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2">
+                                <h4 className="text-sm font-medium truncate">
+                                  {user.displayName}
+                                </h4>
+                                {user.uid === process.env.NEXT_PUBLIC_OWNER_UID && (
+                                  <Badge variant="default" className="text-xs">
+                                    擁有者
+                                  </Badge>
+                                )}
+                                {!user.isActive && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    停用
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {user.email}
+                              </p>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Badge variant="outline" className="text-xs">
+                                  {userRole?.name || '未知角色'}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  登入 {user.loginCount} 次
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="text-right text-xs text-muted-foreground">
+                              <div>註冊: {new Date(user.createdAt).toLocaleDateString('zh-TW')}</div>
+                              <div>最後登入: {new Date(user.lastLoginAt).toLocaleDateString('zh-TW')}</div>
+                            </div>
+                            <PermissionGuard permission="user:write">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  // TODO: 實現用戶編輯功能
+                                  console.log('編輯用戶:', user.uid);
+                                }}
+                              >
+                                編輯
+                              </Button>
+                            </PermissionGuard>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {allUsers.length === 0 && (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">暫無用戶資料</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </PermissionGuard>
           </TabsContent>
         </Tabs>
