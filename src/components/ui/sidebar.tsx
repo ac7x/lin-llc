@@ -291,10 +291,24 @@ function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        'hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex',
+        // 基礎樣式
+        'absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear sm:flex',
+        // 懸停效果
+        'hover:after:bg-sidebar-border',
+        // 位置相關樣式
+        'group-data-[side=left]:-right-4 group-data-[side=right]:left-0',
+        // after 偽元素樣式
+        'after:absolute after:inset-y-0 after:left-1/2 after:w-[2px]',
+        // 游標樣式
         'in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize',
-        '[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize',
-        'hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full',
+        // 折疊狀態游標樣式
+        '[[data-side=left][data-state=collapsed]_&]:cursor-e-resize',
+        '[[data-side=right][data-state=collapsed]_&]:cursor-w-resize',
+        // 可折疊樣式
+        'hover:group-data-[collapsible=offcanvas]:bg-sidebar',
+        'group-data-[collapsible=offcanvas]:translate-x-0',
+        'group-data-[collapsible=offcanvas]:after:left-full',
+        // 位置調整
         '[[data-side=left][data-collapsible=offcanvas]_&]:-right-2',
         '[[data-side=right][data-collapsible=offcanvas]_&]:-left-2',
         className
