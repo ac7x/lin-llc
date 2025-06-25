@@ -4,6 +4,7 @@ import { db } from '@/lib/firebase-init';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { NotificationService } from '../utils/notification-service';
 import { updateAllProgress } from '../utils/progress-calculator';
+import { PointsRewardService } from '../utils/points-system';
 import { Project } from '../types';
 
 /**
@@ -113,11 +114,21 @@ export function useTaskManagement() {
       task.total = total;
       task.progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-      // 如果任務完成，自動提交審核
+      // 如果任務完成，自動提交審核並獎勵積分
       if (task.progress === 100) {
         task.status = 'submitted';
         task.submittedAt = new Date().toISOString();
         task.submittedBy = user.uid;
+
+        // 🎯 獎勵任務完成積分給所有提交者
+        if (task.submitters && task.submitters.length > 0) {
+          await PointsRewardService.rewardTaskCompletion(
+            task.submitters,
+            task.name,
+            completed,
+            total
+          );
+        }
 
         // 發送審核通知給審核者
         if (task.reviewers && task.reviewers.length > 0) {
@@ -180,7 +191,10 @@ export function useTaskManagement() {
       task.approvedAt = new Date().toISOString();
       task.approvedBy = user.uid;
 
-      // 如果審核通過，檢查是否需要向上層提交
+      // 🎯 獎勵審核積分給審核者
+      await PointsRewardService.rewardTaskReview(user.uid, task.name);
+
+      // 如果審核通過，檢查是否需要向上層提交並獎勵階層完成積分
       if (approved) {
         await checkAndSubmitParentLevel(updatedProject, user.uid, packageIndex, subpackageIndex);
       }
@@ -232,24 +246,41 @@ export function useTaskManagement() {
     const subpackage = project.packages[packageIndex].subpackages[subpackageIndex];
     const allTasksApproved = subpackage.taskpackages.every(task => task.status === 'approved');
 
-    if (allTasksApproved && subpackage.reviewers && subpackage.reviewers.length > 0) {
-      subpackage.status = 'submitted';
-      subpackage.submittedAt = new Date().toISOString();
-      subpackage.submittedBy = approvedBy;
+    if (allTasksApproved) {
+      // 🎯 獎勵子工作包完成積分給所有參與者
+      const allParticipants = new Set<string>();
+      subpackage.taskpackages.forEach(task => {
+        task.submitters?.forEach(uid => allParticipants.add(uid));
+        task.reviewers?.forEach(uid => allParticipants.add(uid));
+      });
+      
+      if (allParticipants.size > 0) {
+        await PointsRewardService.rewardLevelCompletion(
+          Array.from(allParticipants),
+          'subpackage',
+          subpackage.name
+        );
+      }
+      
+      if (subpackage.reviewers && subpackage.reviewers.length > 0) {
+        subpackage.status = 'submitted';
+        subpackage.submittedAt = new Date().toISOString();
+        subpackage.submittedBy = approvedBy;
 
-      // 發送子工作包審核通知
-      await NotificationService.sendTaskSubmissionNotification(
-        subpackage.reviewers,
-        subpackage.name,
-        project.name,
-        '系統自動提交',
-        {
-          projectId: project.id,
-          packageIndex,
-          subpackageIndex,
-          taskIndex: -1, // 表示整個子工作包
-        }
-      );
+        // 發送子工作包審核通知
+        await NotificationService.sendTaskSubmissionNotification(
+          subpackage.reviewers,
+          subpackage.name,
+          project.name,
+          '系統自動提交',
+          {
+            projectId: project.id,
+            packageIndex,
+            subpackageIndex,
+            taskIndex: -1, // 表示整個子工作包
+          }
+        );
+      }
 
       // 檢查工作包層級
       await checkAndSubmitPackageLevel(project, packageIndex, approvedBy);
@@ -267,24 +298,43 @@ export function useTaskManagement() {
     const pkg = project.packages[packageIndex];
     const allSubpackagesApproved = pkg.subpackages.every(sub => sub.status === 'approved');
 
-    if (allSubpackagesApproved && pkg.reviewers && pkg.reviewers.length > 0) {
-      pkg.status = 'submitted';
-      pkg.submittedAt = new Date().toISOString();
-      pkg.submittedBy = approvedBy;
+    if (allSubpackagesApproved) {
+      // 🎯 獎勵工作包完成積分給所有參與者
+      const allParticipants = new Set<string>();
+      pkg.subpackages.forEach(sub => {
+        sub.taskpackages.forEach(task => {
+          task.submitters?.forEach(uid => allParticipants.add(uid));
+          task.reviewers?.forEach(uid => allParticipants.add(uid));
+        });
+      });
+      
+      if (allParticipants.size > 0) {
+        await PointsRewardService.rewardLevelCompletion(
+          Array.from(allParticipants),
+          'package',
+          pkg.name
+        );
+      }
+      
+      if (pkg.reviewers && pkg.reviewers.length > 0) {
+        pkg.status = 'submitted';
+        pkg.submittedAt = new Date().toISOString();
+        pkg.submittedBy = approvedBy;
 
-      // 發送工作包審核通知
-      await NotificationService.sendTaskSubmissionNotification(
-        pkg.reviewers,
-        pkg.name,
-        project.name,
-        '系統自動提交',
-        {
-          projectId: project.id,
-          packageIndex,
-          subpackageIndex: -1, // 表示整個工作包
-          taskIndex: -1,
-        }
-      );
+        // 發送工作包審核通知
+        await NotificationService.sendTaskSubmissionNotification(
+          pkg.reviewers,
+          pkg.name,
+          project.name,
+          '系統自動提交',
+          {
+            projectId: project.id,
+            packageIndex,
+            subpackageIndex: -1, // 表示整個工作包
+            taskIndex: -1,
+          }
+        );
+      }
 
       // 檢查專案層級
       await checkAndSubmitProjectLevel(project, approvedBy);
@@ -300,20 +350,41 @@ export function useTaskManagement() {
   ) => {
     const allPackagesApproved = project.packages.every(pkg => pkg.status === 'approved');
 
-    if (allPackagesApproved && project.reviewers && project.reviewers.length > 0) {
-      // 專案完成，發送通知給專案審核者
-      await NotificationService.sendTaskSubmissionNotification(
-        project.reviewers,
-        project.name,
-        '專案管理系統',
-        '系統自動提交',
-        {
-          projectId: project.id,
-          packageIndex: -1, // 表示整個專案
-          subpackageIndex: -1,
-          taskIndex: -1,
-        }
-      );
+    if (allPackagesApproved) {
+      // 🎯 獎勵專案完成積分給所有參與者 - 最高積分獎勵！
+      const allParticipants = new Set<string>();
+      project.packages.forEach(pkg => {
+        pkg.subpackages.forEach(sub => {
+          sub.taskpackages.forEach(task => {
+            task.submitters?.forEach(uid => allParticipants.add(uid));
+            task.reviewers?.forEach(uid => allParticipants.add(uid));
+          });
+        });
+      });
+      
+      if (allParticipants.size > 0) {
+        await PointsRewardService.rewardLevelCompletion(
+          Array.from(allParticipants),
+          'project',
+          project.name
+        );
+      }
+      
+      if (project.reviewers && project.reviewers.length > 0) {
+        // 專案完成，發送通知給專案審核者
+        await NotificationService.sendTaskSubmissionNotification(
+          project.reviewers,
+          project.name,
+          '專案管理系統',
+          '系統自動提交',
+          {
+            projectId: project.id,
+            packageIndex: -1, // 表示整個專案
+            subpackageIndex: -1,
+            taskIndex: -1,
+          }
+        );
+      }
     }
   };
 
