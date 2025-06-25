@@ -34,6 +34,7 @@ import {
   calculateProjectStatistics,
   updateAllProgress 
 } from './utils/progress-calculator';
+import { useProjectProgress } from './hooks/use-project-progress';
 
 export default function ProjectListPage() {
   const { hasPermission } = usePermission();
@@ -44,6 +45,9 @@ export default function ProjectListPage() {
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskPackageInputs, setTaskPackageInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
+  
+  // 使用進度管理 hook
+  const projectProgress = useProjectProgress(selectedProject);
 
   // 檢查項目是否被選中
   const isItemSelected = (item: SelectedItem) => {
@@ -440,7 +444,7 @@ export default function ProjectListPage() {
                                     </TooltipContent>
                                   </Tooltip>
                                   <div>
-                                    <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
+                                    <p className="text-2xl font-bold">{projectProgress.getPackageCount()}</p>
                                     <p className="text-sm text-muted-foreground">工作包</p>
                                   </div>
                                 </div>
@@ -460,7 +464,7 @@ export default function ProjectListPage() {
                                   </Tooltip>
                                   <div>
                                     <p className="text-2xl font-bold">
-                                      {calculateProjectStatistics(selectedProject).subpackageCount}
+                                      {projectProgress.getSubpackageCount()}
                                     </p>
                                     <p className="text-sm text-muted-foreground">子工作包</p>
                                   </div>
@@ -481,7 +485,7 @@ export default function ProjectListPage() {
                                   </Tooltip>
                                   <div>
                                     <p className="text-2xl font-bold">
-                                      {calculateProjectStatistics(selectedProject).taskCount}
+                                      {projectProgress.getTaskCount()}
                                     </p>
                                     <p className="text-sm text-muted-foreground">任務</p>
                                   </div>
@@ -502,7 +506,7 @@ export default function ProjectListPage() {
                                   </Tooltip>
                                   <div className="flex-1">
                                     <p className="text-2xl font-bold">
-                                      {calculateProjectProgress(selectedProject).progress}%
+                                      {projectProgress.getProgressPercentage()}%
                                     </p>
                                     <p className="text-sm text-muted-foreground">完成進度</p>
                                   </div>
@@ -517,18 +521,13 @@ export default function ProjectListPage() {
                               <CardTitle className="text-lg">專案進度</CardTitle>
                             </CardHeader>
                             <CardContent>
-                              {(() => {
-                                const progress = calculateProjectProgress(selectedProject);
-                                return (
-                                  <div className="space-y-4">
-                                    <div className="flex justify-between text-sm">
-                                      <span>整體進度</span>
-                                      <span>{progress.completed} / {progress.total} ({progress.progress}%)</span>
-                                    </div>
-                                    <Progress value={progress.progress} className="h-2" />
-                                  </div>
-                                );
-                              })()}
+                              <div className="space-y-4">
+                                <div className="flex justify-between text-sm">
+                                  <span>整體進度</span>
+                                  <span>{projectProgress.progressText}</span>
+                                </div>
+                                <Progress value={projectProgress.getProgressPercentage()} className="h-2" />
+                              </div>
                             </CardContent>
                           </Card>
                         </>
@@ -819,19 +818,10 @@ export default function ProjectListPage() {
                               </TooltipContent>
                             </Tooltip>
                           </p>
-                          <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
-                          <p><strong>總子工作包數：</strong>
-                            {calculateProjectStatistics(selectedProject).subpackageCount}
-                          </p>
-                          <p><strong>總任務數：</strong>
-                            {calculateProjectStatistics(selectedProject).taskCount}
-                          </p>
-                          <p><strong>完成進度：</strong>
-                            {(() => {
-                              const progress = calculateProjectProgress(selectedProject);
-                              return `${progress.completed}/${progress.total} (${progress.progress}%)`;
-                            })()}
-                          </p>
+                          <p><strong>工作包數量：</strong>{projectProgress.getPackageCount()}</p>
+                          <p><strong>總子工作包數：</strong>{projectProgress.getSubpackageCount()}</p>
+                          <p><strong>總任務數：</strong>{projectProgress.getTaskCount()}</p>
+                          <p><strong>完成進度：</strong>{projectProgress.progressText}</p>
                         </div>
                       ) : (
                         <p className="text-gray-500">選擇專案以查看概覽</p>
@@ -877,14 +867,11 @@ export default function ProjectListPage() {
                           </p>
                           <p><strong>專案進度：</strong></p>
                           <p className="text-xs text-muted-foreground">
-                            {(() => {
-                              const progress = calculateProjectProgress(selectedProject);
-                              return `已完成 ${progress.completed} 個任務，共 ${progress.total} 個任務`;
-                            })()}
+                            {projectProgress.progressDescription}
                           </p>
                           <p><strong>進度百分比：</strong></p>
                           <p className="text-xs text-muted-foreground">
-                            {calculateProjectProgress(selectedProject).progress}%
+                            {projectProgress.getProgressPercentage()}%
                           </p>
                         </div>
                       ) : (
