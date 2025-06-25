@@ -39,7 +39,6 @@ import {
   PlusIcon,
   SettingsIcon,
 } from 'lucide-react';
-import Link from 'next/link';
 
 interface TaskPackage { name: string }
 interface Subpackage { taskpackages: TaskPackage[] }
@@ -52,6 +51,14 @@ interface Project {
   packages: Package[];
 }
 
+// 選中項目的類型
+type SelectedItem = 
+  | { type: 'project'; projectId: string }
+  | { type: 'package'; projectId: string; packageIndex: number }
+  | { type: 'subpackage'; projectId: string; packageIndex: number; subpackageIndex: number }
+  | { type: 'task'; projectId: string; packageIndex: number; subpackageIndex: number; taskIndex: number }
+  | null;
+
 export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectName, setProjectName] = useState('');
@@ -59,6 +66,7 @@ export default function ProjectListPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskPackageInputs, setTaskPackageInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
@@ -213,6 +221,18 @@ export default function ProjectListPage() {
     }
   };
 
+  // 處理項目點擊事件
+  const handleItemClick = (item: SelectedItem) => {
+    setSelectedItem(item);
+    // 如果是專案，同時更新選中的專案
+    if (item?.type === 'project') {
+      const project = projects.find(p => p.id === item.projectId);
+      if (project) {
+        setSelectedProject(project);
+      }
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -271,7 +291,9 @@ export default function ProjectListPage() {
                       key={project.id} 
                       project={project}
                       selectedProject={selectedProject}
+                      selectedItem={selectedItem}
                       onSelectProject={setSelectedProject}
+                      onItemClick={handleItemClick}
                       onAddPackage={handleAddPackage}
                       onAddTaskPackage={handleAddTaskPackage}
                       onAddSubpackage={handleAddSubpackage}
@@ -307,74 +329,186 @@ export default function ProjectListPage() {
               </header>
               
               <div className="flex-1 overflow-auto p-6">
-                {selectedProject ? (
+                {selectedItem ? (
                   <div className="space-y-6">
-                    {/* 專案資訊 */}
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <SettingsIcon className="h-5 w-5" />
-                          專案資訊
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-gray-600 mb-2">{selectedProject.description || '無描述'}</p>
-                        <p className="text-sm text-gray-400">
-                          建立時間：{new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
-                        </p>
-                      </CardContent>
-                    </Card>
+                    {/* 根據選中項目類型顯示不同內容 */}
+                    {selectedItem.type === 'project' && selectedProject && (
+                      <>
+                        {/* 專案資訊 */}
+                        <Card className="border-0 shadow-sm">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <SettingsIcon className="h-5 w-5" />
+                              專案資訊
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-gray-600 mb-2">{selectedProject.description || '無描述'}</p>
+                            <p className="text-sm text-gray-400">
+                              建立時間：{new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
+                            </p>
+                          </CardContent>
+                        </Card>
 
-                    {/* 專案概覽卡片 */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* 專案概覽卡片 */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <Card className="border-0 shadow-sm">
+                            <CardContent className="pt-6">
+                              <div className="flex items-center gap-2">
+                                <PackageIcon className="h-5 w-5 text-blue-500" />
+                                <div>
+                                  <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
+                                  <p className="text-sm text-muted-foreground">工作包</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                          
+                          <Card className="border-0 shadow-sm">
+                            <CardContent className="pt-6">
+                              <div className="flex items-center gap-2">
+                                <CheckSquareIcon className="h-5 w-5 text-green-500" />
+                                <div>
+                                  <p className="text-2xl font-bold">
+                                    {selectedProject.packages?.reduce((total, pkg) => total + (pkg.subpackages?.length || 0), 0) || 0}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">任務</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                          
+                          <Card className="border-0 shadow-sm">
+                            <CardContent className="pt-6">
+                              <div className="flex items-center gap-2">
+                                <ListIcon className="h-5 w-5 text-purple-500" />
+                                <div>
+                                  <p className="text-2xl font-bold">
+                                    {selectedProject.packages?.reduce((total, pkg) => 
+                                      total + pkg.subpackages?.reduce((taskTotal, task) => 
+                                        taskTotal + task.taskpackages?.length || 0, 0
+                                      ), 0
+                                    ) || 0}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">子工作包</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </>
+                    )}
+
+                    {selectedItem.type === 'package' && selectedProject && (
                       <Card className="border-0 shadow-sm">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-2">
-                            <PackageIcon className="h-5 w-5 text-blue-500" />
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <PackageIcon className="h-5 w-5" />
+                            工作包：{selectedProject.packages[selectedItem.packageIndex]?.name}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
                             <div>
-                              <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
-                              <p className="text-sm text-muted-foreground">工作包</p>
+                              <h4 className="font-medium mb-2">子工作包列表</h4>
+                              {selectedProject.packages[selectedItem.packageIndex]?.subpackages?.length > 0 ? (
+                                <div className="space-y-2">
+                                  {selectedProject.packages[selectedItem.packageIndex].subpackages.map((sub, idx) => (
+                                    <div key={idx} className="p-3 border rounded-lg">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <ListIcon className="h-4 w-4" />
+                                        <span className="font-medium">子工作包 {idx + 1}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                          ({sub.taskpackages?.length || 0} 個任務)
+                                        </span>
+                                      </div>
+                                      {sub.taskpackages?.length > 0 && (
+                                        <div className="ml-6 space-y-1">
+                                          {sub.taskpackages.map((task, taskIdx) => (
+                                            <div key={taskIdx} className="flex items-center gap-2 text-sm">
+                                              <CheckSquareIcon className="h-3 w-3" />
+                                              <span>{task.name}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-muted-foreground">尚無子工作包</p>
+                              )}
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                      
+                    )}
+
+                    {selectedItem.type === 'subpackage' && selectedProject && (
                       <Card className="border-0 shadow-sm">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-2">
-                            <CheckSquareIcon className="h-5 w-5 text-green-500" />
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <ListIcon className="h-5 w-5" />
+                            子工作包：{selectedProject.packages[selectedItem.packageIndex]?.name} - 子工作包 {selectedItem.subpackageIndex + 1}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
                             <div>
-                              <p className="text-2xl font-bold">
-                                {selectedProject.packages?.reduce((total, pkg) => total + (pkg.subpackages?.length || 0), 0) || 0}
-                              </p>
-                              <p className="text-sm text-muted-foreground">任務</p>
+                              <h4 className="font-medium mb-2">任務列表</h4>
+                              {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages?.length > 0 ? (
+                                <div className="space-y-2">
+                                  {selectedProject.packages[selectedItem.packageIndex].subpackages[selectedItem.subpackageIndex].taskpackages.map((task, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 p-2 border rounded">
+                                      <CheckSquareIcon className="h-4 w-4" />
+                                      <span>{task.name}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-muted-foreground">尚無任務</p>
+                              )}
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                      
+                    )}
+
+                    {selectedItem.type === 'task' && selectedProject && (
                       <Card className="border-0 shadow-sm">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center gap-2">
-                            <ListIcon className="h-5 w-5 text-purple-500" />
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <CheckSquareIcon className="h-5 w-5" />
+                            任務：{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
                             <div>
-                              <p className="text-2xl font-bold">
-                                {selectedProject.packages?.reduce((total, pkg) => 
-                                  total + pkg.subpackages?.reduce((taskTotal, task) => 
-                                    taskTotal + task.taskpackages?.length || 0, 0
-                                  ), 0
-                                ) || 0}
-                              </p>
-                              <p className="text-sm text-muted-foreground">子工作包</p>
+                              <h4 className="font-medium mb-2">任務詳情</h4>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">所屬工作包：</span>
+                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.name}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">所屬子工作包：</span>
+                                  <span>子工作包 {selectedItem.subpackageIndex + 1}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">任務名稱：</span>
+                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                    </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">請選擇一個專案</p>
+                    <p className="text-gray-500">請選擇一個項目</p>
                   </div>
                 )}
               </div>
@@ -446,7 +580,9 @@ export default function ProjectListPage() {
 interface ProjectTreeProps {
   project: Project;
   selectedProject: Project | null;
+  selectedItem: SelectedItem;
   onSelectProject: (project: Project) => void;
+  onItemClick: (item: SelectedItem) => void;
   onAddPackage: (projectId: string, pkgName: string) => Promise<void>;
   onAddTaskPackage: (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => Promise<void>;
   onAddSubpackage: (projectId: string, pkgIdx: number, subName: string) => Promise<void>;
@@ -462,7 +598,9 @@ interface ProjectTreeProps {
 function ProjectTree({
   project,
   selectedProject,
+  selectedItem,
   onSelectProject,
+  onItemClick,
   onAddPackage,
   onAddTaskPackage,
   onAddSubpackage,
@@ -494,13 +632,18 @@ function ProjectTree({
 
   const toggleTaskExpanded = (pkgIdx: number, taskIdx: number) => {
     setExpandedTasks(prev => {
-      const packageTasks = new Set(prev[pkgIdx] || []);
-      if (packageTasks.has(taskIdx)) {
-        packageTasks.delete(taskIdx);
-      } else {
-        packageTasks.add(taskIdx);
+      const newTasks = { ...prev };
+      if (!newTasks[pkgIdx]) {
+        newTasks[pkgIdx] = new Set();
       }
-      return { ...prev, [pkgIdx]: packageTasks };
+      const taskSet = new Set(newTasks[pkgIdx]);
+      if (taskSet.has(taskIdx)) {
+        taskSet.delete(taskIdx);
+      } else {
+        taskSet.add(taskIdx);
+      }
+      newTasks[pkgIdx] = taskSet;
+      return newTasks;
     });
   };
 
@@ -519,6 +662,12 @@ function ProjectTree({
     }));
   };
 
+  // 檢查項目是否被選中
+  const isItemSelected = (item: SelectedItem) => {
+    if (!selectedItem || !item) return false;
+    return JSON.stringify(selectedItem) === JSON.stringify(item);
+  };
+
   return (
     <SidebarMenuItem>
       <Collapsible
@@ -532,10 +681,18 @@ function ProjectTree({
             className="pl-2"
           >
             <ChevronRightIcon className="transition-transform h-4 w-4" />
-            <Link href={`/project/${project.id}`} className="flex items-center gap-2 hover:bg-accent rounded p-1">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onItemClick({ type: 'project', projectId: project.id });
+              }}
+              className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 ${
+                isItemSelected({ type: 'project', projectId: project.id }) ? 'bg-accent' : ''
+              }`}
+            >
               <FolderIcon className="h-4 w-4" />
               <span className="truncate">{project.name}</span>
-            </Link>
+            </button>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -553,13 +710,21 @@ function ProjectTree({
                       className="pl-2"
                     >
                       <ChevronRightIcon className="transition-transform h-3 w-3" />
-                      <Link href={`/project/${project.id}/package/${pkgIdx}`} className="flex items-center gap-2 hover:bg-accent rounded p-1">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onItemClick({ type: 'package', projectId: project.id, packageIndex: pkgIdx });
+                        }}
+                        className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 ${
+                          isItemSelected({ type: 'package', projectId: project.id, packageIndex: pkgIdx }) ? 'bg-accent' : ''
+                        }`}
+                      >
                         <PackageIcon className="h-3 w-3" />
                         <span className="truncate text-sm">{pkg.name}</span>
                         <span className="text-xs text-muted-foreground">
                           {pkg.subpackages?.length || 0}
                         </span>
-                      </Link>
+                      </button>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -577,13 +742,21 @@ function ProjectTree({
                                 className="pl-2"
                               >
                                 <ChevronRightIcon className="transition-transform h-3 w-3" />
-                                <Link href={`/project/${project.id}/package/${pkgIdx}/subpackage/${taskIdx}`} className="flex items-center gap-2 hover:bg-accent rounded p-1">
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onItemClick({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx });
+                                  }}
+                                  className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 ${
+                                    isItemSelected({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx }) ? 'bg-accent' : ''
+                                  }`}
+                                >
                                   <ListIcon className="h-3 w-3" />
                                   <span className="truncate text-xs">子工作包 {taskIdx + 1}</span>
                                   <span className="text-xs text-muted-foreground">
                                     {sub.taskpackages?.length || 0}
                                   </span>
-                                </Link>
+                                </button>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
@@ -592,10 +765,27 @@ function ProjectTree({
                                 {sub.taskpackages?.map((task, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
                                     <SidebarMenuButton className="pl-2">
-                                      <Link href={`/project/${project.id}/package/${pkgIdx}/subpackage/${taskIdx}/taskpackage/${subIdx}`} className="flex items-center gap-2 hover:bg-accent rounded p-1">
+                                      <button 
+                                        onClick={() => onItemClick({ 
+                                          type: 'task', 
+                                          projectId: project.id, 
+                                          packageIndex: pkgIdx, 
+                                          subpackageIndex: taskIdx, 
+                                          taskIndex: subIdx 
+                                        })}
+                                        className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 ${
+                                          isItemSelected({ 
+                                            type: 'task', 
+                                            projectId: project.id, 
+                                            packageIndex: pkgIdx, 
+                                            subpackageIndex: taskIdx, 
+                                            taskIndex: subIdx 
+                                          }) ? 'bg-accent' : ''
+                                        }`}
+                                      >
                                         <CheckSquareIcon className="h-3 w-3" />
                                         <span className="truncate text-xs">{task.name}</span>
-                                      </Link>
+                                      </button>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
