@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase-init';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import {
   Sidebar,
   SidebarContent,
@@ -42,15 +43,35 @@ import {
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { usePermission } from '@/app/settings/hooks/use-permission';
 
-interface TaskPackage { name: string }
-interface Subpackage { name: string; taskpackages: TaskPackage[] }
-interface Package { name: string; subpackages: Subpackage[] }
+interface TaskPackage { 
+  name: string;
+  completed: number;
+  total: number;
+  progress: number;
+}
+interface Subpackage { 
+  name: string; 
+  taskpackages: TaskPackage[];
+  completed: number;
+  total: number;
+  progress: number;
+}
+interface Package { 
+  name: string; 
+  subpackages: Subpackage[];
+  completed: number;
+  total: number;
+  progress: number;
+}
 interface Project {
   id: string;
   name: string;
   description: string;
   createdAt: string;
   packages: Package[];
+  completed: number;
+  total: number;
+  progress: number;
 }
 
 // 選中項目的類型
@@ -96,10 +117,21 @@ export default function ProjectListPage() {
         const packages = Array.isArray(data.packages) 
           ? data.packages.map((pkg: any) => ({
               name: pkg.name || '',
+              completed: pkg.completed || 0,
+              total: pkg.total || 0,
+              progress: pkg.progress || 0,
               subpackages: Array.isArray(pkg.subpackages) 
                 ? pkg.subpackages.map((sub: any) => ({ 
                     name: sub.name || '未命名子工作包',
-                    taskpackages: Array.isArray(sub.taskpackages) ? sub.taskpackages.map((task: any) => ({ name: task.name || '' })) : [] 
+                    completed: sub.completed || 0,
+                    total: sub.total || 0,
+                    progress: sub.progress || 0,
+                    taskpackages: Array.isArray(sub.taskpackages) ? sub.taskpackages.map((task: any) => ({ 
+                      name: task.name || '', 
+                      completed: task.completed || 0, 
+                      total: task.total || 0, 
+                      progress: task.progress || 0 
+                    })) : [] 
                   }))
                 : []
             }))
@@ -111,6 +143,9 @@ export default function ProjectListPage() {
           description: data.description || '',
           createdAt: data.createdAt || new Date().toISOString(),
           packages,
+          completed: data.completed || 0,
+          total: data.total || 0,
+          progress: data.progress || 0,
         };
       }) as Project[];
       setProjects(projectList);
@@ -144,6 +179,9 @@ export default function ProjectListPage() {
         description: '',
         createdAt: new Date().toISOString(),
         packages: [],
+        completed: 0,
+        total: 0,
+        progress: 0,
       };
       setProjects(prev => [newProject, ...prev]);
       setProjectName('');
@@ -175,7 +213,7 @@ export default function ProjectListPage() {
       if (!project) return;
       const updatedPackages = [
         ...project.packages,
-        { name: pkgName.trim(), subpackages: [] }
+        { name: pkgName.trim(), subpackages: [], completed: 0, total: 0, progress: 0 }
       ];
       await updateProjectPackages(projectId, updatedPackages);
       setPkgInputs(prev => ({ ...prev, [projectId]: '' }));
@@ -200,7 +238,7 @@ export default function ProjectListPage() {
       if (!project) return;
       const updatedPackages = project.packages.map((pkg, idx) =>
         idx === pkgIdx
-          ? { ...pkg, subpackages: [...pkg.subpackages, { name: subName.trim(), taskpackages: [] }] }
+          ? { ...pkg, subpackages: [...pkg.subpackages, { name: subName.trim(), taskpackages: [], completed: 0, total: 0, progress: 0 }] }
           : pkg
       );
       await updateProjectPackages(projectId, updatedPackages);
@@ -233,7 +271,7 @@ export default function ProjectListPage() {
               ...pkg,
               subpackages: pkg.subpackages.map((sub, j) =>
                 j === subIdx
-                  ? { ...sub, taskpackages: [...sub.taskpackages, { name: taskPackageName.trim() }] }
+                  ? { ...sub, taskpackages: [...sub.taskpackages, { name: taskPackageName.trim(), completed: 0, total: 0, progress: 0 }] }
                   : sub
               )
             }
@@ -262,6 +300,33 @@ export default function ProjectListPage() {
     if (selectedProject?.id === projectId) {
       setSelectedProject(prev => prev ? { ...prev, packages } : null);
     }
+  };
+
+  // 計算進度百分比
+  const calculateProgress = (completed: number, total: number): number => {
+    if (total === 0) return 0;
+    return Math.round((completed / total) * 100);
+  };
+
+  // 計算專案總進度
+  const calculateProjectProgress = (project: Project) => {
+    const totalTasks = project.packages.reduce((total, pkg) => 
+      total + pkg.subpackages.reduce((subTotal, sub) => 
+        subTotal + sub.taskpackages.length, 0
+      ), 0
+    );
+    const completedTasks = project.packages.reduce((total, pkg) => 
+      total + pkg.subpackages.reduce((subTotal, sub) => 
+        subTotal + sub.taskpackages.reduce((taskTotal, task) => 
+          taskTotal + task.completed, 0
+        ), 0
+      ), 0
+    );
+    return {
+      completed: completedTasks,
+      total: totalTasks,
+      progress: calculateProgress(completedTasks, totalTasks)
+    };
   };
 
   // 處理項目點擊事件
@@ -429,7 +494,7 @@ export default function ProjectListPage() {
                         </Card>
 
                         {/* 專案概覽卡片 */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                           <Card className="border-0 shadow-sm">
                             <CardContent className="pt-6">
                               <div className="flex items-center gap-2">
@@ -437,20 +502,6 @@ export default function ProjectListPage() {
                                 <div>
                                   <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
                                   <p className="text-sm text-muted-foreground">工作包</p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          
-                          <Card className="border-0 shadow-sm">
-                            <CardContent className="pt-6">
-                              <div className="flex items-center gap-2">
-                                <CheckSquareIcon className="h-5 w-5 text-green-500" />
-                                <div>
-                                  <p className="text-2xl font-bold">
-                                    {selectedProject.packages?.reduce((total, pkg) => total + (pkg.subpackages?.length || 0), 0) || 0}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">任務</p>
                                 </div>
                               </div>
                             </CardContent>
@@ -473,7 +524,63 @@ export default function ProjectListPage() {
                               </div>
                             </CardContent>
                           </Card>
+                          
+                          <Card className="border-0 shadow-sm">
+                            <CardContent className="pt-6">
+                              <div className="flex items-center gap-2">
+                                <CheckSquareIcon className="h-5 w-5 text-green-500" />
+                                <div>
+                                  <p className="text-2xl font-bold">
+                                    {selectedProject.packages?.reduce((total, pkg) => 
+                                      total + pkg.subpackages?.reduce((subTotal, sub) => 
+                                        subTotal + sub.taskpackages?.length, 0
+                                      ), 0
+                                    ) || 0}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">任務</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card className="border-0 shadow-sm">
+                            <CardContent className="pt-6">
+                              <div className="flex items-center gap-2">
+                                <div className="h-5 w-5 rounded-full bg-gradient-to-r from-blue-500 to-green-500" />
+                                <div className="flex-1">
+                                  <p className="text-2xl font-bold">
+                                    {(() => {
+                                      const progress = calculateProjectProgress(selectedProject);
+                                      return `${progress.progress}%`;
+                                    })()}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">完成進度</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         </div>
+
+                        {/* 進度條 */}
+                        <Card className="border-0 shadow-sm">
+                          <CardHeader>
+                            <CardTitle className="text-lg">專案進度</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            {(() => {
+                              const progress = calculateProjectProgress(selectedProject);
+                              return (
+                                <div className="space-y-4">
+                                  <div className="flex justify-between text-sm">
+                                    <span>整體進度</span>
+                                    <span>{progress.completed} / {progress.total} ({progress.progress}%)</span>
+                                  </div>
+                                  <Progress value={progress.progress} className="h-2" />
+                                </div>
+                              );
+                            })()}
+                          </CardContent>
+                        </Card>
                       </>
                     )}
 
@@ -487,6 +594,18 @@ export default function ProjectListPage() {
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-4">
+                            {/* 工作包進度 */}
+                            <div>
+                              <div className="flex justify-between text-sm mb-2">
+                                <span>工作包進度</span>
+                                <span>
+                                  {selectedProject.packages[selectedItem.packageIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.total || 0} 
+                                  ({selectedProject.packages[selectedItem.packageIndex]?.progress || 0}%)
+                                </span>
+                              </div>
+                              <Progress value={selectedProject.packages[selectedItem.packageIndex]?.progress || 0} className="h-2" />
+                            </div>
+
                             <div>
                               <h4 className="font-medium mb-2">子工作包列表</h4>
                               {selectedProject.packages[selectedItem.packageIndex]?.subpackages?.length > 0 ? (
@@ -499,13 +618,20 @@ export default function ProjectListPage() {
                                         <span className="text-sm text-muted-foreground">
                                           ({sub.taskpackages?.length || 0} 個任務)
                                         </span>
+                                        <span className="text-sm text-blue-600">
+                                          {sub.completed || 0}/{sub.total || 0} ({sub.progress || 0}%)
+                                        </span>
                                       </div>
+                                      <Progress value={sub.progress || 0} className="h-1 mb-2" />
                                       {sub.taskpackages?.length > 0 && (
                                         <div className="ml-6 space-y-1">
                                           {sub.taskpackages.map((task, taskIdx) => (
                                             <div key={taskIdx} className="flex items-center gap-2 text-sm">
                                               <CheckSquareIcon className="h-3 w-3" />
                                               <span>{task.name}</span>
+                                              <span className="text-xs text-muted-foreground">
+                                                {task.completed || 0}/{task.total || 0}
+                                              </span>
                                             </div>
                                           ))}
                                         </div>
@@ -532,14 +658,32 @@ export default function ProjectListPage() {
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-4">
+                            {/* 子工作包進度 */}
+                            <div>
+                              <div className="flex justify-between text-sm mb-2">
+                                <span>子工作包進度</span>
+                                <span>
+                                  {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.total || 0} 
+                                  ({selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.progress || 0}%)
+                                </span>
+                              </div>
+                              <Progress value={selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.progress || 0} className="h-2" />
+                            </div>
+
                             <div>
                               <h4 className="font-medium mb-2">任務列表</h4>
                               {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages?.length > 0 ? (
                                 <div className="space-y-2">
                                   {selectedProject.packages[selectedItem.packageIndex].subpackages[selectedItem.subpackageIndex].taskpackages.map((task, idx) => (
-                                    <div key={idx} className="flex items-center gap-2 p-2 border rounded">
-                                      <CheckSquareIcon className="h-4 w-4" />
-                                      <span>{task.name}</span>
+                                    <div key={idx} className="p-3 border rounded">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <CheckSquareIcon className="h-4 w-4" />
+                                        <span className="font-medium">{task.name}</span>
+                                        <span className="text-sm text-blue-600">
+                                          {task.completed || 0}/{task.total || 0} ({task.progress || 0}%)
+                                        </span>
+                                      </div>
+                                      <Progress value={task.progress || 0} className="h-1" />
                                     </div>
                                   ))}
                                 </div>
@@ -562,6 +706,18 @@ export default function ProjectListPage() {
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-4">
+                            {/* 任務進度 */}
+                            <div>
+                              <div className="flex justify-between text-sm mb-2">
+                                <span>任務進度</span>
+                                <span>
+                                  {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.total || 0} 
+                                  ({selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.progress || 0}%)
+                                </span>
+                              </div>
+                              <Progress value={selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.progress || 0} className="h-2" />
+                            </div>
+
                             <div>
                               <h4 className="font-medium mb-2">任務詳情</h4>
                               <div className="space-y-2">
@@ -576,6 +732,14 @@ export default function ProjectListPage() {
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">任務名稱：</span>
                                   <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">完成數量：</span>
+                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.completed || 0}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">總數量：</span>
+                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.total || 0}</span>
                                 </div>
                               </div>
                             </div>
@@ -601,20 +765,30 @@ export default function ProjectListPage() {
                 <div className="flex h-full items-center justify-center p-6 bg-muted/5">
                   <div className="text-center">
                     <h3 className="font-semibold mb-2">專案概覽</h3>
-              {selectedProject ? (
+                    {selectedProject ? (
                       <div className="text-sm space-y-1">
-                    <p><strong>專案名稱：</strong>{selectedProject.name}</p>
-                    <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
-                    <p><strong>總任務數：</strong>
-                          {selectedProject.packages?.reduce((total, pkg) => total + (pkg.subpackages?.length || 0), 0) || 0}
-                    </p>
-                    <p><strong>總子工作包數：</strong>
-                      {selectedProject.packages?.reduce((total, pkg) => 
+                        <p><strong>專案名稱：</strong>{selectedProject.name}</p>
+                        <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
+                        <p><strong>總子工作包數：</strong>
+                          {selectedProject.packages?.reduce((total, pkg) => 
                             total + pkg.subpackages?.reduce((taskTotal, task) => 
                               taskTotal + task.taskpackages?.length || 0, 0
-                        ), 0
-                      ) || 0}
-                    </p>
+                            ), 0
+                          ) || 0}
+                        </p>
+                        <p><strong>總任務數：</strong>
+                          {selectedProject.packages?.reduce((total, pkg) => 
+                            total + pkg.subpackages?.reduce((subTotal, sub) => 
+                              subTotal + sub.taskpackages?.length, 0
+                            ), 0
+                          ) || 0}
+                        </p>
+                        <p><strong>完成進度：</strong>
+                          {(() => {
+                            const progress = calculateProjectProgress(selectedProject);
+                            return `${progress.completed}/${progress.total} (${progress.progress}%)`;
+                          })()}
+                        </p>
                       </div>
                     ) : (
                       <p className="text-gray-500">選擇專案以查看概覽</p>
@@ -639,11 +813,25 @@ export default function ProjectListPage() {
                         <p className="text-xs text-muted-foreground">
                           {selectedProject.description || '無描述'}
                         </p>
-                </div>
-              ) : (
+                        <p><strong>專案進度：</strong></p>
+                        <p className="text-xs text-muted-foreground">
+                          {(() => {
+                            const progress = calculateProjectProgress(selectedProject);
+                            return `已完成 ${progress.completed} 個任務，共 ${progress.total} 個任務`;
+                          })()}
+                        </p>
+                        <p><strong>進度百分比：</strong></p>
+                        <p className="text-xs text-muted-foreground">
+                          {(() => {
+                            const progress = calculateProjectProgress(selectedProject);
+                            return `${progress.progress}%`;
+                          })()}
+                        </p>
+                      </div>
+                    ) : (
                       <p className="text-gray-500">選擇專案以查看詳細資訊</p>
-              )}
-            </div>
+                    )}
+                  </div>
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -802,6 +990,9 @@ function ProjectTree({
                         <span className="text-xs text-muted-foreground">
                           {pkg.subpackages?.length || 0}
                         </span>
+                        <span className="text-xs text-blue-600">
+                          {pkg.completed || 0}/{pkg.total || 0}
+                        </span>
                       </div>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -834,6 +1025,9 @@ function ProjectTree({
                                   <span className="text-xs text-muted-foreground">
                                     {sub.taskpackages?.length || 0}
                                   </span>
+                                  <span className="text-xs text-blue-600">
+                                    {sub.completed || 0}/{sub.total || 0}
+                                  </span>
                                 </div>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
@@ -863,6 +1057,9 @@ function ProjectTree({
                                       >
                                         <CheckSquareIcon className="h-3 w-3" />
                                         <span className="truncate text-xs">{task.name}</span>
+                                        <span className="text-xs text-blue-600">
+                                          {task.completed || 0}/{task.total || 0}
+                                        </span>
                                       </div>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
