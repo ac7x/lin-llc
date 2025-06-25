@@ -14,7 +14,6 @@ import type { Project, SelectedItem } from '@/app/project/types';
 interface ProjectTaskDetailProps {
   selectedProject: Project | null;
   selectedItem: SelectedItem;
-  loading: boolean;
 }
 
 /**
@@ -24,7 +23,6 @@ interface ProjectTaskDetailProps {
 export default function ProjectTaskDetail({
   selectedProject,
   selectedItem,
-  loading,
 }: ProjectTaskDetailProps) {
   // 如果不是選中任務或沒有專案資料，不顯示
   if (selectedItem?.type !== 'task' || !selectedProject) {

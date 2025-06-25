@@ -17,7 +17,6 @@ import type { Project, SelectedItem } from '@/app/project/types';
 interface ProjectDetailProps {
   selectedProject: Project | null;
   selectedItem: SelectedItem;
-  loading: boolean;
   calculateProjectProgress: (project: Project) => { completed: number; total: number; progress: number };
 }
 
@@ -28,7 +27,6 @@ interface ProjectDetailProps {
 export default function ProjectDetail({
   selectedProject,
   selectedItem,
-  loading,
   calculateProjectProgress,
 }: ProjectDetailProps) {
   // 如果不是選中專案或沒有專案資料，不顯示

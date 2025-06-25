@@ -16,9 +16,7 @@ import type { Project, SelectedItem, TaskPackage } from '@/app/project/types';
 interface ProjectSubpackageDetailProps {
   selectedProject: Project | null;
   selectedItem: SelectedItem;
-  loading: boolean;
   isItemSelected: (item: SelectedItem) => boolean;
-  onItemClick: (item: SelectedItem) => void;
 }
 
 /**
@@ -28,9 +26,7 @@ interface ProjectSubpackageDetailProps {
 export default function ProjectSubpackageDetail({
   selectedProject,
   selectedItem,
-  loading,
   isItemSelected,
-  onItemClick,
 }: ProjectSubpackageDetailProps) {
   // 如果不是選中子工作包或沒有專案資料，不顯示
   if (selectedItem?.type !== 'subpackage' || !selectedProject) {

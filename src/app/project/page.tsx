@@ -5,7 +5,6 @@ import { db } from '@/lib/firebase-init';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -18,21 +17,14 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarMenuSub,
   SidebarRail,
 } from '@/components/ui/sidebar';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -54,6 +46,12 @@ import {
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { usePermission } from '@/app/settings/hooks/use-permission';
 import ProjectTree from './components/tree/project-tree';
+import {
+  ProjectDetail,
+  ProjectPackageDetail,
+  ProjectSubpackageDetail,
+  ProjectTaskDetail,
+} from './components/detail';
 import type { Project, SelectedItem, Package, Subpackage, TaskPackage } from './types';
 
 // 提取重複的 Input 樣式為常數，避免 Firebase Performance 錯誤
@@ -556,395 +554,29 @@ export default function ProjectListPage() {
                     </div>
                   ) : selectedItem ? (
                     <div className="space-y-6">
-                      {/* 根據選中項目類型顯示不同內容 */}
-                      {selectedItem.type === 'project' && selectedProject && (
-                        <>
-                          {/* 專案資訊 */}
-                          <Card className="border-0 shadow-sm">
-                            <CardHeader>
-                              <CardTitle className="flex items-center gap-2">
-                                <SettingsIcon className="h-5 w-5" />
-                                專案資訊
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <p className="text-sm text-gray-400">
-                                建立時間：{new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
-                              </p>
-                            </CardContent>
-                          </Card>
-
-                          {/* 專案概覽卡片 */}
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <Card className="border-0 shadow-sm">
-                              <CardContent className="pt-6">
-                                <div className="flex items-center gap-2">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <PackageIcon className="h-5 w-5 text-blue-500" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>工作包數量</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                  <div>
-                                    <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
-                                    <p className="text-sm text-muted-foreground">工作包</p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                            
-                            <Card className="border-0 shadow-sm">
-                              <CardContent className="pt-6">
-                                <div className="flex items-center gap-2">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <ListIcon className="h-5 w-5 text-purple-500" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>子工作包數量</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                  <div>
-                                    <p className="text-2xl font-bold">
-                                      {selectedProject.packages?.reduce((total, pkg) => 
-                                        total + pkg.subpackages?.reduce((taskTotal, task) => 
-                                          taskTotal + task.taskpackages?.length || 0, 0
-                                        ), 0
-                                      ) || 0}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">子工作包</p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                            
-                            <Card className="border-0 shadow-sm">
-                              <CardContent className="pt-6">
-                                <div className="flex items-center gap-2">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <SquareIcon className="h-5 w-5 text-green-500" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>任務總數</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                  <div>
-                                    <p className="text-2xl font-bold">
-                                      {selectedProject.packages?.reduce((total, pkg) => 
-                                        total + pkg.subpackages?.reduce((subTotal, sub) => 
-                                          subTotal + sub.taskpackages?.length, 0
-                                        ), 0
-                                      ) || 0}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">任務</p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-
-                            <Card className="border-0 shadow-sm">
-                              <CardContent className="pt-6">
-                                <div className="flex items-center gap-2">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="h-5 w-5 rounded-full bg-gradient-to-r from-blue-500 to-green-500" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>完成進度百分比</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                  <div className="flex-1">
-                                    <p className="text-2xl font-bold">
-                                      {(() => {
-                                        const progress = calculateProjectProgress(selectedProject);
-                                        return `${progress.progress}%`;
-                                      })()}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">完成進度</p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </div>
-
-                          {/* 進度條 */}
-                          <Card className="border-0 shadow-sm">
-                            <CardHeader>
-                              <CardTitle className="text-lg">專案進度</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              {(() => {
-                                const progress = calculateProjectProgress(selectedProject);
-                                return (
-                                  <div className="space-y-4">
-                                    <div className="flex justify-between text-sm">
-                                      <span>整體進度</span>
-                                      <span>{progress.completed} / {progress.total} ({progress.progress}%)</span>
-                                    </div>
-                                    <Progress value={progress.progress} className="h-2" />
-                                  </div>
-                                );
-                              })()}
-                            </CardContent>
-                          </Card>
-                        </>
-                      )}
-
-                      {selectedItem.type === 'package' && selectedProject && (
-                        <Card className="border-0 shadow-sm">
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                              <PackageIcon className="h-5 w-5" />
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="truncate max-w-[300px]">
-                                    工作包：{selectedProject.packages[selectedItem.packageIndex]?.name}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>工作包：{selectedProject.packages[selectedItem.packageIndex]?.name}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-4">
-                              {/* 工作包進度 */}
-                              <div>
-                                <div className="flex justify-between text-sm mb-2">
-                                  <span>工作包進度</span>
-                                  <span>
-                                    {selectedProject.packages[selectedItem.packageIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.total || 0} 
-                                    ({selectedProject.packages[selectedItem.packageIndex]?.progress || 0}%)
-                                  </span>
-                                </div>
-                                <Progress value={selectedProject.packages[selectedItem.packageIndex]?.progress || 0} className="h-2" />
-                              </div>
-
-                              <div>
-                                <h4 className="font-medium mb-2">子工作包列表</h4>
-                                {selectedProject.packages[selectedItem.packageIndex]?.subpackages?.length > 0 ? (
-                                  <div className="space-y-2">
-                                    {selectedProject.packages[selectedItem.packageIndex].subpackages.map((sub: Subpackage, idx: number) => (
-                                      <div key={idx} className="p-3 border rounded-lg">
-                                        <div className="flex items-center gap-2 mb-2">
-                                          <ListIcon className="h-4 w-4" />
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <span className="font-medium truncate max-w-[200px]">{sub.name}</span>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <p>{sub.name}</p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                          <span className="text-sm text-muted-foreground">
-                                            ({sub.taskpackages?.length || 0} 個任務)
-                                          </span>
-                                          <span className="text-sm text-blue-600">
-                                            {sub.completed || 0}/{sub.total || 0} ({sub.progress || 0}%)
-                                          </span>
-                                        </div>
-                                        <Progress value={sub.progress || 0} className="h-1 mb-2" />
-                                        {sub.taskpackages?.length > 0 && (
-                                          <div className="ml-6 space-y-1">
-                                            {sub.taskpackages.map((task: TaskPackage, taskIdx: number) => (
-                                              <div key={taskIdx} className="flex items-center gap-2 text-sm">
-                                                {isItemSelected({
-                                                  type: 'task',
-                                                  projectId: selectedProject.id,
-                                                  packageIndex: selectedItem.packageIndex,
-                                                  subpackageIndex: idx,
-                                                  taskIndex: taskIdx
-                                                }) ? (
-                                                  <SquareCheckIcon className="h-3 w-3" />
-                                                ) : (
-                                                  <SquareIcon className="h-3 w-3" />
-                                                )}
-                                                <Tooltip>
-                                                  <TooltipTrigger asChild>
-                                                    <span className="truncate max-w-[150px]">{task.name}</span>
-                                                  </TooltipTrigger>
-                                                  <TooltipContent>
-                                                    <p>{task.name}</p>
-                                                  </TooltipContent>
-                                                </Tooltip>
-                                                <span className="text-xs text-muted-foreground">
-                                                  {task.completed || 0}/{task.total || 0}
-                                                </span>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-muted-foreground">尚無子工作包</p>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {selectedItem.type === 'subpackage' && selectedProject && (
-                        <Card className="border-0 shadow-sm">
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                              <ListIcon className="h-5 w-5" />
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="truncate max-w-[400px]">
-                                    子工作包：{selectedProject.packages[selectedItem.packageIndex]?.name} - {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>子工作包：{selectedProject.packages[selectedItem.packageIndex]?.name} - {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-4">
-                              {/* 子工作包進度 */}
-                              <div>
-                                <div className="flex justify-between text-sm mb-2">
-                                  <span>子工作包進度</span>
-                                  <span>
-                                    {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.total || 0} 
-                                    ({selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.progress || 0}%)
-                                  </span>
-                                </div>
-                                <Progress value={selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.progress || 0} className="h-2" />
-                              </div>
-
-                              <div>
-                                <h4 className="font-medium mb-2">任務列表</h4>
-                                {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages?.length > 0 ? (
-                                  <div className="space-y-2">
-                                    {selectedProject.packages[selectedItem.packageIndex].subpackages[selectedItem.subpackageIndex].taskpackages.map((task: TaskPackage, taskIdx: number) => (
-                                      <div key={taskIdx} className="p-3 border rounded">
-                                        <div className="flex items-center gap-2 mb-2">
-                                          {isItemSelected({
-                                            type: 'task',
-                                            projectId: selectedProject.id,
-                                            packageIndex: selectedItem.packageIndex,
-                                            subpackageIndex: selectedItem.subpackageIndex,
-                                            taskIndex: taskIdx
-                                          }) ? (
-                                            <SquareCheckIcon className="h-3 w-3" />
-                                          ) : (
-                                            <SquareIcon className="h-3 w-3" />
-                                          )}
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <span className="font-medium truncate max-w-[250px]">{task.name}</span>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <p>{task.name}</p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                          <span className="text-sm text-blue-600">
-                                            {task.completed || 0}/{task.total || 0} ({task.progress || 0}%)
-                                          </span>
-                                        </div>
-                                        <Progress value={task.progress || 0} className="h-1" />
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-muted-foreground">尚無任務</p>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {selectedItem.type === 'task' && selectedProject && (
-                        <Card className="border-0 shadow-sm">
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                              <SquareIcon className="h-5 w-5" />
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="truncate max-w-[400px]">
-                                    任務：{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>任務：{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-4">
-                              {/* 任務進度 */}
-                              <div>
-                                <div className="flex justify-between text-sm mb-2">
-                                  <span>任務進度</span>
-                                  <span>
-                                    {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.total || 0} 
-                                    ({selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.progress || 0}%)
-                                  </span>
-                                </div>
-                                <Progress value={selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.progress || 0} className="h-2" />
-                              </div>
-
-                              <div>
-                                <h4 className="font-medium mb-2">任務詳情</h4>
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium">所屬工作包：</span>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="truncate max-w-[200px]">{selectedProject.packages[selectedItem.packageIndex]?.name}</span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>{selectedProject.packages[selectedItem.packageIndex]?.name}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium">所屬子工作包：</span>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="truncate max-w-[200px]">{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}</span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium">任務名稱：</span>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="truncate max-w-[200px]">{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium">完成數量：</span>
-                                    <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.completed || 0}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium">總數量：</span>
-                                    <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.total || 0}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
+                      {/* 使用新的詳細資訊組件 */}
+                      <ProjectDetail
+                        selectedProject={selectedProject}
+                        selectedItem={selectedItem}
+                        calculateProjectProgress={calculateProjectProgress}
+                      />
+                      
+                      <ProjectPackageDetail
+                        selectedProject={selectedProject}
+                        selectedItem={selectedItem}
+                        isItemSelected={isItemSelected}
+                      />
+                      
+                      <ProjectSubpackageDetail
+                        selectedProject={selectedProject}
+                        selectedItem={selectedItem}
+                        isItemSelected={isItemSelected}
+                      />
+                      
+                      <ProjectTaskDetail
+                        selectedProject={selectedProject}
+                        selectedItem={selectedItem}
+                      />
                     </div>
                   ) : (
                     <div className="flex items-center justify-center h-full">

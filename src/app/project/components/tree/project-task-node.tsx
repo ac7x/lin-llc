@@ -26,9 +26,7 @@ export default function ProjectTaskNode({
   packageIndex,
   subpackageIndex,
   taskIndex,
-  selectedItem,
   onItemClick,
-  loading,
   isItemSelected,
 }: ProjectTaskNodeProps) {
   const task = project.packages[packageIndex]?.subpackages[subpackageIndex]?.taskpackages[taskIndex];
