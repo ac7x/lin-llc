@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { ProjectTree } from './tree';
+import { CreateProjectWizard } from './create-project-wizard';
 import { Project, SelectedItem } from '../types';
 
 interface ProjectSidebarProps {
@@ -43,7 +44,13 @@ interface ProjectSidebarProps {
   onAddPackage: (projectId: string, pkgName: string) => Promise<void>;
   onAddTaskPackage: (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => Promise<void>;
   onAddSubpackage: (projectId: string, pkgIdx: number, subName: string) => Promise<void>;
-  onCreateProject: (projectName: string) => Promise<void>;
+  onCreateProject: (config: {
+    name: string;
+    createPackages: boolean;
+    packageCount: number;
+    createSubpackages: boolean;
+    createTasks: boolean;
+  }) => Promise<void>;
   isItemSelected: (item: SelectedItem) => boolean;
 }
 
@@ -66,21 +73,15 @@ export function ProjectSidebar({
   onCreateProject,
   isItemSelected,
 }: ProjectSidebarProps) {
-  const [showProjectInput, setShowProjectInput] = useState(false);
-  const [projectInput, setProjectInput] = useState('');
-
   // 處理建立專案
-  const handleCreateProject = async () => {
-    if (!projectInput.trim()) return;
-    
-    await onCreateProject(projectInput.trim());
-    setProjectInput('');
-    setShowProjectInput(false);
-  };
-
-  // 處理建立專案按鈕點擊
-  const handleAddProjectClick = () => {
-    setShowProjectInput(true);
+  const handleCreateProject = async (config: {
+    name: string;
+    createPackages: boolean;
+    packageCount: number;
+    createSubpackages: boolean;
+    createTasks: boolean;
+  }) => {
+    await onCreateProject(config);
   };
 
   // 專案列表 Skeleton 組件
@@ -141,46 +142,20 @@ export function ProjectSidebar({
                   <ProjectActionGuard action="create" resource="project">
                     <SidebarMenuItem>
                       <div className="pl-1 pr-1 py-1">
-                        {showProjectInput ? (
-                          <div className="flex gap-1">
-                            <Input
-                              placeholder="專案名稱"
-                              value={projectInput}
-                              onChange={e => setProjectInput(e.target.value)}
-                              className="flex-1 text-xs h-6"
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  void handleCreateProject();
-                                }
-                              }}
-                            />
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  onClick={() => void handleCreateProject()}
-                                  disabled={loading || !projectInput.trim()}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <PlusIcon className="h-3 w-3" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>建立專案</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleAddProjectClick}
-                            className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
-                          >
-                            <PlusIcon className="h-3 w-3 mr-1" />
-                            {projects.length === 0 ? '新增第一個專案' : '新增專案'}
-                          </Button>
-                        )}
+                        <CreateProjectWizard
+                          onCreateProject={handleCreateProject}
+                          loading={loading}
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                            >
+                              <PlusIcon className="h-3 w-3 mr-1" />
+                              {projects.length === 0 ? '新增第一個專案' : '新增專案'}
+                            </Button>
+                          }
+                        />
                       </div>
                     </SidebarMenuItem>
                   </ProjectActionGuard>

@@ -24,7 +24,8 @@ import {
   useProjectData, 
   useProjectOperations, 
   useProjectSelection,
-  useProjectProgress 
+  useProjectProgress,
+  useProjectWizard
 } from './hooks';
 import { SelectedItem } from './types';
 
@@ -53,6 +54,9 @@ export default function ProjectListPage() {
   // 使用進度管理 hook
   const projectProgress = useProjectProgress(projectSelection.selectedProject);
 
+  // 使用專案精靈 hook
+  const { createProject: createProjectWithWizard, loading: wizardLoading } = useProjectWizard();
+
   // 當專案列表載入後，自動選擇第一個專案
   useEffect(() => {
     if (projectData.projects.length > 0 && !projectSelection.selectedProject) {
@@ -61,8 +65,16 @@ export default function ProjectListPage() {
   }, [projectData.projects, projectSelection]);
 
   // CRUD 操作包裝函數
-  const handleCreateProject = async (projectName: string) => {
-    await projectOperations.createProject(projectName);
+  const handleCreateProject = async (config: {
+    name: string;
+    createPackages: boolean;
+    packageCount: number;
+    createSubpackages: boolean;
+    createTasks: boolean;
+  }) => {
+    const createdProject = await createProjectWithWizard(config);
+    projectData.addProject(createdProject);
+    projectSelection.selectProject(createdProject);
   };
 
   const handleAddPackage = async (projectId: string, pkgName: string) => {
@@ -116,7 +128,7 @@ export default function ProjectListPage() {
             projects={projectData.projects}
             selectedProject={projectSelection.selectedProject}
             selectedItem={projectSelection.selectedItem}
-            loading={projectData.loading || projectOperations.loading}
+            loading={projectData.loading || projectOperations.loading || wizardLoading}
             pkgInputs={projectSelection.pkgInputs}
             setPkgInputs={projectSelection.setPkgInputs}
             taskPackageInputs={projectSelection.taskPackageInputs}
