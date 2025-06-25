@@ -118,6 +118,42 @@ class ProjectService {
   }
 
   /**
+   * 計算進度百分比
+   * @param completed 已完成數量
+   * @param total 總數量
+   * @returns 進度百分比
+   */
+  static calculateProgress(completed: number, total: number): number {
+    if (total === 0) return 0;
+    return Math.round((completed / total) * 100);
+  }
+
+  /**
+   * 計算專案總進度
+   * @param project 專案物件
+   * @returns 進度資訊
+   */
+  static calculateProjectProgress(project: Project) {
+    const totalTasks = project.packages.reduce((total, pkg) => 
+      total + pkg.subpackages.reduce((subTotal, sub) => 
+        subTotal + sub.taskpackages.length, 0
+      ), 0
+    );
+    const completedTasks = project.packages.reduce((total, pkg) => 
+      total + pkg.subpackages.reduce((subTotal, sub) => 
+        subTotal + sub.taskpackages.reduce((taskTotal, task) => 
+          taskTotal + task.completed, 0
+        ), 0
+      ), 0
+    );
+    return {
+      completed: completedTasks,
+      total: totalTasks,
+      progress: this.calculateProgress(completedTasks, totalTasks)
+    };
+  }
+
+  /**
    * 刪除專案
    * @param projectId 專案 ID
    * @param hasPermission 權限檢查函數
