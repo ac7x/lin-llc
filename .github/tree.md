@@ -10,8 +10,14 @@
 │  │  │
 │  │  ├─components
 │  │  │  ├─Journal
+│  │  │  │      page.tsx
+│  │  │  │
 │  │  │  ├─storage
+│  │  │  │      page.tsx
+│  │  │  │
 │  │  │  └─template
+│  │  │          page.tsx
+│  │  │
 │  │  └─[projectId]
 │  │      │  page.tsx
 │  │      │
@@ -21,7 +27,11 @@
 │  │              │
 │  │              └─subpackage
 │  │                  └─[subpackageId]
-│  │                          page.tsx
+│  │                      │  page.tsx
+│  │                      │
+│  │                      └─taskpackage
+│  │                          └─[taskpackageId]
+│  │                                  page.tsx
 │  │
 │  ├─settings
 │  │  │  page.tsx

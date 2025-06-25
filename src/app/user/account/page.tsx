@@ -266,7 +266,7 @@ export default function AccountPage() {
                   💰 財務管理
                 </Button>
               </Link>
-              <Link href="/user/project">
+              <Link href="/project">
                 <Button variant="ghost" className="w-full justify-start">
                   📋 專案管理
                 </Button>

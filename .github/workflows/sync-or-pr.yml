@@ -1,0 +1,38 @@
+name: Auto Sync from Upstream
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 每天 UTC 2:00 執行（台灣時間 10:00）
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout your fork
+        uses: actions/checkout@v4
+
+      - name: Set up Git identity
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Add upstream
+        run: |
+          git remote add upstream https://github.com/ac7x/lin-llc.git
+          git fetch upstream
+
+      - name: Check if behind
+        id: check
+        run: |
+          git fetch origin main
+          BEHIND=$(git rev-list --left-right --count origin/main...upstream/main | awk '{print $2}')
+          echo "behind=$BEHIND" >> $GITHUB_OUTPUT
+
+      - name: Sync from upstream if behind
+        if: steps.check.outputs.behind != '0'
+        run: |
+          git checkout main
+          git merge upstream/main --allow-unrelated-histories || true
+          git push origin main

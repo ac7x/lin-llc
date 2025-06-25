@@ -12,11 +12,40 @@ export const DEFAULT_PERMISSIONS: Permission[] = [
   { id: 'finance:delete', name: '刪除財務', description: '刪除財務資料', resource: 'finance', action: 'delete', category: 'finance' },
   { id: 'finance:admin', name: '財務管理', description: '完整財務管理權限', resource: 'finance', action: 'admin', category: 'finance' },
   
-  // 專案管理權限
+  // 專案管理權限 - 基礎權限
   { id: 'project:read', name: '查看專案', description: '查看專案資料', resource: 'project', action: 'read', category: 'project' },
   { id: 'project:write', name: '編輯專案', description: '編輯專案資料', resource: 'project', action: 'write', category: 'project' },
   { id: 'project:delete', name: '刪除專案', description: '刪除專案資料', resource: 'project', action: 'delete', category: 'project' },
   { id: 'project:admin', name: '專案管理', description: '完整專案管理權限', resource: 'project', action: 'admin', category: 'project' },
+  
+  // 專案管理權限 - 工作包權限
+  { id: 'project:package:read', name: '查看工作包', description: '查看工作包資料', resource: 'project', action: 'package:read', category: 'project' },
+  { id: 'project:package:write', name: '編輯工作包', description: '編輯工作包資料', resource: 'project', action: 'package:write', category: 'project' },
+  { id: 'project:package:delete', name: '刪除工作包', description: '刪除工作包資料', resource: 'project', action: 'package:delete', category: 'project' },
+  { id: 'project:package:create', name: '創建工作包', description: '創建新的工作包', resource: 'project', action: 'package:create', category: 'project' },
+  
+  // 專案管理權限 - 子工作包權限
+  { id: 'project:subpackage:read', name: '查看子工作包', description: '查看子工作包資料', resource: 'project', action: 'subpackage:read', category: 'project' },
+  { id: 'project:subpackage:write', name: '編輯子工作包', description: '編輯子工作包資料', resource: 'project', action: 'subpackage:write', category: 'project' },
+  { id: 'project:subpackage:delete', name: '刪除子工作包', description: '刪除子工作包資料', resource: 'project', action: 'subpackage:delete', category: 'project' },
+  { id: 'project:subpackage:create', name: '創建子工作包', description: '創建新的子工作包', resource: 'project', action: 'subpackage:create', category: 'project' },
+  
+  // 專案管理權限 - 任務權限
+  { id: 'project:task:read', name: '查看任務', description: '查看任務資料', resource: 'project', action: 'task:read', category: 'project' },
+  { id: 'project:task:write', name: '編輯任務', description: '編輯任務資料', resource: 'project', action: 'task:write', category: 'project' },
+  { id: 'project:task:delete', name: '刪除任務', description: '刪除任務資料', resource: 'project', action: 'task:delete', category: 'project' },
+  { id: 'project:task:create', name: '創建任務', description: '創建新的任務', resource: 'project', action: 'task:create', category: 'project' },
+  { id: 'project:task:assign', name: '指派任務', description: '指派任務給用戶', resource: 'project', action: 'task:assign', category: 'project' },
+  
+  // 專案管理權限 - 專案成員權限
+  { id: 'project:member:read', name: '查看專案成員', description: '查看專案成員資料', resource: 'project', action: 'member:read', category: 'project' },
+  { id: 'project:member:write', name: '編輯專案成員', description: '編輯專案成員資料', resource: 'project', action: 'member:write', category: 'project' },
+  { id: 'project:member:add', name: '新增專案成員', description: '新增成員到專案', resource: 'project', action: 'member:add', category: 'project' },
+  { id: 'project:member:remove', name: '移除專案成員', description: '從專案移除成員', resource: 'project', action: 'member:remove', category: 'project' },
+  
+  // 專案管理權限 - 專案設定權限
+  { id: 'project:settings:read', name: '查看專案設定', description: '查看專案設定', resource: 'project', action: 'settings:read', category: 'project' },
+  { id: 'project:settings:write', name: '編輯專案設定', description: '編輯專案設定', resource: 'project', action: 'settings:write', category: 'project' },
   
   // 用戶管理權限
   { id: 'user:read', name: '查看用戶', description: '查看用戶資料', resource: 'user', action: 'read', category: 'user' },
@@ -68,7 +97,12 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
     level: 1,
     permissions: [
       'finance:read', 'finance:write', 'finance:admin',
-      'project:read', 'project:write', 'project:admin',
+      'project:read', 'project:write', 'project:delete', 'project:admin',
+      'project:package:read', 'project:package:write', 'project:package:delete', 'project:package:create',
+      'project:subpackage:read', 'project:subpackage:write', 'project:subpackage:delete', 'project:subpackage:create',
+      'project:task:read', 'project:task:write', 'project:task:delete', 'project:task:create', 'project:task:assign',
+      'project:member:read', 'project:member:write', 'project:member:add', 'project:member:remove',
+      'project:settings:read', 'project:settings:write',
       'user:read', 'user:write',
       'settings:read', 'settings:write',
       'system:read',
@@ -86,6 +120,11 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
     permissions: [
       'finance:read', 'finance:write',
       'project:read', 'project:write',
+      'project:package:read', 'project:package:write', 'project:package:create',
+      'project:subpackage:read', 'project:subpackage:write', 'project:subpackage:create',
+      'project:task:read', 'project:task:write', 'project:task:create', 'project:task:assign',
+      'project:member:read', 'project:member:add',
+      'project:settings:read',
       'user:read',
       'settings:read',
       'navigation:home', 'navigation:project', 'navigation:task', 'navigation:account',
@@ -102,6 +141,11 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
     permissions: [
       'finance:read',
       'project:read', 'project:write',
+      'project:package:read', 'project:package:write', 'project:package:create',
+      'project:subpackage:read', 'project:subpackage:write', 'project:subpackage:create',
+      'project:task:read', 'project:task:write', 'project:task:create',
+      'project:member:read',
+      'project:settings:read',
       'navigation:home', 'navigation:project', 'navigation:task', 'navigation:account',
       'dashboard:read',
       'notification:read',
@@ -114,6 +158,11 @@ export const DEFAULT_ROLES: Omit<Role, 'createdAt' | 'createdBy' | 'updatedAt' |
     description: '訪客用戶，僅有查看權限',
     level: 99,
     permissions: [
+      'project:read',
+      'project:package:read',
+      'project:subpackage:read',
+      'project:task:read',
+      'project:member:read',
       'navigation:home',
     ],
     isCustom: false,

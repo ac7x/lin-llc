@@ -1,87 +1,65 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, setDoc, collection, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckSquareIcon, ListIcon } from 'lucide-react';
 
 export default function SubpackagePage() {
-  // 取得路由參數
-  const [assignedUids, setAssignedUids] = useState<string[]>([]);
-  const [inputUid, setInputUid] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Firestore 路徑
-  // subpackage 資料建議存於: projects/{projectId}/packages/{packageId}/subpackages/{subpackageId}
-  // 這裡僅示範指派用戶
   useEffect(() => {
     void (async () => {
-      const subRef = doc(db, 'subpackages', window.location.pathname);
-      const snap = await getDoc(subRef);
-      if (snap.exists()) {
-        setAssignedUids(snap.data().assignedUids || []);
+      try {
+        // 這裡應該根據路由參數獲取子工作包資料
+        // 實際實現時需要從 URL 參數或 context 中獲取 projectId, packageId, subpackageId
+        setLoading(false);
+      } catch (error) {
+        console.error('載入子工作包資料失敗:', error);
+        setLoading(false);
       }
     })();
   }, []);
 
-  // 指派用戶（可多位）
-  const handleAssign = async () => {
-    setLoading(true);
-    const subRef = doc(db, 'subpackages', window.location.pathname);
-    // 更新 assignedUids 陣列
-    await updateDoc(subRef, { assignedUids: arrayUnion(inputUid) });
-    setAssignedUids(prev => [...prev, inputUid]);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 1500);
-    setLoading(false);
-    // 寫入通知
-    await addDoc(collection(db, 'notifications'), {
-      targetUid: inputUid,
-      title: '任務指派',
-      message: `您已被指派到子工作包：${window.location.pathname}`,
-      type: 'info',
-      isRead: false,
-      createdAt: new Date().toISOString(),
-    });
-  };
-
-  // 移除指派
-  const handleRemove = async (uid: string) => {
-    setLoading(true);
-    const subRef = doc(db, 'subpackages', window.location.pathname);
-    await updateDoc(subRef, { assignedUids: arrayRemove(uid) });
-    setAssignedUids(prev => prev.filter(u => u !== uid));
-    setLoading(false);
-  };
+  if (loading) {
+    return (
+      <main className="p-4">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">載入中...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="p-4">
-      <h1 className="text-xl font-bold mb-4">
-        指派子工作包任務（可多人）
-      </h1>
-      <div className="mb-2">目前指派用戶 UID：{assignedUids.length > 0 ? assignedUids.join(', ') : '尚未指派'}</div>
-      <div className="flex gap-2 items-center mb-4">
-        <Input
-          placeholder="輸入用戶 UID..."
-          value={inputUid}
-          onChange={e => setInputUid(e.target.value)}
-          className="w-64"
-        />
-        <Button onClick={handleAssign} disabled={loading || !inputUid || assignedUids.includes(inputUid)}>
-          {loading ? '指派中...' : '指派'}
-        </Button>
-        {success && <span className="text-green-600 ml-2">指派成功！</span>}
-      </div>
-      <div className="space-y-2">
-        {assignedUids.map(uid => (
-          <div key={uid} className="flex items-center gap-2">
-            <span>{uid}</span>
-            <Button size="sm" variant="outline" onClick={() => handleRemove(uid)} disabled={loading}>
-              移除
-            </Button>
-          </div>
-        ))}
+      <div className="space-y-6">
+        {/* 子工作包資訊 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ListIcon className="h-5 w-5" />
+              子工作包資訊
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">子工作包的基本資訊和描述</p>
+          </CardContent>
+        </Card>
+
+        {/* 任務列表 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckSquareIcon className="h-5 w-5" />
+              任務列表
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p className="text-muted-foreground">此子工作包下的任務列表</p>
+              {/* 這裡可以顯示任務列表，每個任務可以點擊進入任務詳情頁面 */}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
