@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
-import { ProjectNodeProps } from '@/app/project/types';
+import { ProjectNodeProps, SelectedItem } from '@/app/project/types';
 import ProjectPackageNode from './project-package-node';
 
 // 提取重複的 Input 樣式為常數，避免 Firebase Performance 錯誤
@@ -70,8 +70,8 @@ export default function ProjectNode({
   const [expanded, setExpanded] = useState(selectedProject?.id === project.id);
   const [showInput, setShowInput] = useState(false);
   
-  const projectItem = {
-    type: 'project' as const,
+  const projectItem: SelectedItem = {
+    type: 'project',
     projectId: project.id,
   };
 

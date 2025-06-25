@@ -12,7 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ProjectTaskNodeProps } from '@/app/project/types';
+import { ProjectTaskNodeProps, SelectedItem } from '@/app/project/types';
 
 // 提取項目選擇樣式為常數，避免 Firebase Performance 錯誤
 const ITEM_SELECT_STYLE = "flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer";
@@ -35,8 +35,8 @@ export default function ProjectTaskNode({
     return null;
   }
 
-  const taskItem = {
-    type: 'task' as const,
+  const taskItem: SelectedItem = {
+    type: 'task',
     projectId: project.id,
     packageIndex,
     subpackageIndex,

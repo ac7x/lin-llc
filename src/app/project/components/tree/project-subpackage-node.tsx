@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
-import { ProjectSubpackageNodeProps } from '@/app/project/types';
+import { ProjectSubpackageNodeProps, SelectedItem } from '@/app/project/types';
 import ProjectTaskNode from './project-task-node';
 
 // 提取重複的 Input 樣式為常數，避免 Firebase Performance 錯誤
@@ -63,8 +63,8 @@ export default function ProjectSubpackageNode({
     return null;
   }
 
-  const subpackageItem = {
-    type: 'subpackage' as const,
+  const subpackageItem: SelectedItem = {
+    type: 'subpackage',
     projectId: project.id,
     packageIndex,
     subpackageIndex,
