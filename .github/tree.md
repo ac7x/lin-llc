@@ -9,6 +9,9 @@
 │  │  │  page.tsx
 │  │  │
 │  │  ├─components
+│  │  │  │  project-details.tsx
+│  │  │  │  project-tree.tsx
+│  │  │  │
 │  │  │  ├─Journal
 │  │  │  │      page.tsx
 │  │  │  │
@@ -47,7 +50,6 @@
 │  │  │      permission-init.ts
 │  │  │      permission-service.ts
 │  │  │
-│  │  ├─service
 │  │  └─types
 │  │          index.ts
 │  │
@@ -65,9 +67,6 @@
 │                  page.tsx
 │
 ├─components
-│  │  app-sidebar.tsx
-│  │  page.tsx
-│  │
 │  └─ui
 │          accordion.tsx
 │          alert-dialog.tsx
