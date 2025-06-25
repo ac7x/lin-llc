@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -157,6 +158,7 @@ export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectName, setProjectName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
@@ -168,55 +170,63 @@ export default function ProjectListPage() {
   // 載入專案列表
   useEffect(() => {
     void (async () => {
+      setInitialLoading(true);
       // 檢查是否有查看專案權限
       if (!hasPermission('project:read')) {
         console.warn('用戶沒有查看專案權限');
+        setInitialLoading(false);
         return;
       }
 
-      const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      const projectList = snapshot.docs.map(doc => {
-        const data = doc.data();
-        // 確保 packages 是陣列，且每個 package 都有 tasks 陣列
-        const packages = Array.isArray(data.packages) 
-          ? data.packages.map((pkg: any) => ({
-              name: pkg.name || '',
-              completed: pkg.completed || 0,
-              total: pkg.total || 0,
-              progress: pkg.progress || 0,
-              subpackages: Array.isArray(pkg.subpackages) 
-                ? pkg.subpackages.map((sub: any) => ({ 
-                    name: sub.name || '未命名子工作包',
-                    completed: sub.completed || 0,
-                    total: sub.total || 0,
-                    progress: sub.progress || 0,
-                    taskpackages: Array.isArray(sub.taskpackages) ? sub.taskpackages.map((task: any) => ({ 
-                      name: task.name || '', 
-                      completed: task.completed || 0, 
-                      total: task.total || 0, 
-                      progress: task.progress || 0 
-                    })) : [] 
-                  }))
-                : []
-            }))
-          : [];
-        
-        return {
-          id: doc.id,
-          name: data.name || '',
-          description: data.description || '',
-          createdAt: data.createdAt || new Date().toISOString(),
-          packages,
-          completed: data.completed || 0,
-          total: data.total || 0,
-          progress: data.progress || 0,
-        };
-      }) as Project[];
-      setProjects(projectList);
-      // 預設選擇第一個專案
-      if (projectList.length > 0 && !selectedProject) {
-        setSelectedProject(projectList[0]);
+      try {
+        const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const projectList = snapshot.docs.map(doc => {
+          const data = doc.data();
+          // 確保 packages 是陣列，且每個 package 都有 tasks 陣列
+          const packages = Array.isArray(data.packages) 
+            ? data.packages.map((pkg: any) => ({
+                name: pkg.name || '',
+                completed: pkg.completed || 0,
+                total: pkg.total || 0,
+                progress: pkg.progress || 0,
+                subpackages: Array.isArray(pkg.subpackages) 
+                  ? pkg.subpackages.map((sub: any) => ({ 
+                      name: sub.name || '未命名子工作包',
+                      completed: sub.completed || 0,
+                      total: sub.total || 0,
+                      progress: sub.progress || 0,
+                      taskpackages: Array.isArray(sub.taskpackages) ? sub.taskpackages.map((task: any) => ({ 
+                        name: task.name || '', 
+                        completed: task.completed || 0, 
+                        total: task.total || 0, 
+                        progress: task.progress || 0 
+                      })) : [] 
+                    }))
+                  : []
+              }))
+            : [];
+          
+          return {
+            id: doc.id,
+            name: data.name || '',
+            description: data.description || '',
+            createdAt: data.createdAt || new Date().toISOString(),
+            packages,
+            completed: data.completed || 0,
+            total: data.total || 0,
+            progress: data.progress || 0,
+          };
+        }) as Project[];
+        setProjects(projectList);
+        // 預設選擇第一個專案
+        if (projectList.length > 0 && !selectedProject) {
+          setSelectedProject(projectList[0]);
+        }
+      } catch (error) {
+        console.error('載入專案失敗:', error);
+      } finally {
+        setInitialLoading(false);
       }
     })();
   }, [hasPermission]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -429,6 +439,55 @@ export default function ProjectListPage() {
     );
   }
 
+  // 專案列表 Skeleton 組件
+  const ProjectListSkeleton = () => (
+    <div className="space-y-2">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex items-center gap-2 p-2">
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-4 flex-1" />
+        </div>
+      ))}
+    </div>
+  );
+
+  // 專案概覽 Skeleton 組件
+  const ProjectOverviewSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <Card key={i} className="border-0 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <div className="flex-1">
+                <Skeleton className="h-8 w-12 mb-1" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  // 進度條 Skeleton 組件
+  const ProgressSkeleton = () => (
+    <Card className="border-0 shadow-sm">
+      <CardHeader>
+        <Skeleton className="h-6 w-24" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex justify-between">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <Skeleton className="h-2 w-full" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <TooltipProvider>
       <SidebarProvider>
@@ -448,81 +507,87 @@ export default function ProjectListPage() {
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                   <SidebarMenu>
-                    {projects.map(project => (
-                      <ProjectTree 
-                        key={project.id} 
-                        project={project}
-                        selectedProject={selectedProject}
-                        selectedItem={selectedItem}
-                        onSelectProject={setSelectedProject}
-                        onItemClick={handleItemClick}
-                        onAddPackage={handleAddPackage}
-                        onAddTaskPackage={handleAddTaskPackage}
-                        onAddSubpackage={handleAddSubpackage}
-                        pkgInputs={pkgInputs}
-                        setPkgInputs={setPkgInputs}
-                        taskPackageInputs={taskPackageInputs}
-                        setTaskPackageInputs={setTaskPackageInputs}
-                        subInputs={subInputs}
-                        setSubInputs={setSubInputs}
-                        loading={loading}
-                      />
-                    ))}
-                    
-                    {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
-                    <ProjectActionGuard action="create" resource="project">
-                      <SidebarMenuItem>
-                        <div className="pl-1 pr-1 py-1">
-                          {showProjectInput ? (
-                            <div className="flex gap-1">
-                              <Input
-                                placeholder="專案名稱"
-                                value={projectName}
-                                onChange={e => setProjectName(e.target.value)}
-                                className={COMPACT_INPUT_STYLE}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    void handleCreateProject();
-                                    setShowProjectInput(false);
-                                  }
-                                }}
-                              />
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => {
-                                      void handleCreateProject();
-                                      setShowProjectInput(false);
+                    {initialLoading ? (
+                      <ProjectListSkeleton />
+                    ) : (
+                      <>
+                        {projects.map(project => (
+                          <ProjectTree 
+                            key={project.id} 
+                            project={project}
+                            selectedProject={selectedProject}
+                            selectedItem={selectedItem}
+                            onSelectProject={setSelectedProject}
+                            onItemClick={handleItemClick}
+                            onAddPackage={handleAddPackage}
+                            onAddTaskPackage={handleAddTaskPackage}
+                            onAddSubpackage={handleAddSubpackage}
+                            pkgInputs={pkgInputs}
+                            setPkgInputs={setPkgInputs}
+                            taskPackageInputs={taskPackageInputs}
+                            setTaskPackageInputs={setTaskPackageInputs}
+                            subInputs={subInputs}
+                            setSubInputs={setSubInputs}
+                            loading={loading}
+                          />
+                        ))}
+                        
+                        {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
+                        <ProjectActionGuard action="create" resource="project">
+                          <SidebarMenuItem>
+                            <div className="pl-1 pr-1 py-1">
+                              {showProjectInput ? (
+                                <div className="flex gap-1">
+                                  <Input
+                                    placeholder="專案名稱"
+                                    value={projectName}
+                                    onChange={e => setProjectName(e.target.value)}
+                                    className={COMPACT_INPUT_STYLE}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        void handleCreateProject();
+                                        setShowProjectInput(false);
+                                      }
                                     }}
-                                    disabled={loading || !projectName.trim()}
-                                    className="h-6 w-6 p-0"
-                                  >
-                                    <PlusIcon className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>建立專案</p>
-                                </TooltipContent>
-                              </Tooltip>
+                                  />
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => {
+                                          void handleCreateProject();
+                                          setShowProjectInput(false);
+                                        }}
+                                        disabled={loading || !projectName.trim()}
+                                        className="h-6 w-6 p-0"
+                                      >
+                                        <PlusIcon className="h-3 w-3" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>建立專案</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleAddProjectClick}
+                                  className={COMPACT_BUTTON_STYLE}
+                                >
+                                  <PlusIcon className="h-3 w-3 mr-1" />
+                                  {projects.length === 0 ? '新增第一個專案' : '新增專案'}
+                                </Button>
+                              )}
+                              {success && (
+                                <p className="text-green-600 text-center text-xs mt-1">專案建立成功！</p>
+                              )}
                             </div>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleAddProjectClick}
-                              className={COMPACT_BUTTON_STYLE}
-                            >
-                              <PlusIcon className="h-3 w-3 mr-1" />
-                              {projects.length === 0 ? '新增第一個專案' : '新增專案'}
-                            </Button>
-                          )}
-                          {success && (
-                            <p className="text-green-600 text-center text-xs mt-1">專案建立成功！</p>
-                          )}
-                        </div>
-                      </SidebarMenuItem>
-                    </ProjectActionGuard>
+                          </SidebarMenuItem>
+                        </ProjectActionGuard>
+                      </>
+                    )}
                   </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
@@ -553,7 +618,28 @@ export default function ProjectListPage() {
                 </header>
                 
                 <div className="flex-1 overflow-auto p-6 pb-20">
-                  {selectedItem ? (
+                  {initialLoading ? (
+                    <div className="space-y-6">
+                      {/* 專案資訊 Skeleton */}
+                      <Card className="border-0 shadow-sm">
+                        <CardHeader>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-5 w-5" />
+                            <Skeleton className="h-6 w-24" />
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <Skeleton className="h-4 w-48" />
+                        </CardContent>
+                      </Card>
+
+                      {/* 專案概覽 Skeleton */}
+                      <ProjectOverviewSkeleton />
+
+                      {/* 進度條 Skeleton */}
+                      <ProgressSkeleton />
+                    </div>
+                  ) : selectedItem ? (
                     <div className="space-y-6">
                       {/* 根據選中項目類型顯示不同內容 */}
                       {selectedItem.type === 'project' && selectedProject && (
@@ -942,7 +1028,30 @@ export default function ProjectListPage() {
                   <div className="flex h-full items-center justify-center p-6 bg-muted/5">
                     <div className="text-center">
                       <h3 className="font-semibold mb-2">專案概覽</h3>
-                      {selectedProject ? (
+                      {initialLoading ? (
+                        <div className="text-sm space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-4 w-20" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-8" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-8" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-4 w-8" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-4 w-20" />
+                          </div>
+                        </div>
+                      ) : selectedProject ? (
                         <div className="text-sm space-y-1">
                           <p><strong>專案名稱：</strong>
                             <Tooltip>
@@ -989,7 +1098,26 @@ export default function ProjectListPage() {
                   <div className="flex h-full items-center justify-center p-6 bg-muted/10">
                     <div className="text-center">
                       <h3 className="font-semibold mb-2">詳細資訊</h3>
-                      {selectedProject ? (
+                      {initialLoading ? (
+                        <div className="text-sm space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16" />
+                          </div>
+                          <Skeleton className="h-3 w-32" />
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16" />
+                          </div>
+                          <Skeleton className="h-3 w-24" />
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16" />
+                          </div>
+                          <Skeleton className="h-3 w-40" />
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-20" />
+                          </div>
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      ) : selectedProject ? (
                         <div className="text-sm space-y-1">
                           <p><strong>建立時間：</strong></p>
                           <p className="text-xs text-muted-foreground">
