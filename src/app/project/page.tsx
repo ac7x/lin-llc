@@ -68,52 +68,70 @@ interface ScheduleTime {
 }
 // ... 排程時間 生成代碼過程不會影響到註解 ...
 
+/**
+ * 任務包介面 - 代表專案中最小的任務單位
+ */
 interface TaskPackage { 
-  name: string;
-  time?: ScheduleTime;
-  assigness?: string[];
-  completed: number;
-  total: number;
-  progress: number;
-}
-interface Subpackage { 
-  name: string; 
-    time?: ScheduleTime;
-    assigness?: string[];
-  taskpackages: TaskPackage[];
-  completed: number;
-  total: number;
-  progress: number;
-}
-interface Package { 
-  name: string; 
-  time?: ScheduleTime;
-  assigness?: string[];
-  subpackages: Subpackage[];
-  completed: number;
-  total: number;
-  progress: number;
-}
-interface Project {
-  id: string;
-  name: string;
-  time?: ScheduleTime;
-  assigness?: string[];
-  description: string;
-  createdAt: string;
-  packages: Package[];
-  completed: number;
-  total: number;
-  progress: number;
+  name: string;                    // 任務包名稱 - 任務的識別名稱
+  time?: ScheduleTime;             // 時間排程 - 任務的時間規劃和實際執行時間
+  assigness?: string[];            // 指派人員 - 負責執行此任務的人員清單
+  completed: number;               // 已完成數量 - 已完成的工作項目數量
+  total: number;                   // 總數量 - 此任務包含的總工作項目數量
+  progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
 }
 
-// 選中項目的類型
+/**
+ * 子工作包介面 - 代表工作包下的子分類，包含多個任務包
+ */
+interface Subpackage { 
+  name: string;                    // 子工作包名稱 - 子工作包的識別名稱
+  time?: ScheduleTime;             // 時間排程 - 子工作包的時間規劃和實際執行時間
+  assigness?: string[];            // 指派人員 - 負責此子工作包的人員清單
+  taskpackages: TaskPackage[];     // 任務包清單 - 此子工作包包含的所有任務包
+  completed: number;               // 已完成數量 - 已完成的工作項目總數量
+  total: number;                   // 總數量 - 此子工作包包含的總工作項目數量
+  progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
+}
+
+/**
+ * 工作包介面 - 代表專案中的主要工作分類，包含多個子工作包
+ */
+interface Package { 
+  name: string;                    // 工作包名稱 - 工作包的識別名稱
+  time?: ScheduleTime;             // 時間排程 - 工作包的時間規劃和實際執行時間
+  assigness?: string[];            // 指派人員 - 負責此工作包的人員清單
+  subpackages: Subpackage[];       // 子工作包清單 - 此工作包包含的所有子工作包
+  completed: number;               // 已完成數量 - 已完成的工作項目總數量
+  total: number;                   // 總數量 - 此工作包包含的總工作項目數量
+  progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
+}
+
+/**
+ * 專案介面 - 代表整個專案，包含多個工作包
+ */
+interface Project {
+  id: string;                      // 專案識別碼 - Firestore 文件唯一識別碼
+  name: string;                    // 專案名稱 - 專案的識別名稱
+  time?: ScheduleTime;             // 時間排程 - 專案的時間規劃和實際執行時間
+  assigness?: string[];            // 指派人員 - 負責此專案的人員清單
+  description: string;             // 專案描述 - 專案的詳細說明文字
+  createdAt: string;               // 建立時間 - 專案建立的時間戳記
+  packages: Package[];             // 工作包清單 - 此專案包含的所有工作包
+  completed: number;               // 已完成數量 - 已完成的工作項目總數量
+  total: number;                   // 總數量 - 此專案包含的總工作項目數量
+  progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
+}
+
+/**
+ * 選中項目聯合型別 - 定義在樹狀結構中當前選中的項目類型
+ * 可以是專案、工作包、子工作包、任務包，或無選中項目
+ */
 type SelectedItem = 
-  | { type: 'project'; projectId: string }
-  | { type: 'package'; projectId: string; packageIndex: number }
-  | { type: 'subpackage'; projectId: string; packageIndex: number; subpackageIndex: number }
-  | { type: 'task'; projectId: string; packageIndex: number; subpackageIndex: number; taskIndex: number }
-  | null;
+  | { type: 'project'; projectId: string }                                                    // 選中專案 - 包含專案識別碼
+  | { type: 'package'; projectId: string; packageIndex: number }                              // 選中工作包 - 包含專案識別碼和工作包索引
+  | { type: 'subpackage'; projectId: string; packageIndex: number; subpackageIndex: number } // 選中子工作包 - 包含專案識別碼、工作包索引和子工作包索引
+  | { type: 'task'; projectId: string; packageIndex: number; subpackageIndex: number; taskIndex: number } // 選中任務包 - 包含完整的層級索引路徑
+  | null;                                                                                     // 無選中項目 - 表示當前沒有選中任何項目
 
 export default function ProjectListPage() {
   const { hasPermission } = usePermission();
@@ -871,22 +889,26 @@ export default function ProjectListPage() {
 }
 
 // ProjectTree 組件 - 實現樹狀結構
+/**
+ * ProjectTree 組件屬性介面 - 定義專案樹狀結構組件所需的所有屬性
+ * 包含專案資料、選中狀態、回調函數和輸入狀態管理
+ */
 interface ProjectTreeProps {
-  project: Project;
-  selectedProject: Project | null;
-  selectedItem: SelectedItem;
-  onSelectProject: (project: Project) => void;
-  onItemClick: (item: SelectedItem) => void;
-  onAddPackage: (projectId: string, pkgName: string) => Promise<void>;
-  onAddTaskPackage: (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => Promise<void>;
-  onAddSubpackage: (projectId: string, pkgIdx: number, subName: string) => Promise<void>;
-  pkgInputs: Record<string, string>;
-  setPkgInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  taskPackageInputs: Record<string, Record<number, string>>;
-  setTaskPackageInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, string>>>>;
-  subInputs: Record<string, Record<number, Record<number, string>>>;
-  setSubInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, Record<number, string>>>>>;
-  loading: boolean;
+  project: Project;                                                                             // 專案資料 - 要顯示的專案物件
+  selectedProject: Project | null;                                                              // 當前選中專案 - 用於高亮顯示當前選中的專案
+  selectedItem: SelectedItem;                                                                   // 當前選中項目 - 在樹狀結構中選中的具體項目
+  onSelectProject: (project: Project) => void;                                                  // 專案選擇回調 - 當用戶選擇專案時觸發
+  onItemClick: (item: SelectedItem) => void;                                                    // 項目點擊回調 - 當用戶點擊任何項目時觸發
+  onAddPackage: (projectId: string, pkgName: string) => Promise<void>;                          // 新增工作包回調 - 新增工作包的異步函數
+  onAddTaskPackage: (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => Promise<void>; // 新增任務包回調 - 新增任務包的異步函數
+  onAddSubpackage: (projectId: string, pkgIdx: number, subName: string) => Promise<void>;       // 新增子工作包回調 - 新增子工作包的異步函數
+  pkgInputs: Record<string, string>;                                                            // 工作包輸入狀態 - 儲存各專案工作包輸入框的值
+  setPkgInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;                  // 工作包輸入狀態設定器 - 更新工作包輸入框的值
+  taskPackageInputs: Record<string, Record<number, string>>;                                    // 任務包輸入狀態 - 儲存各專案各工作包任務包輸入框的值
+  setTaskPackageInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, string>>>>; // 任務包輸入狀態設定器 - 更新任務包輸入框的值
+  subInputs: Record<string, Record<number, Record<number, string>>>;                            // 子工作包輸入狀態 - 儲存各專案各工作包各子工作包輸入框的值
+  setSubInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, Record<number, string>>>>>; // 子工作包輸入狀態設定器 - 更新子工作包輸入框的值
+  loading: boolean;                                                                             // 載入狀態 - 表示是否正在執行異步操作
 }
 
 function ProjectTree({
