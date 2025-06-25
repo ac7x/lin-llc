@@ -29,6 +29,12 @@ interface VirtualizedProjectTreeProps {
   onItemSelect?: (item: SelectedItem) => void;
   selectedItem?: SelectedItem;
   height?: number;
+  // 🎯 數量分配相關回調
+  onDistributeQuantity?: (item: FlatItem) => void;
+  onAddChild?: (item: FlatItem) => void;
+  onRename?: (item: FlatItem, newName: string) => void;
+  onDelete?: (item: FlatItem) => void;
+  onDuplicate?: (item: FlatItem) => void;
 }
 
 // 項目高度常數
@@ -45,6 +51,11 @@ export function VirtualizedProjectTree({
   onItemSelect,
   selectedItem,
   height = DEFAULT_HEIGHT,
+  onDistributeQuantity,
+  onAddChild,
+  onRename,
+  onDelete,
+  onDuplicate,
 }: VirtualizedProjectTreeProps) {
   // 狀態管理
   const [searchTerm, setSearchTerm] = useState('');
@@ -264,6 +275,11 @@ export function VirtualizedProjectTree({
         onSubmitTask={handleSubmitTask}
         onReviewTask={handleReviewTask}
         isSelected={isItemSelected(item)}
+        onDistributeQuantity={onDistributeQuantity}
+        onAddChild={onAddChild}
+        onRename={onRename}
+        onDelete={onDelete}
+        onDuplicate={onDuplicate}
       />
     );
   }, [flattenedItems, handleToggleExpand, handleItemClick, handleAssignTask, handleSubmitTask, handleReviewTask, isItemSelected]);

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +20,7 @@ import {
 import { usePermission } from '@/app/settings/hooks/use-permission';
 import { ProjectSidebar } from './components/project-sidebar';
 import { ProjectViewer } from './components/viewer/project-viewer';
+import { QuantityManagementView } from './components/quantity-management-view';
 import { MainContentSkeleton, RightPanelSkeleton, DetailsSkeleton } from './components/ui/project-skeletons';
 import { 
   useProjectData, 
@@ -170,14 +172,39 @@ export default function ProjectListPage() {
                   {projectData.loading ? (
                     <MainContentSkeleton />
                   ) : (
-                    <ProjectViewer 
-                      selectedProject={projectSelection.selectedProject} 
-                      selectedItem={projectSelection.selectedItem}
-                      onProjectUpdate={(updatedProject) => {
-                        projectData.updateProject(updatedProject);
-                        projectSelection.updateSelectedProject(updatedProject);
-                      }}
-                    />
+                    <Tabs defaultValue="details" className="w-full">
+                      <TabsList className="mb-4">
+                        <TabsTrigger value="details">項目詳情</TabsTrigger>
+                        <TabsTrigger value="quantity">數量管理</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="details">
+                        <ProjectViewer 
+                          selectedProject={projectSelection.selectedProject} 
+                          selectedItem={projectSelection.selectedItem}
+                          onProjectUpdate={(updatedProject) => {
+                            projectData.updateProject(updatedProject);
+                            projectSelection.updateSelectedProject(updatedProject);
+                          }}
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="quantity">
+                        {projectSelection.selectedProject ? (
+                          <QuantityManagementView
+                            project={projectSelection.selectedProject}
+                            onProjectUpdate={(updatedProject) => {
+                              projectData.updateProject(updatedProject);
+                              projectSelection.updateSelectedProject(updatedProject);
+                            }}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-64">
+                            <p className="text-muted-foreground">請選擇一個專案</p>
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
                   )}
                 </div>
               </div>

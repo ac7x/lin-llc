@@ -1,8 +1,11 @@
 'use client';
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   ChevronRightIcon,
   ChevronDownIcon,
@@ -20,6 +23,7 @@ import {
 import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { FlatItem } from '../../utils/tree-flattener';
 import { Project, Package, Subpackage, TaskPackage } from '../../types';
+import { SimpleContextMenu } from '../ui/simple-context-menu';
 
 interface VirtualizedTreeNodeProps {
   item: FlatItem;
@@ -30,6 +34,12 @@ interface VirtualizedTreeNodeProps {
   onSubmitTask?: (item: FlatItem) => void;
   onReviewTask?: (item: FlatItem) => void;
   isSelected: boolean;
+  // 🎯 右鍵菜單操作
+  onDistributeQuantity?: (item: FlatItem) => void;
+  onAddChild?: (item: FlatItem) => void;
+  onRename?: (item: FlatItem, newName: string) => void;
+  onDelete?: (item: FlatItem) => void;
+  onDuplicate?: (item: FlatItem) => void;
 }
 
 /**
@@ -45,6 +55,11 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
   onSubmitTask,
   onReviewTask,
   isSelected,
+  onDistributeQuantity,
+  onAddChild,
+  onRename,
+  onDelete,
+  onDuplicate,
 }) => {
   const { user } = useGoogleAuth();
 
@@ -128,15 +143,46 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
     paddingLeft: `${item.level * 20 + 8}px`,
   };
 
+    // 🎯 右鍵菜單回調處理
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+
+  const handleRename = () => {
+    setRenameValue((item.data as any).name || '');
+    setShowRenameDialog(true);
+  };
+
+  const handleRenameConfirm = () => {
+    if (renameValue.trim() && onRename) {
+      onRename(item, renameValue.trim());
+    }
+    setShowRenameDialog(false);
+  };
+
+  const contextMenuProps = {
+    itemType: item.type,
+    itemName: (item.data as any).name || '',
+    currentQuantity: (item.data as any).total !== undefined ? {
+      completed: (item.data as any).completed || 0,
+      total: (item.data as any).total || 0,
+    } : undefined,
+    onDistributeQuantity: onDistributeQuantity ? () => onDistributeQuantity(item) : undefined,
+    onAddChild: onAddChild ? () => onAddChild(item) : undefined,
+    onRename: handleRename,
+    onDelete: onDelete ? () => onDelete(item) : undefined,
+    onDuplicate: onDuplicate ? () => onDuplicate(item) : undefined,
+  };
+
   return (
     <div style={style}>
-      <div
-        className={`flex items-center gap-2 py-2 px-2 cursor-pointer transition-colors ${itemInfo.bgColor} border-l-2 ${
-          isSelected ? 'border-l-blue-500' : 'border-l-transparent'
-        }`}
-        style={indentStyle}
-        onClick={() => onItemClick(item)}
-      >
+      <SimpleContextMenu {...contextMenuProps}>
+        <div
+          className={`flex items-center gap-2 py-2 px-2 cursor-pointer transition-colors ${itemInfo.bgColor} border-l-2 ${
+            isSelected ? 'border-l-blue-500' : 'border-l-transparent'
+          }`}
+          style={indentStyle}
+          onClick={() => onItemClick(item)}
+        >
         {/* 展開/收起按鈕 */}
         {item.hasChildren && (
           <Button
@@ -244,7 +290,45 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
             {getChildCount(item.data)}
           </div>
         )}
-      </div>
+        </div>
+      </SimpleContextMenu>
+
+      {/* 重新命名對話框 */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>重新命名</DialogTitle>
+            <DialogDescription>
+              為 {item.type === 'package' ? '工作包' : item.type === 'subpackage' ? '子工作包' : '任務'} 輸入新名稱
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rename-input">新名稱</Label>
+              <Input
+                id="rename-input"
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleRenameConfirm();
+                  }
+                }}
+                className="mt-1"
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
+              取消
+            </Button>
+            <Button onClick={handleRenameConfirm}>
+              確認
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });

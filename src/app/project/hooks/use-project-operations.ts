@@ -244,6 +244,138 @@ export function useProjectOperations(
     }
   };
 
+  // 🎯 數量分配功能
+
+  // 分配數量到子項目
+  const distributeQuantity = async (
+    projectId: string,
+    itemPath: { packageIndex?: number; subpackageIndex?: number },
+    distributionData: {
+      parentTotal: number;
+      distributions: Array<{
+        index: number;
+        name: string;
+        allocated: number;
+        completed?: number;
+      }>;
+    },
+    projects: Project[]
+  ): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const project = projects.find(p => p.id === projectId);
+      if (!project) {
+        setError('專案不存在');
+        return false;
+      }
+
+      let updatedPackages = [...project.packages];
+
+      if (itemPath.subpackageIndex !== undefined && itemPath.packageIndex !== undefined) {
+        // 分配子工作包數量到任務
+        updatedPackages = updatedPackages.map((pkg, pkgIdx) =>
+          pkgIdx === itemPath.packageIndex
+            ? {
+                ...pkg,
+                subpackages: pkg.subpackages.map((sub, subIdx) =>
+                  subIdx === itemPath.subpackageIndex
+                    ? {
+                        ...sub,
+                        total: distributionData.parentTotal,
+                        progress: sub.total > 0 ? Math.round(((sub.completed || 0) / distributionData.parentTotal) * 100) : 0,
+                        taskpackages: sub.taskpackages.map((task, taskIdx) => {
+                          const distribution = distributionData.distributions.find(d => d.index === taskIdx);
+                          if (distribution) {
+                            return {
+                              ...task,
+                              total: distribution.allocated,
+                              progress: distribution.allocated > 0 ? Math.round(((task.completed || 0) / distribution.allocated) * 100) : 0,
+                            };
+                          }
+                          return task;
+                        })
+                      }
+                    : sub
+                )
+              }
+            : pkg
+        );
+      } else if (itemPath.packageIndex !== undefined) {
+        // 分配工作包數量到子工作包
+        updatedPackages = updatedPackages.map((pkg, pkgIdx) =>
+          pkgIdx === itemPath.packageIndex
+            ? {
+                ...pkg,
+                total: distributionData.parentTotal,
+                progress: pkg.total > 0 ? Math.round(((pkg.completed || 0) / distributionData.parentTotal) * 100) : 0,
+                subpackages: pkg.subpackages.map((sub, subIdx) => {
+                  const distribution = distributionData.distributions.find(d => d.index === subIdx);
+                  if (distribution) {
+                    return {
+                      ...sub,
+                      total: distribution.allocated,
+                      progress: distribution.allocated > 0 ? Math.round(((sub.completed || 0) / distribution.allocated) * 100) : 0,
+                    };
+                  }
+                  return sub;
+                })
+              }
+            : pkg
+        );
+      }
+
+      // 重新計算所有層級的進度
+      updatedPackages = recalculateAllProgress(updatedPackages);
+
+      const success = await updateProjectPackages(projectId, updatedPackages, projects);
+      return success;
+    } catch (error) {
+      console.error('分配數量失敗:', error);
+      setError('分配數量失敗');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 重新計算所有層級進度的輔助函數
+  const recalculateAllProgress = (packages: Package[]): Package[] => {
+    return packages.map(pkg => {
+      // 計算工作包進度
+      const subpackages = pkg.subpackages.map(sub => {
+        // 計算子工作包進度
+        const taskpackages = sub.taskpackages.map(task => ({
+          ...task,
+          progress: task.total > 0 ? Math.round(((task.completed || 0) / task.total) * 100) : 0,
+        }));
+
+        const subCompleted = taskpackages.reduce((sum, task) => sum + (task.completed || 0), 0);
+        const subTotal = taskpackages.reduce((sum, task) => sum + (task.total || 0), 0);
+
+        return {
+          ...sub,
+          taskpackages,
+          completed: subCompleted,
+          total: subTotal,
+          progress: subTotal > 0 ? Math.round((subCompleted / subTotal) * 100) : 0,
+        };
+      });
+
+      const pkgCompleted = subpackages.reduce((sum, sub) => sum + (sub.completed || 0), 0);
+      const pkgTotal = subpackages.reduce((sum, sub) => sum + (sub.total || 0), 0);
+
+      return {
+        ...pkg,
+        subpackages,
+        completed: pkgCompleted,
+        total: pkgTotal,
+        progress: pkgTotal > 0 ? Math.round((pkgCompleted / pkgTotal) * 100) : 0,
+      };
+    });
+  };
+
   // 清除錯誤
   const clearError = () => {
     setError(null);
@@ -257,6 +389,8 @@ export function useProjectOperations(
     addSubpackage,
     addTaskPackage,
     updateProjectPackages,
+    // 🎯 數量分配功能
+    distributeQuantity,
     clearError,
   };
 } 
