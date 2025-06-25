@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { usePermission } from '@/app/settings/hooks/use-permission';
+import { useGoogleAuth } from '@/hooks/use-google-auth';
 
 // 提取重複的 Input 樣式為常數，避免 Firebase Performance 錯誤
 const COMPACT_INPUT_STYLE = "flex-1 text-xs h-6";
@@ -159,27 +160,32 @@ type SelectedItem =
 // ... 選中項目聯合型別 生成代碼過程不會影響到註解 ...
 
 export default function ProjectListPage() {
+  const { user } = useGoogleAuth();
   const { hasPermission } = usePermission();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectName, setProjectName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [success, setSuccess] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
+  const [loading, setLoading] = useState(false);
   const [showProjectInput, setShowProjectInput] = useState(false);
+  const [projectInput, setProjectInput] = useState('');
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskPackageInputs, setTaskPackageInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
 
+  // 檢查項目是否被選中 - 移到主組件
+  const isItemSelected = (item: SelectedItem) => {
+    if (!selectedItem || !item) return false;
+    return JSON.stringify(selectedItem) === JSON.stringify(item);
+  };
+
   // 載入專案列表
   useEffect(() => {
     void (async () => {
-      setInitialLoading(true);
+      setLoading(true);
       // 檢查是否有查看專案權限
       if (!hasPermission('project:read')) {
         console.warn('用戶沒有查看專案權限');
-        setInitialLoading(false);
+        setLoading(false);
         return;
       }
 
@@ -231,14 +237,14 @@ export default function ProjectListPage() {
       } catch (error) {
         console.error('載入專案失敗:', error);
       } finally {
-        setInitialLoading(false);
+        setLoading(false);
       }
     })();
   }, [hasPermission]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 建立專案
   const handleCreateProject = async () => {
-    if (!projectName.trim()) return;
+    if (!projectInput.trim()) return;
     
     // 檢查是否有創建專案權限
     if (!hasPermission('project:write')) {
@@ -249,13 +255,13 @@ export default function ProjectListPage() {
     setLoading(true);
     try {
       const docRef = await addDoc(collection(db, 'projects'), {
-        name: projectName.trim(),
+        name: projectInput.trim(),
         createdAt: new Date().toISOString(),
         packages: [],
       });
       const newProject: Project = {
         id: docRef.id,
-        name: projectName.trim(),
+        name: projectInput.trim(),
         description: '',
         createdAt: new Date().toISOString(),
         packages: [],
@@ -264,10 +270,8 @@ export default function ProjectListPage() {
         progress: 0,
       };
       setProjects(prev => [newProject, ...prev]);
-      setProjectName('');
+      setProjectInput('');
       setShowProjectInput(false);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 2000);
       // 自動選擇新建立的專案
       setSelectedProject(newProject);
     } catch (error) {
@@ -512,7 +516,7 @@ export default function ProjectListPage() {
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                   <SidebarMenu>
-                    {initialLoading ? (
+                    {loading ? (
                       <ProjectListSkeleton />
                     ) : (
                       <>
@@ -534,6 +538,7 @@ export default function ProjectListPage() {
                             subInputs={subInputs}
                             setSubInputs={setSubInputs}
                             loading={loading}
+                            isItemSelected={isItemSelected}
                           />
                         ))}
                         
@@ -545,8 +550,8 @@ export default function ProjectListPage() {
                                 <div className="flex gap-1">
                                   <Input
                                     placeholder="專案名稱"
-                                    value={projectName}
-                                    onChange={e => setProjectName(e.target.value)}
+                                    value={projectInput}
+                                    onChange={e => setProjectInput(e.target.value)}
                                     className={COMPACT_INPUT_STYLE}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') {
@@ -563,7 +568,7 @@ export default function ProjectListPage() {
                                           void handleCreateProject();
                                           setShowProjectInput(false);
                                         }}
-                                        disabled={loading || !projectName.trim()}
+                                        disabled={loading || !projectInput.trim()}
                                         className="h-6 w-6 p-0"
                                       >
                                         <PlusIcon className="h-3 w-3" />
@@ -584,9 +589,6 @@ export default function ProjectListPage() {
                                   <PlusIcon className="h-3 w-3 mr-1" />
                                   {projects.length === 0 ? '新增第一個專案' : '新增專案'}
                                 </Button>
-                              )}
-                              {success && (
-                                <p className="text-green-600 text-center text-xs mt-1">專案建立成功！</p>
                               )}
                             </div>
                           </SidebarMenuItem>
@@ -623,7 +625,7 @@ export default function ProjectListPage() {
                 </header>
                 
                 <div className="flex-1 overflow-auto p-6 pb-20">
-                  {initialLoading ? (
+                  {loading ? (
                     <div className="space-y-6">
                       {/* 專案資訊 Skeleton */}
                       <Card className="border-0 shadow-sm">
@@ -1053,7 +1055,7 @@ export default function ProjectListPage() {
                   <div className="flex h-full items-center justify-center p-6 bg-muted/5">
                     <div className="text-center">
                       <h3 className="font-semibold mb-2">專案概覽</h3>
-                      {initialLoading ? (
+                      {loading ? (
                         <div className="text-sm space-y-1">
                           <div className="flex items-center gap-2">
                             <Skeleton className="h-4 w-16" />
@@ -1123,7 +1125,7 @@ export default function ProjectListPage() {
                   <div className="flex h-full items-center justify-center p-6 bg-muted/10">
                     <div className="text-center">
                       <h3 className="font-semibold mb-2">詳細資訊</h3>
-                      {initialLoading ? (
+                      {loading ? (
                         <div className="text-sm space-y-1">
                           <div className="flex items-center gap-2">
                             <Skeleton className="h-4 w-16" />
@@ -1203,6 +1205,7 @@ interface ProjectTreeProps {
   subInputs: Record<string, Record<number, Record<number, string>>>;                            // 子工作包輸入狀態 - 儲存各專案各工作包各子工作包輸入框的值
   setSubInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, Record<number, string>>>>>; // 子工作包輸入狀態設定器 - 更新子工作包輸入框的值
   loading: boolean;                                                                             // 載入狀態 - 表示是否正在執行異步操作
+  isItemSelected: (item: SelectedItem) => boolean;
 }
 
 function ProjectTree({
@@ -1220,13 +1223,15 @@ function ProjectTree({
   setTaskPackageInputs,
   subInputs,
   setSubInputs,
-  loading
+  loading,
+  isItemSelected
 }: ProjectTreeProps) {
   const [expandedPackages, setExpandedPackages] = useState<Set<number>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Record<number, Set<number>>>({});
   const [showPackageInput, setShowPackageInput] = useState(false);
   const [showTaskPackageInputs, setShowTaskPackageInputs] = useState<Record<number, boolean>>({});
   const [showSubInputs, setShowSubInputs] = useState<Record<number, Record<number, boolean>>>({});
+  const [expandedProject, setExpandedProject] = useState(selectedProject?.id === project.id);
 
   const togglePackageExpanded = (pkgIdx: number) => {
     setExpandedPackages(prev => {
@@ -1272,17 +1277,12 @@ function ProjectTree({
     }));
   };
 
-  // 檢查項目是否被選中
-  const isItemSelected = (item: SelectedItem) => {
-    if (!selectedItem || !item) return false;
-    return JSON.stringify(selectedItem) === JSON.stringify(item);
-  };
-
   return (
     <SidebarMenuItem>
       <Collapsible
         className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
         defaultOpen={selectedProject?.id === project.id}
+        onOpenChange={(open) => setExpandedProject(open)}
       >
         <CollapsibleTrigger asChild>
           <SidebarMenuButton
@@ -1300,7 +1300,7 @@ function ProjectTree({
                 isItemSelected({ type: 'project', projectId: project.id }) ? 'bg-accent' : ''
               }`}
             >
-              {selectedProject?.id === project.id ? (
+              {expandedProject ? (
                 <FolderOpenIcon className="h-4 w-4" />
               ) : (
                 <FolderIcon className="h-4 w-4" />
@@ -1341,9 +1341,9 @@ function ProjectTree({
                         }`}
                       >
                         {expandedPackages.has(pkgIdx) ? (
-                          <FolderOpenIcon className="h-3 w-3" />
+                          <PackageOpenIcon className="h-3 w-3" />
                         ) : (
-                          <FolderIcon className="h-3 w-3" />
+                          <PackageIcon className="h-3 w-3" />
                         )}
                         <Tooltip>
                           <TooltipTrigger asChild>
