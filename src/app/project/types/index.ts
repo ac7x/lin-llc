@@ -20,9 +20,15 @@ export interface TaskPackage {
   time?: ScheduleTime;             // 時間排程 - 任務的時間規劃和實際執行時間
   assigness?: string[];            // 指派人員 - 負責執行此任務的人員清單
   submitters?: string[];           // 提交者 - 此任務包的提交者（用戶 UID 陣列）
+  reviewers?: string[];            // 審核者 - 此任務包的審核者（用戶 UID 陣列）
   completed: number;               // 已完成數量 - 已完成的工作項目數量
   total: number;                   // 總數量 - 此任務包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
+  status?: 'draft' | 'in-progress' | 'submitted' | 'approved' | 'rejected'; // 狀態 - 任務包當前狀態
+  submittedAt?: string;            // 提交時間 - 任務包提交的時間戳記
+  approvedAt?: string;             // 核准時間 - 任務包核准的時間戳記
+  submittedBy?: string;            // 提交者 UID - 提交此任務包的用戶
+  approvedBy?: string;             // 核准者 UID - 核准此任務包的用戶
 }
 
 /**
@@ -38,6 +44,11 @@ export interface Subpackage {
   completed: number;               // 已完成數量 - 已完成的工作項目總數量
   total: number;                   // 總數量 - 此子工作包包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
+  status?: 'draft' | 'in-progress' | 'submitted' | 'approved' | 'rejected'; // 狀態 - 子工作包當前狀態
+  submittedAt?: string;            // 提交時間 - 子工作包提交的時間戳記
+  approvedAt?: string;             // 核准時間 - 子工作包核准的時間戳記
+  submittedBy?: string;            // 提交者 UID - 提交此子工作包的用戶
+  approvedBy?: string;             // 核准者 UID - 核准此子工作包的用戶
 }
 
 /**
@@ -53,6 +64,11 @@ export interface Package {
   completed: number;               // 已完成數量 - 已完成的工作項目總數量
   total: number;                   // 總數量 - 此工作包包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
+  status?: 'draft' | 'in-progress' | 'submitted' | 'approved' | 'rejected'; // 狀態 - 工作包當前狀態
+  submittedAt?: string;            // 提交時間 - 工作包提交的時間戳記
+  approvedAt?: string;             // 核准時間 - 工作包核准的時間戳記
+  submittedBy?: string;            // 提交者 UID - 提交此工作包的用戶
+  approvedBy?: string;             // 核准者 UID - 核准此工作包的用戶
 }
 
 /**
@@ -157,4 +173,45 @@ export interface ProjectTaskNodeProps extends TreeComponentProps {
   packageIndex: number;                                                                         // 工作包索引 - 當前工作包在專案中的索引位置
   subpackageIndex: number;                                                                      // 子工作包索引 - 當前子工作包在工作包中的索引位置
   taskIndex: number;                                                                            // 任務索引 - 當前任務在子工作包中的索引位置
+}
+
+/**
+ * 通知介面 - 代表系統通知
+ */
+export interface Notification {
+  id?: string;                     // 通知 ID - Firestore 文件唯一識別碼
+  title: string;                   // 通知標題 - 通知的主要標題
+  message: string;                 // 通知內容 - 通知的詳細內容
+  type: 'info' | 'warning' | 'error' | 'success' | 'task' | 'review'; // 通知類型
+  targetUid: string;               // 目標用戶 UID - 接收通知的用戶
+  isRead: boolean;                 // 是否已讀 - 標記通知是否已被用戶讀取
+  createdAt: string;               // 建立時間 - 通知建立的時間戳記
+  data?: {                         // 附加數據 - 通知相關的額外資訊
+    projectId?: string;            // 專案 ID
+    packageIndex?: number;         // 工作包索引
+    subpackageIndex?: number;      // 子工作包索引
+    taskIndex?: number;            // 任務索引
+    action?: string;               // 動作類型
+  };
+}
+
+/**
+ * 用戶任務介面 - 代表用戶的任務項目
+ */
+export interface UserTask {
+  id: string;                      // 任務 ID
+  name: string;                    // 任務名稱
+  description?: string;            // 任務描述
+  projectId: string;               // 專案 ID
+  packageIndex: number;            // 工作包索引
+  subpackageIndex: number;         // 子工作包索引
+  taskIndex: number;               // 任務索引
+  role: 'submitter' | 'reviewer';  // 用戶角色
+  status?: 'draft' | 'in-progress' | 'submitted' | 'approved' | 'rejected'; // 任務狀態
+  completed: number;               // 已完成數量
+  total: number;                   // 總數量
+  progress: number;                // 進度百分比
+  assignedAt?: string;             // 指派時間
+  submittedAt?: string;            // 提交時間
+  approvedAt?: string;             // 核准時間
 }

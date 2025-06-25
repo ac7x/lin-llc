@@ -5,4 +5,5 @@
 export { useProjectProgress } from './use-project-progress';
 export { useProjectData } from './use-project-data';
 export { useProjectOperations } from './use-project-operations';
-export { useProjectSelection } from './use-project-selection'; 
+export { useProjectSelection } from './use-project-selection';
+export { useTaskManagement } from './use-task-management'; 

@@ -160,7 +160,11 @@ export default function ProjectListPage() {
                   ) : (
                     <ProjectViewer 
                       selectedProject={projectSelection.selectedProject} 
-                      selectedItem={projectSelection.selectedItem} 
+                      selectedItem={projectSelection.selectedItem}
+                      onProjectUpdate={(updatedProject) => {
+                        projectData.updateProject(updatedProject);
+                        projectSelection.updateSelectedProject(updatedProject);
+                      }}
                     />
                   )}
                 </div>

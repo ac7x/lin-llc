@@ -7,13 +7,14 @@ import { TaskDetails } from './task-details';
 interface ProjectViewerProps {
   selectedProject: Project | null;
   selectedItem: SelectedItem;
+  onProjectUpdate?: (updatedProject: Project) => void;
 }
 
 /**
  * 項目檢視器組件
  * 根據選中的項目類型顯示相應的詳情組件
  */
-export function ProjectViewer({ selectedProject, selectedItem }: ProjectViewerProps) {
+export function ProjectViewer({ selectedProject, selectedItem, onProjectUpdate }: ProjectViewerProps) {
   // 如果沒有選中項目，顯示提示
   if (!selectedItem) {
     return (
@@ -48,7 +49,11 @@ export function ProjectViewer({ selectedProject, selectedItem }: ProjectViewerPr
       )}
 
       {selectedItem.type === 'task' && (
-        <TaskDetails project={selectedProject} selectedItem={selectedItem} />
+        <TaskDetails 
+          project={selectedProject} 
+          selectedItem={selectedItem} 
+          onProjectUpdate={onProjectUpdate || (() => {})}
+        />
       )}
     </div>
   );

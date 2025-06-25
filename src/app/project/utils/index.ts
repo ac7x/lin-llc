@@ -3,6 +3,7 @@
  */
 
 export * from './progress-calculator';
+export * from './notification-service';
 
 // 為未來的工具函數預留導出空間
 // export * from './project-data-transformer';
