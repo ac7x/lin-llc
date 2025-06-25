@@ -45,8 +45,8 @@ import {
   PackageIcon,
   PackageOpenIcon,
   ListIcon,
-  BookOpenIcon,
-  BookMarkedIcon,
+  BookOpen,
+  BookOpenCheck,
   SquareIcon,
   SquareCheckIcon,
   PlusIcon,
@@ -160,7 +160,6 @@ type SelectedItem =
 // ... 選中項目聯合型別 生成代碼過程不會影響到註解 ...
 
 export default function ProjectListPage() {
-  const { user } = useGoogleAuth();
   const { hasPermission } = usePermission();
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -1387,9 +1386,9 @@ function ProjectTree({
                                   }`}
                                 >
                                   {expandedTasks[pkgIdx]?.has(taskIdx) ? (
-                                    <BookMarkedIcon className="h-3 w-3" />
+                                    <BookOpenCheck className="h-3 w-3" />
                                   ) : (
-                                    <BookOpenIcon className="h-3 w-3" />
+                                    <BookOpen className="h-3 w-3" />
                                   )}
                                   <Tooltip>
                                     <TooltipTrigger asChild>
