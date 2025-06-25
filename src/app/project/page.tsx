@@ -43,14 +43,43 @@ import {
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { usePermission } from '@/app/settings/hooks/use-permission';
 
+// 提取重複的 Input 樣式為常數，避免 Firebase Performance 錯誤
+const COMPACT_INPUT_STYLE = "flex-1 text-xs h-6";
+
+// 提取重複的 Button 樣式為常數，避免 Firebase Performance 錯誤
+const COMPACT_BUTTON_STYLE = "w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground";
+
+// 提取小型 Button 樣式為常數，避免 Firebase Performance 錯誤
+const SMALL_BUTTON_STYLE = "h-6 w-6 p-0";
+
+// 提取項目選擇樣式為常數，避免 Firebase Performance 錯誤
+const ITEM_SELECT_STYLE = "flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer";
+
+// ... 排程時間 生成代碼過程不會影響到註解 ...
+interface ScheduleTime {
+  plannedStart?: string;    // 計畫起始時間 - 專案或任務的預期開始時間
+  plannedEnd?: string;      // 計畫結束時間 - 專案或任務的預期完成時間
+  scheduledStart?: string;  // 排定開始時間 - 經過資源規劃後的實際排程開始時間
+  scheduledEnd?: string;    // 排定結束時間 - 經過資源規劃後的實際排程結束時間
+  actualStart?: string;     // 實際開始時間 - 專案或任務實際開始執行的時間
+  actualEnd?: string;       // 實際結束時間 - 專案或任務實際完成執行的時間
+  createdAt?: string;       // 建立時間 - 此時間排程記錄的建立時間戳記
+  updatedAt?: string;       // 更新時間 - 此時間排程記錄的最後修改時間戳記
+}
+// ... 排程時間 生成代碼過程不會影響到註解 ...
+
 interface TaskPackage { 
   name: string;
+  time?: ScheduleTime;
+  assigness?: string[];
   completed: number;
   total: number;
   progress: number;
 }
 interface Subpackage { 
   name: string; 
+    time?: ScheduleTime;
+    assigness?: string[];
   taskpackages: TaskPackage[];
   completed: number;
   total: number;
@@ -58,6 +87,8 @@ interface Subpackage {
 }
 interface Package { 
   name: string; 
+  time?: ScheduleTime;
+  assigness?: string[];
   subpackages: Subpackage[];
   completed: number;
   total: number;
@@ -66,6 +97,8 @@ interface Package {
 interface Project {
   id: string;
   name: string;
+  time?: ScheduleTime;
+  assigness?: string[];
   description: string;
   createdAt: string;
   packages: Package[];
@@ -94,11 +127,6 @@ export default function ProjectListPage() {
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskPackageInputs, setTaskPackageInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
-  const [expandedPackages, setExpandedPackages] = useState<Set<number>>(new Set());
-  const [expandedTasks, setExpandedTasks] = useState<Record<number, Set<number>>>({});
-  const [showPackageInput, setShowPackageInput] = useState(false);
-  const [showTaskPackageInputs, setShowTaskPackageInputs] = useState<Record<number, boolean>>({});
-  const [showSubInputs, setShowSubInputs] = useState<Record<number, Record<number, boolean>>>({});
 
   // 載入專案列表
   useEffect(() => {
@@ -366,7 +394,7 @@ export default function ProjectListPage() {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full">
+      <div className="flex h-screen w-full pb-20">
         <Sidebar className="z-50">
           <SidebarHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-2">
@@ -413,7 +441,7 @@ export default function ProjectListPage() {
                               placeholder="專案名稱"
                               value={projectName}
                               onChange={e => setProjectName(e.target.value)}
-                              className="flex-1 text-xs h-6"
+                              className={COMPACT_INPUT_STYLE}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   void handleCreateProject();
@@ -438,7 +466,7 @@ export default function ProjectListPage() {
                             variant="ghost"
                             size="sm"
                             onClick={handleAddProjectClick}
-                            className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                            className={COMPACT_BUTTON_STYLE}
                           >
                             <PlusIcon className="h-3 w-3 mr-1" />
                             {projects.length === 0 ? '新增第一個專案' : '新增專案'}
@@ -472,7 +500,7 @@ export default function ProjectListPage() {
                 </div>
               </header>
               
-              <div className="flex-1 overflow-auto p-6">
+              <div className="flex-1 overflow-auto p-6 pb-20">
                 {selectedItem ? (
                   <div className="space-y-6">
                     {/* 根據選中項目類型顯示不同內容 */}
@@ -952,7 +980,7 @@ function ProjectTree({
                 e.stopPropagation();
                 onItemClick({ type: 'project', projectId: project.id });
               }}
-              className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer ${
+              className={`${ITEM_SELECT_STYLE} ${
                 isItemSelected({ type: 'project', projectId: project.id }) ? 'bg-accent' : ''
               }`}
             >
@@ -981,7 +1009,7 @@ function ProjectTree({
                           e.stopPropagation();
                           onItemClick({ type: 'package', projectId: project.id, packageIndex: pkgIdx });
                         }}
-                        className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer ${
+                        className={`${ITEM_SELECT_STYLE} ${
                           isItemSelected({ type: 'package', projectId: project.id, packageIndex: pkgIdx }) ? 'bg-accent' : ''
                         }`}
                       >
@@ -1016,7 +1044,7 @@ function ProjectTree({
                                     e.stopPropagation();
                                     onItemClick({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx });
                                   }}
-                                  className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer ${
+                                  className={`${ITEM_SELECT_STYLE} ${
                                     isItemSelected({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx }) ? 'bg-accent' : ''
                                   }`}
                                 >
@@ -1045,7 +1073,7 @@ function ProjectTree({
                                           subpackageIndex: taskIdx, 
                                           taskIndex: subIdx 
                                         })}
-                                        className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer ${
+                                        className={`${ITEM_SELECT_STYLE} ${
                                           isItemSelected({ 
                                             type: 'task', 
                                             projectId: project.id, 
@@ -1083,7 +1111,7 @@ function ProjectTree({
                                                 }
                                               }
                                             }))}
-                                            className="flex-1 text-xs h-6"
+                                            className={COMPACT_INPUT_STYLE}
                                             onKeyDown={(e) => {
                                               if (e.key === 'Enter') {
                                                 void onAddTaskPackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
@@ -1104,7 +1132,7 @@ function ProjectTree({
                                               }));
                                             }}
                                             disabled={loading || !(subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
-                                            className="h-6 w-6 p-0"
+                                            className={SMALL_BUTTON_STYLE}
                                           >
                                             <PlusIcon className="h-3 w-3" />
                                           </Button>
@@ -1114,7 +1142,7 @@ function ProjectTree({
                                           variant="ghost"
                                           size="sm"
                                           onClick={() => handleAddSubClick(pkgIdx, taskIdx)}
-                                          className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                                          className={COMPACT_BUTTON_STYLE}
                                         >
                                           <PlusIcon className="h-3 w-3 mr-1" />
                                           新增任務
@@ -1141,7 +1169,7 @@ function ProjectTree({
                                     ...prev,
                                     [project.id]: { ...prev[project.id], [pkgIdx]: e.target.value }
                                   }))}
-                                  className="flex-1 text-xs h-6"
+                                  className={COMPACT_INPUT_STYLE}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                       void onAddSubpackage(project.id, pkgIdx, taskPackageInputs[project.id]?.[pkgIdx] || '');
@@ -1156,7 +1184,7 @@ function ProjectTree({
                                     setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: false }));
                                   }}
                                   disabled={loading || !(taskPackageInputs[project.id]?.[pkgIdx] || '').trim()}
-                                  className="h-6 w-6 p-0"
+                                  className={SMALL_BUTTON_STYLE}
                                 >
                                   <PlusIcon className="h-3 w-3" />
                                 </Button>
@@ -1166,7 +1194,7 @@ function ProjectTree({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleAddTaskPackageClick(pkgIdx)}
-                                className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                                className={COMPACT_BUTTON_STYLE}
                               >
                                 <PlusIcon className="h-3 w-3 mr-1" />
                                 新增子工作包
@@ -1190,7 +1218,7 @@ function ProjectTree({
                         placeholder="工作包名稱"
                         value={pkgInputs[project.id] || ''}
                         onChange={e => setPkgInputs(prev => ({ ...prev, [project.id]: e.target.value }))}
-                        className="flex-1 text-xs h-6"
+                        className={COMPACT_INPUT_STYLE}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             void onAddPackage(project.id, pkgInputs[project.id] || '');
@@ -1205,7 +1233,7 @@ function ProjectTree({
                           setShowPackageInput(false);
                         }}
                         disabled={loading || !(pkgInputs[project.id] || '').trim()}
-                        className="h-6 w-6 p-0"
+                        className={SMALL_BUTTON_STYLE}
                       >
                         <PlusIcon className="h-3 w-3" />
                       </Button>
@@ -1215,7 +1243,7 @@ function ProjectTree({
                       variant="ghost"
                       size="sm"
                       onClick={handleAddPackageClick}
-                      className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                      className={COMPACT_BUTTON_STYLE}
                     >
                       <PlusIcon className="h-3 w-3 mr-1" />
                       新增工作包
