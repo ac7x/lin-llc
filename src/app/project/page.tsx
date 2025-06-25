@@ -372,7 +372,7 @@ export default function ProjectListPage() {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full">
+      <div className="flex h-screen w-full pb-20">
         <Sidebar className="z-50">
           <SidebarHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-2">
@@ -478,7 +478,7 @@ export default function ProjectListPage() {
                 </div>
               </header>
               
-              <div className="flex-1 overflow-auto p-6">
+              <div className="flex-1 overflow-auto p-6 pb-20">
                 {selectedItem ? (
                   <div className="space-y-6">
                     {/* 根據選中項目類型顯示不同內容 */}
