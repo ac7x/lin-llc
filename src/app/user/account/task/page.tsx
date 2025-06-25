@@ -32,10 +32,10 @@ export default function UserTaskPage() {
       try {
         // 查詢所有 taskpackages，然後在記憶體中過濾
         const colRef = collection(db, 'taskpackages');
-        const snap = await getDocs(colRef);
+      const snap = await getDocs(colRef);
         const list: TaskPackage[] = [];
         
-        snap.forEach(docSnap => {
+      snap.forEach(docSnap => {
           const data = docSnap.data() as TaskPackage;
           // 檢查當前用戶是否在指派清單中
           if (data.assignedUids && data.assignedUids.includes(user.uid)) {
@@ -50,14 +50,14 @@ export default function UserTaskPage() {
               taskpackageId: idParts[3]
             };
             list.push(taskInfo);
-          }
-        });
+        }
+      });
         
-        setTasks(list);
+      setTasks(list);
       } catch (error) {
         console.error('載入任務失敗:', error);
       } finally {
-        setLoading(false);
+      setLoading(false);
       }
     })();
   }, [user]);

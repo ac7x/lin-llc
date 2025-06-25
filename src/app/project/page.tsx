@@ -39,7 +39,6 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { 
-  ChevronRightIcon,
   FolderIcon,
   FolderOpenIcon,
   PackageIcon,
@@ -54,7 +53,6 @@ import {
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { usePermission } from '@/app/settings/hooks/use-permission';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
 
 // 提取重複的 Input 樣式為常數，避免 Firebase Performance 錯誤
 const COMPACT_INPUT_STYLE = "flex-1 text-xs h-6";
@@ -1279,7 +1277,7 @@ function ProjectTree({
   return (
     <SidebarMenuItem>
       <Collapsible
-        className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+        className="group/collapsible"
         defaultOpen={selectedProject?.id === project.id}
         onOpenChange={(open) => setExpandedProject(open)}
       >
@@ -1289,7 +1287,12 @@ function ProjectTree({
             onClick={() => onSelectProject(project)}
             className="pl-2"
           >
-            <ChevronRightIcon className="transition-transform h-4 w-4" />
+            {expandedProject ? (
+              <FolderOpenIcon className="transition-transform h-4 w-4" />
+            ) : (
+              <FolderIcon className="transition-transform h-4 w-4" />
+            )}
+            <span className="ml-1 text-xs text-muted-foreground">{project.packages?.length || 0}</span>
             <div 
               onClick={(e) => {
                 e.stopPropagation();
@@ -1299,11 +1302,6 @@ function ProjectTree({
                 isItemSelected({ type: 'project', projectId: project.id }) ? 'bg-accent' : ''
               }`}
             >
-              {expandedProject ? (
-                <FolderOpenIcon className="h-4 w-4" />
-              ) : (
-                <FolderIcon className="h-4 w-4" />
-              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="truncate">{project.name}</span>
@@ -1321,7 +1319,7 @@ function ProjectTree({
             {project.packages?.map((pkg, pkgIdx) => (
               <SidebarMenuItem key={pkgIdx}>
                 <Collapsible
-                  className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+                  className="group/collapsible"
                   defaultOpen={expandedPackages.has(pkgIdx)}
                 >
                   <CollapsibleTrigger asChild>
@@ -1329,7 +1327,12 @@ function ProjectTree({
                       onClick={() => togglePackageExpanded(pkgIdx)}
                       className="pl-2"
                     >
-                      <ChevronRightIcon className="transition-transform h-3 w-3" />
+                      {expandedPackages.has(pkgIdx) ? (
+                        <PackageOpenIcon className="transition-transform h-3 w-3" />
+                      ) : (
+                        <PackageIcon className="transition-transform h-3 w-3" />
+                      )}
+                      <span className="ml-1 text-xs text-muted-foreground">{pkg.subpackages?.length || 0}</span>
                       <div 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1339,11 +1342,6 @@ function ProjectTree({
                           isItemSelected({ type: 'package', projectId: project.id, packageIndex: pkgIdx }) ? 'bg-accent' : ''
                         }`}
                       >
-                        {expandedPackages.has(pkgIdx) ? (
-                          <PackageOpenIcon className="h-3 w-3" />
-                        ) : (
-                          <PackageIcon className="h-3 w-3" />
-                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="truncate text-sm">{pkg.name}</span>
@@ -1352,12 +1350,6 @@ function ProjectTree({
                             <p>{pkg.name}</p>
                           </TooltipContent>
                         </Tooltip>
-                        <span className="text-xs text-muted-foreground">
-                          {pkg.subpackages?.length || 0}
-                        </span>
-                        <span className="text-xs text-blue-600">
-                          {pkg.completed || 0}/{pkg.total || 0}
-                        </span>
                       </div>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -1367,7 +1359,7 @@ function ProjectTree({
                       {pkg.subpackages?.map((sub, taskIdx) => (
                         <SidebarMenuItem key={taskIdx}>
                           <Collapsible
-                            className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+                            className="group/collapsible"
                             defaultOpen={expandedTasks[pkgIdx]?.has(taskIdx)}
                           >
                             <CollapsibleTrigger asChild>
@@ -1375,7 +1367,12 @@ function ProjectTree({
                                 onClick={() => toggleTaskExpanded(pkgIdx, taskIdx)}
                                 className="pl-2"
                               >
-                                <ChevronRightIcon className="transition-transform h-3 w-3" />
+                                {expandedTasks[pkgIdx]?.has(taskIdx) ? (
+                                  <BookOpenCheck className="transition-transform h-3 w-3" />
+                                ) : (
+                                  <BookOpen className="transition-transform h-3 w-3" />
+                                )}
+                                <span className="ml-1 text-xs text-muted-foreground">{sub.taskpackages?.length || 0}</span>
                                 <div 
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1385,11 +1382,6 @@ function ProjectTree({
                                     isItemSelected({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx }) ? 'bg-accent' : ''
                                   }`}
                                 >
-                                  {expandedTasks[pkgIdx]?.has(taskIdx) ? (
-                                    <BookOpenCheck className="h-3 w-3" />
-                                  ) : (
-                                    <BookOpen className="h-3 w-3" />
-                                  )}
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <span className="truncate text-xs">{sub.name}</span>
@@ -1398,12 +1390,6 @@ function ProjectTree({
                                       <p>{sub.name}</p>
                                     </TooltipContent>
                                   </Tooltip>
-                                  <span className="text-xs text-muted-foreground">
-                                    {sub.taskpackages?.length || 0}
-                                  </span>
-                                  <span className="text-xs text-blue-600">
-                                    {sub.completed || 0}/{sub.total || 0}
-                                  </span>
                                 </div>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
