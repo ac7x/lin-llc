@@ -5,7 +5,6 @@ import { db } from '@/lib/firebase-init';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
 import {
   Sidebar,
   SidebarContent,
@@ -31,7 +30,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import {
+import { 
   ChevronRightIcon,
   FolderIcon,
   PackageIcon,
@@ -231,40 +230,40 @@ export default function ProjectListPage() {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <div className="p-4 space-y-2">
-                  <Input
-                    placeholder="專案名稱"
-                    value={projectName}
-                    onChange={e => setProjectName(e.target.value)}
+              <Input
+                placeholder="專案名稱"
+                value={projectName}
+                onChange={e => setProjectName(e.target.value)}
                     className="text-sm"
-                  />
-                  <Input
-                    placeholder="專案描述（選填）"
-                    value={projectDescription}
-                    onChange={e => setProjectDescription(e.target.value)}
+              />
+              <Input
+                placeholder="專案描述（選填）"
+                value={projectDescription}
+                onChange={e => setProjectDescription(e.target.value)}
                     className="text-sm"
-                  />
-                  <Button 
-                    onClick={handleCreateProject} 
-                    disabled={loading || !projectName.trim()}
-                    className="w-full"
-                    size="sm"
-                  >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    {loading ? '建立中...' : '建立專案'}
-                  </Button>
-                  {success && (
+              />
+              <Button 
+                onClick={handleCreateProject} 
+                disabled={loading || !projectName.trim()}
+                className="w-full"
+                size="sm"
+              >
+                <PlusIcon className="h-4 w-4 mr-2" />
+                {loading ? '建立中...' : '建立專案'}
+              </Button>
+              {success && (
                     <p className="text-green-600 text-center text-xs">專案建立成功！</p>
-                  )}
-                </div>
+              )}
+            </div>
               </SidebarGroupContent>
             </SidebarGroup>
 
             {/* 專案樹狀結構 */}
-            <SidebarGroup>
-              <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
+              <SidebarGroup>
+                <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
                 專案列表
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
                 <SidebarMenu>
                   {projects.map(project => (
                     <ProjectTree 
@@ -285,8 +284,8 @@ export default function ProjectListPage() {
                     />
                   ))}
                 </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+                </SidebarGroupContent>
+              </SidebarGroup>
           </SidebarContent>
           <SidebarRail />
         </Sidebar>
@@ -380,29 +379,29 @@ export default function ProjectListPage() {
               </div>
             </div>
           </ResizablePanel>
-          
+
           <ResizableHandle withHandle className="w-1 bg-border hover:bg-border/80 transition-colors" />
-          
+
           <ResizablePanel defaultSize={50} minSize={20}>
             <ResizablePanelGroup direction="vertical">
               <ResizablePanel defaultSize={25} minSize={15}>
                 <div className="flex h-full items-center justify-center p-6 bg-muted/5">
                   <div className="text-center">
                     <h3 className="font-semibold mb-2">專案概覽</h3>
-                    {selectedProject ? (
+              {selectedProject ? (
                       <div className="text-sm space-y-1">
-                        <p><strong>專案名稱：</strong>{selectedProject.name}</p>
-                        <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
-                        <p><strong>總任務數：</strong>
+                    <p><strong>專案名稱：</strong>{selectedProject.name}</p>
+                    <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
+                    <p><strong>總任務數：</strong>
                           {selectedProject.packages?.reduce((total, pkg) => total + (pkg.subpackages?.length || 0), 0) || 0}
-                        </p>
-                        <p><strong>總子工作包數：</strong>
-                          {selectedProject.packages?.reduce((total, pkg) => 
+                    </p>
+                    <p><strong>總子工作包數：</strong>
+                      {selectedProject.packages?.reduce((total, pkg) => 
                             total + pkg.subpackages?.reduce((taskTotal, task) => 
                               taskTotal + task.taskpackages?.length || 0, 0
-                            ), 0
-                          ) || 0}
-                        </p>
+                        ), 0
+                      ) || 0}
+                    </p>
                       </div>
                     ) : (
                       <p className="text-gray-500">選擇專案以查看概覽</p>
@@ -427,11 +426,11 @@ export default function ProjectListPage() {
                         <p className="text-xs text-muted-foreground">
                           {selectedProject.description || '無描述'}
                         </p>
-                      </div>
-                    ) : (
+                </div>
+              ) : (
                       <p className="text-gray-500">選擇專案以查看詳細資訊</p>
-                    )}
-                  </div>
+              )}
+            </div>
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -534,9 +533,6 @@ function ProjectTree({
             <ChevronRightIcon className="transition-transform h-4 w-4" />
             <FolderIcon className="h-4 w-4" />
             <span className="truncate">{project.name}</span>
-            <Link href={`/project/${project.id}`} className="ml-auto p-1 hover:bg-accent rounded">
-              <ChevronRightIcon className="h-3 w-3" />
-            </Link>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -559,9 +555,6 @@ function ProjectTree({
                       <span className="ml-auto text-xs text-muted-foreground">
                         {pkg.subpackages?.length || 0}
                       </span>
-                      <Link href={`/project/${project.id}/package/${pkgIdx}`} className="ml-1 p-1 hover:bg-accent rounded">
-                        <ChevronRightIcon className="h-3 w-3" />
-                      </Link>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -584,9 +577,6 @@ function ProjectTree({
                                 <span className="ml-auto text-xs text-muted-foreground">
                                   {sub.taskpackages?.length || 0}
                                 </span>
-                                <Link href={`/project/${project.id}/package/${pkgIdx}/subpackage/${taskIdx}`} className="ml-1 p-1 hover:bg-accent rounded">
-                                  <ChevronRightIcon className="h-3 w-3" />
-                                </Link>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
@@ -597,9 +587,6 @@ function ProjectTree({
                                     <SidebarMenuButton className="pl-2">
                                       <CheckSquareIcon className="h-3 w-3" />
                                       <span className="truncate text-xs">{task.name}</span>
-                                      <Link href={`/project/${project.id}/package/${pkgIdx}/subpackage/${taskIdx}/taskpackage/${subIdx}`} className="ml-auto p-1 hover:bg-accent rounded">
-                                        <ChevronRightIcon className="h-3 w-3" />
-                                      </Link>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
