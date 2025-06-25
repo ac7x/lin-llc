@@ -29,6 +29,11 @@ import {
 import { usePermission } from '@/app/settings/hooks/use-permission';
 import { ProjectSidebar } from './components/project-sidebar';
 import { Project, SelectedItem, Package } from './types';
+import { 
+  calculateProjectProgress, 
+  calculateProjectStatistics,
+  updateAllProgress 
+} from './utils/progress-calculator';
 
 export default function ProjectListPage() {
   const { hasPermission } = usePermission();
@@ -250,32 +255,7 @@ export default function ProjectListPage() {
     }
   };
 
-  // 計算進度百分比
-  const calculateProgress = (completed: number, total: number): number => {
-    if (total === 0) return 0;
-    return Math.round((completed / total) * 100);
-  };
-
-  // 計算專案總進度
-  const calculateProjectProgress = (project: Project) => {
-    const totalTasks = project.packages.reduce((total, pkg) => 
-      total + pkg.subpackages.reduce((subTotal, sub) => 
-        subTotal + sub.taskpackages.length, 0
-      ), 0
-    );
-    const completedTasks = project.packages.reduce((total, pkg) => 
-      total + pkg.subpackages.reduce((subTotal, sub) => 
-        subTotal + sub.taskpackages.reduce((taskTotal, task) => 
-          taskTotal + task.completed, 0
-        ), 0
-      ), 0
-    );
-    return {
-      completed: completedTasks,
-      total: totalTasks,
-      progress: calculateProgress(completedTasks, totalTasks)
-    };
-  };
+  // 注意：進度計算邏輯已移至 utils/progress-calculator.ts
 
   // 處理項目點擊事件
   const handleItemClick = (item: SelectedItem) => {
@@ -480,11 +460,7 @@ export default function ProjectListPage() {
                                   </Tooltip>
                                   <div>
                                     <p className="text-2xl font-bold">
-                                      {selectedProject.packages?.reduce((total, pkg) => 
-                                        total + pkg.subpackages?.reduce((taskTotal, task) => 
-                                          taskTotal + task.taskpackages?.length || 0, 0
-                                        ), 0
-                                      ) || 0}
+                                      {calculateProjectStatistics(selectedProject).subpackageCount}
                                     </p>
                                     <p className="text-sm text-muted-foreground">子工作包</p>
                                   </div>
@@ -505,11 +481,7 @@ export default function ProjectListPage() {
                                   </Tooltip>
                                   <div>
                                     <p className="text-2xl font-bold">
-                                      {selectedProject.packages?.reduce((total, pkg) => 
-                                        total + pkg.subpackages?.reduce((subTotal, sub) => 
-                                          subTotal + sub.taskpackages?.length, 0
-                                        ), 0
-                                      ) || 0}
+                                      {calculateProjectStatistics(selectedProject).taskCount}
                                     </p>
                                     <p className="text-sm text-muted-foreground">任務</p>
                                   </div>
@@ -530,10 +502,7 @@ export default function ProjectListPage() {
                                   </Tooltip>
                                   <div className="flex-1">
                                     <p className="text-2xl font-bold">
-                                      {(() => {
-                                        const progress = calculateProjectProgress(selectedProject);
-                                        return `${progress.progress}%`;
-                                      })()}
+                                      {calculateProjectProgress(selectedProject).progress}%
                                     </p>
                                     <p className="text-sm text-muted-foreground">完成進度</p>
                                   </div>
@@ -852,18 +821,10 @@ export default function ProjectListPage() {
                           </p>
                           <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
                           <p><strong>總子工作包數：</strong>
-                            {selectedProject.packages?.reduce((total, pkg) => 
-                              total + pkg.subpackages?.reduce((taskTotal, task) => 
-                                taskTotal + task.taskpackages?.length || 0, 0
-                              ), 0
-                            ) || 0}
+                            {calculateProjectStatistics(selectedProject).subpackageCount}
                           </p>
                           <p><strong>總任務數：</strong>
-                            {selectedProject.packages?.reduce((total, pkg) => 
-                              total + pkg.subpackages?.reduce((subTotal, sub) => 
-                                subTotal + sub.taskpackages?.length, 0
-                              ), 0
-                            ) || 0}
+                            {calculateProjectStatistics(selectedProject).taskCount}
                           </p>
                           <p><strong>完成進度：</strong>
                             {(() => {
@@ -923,10 +884,7 @@ export default function ProjectListPage() {
                           </p>
                           <p><strong>進度百分比：</strong></p>
                           <p className="text-xs text-muted-foreground">
-                            {(() => {
-                              const progress = calculateProjectProgress(selectedProject);
-                              return `${progress.progress}%`;
-                            })()}
+                            {calculateProjectProgress(selectedProject).progress}%
                           </p>
                         </div>
                       ) : (
