@@ -155,7 +155,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
       {authorizedItems.map((item) => {
         const isActive = item.exact !== false
           ? pathname === item.href
-          : (pathname === item.href || pathname.startsWith(item.href + '/'));
+          : (pathname === item.href || pathname.startsWith(`${item.href  }/`));
         
         return (
           <Link key={item.href} href={item.href} className="flex-1">
