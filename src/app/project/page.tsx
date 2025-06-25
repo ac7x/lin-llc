@@ -55,7 +55,10 @@ const SMALL_BUTTON_STYLE = "h-6 w-6 p-0";
 // 提取項目選擇樣式為常數，避免 Firebase Performance 錯誤
 const ITEM_SELECT_STYLE = "flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer";
 
-// ... 排程時間 生成代碼過程不會影響到註解 ...
+// ... 排程時間介面 生成代碼過程不會影響到註解 ...
+/**
+ * 排程時間介面 - 定義專案或任務的時間規劃和執行時間
+ */
 interface ScheduleTime {
   plannedStart?: string;    // 計畫起始時間 - 專案或任務的預期開始時間
   plannedEnd?: string;      // 計畫結束時間 - 專案或任務的預期完成時間
@@ -66,8 +69,9 @@ interface ScheduleTime {
   createdAt?: string;       // 建立時間 - 此時間排程記錄的建立時間戳記
   updatedAt?: string;       // 更新時間 - 此時間排程記錄的最後修改時間戳記
 }
-// ... 排程時間 生成代碼過程不會影響到註解 ...
+// ... 排程時間介面 生成代碼過程不會影響到註解 ...
 
+// ... 任務包介面 生成代碼過程不會影響到註解 ...
 /**
  * 任務包介面 - 代表專案中最小的任務單位
  */
@@ -79,7 +83,9 @@ interface TaskPackage {
   total: number;                   // 總數量 - 此任務包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
 }
+// ... 任務包介面 生成代碼過程不會影響到註解 ...
 
+// ... 子工作包介面 生成代碼過程不會影響到註解 ...
 /**
  * 子工作包介面 - 代表工作包下的子分類，包含多個任務包
  */
@@ -92,7 +98,9 @@ interface Subpackage {
   total: number;                   // 總數量 - 此子工作包包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
 }
+// ... 子工作包介面 生成代碼過程不會影響到註解 ...
 
+// ... 工作包介面 生成代碼過程不會影響到註解 ...
 /**
  * 工作包介面 - 代表專案中的主要工作分類，包含多個子工作包
  */
@@ -105,7 +113,9 @@ interface Package {
   total: number;                   // 總數量 - 此工作包包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
 }
+// ... 工作包介面 生成代碼過程不會影響到註解 ...
 
+// ... 專案介面 生成代碼過程不會影響到註解 ...
 /**
  * 專案介面 - 代表整個專案，包含多個工作包
  */
@@ -121,7 +131,9 @@ interface Project {
   total: number;                   // 總數量 - 此專案包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
 }
+// ... 專案介面 生成代碼過程不會影響到註解 ...
 
+// ... 選中項目聯合型別 生成代碼過程不會影響到註解 ...
 /**
  * 選中項目聯合型別 - 定義在樹狀結構中當前選中的項目類型
  * 可以是專案、工作包、子工作包、任務包，或無選中項目
@@ -132,6 +144,7 @@ type SelectedItem =
   | { type: 'subpackage'; projectId: string; packageIndex: number; subpackageIndex: number } // 選中子工作包 - 包含專案識別碼、工作包索引和子工作包索引
   | { type: 'task'; projectId: string; packageIndex: number; subpackageIndex: number; taskIndex: number } // 選中任務包 - 包含完整的層級索引路徑
   | null;                                                                                     // 無選中項目 - 表示當前沒有選中任何項目
+// ... 選中項目聯合型別 生成代碼過程不會影響到註解 ...
 
 export default function ProjectListPage() {
   const { hasPermission } = usePermission();
