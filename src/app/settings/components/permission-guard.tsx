@@ -115,4 +115,79 @@ export function DataScopeGuard({
   }
   
   return <>{fallback}</>;
+}
+
+/**
+ * 專案權限守衛組件
+ * 基於專案權限控制子組件的渲染
+ */
+interface ProjectPermissionGuardProps {
+  permission: string;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  requireOwner?: boolean;
+}
+
+export function ProjectPermissionGuard({ 
+  permission, 
+  children, 
+  fallback = null,
+  requireOwner = false 
+}: ProjectPermissionGuardProps) {
+  const { hasPermission, userProfile } = usePermission();
+  
+  // 檢查是否為擁有者
+  const isUserOwner = userProfile?.uid ? isOwner(userProfile.uid) : false;
+  
+  // 如果需要擁有者權限
+  if (requireOwner && !isUserOwner) {
+    return <>{fallback}</>;
+  }
+  
+  // 檢查專案權限
+  if (!hasPermission(permission)) {
+    return <>{fallback}</>;
+  }
+  
+  return <>{children}</>;
+}
+
+/**
+ * 專案操作權限檢查組件
+ * 用於檢查專案相關操作的權限
+ */
+interface ProjectActionGuardProps {
+  action: 'create' | 'read' | 'write' | 'delete' | 'assign';
+  resource: 'project' | 'package' | 'subpackage' | 'task' | 'member' | 'settings';
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  requireOwner?: boolean;
+}
+
+export function ProjectActionGuard({
+  action,
+  resource,
+  children,
+  fallback = null,
+  requireOwner = false
+}: ProjectActionGuardProps) {
+  const { hasPermission, userProfile } = usePermission();
+  
+  // 檢查是否為擁有者
+  const isUserOwner = userProfile?.uid ? isOwner(userProfile.uid) : false;
+  
+  // 如果需要擁有者權限
+  if (requireOwner && !isUserOwner) {
+    return <>{fallback}</>;
+  }
+  
+  // 構建權限 ID
+  const permissionId = `project:${resource}:${action}`;
+  
+  // 檢查權限
+  if (!hasPermission(permissionId)) {
+    return <>{fallback}</>;
+  }
+  
+  return <>{children}</>;
 } 

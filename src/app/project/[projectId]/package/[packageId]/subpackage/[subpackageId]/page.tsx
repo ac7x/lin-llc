@@ -1,12 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckSquareIcon, ListIcon } from 'lucide-react';
 
 export default function SubpackagePage() {
-  const [subpackageData, setSubpackageData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

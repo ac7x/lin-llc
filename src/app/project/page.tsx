@@ -39,6 +39,8 @@ import {
   PlusIcon,
   SettingsIcon,
 } from 'lucide-react';
+import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
+import { usePermission } from '@/app/settings/hooks/use-permission';
 
 interface TaskPackage { name: string }
 interface Subpackage { taskpackages: TaskPackage[] }
@@ -60,6 +62,7 @@ type SelectedItem =
   | null;
 
 export default function ProjectListPage() {
+  const { hasPermission } = usePermission();
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectName, setProjectName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -75,6 +78,12 @@ export default function ProjectListPage() {
   // 載入專案列表
   useEffect(() => {
     void (async () => {
+      // 檢查是否有查看專案權限
+      if (!hasPermission('project:read')) {
+        console.warn('用戶沒有查看專案權限');
+        return;
+      }
+
       const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
       const projectList = snapshot.docs.map(doc => {
@@ -103,11 +112,18 @@ export default function ProjectListPage() {
         setSelectedProject(projectList[0]);
       }
     })();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasPermission]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 建立專案
   const handleCreateProject = async () => {
     if (!projectName.trim()) return;
+    
+    // 檢查是否有創建專案權限
+    if (!hasPermission('project:write')) {
+      console.warn('用戶沒有創建專案權限');
+      return;
+    }
+
     setLoading(true);
     try {
       const docRef = await addDoc(collection(db, 'projects'), {
@@ -139,6 +155,13 @@ export default function ProjectListPage() {
   // 新增工作包
   const handleAddPackage = async (projectId: string, pkgName: string) => {
     if (!pkgName.trim()) return;
+    
+    // 檢查是否有創建工作包權限
+    if (!hasPermission('project:package:create')) {
+      console.warn('用戶沒有創建工作包權限');
+      return;
+    }
+
     setLoading(true);
     try {
       const project = projects.find(p => p.id === projectId);
@@ -157,6 +180,13 @@ export default function ProjectListPage() {
   // 新增子工作包
   const handleAddSubpackage = async (projectId: string, pkgIdx: number, subName: string) => {
     if (!subName.trim()) return;
+    
+    // 檢查是否有創建子工作包權限
+    if (!hasPermission('project:subpackage:create')) {
+      console.warn('用戶沒有創建子工作包權限');
+      return;
+    }
+
     setLoading(true);
     try {
       const project = projects.find(p => p.id === projectId);
@@ -179,6 +209,13 @@ export default function ProjectListPage() {
   // 新增任務包
   const handleAddTaskPackage = async (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => {
     if (!taskPackageName.trim()) return;
+    
+    // 檢查是否有創建任務權限
+    if (!hasPermission('project:task:create')) {
+      console.warn('用戶沒有創建任務權限');
+      return;
+    }
+
     setLoading(true);
     try {
       const project = projects.find(p => p.id === projectId);
@@ -237,6 +274,24 @@ export default function ProjectListPage() {
     setShowProjectInput(true);
   };
 
+  // 檢查是否有查看專案權限
+  if (!hasPermission('project:read')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>權限不足</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              您沒有權限查看專案列表
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -276,51 +331,53 @@ export default function ProjectListPage() {
                     />
                   ))}
                   
-                  {/* 新增專案按鈕 - 永遠顯示在最後 */}
-                  <SidebarMenuItem>
-                    <div className="pl-1 pr-1 py-1">
-                      {showProjectInput ? (
-                        <div className="flex gap-1">
-                          <Input
-                            placeholder="專案名稱"
-                            value={projectName}
-                            onChange={e => setProjectName(e.target.value)}
-                            className="flex-1 text-xs h-6"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
+                  {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
+                  <ProjectActionGuard action="create" resource="project">
+                    <SidebarMenuItem>
+                      <div className="pl-1 pr-1 py-1">
+                        {showProjectInput ? (
+                          <div className="flex gap-1">
+                            <Input
+                              placeholder="專案名稱"
+                              value={projectName}
+                              onChange={e => setProjectName(e.target.value)}
+                              className="flex-1 text-xs h-6"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  void handleCreateProject();
+                                  setShowProjectInput(false);
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => {
                                 void handleCreateProject();
                                 setShowProjectInput(false);
-                              }
-                            }}
-                          />
+                              }}
+                              disabled={loading || !projectName.trim()}
+                              className="h-6 w-6 p-0"
+                            >
+                              <PlusIcon className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
                           <Button
+                            variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              void handleCreateProject();
-                              setShowProjectInput(false);
-                            }}
-                            disabled={loading || !projectName.trim()}
-                            className="h-6 w-6 p-0"
+                            onClick={handleAddProjectClick}
+                            className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
                           >
-                            <PlusIcon className="h-3 w-3" />
+                            <PlusIcon className="h-3 w-3 mr-1" />
+                            {projects.length === 0 ? '新增第一個專案' : '新增專案'}
                           </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleAddProjectClick}
-                          className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
-                        >
-                          <PlusIcon className="h-3 w-3 mr-1" />
-                          {projects.length === 0 ? '新增第一個專案' : '新增專案'}
-                        </Button>
-                      )}
-                      {success && (
-                        <p className="text-green-600 text-center text-xs mt-1">專案建立成功！</p>
-                      )}
-                    </div>
-                  </SidebarMenuItem>
+                        )}
+                        {success && (
+                          <p className="text-green-600 text-center text-xs mt-1">專案建立成功！</p>
+                        )}
+                      </div>
+                    </SidebarMenuItem>
+                  </ProjectActionGuard>
                 </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -803,160 +860,166 @@ function ProjectTree({
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
-                                {/* 新增任務按鈕 */}
-                                <SidebarMenuItem>
-                                  <div className="pl-2 pr-1 py-1">
-                                    {showSubInputs[pkgIdx]?.[taskIdx] ? (
-                                      <div className="flex gap-1">
-                                        <Input
-                                          placeholder="任務名稱"
-                                          value={subInputs[project.id]?.[pkgIdx]?.[taskIdx] || ''}
-                                          onChange={e => setSubInputs(prev => ({
-                                            ...prev,
-                                            [project.id]: {
-                                              ...prev[project.id],
-                                              [pkgIdx]: {
-                                                ...prev[project.id]?.[pkgIdx],
-                                                [taskIdx]: e.target.value
+                                {/* 新增任務按鈕 - 只有有權限的用戶才能看到 */}
+                                <ProjectActionGuard action="create" resource="task">
+                                  <SidebarMenuItem>
+                                    <div className="pl-2 pr-1 py-1">
+                                      {showSubInputs[pkgIdx]?.[taskIdx] ? (
+                                        <div className="flex gap-1">
+                                          <Input
+                                            placeholder="任務名稱"
+                                            value={subInputs[project.id]?.[pkgIdx]?.[taskIdx] || ''}
+                                            onChange={e => setSubInputs(prev => ({
+                                              ...prev,
+                                              [project.id]: {
+                                                ...prev[project.id],
+                                                [pkgIdx]: {
+                                                  ...prev[project.id]?.[pkgIdx],
+                                                  [taskIdx]: e.target.value
+                                                }
                                               }
-                                            }
-                                          }))}
-                                          className="flex-1 text-xs h-6"
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
+                                            }))}
+                                            className="flex-1 text-xs h-6"
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                void onAddTaskPackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
+                                                setShowSubInputs(prev => ({
+                                                  ...prev,
+                                                  [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
+                                                }));
+                                              }
+                                            }}
+                                          />
+                                          <Button
+                                            size="sm"
+                                            onClick={() => {
                                               void onAddTaskPackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
                                               setShowSubInputs(prev => ({
                                                 ...prev,
                                                 [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
                                               }));
-                                            }
-                                          }}
-                                        />
+                                            }}
+                                            disabled={loading || !(subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            <PlusIcon className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      ) : (
                                         <Button
+                                          variant="ghost"
                                           size="sm"
-                                          onClick={() => {
-                                            void onAddTaskPackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
-                                            setShowSubInputs(prev => ({
-                                              ...prev,
-                                              [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
-                                            }));
-                                          }}
-                                          disabled={loading || !(subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
-                                          className="h-6 w-6 p-0"
+                                          onClick={() => handleAddSubClick(pkgIdx, taskIdx)}
+                                          className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
                                         >
-                                          <PlusIcon className="h-3 w-3" />
+                                          <PlusIcon className="h-3 w-3 mr-1" />
+                                          新增任務
                                         </Button>
-                                      </div>
-                                    ) : (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleAddSubClick(pkgIdx, taskIdx)}
-                                        className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
-                                      >
-                                        <PlusIcon className="h-3 w-3 mr-1" />
-                                        新增任務
-                                      </Button>
-                                    )}
-                                  </div>
-                                </SidebarMenuItem>
+                                      )}
+                                    </div>
+                                  </SidebarMenuItem>
+                                </ProjectActionGuard>
                               </SidebarMenuSub>
                             </CollapsibleContent>
                           </Collapsible>
                         </SidebarMenuItem>
                       ))}
-                      {/* 新增子工作包按鈕 */}
-                      <SidebarMenuItem>
-                        <div className="pl-1 pr-1 py-1">
-                          {showTaskPackageInputs[pkgIdx] ? (
-                            <div className="flex gap-1">
-                              <Input
-                                placeholder="子工作包名稱"
-                                value={taskPackageInputs[project.id]?.[pkgIdx] || ''}
-                                onChange={e => setTaskPackageInputs(prev => ({
-                                  ...prev,
-                                  [project.id]: { ...prev[project.id], [pkgIdx]: e.target.value }
-                                }))}
-                                className="flex-1 text-xs h-6"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
+                      {/* 新增子工作包按鈕 - 只有有權限的用戶才能看到 */}
+                      <ProjectActionGuard action="create" resource="subpackage">
+                        <SidebarMenuItem>
+                          <div className="pl-1 pr-1 py-1">
+                            {showTaskPackageInputs[pkgIdx] ? (
+                              <div className="flex gap-1">
+                                <Input
+                                  placeholder="子工作包名稱"
+                                  value={taskPackageInputs[project.id]?.[pkgIdx] || ''}
+                                  onChange={e => setTaskPackageInputs(prev => ({
+                                    ...prev,
+                                    [project.id]: { ...prev[project.id], [pkgIdx]: e.target.value }
+                                  }))}
+                                  className="flex-1 text-xs h-6"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      void onAddSubpackage(project.id, pkgIdx, taskPackageInputs[project.id]?.[pkgIdx] || '');
+                                      setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: false }));
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
                                     void onAddSubpackage(project.id, pkgIdx, taskPackageInputs[project.id]?.[pkgIdx] || '');
                                     setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: false }));
-                                  }
-                                }}
-                              />
+                                  }}
+                                  disabled={loading || !(taskPackageInputs[project.id]?.[pkgIdx] || '').trim()}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <PlusIcon className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
                               <Button
+                                variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  void onAddSubpackage(project.id, pkgIdx, taskPackageInputs[project.id]?.[pkgIdx] || '');
-                                  setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: false }));
-                                }}
-                                disabled={loading || !(taskPackageInputs[project.id]?.[pkgIdx] || '').trim()}
-                                className="h-6 w-6 p-0"
+                                onClick={() => handleAddTaskPackageClick(pkgIdx)}
+                                className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
                               >
-                                <PlusIcon className="h-3 w-3" />
+                                <PlusIcon className="h-3 w-3 mr-1" />
+                                新增子工作包
                               </Button>
-                            </div>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleAddTaskPackageClick(pkgIdx)}
-                              className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
-                            >
-                              <PlusIcon className="h-3 w-3 mr-1" />
-                              新增子工作包
-                            </Button>
-                          )}
-                        </div>
-                      </SidebarMenuItem>
+                            )}
+                          </div>
+                        </SidebarMenuItem>
+                      </ProjectActionGuard>
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </Collapsible>
               </SidebarMenuItem>
             ))}
-            {/* 新增工作包按鈕 */}
-            <SidebarMenuItem>
-              <div className="pl-1 pr-1 py-1">
-                {showPackageInput ? (
-                  <div className="flex gap-1">
-                    <Input
-                      placeholder="工作包名稱"
-                      value={pkgInputs[project.id] || ''}
-                      onChange={e => setPkgInputs(prev => ({ ...prev, [project.id]: e.target.value }))}
-                      className="flex-1 text-xs h-6"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+            {/* 新增工作包按鈕 - 只有有權限的用戶才能看到 */}
+            <ProjectActionGuard action="create" resource="package">
+              <SidebarMenuItem>
+                <div className="pl-1 pr-1 py-1">
+                  {showPackageInput ? (
+                    <div className="flex gap-1">
+                      <Input
+                        placeholder="工作包名稱"
+                        value={pkgInputs[project.id] || ''}
+                        onChange={e => setPkgInputs(prev => ({ ...prev, [project.id]: e.target.value }))}
+                        className="flex-1 text-xs h-6"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            void onAddPackage(project.id, pkgInputs[project.id] || '');
+                            setShowPackageInput(false);
+                          }
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
                           void onAddPackage(project.id, pkgInputs[project.id] || '');
                           setShowPackageInput(false);
-                        }
-                      }}
-                    />
+                        }}
+                        disabled={loading || !(pkgInputs[project.id] || '').trim()}
+                        className="h-6 w-6 p-0"
+                      >
+                        <PlusIcon className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
                     <Button
+                      variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        void onAddPackage(project.id, pkgInputs[project.id] || '');
-                        setShowPackageInput(false);
-                      }}
-                      disabled={loading || !(pkgInputs[project.id] || '').trim()}
-                      className="h-6 w-6 p-0"
+                      onClick={handleAddPackageClick}
+                      className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
                     >
-                      <PlusIcon className="h-3 w-3" />
+                      <PlusIcon className="h-3 w-3 mr-1" />
+                      新增工作包
                     </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleAddPackageClick}
-                    className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
-                  >
-                    <PlusIcon className="h-3 w-3 mr-1" />
-                    新增工作包
-                  </Button>
-                )}
-              </div>
-            </SidebarMenuItem>
+                  )}
+                </div>
+              </SidebarMenuItem>
+            </ProjectActionGuard>
           </SidebarMenuSub>
         </CollapsibleContent>
       </Collapsible>
