@@ -132,6 +132,9 @@ export interface ProjectPackageNodeProps extends TreeComponentProps {
   onAddSubpackage: (projectId: string, pkgIdx: number, subName: string) => Promise<void>;       // 新增子工作包回調 - 新增子工作包的異步函數
   taskPackageInputs: Record<string, Record<number, string>>;                                    // 任務包輸入狀態 - 儲存各專案各工作包任務包輸入框的值
   setTaskPackageInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, string>>>>; // 任務包輸入狀態設定器 - 更新任務包輸入框的值
+  subInputs: Record<string, Record<number, Record<number, string>>>;                            // 子工作包輸入狀態 - 儲存各專案各工作包各子工作包輸入框的值
+  setSubInputs: React.Dispatch<React.SetStateAction<Record<string, Record<number, Record<number, string>>>>>; // 子工作包輸入狀態設定器 - 更新子工作包輸入框的值
+  onAddTaskPackage: (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => Promise<void>; // 新增任務包回調 - 新增任務包的異步函數
 }
 
 /**

@@ -23,20 +23,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
-import { ProjectNodeProps, SelectedItem } from '@/app/project/types';
+import { ProjectNodeProps, SelectedItem } from '../../types';
+import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../constants';
 import ProjectPackageNode from './project-package-node';
-
-// 提取重複的 Input 樣式為常數，避免 Firebase Performance 錯誤
-const COMPACT_INPUT_STYLE = "flex-1 text-xs h-6";
-
-// 提取重複的 Button 樣式為常數，避免 Firebase Performance 錯誤
-const COMPACT_BUTTON_STYLE = "w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground";
-
-// 提取小型 Button 樣式為常數，避免 Firebase Performance 錯誤
-const SMALL_BUTTON_STYLE = "h-6 w-6 p-0";
-
-// 提取項目選擇樣式為常數，避免 Firebase Performance 錯誤
-const ITEM_SELECT_STYLE = "flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer";
 
 /**
  * 專案節點組件 - 顯示專案資訊並包含工作包列表

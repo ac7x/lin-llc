@@ -23,20 +23,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
-import { ProjectPackageNodeProps, SelectedItem } from '@/app/project/types';
+import { ProjectPackageNodeProps, SelectedItem } from '../../types';
+import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../constants';
 import ProjectSubpackageNode from './project-subpackage-node';
-
-// 提取重複的 Input 樣式為常數，避免 Firebase Performance 錯誤
-const COMPACT_INPUT_STYLE = "flex-1 text-xs h-6";
-
-// 提取重複的 Button 樣式為常數，避免 Firebase Performance 錯誤
-const COMPACT_BUTTON_STYLE = "w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground";
-
-// 提取小型 Button 樣式為常數，避免 Firebase Performance 錯誤
-const SMALL_BUTTON_STYLE = "h-6 w-6 p-0";
-
-// 提取項目選擇樣式為常數，避免 Firebase Performance 錯誤
-const ITEM_SELECT_STYLE = "flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer";
 
 /**
  * 工作包節點組件 - 顯示工作包資訊並包含子工作包列表
@@ -55,11 +44,7 @@ export default function ProjectPackageNode({
   subInputs,
   setSubInputs,
   onAddTaskPackage,
-}: ProjectPackageNodeProps & {
-  subInputs?: Record<string, Record<number, Record<number, string>>>;
-  setSubInputs?: React.Dispatch<React.SetStateAction<Record<string, Record<number, Record<number, string>>>>>;
-  onAddTaskPackage?: (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => Promise<void>;
-}) {
+}: ProjectPackageNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const [showInput, setShowInput] = useState(false);
   

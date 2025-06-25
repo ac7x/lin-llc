@@ -12,10 +12,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ProjectTaskNodeProps, SelectedItem } from '@/app/project/types';
-
-// 提取項目選擇樣式為常數，避免 Firebase Performance 錯誤
-const ITEM_SELECT_STYLE = "flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer";
+import { ProjectTaskNodeProps, SelectedItem } from '../../types';
+import { ITEM_SELECT_STYLE } from '../../constants';
 
 /**
  * 任務節點組件 - 顯示單一任務的資訊
