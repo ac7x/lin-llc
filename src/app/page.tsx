@@ -163,7 +163,7 @@ export default function HomePage() {
               <p className="text-sm text-muted-foreground mb-4">
                 管理專案進度、任務分配、時間追蹤和團隊協作。
               </p>
-              <Link href="/user/project">
+              <Link href="/project">
                 <Button variant="outline" className="w-full">
                   進入專案管理
                 </Button>
