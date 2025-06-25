@@ -39,6 +39,7 @@ import {
   PlusIcon,
   SettingsIcon,
 } from 'lucide-react';
+import Link from 'next/link';
 
 interface TaskPackage { name: string }
 interface Subpackage { taskpackages: TaskPackage[] }
@@ -531,8 +532,10 @@ function ProjectTree({
             className="pl-2"
           >
             <ChevronRightIcon className="transition-transform h-4 w-4" />
-            <FolderIcon className="h-4 w-4" />
-            <span className="truncate">{project.name}</span>
+            <Link href={`/project/${project.id}`} className="flex items-center gap-2 hover:bg-accent rounded p-1">
+              <FolderIcon className="h-4 w-4" />
+              <span className="truncate">{project.name}</span>
+            </Link>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -550,11 +553,13 @@ function ProjectTree({
                       className="pl-2"
                     >
                       <ChevronRightIcon className="transition-transform h-3 w-3" />
-                      <PackageIcon className="h-3 w-3" />
-                      <span className="truncate text-sm">{pkg.name}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {pkg.subpackages?.length || 0}
-                      </span>
+                      <Link href={`/project/${project.id}/package/${pkgIdx}`} className="flex items-center gap-2 hover:bg-accent rounded p-1">
+                        <PackageIcon className="h-3 w-3" />
+                        <span className="truncate text-sm">{pkg.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {pkg.subpackages?.length || 0}
+                        </span>
+                      </Link>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -572,11 +577,13 @@ function ProjectTree({
                                 className="pl-2"
                               >
                                 <ChevronRightIcon className="transition-transform h-3 w-3" />
-                                <ListIcon className="h-3 w-3" />
-                                <span className="truncate text-xs">子工作包 {taskIdx + 1}</span>
-                                <span className="ml-auto text-xs text-muted-foreground">
-                                  {sub.taskpackages?.length || 0}
-                                </span>
+                                <Link href={`/project/${project.id}/package/${pkgIdx}/subpackage/${taskIdx}`} className="flex items-center gap-2 hover:bg-accent rounded p-1">
+                                  <ListIcon className="h-3 w-3" />
+                                  <span className="truncate text-xs">子工作包 {taskIdx + 1}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {sub.taskpackages?.length || 0}
+                                  </span>
+                                </Link>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
@@ -585,8 +592,10 @@ function ProjectTree({
                                 {sub.taskpackages?.map((task, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
                                     <SidebarMenuButton className="pl-2">
-                                      <CheckSquareIcon className="h-3 w-3" />
-                                      <span className="truncate text-xs">{task.name}</span>
+                                      <Link href={`/project/${project.id}/package/${pkgIdx}/subpackage/${taskIdx}/taskpackage/${subIdx}`} className="flex items-center gap-2 hover:bg-accent rounded p-1">
+                                        <CheckSquareIcon className="h-3 w-3" />
+                                        <span className="truncate text-xs">{task.name}</span>
+                                      </Link>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
