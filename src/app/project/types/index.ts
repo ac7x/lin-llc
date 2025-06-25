@@ -19,6 +19,7 @@ export interface TaskPackage {
   name: string;                    // 任務包名稱 - 任務的識別名稱
   time?: ScheduleTime;             // 時間排程 - 任務的時間規劃和實際執行時間
   assigness?: string[];            // 指派人員 - 負責執行此任務的人員清單
+  submitters?: string[];           // 提交者 - 此任務包的提交者（用戶 UID 陣列）
   completed: number;               // 已完成數量 - 已完成的工作項目數量
   total: number;                   // 總數量 - 此任務包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
@@ -31,6 +32,8 @@ export interface Subpackage {
   name: string;                    // 子工作包名稱 - 子工作包的識別名稱
   time?: ScheduleTime;             // 時間排程 - 子工作包的時間規劃和實際執行時間
   assigness?: string[];            // 指派人員 - 負責此子工作包的人員清單
+  reviewers?: string[];            // 審核者 - 此子工作包的審核者（用戶 UID 陣列）
+  submitters?: string[];           // 提交者 - 此子工作包的提交者（用戶 UID 陣列）
   taskpackages: TaskPackage[];     // 任務包清單 - 此子工作包包含的所有任務包
   completed: number;               // 已完成數量 - 已完成的工作項目總數量
   total: number;                   // 總數量 - 此子工作包包含的總工作項目數量
@@ -44,6 +47,8 @@ export interface Package {
   name: string;                    // 工作包名稱 - 工作包的識別名稱
   time?: ScheduleTime;             // 時間排程 - 工作包的時間規劃和實際執行時間
   assigness?: string[];            // 指派人員 - 負責此工作包的人員清單
+  reviewers?: string[];            // 審核者 - 此工作包的審核者（用戶 UID 陣列）
+  submitters?: string[];           // 提交者 - 此工作包的提交者（用戶 UID 陣列）
   subpackages: Subpackage[];       // 子工作包清單 - 此工作包包含的所有子工作包
   completed: number;               // 已完成數量 - 已完成的工作項目總數量
   total: number;                   // 總數量 - 此工作包包含的總工作項目數量
@@ -58,6 +63,7 @@ export interface Project {
   name: string;                    // 專案名稱 - 專案的識別名稱
   time?: ScheduleTime;             // 時間排程 - 專案的時間規劃和實際執行時間
   assigness?: string[];            // 指派人員 - 負責此專案的人員清單
+  reviewers?: string[];            // 審核者 - 此專案的審核者（用戶 UID 陣列）
   description: string;             // 專案描述 - 專案的詳細說明文字
   createdAt: string;               // 建立時間 - 專案建立的時間戳記
   packages: Package[];             // 工作包清單 - 此專案包含的所有工作包
