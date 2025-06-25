@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase-init';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckSquareIcon } from 'lucide-react';
+import { CheckSquareIcon, UserIcon, SendIcon } from 'lucide-react';
 
 interface TaskPackage {
   id: string;
@@ -13,12 +13,14 @@ interface TaskPackage {
   description?: string;
   status?: string;
   assignedUids: string[];
+  submitters: string[];
   projectId?: string;
   packageId?: string;
   subpackageId?: string;
   completed?: number;
   total?: number;
   progress?: number;
+  role?: 'assigned' | 'submitter';
 }
 
 export default function UserTaskPage() {
@@ -32,13 +34,16 @@ export default function UserTaskPage() {
       try {
         // 查詢所有 taskpackages，然後在記憶體中過濾
         const colRef = collection(db, 'taskpackages');
-      const snap = await getDocs(colRef);
+        const snap = await getDocs(colRef);
         const list: TaskPackage[] = [];
         
-      snap.forEach(docSnap => {
+        snap.forEach(docSnap => {
           const data = docSnap.data() as TaskPackage;
-          // 檢查當前用戶是否在指派清單中
-          if (data.assignedUids && data.assignedUids.includes(user.uid)) {
+          // 檢查當前用戶是否在指派清單或提交者清單中
+          const isAssigned = data.assignedUids && data.assignedUids.includes(user.uid);
+          const isSubmitter = data.submitters && data.submitters.includes(user.uid);
+          
+          if (isAssigned || isSubmitter) {
             // 從文件 ID 解析專案資訊
             const idParts = docSnap.id.split('_');
             const taskInfo = {
@@ -47,17 +52,18 @@ export default function UserTaskPage() {
               projectId: idParts[0],
               packageId: idParts[1],
               subpackageId: idParts[2],
-              taskpackageId: idParts[3]
+              taskpackageId: idParts[3],
+              role: isAssigned ? 'assigned' as const : 'submitter' as const
             };
             list.push(taskInfo);
-        }
-      });
+          }
+        });
         
-      setTasks(list);
+        setTasks(list);
       } catch (error) {
         console.error('載入任務失敗:', error);
       } finally {
-      setLoading(false);
+        setLoading(false);
       }
     })();
   }, [user]);
@@ -72,6 +78,22 @@ export default function UserTaskPage() {
       case 'in-progress': return 'bg-blue-100 text-blue-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getRoleColor = (role?: string) => {
+    switch (role) {
+      case 'assigned': return 'bg-blue-100 text-blue-800';
+      case 'submitter': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getRoleIcon = (role?: string) => {
+    switch (role) {
+      case 'assigned': return <UserIcon className="h-4 w-4" />;
+      case 'submitter': return <SendIcon className="h-4 w-4" />;
+      default: return <UserIcon className="h-4 w-4" />;
     }
   };
 
@@ -96,9 +118,17 @@ export default function UserTaskPage() {
                     <CheckSquareIcon className="h-5 w-5" />
                     {task.name || '未命名任務'}
                   </CardTitle>
-                  <Badge className={getStatusColor(task.status)}>
-                    {task.status || '未開始'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getRoleColor(task.role)}>
+                      <div className="flex items-center gap-1">
+                        {getRoleIcon(task.role)}
+                        {task.role === 'assigned' ? '指派用戶' : '提交者'}
+                      </div>
+                    </Badge>
+                    <Badge className={getStatusColor(task.status)}>
+                      {task.status || '未開始'}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -114,7 +144,7 @@ export default function UserTaskPage() {
                     專案：{task.projectId} → 工作包：{task.packageId} → 子工作包：{task.subpackageId}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    指派給 {task.assignedUids.length} 位用戶
+                    指派給 {task.assignedUids?.length || 0} 位用戶，提交者 {task.submitters?.length || 0} 位
                   </div>
                 </div>
               </CardContent>

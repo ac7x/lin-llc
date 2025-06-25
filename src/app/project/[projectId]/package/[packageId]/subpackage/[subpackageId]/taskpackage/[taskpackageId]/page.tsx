@@ -5,15 +5,18 @@ import { db } from '@/lib/firebase-init';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckSquareIcon, UserIcon } from 'lucide-react';
+import { CheckSquareIcon, UserIcon, SendIcon } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
 export default function TaskPackagePage() {
   const params = useParams();
   const [assignedUids, setAssignedUids] = useState<string[]>([]);
+  const [submitters, setSubmitters] = useState<string[]>([]);
   const [inputUid, setInputUid] = useState('');
+  const [inputSubmitter, setInputSubmitter] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [submitterSuccess, setSubmitterSuccess] = useState(false);
   const [taskData, setTaskData] = useState<any>(null);
 
   // 取得路由參數
@@ -32,6 +35,7 @@ export default function TaskPackagePage() {
         if (snap.exists()) {
           setTaskData(snap.data());
           setAssignedUids(snap.data().assignedUids || []);
+          setSubmitters(snap.data().submitters || []);
         }
       } catch (error) {
         console.error('載入任務資料失敗:', error);
@@ -78,6 +82,50 @@ export default function TaskPackagePage() {
       setAssignedUids(prev => prev.filter(u => u !== uid));
     } catch (error) {
       console.error('移除指派失敗:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 設置提交者
+  const handleSetSubmitter = async () => {
+    if (!inputSubmitter.trim() || submitters.includes(inputSubmitter)) return;
+    
+    setLoading(true);
+    try {
+      const taskRef = doc(db, 'taskpackages', `${projectId}_${packageId}_${subpackageId}_${taskpackageId}`);
+      // 更新 submitters 陣列
+      await updateDoc(taskRef, { submitters: arrayUnion(inputSubmitter) });
+      setSubmitters(prev => [...prev, inputSubmitter]);
+      setInputSubmitter('');
+      setSubmitterSuccess(true);
+      setTimeout(() => setSubmitterSuccess(false), 1500);
+      
+      // 寫入通知
+      await addDoc(collection(db, 'notifications'), {
+        targetUid: inputSubmitter,
+        title: '任務提交者指派',
+        message: `您已被設為任務提交者：${taskData?.name || '未命名任務'}`,
+        type: 'info',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('設置提交者失敗:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 移除提交者
+  const handleRemoveSubmitter = async (uid: string) => {
+    setLoading(true);
+    try {
+      const taskRef = doc(db, 'taskpackages', `${projectId}_${packageId}_${subpackageId}_${taskpackageId}`);
+      await updateDoc(taskRef, { submitters: arrayRemove(uid) });
+      setSubmitters(prev => prev.filter(u => u !== uid));
+    } catch (error) {
+      console.error('移除提交者失敗:', error);
     } finally {
       setLoading(false);
     }
@@ -148,6 +196,62 @@ export default function TaskPackagePage() {
                       size="sm" 
                       variant="outline" 
                       onClick={() => handleRemove(uid)} 
+                      disabled={loading}
+                    >
+                      移除
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 設置提交者 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SendIcon className="h-5 w-5" />
+              設置提交者（可多人）
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="mb-2">
+                <p className="text-sm text-muted-foreground">
+                  目前提交者 UID：{submitters.length > 0 ? submitters.join(', ') : '尚未設置'}
+                </p>
+              </div>
+              
+              <div className="flex gap-2 items-center">
+                <Input
+                  placeholder="輸入提交者 UID..."
+                  value={inputSubmitter}
+                  onChange={e => setInputSubmitter(e.target.value)}
+                  className="w-64"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      void handleSetSubmitter();
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={handleSetSubmitter} 
+                  disabled={loading || !inputSubmitter.trim() || submitters.includes(inputSubmitter)}
+                >
+                  {loading ? '設置中...' : '設置'}
+                </Button>
+                {submitterSuccess && <span className="text-green-600 ml-2">設置成功！</span>}
+              </div>
+              
+              <div className="space-y-2">
+                {submitters.map(uid => (
+                  <div key={uid} className="flex items-center gap-2 p-2 border rounded">
+                    <span className="flex-1">{uid}</span>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleRemoveSubmitter(uid)} 
                       disabled={loading}
                     >
                       移除
