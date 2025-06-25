@@ -2,8 +2,6 @@
 import { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs, query, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,17 +12,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarRail,
 } from '@/components/ui/sidebar';
 import {
   ResizablePanelGroup,
@@ -32,16 +21,13 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { 
-  FolderIcon,
   PackageIcon,
   ListIcon,
   SquareIcon,
-  PlusIcon,
   SettingsIcon,
 } from 'lucide-react';
-import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { usePermission } from '@/app/settings/hooks/use-permission';
-import { ProjectTree } from './components/tree';
+import { ProjectSidebar } from './components/project-sidebar';
 import { Project, SelectedItem, Package } from './types';
 
 export default function ProjectListPage() {
@@ -50,8 +36,6 @@ export default function ProjectListPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
   const [loading, setLoading] = useState(false);
-  const [showProjectInput, setShowProjectInput] = useState(false);
-  const [projectInput, setProjectInput] = useState('');
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskPackageInputs, setTaskPackageInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
@@ -127,9 +111,7 @@ export default function ProjectListPage() {
   }, [hasPermission]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 建立專案
-  const handleCreateProject = async () => {
-    if (!projectInput.trim()) return;
-    
+  const handleCreateProject = async (projectName: string) => {
     // 檢查是否有創建專案權限
     if (!hasPermission('project:write')) {
       console.warn('用戶沒有創建專案權限');
@@ -139,13 +121,13 @@ export default function ProjectListPage() {
     setLoading(true);
     try {
       const docRef = await addDoc(collection(db, 'projects'), {
-        name: projectInput.trim(),
+        name: projectName,
         createdAt: new Date().toISOString(),
         packages: [],
       });
       const newProject: Project = {
         id: docRef.id,
-        name: projectInput.trim(),
+        name: projectName,
         description: '',
         createdAt: new Date().toISOString(),
         packages: [],
@@ -154,8 +136,6 @@ export default function ProjectListPage() {
         progress: 0,
       };
       setProjects(prev => [newProject, ...prev]);
-      setProjectInput('');
-      setShowProjectInput(false);
       // 自動選擇新建立的專案
       setSelectedProject(newProject);
     } catch (error) {
@@ -309,10 +289,7 @@ export default function ProjectListPage() {
     }
   };
 
-  // 處理建立專案按鈕點擊
-  const handleAddProjectClick = () => {
-    setShowProjectInput(true);
-  };
+
 
   // 檢查是否有查看專案權限
   if (!hasPermission('project:read')) {
@@ -385,106 +362,25 @@ export default function ProjectListPage() {
     <TooltipProvider>
       <SidebarProvider>
         <div className="flex h-screen w-full pb-20">
-          <Sidebar className="z-50">
-            <SidebarHeader className="border-b px-6 py-4">
-              <div className="flex items-center gap-2">
-                <FolderIcon className="h-5 w-5" />
-                <h2 className="text-lg font-semibold">專案管理</h2>
-              </div>
-            </SidebarHeader>
-            <SidebarContent className="pb-20">
-              {/* 專案樹狀結構 */}
-              <SidebarGroup>
-                <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
-                  專案列表
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {loading ? (
-                      <ProjectListSkeleton />
-                    ) : (
-                      <>
-                        {projects.map(project => (
-                          <ProjectTree 
-                            key={project.id} 
-                            project={project}
-                            selectedProject={selectedProject}
-                            selectedItem={selectedItem}
-                            onSelectProject={setSelectedProject}
-                            onItemClick={handleItemClick}
-                            onAddPackage={handleAddPackage}
-                            onAddTaskPackage={handleAddTaskPackage}
-                            onAddSubpackage={handleAddSubpackage}
-                            pkgInputs={pkgInputs}
-                            setPkgInputs={setPkgInputs}
-                            taskPackageInputs={taskPackageInputs}
-                            setTaskPackageInputs={setTaskPackageInputs}
-                            subInputs={subInputs}
-                            setSubInputs={setSubInputs}
-                            loading={loading}
-                            isItemSelected={isItemSelected}
-                          />
-                        ))}
-                        
-                        {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
-                        <ProjectActionGuard action="create" resource="project">
-                          <SidebarMenuItem>
-                            <div className="pl-1 pr-1 py-1">
-                              {showProjectInput ? (
-                                <div className="flex gap-1">
-                                  <Input
-                                    placeholder="專案名稱"
-                                    value={projectInput}
-                                    onChange={e => setProjectInput(e.target.value)}
-                                    className="flex-1 text-xs h-6"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        void handleCreateProject();
-                                        setShowProjectInput(false);
-                                      }
-                                    }}
-                                  />
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        onClick={() => {
-                                          void handleCreateProject();
-                                          setShowProjectInput(false);
-                                        }}
-                                        disabled={loading || !projectInput.trim()}
-                                        className="h-6 w-6 p-0"
-                                      >
-                                        <PlusIcon className="h-3 w-3" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>建立專案</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={handleAddProjectClick}
-                                  className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
-                                >
-                                  <PlusIcon className="h-3 w-3 mr-1" />
-                                  {projects.length === 0 ? '新增第一個專案' : '新增專案'}
-                                </Button>
-                              )}
-                            </div>
-                          </SidebarMenuItem>
-                        </ProjectActionGuard>
-                      </>
-                    )}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </SidebarContent>
-            <SidebarRail />
-          </Sidebar>
+          <ProjectSidebar
+            projects={projects}
+            selectedProject={selectedProject}
+            selectedItem={selectedItem}
+            loading={loading}
+            pkgInputs={pkgInputs}
+            setPkgInputs={setPkgInputs}
+            taskPackageInputs={taskPackageInputs}
+            setTaskPackageInputs={setTaskPackageInputs}
+            subInputs={subInputs}
+            setSubInputs={setSubInputs}
+            onSelectProject={setSelectedProject}
+            onItemClick={handleItemClick}
+            onAddPackage={handleAddPackage}
+            onAddTaskPackage={handleAddTaskPackage}
+            onAddSubpackage={handleAddSubpackage}
+            onCreateProject={handleCreateProject}
+            isItemSelected={isItemSelected}
+          />
 
           <ResizablePanelGroup
             direction="horizontal"
