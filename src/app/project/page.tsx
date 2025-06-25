@@ -44,12 +44,14 @@ import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { usePermission } from '@/app/settings/hooks/use-permission';
 
 interface TaskPackage { 
+  id: string;
   name: string;
   completed: number;
   total: number;
   progress: number;
 }
 interface Subpackage { 
+  id: string;
   name: string; 
   taskpackages: TaskPackage[];
   completed: number;
@@ -57,6 +59,7 @@ interface Subpackage {
   progress: number;
 }
 interface Package { 
+  id: string;
   name: string; 
   subpackages: Subpackage[];
   completed: number;
@@ -94,11 +97,6 @@ export default function ProjectListPage() {
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskPackageInputs, setTaskPackageInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
-  const [expandedPackages, setExpandedPackages] = useState<Set<number>>(new Set());
-  const [expandedTasks, setExpandedTasks] = useState<Record<number, Set<number>>>({});
-  const [showPackageInput, setShowPackageInput] = useState(false);
-  const [showTaskPackageInputs, setShowTaskPackageInputs] = useState<Record<number, boolean>>({});
-  const [showSubInputs, setShowSubInputs] = useState<Record<number, Record<number, boolean>>>({});
 
   // 載入專案列表
   useEffect(() => {
@@ -116,17 +114,20 @@ export default function ProjectListPage() {
         // 確保 packages 是陣列，且每個 package 都有 tasks 陣列
         const packages = Array.isArray(data.packages) 
           ? data.packages.map((pkg: any) => ({
+              id: pkg.id || generateId(),
               name: pkg.name || '',
               completed: pkg.completed || 0,
               total: pkg.total || 0,
               progress: pkg.progress || 0,
               subpackages: Array.isArray(pkg.subpackages) 
                 ? pkg.subpackages.map((sub: any) => ({ 
+                    id: sub.id || generateId(),
                     name: sub.name || '未命名子工作包',
                     completed: sub.completed || 0,
                     total: sub.total || 0,
                     progress: sub.progress || 0,
                     taskpackages: Array.isArray(sub.taskpackages) ? sub.taskpackages.map((task: any) => ({ 
+                      id: task.id || generateId(),
                       name: task.name || '', 
                       completed: task.completed || 0, 
                       total: task.total || 0, 
@@ -213,7 +214,7 @@ export default function ProjectListPage() {
       if (!project) return;
       const updatedPackages = [
         ...project.packages,
-        { name: pkgName.trim(), subpackages: [], completed: 0, total: 0, progress: 0 }
+        { id: generateId(), name: pkgName.trim(), subpackages: [], completed: 0, total: 0, progress: 0 }
       ];
       await updateProjectPackages(projectId, updatedPackages);
       setPkgInputs(prev => ({ ...prev, [projectId]: '' }));
@@ -238,7 +239,7 @@ export default function ProjectListPage() {
       if (!project) return;
       const updatedPackages = project.packages.map((pkg, idx) =>
         idx === pkgIdx
-          ? { ...pkg, subpackages: [...pkg.subpackages, { name: subName.trim(), taskpackages: [], completed: 0, total: 0, progress: 0 }] }
+          ? { ...pkg, subpackages: [...pkg.subpackages, { id: generateId(), name: subName.trim(), taskpackages: [], completed: 0, total: 0, progress: 0 }] }
           : pkg
       );
       await updateProjectPackages(projectId, updatedPackages);
@@ -271,7 +272,7 @@ export default function ProjectListPage() {
               ...pkg,
               subpackages: pkg.subpackages.map((sub, j) =>
                 j === subIdx
-                  ? { ...sub, taskpackages: [...sub.taskpackages, { name: taskPackageName.trim(), completed: 0, total: 0, progress: 0 }] }
+                  ? { ...sub, taskpackages: [...sub.taskpackages, { id: generateId(), name: taskPackageName.trim(), completed: 0, total: 0, progress: 0 }] }
                   : sub
               )
             }
@@ -300,6 +301,11 @@ export default function ProjectListPage() {
     if (selectedProject?.id === projectId) {
       setSelectedProject(prev => prev ? { ...prev, packages } : null);
     }
+  };
+
+  // 生成唯一 ID
+  const generateId = (): string => {
+    return crypto.randomUUID();
   };
 
   // 計算進度百分比
