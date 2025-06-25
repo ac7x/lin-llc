@@ -62,11 +62,11 @@ type SelectedItem =
 export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectName, setProjectName] = useState('');
-  const [projectDescription, setProjectDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
+  const [showProjectInput, setShowProjectInput] = useState(false);
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskPackageInputs, setTaskPackageInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
@@ -112,20 +112,19 @@ export default function ProjectListPage() {
     try {
       const docRef = await addDoc(collection(db, 'projects'), {
         name: projectName.trim(),
-        description: projectDescription.trim(),
         createdAt: new Date().toISOString(),
         packages: [],
       });
       const newProject: Project = {
         id: docRef.id,
         name: projectName.trim(),
-        description: projectDescription.trim(),
+        description: '',
         createdAt: new Date().toISOString(),
         packages: [],
       };
       setProjects(prev => [newProject, ...prev]);
       setProjectName('');
-      setProjectDescription('');
+      setShowProjectInput(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
       // 自動選擇新建立的專案
@@ -233,6 +232,11 @@ export default function ProjectListPage() {
     }
   };
 
+  // 處理建立專案按鈕點擊
+  const handleAddProjectClick = () => {
+    setShowProjectInput(true);
+  };
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -244,41 +248,6 @@ export default function ProjectListPage() {
             </div>
           </SidebarHeader>
           <SidebarContent className="pb-20">
-            {/* 建立專案表單 */}
-            <SidebarGroup>
-              <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
-                建立專案
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <div className="p-4 space-y-2">
-              <Input
-                placeholder="專案名稱"
-                value={projectName}
-                onChange={e => setProjectName(e.target.value)}
-                    className="text-sm"
-              />
-              <Input
-                placeholder="專案描述（選填）"
-                value={projectDescription}
-                onChange={e => setProjectDescription(e.target.value)}
-                    className="text-sm"
-              />
-              <Button 
-                onClick={handleCreateProject} 
-                disabled={loading || !projectName.trim()}
-                className="w-full"
-                size="sm"
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                {loading ? '建立中...' : '建立專案'}
-              </Button>
-              {success && (
-                    <p className="text-green-600 text-center text-xs">專案建立成功！</p>
-              )}
-            </div>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
             {/* 專案樹狀結構 */}
               <SidebarGroup>
                 <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
@@ -306,6 +275,52 @@ export default function ProjectListPage() {
                       loading={loading}
                     />
                   ))}
+                  
+                  {/* 新增專案按鈕 - 永遠顯示在最後 */}
+                  <SidebarMenuItem>
+                    <div className="pl-1 pr-1 py-1">
+                      {showProjectInput ? (
+                        <div className="flex gap-1">
+                          <Input
+                            placeholder="專案名稱"
+                            value={projectName}
+                            onChange={e => setProjectName(e.target.value)}
+                            className="flex-1 text-xs h-6"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                void handleCreateProject();
+                                setShowProjectInput(false);
+                              }
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              void handleCreateProject();
+                              setShowProjectInput(false);
+                            }}
+                            disabled={loading || !projectName.trim()}
+                            className="h-6 w-6 p-0"
+                          >
+                            <PlusIcon className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleAddProjectClick}
+                          className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                        >
+                          <PlusIcon className="h-3 w-3 mr-1" />
+                          {projects.length === 0 ? '新增第一個專案' : '新增專案'}
+                        </Button>
+                      )}
+                      {success && (
+                        <p className="text-green-600 text-center text-xs mt-1">專案建立成功！</p>
+                      )}
+                    </div>
+                  </SidebarMenuItem>
                 </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -343,7 +358,6 @@ export default function ProjectListPage() {
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <p className="text-gray-600 mb-2">{selectedProject.description || '無描述'}</p>
                             <p className="text-sm text-gray-400">
                               建立時間：{new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
                             </p>
@@ -681,18 +695,18 @@ function ProjectTree({
             className="pl-2"
           >
             <ChevronRightIcon className="transition-transform h-4 w-4" />
-            <button 
+            <div 
               onClick={(e) => {
                 e.stopPropagation();
                 onItemClick({ type: 'project', projectId: project.id });
               }}
-              className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 ${
+              className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer ${
                 isItemSelected({ type: 'project', projectId: project.id }) ? 'bg-accent' : ''
               }`}
             >
               <FolderIcon className="h-4 w-4" />
               <span className="truncate">{project.name}</span>
-            </button>
+            </div>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -710,12 +724,12 @@ function ProjectTree({
                       className="pl-2"
                     >
                       <ChevronRightIcon className="transition-transform h-3 w-3" />
-                      <button 
+                      <div 
                         onClick={(e) => {
                           e.stopPropagation();
                           onItemClick({ type: 'package', projectId: project.id, packageIndex: pkgIdx });
                         }}
-                        className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 ${
+                        className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer ${
                           isItemSelected({ type: 'package', projectId: project.id, packageIndex: pkgIdx }) ? 'bg-accent' : ''
                         }`}
                       >
@@ -724,7 +738,7 @@ function ProjectTree({
                         <span className="text-xs text-muted-foreground">
                           {pkg.subpackages?.length || 0}
                         </span>
-                      </button>
+                      </div>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -742,12 +756,12 @@ function ProjectTree({
                                 className="pl-2"
                               >
                                 <ChevronRightIcon className="transition-transform h-3 w-3" />
-                                <button 
+                                <div 
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     onItemClick({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx });
                                   }}
-                                  className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 ${
+                                  className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer ${
                                     isItemSelected({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx }) ? 'bg-accent' : ''
                                   }`}
                                 >
@@ -756,7 +770,7 @@ function ProjectTree({
                                   <span className="text-xs text-muted-foreground">
                                     {sub.taskpackages?.length || 0}
                                   </span>
-                                </button>
+                                </div>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
@@ -765,7 +779,7 @@ function ProjectTree({
                                 {sub.taskpackages?.map((task, subIdx) => (
                                   <SidebarMenuItem key={subIdx}>
                                     <SidebarMenuButton className="pl-2">
-                                      <button 
+                                      <div 
                                         onClick={() => onItemClick({ 
                                           type: 'task', 
                                           projectId: project.id, 
@@ -773,7 +787,7 @@ function ProjectTree({
                                           subpackageIndex: taskIdx, 
                                           taskIndex: subIdx 
                                         })}
-                                        className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 ${
+                                        className={`flex items-center gap-2 hover:bg-accent rounded p-1 flex-1 cursor-pointer ${
                                           isItemSelected({ 
                                             type: 'task', 
                                             projectId: project.id, 
@@ -785,7 +799,7 @@ function ProjectTree({
                                       >
                                         <CheckSquareIcon className="h-3 w-3" />
                                         <span className="truncate text-xs">{task.name}</span>
-                                      </button>
+                                      </div>
                                     </SidebarMenuButton>
                                   </SidebarMenuItem>
                                 ))}
