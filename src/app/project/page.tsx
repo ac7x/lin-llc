@@ -33,8 +33,8 @@ import {
   calculateProjectProgress, 
   calculateProjectStatistics,
   updateAllProgress 
-} from './utils/progress-calculator';
-import { useProjectProgress } from './hooks/use-project-progress';
+} from './utils';
+import { useProjectProgress } from './hooks';
 
 export default function ProjectListPage() {
   const { hasPermission } = usePermission();
