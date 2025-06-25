@@ -7,6 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
@@ -424,480 +430,602 @@ export default function ProjectListPage() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full pb-20">
-        <Sidebar className="z-50">
-          <SidebarHeader className="border-b px-6 py-4">
-            <div className="flex items-center gap-2">
-              <FolderIcon className="h-5 w-5" />
-              <h2 className="text-lg font-semibold">專案管理</h2>
-            </div>
-          </SidebarHeader>
-          <SidebarContent className="pb-20">
-            {/* 專案樹狀結構 */}
-              <SidebarGroup>
-                <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
-                專案列表
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                <SidebarMenu>
-                  {projects.map(project => (
-                    <ProjectTree 
-                      key={project.id} 
-                      project={project}
-                      selectedProject={selectedProject}
-                      selectedItem={selectedItem}
-                      onSelectProject={setSelectedProject}
-                      onItemClick={handleItemClick}
-                      onAddPackage={handleAddPackage}
-                      onAddTaskPackage={handleAddTaskPackage}
-                      onAddSubpackage={handleAddSubpackage}
-                      pkgInputs={pkgInputs}
-                      setPkgInputs={setPkgInputs}
-                      taskPackageInputs={taskPackageInputs}
-                      setTaskPackageInputs={setTaskPackageInputs}
-                      subInputs={subInputs}
-                      setSubInputs={setSubInputs}
-                      loading={loading}
-                    />
-                  ))}
-                  
-                  {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
-                  <ProjectActionGuard action="create" resource="project">
-                    <SidebarMenuItem>
-                      <div className="pl-1 pr-1 py-1">
-                        {showProjectInput ? (
-                          <div className="flex gap-1">
-                            <Input
-                              placeholder="專案名稱"
-                              value={projectName}
-                              onChange={e => setProjectName(e.target.value)}
-                              className={COMPACT_INPUT_STYLE}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  void handleCreateProject();
-                                  setShowProjectInput(false);
-                                }
-                              }}
-                            />
+    <TooltipProvider>
+      <SidebarProvider>
+        <div className="flex h-screen w-full pb-20">
+          <Sidebar className="z-50">
+            <SidebarHeader className="border-b px-6 py-4">
+              <div className="flex items-center gap-2">
+                <FolderIcon className="h-5 w-5" />
+                <h2 className="text-lg font-semibold">專案管理</h2>
+              </div>
+            </SidebarHeader>
+            <SidebarContent className="pb-20">
+              {/* 專案樹狀結構 */}
+                <SidebarGroup>
+                  <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
+                  專案列表
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                  <SidebarMenu>
+                    {projects.map(project => (
+                      <ProjectTree 
+                        key={project.id} 
+                        project={project}
+                        selectedProject={selectedProject}
+                        selectedItem={selectedItem}
+                        onSelectProject={setSelectedProject}
+                        onItemClick={handleItemClick}
+                        onAddPackage={handleAddPackage}
+                        onAddTaskPackage={handleAddTaskPackage}
+                        onAddSubpackage={handleAddSubpackage}
+                        pkgInputs={pkgInputs}
+                        setPkgInputs={setPkgInputs}
+                        taskPackageInputs={taskPackageInputs}
+                        setTaskPackageInputs={setTaskPackageInputs}
+                        subInputs={subInputs}
+                        setSubInputs={setSubInputs}
+                        loading={loading}
+                      />
+                    ))}
+                    
+                    {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
+                    <ProjectActionGuard action="create" resource="project">
+                      <SidebarMenuItem>
+                        <div className="pl-1 pr-1 py-1">
+                          {showProjectInput ? (
+                            <div className="flex gap-1">
+                              <Input
+                                placeholder="專案名稱"
+                                value={projectName}
+                                onChange={e => setProjectName(e.target.value)}
+                                className={COMPACT_INPUT_STYLE}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    void handleCreateProject();
+                                    setShowProjectInput(false);
+                                  }
+                                }}
+                              />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      void handleCreateProject();
+                                      setShowProjectInput(false);
+                                    }}
+                                    disabled={loading || !projectName.trim()}
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    <PlusIcon className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>建立專案</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          ) : (
                             <Button
+                              variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                void handleCreateProject();
-                                setShowProjectInput(false);
-                              }}
-                              disabled={loading || !projectName.trim()}
-                              className="h-6 w-6 p-0"
+                              onClick={handleAddProjectClick}
+                              className={COMPACT_BUTTON_STYLE}
                             >
-                              <PlusIcon className="h-3 w-3" />
+                              <PlusIcon className="h-3 w-3 mr-1" />
+                              {projects.length === 0 ? '新增第一個專案' : '新增專案'}
                             </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleAddProjectClick}
-                            className={COMPACT_BUTTON_STYLE}
-                          >
-                            <PlusIcon className="h-3 w-3 mr-1" />
-                            {projects.length === 0 ? '新增第一個專案' : '新增專案'}
-                          </Button>
-                        )}
-                        {success && (
-                          <p className="text-green-600 text-center text-xs mt-1">專案建立成功！</p>
-                        )}
-                      </div>
-                    </SidebarMenuItem>
-                  </ProjectActionGuard>
-                </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-          </SidebarContent>
-          <SidebarRail />
-        </Sidebar>
+                          )}
+                          {success && (
+                            <p className="text-green-600 text-center text-xs mt-1">專案建立成功！</p>
+                          )}
+                        </div>
+                      </SidebarMenuItem>
+                    </ProjectActionGuard>
+                  </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+            </SidebarContent>
+            <SidebarRail />
+          </Sidebar>
 
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="flex-1 min-h-0"
-        >
-          <ResizablePanel defaultSize={50} minSize={30}>
-            <div className="flex h-full flex-col">
-              <header className="border-b px-6 py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="flex items-center gap-2">
-                  <SidebarTrigger />
-                  <h1 className="text-xl font-semibold">
-                    {selectedProject ? selectedProject.name : '選擇專案'}
-                  </h1>
-                </div>
-              </header>
-              
-              <div className="flex-1 overflow-auto p-6 pb-20">
-                {selectedItem ? (
-                  <div className="space-y-6">
-                    {/* 根據選中項目類型顯示不同內容 */}
-                    {selectedItem.type === 'project' && selectedProject && (
-                      <>
-                        {/* 專案資訊 */}
+          <ResizablePanelGroup
+            direction="horizontal"
+            className="flex-1 min-h-0"
+          >
+            <ResizablePanel defaultSize={50} minSize={30}>
+              <div className="flex h-full flex-col">
+                <header className="border-b px-6 py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                  <div className="flex items-center gap-2">
+                    <SidebarTrigger />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <h1 className="text-xl font-semibold truncate max-w-[200px]">
+                          {selectedProject ? selectedProject.name : '選擇專案'}
+                        </h1>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{selectedProject ? selectedProject.name : '選擇專案'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </header>
+                
+                <div className="flex-1 overflow-auto p-6 pb-20">
+                  {selectedItem ? (
+                    <div className="space-y-6">
+                      {/* 根據選中項目類型顯示不同內容 */}
+                      {selectedItem.type === 'project' && selectedProject && (
+                        <>
+                          {/* 專案資訊 */}
+                          <Card className="border-0 shadow-sm">
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
+                                <SettingsIcon className="h-5 w-5" />
+                                專案資訊
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-sm text-gray-400">
+                                建立時間：{new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
+                              </p>
+                            </CardContent>
+                          </Card>
+
+                          {/* 專案概覽卡片 */}
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <Card className="border-0 shadow-sm">
+                              <CardContent className="pt-6">
+                                <div className="flex items-center gap-2">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <PackageIcon className="h-5 w-5 text-blue-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>工作包數量</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <div>
+                                    <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
+                                    <p className="text-sm text-muted-foreground">工作包</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            <Card className="border-0 shadow-sm">
+                              <CardContent className="pt-6">
+                                <div className="flex items-center gap-2">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <ListIcon className="h-5 w-5 text-purple-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>子工作包數量</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <div>
+                                    <p className="text-2xl font-bold">
+                                      {selectedProject.packages?.reduce((total, pkg) => 
+                                        total + pkg.subpackages?.reduce((taskTotal, task) => 
+                                          taskTotal + task.taskpackages?.length || 0, 0
+                                        ), 0
+                                      ) || 0}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">子工作包</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            <Card className="border-0 shadow-sm">
+                              <CardContent className="pt-6">
+                                <div className="flex items-center gap-2">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <CheckSquareIcon className="h-5 w-5 text-green-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>任務總數</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <div>
+                                    <p className="text-2xl font-bold">
+                                      {selectedProject.packages?.reduce((total, pkg) => 
+                                        total + pkg.subpackages?.reduce((subTotal, sub) => 
+                                          subTotal + sub.taskpackages?.length, 0
+                                        ), 0
+                                      ) || 0}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">任務</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+
+                            <Card className="border-0 shadow-sm">
+                              <CardContent className="pt-6">
+                                <div className="flex items-center gap-2">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="h-5 w-5 rounded-full bg-gradient-to-r from-blue-500 to-green-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>完成進度百分比</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <div className="flex-1">
+                                    <p className="text-2xl font-bold">
+                                      {(() => {
+                                        const progress = calculateProjectProgress(selectedProject);
+                                        return `${progress.progress}%`;
+                                      })()}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">完成進度</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+
+                          {/* 進度條 */}
+                          <Card className="border-0 shadow-sm">
+                            <CardHeader>
+                              <CardTitle className="text-lg">專案進度</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              {(() => {
+                                const progress = calculateProjectProgress(selectedProject);
+                                return (
+                                  <div className="space-y-4">
+                                    <div className="flex justify-between text-sm">
+                                      <span>整體進度</span>
+                                      <span>{progress.completed} / {progress.total} ({progress.progress}%)</span>
+                                    </div>
+                                    <Progress value={progress.progress} className="h-2" />
+                                  </div>
+                                );
+                              })()}
+                            </CardContent>
+                          </Card>
+                        </>
+                      )}
+
+                      {selectedItem.type === 'package' && selectedProject && (
                         <Card className="border-0 shadow-sm">
                           <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                              <SettingsIcon className="h-5 w-5" />
-                              專案資訊
+                              <PackageIcon className="h-5 w-5" />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="truncate max-w-[300px]">
+                                    工作包：{selectedProject.packages[selectedItem.packageIndex]?.name}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>工作包：{selectedProject.packages[selectedItem.packageIndex]?.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <p className="text-sm text-gray-400">
-                              建立時間：{new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
-                            </p>
+                            <div className="space-y-4">
+                              {/* 工作包進度 */}
+                              <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                  <span>工作包進度</span>
+                                  <span>
+                                    {selectedProject.packages[selectedItem.packageIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.total || 0} 
+                                    ({selectedProject.packages[selectedItem.packageIndex]?.progress || 0}%)
+                                  </span>
+                                </div>
+                                <Progress value={selectedProject.packages[selectedItem.packageIndex]?.progress || 0} className="h-2" />
+                              </div>
+
+                              <div>
+                                <h4 className="font-medium mb-2">子工作包列表</h4>
+                                {selectedProject.packages[selectedItem.packageIndex]?.subpackages?.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {selectedProject.packages[selectedItem.packageIndex].subpackages.map((sub, idx) => (
+                                      <div key={idx} className="p-3 border rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <ListIcon className="h-4 w-4" />
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span className="font-medium truncate max-w-[200px]">{sub.name}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>{sub.name}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                          <span className="text-sm text-muted-foreground">
+                                            ({sub.taskpackages?.length || 0} 個任務)
+                                          </span>
+                                          <span className="text-sm text-blue-600">
+                                            {sub.completed || 0}/{sub.total || 0} ({sub.progress || 0}%)
+                                          </span>
+                                        </div>
+                                        <Progress value={sub.progress || 0} className="h-1 mb-2" />
+                                        {sub.taskpackages?.length > 0 && (
+                                          <div className="ml-6 space-y-1">
+                                            {sub.taskpackages.map((task, taskIdx) => (
+                                              <div key={taskIdx} className="flex items-center gap-2 text-sm">
+                                                <CheckSquareIcon className="h-3 w-3" />
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <span className="truncate max-w-[150px]">{task.name}</span>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    <p>{task.name}</p>
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                                <span className="text-xs text-muted-foreground">
+                                                  {task.completed || 0}/{task.total || 0}
+                                                </span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-muted-foreground">尚無子工作包</p>
+                                )}
+                              </div>
+                            </div>
                           </CardContent>
                         </Card>
+                      )}
 
-                        {/* 專案概覽卡片 */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <Card className="border-0 shadow-sm">
-                            <CardContent className="pt-6">
-                              <div className="flex items-center gap-2">
-                                <PackageIcon className="h-5 w-5 text-blue-500" />
-                                <div>
-                                  <p className="text-2xl font-bold">{selectedProject.packages?.length || 0}</p>
-                                  <p className="text-sm text-muted-foreground">工作包</p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          
-                          <Card className="border-0 shadow-sm">
-                            <CardContent className="pt-6">
-                              <div className="flex items-center gap-2">
-                                <ListIcon className="h-5 w-5 text-purple-500" />
-                                <div>
-                                  <p className="text-2xl font-bold">
-                                    {selectedProject.packages?.reduce((total, pkg) => 
-                                      total + pkg.subpackages?.reduce((taskTotal, task) => 
-                                        taskTotal + task.taskpackages?.length || 0, 0
-                                      ), 0
-                                    ) || 0}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">子工作包</p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          
-                          <Card className="border-0 shadow-sm">
-                            <CardContent className="pt-6">
-                              <div className="flex items-center gap-2">
-                                <CheckSquareIcon className="h-5 w-5 text-green-500" />
-                                <div>
-                                  <p className="text-2xl font-bold">
-                                    {selectedProject.packages?.reduce((total, pkg) => 
-                                      total + pkg.subpackages?.reduce((subTotal, sub) => 
-                                        subTotal + sub.taskpackages?.length, 0
-                                      ), 0
-                                    ) || 0}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">任務</p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-
-                          <Card className="border-0 shadow-sm">
-                            <CardContent className="pt-6">
-                              <div className="flex items-center gap-2">
-                                <div className="h-5 w-5 rounded-full bg-gradient-to-r from-blue-500 to-green-500" />
-                                <div className="flex-1">
-                                  <p className="text-2xl font-bold">
-                                    {(() => {
-                                      const progress = calculateProjectProgress(selectedProject);
-                                      return `${progress.progress}%`;
-                                    })()}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">完成進度</p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-
-                        {/* 進度條 */}
+                      {selectedItem.type === 'subpackage' && selectedProject && (
                         <Card className="border-0 shadow-sm">
                           <CardHeader>
-                            <CardTitle className="text-lg">專案進度</CardTitle>
+                            <CardTitle className="flex items-center gap-2">
+                              <ListIcon className="h-5 w-5" />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="truncate max-w-[400px]">
+                                    子工作包：{selectedProject.packages[selectedItem.packageIndex]?.name} - {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>子工作包：{selectedProject.packages[selectedItem.packageIndex]?.name} - {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            {(() => {
-                              const progress = calculateProjectProgress(selectedProject);
-                              return (
-                                <div className="space-y-4">
-                                  <div className="flex justify-between text-sm">
-                                    <span>整體進度</span>
-                                    <span>{progress.completed} / {progress.total} ({progress.progress}%)</span>
-                                  </div>
-                                  <Progress value={progress.progress} className="h-2" />
+                            <div className="space-y-4">
+                              {/* 子工作包進度 */}
+                              <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                  <span>子工作包進度</span>
+                                  <span>
+                                    {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.total || 0} 
+                                    ({selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.progress || 0}%)
+                                  </span>
                                 </div>
-                              );
-                            })()}
+                                <Progress value={selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.progress || 0} className="h-2" />
+                              </div>
+
+                              <div>
+                                <h4 className="font-medium mb-2">任務列表</h4>
+                                {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages?.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {selectedProject.packages[selectedItem.packageIndex].subpackages[selectedItem.subpackageIndex].taskpackages.map((task, idx) => (
+                                      <div key={idx} className="p-3 border rounded">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <CheckSquareIcon className="h-4 w-4" />
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span className="font-medium truncate max-w-[250px]">{task.name}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>{task.name}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                          <span className="text-sm text-blue-600">
+                                            {task.completed || 0}/{task.total || 0} ({task.progress || 0}%)
+                                          </span>
+                                        </div>
+                                        <Progress value={task.progress || 0} className="h-1" />
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-muted-foreground">尚無任務</p>
+                                )}
+                              </div>
+                            </div>
                           </CardContent>
                         </Card>
-                      </>
-                    )}
+                      )}
 
-                    {selectedItem.type === 'package' && selectedProject && (
-                      <Card className="border-0 shadow-sm">
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <PackageIcon className="h-5 w-5" />
-                            工作包：{selectedProject.packages[selectedItem.packageIndex]?.name}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            {/* 工作包進度 */}
-                            <div>
-                              <div className="flex justify-between text-sm mb-2">
-                                <span>工作包進度</span>
-                                <span>
-                                  {selectedProject.packages[selectedItem.packageIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.total || 0} 
-                                  ({selectedProject.packages[selectedItem.packageIndex]?.progress || 0}%)
-                                </span>
+                      {selectedItem.type === 'task' && selectedProject && (
+                        <Card className="border-0 shadow-sm">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <CheckSquareIcon className="h-5 w-5" />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="truncate max-w-[400px]">
+                                    任務：{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>任務：{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              {/* 任務進度 */}
+                              <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                  <span>任務進度</span>
+                                  <span>
+                                    {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.total || 0} 
+                                    ({selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.progress || 0}%)
+                                  </span>
+                                </div>
+                                <Progress value={selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.progress || 0} className="h-2" />
                               </div>
-                              <Progress value={selectedProject.packages[selectedItem.packageIndex]?.progress || 0} className="h-2" />
-                            </div>
 
-                            <div>
-                              <h4 className="font-medium mb-2">子工作包列表</h4>
-                              {selectedProject.packages[selectedItem.packageIndex]?.subpackages?.length > 0 ? (
+                              <div>
+                                <h4 className="font-medium mb-2">任務詳情</h4>
                                 <div className="space-y-2">
-                                  {selectedProject.packages[selectedItem.packageIndex].subpackages.map((sub, idx) => (
-                                    <div key={idx} className="p-3 border rounded-lg">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <ListIcon className="h-4 w-4" />
-                                        <span className="font-medium">{sub.name}</span>
-                                        <span className="text-sm text-muted-foreground">
-                                          ({sub.taskpackages?.length || 0} 個任務)
-                                        </span>
-                                        <span className="text-sm text-blue-600">
-                                          {sub.completed || 0}/{sub.total || 0} ({sub.progress || 0}%)
-                                        </span>
-                                      </div>
-                                      <Progress value={sub.progress || 0} className="h-1 mb-2" />
-                                      {sub.taskpackages?.length > 0 && (
-                                        <div className="ml-6 space-y-1">
-                                          {sub.taskpackages.map((task, taskIdx) => (
-                                            <div key={taskIdx} className="flex items-center gap-2 text-sm">
-                                              <CheckSquareIcon className="h-3 w-3" />
-                                              <span>{task.name}</span>
-                                              <span className="text-xs text-muted-foreground">
-                                                {task.completed || 0}/{task.total || 0}
-                                              </span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-muted-foreground">尚無子工作包</p>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {selectedItem.type === 'subpackage' && selectedProject && (
-                      <Card className="border-0 shadow-sm">
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <ListIcon className="h-5 w-5" />
-                            子工作包：{selectedProject.packages[selectedItem.packageIndex]?.name} - {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            {/* 子工作包進度 */}
-                            <div>
-                              <div className="flex justify-between text-sm mb-2">
-                                <span>子工作包進度</span>
-                                <span>
-                                  {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.total || 0} 
-                                  ({selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.progress || 0}%)
-                                </span>
-                              </div>
-                              <Progress value={selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.progress || 0} className="h-2" />
-                            </div>
-
-                            <div>
-                              <h4 className="font-medium mb-2">任務列表</h4>
-                              {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages?.length > 0 ? (
-                                <div className="space-y-2">
-                                  {selectedProject.packages[selectedItem.packageIndex].subpackages[selectedItem.subpackageIndex].taskpackages.map((task, idx) => (
-                                    <div key={idx} className="p-3 border rounded">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <CheckSquareIcon className="h-4 w-4" />
-                                        <span className="font-medium">{task.name}</span>
-                                        <span className="text-sm text-blue-600">
-                                          {task.completed || 0}/{task.total || 0} ({task.progress || 0}%)
-                                        </span>
-                                      </div>
-                                      <Progress value={task.progress || 0} className="h-1" />
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-muted-foreground">尚無任務</p>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {selectedItem.type === 'task' && selectedProject && (
-                      <Card className="border-0 shadow-sm">
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <CheckSquareIcon className="h-5 w-5" />
-                            任務：{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            {/* 任務進度 */}
-                            <div>
-                              <div className="flex justify-between text-sm mb-2">
-                                <span>任務進度</span>
-                                <span>
-                                  {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.completed || 0} / {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.total || 0} 
-                                  ({selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.progress || 0}%)
-                                </span>
-                              </div>
-                              <Progress value={selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.progress || 0} className="h-2" />
-                            </div>
-
-                            <div>
-                              <h4 className="font-medium mb-2">任務詳情</h4>
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">所屬工作包：</span>
-                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.name}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">所屬子工作包：</span>
-                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">任務名稱：</span>
-                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">完成數量：</span>
-                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.completed || 0}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">總數量：</span>
-                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.total || 0}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">所屬工作包：</span>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="truncate max-w-[200px]">{selectedProject.packages[selectedItem.packageIndex]?.name}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>{selectedProject.packages[selectedItem.packageIndex]?.name}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">所屬子工作包：</span>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="truncate max-w-[200px]">{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">任務名稱：</span>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="truncate max-w-[200px]">{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.name}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">完成數量：</span>
+                                    <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.completed || 0}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">總數量：</span>
+                                    <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.taskpackages[selectedItem.taskIndex]?.total || 0}</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">請選擇一個項目</p>
-                  </div>
-                )}
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500">請選擇一個項目</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </ResizablePanel>
+            </ResizablePanel>
 
-          <ResizableHandle withHandle className="w-1 bg-border hover:bg-border/80 transition-colors" />
+            <ResizableHandle withHandle className="w-1 bg-border hover:bg-border/80 transition-colors" />
 
-          <ResizablePanel defaultSize={50} minSize={20}>
-            <ResizablePanelGroup direction="vertical">
-              <ResizablePanel defaultSize={25} minSize={15}>
-                <div className="flex h-full items-center justify-center p-6 bg-muted/5">
-                  <div className="text-center">
-                    <h3 className="font-semibold mb-2">專案概覽</h3>
-                    {selectedProject ? (
-                      <div className="text-sm space-y-1">
-                        <p><strong>專案名稱：</strong>{selectedProject.name}</p>
-                        <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
-                        <p><strong>總子工作包數：</strong>
-                          {selectedProject.packages?.reduce((total, pkg) => 
-                            total + pkg.subpackages?.reduce((taskTotal, task) => 
-                              taskTotal + task.taskpackages?.length || 0, 0
-                            ), 0
-                          ) || 0}
-                        </p>
-                        <p><strong>總任務數：</strong>
-                          {selectedProject.packages?.reduce((total, pkg) => 
-                            total + pkg.subpackages?.reduce((subTotal, sub) => 
-                              subTotal + sub.taskpackages?.length, 0
-                            ), 0
-                          ) || 0}
-                        </p>
-                        <p><strong>完成進度：</strong>
-                          {(() => {
-                            const progress = calculateProjectProgress(selectedProject);
-                            return `${progress.completed}/${progress.total} (${progress.progress}%)`;
-                          })()}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">選擇專案以查看概覽</p>
-                    )}
+            <ResizablePanel defaultSize={50} minSize={20}>
+              <ResizablePanelGroup direction="vertical">
+                <ResizablePanel defaultSize={25} minSize={15}>
+                  <div className="flex h-full items-center justify-center p-6 bg-muted/5">
+                    <div className="text-center">
+                      <h3 className="font-semibold mb-2">專案概覽</h3>
+                      {selectedProject ? (
+                        <div className="text-sm space-y-1">
+                          <p><strong>專案名稱：</strong>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="truncate max-w-[150px] inline-block">{selectedProject.name}</span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{selectedProject.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </p>
+                          <p><strong>工作包數量：</strong>{selectedProject.packages?.length || 0}</p>
+                          <p><strong>總子工作包數：</strong>
+                            {selectedProject.packages?.reduce((total, pkg) => 
+                              total + pkg.subpackages?.reduce((taskTotal, task) => 
+                                taskTotal + task.taskpackages?.length || 0, 0
+                              ), 0
+                            ) || 0}
+                          </p>
+                          <p><strong>總任務數：</strong>
+                            {selectedProject.packages?.reduce((total, pkg) => 
+                              total + pkg.subpackages?.reduce((subTotal, sub) => 
+                                subTotal + sub.taskpackages?.length, 0
+                              ), 0
+                            ) || 0}
+                          </p>
+                          <p><strong>完成進度：</strong>
+                            {(() => {
+                              const progress = calculateProjectProgress(selectedProject);
+                              return `${progress.completed}/${progress.total} (${progress.progress}%)`;
+                            })()}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500">選擇專案以查看概覽</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </ResizablePanel>
-              
-              <ResizableHandle withHandle className="h-1 bg-border hover:bg-border/80 transition-colors" />
-              
-              <ResizablePanel defaultSize={75} minSize={25}>
-                <div className="flex h-full items-center justify-center p-6 bg-muted/10">
-                  <div className="text-center">
-                    <h3 className="font-semibold mb-2">詳細資訊</h3>
-                    {selectedProject ? (
-                      <div className="text-sm space-y-1">
-                        <p><strong>建立時間：</strong></p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
-                        </p>
-                        <p><strong>專案描述：</strong></p>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedProject.description || '無描述'}
-                        </p>
-                        <p><strong>專案進度：</strong></p>
-                        <p className="text-xs text-muted-foreground">
-                          {(() => {
-                            const progress = calculateProjectProgress(selectedProject);
-                            return `已完成 ${progress.completed} 個任務，共 ${progress.total} 個任務`;
-                          })()}
-                        </p>
-                        <p><strong>進度百分比：</strong></p>
-                        <p className="text-xs text-muted-foreground">
-                          {(() => {
-                            const progress = calculateProjectProgress(selectedProject);
-                            return `${progress.progress}%`;
-                          })()}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">選擇專案以查看詳細資訊</p>
-                    )}
+                </ResizablePanel>
+                
+                <ResizableHandle withHandle className="h-1 bg-border hover:bg-border/80 transition-colors" />
+                
+                <ResizablePanel defaultSize={75} minSize={25}>
+                  <div className="flex h-full items-center justify-center p-6 bg-muted/10">
+                    <div className="text-center">
+                      <h3 className="font-semibold mb-2">詳細資訊</h3>
+                      {selectedProject ? (
+                        <div className="text-sm space-y-1">
+                          <p><strong>建立時間：</strong></p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(selectedProject.createdAt).toLocaleString('zh-TW')}
+                          </p>
+                          <p><strong>專案描述：</strong></p>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedProject.description || '無描述'}
+                          </p>
+                          <p><strong>專案進度：</strong></p>
+                          <p className="text-xs text-muted-foreground">
+                            {(() => {
+                              const progress = calculateProjectProgress(selectedProject);
+                              return `已完成 ${progress.completed} 個任務，共 ${progress.total} 個任務`;
+                            })()}
+                          </p>
+                          <p><strong>進度百分比：</strong></p>
+                          <p className="text-xs text-muted-foreground">
+                            {(() => {
+                              const progress = calculateProjectProgress(selectedProject);
+                              return `${progress.progress}%`;
+                            })()}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500">選擇專案以查看詳細資訊</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </div>
-    </SidebarProvider>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
 
@@ -1020,7 +1148,14 @@ function ProjectTree({
               }`}
             >
               <FolderIcon className="h-4 w-4" />
-              <span className="truncate">{project.name}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="truncate">{project.name}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{project.name}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -1049,7 +1184,14 @@ function ProjectTree({
                         }`}
                       >
                         <PackageIcon className="h-3 w-3" />
-                        <span className="truncate text-sm">{pkg.name}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="truncate text-sm">{pkg.name}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{pkg.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
                         <span className="text-xs text-muted-foreground">
                           {pkg.subpackages?.length || 0}
                         </span>
@@ -1084,7 +1226,14 @@ function ProjectTree({
                                   }`}
                                 >
                                   <ListIcon className="h-3 w-3" />
-                                  <span className="truncate text-xs">{sub.name}</span>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="truncate text-xs">{sub.name}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{sub.name}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
                                   <span className="text-xs text-muted-foreground">
                                     {sub.taskpackages?.length || 0}
                                   </span>
@@ -1119,7 +1268,14 @@ function ProjectTree({
                                         }`}
                                       >
                                         <CheckSquareIcon className="h-3 w-3" />
-                                        <span className="truncate text-xs">{task.name}</span>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="truncate text-xs">{task.name}</span>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>{task.name}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
                                         <span className="text-xs text-blue-600">
                                           {task.completed || 0}/{task.total || 0}
                                         </span>
@@ -1157,20 +1313,27 @@ function ProjectTree({
                                               }
                                             }}
                                           />
-                                          <Button
-                                            size="sm"
-                                            onClick={() => {
-                                              void onAddTaskPackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
-                                              setShowSubInputs(prev => ({
-                                                ...prev,
-                                                [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
-                                              }));
-                                            }}
-                                            disabled={loading || !(subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
-                                            className={SMALL_BUTTON_STYLE}
-                                          >
-                                            <PlusIcon className="h-3 w-3" />
-                                          </Button>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                size="sm"
+                                                onClick={() => {
+                                                  void onAddTaskPackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
+                                                  setShowSubInputs(prev => ({
+                                                    ...prev,
+                                                    [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
+                                                  }));
+                                                }}
+                                                disabled={loading || !(subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
+                                                className={SMALL_BUTTON_STYLE}
+                                              >
+                                                <PlusIcon className="h-3 w-3" />
+                                              </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>建立任務</p>
+                                            </TooltipContent>
+                                          </Tooltip>
                                         </div>
                                       ) : (
                                         <Button
@@ -1212,17 +1375,24 @@ function ProjectTree({
                                     }
                                   }}
                                 />
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    void onAddSubpackage(project.id, pkgIdx, taskPackageInputs[project.id]?.[pkgIdx] || '');
-                                    setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: false }));
-                                  }}
-                                  disabled={loading || !(taskPackageInputs[project.id]?.[pkgIdx] || '').trim()}
-                                  className={SMALL_BUTTON_STYLE}
-                                >
-                                  <PlusIcon className="h-3 w-3" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        void onAddSubpackage(project.id, pkgIdx, taskPackageInputs[project.id]?.[pkgIdx] || '');
+                                        setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: false }));
+                                      }}
+                                      disabled={loading || !(taskPackageInputs[project.id]?.[pkgIdx] || '').trim()}
+                                      className={SMALL_BUTTON_STYLE}
+                                    >
+                                      <PlusIcon className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>建立子工作包</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               </div>
                             ) : (
                               <Button
@@ -1261,17 +1431,24 @@ function ProjectTree({
                           }
                         }}
                       />
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          void onAddPackage(project.id, pkgInputs[project.id] || '');
-                          setShowPackageInput(false);
-                        }}
-                        disabled={loading || !(pkgInputs[project.id] || '').trim()}
-                        className={SMALL_BUTTON_STYLE}
-                      >
-                        <PlusIcon className="h-3 w-3" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              void onAddPackage(project.id, pkgInputs[project.id] || '');
+                              setShowPackageInput(false);
+                            }}
+                            disabled={loading || !(pkgInputs[project.id] || '').trim()}
+                            className={SMALL_BUTTON_STYLE}
+                          >
+                            <PlusIcon className="h-3 w-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>建立工作包</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   ) : (
                     <Button
