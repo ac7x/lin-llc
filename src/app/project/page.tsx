@@ -41,9 +41,12 @@ import {
 import { 
   ChevronRightIcon,
   FolderIcon,
+  FolderOpenIcon,
   PackageIcon,
+  PackageOpenIcon,
   ListIcon,
-  CheckSquareIcon,
+  SquareIcon,
+  SquareCheckIcon,
   PlusIcon,
   SettingsIcon,
 } from 'lucide-react';
@@ -710,7 +713,7 @@ export default function ProjectListPage() {
                                 <div className="flex items-center gap-2">
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <CheckSquareIcon className="h-5 w-5 text-green-500" />
+                                      <SquareIcon className="h-5 w-5 text-green-500" />
                                     </TooltipTrigger>
                                     <TooltipContent>
                                       <p>任務總數</p>
@@ -837,7 +840,17 @@ export default function ProjectListPage() {
                                           <div className="ml-6 space-y-1">
                                             {sub.taskpackages.map((task, taskIdx) => (
                                               <div key={taskIdx} className="flex items-center gap-2 text-sm">
-                                                <CheckSquareIcon className="h-3 w-3" />
+                                                {isItemSelected({
+                                                  type: 'task',
+                                                  projectId: selectedProject.id,
+                                                  packageIndex: selectedItem.packageIndex,
+                                                  subpackageIndex: idx,
+                                                  taskIndex: taskIdx
+                                                }) ? (
+                                                  <SquareCheckIcon className="h-3 w-3" />
+                                                ) : (
+                                                  <SquareIcon className="h-3 w-3" />
+                                                )}
                                                 <Tooltip>
                                                   <TooltipTrigger asChild>
                                                     <span className="truncate max-w-[150px]">{task.name}</span>
@@ -903,7 +916,17 @@ export default function ProjectListPage() {
                                     {selectedProject.packages[selectedItem.packageIndex].subpackages[selectedItem.subpackageIndex].taskpackages.map((task, idx) => (
                                       <div key={idx} className="p-3 border rounded">
                                         <div className="flex items-center gap-2 mb-2">
-                                          <CheckSquareIcon className="h-4 w-4" />
+                                          {isItemSelected({
+                                            type: 'task',
+                                            projectId: selectedProject.id,
+                                            packageIndex: selectedItem.packageIndex,
+                                            subpackageIndex: selectedItem.subpackageIndex,
+                                            taskIndex: idx
+                                          }) ? (
+                                            <SquareCheckIcon className="h-3 w-3" />
+                                          ) : (
+                                            <SquareIcon className="h-3 w-3" />
+                                          )}
                                           <Tooltip>
                                             <TooltipTrigger asChild>
                                               <span className="font-medium truncate max-w-[250px]">{task.name}</span>
@@ -933,7 +956,7 @@ export default function ProjectListPage() {
                         <Card className="border-0 shadow-sm">
                           <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                              <CheckSquareIcon className="h-5 w-5" />
+                              <SquareIcon className="h-5 w-5" />
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <span className="truncate max-w-[400px]">
@@ -1275,7 +1298,11 @@ function ProjectTree({
                 isItemSelected({ type: 'project', projectId: project.id }) ? 'bg-accent' : ''
               }`}
             >
-              <FolderIcon className="h-4 w-4" />
+              {selectedProject?.id === project.id ? (
+                <FolderOpenIcon className="h-4 w-4" />
+              ) : (
+                <FolderIcon className="h-4 w-4" />
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="truncate">{project.name}</span>
@@ -1311,7 +1338,11 @@ function ProjectTree({
                           isItemSelected({ type: 'package', projectId: project.id, packageIndex: pkgIdx }) ? 'bg-accent' : ''
                         }`}
                       >
-                        <PackageIcon className="h-3 w-3" />
+                        {expandedPackages.has(pkgIdx) ? (
+                          <PackageOpenIcon className="h-3 w-3" />
+                        ) : (
+                          <PackageIcon className="h-3 w-3" />
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="truncate text-sm">{pkg.name}</span>
@@ -1395,7 +1426,17 @@ function ProjectTree({
                                           }) ? 'bg-accent' : ''
                                         }`}
                                       >
-                                        <CheckSquareIcon className="h-3 w-3" />
+                                        {isItemSelected({
+                                          type: 'task',
+                                          projectId: project.id,
+                                          packageIndex: pkgIdx,
+                                          subpackageIndex: taskIdx,
+                                          taskIndex: subIdx
+                                        }) ? (
+                                          <SquareCheckIcon className="h-3 w-3" />
+                                        ) : (
+                                          <SquareIcon className="h-3 w-3" />
+                                        )}
                                         <Tooltip>
                                           <TooltipTrigger asChild>
                                             <span className="truncate text-xs">{task.name}</span>
