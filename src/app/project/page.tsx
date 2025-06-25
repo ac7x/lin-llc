@@ -43,7 +43,7 @@ import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { usePermission } from '@/app/settings/hooks/use-permission';
 
 interface TaskPackage { name: string }
-interface Subpackage { taskpackages: TaskPackage[] }
+interface Subpackage { name: string; taskpackages: TaskPackage[] }
 interface Package { name: string; subpackages: Subpackage[] }
 interface Project {
   id: string;
@@ -73,7 +73,11 @@ export default function ProjectListPage() {
   const [pkgInputs, setPkgInputs] = useState<Record<string, string>>({});
   const [taskPackageInputs, setTaskPackageInputs] = useState<Record<string, Record<number, string>>>({});
   const [subInputs, setSubInputs] = useState<Record<string, Record<number, Record<number, string>>>>({});
+  const [expandedPackages, setExpandedPackages] = useState<Set<number>>(new Set());
+  const [expandedTasks, setExpandedTasks] = useState<Record<number, Set<number>>>({});
+  const [showPackageInput, setShowPackageInput] = useState(false);
   const [showTaskPackageInputs, setShowTaskPackageInputs] = useState<Record<number, boolean>>({});
+  const [showSubInputs, setShowSubInputs] = useState<Record<number, Record<number, boolean>>>({});
 
   // 載入專案列表
   useEffect(() => {
@@ -93,7 +97,10 @@ export default function ProjectListPage() {
           ? data.packages.map((pkg: any) => ({
               name: pkg.name || '',
               subpackages: Array.isArray(pkg.subpackages) 
-                ? pkg.subpackages.map((sub: any) => ({ taskpackages: Array.isArray(sub.taskpackages) ? sub.taskpackages.map((task: any) => ({ name: task.name || '' })) : [] }))
+                ? pkg.subpackages.map((sub: any) => ({ 
+                    name: sub.name || '未命名子工作包',
+                    taskpackages: Array.isArray(sub.taskpackages) ? sub.taskpackages.map((task: any) => ({ name: task.name || '' })) : [] 
+                  }))
                 : []
             }))
           : [];
@@ -193,7 +200,7 @@ export default function ProjectListPage() {
       if (!project) return;
       const updatedPackages = project.packages.map((pkg, idx) =>
         idx === pkgIdx
-          ? { ...pkg, subpackages: [...pkg.subpackages, { taskpackages: [] }] }
+          ? { ...pkg, subpackages: [...pkg.subpackages, { name: subName.trim(), taskpackages: [] }] }
           : pkg
       );
       await updateProjectPackages(projectId, updatedPackages);
@@ -488,7 +495,7 @@ export default function ProjectListPage() {
                                     <div key={idx} className="p-3 border rounded-lg">
                                       <div className="flex items-center gap-2 mb-2">
                                         <ListIcon className="h-4 w-4" />
-                                        <span className="font-medium">子工作包 {idx + 1}</span>
+                                        <span className="font-medium">{sub.name}</span>
                                         <span className="text-sm text-muted-foreground">
                                           ({sub.taskpackages?.length || 0} 個任務)
                                         </span>
@@ -520,7 +527,7 @@ export default function ProjectListPage() {
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
                             <ListIcon className="h-5 w-5" />
-                            子工作包：{selectedProject.packages[selectedItem.packageIndex]?.name} - 子工作包 {selectedItem.subpackageIndex + 1}
+                            子工作包：{selectedProject.packages[selectedItem.packageIndex]?.name} - {selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -564,7 +571,7 @@ export default function ProjectListPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">所屬子工作包：</span>
-                                  <span>子工作包 {selectedItem.subpackageIndex + 1}</span>
+                                  <span>{selectedProject.packages[selectedItem.packageIndex]?.subpackages[selectedItem.subpackageIndex]?.name}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">任務名稱：</span>
@@ -823,7 +830,7 @@ function ProjectTree({
                                   }`}
                                 >
                                   <ListIcon className="h-3 w-3" />
-                                  <span className="truncate text-xs">子工作包 {taskIdx + 1}</span>
+                                  <span className="truncate text-xs">{sub.name}</span>
                                   <span className="text-xs text-muted-foreground">
                                     {sub.taskpackages?.length || 0}
                                   </span>
