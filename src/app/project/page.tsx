@@ -45,6 +45,8 @@ import {
   PackageIcon,
   PackageOpenIcon,
   ListIcon,
+  BookOpenIcon,
+  BookMarkedIcon,
   SquareIcon,
   SquareCheckIcon,
   PlusIcon,
@@ -1339,9 +1341,9 @@ function ProjectTree({
                         }`}
                       >
                         {expandedPackages.has(pkgIdx) ? (
-                          <PackageOpenIcon className="h-3 w-3" />
+                          <FolderOpenIcon className="h-3 w-3" />
                         ) : (
-                          <PackageIcon className="h-3 w-3" />
+                          <FolderIcon className="h-3 w-3" />
                         )}
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -1384,7 +1386,11 @@ function ProjectTree({
                                     isItemSelected({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx }) ? 'bg-accent' : ''
                                   }`}
                                 >
-                                  <ListIcon className="h-3 w-3" />
+                                  {expandedTasks[pkgIdx]?.has(taskIdx) ? (
+                                    <BookMarkedIcon className="h-3 w-3" />
+                                  ) : (
+                                    <BookOpenIcon className="h-3 w-3" />
+                                  )}
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <span className="truncate text-xs">{sub.name}</span>
