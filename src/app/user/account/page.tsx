@@ -261,7 +261,7 @@ export default function AccountPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Link href="/user/finance">
+              <Link href="/finance">
                 <Button variant="ghost" className="w-full justify-start">
                   💰 財務管理
                 </Button>

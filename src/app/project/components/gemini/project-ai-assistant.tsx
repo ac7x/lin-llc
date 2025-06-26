@@ -16,14 +16,26 @@ interface Message {
 }
 
 interface ProjectAIAssistantProps {
-  projectId: string;
+  projectId?: string;
+  title?: string;
+  className?: string;
 }
 
-export default function ProjectAIAssistant({ projectId }: ProjectAIAssistantProps) {
+export default function ProjectAIAssistant({ 
+  projectId, 
+  title, 
+  className = "w-full h-[600px] flex flex-col" 
+}: ProjectAIAssistantProps) {
+  const isProjectContext = !!projectId;
+  const assistantTitle = title || (isProjectContext ? '專案AI助手' : 'AI 助手');
+  const initialMessage = isProjectContext 
+    ? '您好！我是您的專案AI助手，有什麼可以幫助您的嗎？'
+    : '您好！我是您的AI助手，有什麼可以幫助您的嗎？我可以協助您處理各種業務需求。';
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: '您好！我是您的專案AI助手，有什麼可以幫助您的嗎？',
+      content: initialMessage,
       sender: 'ai',
       timestamp: new Date().toLocaleTimeString('zh-TW')
     }
@@ -61,22 +73,32 @@ export default function ProjectAIAssistant({ projectId }: ProjectAIAssistantProp
   };
 
   const getAIResponse = (input: string): string => {
-    const responses = [
+    const projectResponses = [
       '根據您的問題，我建議您檢查專案的進度追蹤。',
       '這是一個很好的想法！您可以考慮將此項目加入專案規劃中。',
       '基於目前的專案狀況，我建議您優先處理高優先級的任務。',
       '您提到的問題很重要，建議與團隊成員討論解決方案。',
-      '我理解您的關切。讓我們一步步分析這個問題。'
+      '我理解您的關切。讓我們一步步分析這個專案問題。'
     ];
+
+    const generalResponses = [
+      '這是一個很有趣的問題！讓我為您提供一些建議。',
+      '根據您的描述，我建議您可以考慮以下方案。',
+      '我理解您的需求。讓我幫您分析一下最佳的解決方式。',
+      '這確實是一個需要仔細考慮的問題。我建議您從以下角度思考。',
+      '基於我的分析，我認為您可以嘗試這樣的方法。'
+    ];
+
+    const responses = isProjectContext ? projectResponses : generalResponses;
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
   return (
-    <Card className="w-full h-[600px] flex flex-col">
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="w-5 h-5" />
-          專案AI助手
+          {assistantTitle}
         </CardTitle>
       </CardHeader>
       
@@ -104,7 +126,7 @@ export default function ProjectAIAssistant({ projectId }: ProjectAIAssistantProp
                   className={`max-w-[80%] rounded-lg p-3 ${
                     message.sender === 'user'
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-900'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                   }`}
                 >
                   <p className="text-sm">{message.content}</p>
@@ -122,7 +144,7 @@ export default function ProjectAIAssistant({ projectId }: ProjectAIAssistantProp
                     <Bot className="w-4 h-4" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="bg-gray-100 rounded-lg p-3">
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
                     <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100" />

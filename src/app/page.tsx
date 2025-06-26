@@ -142,7 +142,7 @@ export default function HomePage() {
               <p className="text-sm text-muted-foreground mb-4">
                 追蹤收入、支出、預算和財務報表，提供詳細的財務分析。
               </p>
-              <Link href="/user/finance">
+              <Link href="/finance">
                 <Button variant="outline" className="w-full">
                   進入財務管理
                 </Button>

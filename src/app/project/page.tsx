@@ -185,6 +185,7 @@ export default function ProjectListPage() {
                         projectData.updateProject(updatedProject);
                         projectSelection.updateSelectedProject(updatedProject);
                       }}
+                      updateProjectInfo={projectOperations.updateProjectInfo}
                     />
                   )}
                 </div>
