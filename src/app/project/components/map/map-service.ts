@@ -101,7 +101,7 @@ class MapService {
         this.suppressAppCheckErrors();
         
         // 建構 Google Maps API URL
-        let mapsSrc = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW`;
+        let mapsSrc = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,marker&language=zh-TW&region=TW&loading=async`;
         
         // 添加回調參數
         const callbackName = `initMap_${Date.now()}`;
@@ -158,7 +158,7 @@ class MapService {
         };
 
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW&callback=${fallbackCallbackName}`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,marker&language=zh-TW&region=TW&loading=async&callback=${fallbackCallbackName}`;
         script.async = true;
         script.defer = true;
 
@@ -230,7 +230,7 @@ class MapService {
           google?.maps?.places?.AutocompleteService &&
           google?.maps?.places?.PlacesService &&
           google?.maps?.Map &&
-          google?.maps?.Marker
+          (google?.maps?.marker?.AdvancedMarkerElement || google?.maps?.Marker)
         ) {
           resolve();
           return;

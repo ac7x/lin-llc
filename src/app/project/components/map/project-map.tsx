@@ -136,26 +136,46 @@ export function ProjectMap({
 
     // 移除舊標記
     if (markerRef.current) {
-      markerRef.current.setMap(null);
+      markerRef.current.map = null;
     }
 
-    // 創建新標記
-    markerRef.current = new google.maps.Marker({
-      position: location,
-      map: mapInstanceRef.current,
-      title: title,
-      animation: google.maps.Animation.DROP,
-    });
+    // 檢查是否支援 AdvancedMarkerElement
+    if (google.maps.marker?.AdvancedMarkerElement) {
+      // 使用新的 AdvancedMarkerElement
+      markerRef.current = new google.maps.marker.AdvancedMarkerElement({
+        position: location,
+        map: mapInstanceRef.current,
+        title: title,
+      });
 
-    // 創建資訊窗口
-    const infoWindow = new google.maps.InfoWindow({
-      content: `<div class="p-2"><strong>${title}</strong></div>`,
-    });
+      // 創建資訊窗口
+      const infoWindow = new google.maps.InfoWindow({
+        content: `<div class="p-2"><strong>${title}</strong></div>`,
+      });
 
-    // 點擊標記顯示資訊
-    markerRef.current.addListener('click', () => {
-      infoWindow.open(mapInstanceRef.current, markerRef.current);
-    });
+      // 點擊標記顯示資訊
+      markerRef.current.addListener('click', () => {
+        infoWindow.open(mapInstanceRef.current, markerRef.current);
+      });
+    } else {
+      // 降級使用舊的 Marker（暫時保留以確保兼容性）
+      markerRef.current = new google.maps.Marker({
+        position: location,
+        map: mapInstanceRef.current,
+        title: title,
+        animation: google.maps.Animation.DROP,
+      });
+
+      // 創建資訊窗口
+      const infoWindow = new google.maps.InfoWindow({
+        content: `<div class="p-2"><strong>${title}</strong></div>`,
+      });
+
+      // 點擊標記顯示資訊
+      markerRef.current.addListener('click', () => {
+        infoWindow.open(mapInstanceRef.current, markerRef.current);
+      });
+    }
   }, []);
 
   /**
