@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { removeUndefinedValues } from '@/lib/utils';
+import type { Project } from '@/app/project/types';
 
 interface UserInfo {
   uid: string;
@@ -231,7 +232,7 @@ export default function UserTaskPage() {
       
       // 獲取當前專案數據
       const projectSnapshot = await getDocs(collection(db, 'projects'));
-      let projectData: any = null;
+      let projectData: Project | null = null;
       
       projectSnapshot.forEach(doc => {
         if (doc.id === selectedTask.projectId) {
@@ -349,7 +350,7 @@ export default function UserTaskPage() {
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">{label}：</span>
         <div className="flex items-center -space-x-2">
-          {users.slice(0, 3).map((user, index) => (
+          {users.slice(0, 3).map((user) => (
             <Avatar key={user.uid} className="h-8 w-8 border-2 border-background">
               <AvatarImage src={user.photoURL} alt={user.name} />
               <AvatarFallback className="text-xs">

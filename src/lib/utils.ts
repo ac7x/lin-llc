@@ -21,10 +21,10 @@ export function removeUndefinedValues<T>(obj: T): T {
   }
 
   if (typeof obj === 'object') {
-    const cleaned: any = {};
+    const cleaned = {} as T;
     for (const [key, value] of Object.entries(obj)) {
       if (value !== undefined) {
-        cleaned[key] = removeUndefinedValues(value);
+        (cleaned as Record<string, unknown>)[key] = removeUndefinedValues(value);
       }
     }
     return cleaned;
