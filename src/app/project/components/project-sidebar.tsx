@@ -49,7 +49,9 @@ interface ProjectSidebarProps {
     createPackages: boolean;
     packageCount: number;
     createSubpackages: boolean;
+    subpackageCount: number;
     createTasks: boolean;
+    taskCount: number;
   }) => Promise<void>;
   isItemSelected: (item: SelectedItem) => boolean;
 }
@@ -79,7 +81,9 @@ export function ProjectSidebar({
     createPackages: boolean;
     packageCount: number;
     createSubpackages: boolean;
+    subpackageCount: number;
     createTasks: boolean;
+    taskCount: number;
   }) => {
     await onCreateProject(config);
   };

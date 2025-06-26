@@ -63,7 +63,7 @@ export default function ProjectTaskNode({
               <p>{task.name}</p>
             </TooltipContent>
           </Tooltip>
-          <span className="text-xs text-blue-600">
+          <span className={`text-xs ${isItemSelected(taskItem) ? 'text-orange-600' : 'text-blue-600'}`}>
             {task.completed || 0}/{task.total || 0}
           </span>
         </div>

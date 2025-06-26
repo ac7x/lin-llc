@@ -41,10 +41,12 @@ const projectFormSchema = z.object({
 
 const subpackageFormSchema = z.object({
   createSubpackages: z.enum(['no', 'yes']),
+  subpackageCount: z.number().min(1, '子包數量至少為1').max(50, '子包數量不能超過50'),
 });
 
 const taskFormSchema = z.object({
   createTasks: z.enum(['no', 'yes']),
+  taskCount: z.number().min(1, '任務數量至少為1').max(50, '任務數量不能超過50'),
 });
 
 type ProjectFormData = z.infer<typeof projectFormSchema>;
@@ -57,7 +59,9 @@ interface CreateProjectWizardProps {
     createPackages: boolean;
     packageCount: number;
     createSubpackages: boolean;
+    subpackageCount: number;
     createTasks: boolean;
+    taskCount: number;
   }) => Promise<void>;
   loading?: boolean;
   trigger?: React.ReactNode;
@@ -91,6 +95,7 @@ export function CreateProjectWizard({
     resolver: zodResolver(subpackageFormSchema),
     defaultValues: {
       createSubpackages: 'no',
+      subpackageCount: 2,
     },
   });
 
@@ -99,6 +104,7 @@ export function CreateProjectWizard({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       createTasks: 'no',
+      taskCount: 3,
     },
   });
 
@@ -121,7 +127,7 @@ export function CreateProjectWizard({
       setStep('subpackage');
     } else {
       // 沒有包，直接建立專案
-      void handleFinalSubmit(data, false, false);
+      void handleFinalSubmit(data, false, 2, false, 3);
     }
   };
 
@@ -134,7 +140,7 @@ export function CreateProjectWizard({
       setStep('task');
     } else {
       // 沒有子包，完成建立
-      void handleFinalSubmit(projectData!, false, false);
+      void handleFinalSubmit(projectData!, false, 2, false, 3);
     }
   };
 
@@ -143,7 +149,9 @@ export function CreateProjectWizard({
     void handleFinalSubmit(
       projectData!,
       subpackageData!.createSubpackages === 'yes',
-      data.createTasks === 'yes'
+      subpackageData!.subpackageCount || 2,
+      data.createTasks === 'yes',
+      data.taskCount || 3
     );
   };
 
@@ -151,7 +159,9 @@ export function CreateProjectWizard({
   const handleFinalSubmit = async (
     project: ProjectFormData,
     createSubpackages: boolean,
-    createTasks: boolean
+    subpackageCount: number,
+    createTasks: boolean,
+    taskCount: number
   ) => {
     try {
       await onCreateProject({
@@ -159,7 +169,9 @@ export function CreateProjectWizard({
         createPackages: project.createPackages,
         packageCount: project.packageCount,
         createSubpackages,
+        subpackageCount,
         createTasks,
+        taskCount,
       });
       
       setIsOpen(false);
@@ -305,7 +317,7 @@ export function CreateProjectWizard({
                           <div className="flex items-center space-x-3 space-y-0">
                             <RadioGroupItem value="yes" />
                             <Label className="font-normal">
-                              是，每個包都建立一個子包
+                              是，為每個包建立子包
                             </Label>
                           </div>
                         </RadioGroup>
@@ -314,6 +326,31 @@ export function CreateProjectWizard({
                     </FormItem>
                   )}
                 />
+
+                {subpackageForm.watch('createSubpackages') === 'yes' && (
+                  <FormField
+                    control={subpackageForm.control}
+                    name="subpackageCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>每個包建立多少個子包？</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={20}
+                            {...field}
+                            onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm text-muted-foreground">
+                          建議：2-5 個子包
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <DialogFooter className="gap-2">
                   <Button type="button" variant="outline" onClick={() => setStep('project')}>
@@ -363,7 +400,7 @@ export function CreateProjectWizard({
                           <div className="flex items-center space-x-3 space-y-0">
                             <RadioGroupItem value="yes" />
                             <Label className="font-normal">
-                              是，每個子包都建立一個任務
+                              是，為每個子包建立任務
                             </Label>
                           </div>
                         </RadioGroup>
@@ -372,6 +409,31 @@ export function CreateProjectWizard({
                     </FormItem>
                   )}
                 />
+
+                {taskForm.watch('createTasks') === 'yes' && (
+                  <FormField
+                    control={taskForm.control}
+                    name="taskCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>每個子包建立多少個任務？</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={10}
+                            {...field}
+                            onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm text-muted-foreground">
+                          建議：2-5 個任務
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <DialogFooter className="gap-2">
                   <Button type="button" variant="outline" onClick={() => setStep('subpackage')}>

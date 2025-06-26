@@ -72,7 +72,9 @@ export default function ProjectListPage() {
     createPackages: boolean;
     packageCount: number;
     createSubpackages: boolean;
+    subpackageCount: number;
     createTasks: boolean;
+    taskCount: number;
   }) => {
     const createdProject = await createProjectWithWizard(config);
     projectData.addProject(createdProject);

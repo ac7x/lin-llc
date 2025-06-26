@@ -15,7 +15,9 @@ interface ProjectWizardConfig {
   createPackages: boolean;
   packageCount: number;
   createSubpackages: boolean;
+  subpackageCount: number;
   createTasks: boolean;
+  taskCount: number;
 }
 
 /**
@@ -60,31 +62,35 @@ export function useProjectWizard() {
 
           // 如果需要建立子包
           if (config.createSubpackages) {
-            const subpackage: Subpackage = {
-              name: `子工作包 ${i + 1}-1`,
-              taskpackages: [],
-              completed: 0,
-              total: 0,
-              progress: 0,
-            };
-
-            // 如果需要建立任務
-            if (config.createTasks) {
-              const task: TaskPackage = {
-                name: `任務 ${i + 1}-1-1`,
-                total: 1,
+            for (let j = 0; j < config.subpackageCount; j++) {
+              const subpackage: Subpackage = {
+                name: `子工作包 ${i + 1}-${j + 1}`,
+                taskpackages: [],
                 completed: 0,
+                total: 0,
                 progress: 0,
-                submitters: [],
-                reviewers: [],
               };
 
-              subpackage.taskpackages.push(task);
-              subpackage.total = 1;
-            }
+              // 如果需要建立任務
+              if (config.createTasks) {
+                for (let k = 0; k < config.taskCount; k++) {
+                  const task: TaskPackage = {
+                    name: `任務 ${i + 1}-${j + 1}-${k + 1}`,
+                    total: 1,
+                    completed: 0,
+                    progress: 0,
+                    submitters: [],
+                    reviewers: [],
+                  };
 
-            packageData.subpackages.push(subpackage);
-            packageData.total = subpackage.total;
+                  subpackage.taskpackages.push(task);
+                }
+                subpackage.total = config.taskCount;
+              }
+
+              packageData.subpackages.push(subpackage);
+            }
+            packageData.total = packageData.subpackages.reduce((sum, sub) => sum + sub.total, 0);
           }
 
           packages.push(packageData);
