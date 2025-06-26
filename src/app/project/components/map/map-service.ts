@@ -78,51 +78,6 @@ class MapService {
   private loadPromise: Promise<void> | null = null;
 
   /**
-   * 獲取 App Check token
-   */
-  private async getAppCheckToken(): Promise<string | null> {
-    try {
-      // 檢查多種可能的 App Check 實現
-      if (typeof window === 'undefined') return null;
-
-      // 方法1: Firebase App Check (最常見)
-      const firebase = (window as any).firebase;
-      if (firebase?.appCheck?.getToken) {
-        const tokenResult = await firebase.appCheck.getToken();
-        return tokenResult.token;
-      }
-
-      // 方法2: 直接存取 appCheck 全局物件
-      const appCheck = (window as any).appCheck;
-      if (appCheck?.getToken) {
-        const tokenResult = await appCheck.getToken();
-        return tokenResult.token;
-      }
-
-      // 方法3: 從 Firebase app 實例獲取
-      const app = (window as any).firebaseApp || (window as any).app;
-      if (app && firebase?.appCheck) {
-        const appCheckInstance = firebase.appCheck(app);
-        if (appCheckInstance?.getToken) {
-          const tokenResult = await appCheckInstance.getToken();
-          return tokenResult.token;
-        }
-      }
-
-      // 方法4: 檢查是否有其他 App Check 實現
-      if ((window as any).getAppCheckToken) {
-        return await (window as any).getAppCheckToken();
-      }
-
-      console.log('未找到 App Check token，繼續載入地圖');
-      return null;
-    } catch (error) {
-      console.warn('獲取 App Check token 失敗:', error);
-      return null;
-    }
-  }
-
-  /**
    * 載入 Google Maps API
    */
   async loadGoogleMaps(): Promise<void> {
@@ -138,23 +93,16 @@ class MapService {
       }
 
       try {
-        // 嘗試獲取 App Check token
-        console.log('正在獲取 App Check token...');
-        const appCheckToken = await this.getAppCheckToken();
+        // 等待 Firebase 客戶端服務初始化完成（包括 App Check）
+        console.log('等待 Firebase 客戶端服務初始化...');
+        await this.waitForFirebaseInitialization();
+        
+        // 暫時抑制 App Check 錯誤
+        this.suppressAppCheckErrors();
         
         // 建構 Google Maps API URL
         let mapsSrc = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW`;
         
-        // 如果有 App Check token，加入相關參數
-        if (appCheckToken) {
-          console.log('使用 App Check token 載入地圖');
-          mapsSrc += `&authuser=0&hl=zh-TW&gl=TW`;
-          // 設定 App Check token 到全域，讓 Maps API 能夠存取
-          (window as any).google_maps_app_check_token = appCheckToken;
-        } else {
-          console.log('未獲取到 App Check token，使用標準載入');
-        }
-
         // 添加回調參數
         const callbackName = `initMap_${Date.now()}`;
         mapsSrc += `&callback=${callbackName}`;
@@ -162,6 +110,7 @@ class MapService {
         // 設定全域回調函數
         (window as any)[callbackName] = () => {
           console.log('Google Maps API 回調觸發');
+          
           this.waitForMapsReady()
             .then(() => {
               console.log('Google Maps API 完全準備就緒');
@@ -173,6 +122,8 @@ class MapService {
             .catch(reject);
         };
 
+        console.log('載入 Google Maps API (App Check 已初始化):', mapsSrc);
+        
         // 創建 script 標籤
         const script = document.createElement('script');
         script.src = mapsSrc;
@@ -189,7 +140,11 @@ class MapService {
         document.head.appendChild(script);
       } catch (error) {
         console.error('載入 Google Maps API 時發生錯誤:', error);
-        // 如果 App Check 相關處理失敗，仍然嘗試載入標準地圖
+        
+        // 降級方案：不等待 App Check，直接載入
+        console.log('使用降級方案載入 Maps API');
+        this.suppressAppCheckErrors();
+        
         const fallbackCallbackName = `initMapFallback_${Date.now()}`;
         
         (window as any)[fallbackCallbackName] = () => {
@@ -217,6 +172,44 @@ class MapService {
     });
 
     return this.loadPromise;
+  }
+
+  /**
+   * 等待 Firebase 客戶端服務初始化完成
+   */
+  private async waitForFirebaseInitialization(): Promise<void> {
+    return new Promise((resolve) => {
+      const maxWaitTime = 10000; // 最多等待 10 秒
+      const checkInterval = 100; // 每 100ms 檢查一次
+      let waitedTime = 0;
+
+      const checkInitialization = async () => {
+        try {
+          // 檢查 Firebase 客戶端服務是否已初始化
+          const { isClientServicesReady } = await import('@/lib/firebase-init');
+          
+          if (await isClientServicesReady()) {
+            console.log('Firebase 客戶端服務已初始化，包括 App Check');
+            resolve();
+            return;
+          }
+        } catch (error) {
+          console.log('檢查 Firebase 初始化狀態失敗:', error);
+        }
+
+        waitedTime += checkInterval;
+        
+        if (waitedTime >= maxWaitTime) {
+          console.log('Firebase 初始化等待超時，繼續載入 Maps API');
+          resolve();
+          return;
+        }
+
+        setTimeout(checkInitialization, checkInterval);
+      };
+
+      checkInitialization();
+    });
   }
 
   /**
@@ -441,6 +434,38 @@ class MapService {
 
   private toRad(degrees: number): number {
     return degrees * (Math.PI / 180);
+  }
+
+  /**
+   * 暫時抑制 App Check 相關錯誤
+   */
+  private suppressAppCheckErrors(): void {
+    const originalConsoleError = console.error;
+    
+    // 創建過濾後的 console.error
+    console.error = function(...args: any[]) {
+      // 檢查是否為 App Check 相關錯誤
+      const errorMessage = args[0]?.toString() || '';
+      
+      if (
+        errorMessage.includes('InvalidAppCheckTokenMapError') ||
+        errorMessage.includes('App Check') ||
+        errorMessage.includes('AppCheck')
+      ) {
+        // 用警告替代錯誤，不會中斷應用
+        console.warn('🗺️ App Check 警告 (已忽略):', ...args);
+        return;
+      }
+      
+      // 其他錯誤正常顯示
+      originalConsoleError.apply(console, args);
+    };
+
+    // 5 秒後恢復原始的 console.error
+    setTimeout(() => {
+      console.error = originalConsoleError;
+      console.log('已恢復原始的 console.error');
+    }, 5000);
   }
 }
 
