@@ -17,7 +17,7 @@ export default function SignInPage() {
   useEffect(() => {
     const initializeServices = async () => {
       try {
-        const { initializeClientServices } = await import('@/lib/firebase-init');
+        const { initializeClientServices } = await import('@/app/(system)');
         await initializeClientServices();
       } catch (error) {
         console.error('初始化客戶端服務失敗:', error);

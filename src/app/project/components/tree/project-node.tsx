@@ -22,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
+import { ProjectActionGuard } from '@/app/(system)';
 import { ProjectNodeProps, SelectedItem } from '../../types';
 import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../constants';
 import { getItemInfo, getChildCount } from './tree-utils';

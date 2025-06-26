@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/app/(system)/auth/context/auth-context';
 import { permissionService } from '@/app/(system)/permissions/lib/permission-service';

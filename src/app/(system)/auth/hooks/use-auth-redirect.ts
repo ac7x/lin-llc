@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { getAuth, getRedirectResult, AuthError } from 'firebase/auth';
 

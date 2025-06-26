@@ -17,7 +17,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import { usePermissionContext } from '@/context/permission-context';
+import { usePermissionContext } from '@/app/(system)';
 import { ProjectSidebar } from './components/sidebar/project-sidebar';
 import { ProjectViewer } from './components/viewer/project-viewer';
 

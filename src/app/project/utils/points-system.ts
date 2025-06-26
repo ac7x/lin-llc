@@ -3,7 +3,7 @@
  * 最少代碼實現任務與積分關聯
  */
 
-import { permissionService } from '@/app/settings/lib/permission-service';
+import { permissionService } from '@/app/(system)';
 
 /**
  * 積分規則配置
