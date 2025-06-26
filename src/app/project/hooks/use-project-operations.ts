@@ -382,6 +382,64 @@ export function useProjectOperations(
     });
   };
 
+  // 更新專案基本資訊
+  const updateProjectInfo = async (project: Project): Promise<boolean> => {
+    // 檢查是否有更新專案權限
+    if (!hasPermission('project:write')) {
+      console.warn('用戶沒有更新專案權限');
+      setError('權限不足：無法更新專案');
+      return false;
+    }
+
+    if (!project.id) {
+      setError('專案 ID 不能為空');
+      return false;
+    }
+
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const now = new Date().toISOString();
+      
+      // 準備要更新的專案資料
+      const updateData = {
+        name: project.name,
+        description: project.description || '',
+        manager: project.manager,
+        supervisor: project.supervisor,
+        safety: project.safety,
+        quality: project.quality,
+        region: project.region,
+        address: project.address,
+        updatedAt: now,
+      };
+
+      // 移除 undefined 值
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key as keyof typeof updateData] === undefined) {
+          delete updateData[key as keyof typeof updateData];
+        }
+      });
+      
+      await updateDoc(doc(db, 'projects', project.id), updateData);
+      
+      // 更新本地狀態
+      const updatedProject: Project = {
+        ...project,
+      };
+      
+      onProjectUpdate(updatedProject);
+      return true;
+    } catch (error) {
+      console.error('更新專案資訊失敗:', error);
+      setError('更新專案資訊失敗');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 清除錯誤
   const clearError = () => {
     setError(null);
@@ -397,6 +455,7 @@ export function useProjectOperations(
     updateProjectPackages,
     // 🎯 數量分配功能
     distributeQuantity,
+    updateProjectInfo,
     clearError,
   };
 } 

@@ -47,6 +47,7 @@ type ProjectEditFormData = z.infer<typeof projectEditSchema>;
 interface ProjectEditDialogProps {
   project: Project;
   onProjectUpdate: (updatedProject: Project) => void;
+  updateProjectInfo: (project: Project) => Promise<boolean>;
   trigger?: React.ReactNode;
 }
 
@@ -56,6 +57,7 @@ interface ProjectEditDialogProps {
 export function ProjectEditDialog({ 
   project,
   onProjectUpdate,
+  updateProjectInfo,
   trigger 
 }: ProjectEditDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -106,10 +108,16 @@ export function ProjectEditDialog({
         address: data.address || undefined,
       };
 
-      // 調用更新回調
-      onProjectUpdate(updatedProject);
+      // 調用資料庫更新方法
+      const success = await updateProjectInfo(updatedProject);
       
-      setIsOpen(false);
+      if (success) {
+        setIsOpen(false);
+        // 不需要再調用 onProjectUpdate，因為 updateProjectInfo 會處理本地狀態更新
+      } else {
+        // 錯誤處理會在 updateProjectInfo 中處理
+        console.error('更新專案失敗');
+      }
     } catch (error) {
       console.error('更新專案失敗:', error);
     } finally {
