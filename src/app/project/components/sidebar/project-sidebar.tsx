@@ -24,10 +24,12 @@ import {
   FolderIcon,
   PlusIcon,
   Calculator,
+  BookTemplateIcon,
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import ProjectTree from '../tree/project-tree';
 import { CreateProjectWizard } from '../create/create-project-wizard';
+import { ProjectTemplates } from '../template';
 import { QuantityManagementTab } from './quantity-management-tab';
 import { Project, SelectedItem } from '../../types';
 
@@ -165,10 +167,10 @@ export function ProjectSidebar({
                             />
                           ))}
                           
-                          {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
+                          {/* 新增專案按鈕和範本 - 只有有權限的用戶才能看到 */}
                           <ProjectActionGuard action="create" resource="project">
                             <SidebarMenuItem>
-                              <div className="pl-1 pr-1 py-1">
+                              <div className="pl-1 pr-1 py-1 space-y-1">
                                 <CreateProjectWizard
                                   onCreateProject={handleCreateProject}
                                   loading={loading}
@@ -180,6 +182,20 @@ export function ProjectSidebar({
                                     >
                                       <PlusIcon className="h-3 w-3 mr-1" />
                                       {projects.length === 0 ? '新增第一個專案' : '新增專案'}
+                                    </Button>
+                                  }
+                                />
+                                <ProjectTemplates
+                                  onCreateProject={handleCreateProject}
+                                  loading={loading}
+                                  trigger={
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                                    >
+                                      <BookTemplateIcon className="h-3 w-3 mr-1" />
+                                      範本快建
                                     </Button>
                                   }
                                 />
