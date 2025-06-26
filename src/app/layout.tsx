@@ -24,8 +24,8 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <PermissionProvider>
-              <div className="pb-20">
-                <div className="w-full min-h-[calc(100vh-5rem)]">
+              <div style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+                <div className="w-full min-h-[calc(100vh-5rem-env(safe-area-inset-bottom))]">
                   <div className="h-full">
                     {children}
                   </div>

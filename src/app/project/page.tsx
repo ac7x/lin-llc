@@ -37,7 +37,7 @@ export default function ProjectListPage() {
   // 等待權限檢查完成
   if (permissionLoading) {
     return (
-      <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center bg-background p-4">
+      <div className="h-full flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>載入中...</CardTitle>
@@ -58,7 +58,7 @@ export default function ProjectListPage() {
   // 檢查是否有查看專案權限 - 在所有其他邏輯之前
   if (!hasPermission('project:read')) {
     return (
-      <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center bg-background p-4">
+      <div className="h-full flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>權限不足</CardTitle>
@@ -163,7 +163,7 @@ function AuthorizedProjectPage() {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <div className="w-full h-[calc(100vh-5rem)] bg-background flex flex-col">
+        <div className="w-full h-full bg-background flex flex-col">
           <div className="flex flex-1 min-h-0 w-full">
             <ProjectSidebar
               projects={projectData.projects}
