@@ -18,7 +18,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import { usePermission } from '@/app/settings/hooks/use-permission';
+import { usePermissionContext } from '@/context/permission-context';
 import { ProjectSidebar } from './components/sidebar/project-sidebar';
 import { ProjectViewer } from './components/viewer/project-viewer';
 
@@ -33,7 +33,61 @@ import {
 import { SelectedItem } from './types';
 
 export default function ProjectListPage() {
-  const { hasPermission } = usePermission();
+  const { hasPermission, loading: permissionLoading, userRole, userProfile } = usePermissionContext();
+  
+  // 等待權限檢查完成
+  if (permissionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4 pb-20">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>載入中...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+            <p className="text-muted-foreground text-center mt-2">
+              正在檢查用戶權限...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // 檢查是否有查看專案權限 - 在所有其他邏輯之前
+  if (!hasPermission('project:read')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4 pb-20">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>權限不足</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              您沒有權限查看專案列表
+            </p>
+            <div className="mt-4 p-3 bg-muted rounded-lg">
+              <p className="text-sm">
+                <strong>當前角色：</strong>{userRole?.name || '未分配'}
+              </p>
+              <p className="text-sm mt-1">
+                <strong>用戶資料：</strong>{userProfile?.displayName || '未設定'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return <AuthorizedProjectPage />;
+}
+
+// 已授權的專案頁面組件
+function AuthorizedProjectPage() {
+  const { hasPermission } = usePermissionContext();
   
   // 使用專案數據管理 hook
   const projectData = useProjectData(hasPermission);
@@ -106,24 +160,6 @@ export default function ProjectListPage() {
   const handleItemClick = (item: SelectedItem) => {
     projectSelection.handleItemClick(item, projectData.projects);
   };
-
-  // 檢查是否有查看專案權限
-  if (!hasPermission('project:read')) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4 pb-20">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>權限不足</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              您沒有權限查看專案列表
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <TooltipProvider>

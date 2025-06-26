@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { usePermission } from '@/app/settings/hooks/use-permission';
+import { usePermissionContext } from '@/context/permission-context';
 import { isOwner } from '@/app/settings/lib/env-config';
 
 interface PermissionGuardProps {
@@ -21,7 +21,7 @@ export function PermissionGuard({
   fallback = null,
   requireOwner = false 
 }: PermissionGuardProps) {
-  const { hasPermission, userProfile } = usePermission();
+  const { hasPermission, userProfile } = usePermissionContext();
   
   // 檢查是否為擁有者
   const isUserOwner = userProfile?.uid ? isOwner(userProfile.uid) : false;
@@ -54,7 +54,7 @@ export function RoleGuard({
   children, 
   fallback = null 
 }: RoleGuardProps) {
-  const { userRole } = usePermission();
+  const { userRole } = usePermissionContext();
   
   if (!userRole || !allowedRoles.includes(userRole.id)) {
     return <>{fallback}</>;
@@ -86,7 +86,7 @@ export function DataScopeGuard({
   userDepartment,
   dataDepartment,
 }: DataScopeGuardProps) {
-  const { userProfile } = usePermission();
+  const { userProfile } = usePermissionContext();
   
   // 擁有者可以查看所有資料
   if (userProfile?.uid && isOwner(userProfile.uid)) {
@@ -134,7 +134,7 @@ export function ProjectPermissionGuard({
   fallback = null,
   requireOwner = false 
 }: ProjectPermissionGuardProps) {
-  const { hasPermission, userProfile } = usePermission();
+  const { hasPermission, userProfile } = usePermissionContext();
   
   // 檢查是否為擁有者
   const isUserOwner = userProfile?.uid ? isOwner(userProfile.uid) : false;
@@ -171,7 +171,7 @@ export function ProjectActionGuard({
   fallback = null,
   requireOwner = false
 }: ProjectActionGuardProps) {
-  const { hasPermission, userProfile } = usePermission();
+  const { hasPermission, userProfile } = usePermissionContext();
   
   // 檢查是否為擁有者
   const isUserOwner = userProfile?.uid ? isOwner(userProfile.uid) : false;

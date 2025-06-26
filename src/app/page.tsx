@@ -6,7 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { usePermission } from '@/app/settings/hooks/use-permission';
+import { usePermissionContext } from '@/context/permission-context';
 import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
@@ -58,7 +58,7 @@ export default function HomePage() {
     loadPointsLeaderboard,
     userPoints,
     loadUserPoints
-  } = usePermission();
+  } = usePermissionContext();
 
   const [isAIOpen, setIsAIOpen] = useState(false);
 
