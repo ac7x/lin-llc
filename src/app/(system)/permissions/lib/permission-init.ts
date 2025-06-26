@@ -1,5 +1,5 @@
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/app/(system)/data/lib/firebase-init';
+import { db } from '@/app/(system)';
 import { Permission, Role } from '@/app/(system)/permissions/types';
 
 /**

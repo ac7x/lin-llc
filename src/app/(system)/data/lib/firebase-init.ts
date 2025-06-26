@@ -4,22 +4,7 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import { initializeAppCheck, ReCaptchaV3Provider, AppCheck } from 'firebase/app-check';
-
-// Firebase 配置
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
-
-// App Check 配置
-const APP_CHECK_CONFIG = {
-  SITE_KEY: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // 測試用 key
-};
+import { firebaseConfig, APP_CHECK_CONFIG } from './firebase-config';
 
 // 初始化 Firebase 應用
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -140,6 +125,9 @@ export async function getAppCheck(): Promise<AppCheck | null> {
 export function getAppCheckSync(): AppCheck | null {
   return appCheck;
 }
+
+// 重新導出配置常數，便於統一導出
+export { firebaseConfig, RECAPTCHA_CONFIG, APP_CHECK_CONFIG, GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_MAP_ID } from './firebase-config';
 
 // 默認導出主要服務
 const firebaseServices = {

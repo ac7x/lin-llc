@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { db, storage, auth } from '@/app/(system)/data/lib/firebase-init';
+import { db, storage, auth } from '@/app/(system)';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

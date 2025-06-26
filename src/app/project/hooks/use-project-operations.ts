@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/app/(system)/data/lib/firebase-init';
+import { db } from '@/app/(system)';
 import { Project, Package } from '../types';
 
 /**

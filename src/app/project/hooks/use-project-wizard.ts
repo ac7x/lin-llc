@@ -5,7 +5,7 @@ import {
   doc, 
   setDoc 
 } from 'firebase/firestore';
-import { db } from '@/app/(system)/data/lib/firebase-init';
+import { db } from '@/app/(system)';
 import { useGoogleAuth } from '@/app/(system)';
 import { Project, Package, Subpackage, TaskPackage } from '../types';
 

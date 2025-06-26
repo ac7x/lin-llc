@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL, listAll, deleteObject, getMetadata } from 'firebase/storage';
-import { storage } from '@/app/(system)/data/lib/firebase-init';
+import { storage } from '@/app/(system)';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';

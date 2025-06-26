@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         // 動態導入 Firebase 初始化
-        const { initializeClientServices } = await import('@/app/(system)/data/lib/firebase-init');
+        const { initializeClientServices } = await import('@/app/(system)');
         await initializeClientServices();
         
         // 動態導入 auth

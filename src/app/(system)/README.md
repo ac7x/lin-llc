@@ -101,7 +101,7 @@ import {
 // 或者從具體層級導入
 import { useAuth } from '@/app/(system)/auth/context/auth-context';
 import { PermissionGuard } from '@/app/(system)/permissions/components/permission-guard';
-import { db } from '@/app/(system)/data/lib/firebase-init';
+import { db } from '@/app/(system)';
 ```
 
 ### 應用程式初始化

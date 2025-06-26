@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/app/(system)/data/lib/firebase-init';
+import { db } from '@/app/(system)';
 import { useGoogleAuth } from '@/app/(system)';
 import { removeUndefinedValues } from '@/lib/utils';
 import { NotificationService } from '../utils/notification-service';

@@ -11,7 +11,7 @@ import {
   orderBy,
   limit
 } from 'firebase/firestore';
-import { db } from '@/app/(system)/data/lib/firebase-init';
+import { db } from '@/app/(system)';
 import { 
   Permission, 
   Role, 

@@ -9,7 +9,7 @@ import {
   AuthError,
   User
 } from 'firebase/auth';
-import { getAppCheck } from '@/app/(system)/data/lib/firebase-init';
+import { getAppCheck } from '@/app/(system)';
 import { permissionService } from '@/app/(system)/permissions/lib/permission-service';
 import { useAuth } from '@/app/(system)/auth/context/auth-context';
 
