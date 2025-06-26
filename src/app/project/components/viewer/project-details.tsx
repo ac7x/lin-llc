@@ -27,6 +27,21 @@ export function ProjectDetails({ project, onProjectUpdate, updateProjectInfo }: 
   const projectProgress = useProjectProgress(project);
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
 
+  // 調試資訊：檢查專案資料
+  useEffect(() => {
+    console.log('專案詳情 - 當前專案資料:', {
+      id: project.id,
+      name: project.name,
+      address: project.address,
+      region: project.region,
+      manager: project.manager,
+      supervisor: project.supervisor,
+      safety: project.safety,
+      quality: project.quality,
+      description: project.description
+    });
+  }, [project]);
+
   // 獲取用戶資料
   useEffect(() => {
     const loadUserProfiles = async () => {
