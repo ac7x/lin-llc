@@ -13,7 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { useGoogleAuth } from '@/app/(system)';
 import { ProjectTaskNodeProps, SelectedItem } from '../../types';
 import { ITEM_SELECT_STYLE } from '../../constants';
 import { getItemInfo } from './tree-utils';
