@@ -7,10 +7,10 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePermission } from '@/app/settings/hooks/use-permission';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import * as React from 'react';
 import {
@@ -19,6 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ProjectAIAssistant } from '@/app/project/components/gemini';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 function ModeToggle() {
   const { setTheme } = useTheme();
@@ -57,6 +59,22 @@ export default function HomePage() {
     userPoints,
     loadUserPoints
   } = usePermission();
+
+  const [isAIOpen, setIsAIOpen] = useState(false);
+
+  // 當 AI 助手展開時，滾動到對應位置
+  const handleAIToggle = (open: boolean) => {
+    setIsAIOpen(open);
+    if (open) {
+      // 延遲滾動，等待動畫完成
+      setTimeout(() => {
+        const aiSection = document.getElementById('ai-assistant-section');
+        if (aiSection) {
+          aiSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  };
 
   useEffect(() => {
     if (userProfile?.uid) {
@@ -171,27 +189,70 @@ export default function HomePage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                🤖 AI 助手
-              </CardTitle>
-              <CardDescription>
-                智能化的業務助手
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                基於 Google Gemini 的 AI 助手，協助您處理各種業務需求。
-              </p>
-              <Link href="/user/gemini">
-                <Button variant="outline" className="w-full">
-                  使用 AI 助手
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <Collapsible open={isAIOpen} onOpenChange={handleAIToggle}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  🤖 AI 助手
+                </CardTitle>
+                <CardDescription>
+                  智能化的業務助手
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  基於 Google Gemini 的 AI 助手，協助您處理各種業務需求。
+                </p>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full gap-2">
+                    {isAIOpen ? (
+                      <>
+                        <ChevronUp className="h-4 w-4" />
+                        收起 AI 助手
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4" />
+                        展開 AI 助手
+                      </>
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+              </CardContent>
+            </Card>
+          </Collapsible>
         </div>
+
+        {/* AI 助手展開區域 */}
+        <Collapsible open={isAIOpen} onOpenChange={handleAIToggle}>
+          <CollapsibleContent className="mb-12" id="ai-assistant-section">
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    🤖 AI 智能助手
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleAIToggle(false)}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                </CardTitle>
+                <CardDescription>
+                  基於 Google Gemini 的智能助手，可以協助您處理各種業務需求。點擊右上角 ↑ 可收起此區域。
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProjectAIAssistant 
+                  title="AI 智能助手"
+                  className="w-full h-[500px] flex flex-col bg-background rounded-lg"
+                />
+              </CardContent>
+            </Card>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* 安全特色 */}
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">

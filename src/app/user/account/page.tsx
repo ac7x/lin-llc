@@ -271,7 +271,7 @@ export default function AccountPage() {
                   📋 專案管理
                 </Button>
               </Link>
-              <Link href="/user/gemini">
+              <Link href="/">
                 <Button variant="ghost" className="w-full justify-start">
                   🤖 AI 助手
                 </Button>
