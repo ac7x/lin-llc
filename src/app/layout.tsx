@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { PermissionProvider } from '@/context/permission-context';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { ThemeProvider } from '@/components/ui/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -32,6 +33,7 @@ export default function RootLayout({
                 </div>
               </div>
               <BottomNavigation />
+              <Toaster />
             </PermissionProvider>
           </AuthProvider>
         </ThemeProvider>

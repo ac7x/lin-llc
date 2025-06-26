@@ -29,3 +29,6 @@ export const APP_CHECK_CONFIG = {
 
 // Google Maps API 金鑰，用於地圖服務的存取
 export const GOOGLE_MAPS_API_KEY = 'AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o';
+
+// Google Maps Map ID，用於啟用進階功能如 AdvancedMarkerElement
+export const GOOGLE_MAPS_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';

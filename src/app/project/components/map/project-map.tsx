@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { mapService, type LatLng, type AddressInfo } from './map-service';
+import { GOOGLE_MAPS_MAP_ID } from '@/lib/firebase-config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -81,6 +82,7 @@ export function ProjectMap({
         center: initialLocation,
         zoom: address ? 16 : 12,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
+        mapId: GOOGLE_MAPS_MAP_ID, // Google Maps Map ID for advanced features
         disableDefaultUI: !showControls,
         gestureHandling: interactive ? 'auto' : 'none',
         zoomControl: showControls,
