@@ -18,7 +18,7 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { usePermission } from '@/app/settings/hooks/use-permission';
-import { ProjectSidebar } from './components/project-sidebar';
+import { ProjectSidebar } from './components/sidebar/project-sidebar';
 import { ProjectViewer } from './components/viewer/project-viewer';
 import { QuantityManagementView } from './components/quantity-management-view';
 import { MainContentSkeleton, RightPanelSkeleton, DetailsSkeleton } from './components/ui/project-skeletons';

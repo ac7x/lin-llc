@@ -24,9 +24,9 @@ import {
   PlusIcon,
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
-import { ProjectTree } from './tree';
-import { CreateProjectWizard } from './create-project-wizard';
-import { Project, SelectedItem } from '../types';
+import { ProjectTree } from '../tree';
+import { CreateProjectWizard } from '../create-project-wizard';
+import { Project, SelectedItem } from '../../types';
 
 interface ProjectSidebarProps {
   projects: Project[];
