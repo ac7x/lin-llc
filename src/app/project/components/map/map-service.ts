@@ -78,13 +78,58 @@ class MapService {
   private loadPromise: Promise<void> | null = null;
 
   /**
+   * 獲取 App Check token
+   */
+  private async getAppCheckToken(): Promise<string | null> {
+    try {
+      // 檢查多種可能的 App Check 實現
+      if (typeof window === 'undefined') return null;
+
+      // 方法1: Firebase App Check (最常見)
+      const firebase = (window as any).firebase;
+      if (firebase?.appCheck?.getToken) {
+        const tokenResult = await firebase.appCheck.getToken();
+        return tokenResult.token;
+      }
+
+      // 方法2: 直接存取 appCheck 全局物件
+      const appCheck = (window as any).appCheck;
+      if (appCheck?.getToken) {
+        const tokenResult = await appCheck.getToken();
+        return tokenResult.token;
+      }
+
+      // 方法3: 從 Firebase app 實例獲取
+      const app = (window as any).firebaseApp || (window as any).app;
+      if (app && firebase?.appCheck) {
+        const appCheckInstance = firebase.appCheck(app);
+        if (appCheckInstance?.getToken) {
+          const tokenResult = await appCheckInstance.getToken();
+          return tokenResult.token;
+        }
+      }
+
+      // 方法4: 檢查是否有其他 App Check 實現
+      if ((window as any).getAppCheckToken) {
+        return await (window as any).getAppCheckToken();
+      }
+
+      console.log('未找到 App Check token，繼續載入地圖');
+      return null;
+    } catch (error) {
+      console.warn('獲取 App Check token 失敗:', error);
+      return null;
+    }
+  }
+
+  /**
    * 載入 Google Maps API
    */
   async loadGoogleMaps(): Promise<void> {
     if (this.isLoaded) return;
     if (this.loadPromise) return this.loadPromise;
 
-    this.loadPromise = new Promise((resolve, reject) => {
+    this.loadPromise = new Promise(async (resolve, reject) => {
       // 檢查是否已經載入
       if ((window as any).google?.maps) {
         this.isLoaded = true;
@@ -92,28 +137,61 @@ class MapService {
         return;
       }
 
-      // 創建 script 標籤
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW`;
-      script.async = true;
-      script.defer = true;
+      try {
+        // 嘗試獲取 App Check token
+        console.log('正在獲取 App Check token...');
+        const appCheckToken = await this.getAppCheckToken();
+        
+        // 建構 Google Maps API URL
+        let mapsSrc = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW&loading=async`;
+        
+        // 如果有 App Check token，加入 URL 中
+        if (appCheckToken) {
+          console.log('使用 App Check token 載入地圖');
+          mapsSrc += `&authuser=0&hl=zh-TW&gl=TW`;
+          // 設定 App Check token 到全域，讓 Maps API 能夠存取
+          (window as any).google_maps_app_check_token = appCheckToken;
+        } else {
+          console.log('未獲取到 App Check token，使用標準載入');
+        }
 
-      // 設定全局回調
-      (window as any).initGoogleMaps = () => {
-        this.isLoaded = true;
-        resolve();
-      };
+        // 創建 script 標籤
+        const script = document.createElement('script');
+        script.src = mapsSrc;
+        script.async = true;
+        script.defer = true;
 
-      script.onload = () => {
-        this.isLoaded = true;
-        resolve();
-      };
+        script.onload = () => {
+          console.log('Google Maps API 載入成功');
+          this.isLoaded = true;
+          resolve();
+        };
 
-      script.onerror = () => {
-        reject(new Error('Failed to load Google Maps API'));
-      };
+        script.onerror = () => {
+          console.error('Google Maps API 載入失敗');
+          reject(new Error('Failed to load Google Maps API'));
+        };
 
-      document.head.appendChild(script);
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error('載入 Google Maps API 時發生錯誤:', error);
+        // 如果 App Check 相關處理失敗，仍然嘗試載入標準地圖
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW`;
+        script.async = true;
+        script.defer = true;
+
+        script.onload = () => {
+          this.isLoaded = true;
+          resolve();
+        };
+
+        script.onerror = () => {
+          reject(new Error('Failed to load Google Maps API'));
+        };
+
+        document.head.appendChild(script);
+      }
     });
 
     return this.loadPromise;
