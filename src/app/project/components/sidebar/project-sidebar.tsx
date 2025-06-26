@@ -2,6 +2,7 @@
 import { useState, Dispatch, SetStateAction } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Sidebar,
   SidebarContent,
@@ -22,10 +23,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   FolderIcon,
   PlusIcon,
+  Calculator,
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { ProjectTree } from '../tree';
 import { CreateProjectWizard } from '../create-project-wizard';
+import { QuantityManagementTab } from './quantity-management-tab';
 import { Project, SelectedItem } from '../../types';
 
 interface ProjectSidebarProps {
@@ -53,6 +56,7 @@ interface ProjectSidebarProps {
     createTasks: boolean;
     taskCount: number;
   }) => Promise<void>;
+  onProjectUpdate: (updatedProject: Project) => void;
   isItemSelected: (item: SelectedItem) => boolean;
 }
 
@@ -73,6 +77,7 @@ export function ProjectSidebar({
   onAddTaskPackage,
   onAddSubpackage,
   onCreateProject,
+  onProjectUpdate,
   isItemSelected,
 }: ProjectSidebarProps) {
   // 處理建立專案
@@ -109,65 +114,96 @@ export function ProjectSidebar({
         </div>
       </SidebarHeader>
       <SidebarContent className="pb-20">
-        {/* 專案樹狀結構 */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
-            專案列表
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {loading ? (
-                <ProjectListSkeleton />
-              ) : (
-                <>
-                  {projects.map(project => (
-                    <ProjectTree 
-                      key={project.id} 
-                      project={project}
-                      selectedProject={selectedProject}
-                      selectedItem={selectedItem}
-                      onSelectProject={onSelectProject}
-                      onItemClick={onItemClick}
-                      onAddPackage={onAddPackage}
-                      onAddTaskPackage={onAddTaskPackage}
-                      onAddSubpackage={onAddSubpackage}
-                      pkgInputs={pkgInputs}
-                      setPkgInputs={setPkgInputs}
-                      taskPackageInputs={taskPackageInputs}
-                      setTaskPackageInputs={setTaskPackageInputs}
-                      subInputs={subInputs}
-                      setSubInputs={setSubInputs}
-                      loading={loading}
-                      isItemSelected={isItemSelected}
-                    />
-                  ))}
-                  
-                  {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
-                  <ProjectActionGuard action="create" resource="project">
-                    <SidebarMenuItem>
-                      <div className="pl-1 pr-1 py-1">
-                        <CreateProjectWizard
-                          onCreateProject={handleCreateProject}
+        <Tabs defaultValue="projects" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mx-4 mb-4">
+            <TabsTrigger value="projects" className="flex items-center gap-2">
+              <FolderIcon className="h-4 w-4" />
+              專案列表
+            </TabsTrigger>
+            <TabsTrigger value="quantity" className="flex items-center gap-2" disabled={!selectedProject}>
+              <Calculator className="h-4 w-4" />
+              數量管理
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="projects" className="mt-0">
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-muted-foreground">
+                專案列表
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {loading ? (
+                    <ProjectListSkeleton />
+                  ) : (
+                    <>
+                      {projects.map(project => (
+                        <ProjectTree 
+                          key={project.id} 
+                          project={project}
+                          selectedProject={selectedProject}
+                          selectedItem={selectedItem}
+                          onSelectProject={onSelectProject}
+                          onItemClick={onItemClick}
+                          onAddPackage={onAddPackage}
+                          onAddTaskPackage={onAddTaskPackage}
+                          onAddSubpackage={onAddSubpackage}
+                          pkgInputs={pkgInputs}
+                          setPkgInputs={setPkgInputs}
+                          taskPackageInputs={taskPackageInputs}
+                          setTaskPackageInputs={setTaskPackageInputs}
+                          subInputs={subInputs}
+                          setSubInputs={setSubInputs}
                           loading={loading}
-                          trigger={
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
-                            >
-                              <PlusIcon className="h-3 w-3 mr-1" />
-                              {projects.length === 0 ? '新增第一個專案' : '新增專案'}
-                            </Button>
-                          }
+                          isItemSelected={isItemSelected}
                         />
-                      </div>
-                    </SidebarMenuItem>
-                  </ProjectActionGuard>
-                </>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                      ))}
+                      
+                      {/* 新增專案按鈕 - 只有有權限的用戶才能看到 */}
+                      <ProjectActionGuard action="create" resource="project">
+                        <SidebarMenuItem>
+                          <div className="pl-1 pr-1 py-1">
+                            <CreateProjectWizard
+                              onCreateProject={handleCreateProject}
+                              loading={loading}
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start text-xs h-6 text-muted-foreground hover:text-foreground"
+                                >
+                                  <PlusIcon className="h-3 w-3 mr-1" />
+                                  {projects.length === 0 ? '新增第一個專案' : '新增專案'}
+                                </Button>
+                              }
+                            />
+                          </div>
+                        </SidebarMenuItem>
+                      </ProjectActionGuard>
+                    </>
+                  )}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </TabsContent>
+          
+          <TabsContent value="quantity" className="mt-0">
+            <SidebarGroup>
+              <SidebarGroupContent className="px-4">
+                {selectedProject ? (
+                  <QuantityManagementTab
+                    project={selectedProject}
+                    onProjectUpdate={onProjectUpdate}
+                  />
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    請先選擇一個專案
+                  </div>
+                )}
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </TabsContent>
+        </Tabs>
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
