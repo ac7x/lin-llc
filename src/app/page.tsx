@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ProjectAIAssistant } from '@/app/project/components/gemini';
+import { ProjectAIAssistant } from '@/app/(shared)/gemini';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 function ModeToggle() {
