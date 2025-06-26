@@ -1,21 +1,85 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
+import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Calculator, Info, Lightbulb } from 'lucide-react';
-import { VirtualizedProjectTree } from '../tree/virtualized-project-tree';
+import { Calculator, Lightbulb, ChevronRight, ChevronDown } from 'lucide-react';
 import { QuantityDistributionDialog } from '../dialogs/quantity-distribution-dialog';
 import { useProjectOperations } from '../../hooks';
 import { usePermission } from '@/app/settings/hooks/use-permission';
-import { Project, SelectedItem, Package, Subpackage } from '../../types';
-import { FlatItem } from '../../utils/tree-flattener';
+import { Project, Package, Subpackage } from '../../types';
+import { FlatItem, ExpandedState, TreeFlattener } from '../../utils/tree-flattener';
 
 interface QuantityManagementTabProps {
   project: Project;
   onProjectUpdate: (updatedProject: Project) => void;
+}
+
+// 簡化的樹狀節點組件 - 專為 sidebar 設計
+function CompactTreeNode({
+  item,
+  style,
+  onToggleExpand,
+  onDistributeQuantity,
+}: {
+  item: FlatItem;
+  style: React.CSSProperties;
+  onToggleExpand: (id: string) => void;
+  onDistributeQuantity?: (item: FlatItem) => void;
+}) {
+  const handleRightClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    if ((item.type === 'package' || item.type === 'subpackage') && onDistributeQuantity) {
+      onDistributeQuantity(item);
+    }
+  }, [item, onDistributeQuantity]);
+
+  const getIcon = () => {
+    if (item.type === 'project') return null;
+    return item.isExpanded ? (
+      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+    ) : (
+      <ChevronRight className="h-3 w-3 text-muted-foreground" />
+    );
+  };
+
+  const getStatusColor = () => {
+    if (item.type !== 'task') return 'text-foreground';
+    const data = item.data as any;
+    const status = data.status;
+    switch (status) {
+      case 'pending': return 'text-yellow-600';
+      case 'in_progress': return 'text-blue-600';
+      case 'completed': return 'text-green-600';
+      case 'under_review': return 'text-purple-600';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  return (
+    <div
+      style={style}
+      className="flex items-center px-2 py-0.5 hover:bg-muted/50 cursor-pointer text-xs border-b border-muted/20"
+      onContextMenu={handleRightClick}
+      onClick={() => item.hasChildren && onToggleExpand(item.id)}
+    >
+      <div 
+        className="flex items-center gap-1 flex-1 min-w-0"
+        style={{ paddingLeft: `${item.level * 8}px` }}
+      >
+        {item.hasChildren && getIcon()}
+        <span className={`truncate font-medium ${getStatusColor()}`} title={(item.data as any).name}>
+          {(item.data as any).name}
+        </span>
+        {(item.type === 'package' || item.type === 'subpackage' || item.type === 'task') && (
+          <Badge variant="secondary" className="text-xs h-3 px-1 ml-auto flex-shrink-0">
+            {(item.data as any).completed || 0}/{(item.data as any).total || 0}
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -33,6 +97,10 @@ export function QuantityManagementTab({
     () => {}
   );
 
+  // 樹狀結構狀態
+  const [expandedState] = useState(() => new ExpandedState());
+  const [refreshKey, setRefreshKey] = useState(0);
+
   // 對話框狀態
   const [showDistributionDialog, setShowDistributionDialog] = useState(false);
   const [activeDistributionItem, setActiveDistributionItem] = useState<{
@@ -41,9 +109,21 @@ export function QuantityManagementTab({
     itemType: 'package' | 'subpackage';
   } | null>(null);
 
-  const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
+  const listRef = useRef<List>(null);
 
-  // 🎯 數量分配功能實現
+  // 創建扁平化器和數據
+  const flattener = useMemo(() => new TreeFlattener(expandedState), [expandedState]);
+  
+  const flattenedItems = useMemo(() => {
+    const items = flattener.flattenProject(project, '');
+    return items.filter(item => item.isVisible);
+  }, [flattener, project, refreshKey]);
+
+  // 展開/收起切換
+  const handleToggleExpand = useCallback((id: string) => {
+    expandedState.toggle(id);
+    setRefreshKey(prev => prev + 1);
+  }, [expandedState]);
 
   // 處理數量分配請求
   const handleDistributeQuantity = useCallback((item: FlatItem) => {
@@ -71,7 +151,6 @@ export function QuantityManagementTab({
 
     const { item } = activeDistributionItem;
     
-    // 構建項目路徑
     const itemPath = {
       packageIndex: item.packageIndex,
       subpackageIndex: item.subpackageIndex,
@@ -87,37 +166,13 @@ export function QuantityManagementTab({
     if (success) {
       setShowDistributionDialog(false);
       setActiveDistributionItem(null);
+      setRefreshKey(prev => prev + 1);
     }
 
     return success;
   }, [activeDistributionItem, distributeQuantity, project]);
 
-  // 🎯 其他操作的簡單實現
 
-  const handleAddChild = useCallback((item: FlatItem) => {
-    // 這裡可以實現添加子項目的邏輯
-    console.log('添加子項目:', item);
-  }, []);
-
-  const handleRename = useCallback((item: FlatItem, newName: string) => {
-    // 這裡可以實現重命名的邏輯
-    console.log('重命名:', item, newName);
-  }, []);
-
-  const handleDelete = useCallback((item: FlatItem) => {
-    // 這裡可以實現刪除的邏輯
-    console.log('刪除項目:', item);
-  }, []);
-
-  const handleDuplicate = useCallback((item: FlatItem) => {
-    // 這裡可以實現複製的邏輯
-    console.log('複製項目:', item);
-  }, []);
-
-  // 項目選擇處理
-  const handleItemSelect = useCallback((item: SelectedItem) => {
-    setSelectedItem(item);
-  }, []);
 
   // 統計信息
   const getProjectStats = () => {
@@ -142,110 +197,98 @@ export function QuantityManagementTab({
 
   const stats = getProjectStats();
 
+  // 渲染樹狀節點
+  const renderTreeItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const item = flattenedItems[index];
+    if (!item) return null;
+
+    return (
+      <CompactTreeNode
+        key={item.id}
+        item={item}
+        style={style}
+        onToggleExpand={handleToggleExpand}
+        onDistributeQuantity={handleDistributeQuantity}
+      />
+    );
+  }, [flattenedItems, handleToggleExpand, handleDistributeQuantity]);
+
   return (
-    <div className="space-y-4">
-      {/* 簡化的統計信息 - 適用於 sidebar */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Calculator className="h-4 w-4" />
-            數量分配管理
+    <div className="space-y-3">
+      {/* 緊湊統計信息 */}
+      <Card className="border-0 shadow-none bg-muted/20">
+        <CardHeader className="pb-2 px-3 pt-3">
+          <CardTitle className="text-xs flex items-center gap-1">
+            <Calculator className="h-3 w-3" />
+            數量統計
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-2 text-xs">
+        <CardContent className="px-3 pb-3">
+          <div className="grid grid-cols-4 gap-1 text-xs mb-2">
             <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">{stats.packages}</div>
-              <div className="text-muted-foreground">工作包</div>
+              <div className="text-sm font-bold text-blue-600">{stats.packages}</div>
+              <div className="text-muted-foreground text-xs">工作包</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-green-600">{stats.subpackages}</div>
-              <div className="text-muted-foreground">子工作包</div>
+              <div className="text-sm font-bold text-green-600">{stats.subpackages}</div>
+              <div className="text-muted-foreground text-xs">子包</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-purple-600">{stats.tasks}</div>
-              <div className="text-muted-foreground">任務</div>
+              <div className="text-sm font-bold text-purple-600">{stats.tasks}</div>
+              <div className="text-muted-foreground text-xs">任務</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-orange-600">{stats.progress}%</div>
-              <div className="text-muted-foreground">總進度</div>
+              <div className="text-sm font-bold text-orange-600">{stats.progress}%</div>
+              <div className="text-muted-foreground text-xs">進度</div>
             </div>
           </div>
 
-          <Alert className="py-2">
-            <Lightbulb className="h-3 w-3" />
-            <AlertDescription className="text-xs">
-              右鍵點擊工作包或子工作包，選擇「分配數量」來設置總數量並分配到子項目中。
-            </AlertDescription>
-          </Alert>
+          <div className="bg-muted/30 rounded p-2">
+            <div className="flex items-center gap-1">
+              <Lightbulb className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+              <p className="text-xs text-muted-foreground leading-tight">
+                右鍵工作包可分配數量
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* 專案樹狀結構 - 適用於 sidebar */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">階層式數量分配</CardTitle>
+      {/* 緊湊的專案樹 */}
+      <Card className="border-0 shadow-none bg-muted/20">
+        <CardHeader className="pb-2 px-3 pt-3">
+          <CardTitle className="text-xs">階層式分配</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <VirtualizedProjectTree
-            project={project}
-            onProjectUpdate={onProjectUpdate}
-            onItemSelect={handleItemSelect}
-            selectedItem={selectedItem}
-            height={400}
-            onDistributeQuantity={handleDistributeQuantity}
-            onAddChild={handleAddChild}
-            onRename={handleRename}
-            onDelete={handleDelete}
-            onDuplicate={handleDuplicate}
-          />
+          <div className="border border-muted/50 rounded-md overflow-hidden bg-background">
+            {flattenedItems.length === 0 ? (
+              <div className="flex items-center justify-center h-16 text-xs text-muted-foreground">
+                暫無數據
+              </div>
+            ) : (
+              <List
+                ref={listRef}
+                height={200}
+                width="100%"
+                itemCount={flattenedItems.length}
+                itemSize={24}
+                overscanCount={3}
+              >
+                {renderTreeItem}
+              </List>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* 簡化的分配狀態概覽 */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">分配狀態</CardTitle>
+      {/* 緊湊狀態摘要 */}
+      <Card className="border-0 shadow-none bg-muted/20">
+        <CardHeader className="pb-2 px-3 pt-3">
+          <CardTitle className="text-xs">狀態摘要</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="text-xs text-muted-foreground">
-              <strong>總體進度：</strong>
-              {stats.totalCompleted} / {stats.totalQuantity} ({stats.progress}%)
-            </div>
-            
-            {project.packages?.slice(0, 3).map((pkg, pkgIdx) => (
-              <div key={pkgIdx} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium truncate">{pkg.name}</span>
-                  <Badge variant="outline" className="text-xs">
-                    {pkg.completed || 0} / {pkg.total || 0}
-                  </Badge>
-                </div>
-                
-                <div className="ml-2 space-y-1">
-                  {pkg.subpackages?.slice(0, 2).map((sub, subIdx) => (
-                    <div key={subIdx} className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground truncate">{sub.name}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {sub.completed || 0} / {sub.total || 0}
-                      </Badge>
-                    </div>
-                  ))}
-                  {(pkg.subpackages?.length || 0) > 2 && (
-                    <div className="text-xs text-muted-foreground ml-2">
-                      ...還有 {(pkg.subpackages?.length || 0) - 2} 個子工作包
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            
-            {(project.packages?.length || 0) > 3 && (
-              <div className="text-xs text-muted-foreground">
-                ...還有 {(project.packages?.length || 0) - 3} 個工作包
-              </div>
-            )}
+        <CardContent className="px-3 pb-3">
+          <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-2 text-center border">
+            總進度: {stats.totalCompleted}/{stats.totalQuantity} ({stats.progress}%)
           </div>
         </CardContent>
       </Card>
