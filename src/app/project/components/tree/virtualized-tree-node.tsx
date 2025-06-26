@@ -69,32 +69,32 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
       case 'project':
         return {
           icon: FolderIcon,
-          color: 'text-blue-600',
-          bgColor: isSelected ? 'bg-blue-50' : 'hover:bg-blue-50',
+          color: isSelected ? 'text-blue-800' : 'text-blue-600',
+          bgColor: isSelected ? 'bg-blue-100 border-blue-300' : 'hover:bg-blue-50',
         };
       case 'package':
         return {
           icon: PackageIcon,
-          color: 'text-green-600',
-          bgColor: isSelected ? 'bg-green-50' : 'hover:bg-green-50',
+          color: isSelected ? 'text-green-800' : 'text-green-600',
+          bgColor: isSelected ? 'bg-green-100 border-green-300' : 'hover:bg-green-50',
         };
       case 'subpackage':
         return {
           icon: FileIcon,
-          color: 'text-purple-600',
-          bgColor: isSelected ? 'bg-purple-50' : 'hover:bg-purple-50',
+          color: isSelected ? 'text-purple-800' : 'text-purple-600',
+          bgColor: isSelected ? 'bg-purple-100 border-purple-300' : 'hover:bg-purple-50',
         };
       case 'task':
         return {
           icon: CheckSquareIcon,
-          color: 'text-orange-600',
-          bgColor: isSelected ? 'bg-orange-50' : 'hover:bg-orange-50',
+          color: isSelected ? 'text-orange-800' : 'text-orange-600',
+          bgColor: isSelected ? 'bg-orange-100 border-orange-300' : 'hover:bg-orange-50',
         };
       default:
         return {
           icon: FileIcon,
-          color: 'text-gray-600',
-          bgColor: isSelected ? 'bg-gray-50' : 'hover:bg-gray-50',
+          color: isSelected ? 'text-gray-800' : 'text-gray-600',
+          bgColor: isSelected ? 'bg-gray-100 border-gray-300' : 'hover:bg-gray-50',
         };
     }
   };
@@ -138,6 +138,22 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
   const StatusIcon = statusInfo?.icon;
   const permissions = getUserPermissions(item.data);
 
+  // 根據項目類型獲取邊框顏色
+  const getBorderColor = (type: string) => {
+    switch (type) {
+      case 'project':
+        return 'border-l-blue-500';
+      case 'package':
+        return 'border-l-green-500';
+      case 'subpackage':
+        return 'border-l-purple-500';
+      case 'task':
+        return 'border-l-orange-500';
+      default:
+        return 'border-l-gray-500';
+    }
+  };
+
   // 縮排樣式
   const indentStyle = {
     paddingLeft: `${item.level * 20 + 8}px`,
@@ -178,7 +194,7 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
       <SimpleContextMenu {...contextMenuProps}>
         <div
           className={`flex items-center gap-2 py-2 px-2 cursor-pointer transition-colors ${itemInfo.bgColor} border-l-2 ${
-            isSelected ? 'border-l-blue-500' : 'border-l-transparent'
+            isSelected ? getBorderColor(item.type) : 'border-l-transparent'
           }`}
           style={indentStyle}
           onClick={() => onItemClick(item)}
@@ -195,9 +211,9 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
             }}
           >
             {item.isExpanded ? (
-              <ChevronDownIcon className="h-4 w-4" />
+              <ChevronDownIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
             ) : (
-              <ChevronRightIcon className="h-4 w-4" />
+              <ChevronRightIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
             )}
           </Button>
         )}
@@ -209,14 +225,14 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
         <ItemIcon className={`h-4 w-4 ${itemInfo.color}`} />
 
         {/* 項目名稱 */}
-        <span className="flex-1 text-sm font-medium truncate">
+        <span className={`flex-1 text-sm font-medium truncate ${itemInfo.color}`}>
           {(item.data as any).name}
         </span>
 
         {/* 進度信息（僅對有進度的項目） */}
         {(item.data as any).progress !== undefined && (
           <div className="flex items-center gap-2 min-w-[120px]">
-            <div className="w-16 text-xs text-muted-foreground">
+            <div className={`w-16 text-xs ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
               {(item.data as any).progress || 0}%
             </div>
             <Progress 
@@ -248,7 +264,7 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
                 }}
                 title="指派任務"
               >
-                <UserPlusIcon className="h-3 w-3" />
+                <UserPlusIcon className={`h-3 w-3 ${isSelected ? itemInfo.color : ''}`} />
               </Button>
             )}
 
@@ -263,7 +279,7 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
                 }}
                 title="更新進度"
               >
-                <EditIcon className="h-3 w-3" />
+                <EditIcon className={`h-3 w-3 ${isSelected ? itemInfo.color : ''}`} />
               </Button>
             )}
 
@@ -278,7 +294,7 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
                 }}
                 title="審核任務"
               >
-                <EyeIcon className="h-3 w-3" />
+                <EyeIcon className={`h-3 w-3 ${isSelected ? itemInfo.color : ''}`} />
               </Button>
             )}
           </div>
@@ -286,7 +302,7 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
 
         {/* 子項目計數 */}
         {item.hasChildren && (
-          <div className="text-xs text-muted-foreground ml-2">
+          <div className={`text-xs ml-2 ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
             {getChildCount(item.data)}
           </div>
         )}
