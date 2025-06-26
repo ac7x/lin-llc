@@ -21,6 +21,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
 import { Label } from '@/components/ui/label';
 import { SkillTagsInput } from '@/components/ui/skill-tags-input';
+import { PermissionMatrixAnalyzer } from '@/app/settings/components/permission-matrix-analyzer';
 
 export default function SettingsPage() {
   const {
@@ -389,10 +390,11 @@ export default function SettingsPage() {
         </div>
 
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">概覽</TabsTrigger>
             <TabsTrigger value="roles">角色管理</TabsTrigger>
             <TabsTrigger value="permissions">權限矩陣</TabsTrigger>
+            <TabsTrigger value="analysis">權限分析</TabsTrigger>
             <TabsTrigger value="users">用戶管理</TabsTrigger>
           </TabsList>
 
@@ -487,7 +489,7 @@ export default function SettingsPage() {
                 <CardDescription>快速存取常用管理功能</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                   <Button
                     variant="outline"
                     className="h-20 flex flex-col items-center justify-center space-y-2"
@@ -504,6 +506,15 @@ export default function SettingsPage() {
                   >
                     <div className="text-2xl">🔐</div>
                     <span className="text-sm">權限矩陣</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center space-y-2"
+                    onClick={() => setCurrentTab('analysis')}
+                  >
+                    <div className="text-2xl">📊</div>
+                    <span className="text-sm">權限分析</span>
                   </Button>
                   
                   <Button
@@ -917,6 +928,22 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* 權限分析頁面 */}
+          <TabsContent value="analysis" className="space-y-6">
+            <PermissionGuard permission="settings:read">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">權限矩陣分析</h2>
+                    <p className="text-muted-foreground">深入分析權限配置和角色覆蓋率</p>
+                  </div>
+                </div>
+                
+                <PermissionMatrixAnalyzer />
+              </div>
+            </PermissionGuard>
           </TabsContent>
 
           {/* 用戶管理頁面 */}
