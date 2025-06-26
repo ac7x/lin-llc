@@ -38,7 +38,6 @@ tsconfig.json
 .vscode/
 .idea/
 .cursor/
-.cursorrules
 
 # Git 和版本控制
 .gitignore
