@@ -3,4 +3,4 @@ description:
 globs: 
 alwaysApply: true
 ---
-始終使用繁體中文回覆
+> 這會自動被 Cursor IDE 載入並提供給 AI 使用。
