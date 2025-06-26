@@ -230,20 +230,15 @@ export default function UserTaskPage() {
       // 直接更新專案數據
       const projectRef = doc(db, 'projects', selectedTask.projectId);
       
-      // 獲取當前專案數據
-      const projectSnapshot = await getDocs(collection(db, 'projects'));
-      let projectData: Project | null = null;
+      // 直接獲取特定專案數據
+      const projectDoc = await getDoc(projectRef);
       
-      projectSnapshot.forEach(doc => {
-        if (doc.id === selectedTask.projectId) {
-          projectData = doc.data();
-        }
-      });
-      
-      if (!projectData) {
+      if (!projectDoc.exists()) {
         toast.error('找不到專案數據');
         return;
       }
+
+      const projectData = projectDoc.data() as Project;
 
       // 更新任務數據
       const task = projectData.packages[selectedTask.packageIndex]
@@ -267,7 +262,7 @@ export default function UserTaskPage() {
 
       // 清理undefined值並更新到Firestore
       const cleanedProject = removeUndefinedValues(projectData);
-      await updateDoc(projectRef, cleanedProject);
+      await updateDoc(projectRef, cleanedProject as any);
 
       // 更新本地任務列表
       setTasks(prev => prev.map(t => 
