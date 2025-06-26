@@ -18,6 +18,7 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { usePermissionContext } from '@/app/(system)';
+import { ProjectListPermissionAlert } from '@/app/(system)/permissions/components';
 import { ProjectSidebar } from './components/sidebar/project-sidebar';
 import { ProjectViewer } from './components/viewer/project-viewer';
 
@@ -59,24 +60,7 @@ export default function ProjectListPage() {
   if (!hasPermission('project:read')) {
     return (
       <div className="h-full flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>權限不足</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              您沒有權限查看專案列表
-            </p>
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <p className="text-sm">
-                <strong>當前角色：</strong>{userRole?.name || '未分配'}
-              </p>
-              <p className="text-sm mt-1">
-                <strong>用戶資料：</strong>{userProfile?.displayName || '未設定'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <ProjectListPermissionAlert />
       </div>
     );
   }

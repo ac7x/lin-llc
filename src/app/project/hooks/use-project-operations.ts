@@ -20,7 +20,7 @@ export function useProjectOperations(
     // 檢查是否有創建專案權限
     if (!hasPermission('project:write')) {
       console.warn('用戶沒有創建專案權限');
-      setError('權限不足：無法創建專案');
+      setError('您沒有權限創建專案，請聯繫管理員取得相關權限');
       return false;
     }
 
@@ -103,7 +103,7 @@ export function useProjectOperations(
     // 檢查是否有創建工作包權限
     if (!hasPermission('project:package:create')) {
       console.warn('用戶沒有創建工作包權限');
-      setError('權限不足：無法創建工作包');
+      setError('您沒有權限創建工作包，請聯繫管理員取得相關權限');
       return false;
     }
 
@@ -148,7 +148,7 @@ export function useProjectOperations(
     // 檢查是否有創建子工作包權限
     if (!hasPermission('project:subpackage:create')) {
       console.warn('用戶沒有創建子工作包權限');
-      setError('權限不足：無法創建子工作包');
+      setError('您沒有權限創建子工作包，請聯繫管理員取得相關權限');
       return false;
     }
 
@@ -204,7 +204,7 @@ export function useProjectOperations(
     // 檢查是否有創建任務權限
     if (!hasPermission('project:task:create')) {
       console.warn('用戶沒有創建任務權限');
-      setError('權限不足：無法創建任務包');
+      setError('您沒有權限創建任務包，請聯繫管理員取得相關權限');
       return false;
     }
 
@@ -387,7 +387,7 @@ export function useProjectOperations(
     // 檢查是否有更新專案權限
     if (!hasPermission('project:write')) {
       console.warn('用戶沒有更新專案權限');
-      setError('權限不足：無法更新專案');
+      setError('您沒有權限更新專案，請聯繫管理員取得相關權限');
       return false;
     }
 

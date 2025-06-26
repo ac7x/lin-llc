@@ -21,6 +21,7 @@ import {
   checkInitialization,
   PermissionMatrixAnalyzer
 } from '@/app/(system)';
+import { SettingsPermissionAlert } from '@/app/(system)/permissions/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -365,14 +366,9 @@ export default function SettingsPage() {
     
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>權限不足</CardTitle>
-            <CardDescription>
-              您沒有權限訪問此頁面
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div className="w-full max-w-md">
+          <SettingsPermissionAlert />
+          <div className="mt-4 p-3 bg-muted rounded-lg">
             <div className="text-sm text-muted-foreground space-y-2">
               <p>用戶 ID: {userProfile?.uid || '未載入'}</p>
               <p>擁有者 ID: {process.env.NEXT_PUBLIC_OWNER_UID || '未設定'}</p>
@@ -380,8 +376,8 @@ export default function SettingsPage() {
               <p>用戶角色: {userRole?.name || '未載入'}</p>
               <p>權限數量: {userRole?.permissions.length || 0}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
