@@ -4,7 +4,7 @@ node_modules/
 out/
 dist/
 build/
-package-lock.json
+# package-lock.json
 
 # 緩存和臨時文件
 .eslintcache
@@ -27,12 +27,12 @@ firestore.rules
 storage.rules
 
 # 開發工具配置
-next-env.d.ts
-next.config.ts
-postcss.config.mjs
-eslint.config.mjs
-components.json
-tsconfig.json
+# next-env.d.ts
+# next.config.ts
+# postcss.config.mjs
+# eslint.config.mjs
+# components.json
+# tsconfig.json
 
 # IDE 和編輯器
 .vscode/
