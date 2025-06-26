@@ -75,9 +75,16 @@ export default function AccountPage() {
         skills: profile?.skills || [],
         updatedAt: new Date().toISOString(),
       });
-      setProfile(prev => prev ? { ...prev, alias: editAlias, phone: editPhone, lineId: editLineId } : prev);
+      setProfile(prev => prev ? { 
+        ...prev, 
+        alias: editAlias.trim(), 
+        phone: editPhone.trim(), 
+        lineId: editLineId.trim() 
+      } : prev);
       setEditSuccess(true);
       setTimeout(() => setEditSuccess(false), 2000);
+    } catch (error) {
+      console.error('儲存個人資料失敗:', error);
     } finally {
       setEditLoading(false);
     }
@@ -297,8 +304,8 @@ export default function AccountPage() {
                     <Label htmlFor="alias">別名</Label>
                     <Input
                       id="alias"
-                      value={profile?.alias || ''}
-                      onChange={(e) => setProfile(prev => prev ? { ...prev, alias: e.target.value } : prev)}
+                      value={editAlias}
+                      onChange={(e) => setEditAlias(e.target.value)}
                       placeholder="請輸入別名"
                     />
                   </div>
@@ -306,8 +313,8 @@ export default function AccountPage() {
                     <Label htmlFor="phone">聯絡電話</Label>
                     <Input
                       id="phone"
-                      value={profile?.phone || ''}
-                      onChange={(e) => setProfile(prev => prev ? { ...prev, phone: e.target.value } : prev)}
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="請輸入聯絡電話"
                     />
                   </div>
@@ -316,8 +323,8 @@ export default function AccountPage() {
                   <Label htmlFor="lineId">Line ID</Label>
                   <Input
                     id="lineId"
-                    value={profile?.lineId || ''}
-                    onChange={(e) => setProfile(prev => prev ? { ...prev, lineId: e.target.value } : prev)}
+                    value={editLineId}
+                    onChange={(e) => setEditLineId(e.target.value)}
                     placeholder="請輸入 Line ID"
                   />
                 </div>
