@@ -26,7 +26,7 @@ import {
   Calculator,
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
-import { ProjectTree } from '../tree';
+import ProjectTree from '../tree/project-tree';
 import { CreateProjectWizard } from '../create-project-wizard';
 import { QuantityManagementTab } from './quantity-management-tab';
 import { Project, SelectedItem } from '../../types';

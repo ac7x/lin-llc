@@ -149,7 +149,7 @@ export default function ProjectTree({
           <SidebarMenuSub className="mx-1 border-l border-border/30">
             {/* 工作包列表 */}
             {project.packages?.map((pkg, pkgIdx) => (
-              <SidebarMenuItem key={pkgIdx}>
+              <SidebarMenuItem key={pkgIdx} className="overflow-hidden">
                 <Collapsible
                   className="group/collapsible"
                   defaultOpen={expandedPackages.has(pkgIdx)}
@@ -157,7 +157,7 @@ export default function ProjectTree({
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                       onClick={() => togglePackageExpanded(pkgIdx)}
-                      className="pl-2"
+                      className="pl-2 min-h-0 h-6"
                     >
                       {expandedPackages.has(pkgIdx) ? (
                         <PackageOpenIcon className="transition-transform h-3 w-3" />
@@ -176,7 +176,7 @@ export default function ProjectTree({
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="truncate text-sm">{pkg.name}</span>
+                            <span className="truncate text-xs">{pkg.name}</span>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>{pkg.name}</p>
@@ -189,7 +189,7 @@ export default function ProjectTree({
                     <SidebarMenuSub className="mx-1 border-l border-border/20">
                       {/* 子工作包列表 */}
                       {pkg.subpackages?.map((sub, taskIdx) => (
-                        <SidebarMenuItem key={taskIdx}>
+                        <SidebarMenuItem key={taskIdx} className="overflow-hidden">
                           <Collapsible
                             className="group/collapsible"
                             defaultOpen={expandedTasks[pkgIdx]?.has(taskIdx)}
@@ -197,7 +197,7 @@ export default function ProjectTree({
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
                                 onClick={() => toggleTaskExpanded(pkgIdx, taskIdx)}
-                                className="pl-2"
+                                className="pl-2 min-h-0 h-5"
                               >
                                 {expandedTasks[pkgIdx]?.has(taskIdx) ? (
                                   <BookOpenCheck className="transition-transform h-3 w-3" />
@@ -229,8 +229,8 @@ export default function ProjectTree({
                               <SidebarMenuSub className="mx-1 border-l border-border/10">
                                 {/* 任務列表 */}
                                 {sub.taskpackages?.map((task, subIdx) => (
-                                  <SidebarMenuItem key={subIdx}>
-                                    <SidebarMenuButton className="pl-2">
+                                  <SidebarMenuItem key={subIdx} className="overflow-hidden">
+                                    <SidebarMenuButton className="pl-2 min-h-0 h-5">
                                       <div 
                                         onClick={() => onItemClick({ 
                                           type: 'task', 
@@ -262,13 +262,13 @@ export default function ProjectTree({
                                         )}
                                         <Tooltip>
                                           <TooltipTrigger asChild>
-                                            <span className="truncate text-xs">{task.name}</span>
+                                            <span className="truncate text-xs flex-1">{task.name}</span>
                                           </TooltipTrigger>
                                           <TooltipContent>
                                             <p>{task.name}</p>
                                           </TooltipContent>
                                         </Tooltip>
-                                        <span className={`text-xs ${
+                                        <span className={`text-xs flex-shrink-0 ml-1 ${
                                           isItemSelected({
                                             type: 'task',
                                             projectId: project.id,
@@ -285,7 +285,7 @@ export default function ProjectTree({
                                 ))}
                                 {/* 新增任務按鈕 - 只有有權限的用戶才能看到 */}
                                 <ProjectActionGuard action="create" resource="task">
-                                  <SidebarMenuItem>
+                                  <SidebarMenuItem className="overflow-hidden">
                                     <div className="pl-2 pr-1 py-1">
                                       {showSubInputs[pkgIdx]?.[taskIdx] ? (
                                         <div className="flex gap-1">
@@ -356,7 +356,7 @@ export default function ProjectTree({
                       ))}
                       {/* 新增子工作包按鈕 - 只有有權限的用戶才能看到 */}
                       <ProjectActionGuard action="create" resource="subpackage">
-                        <SidebarMenuItem>
+                        <SidebarMenuItem className="overflow-hidden">
                           <div className="pl-1 pr-1 py-1">
                             {showTaskPackageInputs[pkgIdx] ? (
                               <div className="flex gap-1">
@@ -415,7 +415,7 @@ export default function ProjectTree({
             ))}
             {/* 新增工作包按鈕 - 只有有權限的用戶才能看到 */}
             <ProjectActionGuard action="create" resource="package">
-              <SidebarMenuItem>
+              <SidebarMenuItem className="overflow-hidden">
                 <div className="pl-1 pr-1 py-1">
                   {showPackageInput ? (
                     <div className="flex gap-1">
