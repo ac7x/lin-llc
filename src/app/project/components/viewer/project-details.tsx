@@ -9,6 +9,7 @@ import { Project } from '../../types';
 import { ProjectOverviewCards } from './project-overview-cards';
 import { ProjectEditDialog } from './project-edit-dialog';
 import { CurrentWeather, WeatherForecast } from '../weather';
+import { SimpleProjectMap } from '../map';
 import { permissionService } from '@/app/settings/lib/permission-service';
 import type { UserProfile } from '@/app/settings/types';
 
@@ -227,6 +228,9 @@ export function ProjectDetails({ project, onProjectUpdate }: ProjectDetailsProps
 
       {/* 專案概覽卡片 */}
       <ProjectOverviewCards project={project} />
+
+      {/* 專案地圖 - 只有當專案設定了地區或地址時才顯示 */}
+      <SimpleProjectMap project={project} />
 
       {/* 天氣資訊 - 只有當專案設定了地區時才顯示 */}
       {project.region && (

@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { EditIcon } from 'lucide-react';
 import { Project, TaiwanCity } from '../../types';
 import { UserSelector, RegionSelector } from '../ui';
+import { AddressSearch, type AddressInfo } from '../map';
 
 // 表單驗證 schema
 const projectEditSchema = z.object({
@@ -203,7 +204,29 @@ export function ProjectEditDialog({
                   <FormItem>
                     <FormLabel>詳細地址</FormLabel>
                     <FormControl>
-                      <Input placeholder="輸入詳細地址..." {...field} />
+                      <AddressSearch
+                        initialValue={field.value || ''}
+                        placeholder="搜索並選擇地址..."
+                        onAddressSelect={(addressInfo: AddressInfo) => {
+                          field.onChange(addressInfo.formattedAddress);
+                          
+                          // 自動更新地區（如果未設定）
+                          const currentRegion = form.getValues('region');
+                          if (!currentRegion && addressInfo.addressComponents) {
+                            // 從地址組件中找出縣市資訊
+                            const cityComponent = addressInfo.addressComponents.find(
+                              component => component.types.includes('administrative_area_level_1')
+                            );
+                            if (cityComponent) {
+                              const cityName = cityComponent.longName;
+                              // 檢查是否為有效的台灣縣市
+                              if (Object.values(TaiwanCity).includes(cityName as TaiwanCity)) {
+                                form.setValue('region', cityName as TaiwanCity);
+                              }
+                            }
+                          }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
