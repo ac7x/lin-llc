@@ -9,11 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { UserPlusIcon, XIcon } from 'lucide-react';
+import { UserPlusIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { UserSelector } from '../ui/user-selector';
 
 interface TaskAssignmentDialogProps {
   isOpen: boolean;
@@ -34,34 +33,14 @@ export function TaskAssignmentDialog({
   currentReviewers,
   onAssign,
 }: TaskAssignmentDialogProps) {
-  const [submitterInput, setSubmitterInput] = useState('');
-  const [reviewerInput, setReviewerInput] = useState('');
   const [submitters, setSubmitters] = useState<string[]>(currentSubmitters);
   const [reviewers, setReviewers] = useState<string[]>(currentReviewers);
   const [loading, setLoading] = useState(false);
 
-  const handleAddSubmitter = () => {
-    const uid = submitterInput.trim();
-    if (uid && !submitters.includes(uid)) {
-      setSubmitters([...submitters, uid]);
-      setSubmitterInput('');
-    }
-  };
-
-  const handleAddReviewer = () => {
-    const uid = reviewerInput.trim();
-    if (uid && !reviewers.includes(uid)) {
-      setReviewers([...reviewers, uid]);
-      setReviewerInput('');
-    }
-  };
-
-  const handleRemoveSubmitter = (uid: string) => {
-    setSubmitters(submitters.filter(s => s !== uid));
-  };
-
-  const handleRemoveReviewer = (uid: string) => {
-    setReviewers(reviewers.filter(r => r !== uid));
+  // 重置表單數據
+  const resetForm = () => {
+    setSubmitters(currentSubmitters);
+    setReviewers(currentReviewers);
   };
 
   const handleAssign = async () => {
@@ -81,6 +60,7 @@ export function TaskAssignmentDialog({
       if (success) {
         toast.success('任務指派成功');
         onClose();
+        resetForm();
       } else {
         toast.error('任務指派失敗');
       }
@@ -109,80 +89,36 @@ export function TaskAssignmentDialog({
           {/* 提交者設定 */}
           <div className="space-y-3">
             <Label className="text-sm font-medium">提交者 (Submitters)</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="輸入用戶 UID"
-                value={submitterInput}
-                onChange={(e) => setSubmitterInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddSubmitter();
-                  }
-                }}
-                className="flex-1"
-              />
-              <Button 
-                size="sm" 
-                onClick={handleAddSubmitter}
-                disabled={!submitterInput.trim()}
-              >
-                新增
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {submitters.map((uid) => (
-                <Badge key={uid} variant="secondary" className="flex items-center gap-1">
-                  <span className="max-w-[120px] truncate">{uid}</span>
-                  <XIcon 
-                    className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                    onClick={() => handleRemoveSubmitter(uid)}
-                  />
-                </Badge>
-              ))}
-            </div>
+            <UserSelector
+              value={submitters}
+              onValueChange={setSubmitters}
+              placeholder="選擇提交者"
+              emptyText="找不到用戶"
+              disabled={loading}
+            />
+            <p className="text-xs text-muted-foreground">
+              提交者負責執行任務並提交完成結果
+            </p>
           </div>
 
           {/* 審核者設定 */}
           <div className="space-y-3">
             <Label className="text-sm font-medium">審核者 (Reviewers)</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="輸入用戶 UID"
-                value={reviewerInput}
-                onChange={(e) => setReviewerInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddReviewer();
-                  }
-                }}
-                className="flex-1"
-              />
-              <Button 
-                size="sm" 
-                onClick={handleAddReviewer}
-                disabled={!reviewerInput.trim()}
-              >
-                新增
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {reviewers.map((uid) => (
-                <Badge key={uid} variant="outline" className="flex items-center gap-1">
-                  <span className="max-w-[120px] truncate">{uid}</span>
-                  <XIcon 
-                    className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                    onClick={() => handleRemoveReviewer(uid)}
-                  />
-                </Badge>
-              ))}
-            </div>
+            <UserSelector
+              value={reviewers}
+              onValueChange={setReviewers}
+              placeholder="選擇審核者"
+              emptyText="找不到用戶"
+              disabled={loading}
+            />
+            <p className="text-xs text-muted-foreground">
+              審核者負責檢查和批准任務完成結果
+            </p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+          <Button variant="outline" onClick={() => { onClose(); resetForm(); }} disabled={loading}>
             取消
           </Button>
           <Button onClick={handleAssign} disabled={loading}>
