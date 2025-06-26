@@ -25,22 +25,7 @@ interface ProjectDetailsProps {
  */
 export function ProjectDetails({ project, onProjectUpdate, updateProjectInfo }: ProjectDetailsProps) {
   const projectProgress = useProjectProgress(project);
-  const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
-
-  // 調試資訊：檢查專案資料
-  useEffect(() => {
-    console.log('專案詳情 - 當前專案資料:', {
-      id: project.id,
-      name: project.name,
-      address: project.address,
-      region: project.region,
-      manager: project.manager,
-      supervisor: project.supervisor,
-      safety: project.safety,
-      quality: project.quality,
-      description: project.description
-    });
-  }, [project]);
+    const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
 
   // 獲取用戶資料
   useEffect(() => {
@@ -248,13 +233,11 @@ export function ProjectDetails({ project, onProjectUpdate, updateProjectInfo }: 
       {/* 專案地圖 - 只有當專案設定了地區或地址時才顯示 */}
       <SimpleProjectMap project={project} />
 
-      {/* 天氣資訊 - 只有當專案設定了地區時才顯示 */}
-      {project.region && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CurrentWeather city={project.region} />
-          <WeatherForecast city={project.region} />
-        </div>
-      )}
+      {/* 天氣資訊 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CurrentWeather city={project.region} />
+        <WeatherForecast city={project.region} />
+      </div>
 
       {/* 進度條 */}
       <Card className="border-0 shadow-sm">

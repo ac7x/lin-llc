@@ -5,7 +5,7 @@ import { ProjectMap } from './project-map';
 import { mapService } from './map-service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin, Navigation, AlertCircle } from 'lucide-react';
 import type { Project } from '../../types';
 
 interface SimpleProjectMapProps {
@@ -24,9 +24,27 @@ export function SimpleProjectMap({
   showTitle = true,
   height = 300,
 }: SimpleProjectMapProps) {
-  // 如果沒有地區或地址資訊，不顯示地圖
+  // 如果沒有地區或地址資訊，顯示提示訊息
   if (!project.region && !project.address) {
-    return null;
+    return (
+      <Card className={className}>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            專案位置
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center p-8">
+          <div className="text-center space-y-2">
+            <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto" />
+            <p className="text-sm text-muted-foreground">尚未設置地址</p>
+            <p className="text-xs text-muted-foreground">
+              請編輯專案資訊以添加地址或地區
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   // 計算距離到台北市中心（示例）

@@ -19,7 +19,7 @@ import { weatherService, type WeatherData } from './weather-service';
 import { TaiwanCity, TaiwanCityList } from '../../types';
 
 interface CurrentWeatherProps {
-  city: TaiwanCity;
+  city?: TaiwanCity | null;
   className?: string;
 }
 
@@ -28,6 +28,29 @@ export function CurrentWeather({ city, className }: CurrentWeatherProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  // 如果沒有城市資訊，顯示提示訊息
+  if (!city) {
+    return (
+      <Card className={className}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <CloudIcon className="h-5 w-5" />
+            <span className="text-lg">當前天氣</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center p-8">
+          <div className="text-center space-y-2">
+            <AlertCircleIcon className="h-8 w-8 text-muted-foreground mx-auto" />
+            <p className="text-sm text-muted-foreground">尚未設置地區</p>
+            <p className="text-xs text-muted-foreground">
+              請編輯專案資訊以添加地區，然後查看天氣資訊
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // 獲取城市查詢字串
   const getCityQuery = () => {
@@ -54,7 +77,9 @@ export function CurrentWeather({ city, className }: CurrentWeatherProps) {
 
   // 初始載入和城市變更時重新獲取
   useEffect(() => {
-    fetchWeatherData();
+    if (city) {
+      fetchWeatherData();
+    }
   }, [city]);
 
   // 錯誤狀態
