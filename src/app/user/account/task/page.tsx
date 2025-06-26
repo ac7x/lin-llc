@@ -123,7 +123,7 @@ export default function UserTaskPage() {
         const userTasks: UserTask[] = [];
         
         for (const projectDoc of projectsSnapshot.docs) {
-          const projectData = projectDoc.data();
+          const projectData = projectDoc.data() as Project;
           const projectId = projectDoc.id;
           
           // 遍歷所有工作包、子工作包、任務包
@@ -159,7 +159,7 @@ export default function UserTaskPage() {
                       completed: task.completed || 0,
                       total: task.total || 0,
                       progress: task.progress || 0,
-                      assignedAt: task.assignedAt,
+                      assignedAt: task.time?.createdAt,
                       submittedAt: task.submittedAt,
                       approvedAt: task.approvedAt,
                       submitters,
@@ -182,7 +182,7 @@ export default function UserTaskPage() {
                       completed: task.completed || 0,
                       total: task.total || 0,
                       progress: task.progress || 0,
-                      assignedAt: task.assignedAt,
+                      assignedAt: task.time?.createdAt,
                       submittedAt: task.submittedAt,
                       approvedAt: task.approvedAt,
                       submitters,
