@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { EditIcon } from 'lucide-react';
-import { Project, TaiwanRegion } from '../../types';
+import { Project, TaiwanCity } from '../../types';
 import { UserSelector, RegionSelector } from '../ui';
 
 // 表單驗證 schema
@@ -37,7 +37,7 @@ const projectEditSchema = z.object({
   supervisor: z.array(z.string()).optional(),
   safety: z.array(z.string()).optional(),
   quality: z.array(z.string()).optional(),
-  region: z.nativeEnum(TaiwanRegion).optional(),
+  region: z.nativeEnum(TaiwanCity).optional(),
   address: z.string().optional(),
 });
 

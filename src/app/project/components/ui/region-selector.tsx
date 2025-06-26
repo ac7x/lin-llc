@@ -23,11 +23,11 @@ import {
 } from '@/components/ui/popover';
 import { CheckIcon, MapPinIcon } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { TaiwanRegion } from '../../types';
+import { TaiwanCity, TaiwanCityList } from '../../types';
 
 interface RegionSelectorProps {
-  value?: TaiwanRegion;
-  onValueChange?: (value: TaiwanRegion | undefined) => void;
+  value?: TaiwanCity;
+  onValueChange?: (value: TaiwanCity | undefined) => void;
   placeholder?: string;
   emptyText?: string;
   disabled?: boolean;
@@ -45,13 +45,17 @@ export function RegionSelector({
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  // 台灣縣市列表
-  const regions = Object.values(TaiwanRegion);
-
   // 處理地區選擇
-  const handleSelectRegion = (region: TaiwanRegion) => {
-    onValueChange?.(value === region ? undefined : region);
+  const handleSelectRegion = (city: TaiwanCity) => {
+    onValueChange?.(value === city ? undefined : city);
     setOpen(false);
+  };
+
+  // 獲取選中地區的顯示標籤
+  const getSelectedLabel = () => {
+    if (!value) return placeholder;
+    const cityInfo = TaiwanCityList.find(city => city.value === value);
+    return cityInfo?.label || value;
   };
 
   // 地區列表組件
@@ -65,18 +69,18 @@ export function RegionSelector({
       <CommandList>
         <CommandEmpty>{emptyText}</CommandEmpty>
         <CommandGroup>
-          {regions.map((region) => (
+          {TaiwanCityList.map((cityInfo) => (
             <CommandItem
-              key={region}
-              value={region}
-              onSelect={() => handleSelectRegion(region)}
+              key={cityInfo.value}
+              value={cityInfo.label}
+              onSelect={() => handleSelectRegion(cityInfo.value)}
               className="flex items-center justify-between"
             >
               <div className="flex items-center gap-2">
                 <MapPinIcon className="h-4 w-4" />
-                <span>{region}</span>
+                <span>{cityInfo.label}</span>
               </div>
-              {value === region && (
+              {value === cityInfo.value && (
                 <CheckIcon className="h-4 w-4 text-primary" />
               )}
             </CommandItem>
@@ -98,7 +102,7 @@ export function RegionSelector({
               disabled={disabled}
             >
               <MapPinIcon className="h-4 w-4 mr-2" />
-              {value || placeholder}
+              {getSelectedLabel()}
             </Button>
           </DrawerTrigger>
           <DrawerContent>
@@ -122,7 +126,7 @@ export function RegionSelector({
             disabled={disabled}
           >
             <MapPinIcon className="h-4 w-4 mr-2" />
-            {value || placeholder}
+            {getSelectedLabel()}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-60 p-0" align="start">

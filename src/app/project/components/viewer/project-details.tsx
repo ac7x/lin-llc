@@ -8,6 +8,7 @@ import { useProjectProgress } from '../../hooks';
 import { Project } from '../../types';
 import { ProjectOverviewCards } from './project-overview-cards';
 import { ProjectEditDialog } from './project-edit-dialog';
+import { CurrentWeather, WeatherForecast } from '../weather';
 import { permissionService } from '@/app/settings/lib/permission-service';
 import type { UserProfile } from '@/app/settings/types';
 
@@ -226,6 +227,14 @@ export function ProjectDetails({ project, onProjectUpdate }: ProjectDetailsProps
 
       {/* 專案概覽卡片 */}
       <ProjectOverviewCards project={project} />
+
+      {/* 天氣資訊 - 只有當專案設定了地區時才顯示 */}
+      {project.region && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CurrentWeather city={project.region} />
+          <WeatherForecast city={project.region} />
+        </div>
+      )}
 
       {/* 進度條 */}
       <Card className="border-0 shadow-sm">
