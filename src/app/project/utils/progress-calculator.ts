@@ -27,13 +27,14 @@ export function calculatePercentage(completed: number, total: number): number {
 
 /**
  * 計算任務包進度
- * 基礎計算：已完成數量/總數量 = 百分比
+ * 基礎計算：只有審核通過的任務才計算為已完成
  * @param taskPackage 任務包物件
  * @returns 進度計算結果
  */
 export function calculateTaskPackageProgress(taskPackage: TaskPackage): ProgressResult {
-  const completed = taskPackage.completed || 0;
   const total = taskPackage.total || 0;
+  // 只有審核通過的任務才算已完成
+  const completed = taskPackage.status === 'approved' ? (taskPackage.completed || 0) : 0;
   const progress = calculatePercentage(completed, total);
 
   return {
@@ -46,6 +47,7 @@ export function calculateTaskPackageProgress(taskPackage: TaskPackage): Progress
 /**
  * 計算子工作包進度
  * 邏輯：該子工作包下所有任務包的已完成數量加總 / 所有任務包的總數量加總 = 百分比
+ * 只有審核通過的任務才計入已完成數量
  * @param subpackage 子工作包物件
  * @returns 進度計算結果
  */
@@ -57,8 +59,11 @@ export function calculateSubpackageProgress(subpackage: Subpackage): ProgressRes
     return { completed: 0, total: 0, progress: 0 };
   }
 
-  // 計算所有任務包的已完成數量和總數量
-  const totalCompleted = taskPackages.reduce((sum, task) => sum + (task.completed || 0), 0);
+  // 計算所有任務包的已完成數量和總數量（只有審核通過的任務才算已完成）
+  const totalCompleted = taskPackages.reduce((sum, task) => {
+    const taskCompleted = task.status === 'approved' ? (task.completed || 0) : 0;
+    return sum + taskCompleted;
+  }, 0);
   const totalAmount = taskPackages.reduce((sum, task) => sum + (task.total || 0), 0);
   const progress = calculatePercentage(totalCompleted, totalAmount);
 

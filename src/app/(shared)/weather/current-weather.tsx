@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { weatherService, type WeatherData } from './weather-service';
-import { TaiwanCity, TaiwanCityList } from '../../types';
+import { TaiwanCity, TaiwanCityList } from '../../project/types';
 
 interface CurrentWeatherProps {
   city?: TaiwanCity | null;

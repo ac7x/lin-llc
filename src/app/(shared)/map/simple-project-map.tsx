@@ -6,7 +6,7 @@ import { mapService } from './map-service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, AlertCircle } from 'lucide-react';
-import type { Project } from '../../types';
+import type { Project } from '../../project/types';
 
 interface SimpleProjectMapProps {
   project: Project;

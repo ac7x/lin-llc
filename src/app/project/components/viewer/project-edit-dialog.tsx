@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button';
 import { EditIcon } from 'lucide-react';
 import { Project, TaiwanCity } from '../../types';
 import { UserSelector, RegionSelector } from '../ui';
-import { AddressSearch, type AddressInfo } from '../map';
+import { AddressSearch, type AddressInfo } from '../../../(shared)/map';
 
 // 表單驗證 schema
 const projectEditSchema = z.object({

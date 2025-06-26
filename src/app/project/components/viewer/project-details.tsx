@@ -8,8 +8,8 @@ import { useProjectProgress } from '../../hooks';
 import { Project } from '../../types';
 import { ProjectOverviewCards } from './project-overview-cards';
 import { ProjectEditDialog } from './project-edit-dialog';
-import { CurrentWeather, WeatherForecast } from '../weather';
-import { SimpleProjectMap } from '../map';
+import { CurrentWeather, WeatherForecast } from '../../../(shared)/weather';
+import { SimpleProjectMap } from '../../../(shared)/map';
 import { permissionService } from '@/app/settings/lib/permission-service';
 import type { UserProfile } from '@/app/settings/types';
 
