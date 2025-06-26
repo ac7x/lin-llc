@@ -3,4 +3,69 @@ description:
 globs: 
 alwaysApply: true
 ---
-> 這會自動被 Cursor IDE 載入並提供給 AI 使用。
+# Minimalist Development Ruleset for Project
+# Path: .cursor/rules/lin.mdc
+
+## 🧠 Philosophy
+- The goal is to implement **only what is necessary**.
+- Code should be **readable, maintainable**, and **free from bloat**.
+- Embrace simplicity. Avoid over-engineering.
+
+---
+
+## ✅ Preferred Patterns
+- Use functional components with **minimal local state**.
+- Keep files **concise** (prefer <100 lines per file when possible).
+- Prefer **native JS/TS** over third-party utilities.
+- Use **composition** instead of abstraction layers.
+- Flat, predictable component trees.
+- Write **direct logic** rather than indirection via utils or wrappers.
+
+---
+
+## ❌ Anti-Patterns to Avoid
+- ❌ Splitting tiny logic into excessive files/components.
+- ❌ Creating custom hooks without reusability (used <2 times).
+- ❌ Premature abstraction or generalization.
+- ❌ Overusing context providers or deeply nested props.
+- ❌ Complex config files for edge use-cases.
+- ❌ Installing packages for single-use tasks.
+
+---
+
+## 📦 Dependencies
+- Use packages **only if** native capabilities are insufficient.
+- Avoid utility bloat (e.g., `lodash`, `date-fns`, `ramda`) unless heavily reused.
+- No wrappers for styling unless necessary (e.g., `clsx`, `tailwind-merge` are fine).
+
+---
+
+## 📁 File & Project Structure
+- Group files **by feature**, not by type (`project/assistant.tsx` > `components/ui/`).
+- Keep component files self-contained and lean.
+- No empty placeholder files or folders.
+
+---
+
+## ✍️ Naming Conventions
+- Use **clear, short, specific names** (e.g., `ProjectChat.tsx`, not `ProjectAIWrapperComponent.tsx`).
+- Avoid nested prefixes/suffixes unless they add clarity.
+
+---
+
+## ⚙️ Cursor / AI Prompts
+### Preferred Prompt:
+
+
+### If output is too verbose:
+- Prompt: `Simplify it`
+- Prompt: `Collapse logic`
+- Prompt: `Less code, same logic`
+
+---
+
+## 🧘 Reminder
+> "Perfection is achieved not when there is nothing more to add,  
+> but when there is nothing left to take away."  
+> — Antoine de Saint-Exupéry
+

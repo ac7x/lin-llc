@@ -43,7 +43,7 @@ tsconfig.json
 .github/
 
 # 腳本文件
-# script/
+script/
 
 # 靜態資源和媒體文件
 public/
