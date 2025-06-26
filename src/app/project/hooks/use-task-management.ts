@@ -127,7 +127,7 @@ export function useTaskManagement() {
       task.total = total;
       task.progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-      // 如果任務完成，自動提交審核並獎勵積分
+      // 如果任務完成，自動提交審核
       if (task.progress === 100) {
         // 檢查是否有審核者
         if (task.reviewers && task.reviewers.length > 0) {
@@ -150,7 +150,7 @@ export function useTaskManagement() {
             }
           );
         } else {
-          // 沒有審核者時，直接標記為已核准
+          // 沒有審核者時，直接標記為已核准並給予積分
           task.status = 'approved';
           task.submittedAt = new Date().toISOString();
           task.submittedBy = user.uid;
@@ -160,18 +160,18 @@ export function useTaskManagement() {
           // 提示用戶任務已自動核准
           console.log('任務已完成且無需審核，自動核准:', task.name);
           
+          // 🎯 沒有審核者時才在提交時給予積分（因為系統自動核准）
+          if (task.submitters && task.submitters.length > 0) {
+            await PointsRewardService.rewardTaskCompletion(
+              task.submitters,
+              task.name,
+              completed,
+              total
+            );
+          }
+          
           // 檢查是否需要向上層提交
           await checkAndSubmitParentLevel(updatedProject, 'system', packageIndex, subpackageIndex);
-        }
-
-        // 🎯 獎勵任務完成積分給所有提交者
-        if (task.submitters && task.submitters.length > 0) {
-          await PointsRewardService.rewardTaskCompletion(
-            task.submitters,
-            task.name,
-            completed,
-            total
-          );
         }
       }
 
@@ -225,6 +225,16 @@ export function useTaskManagement() {
 
       // 如果審核通過，檢查是否需要向上層提交並獎勵階層完成積分
       if (approved) {
+        // 🎯 審核通過時給予提交者任務完成積分
+        if (task.submitters && task.submitters.length > 0) {
+          await PointsRewardService.rewardTaskCompletion(
+            task.submitters,
+            task.name,
+            task.completed || 0,
+            task.total || 0
+          );
+        }
+        
         await checkAndSubmitParentLevel(updatedProject, user.uid, packageIndex, subpackageIndex);
       }
 

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { weatherService, type WeatherForecast } from './weather-service';
-import { TaiwanCity, TaiwanCityList } from '../../types';
+import { TaiwanCity, TaiwanCityList } from '../../project/types';
 
 interface WeatherForecastProps {
   city?: TaiwanCity | null;

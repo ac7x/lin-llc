@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Drawer,
@@ -27,10 +28,14 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   FolderIcon,
-  SendIcon
+  SendIcon,
+  EyeIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { removeUndefinedValues } from '@/lib/utils';
+import { useTaskManagement } from '@/app/project/hooks/use-task-management';
 import type { Project } from '@/app/project/types';
 
 interface UserInfo {
@@ -62,6 +67,7 @@ interface UserTask {
 
 export default function UserTaskPage() {
   const { user } = useGoogleAuth();
+  const { submitTaskProgress, reviewTask } = useTaskManagement();
   const [tasks, setTasks] = useState<UserTask[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -70,6 +76,11 @@ export default function UserTaskPage() {
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [completedInput, setCompletedInput] = useState('');
   const [totalInput, setTotalInput] = useState('');
+  
+  // 審核相關狀態
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [selectedReviewTask, setSelectedReviewTask] = useState<UserTask | null>(null);
+  const [reviewComment, setReviewComment] = useState('');
 
   // 載入用戶信息
   const loadUserInfo = async (uids: string[]): Promise<UserInfo[]> => {
@@ -207,7 +218,7 @@ export default function UserTaskPage() {
     void loadUserTasks();
   }, [user]);
 
-  // 直接提交任務進度（不需要專案權限）
+  // 使用正確的任務管理邏輯提交進度
   const handleDirectSubmit = async () => {
     if (!selectedTask || !user) return;
 
@@ -227,10 +238,8 @@ export default function UserTaskPage() {
     setSubmitLoading(true);
     
     try {
-      // 直接更新專案數據
+      // 獲取專案數據
       const projectRef = doc(db, 'projects', selectedTask.projectId);
-      
-      // 直接獲取特定專案數據
       const projectDoc = await getDoc(projectRef);
       
       if (!projectDoc.exists()) {
@@ -240,42 +249,52 @@ export default function UserTaskPage() {
 
       const projectData = projectDoc.data() as Project;
 
-      // 更新任務數據
-      const task = projectData.packages[selectedTask.packageIndex]
-        .subpackages[selectedTask.subpackageIndex]
-        .taskpackages[selectedTask.taskIndex];
-      
-      task.completed = completed;
-      task.total = total;
-      task.progress = Math.round((completed / total) * 100);
-      
-      // 如果任務完成，自動提交審核
-      if (task.progress === 100) {
-        task.status = 'submitted';
-        task.submittedAt = new Date().toISOString();
-        task.submittedBy = user.uid;
-        
-        toast.success('任務已完成並提交審核！');
+      // 使用 submitTaskProgress 函數來正確處理審核流程
+      const success = await submitTaskProgress(
+        projectData,
+        {
+          packageIndex: selectedTask.packageIndex,
+          subpackageIndex: selectedTask.subpackageIndex,
+          taskIndex: selectedTask.taskIndex,
+        },
+        completed,
+        total,
+        () => {} // 空的更新回調，因為我們會手動更新本地狀態
+      );
+
+      if (success) {
+        // 重新獲取更新後的專案數據來取得正確的任務狀態
+        const updatedProjectDoc = await getDoc(projectRef);
+        if (updatedProjectDoc.exists()) {
+          const updatedProjectData = updatedProjectDoc.data() as Project;
+          const updatedTask = updatedProjectData.packages[selectedTask.packageIndex]
+            .subpackages[selectedTask.subpackageIndex]
+            .taskpackages[selectedTask.taskIndex];
+
+          // 更新本地任務列表
+          setTasks(prev => prev.map(t => 
+            t.id === selectedTask.id 
+              ? { ...t, completed, total, progress: updatedTask.progress, status: updatedTask.status }
+              : t
+          ));
+
+          // 根據狀態顯示適當的訊息
+          if (updatedTask.status === 'submitted') {
+            toast.success('任務已提交審核，等待審核者審核');
+          } else if (updatedTask.status === 'approved') {
+            toast.success('任務已完成並自動核准');
+          } else {
+            toast.success('任務進度已更新');
+          }
+        }
+
+        // 重置表單
+        setSelectedTask(null);
+        setCompletedInput('');
+        setTotalInput('');
       } else {
-        toast.success('任務進度已更新！');
+        toast.error('提交任務失敗');
       }
-
-      // 清理undefined值並更新到Firestore
-      const cleanedProject = removeUndefinedValues(projectData);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await updateDoc(projectRef, cleanedProject as any);
-
-      // 更新本地任務列表
-      setTasks(prev => prev.map(t => 
-        t.id === selectedTask.id 
-          ? { ...t, completed, total, progress: task.progress, status: task.status }
-          : t
-      ));
-
-      // 重置表單
-      setSelectedTask(null);
-      setCompletedInput('');
-      setTotalInput('');
       
     } catch (error) {
       console.error('提交任務失敗:', error);
@@ -290,6 +309,76 @@ export default function UserTaskPage() {
     setSelectedTask(task);
     setCompletedInput(task.completed.toString());
     setTotalInput(task.total.toString());
+  };
+
+  // 審核任務
+  const handleReviewTask = async (approved: boolean) => {
+    if (!selectedReviewTask || !user) return;
+
+    setReviewLoading(true);
+    
+    try {
+      // 獲取專案數據
+      const projectRef = doc(db, 'projects', selectedReviewTask.projectId);
+      const projectDoc = await getDoc(projectRef);
+      
+      if (!projectDoc.exists()) {
+        toast.error('找不到專案數據');
+        return;
+      }
+
+      const projectData = projectDoc.data() as Project;
+
+      const success = await reviewTask(
+        projectData,
+        {
+          packageIndex: selectedReviewTask.packageIndex,
+          subpackageIndex: selectedReviewTask.subpackageIndex,
+          taskIndex: selectedReviewTask.taskIndex,
+        },
+        approved,
+        () => {}, // 空的更新回調
+        reviewComment
+      );
+
+      if (success) {
+        // 重新獲取更新後的專案數據
+        const updatedProjectDoc = await getDoc(projectRef);
+        if (updatedProjectDoc.exists()) {
+          const updatedProjectData = updatedProjectDoc.data() as Project;
+          const updatedTask = updatedProjectData.packages[selectedReviewTask.packageIndex]
+            .subpackages[selectedReviewTask.subpackageIndex]
+            .taskpackages[selectedReviewTask.taskIndex];
+
+          // 更新本地任務列表
+          setTasks(prev => prev.map(t => 
+            t.id === selectedReviewTask.id 
+              ? { ...t, status: updatedTask.status, approvedAt: updatedTask.approvedAt }
+              : t
+          ));
+
+          toast.success(approved ? '任務審核通過' : '任務已駁回');
+        }
+
+        // 重置表單
+        setSelectedReviewTask(null);
+        setReviewComment('');
+      } else {
+        toast.error('審核失敗');
+      }
+      
+    } catch (error) {
+      console.error('審核任務失敗:', error);
+      toast.error('審核失敗');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  // 開啟審核drawer
+  const openReviewDrawer = (task: UserTask) => {
+    setSelectedReviewTask(task);
+    setReviewComment('');
   };
 
   if (!user) {
@@ -552,6 +641,91 @@ export default function UserTaskPage() {
                                     >
                                       {submitLoading ? '提交中...' : '確認提交'}
                                     </Button>
+                                    <DrawerClose asChild>
+                                      <Button variant="outline">取消</Button>
+                                    </DrawerClose>
+                                  </DrawerFooter>
+                                </DrawerContent>
+                              </Drawer>
+                            </>
+                          )}
+
+                          {task.role === 'reviewer' && task.status === 'submitted' && (
+                            <>
+                              {/* 審核按鈕 - 使用Drawer */}
+                              <Drawer>
+                                <DrawerTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openReviewDrawer(task)}
+                                  >
+                                    <EyeIcon className="h-4 w-4 mr-1" />
+                                    審核任務
+                                  </Button>
+                                </DrawerTrigger>
+                                <DrawerContent>
+                                  <DrawerHeader>
+                                    <DrawerTitle>審核任務</DrawerTitle>
+                                    <DrawerDescription>
+                                      審核任務「{selectedReviewTask?.name}」的提交內容
+                                    </DrawerDescription>
+                                  </DrawerHeader>
+                                  <div className="p-4 space-y-4">
+                                    {/* 任務基本信息 */}
+                                    <div className="space-y-3 p-4 bg-muted rounded-lg">
+                                      <div className="flex justify-between text-sm">
+                                        <span className="font-medium">專案名稱：</span>
+                                        <span>{selectedReviewTask?.projectName}</span>
+                                      </div>
+                                      <div className="flex justify-between text-sm">
+                                        <span className="font-medium">任務進度：</span>
+                                        <span>{selectedReviewTask?.completed} / {selectedReviewTask?.total} ({selectedReviewTask?.progress}%)</span>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <span className="text-sm font-medium">進度條：</span>
+                                        <Progress value={selectedReviewTask?.progress || 0} className="h-2" />
+                                      </div>
+                                      {selectedReviewTask?.submittedAt && (
+                                        <div className="flex justify-between text-sm">
+                                          <span className="font-medium">提交時間：</span>
+                                          <span>{new Date(selectedReviewTask.submittedAt).toLocaleString('zh-TW')}</span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* 審核意見 */}
+                                    <div className="space-y-2">
+                                      <Label htmlFor="reviewComment">審核意見</Label>
+                                      <Textarea
+                                        id="reviewComment"
+                                        placeholder="請輸入審核意見（駁回時必填）"
+                                        value={reviewComment}
+                                        onChange={(e) => setReviewComment(e.target.value)}
+                                        rows={3}
+                                      />
+                                    </div>
+                                  </div>
+                                  <DrawerFooter>
+                                    <div className="flex gap-2">
+                                      <Button 
+                                        variant="destructive"
+                                        onClick={() => handleReviewTask(false)}
+                                        disabled={reviewLoading || !reviewComment.trim()}
+                                        className="flex-1"
+                                      >
+                                        <ThumbsDownIcon className="h-4 w-4 mr-1" />
+                                        {reviewLoading ? '處理中...' : '駁回'}
+                                      </Button>
+                                      <Button 
+                                        onClick={() => handleReviewTask(true)}
+                                        disabled={reviewLoading}
+                                        className="flex-1"
+                                      >
+                                        <ThumbsUpIcon className="h-4 w-4 mr-1" />
+                                        {reviewLoading ? '處理中...' : '核准'}
+                                      </Button>
+                                    </div>
                                     <DrawerClose asChild>
                                       <Button variant="outline">取消</Button>
                                     </DrawerClose>
