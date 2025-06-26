@@ -5,7 +5,6 @@ import { AuthProvider } from '@/context/auth-context';
 import { PermissionProvider } from '@/context/permission-context';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { ThemeProvider } from '@/components/ui/theme-provider';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -26,9 +25,11 @@ export default function RootLayout({
           <AuthProvider>
             <PermissionProvider>
               <div className="pb-20">
-                <AspectRatio ratio={16/9} className="w-full">
-                  {children}
-                </AspectRatio>
+                <div className="w-full min-h-[calc(100vh-5rem)]">
+                  <div className="h-full">
+                    {children}
+                  </div>
+                </div>
               </div>
               <BottomNavigation />
             </PermissionProvider>
