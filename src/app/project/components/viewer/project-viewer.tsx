@@ -37,7 +37,10 @@ export function ProjectViewer({ selectedProject, selectedItem, onProjectUpdate }
     <div className="space-y-6">
       {/* 根據選中項目類型顯示不同內容 */}
       {selectedItem.type === 'project' && (
-        <ProjectDetails project={selectedProject} />
+        <ProjectDetails 
+          project={selectedProject} 
+          onProjectUpdate={onProjectUpdate}
+        />
       )}
 
       {selectedItem.type === 'package' && (

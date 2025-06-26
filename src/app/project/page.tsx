@@ -237,7 +237,28 @@ export default function ProjectListPage() {
                         <div className="text-sm space-y-1">
                           <p><strong>建立時間：</strong></p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(projectSelection.selectedProject.createdAt).toLocaleString('zh-TW')}
+                            {(() => {
+                              try {
+                                const createdAt = projectSelection.selectedProject.createdAt;
+                                if (!createdAt) return '未設定';
+                                
+                                let date: Date;
+                                if (typeof createdAt === 'string') {
+                                  if (createdAt.includes('T') || createdAt.includes('Z')) {
+                                    date = new Date(createdAt);
+                                  } else {
+                                    const timestamp = parseInt(createdAt);
+                                    date = !isNaN(timestamp) ? new Date(timestamp) : new Date(createdAt);
+                                  }
+                                } else {
+                                  date = new Date(createdAt);
+                                }
+                                
+                                return isNaN(date.getTime()) ? '日期格式錯誤' : date.toLocaleString('zh-TW');
+                              } catch (error) {
+                                return '日期格式錯誤';
+                              }
+                            })()}
                           </p>
                           <p><strong>專案描述：</strong></p>
                           <p className="text-xs text-muted-foreground">
