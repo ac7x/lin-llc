@@ -90,7 +90,7 @@ export default function ProjectAIAssistant({
       try {
         const { initializeApp } = await import('firebase/app');
         const { getAI, getGenerativeModel, GoogleAIBackend } = await import('firebase/ai');
-        const { firebaseConfig } = await import('@/lib/firebase-config');
+        const { firebaseConfig } = await import('@/app/(system)/data/lib/firebase-config');
         
         const firebaseApp = initializeApp(firebaseConfig);
         const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
