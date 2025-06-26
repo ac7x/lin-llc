@@ -131,7 +131,7 @@ class MapService {
 
     this.loadPromise = new Promise(async (resolve, reject) => {
       // 檢查是否已經載入
-      if ((window as any).google?.maps) {
+      if ((window as any).google?.maps?.Geocoder) {
         this.isLoaded = true;
         resolve();
         return;
@@ -143,9 +143,9 @@ class MapService {
         const appCheckToken = await this.getAppCheckToken();
         
         // 建構 Google Maps API URL
-        let mapsSrc = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW&loading=async`;
+        let mapsSrc = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW`;
         
-        // 如果有 App Check token，加入 URL 中
+        // 如果有 App Check token，加入相關參數
         if (appCheckToken) {
           console.log('使用 App Check token 載入地圖');
           mapsSrc += `&authuser=0&hl=zh-TW&gl=TW`;
@@ -155,20 +155,34 @@ class MapService {
           console.log('未獲取到 App Check token，使用標準載入');
         }
 
+        // 添加回調參數
+        const callbackName = `initMap_${Date.now()}`;
+        mapsSrc += `&callback=${callbackName}`;
+
+        // 設定全域回調函數
+        (window as any)[callbackName] = () => {
+          console.log('Google Maps API 回調觸發');
+          this.waitForMapsReady()
+            .then(() => {
+              console.log('Google Maps API 完全準備就緒');
+              this.isLoaded = true;
+              // 清理回調函數
+              delete (window as any)[callbackName];
+              resolve();
+            })
+            .catch(reject);
+        };
+
         // 創建 script 標籤
         const script = document.createElement('script');
         script.src = mapsSrc;
         script.async = true;
         script.defer = true;
 
-        script.onload = () => {
-          console.log('Google Maps API 載入成功');
-          this.isLoaded = true;
-          resolve();
-        };
-
         script.onerror = () => {
           console.error('Google Maps API 載入失敗');
+          // 清理回調函數
+          delete (window as any)[callbackName];
           reject(new Error('Failed to load Google Maps API'));
         };
 
@@ -176,17 +190,25 @@ class MapService {
       } catch (error) {
         console.error('載入 Google Maps API 時發生錯誤:', error);
         // 如果 App Check 相關處理失敗，仍然嘗試載入標準地圖
+        const fallbackCallbackName = `initMapFallback_${Date.now()}`;
+        
+        (window as any)[fallbackCallbackName] = () => {
+          this.waitForMapsReady()
+            .then(() => {
+              this.isLoaded = true;
+              delete (window as any)[fallbackCallbackName];
+              resolve();
+            })
+            .catch(reject);
+        };
+
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=zh-TW&region=TW&callback=${fallbackCallbackName}`;
         script.async = true;
         script.defer = true;
 
-        script.onload = () => {
-          this.isLoaded = true;
-          resolve();
-        };
-
         script.onerror = () => {
+          delete (window as any)[fallbackCallbackName];
           reject(new Error('Failed to load Google Maps API'));
         };
 
@@ -195,6 +217,42 @@ class MapService {
     });
 
     return this.loadPromise;
+  }
+
+  /**
+   * 等待 Maps API 完全準備就緒
+   */
+  private async waitForMapsReady(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const maxAttempts = 50; // 最多等待 5 秒
+      let attempts = 0;
+
+      const checkReady = () => {
+        attempts++;
+        
+        // 檢查所有必要的 API 是否可用
+        const google = (window as any).google;
+        if (
+          google?.maps?.Geocoder &&
+          google?.maps?.places?.AutocompleteService &&
+          google?.maps?.places?.PlacesService &&
+          google?.maps?.Map &&
+          google?.maps?.Marker
+        ) {
+          resolve();
+          return;
+        }
+
+        if (attempts >= maxAttempts) {
+          reject(new Error('Google Maps API initialization timeout'));
+          return;
+        }
+
+        setTimeout(checkReady, 100);
+      };
+
+      checkReady();
+    });
   }
 
   /**
