@@ -8,13 +8,14 @@ interface ProjectViewerProps {
   selectedProject: Project | null;
   selectedItem: SelectedItem;
   onProjectUpdate?: (updatedProject: Project) => void;
+  updateProjectInfo?: (project: Project) => Promise<boolean>;
 }
 
 /**
  * 項目檢視器組件
  * 根據選中的項目類型顯示相應的詳情組件
  */
-export function ProjectViewer({ selectedProject, selectedItem, onProjectUpdate }: ProjectViewerProps) {
+export function ProjectViewer({ selectedProject, selectedItem, onProjectUpdate, updateProjectInfo }: ProjectViewerProps) {
   // 如果沒有選中項目，顯示提示
   if (!selectedItem) {
     return (
@@ -40,6 +41,7 @@ export function ProjectViewer({ selectedProject, selectedItem, onProjectUpdate }
         <ProjectDetails 
           project={selectedProject} 
           onProjectUpdate={onProjectUpdate}
+          updateProjectInfo={updateProjectInfo}
         />
       )}
 

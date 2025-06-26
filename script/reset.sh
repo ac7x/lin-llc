@@ -14,11 +14,40 @@
 # ./script/reset.sh
 # =============================================
 
-rm -rf node_modules
+set -e
 
-read -p "請輸入要 reset 的 commit hash: " commit
-if [ -z "$commit" ]; then
-  echo "未輸入 commit hash，操作中止。"
-  exit 1
+echo "開始重置專案狀態..."
+
+# 清除 node_modules
+if [ -d "node_modules" ]; then
+    echo "清除 node_modules..."
+    rm -rf node_modules
+else
+    echo "node_modules 目錄不存在，跳過清除。"
 fi
-git reset --hard "$commit"
+
+# 清除 .next 快取
+if [ -d ".next" ]; then
+    echo "清除 .next 快取..."
+    rm -rf .next
+else
+    echo ".next 目錄不存在，跳過清除。"
+fi
+
+# 清除 package-lock.json
+if [ -f "package-lock.json" ]; then
+    echo "清除 package-lock.json..."
+    rm -f package-lock.json
+else
+    echo "package-lock.json 不存在，跳過清除。"
+fi
+
+# 清除 npm 快取
+echo "清除 npm 快取..."
+npm cache clean --force
+
+# 重新安裝依賴
+echo "重新安裝依賴套件..."
+npm install
+
+echo "專案重置完成！"

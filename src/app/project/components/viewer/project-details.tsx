@@ -16,15 +16,16 @@ import type { UserProfile } from '@/app/settings/types';
 interface ProjectDetailsProps {
   project: Project;
   onProjectUpdate?: (updatedProject: Project) => void;
+  updateProjectInfo?: (project: Project) => Promise<boolean>;
 }
 
 /**
  * 專案詳情組件
  * 顯示專案的基本資訊、統計概覽和進度條
  */
-export function ProjectDetails({ project, onProjectUpdate }: ProjectDetailsProps) {
+export function ProjectDetails({ project, onProjectUpdate, updateProjectInfo }: ProjectDetailsProps) {
   const projectProgress = useProjectProgress(project);
-  const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
+    const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
 
   // 獲取用戶資料
   useEffect(() => {
@@ -136,10 +137,11 @@ export function ProjectDetails({ project, onProjectUpdate }: ProjectDetailsProps
               <SettingsIcon className="h-5 w-5" />
               專案資訊
             </div>
-            {onProjectUpdate && (
+            {onProjectUpdate && updateProjectInfo && (
               <ProjectEditDialog
                 project={project}
                 onProjectUpdate={onProjectUpdate}
+                updateProjectInfo={updateProjectInfo}
                 trigger={
                   <Button variant="outline" size="sm" className="gap-2">
                     <EditIcon className="h-4 w-4" />
@@ -231,13 +233,11 @@ export function ProjectDetails({ project, onProjectUpdate }: ProjectDetailsProps
       {/* 專案地圖 - 只有當專案設定了地區或地址時才顯示 */}
       <SimpleProjectMap project={project} />
 
-      {/* 天氣資訊 - 只有當專案設定了地區時才顯示 */}
-      {project.region && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CurrentWeather city={project.region} />
-          <WeatherForecast city={project.region} />
-        </div>
-      )}
+      {/* 天氣資訊 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CurrentWeather city={project.region} />
+        <WeatherForecast city={project.region} />
+      </div>
 
       {/* 進度條 */}
       <Card className="border-0 shadow-sm">

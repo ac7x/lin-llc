@@ -62,6 +62,16 @@ export function useProjectData(hasPermission: (permission: string) => boolean) {
           completed: data.completed || 0,
           total: data.total || 0,
           progress: data.progress || 0,
+          // 添加缺少的專案資訊欄位
+          address: data.address || undefined,
+          region: data.region || undefined,
+          manager: data.manager || undefined,
+          supervisor: data.supervisor || undefined,
+          safety: data.safety || undefined,
+          quality: data.quality || undefined,
+          assigness: data.assigness || undefined,
+          reviewers: data.reviewers || undefined,
+          time: data.time || undefined,
         };
       }) as Project[];
       
