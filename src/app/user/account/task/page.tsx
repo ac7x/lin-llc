@@ -262,6 +262,7 @@ export default function UserTaskPage() {
 
       // 清理undefined值並更新到Firestore
       const cleanedProject = removeUndefinedValues(projectData);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await updateDoc(projectRef, cleanedProject as any);
 
       // 更新本地任務列表
