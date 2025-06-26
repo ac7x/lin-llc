@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useEffect, FormEvent, ChangeEvent } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot, User, Upload, X } from 'lucide-react';
+import { User, Upload, X } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { getErrorMessage, logError, safeAsync } from '@/lib/error-utils';
 
@@ -298,7 +299,7 @@ export default function ProjectAIAssistant({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Bot className="w-5 h-5" />
+            <Image src="/sup.svg" alt="AI Assistant" width={20} height={20} />
             {assistantTitle}
             {!aiInitialized && (
               <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">
@@ -335,7 +336,7 @@ export default function ProjectAIAssistant({
                   {message.role === 'user' ? (
                     <User className="w-4 h-4" />
                   ) : (
-                    <Bot className="w-4 h-4" />
+                    <Image src="/sup.svg" alt="AI Assistant" width={16} height={16} />
                   )}
                 </AvatarFallback>
               </Avatar>
@@ -364,7 +365,7 @@ export default function ProjectAIAssistant({
             <div className="flex items-start gap-3">
               <Avatar className="w-8 h-8">
                 <AvatarFallback>
-                  <Bot className="w-4 h-4" />
+                  <Image src="/sup.svg" alt="AI Assistant" width={16} height={16} />
                 </AvatarFallback>
               </Avatar>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3">

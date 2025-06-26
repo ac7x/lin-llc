@@ -164,188 +164,187 @@ function AuthorizedProjectPage() {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        {/* 使用 AspectRatio 控制整體布局容器 */}
-        <div className="w-full min-h-screen pb-20 bg-background">
-          <AspectRatio ratio={16 / 9} className="w-full">
-            <div className="flex h-full w-full">
-              <ProjectSidebar
-                projects={projectData.projects}
-                selectedProject={projectSelection.selectedProject}
-                selectedItem={projectSelection.selectedItem}
-                loading={projectData.loading || projectOperations.loading || wizardLoading}
-                pkgInputs={projectSelection.pkgInputs}
-                setPkgInputs={projectSelection.setPkgInputs}
-                taskPackageInputs={projectSelection.taskPackageInputs}
-                setTaskPackageInputs={projectSelection.setTaskPackageInputs}
-                subInputs={projectSelection.subInputs}
-                setSubInputs={projectSelection.setSubInputs}
-                onSelectProject={projectSelection.selectProject}
-                onItemClick={handleItemClick}
-                onAddPackage={handleAddPackage}
-                onAddTaskPackage={handleAddTaskPackage}
-                onAddSubpackage={handleAddSubpackage}
-                onCreateProject={handleCreateProject}
-                onProjectUpdate={(updatedProject) => {
-                  projectData.updateProject(updatedProject);
-                  projectSelection.updateSelectedProject(updatedProject);
-                }}
-                isItemSelected={projectSelection.isItemSelected}
-              />
+        <div className="w-full h-screen bg-background flex flex-col">
+          <div className="flex flex-1 min-h-0 w-full">
+            <ProjectSidebar
+              projects={projectData.projects}
+              selectedProject={projectSelection.selectedProject}
+              selectedItem={projectSelection.selectedItem}
+              loading={projectData.loading || projectOperations.loading || wizardLoading}
+              pkgInputs={projectSelection.pkgInputs}
+              setPkgInputs={projectSelection.setPkgInputs}
+              taskPackageInputs={projectSelection.taskPackageInputs}
+              setTaskPackageInputs={projectSelection.setTaskPackageInputs}
+              subInputs={projectSelection.subInputs}
+              setSubInputs={projectSelection.setSubInputs}
+              onSelectProject={projectSelection.selectProject}
+              onItemClick={handleItemClick}
+              onAddPackage={handleAddPackage}
+              onAddTaskPackage={handleAddTaskPackage}
+              onAddSubpackage={handleAddSubpackage}
+              onCreateProject={handleCreateProject}
+              onProjectUpdate={(updatedProject) => {
+                projectData.updateProject(updatedProject);
+                projectSelection.updateSelectedProject(updatedProject);
+              }}
+              isItemSelected={projectSelection.isItemSelected}
+            />
 
-              <ResizablePanelGroup
-                direction="horizontal"
-                className="flex-1 min-h-0"
-              >
-                <ResizablePanel defaultSize={50} minSize={30}>
-                  <div className="flex h-full flex-col">
-                    <header className="border-b px-6 py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                      <div className="flex items-center gap-2">
-                        <SidebarTrigger />
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <h1 className="text-xl font-semibold truncate max-w-[200px]">
-                              {projectSelection.selectedProject ? projectSelection.selectedProject.name : '選擇專案'}
-                            </h1>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{projectSelection.selectedProject ? projectSelection.selectedProject.name : '選擇專案'}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </header>
-                    
-                    <div className="flex-1 overflow-auto">
-                      <AspectRatio ratio={4 / 3} className="w-full">
-                        <div className="h-full p-6 overflow-auto">
-                          {projectData.loading ? (
-                            <MainContentSkeleton />
-                          ) : (
-                            <ProjectViewer 
-                              selectedProject={projectSelection.selectedProject} 
-                              selectedItem={projectSelection.selectedItem}
-                              onProjectUpdate={(updatedProject) => {
-                                projectData.updateProject(updatedProject);
-                                projectSelection.updateSelectedProject(updatedProject);
-                              }}
-                              updateProjectInfo={projectOperations.updateProjectInfo}
-                            />
-                          )}
-                        </div>
-                      </AspectRatio>
+            <ResizablePanelGroup
+              direction="horizontal"
+              className="flex-1 min-h-0"
+            >
+              <ResizablePanel defaultSize={50} minSize={30}>
+                <div className="flex h-full flex-col">
+                  <header className="border-b px-6 py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    <div className="flex items-center gap-2">
+                      <SidebarTrigger />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <h1 className="text-xl font-semibold truncate max-w-[200px]">
+                            {projectSelection.selectedProject ? projectSelection.selectedProject.name : '選擇專案'}
+                          </h1>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{projectSelection.selectedProject ? projectSelection.selectedProject.name : '選擇專案'}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
+                  </header>
+                  
+                  <div className="flex-1 overflow-auto">
+                    <AspectRatio ratio={4/3} className="w-full">
+                      <div className="h-full p-6 overflow-auto">
+                        {projectData.loading ? (
+                          <MainContentSkeleton />
+                        ) : (
+                          <ProjectViewer 
+                            selectedProject={projectSelection.selectedProject} 
+                            selectedItem={projectSelection.selectedItem}
+                            onProjectUpdate={(updatedProject) => {
+                              projectData.updateProject(updatedProject);
+                              projectSelection.updateSelectedProject(updatedProject);
+                            }}
+                            updateProjectInfo={projectOperations.updateProjectInfo}
+                          />
+                        )}
+                      </div>
+                    </AspectRatio>
                   </div>
-                </ResizablePanel>
+                </div>
+              </ResizablePanel>
 
-                <ResizableHandle withHandle className="w-1 bg-border hover:bg-border/80 transition-colors" />
+              <ResizableHandle withHandle className="w-1 bg-border hover:bg-border/80 transition-colors" />
 
-                <ResizablePanel defaultSize={50} minSize={20}>
-                  <ResizablePanelGroup direction="vertical">
-                    <ResizablePanel defaultSize={25} minSize={15}>
-                      <div className="flex h-full items-center justify-center p-6 bg-muted/5">
-                        <div className="text-center w-full max-w-sm">
+              <ResizablePanel defaultSize={50} minSize={20}>
+                <ResizablePanelGroup direction="vertical">
+                  <ResizablePanel defaultSize={25} minSize={15}>
+                    <div className="flex h-full items-center justify-center p-4 bg-muted/5">
+                      <AspectRatio ratio={3/2} className="w-full max-w-sm">
+                        <div className="h-full flex flex-col justify-center text-center">
                           <h3 className="font-semibold mb-2">專案概覽</h3>
                           {projectData.loading ? (
                             <RightPanelSkeleton />
                           ) : projectSelection.selectedProject ? (
-                            <AspectRatio ratio={3 / 2} className="w-full">
-                              <div className="h-full flex flex-col justify-center space-y-2 text-sm">
-                                <p><strong>專案名稱：</strong>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="truncate max-w-[150px] inline-block">{projectSelection.selectedProject.name}</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>{projectSelection.selectedProject.name}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </p>
-                                <p><strong>工作包數量：</strong>{projectProgress.getPackageCount()}</p>
-                                <p><strong>總子工作包數：</strong>{projectProgress.getSubpackageCount()}</p>
-                                <p><strong>總任務數：</strong>{projectProgress.getTaskCount()}</p>
-                                <p><strong>完成進度：</strong>{projectProgress.progressText}</p>
-                              </div>
-                            </AspectRatio>
+                            <div className="space-y-2 text-sm">
+                              <p><strong>專案名稱：</strong>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="truncate max-w-[150px] inline-block">{projectSelection.selectedProject.name}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{projectSelection.selectedProject.name}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </p>
+                              <p><strong>工作包數量：</strong>{projectProgress.getPackageCount()}</p>
+                              <p><strong>總子工作包數：</strong>{projectProgress.getSubpackageCount()}</p>
+                              <p><strong>總任務數：</strong>{projectProgress.getTaskCount()}</p>
+                              <p><strong>完成進度：</strong>{projectProgress.progressText}</p>
+                            </div>
                           ) : (
                             <p className="text-gray-500">選擇專案以查看概覽</p>
                           )}
                         </div>
-                      </div>
-                    </ResizablePanel>
-                    
-                    <ResizableHandle withHandle className="h-1 bg-border hover:bg-border/80 transition-colors" />
-                    
-                    <ResizablePanel defaultSize={75} minSize={25}>
-                      <div className="flex h-full items-center justify-center p-6 bg-muted/10">
-                        <div className="text-center w-full max-w-sm">
+                      </AspectRatio>
+                    </div>
+                  </ResizablePanel>
+                  
+                  <ResizableHandle withHandle className="h-1 bg-border hover:bg-border/80 transition-colors" />
+                  
+                  <ResizablePanel defaultSize={75} minSize={25}>
+                    <div className="flex h-full items-start justify-center p-4 bg-muted/10">
+                      <AspectRatio ratio={3/4} className="w-full max-w-sm">
+                        <div className="h-full flex flex-col text-center">
                           <h3 className="font-semibold mb-2">詳細資訊</h3>
                           {projectData.loading ? (
                             <DetailsSkeleton />
                           ) : projectSelection.selectedProject ? (
-                            <AspectRatio ratio={3 / 4} className="w-full">
-                              <div className="h-full flex flex-col justify-center space-y-2 text-sm overflow-auto">
-                                <div className="space-y-3">
-                                  <div>
-                                    <p><strong>建立時間：</strong></p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {(() => {
-                                        try {
-                                          const createdAt = projectSelection.selectedProject.createdAt;
-                                          if (!createdAt) return '未設定';
-                                          
-                                          let date: Date;
-                                          if (typeof createdAt === 'string') {
-                                            if (createdAt.includes('T') || createdAt.includes('Z')) {
-                                              date = new Date(createdAt);
-                                            } else {
-                                              const timestamp = parseInt(createdAt);
-                                              date = !isNaN(timestamp) ? new Date(timestamp) : new Date(createdAt);
-                                            }
-                                          } else {
+                            <div className="flex-1 space-y-2 text-sm overflow-auto">
+                              <div className="space-y-3">
+                                <div>
+                                  <p><strong>建立時間：</strong></p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {(() => {
+                                      try {
+                                        const createdAt = projectSelection.selectedProject.createdAt;
+                                        if (!createdAt) return '未設定';
+                                        
+                                        let date: Date;
+                                        if (typeof createdAt === 'string') {
+                                          if (createdAt.includes('T') || createdAt.includes('Z')) {
                                             date = new Date(createdAt);
+                                          } else {
+                                            const timestamp = parseInt(createdAt);
+                                            date = !isNaN(timestamp) ? new Date(timestamp) : new Date(createdAt);
                                           }
-                                          
-                                          return isNaN(date.getTime()) ? '日期格式錯誤' : date.toLocaleString('zh-TW');
-                                        } catch (error) {
-                                          return '日期格式錯誤';
+                                        } else {
+                                          date = new Date(createdAt);
                                         }
-                                      })()}
-                                    </p>
-                                  </div>
-                                  
-                                  <div>
-                                    <p><strong>專案描述：</strong></p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {projectSelection.selectedProject.description || '無描述'}
-                                    </p>
-                                  </div>
-                                  
-                                  <div>
-                                    <p><strong>專案進度：</strong></p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {projectProgress.progressDescription}
-                                    </p>
-                                  </div>
-                                  
-                                  <div>
-                                    <p><strong>進度百分比：</strong></p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {projectProgress.getProgressPercentage()}%
-                                    </p>
-                                  </div>
+                                        
+                                        return isNaN(date.getTime()) ? '日期格式錯誤' : date.toLocaleString('zh-TW');
+                                      } catch (error) {
+                                        return '日期格式錯誤';
+                                      }
+                                    })()}
+                                  </p>
+                                </div>
+                                
+                                <div>
+                                  <p><strong>專案描述：</strong></p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {projectSelection.selectedProject.description || '無描述'}
+                                  </p>
+                                </div>
+                                
+                                <div>
+                                  <p><strong>專案進度：</strong></p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {projectProgress.progressDescription}
+                                  </p>
+                                </div>
+                                
+                                <div>
+                                  <p><strong>進度百分比：</strong></p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {projectProgress.getProgressPercentage()}%
+                                  </p>
                                 </div>
                               </div>
-                            </AspectRatio>
+                            </div>
                           ) : (
                             <p className="text-gray-500">選擇專案以查看詳細資訊</p>
                           )}
                         </div>
-                      </div>
-                    </ResizablePanel>
-                  </ResizablePanelGroup>
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </div>
-          </AspectRatio>
+                      </AspectRatio>
+                    </div>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+          {/* 底部導航空間預留 */}
+          <div className="h-20 bg-background border-t flex-shrink-0" />
         </div>
       </SidebarProvider>
     </TooltipProvider>

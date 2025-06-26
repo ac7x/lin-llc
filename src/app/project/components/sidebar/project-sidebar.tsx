@@ -106,7 +106,7 @@ export function ProjectSidebar({
   );
 
   return (
-    <Sidebar className="z-50">
+    <Sidebar className="z-50 h-full">
       <SidebarHeader className="border-b px-6 py-4 flex-shrink-0">
         <div className="flex items-center gap-2">
           <FolderIcon className="h-5 w-5" />
