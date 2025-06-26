@@ -4,4 +4,7 @@
  */
 
 export * from './project-skeletons';
-export * from './points-dashboard'; 
+export * from './points-dashboard';
+export * from './user-selector';
+export * from './region-selector';
+export * from './simple-context-menu'; 

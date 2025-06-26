@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, addDoc, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { db, storage, auth } from '@/lib/firebase-init';
@@ -92,19 +92,17 @@ export default function ProjectJournal({
         : [];
 
       // 儲存日誌條目
+      const now = new Date().toISOString();
       const journalEntry: Omit<JournalEntry, 'id'> = {
         projectId,
         title: formData.title.trim(),
         content: formData.content.trim(),
         photos: photoUrls,
-        createdAt: Timestamp.now().toDate().toISOString(),
+        createdAt: now,
         createdBy: user.uid
       };
 
-      await addDoc(collection(db, 'projects', projectId, 'journal'), {
-        ...journalEntry,
-        createdAt: Timestamp.now()
-      });
+      await addDoc(collection(db, 'projects', projectId, 'journal'), journalEntry);
 
       // 重置表單
       setFormData({ title: '', content: '', photos: [] });

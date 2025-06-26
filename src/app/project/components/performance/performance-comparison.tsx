@@ -13,9 +13,9 @@ import {
   CheckCircleIcon,
   AlertTriangleIcon,
 } from 'lucide-react';
-import { VirtualizedProjectTree } from './tree/virtualized-project-tree';
-import ProjectTree from './tree/project-tree';
-import { Project } from '../types';
+import { VirtualizedProjectTree } from '../tree/virtualized-project-tree';
+import ProjectTree from '../tree/project-tree';
+import { Project } from '../../types';
 
 interface PerformanceComparisonProps {
   project: Project;

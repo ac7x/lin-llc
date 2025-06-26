@@ -1,4 +1,157 @@
 /**
+ * 台灣縣市枚舉
+ */
+export enum TaiwanCity {
+  TaipeiCity = '台北市',
+  NewTaipeiCity = '新北市',
+  TaoyuanCity = '桃園市',
+  TaichungCity = '台中市',
+  TainanCity = '台南市',
+  KaohsiungCity = '高雄市',
+  KeelungCity = '基隆市',
+  HsinchuCity = '新竹市',
+  HsinchuCounty = '新竹縣',
+  MiaoliCounty = '苗栗縣',
+  ChanghuaCounty = '彰化縣',
+  NantouCounty = '南投縣',
+  YunlinCounty = '雲林縣',
+  ChiayiCity = '嘉義市',
+  ChiayiCounty = '嘉義縣',
+  PingtungCounty = '屏東縣',
+  YilanCounty = '宜蘭縣',
+  HualienCounty = '花蓮縣',
+  TaitungCounty = '台東縣',
+  PenghuCounty = '澎湖縣',
+  KinmenCounty = '金門縣',
+  LienchiangCounty = '連江縣',
+}
+
+/**
+ * 台灣縣市資訊介面
+ */
+export interface TaiwanCityInfo {
+  value: TaiwanCity;
+  label: string;
+  owmQuery: string; // OpenWeatherMap API 查詢用字串
+}
+
+/**
+ * 台灣縣市列表，包含 OpenWeatherMap API 查詢字串
+ */
+export const TaiwanCityList: TaiwanCityInfo[] = [
+  {
+    value: TaiwanCity.TaipeiCity,
+    label: '台北市',
+    owmQuery: 'Taipei,tw',
+  },
+  {
+    value: TaiwanCity.NewTaipeiCity,
+    label: '新北市',
+    owmQuery: 'New Taipei,tw',
+  },
+  {
+    value: TaiwanCity.TaoyuanCity,
+    label: '桃園市',
+    owmQuery: 'Taoyuan,tw',
+  },
+  {
+    value: TaiwanCity.TaichungCity,
+    label: '台中市',
+    owmQuery: 'Taichung,tw',
+  },
+  {
+    value: TaiwanCity.TainanCity,
+    label: '台南市',
+    owmQuery: 'Tainan,tw',
+  },
+  {
+    value: TaiwanCity.KaohsiungCity,
+    label: '高雄市',
+    owmQuery: 'Kaohsiung,tw',
+  },
+  {
+    value: TaiwanCity.KeelungCity,
+    label: '基隆市',
+    owmQuery: 'Keelung,tw',
+  },
+  {
+    value: TaiwanCity.HsinchuCity,
+    label: '新竹市',
+    owmQuery: 'Hsinchu,tw',
+  },
+  {
+    value: TaiwanCity.HsinchuCounty,
+    label: '新竹縣',
+    owmQuery: 'Hsinchu County,tw',
+  },
+  {
+    value: TaiwanCity.MiaoliCounty,
+    label: '苗栗縣',
+    owmQuery: 'Miaoli,tw',
+  },
+  {
+    value: TaiwanCity.ChanghuaCounty,
+    label: '彰化縣',
+    owmQuery: 'Changhua,tw',
+  },
+  {
+    value: TaiwanCity.NantouCounty,
+    label: '南投縣',
+    owmQuery: 'Nantou,tw',
+  },
+  {
+    value: TaiwanCity.YunlinCounty,
+    label: '雲林縣',
+    owmQuery: 'Yunlin,tw',
+  },
+  {
+    value: TaiwanCity.ChiayiCity,
+    label: '嘉義市',
+    owmQuery: 'Chiayi,tw',
+  },
+  {
+    value: TaiwanCity.ChiayiCounty,
+    label: '嘉義縣',
+    owmQuery: 'Chiayi County,tw',
+  },
+  {
+    value: TaiwanCity.PingtungCounty,
+    label: '屏東縣',
+    owmQuery: 'Pingtung,tw',
+  },
+  {
+    value: TaiwanCity.YilanCounty,
+    label: '宜蘭縣',
+    owmQuery: 'Yilan,tw',
+  },
+  {
+    value: TaiwanCity.HualienCounty,
+    label: '花蓮縣',
+    owmQuery: 'Hualien,tw',
+  },
+  {
+    value: TaiwanCity.TaitungCounty,
+    label: '台東縣',
+    owmQuery: 'Taitung,tw',
+  },
+  {
+    value: TaiwanCity.PenghuCounty,
+    label: '澎湖縣',
+    owmQuery: 'Penghu,tw',
+  },
+  {
+    value: TaiwanCity.KinmenCounty,
+    label: '金門縣',
+    owmQuery: 'Kinmen,tw',
+  },
+  {
+    value: TaiwanCity.LienchiangCounty,
+    label: '連江縣',
+    owmQuery: 'Lienchiang,tw',
+  },
+];
+
+/**
  * 排程時間介面 - 定義專案或任務的時間規劃和執行時間
  */
 export interface ScheduleTime {
@@ -80,6 +233,12 @@ export interface Project {
   time?: ScheduleTime;             // 時間排程 - 專案的時間規劃和實際執行時間
   assigness?: string[];            // 指派人員 - 負責此專案的人員清單
   reviewers?: string[];            // 審核者 - 此專案的審核者（用戶 UID 陣列）
+  manager?: string[];              // 經理 - 此專案的經理（用戶 UID 陣列）
+  supervisor?: string[];           // 監工 - 此專案的監工（用戶 UID 陣列）
+  safety?: string[];               // 公安 - 此專案的公安（用戶 UID 陣列）
+  quality?: string[];              // 品管 - 此專案的品管（用戶 UID 陣列）
+  region?: TaiwanCity;             // 地區 - 專案所在的台灣縣市
+  address?: string;                // 地址 - 專案的詳細地址
   description: string;             // 專案描述 - 專案的詳細說明文字
   createdAt: string;               // 建立時間 - 專案建立的時間戳記
   packages: Package[];             // 工作包清單 - 此專案包含的所有工作包

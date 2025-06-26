@@ -24,8 +24,8 @@ import {
   ZapIcon,
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
-import { VirtualizedProjectTree } from './tree/virtualized-project-tree';
-import { Project, SelectedItem } from '../types';
+import { VirtualizedProjectTree } from '../tree/virtualized-project-tree';
+import { Project, SelectedItem } from '../../types';
 
 interface VirtualizedProjectSidebarProps {
   projects: Project[];

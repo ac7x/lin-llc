@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/tooltip';
 import { 
   PackageIcon,
-  ListIcon,
+  BookOpen,
   SquareIcon,
 } from 'lucide-react';
 import { useProjectProgress } from '../../hooks';
@@ -51,7 +51,7 @@ export function ProjectOverviewCards({ project }: ProjectOverviewCardsProps) {
           <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <ListIcon className="h-5 w-5 text-purple-500" />
+                <BookOpen className="h-5 w-5 text-purple-500" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>子工作包數量</p>

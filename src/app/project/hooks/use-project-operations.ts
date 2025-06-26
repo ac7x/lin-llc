@@ -33,17 +33,23 @@ export function useProjectOperations(
     setError(null);
     
     try {
+      const now = new Date().toISOString();
       const docRef = await addDoc(collection(db, 'projects'), {
         name: projectName.trim(),
-        createdAt: new Date().toISOString(),
+        description: '',
+        createdAt: now,
+        updatedAt: now,
         packages: [],
+        completed: 0,
+        total: 0,
+        progress: 0,
       });
       
       const newProject: Project = {
         id: docRef.id,
         name: projectName.trim(),
         description: '',
-        createdAt: new Date().toISOString(),
+        createdAt: now,
         packages: [],
         completed: 0,
         total: 0,
