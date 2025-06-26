@@ -14,10 +14,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useGoogleAuth } from '@/app/(system)';
+import { useTaskManagement } from '../../../hooks';
 import { ProjectTaskNodeProps, SelectedItem } from '../../../types';
 import { ITEM_SELECT_STYLE } from '../../../constants';
 import { getItemInfo } from './tree-utils';
 import { TaskActionButtons } from './task-action-buttons';
+import { TaskAssignmentDialog, TaskSubmissionDialog, TaskReviewDialog } from '../../task';
 import { RenameDialog } from './rename-dialog';
 import { SimpleContextMenu } from '../../ui/simple-context-menu';
 
@@ -32,17 +34,17 @@ export default function ProjectTaskNode({
   taskIndex,
   onItemClick,
   isItemSelected,
-  onAssignTask,
-  onSubmitTask,
-  onReviewTask,
-  onRename,
+  onProjectUpdate,
 }: ProjectTaskNodeProps & {
-  onAssignTask?: (taskItem: SelectedItem) => void;
-  onSubmitTask?: (taskItem: SelectedItem) => void;
-  onReviewTask?: (taskItem: SelectedItem) => void;
-  onRename?: (taskItem: SelectedItem, newName: string) => void;
+  onProjectUpdate?: (updatedProject: any) => void;
 }) {
   const { user } = useGoogleAuth();
+  const { assignTask, submitTaskProgress, reviewTask } = useTaskManagement();
+  
+  // 對話框狀態
+  const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
+  const [showSubmissionDialog, setShowSubmissionDialog] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
 
   const task = project.packages[packageIndex]?.subpackages[subpackageIndex]?.taskpackages[taskIndex];
@@ -62,15 +64,28 @@ export default function ProjectTaskNode({
   const isSelected = isItemSelected(taskItem);
   const itemInfo = getItemInfo('task', isSelected);
 
+  // 任務操作處理
+  const handleAssignTask = () => {
+    setShowAssignmentDialog(true);
+  };
+
+  const handleSubmitTask = () => {
+    setShowSubmissionDialog(true);
+  };
+
+  const handleReviewTask = () => {
+    setShowReviewDialog(true);
+  };
+
   // 右鍵菜單處理
   const handleRename = () => {
     setShowRenameDialog(true);
   };
 
   const handleRenameConfirm = (newName: string) => {
-    if (onRename) {
-      onRename(taskItem, newName);
-    }
+    // 實現重新命名邏輯
+    console.log('Rename task:', task.name, 'to:', newName);
+    setShowRenameDialog(false);
   };
 
   const contextMenuProps = {
@@ -85,9 +100,9 @@ export default function ProjectTaskNode({
 
   return (
     <>
-      <SidebarMenuItem>
+      <SidebarMenuItem className="overflow-hidden">
         <SimpleContextMenu {...contextMenuProps}>
-          <SidebarMenuButton className="pl-2">
+          <SidebarMenuButton className="pl-2 min-h-0 h-5">
             <div 
               onClick={() => onItemClick(taskItem)}
               className={`${ITEM_SELECT_STYLE} ${
@@ -108,15 +123,15 @@ export default function ProjectTaskNode({
                 </TooltipContent>
               </Tooltip>
               
-              {/* 任務操作按鈕 */}
+              {/* 任務操作按鈕和進度顯示 */}
               <TaskActionButtons
                 task={task}
                 userUid={user?.uid}
                 isSelected={isSelected}
                 itemColor={itemInfo.color}
-                onAssignTask={onAssignTask ? () => onAssignTask(taskItem) : undefined}
-                onSubmitTask={onSubmitTask ? () => onSubmitTask(taskItem) : undefined}
-                onReviewTask={onReviewTask ? () => onReviewTask(taskItem) : undefined}
+                onAssignTask={handleAssignTask}
+                onSubmitTask={handleSubmitTask}
+                onReviewTask={handleReviewTask}
                 showStatus={false}
                 showProgress={false}
               />
@@ -124,6 +139,78 @@ export default function ProjectTaskNode({
           </SidebarMenuButton>
         </SimpleContextMenu>
       </SidebarMenuItem>
+
+      {/* 任務對話框 */}
+      <TaskAssignmentDialog
+        isOpen={showAssignmentDialog}
+        onClose={() => setShowAssignmentDialog(false)}
+        taskName={task.name}
+        projectName={project.name}
+        currentSubmitters={task.submitters || []}
+        currentReviewers={task.reviewers || []}
+        onAssign={async (submitters: string[], reviewers: string[]) => {
+          const success = await assignTask(
+            project,
+            {
+              packageIndex,
+              subpackageIndex,
+              taskIndex,
+            },
+            submitters,
+            reviewers,
+            onProjectUpdate || (() => {})
+          );
+          return success;
+        }}
+      />
+
+      <TaskSubmissionDialog
+        isOpen={showSubmissionDialog}
+        onClose={() => setShowSubmissionDialog(false)}
+        taskName={task.name}
+        currentCompleted={task.completed || 0}
+        currentTotal={task.total || 0}
+        onSubmit={async (completed: number, total: number) => {
+          const success = await submitTaskProgress(
+            project,
+            {
+              packageIndex,
+              subpackageIndex,
+              taskIndex,
+            },
+            completed,
+            total,
+            onProjectUpdate || (() => {})
+          );
+          return success;
+        }}
+      />
+
+      <TaskReviewDialog
+        isOpen={showReviewDialog}
+        onClose={() => setShowReviewDialog(false)}
+        taskName={task.name}
+        projectName={project.name}
+        submittedBy={task.submittedBy}
+        submittedAt={task.submittedAt}
+        completed={task.completed || 0}
+        total={task.total || 0}
+        currentStatus={task.status}
+        onReview={async (approved: boolean, comment?: string) => {
+          const success = await reviewTask(
+            project,
+            {
+              packageIndex,
+              subpackageIndex,
+              taskIndex,
+            },
+            approved,
+            onProjectUpdate || (() => {}),
+            comment
+          );
+          return success;
+        }}
+      />
 
       {/* 重新命名對話框 */}
       <RenameDialog

@@ -46,8 +46,10 @@ export default function ProjectSubpackageNode({
   subInputs,
   setSubInputs,
   onRename,
+  onProjectUpdate,
 }: ProjectSubpackageNodeProps & {
   onRename?: (subpackageItem: SelectedItem, newName: string) => void;
+  onProjectUpdate?: (updatedProject: any) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showInput, setShowInput] = useState(false);
@@ -163,6 +165,7 @@ export default function ProjectSubpackageNode({
                 onItemClick={onItemClick}
                 loading={loading}
                 isItemSelected={isItemSelected}
+                onProjectUpdate={onProjectUpdate}
               />
             ))}
             

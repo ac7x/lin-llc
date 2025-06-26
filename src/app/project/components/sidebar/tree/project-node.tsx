@@ -52,6 +52,7 @@ export default function ProjectNode({
   subInputs,
   setSubInputs,
   onRename,
+  onProjectUpdate,
 }: ProjectNodeProps & {
   onAddSubpackage?: (projectId: string, pkgIdx: number, subName: string) => Promise<void>;
   onAddTaskPackage?: (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => Promise<void>;
@@ -60,6 +61,7 @@ export default function ProjectNode({
   subInputs?: Record<string, Record<number, Record<number, string>>>;
   setSubInputs?: React.Dispatch<React.SetStateAction<Record<string, Record<number, Record<number, string>>>>>;
   onRename?: (projectItem: SelectedItem, newName: string) => void;
+  onProjectUpdate?: (updatedProject: any) => void;
 }) {
   const [expanded, setExpanded] = useState(selectedProject?.id === project.id);
   const [showInput, setShowInput] = useState(false);
@@ -168,6 +170,7 @@ export default function ProjectNode({
                 subInputs={subInputs || {}}
                 setSubInputs={setSubInputs || (() => {})}
                 onAddTaskPackage={onAddTaskPackage || (async () => {})}
+                onProjectUpdate={onProjectUpdate}
               />
             ))}
             
