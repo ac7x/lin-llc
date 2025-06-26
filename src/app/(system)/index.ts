@@ -50,6 +50,7 @@ export type {
 } from './permissions/types';
 
 // === 資料層 (Data Layer) ===
+// Firebase 服務實例
 export { 
   auth, 
   db, 
@@ -63,6 +64,15 @@ export {
   getFirebaseConfig,
   isEmulatorEnvironment
 } from './data/lib/firebase-init';
+
+// Firebase 配置和常數
+export { 
+  firebaseConfig,
+  RECAPTCHA_CONFIG,
+  APP_CHECK_CONFIG,
+  GOOGLE_MAPS_API_KEY,
+  GOOGLE_MAPS_MAP_ID
+} from './data/lib/firebase-config';
 
 // === 系統架構統一導出 ===
 // 提供清晰的三層架構導出，避免循環依賴問題 
