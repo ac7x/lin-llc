@@ -2,8 +2,7 @@
  * Google Maps API 服務
  */
 
-// Google Maps API 設定
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBdgNEAkXT0pCWOkSK7xXoAcUsOWbJEz8o';
+import { GOOGLE_MAPS_API_KEY } from '@/lib/firebase-config';
 
 /**
  * 地理座標介面
@@ -93,19 +92,9 @@ class MapService {
       }
 
       try {
-        // 等待 Firebase 客戶端服務初始化完成（包括 App Check）
-        console.log('等待 Firebase 客戶端服務初始化...');
-        await this.waitForFirebaseInitialization();
-        
-        // 暫時抑制 App Check 錯誤
-        this.suppressAppCheckErrors();
-        
         // 建構 Google Maps API URL
-        let mapsSrc = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,marker&language=zh-TW&region=TW&loading=async`;
-        
-        // 添加回調參數
         const callbackName = `initMap_${Date.now()}`;
-        mapsSrc += `&callback=${callbackName}`;
+        const mapsSrc = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,marker&language=zh-TW&region=TW&loading=async&callback=${callbackName}`;
 
         // 設定全域回調函數
         (window as any)[callbackName] = () => {
@@ -122,7 +111,7 @@ class MapService {
             .catch(reject);
         };
 
-        console.log('載入 Google Maps API (App Check 已初始化):', mapsSrc);
+        console.log('載入 Google Maps API:', mapsSrc);
         
         // 創建 script 標籤
         const script = document.createElement('script');
@@ -140,76 +129,11 @@ class MapService {
         document.head.appendChild(script);
       } catch (error) {
         console.error('載入 Google Maps API 時發生錯誤:', error);
-        
-        // 降級方案：不等待 App Check，直接載入
-        console.log('使用降級方案載入 Maps API');
-        this.suppressAppCheckErrors();
-        
-        const fallbackCallbackName = `initMapFallback_${Date.now()}`;
-        
-        (window as any)[fallbackCallbackName] = () => {
-          this.waitForMapsReady()
-            .then(() => {
-              this.isLoaded = true;
-              delete (window as any)[fallbackCallbackName];
-              resolve();
-            })
-            .catch(reject);
-        };
-
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,marker&language=zh-TW&region=TW&loading=async&callback=${fallbackCallbackName}`;
-        script.async = true;
-        script.defer = true;
-
-        script.onerror = () => {
-          delete (window as any)[fallbackCallbackName];
-          reject(new Error('Failed to load Google Maps API'));
-        };
-
-        document.head.appendChild(script);
+        reject(error);
       }
     });
 
     return this.loadPromise;
-  }
-
-  /**
-   * 等待 Firebase 客戶端服務初始化完成
-   */
-  private async waitForFirebaseInitialization(): Promise<void> {
-    return new Promise((resolve) => {
-      const maxWaitTime = 10000; // 最多等待 10 秒
-      const checkInterval = 100; // 每 100ms 檢查一次
-      let waitedTime = 0;
-
-      const checkInitialization = async () => {
-        try {
-          // 檢查 Firebase 客戶端服務是否已初始化
-          const { isClientServicesReady } = await import('@/lib/firebase-init');
-          
-          if (await isClientServicesReady()) {
-            console.log('Firebase 客戶端服務已初始化，包括 App Check');
-            resolve();
-            return;
-          }
-        } catch (error) {
-          console.log('檢查 Firebase 初始化狀態失敗:', error);
-        }
-
-        waitedTime += checkInterval;
-        
-        if (waitedTime >= maxWaitTime) {
-          console.log('Firebase 初始化等待超時，繼續載入 Maps API');
-          resolve();
-          return;
-        }
-
-        setTimeout(checkInitialization, checkInterval);
-      };
-
-      checkInitialization();
-    });
   }
 
   /**
@@ -435,38 +359,6 @@ class MapService {
   private toRad(degrees: number): number {
     return degrees * (Math.PI / 180);
   }
-
-  /**
-   * 暫時抑制 App Check 相關錯誤
-   */
-  private suppressAppCheckErrors(): void {
-    const originalConsoleError = console.error;
-    
-    // 創建過濾後的 console.error
-    console.error = function(...args: any[]) {
-      // 檢查是否為 App Check 相關錯誤
-      const errorMessage = args[0]?.toString() || '';
-      
-      if (
-        errorMessage.includes('InvalidAppCheckTokenMapError') ||
-        errorMessage.includes('App Check') ||
-        errorMessage.includes('AppCheck')
-      ) {
-        // 用警告替代錯誤，不會中斷應用
-        console.warn('🗺️ App Check 警告 (已忽略):', ...args);
-        return;
-      }
-      
-      // 其他錯誤正常顯示
-      originalConsoleError.apply(console, args);
-    };
-
-    // 5 秒後恢復原始的 console.error
-    setTimeout(() => {
-      console.error = originalConsoleError;
-      console.log('已恢復原始的 console.error');
-    }, 5000);
-  }
 }
 
 // Google Maps API 類型定義
@@ -483,6 +375,15 @@ declare global {
         GeocoderStatus: {
           OK: any;
         };
+        Map: new (element: HTMLElement, options: any) => any;
+        MapTypeId: {
+          ROADMAP: any;
+        };
+        Marker: new (options: any) => any;
+        Animation: {
+          DROP: any;
+        };
+        InfoWindow: new (options: any) => any;
         places: {
           AutocompleteService: new () => {
             getPlacePredictions: (
@@ -500,6 +401,9 @@ declare global {
             OK: any;
             ZERO_RESULTS: any;
           };
+        };
+        marker: {
+          AdvancedMarkerElement: new (options: any) => any;
         };
       };
     };

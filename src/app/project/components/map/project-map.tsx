@@ -136,10 +136,10 @@ export function ProjectMap({
 
     // 移除舊標記
     if (markerRef.current) {
-      markerRef.current.map = null;
+      markerRef.current.setMap(null);
     }
 
-    // 檢查是否支援 AdvancedMarkerElement
+    // 優先使用 AdvancedMarkerElement，降級使用標準 Marker
     if (google.maps.marker?.AdvancedMarkerElement) {
       // 使用新的 AdvancedMarkerElement
       markerRef.current = new google.maps.marker.AdvancedMarkerElement({
@@ -158,7 +158,7 @@ export function ProjectMap({
         infoWindow.open(mapInstanceRef.current, markerRef.current);
       });
     } else {
-      // 降級使用舊的 Marker（暫時保留以確保兼容性）
+      // 降級使用標準 Marker
       markerRef.current = new google.maps.Marker({
         position: location,
         map: mapInstanceRef.current,
