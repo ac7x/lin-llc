@@ -42,6 +42,10 @@ export interface WeatherForecast {
  */
 interface OpenWeatherCurrentResponse {
   name: string;
+  coord: {
+    lat: number;
+    lon: number;
+  };
   main: {
     temp: number;
     feels_like: number;
@@ -114,15 +118,21 @@ class WeatherService {
 
       const data: OpenWeatherCurrentResponse = await response.json();
 
-      // 獲取 UV 指數（可選）
+      // 獲取 UV 指數（使用正確的座標）
       let uvIndex: number | undefined;
       try {
-        const uvResponse = await fetch(
-          `${OPENWEATHER_BASE_URL}/uvi?lat=${data.name}&lon=${data.name}&appid=${OPENWEATHER_API_KEY}`
-        );
-        if (uvResponse.ok) {
-          const uvData: OpenWeatherUVResponse = await uvResponse.json();
-          uvIndex = uvData.value;
+        // 使用正確的座標參數
+        const lat = (data as any).coord?.lat;
+        const lon = (data as any).coord?.lon;
+        
+        if (lat && lon) {
+          const uvResponse = await fetch(
+            `${OPENWEATHER_BASE_URL}/uvi?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}`
+          );
+          if (uvResponse.ok) {
+            const uvData: OpenWeatherUVResponse = await uvResponse.json();
+            uvIndex = uvData.value;
+          }
         }
       } catch (error) {
         console.warn('無法獲取 UV 指數:', error);

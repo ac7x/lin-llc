@@ -1,0 +1,216 @@
+---
+description: Server actions for React
+globs: *.action.ts
+alwaysApply: false
+---
+
+Below is a concise set of recommended “rules” or best practices for using React
+Server Actions together with next-safe-action and shared Zod schemas.
+
+You will need to retrieve the documentations of :
+
+- react-hook-form
+- zod
+- next-auth
+- next-safe-action
+
+## 0 - Introduction
+
+Ensure the file is named like `my-domain.action.ts` Ensure the action file has
+"use server"`
+
+## 1. Keep Zod Schemas in a Shared Module
+
+1. **Single Source of Truth**
+
+   - Define all Zod schemas in a dedicated
+     `src/models/validation/my-domain.zod.ts` (or similar) so they can be
+     imported in both client and server code.
+   - This ensures consistent validation rules for both front-end and back-end
+     without duplication.
+
+2. **Schema for Each Data Model**
+   - Write separate schemas for each form or data type you collect.
+   - Keep them small and composable. For example, `ZodUserLogin`,
+     `ZodUserRegistration`, etc.
+
+---
+
+## 2. Client-Side Validation with Zod
+
+1. **Immediate Feedback**
+
+   - On the client, parse or refine data with Zod to prevent sending invalid
+     forms.
+   - Use React hook form and its documentation or a custom solution that calls
+     `ZodUserLogin.safeParse()`.
+
+2. **Don’t Rely Solely on Client Validation**
+   - Treat client validation as a convenience layer; remember the server must
+     run the same validation to guarantee safety.
+
+---
+
+## 3. Server Actions with next-safe-action
+
+1. On the server side, call `createSafeActionClient`
+
+Separate boilerplate from business logic and type definitions.:
+
+```typescript
+'use server'; // don't forget to add this!
+
+import { z } from 'zod';
+
+// usually imported from another file
+const actionClient = createSafeActionClient();
+
+// Boilerplate Create a safe action with input validation
+export const signupMember = actionClient
+  .schema(CreateZodMember)
+  .action(async ({ parsedInput: { email, system, userId } }) => {
+    return await createMemberWork({ email, system, userId });
+  });
+
+// type inference
+type ZMember = z.infer<typeof CreateZodMember>;
+
+// Real action implementation
+async function createMemberWork({ userId, email, system }: ZMember) {
+  try {
+    // Verify session if needed
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    /**
+     * Real work, depends on your business logic
+     */
+
+    // return the result
+    return {
+      success: true,
+      member: standardMember,
+    };
+  } catch (error) {
+    console.error('Failed to create member:', error);
+    return {
+      success: false,
+      error: 'Failed to create member',
+    };
+  }
+}
+```
+
+2. On the client side, call useAction
+
+```tsx
+'use client';
+
+import { useAction } from 'next-safe-action/hooks';
+import { loginUser } from '@/actions/loginUser.action';
+
+export default function AdminLogin() {
+  const [password, setPassword] = useState('');
+  const { execute, isPending, result } = useAction(loginUser);
+
+  return (
+    <div>
+      <div>Enter admin password:</div>
+      <input type="text" onChange={(e) => setPassword(e.target.value)} />
+      <button
+        onClick={() => {
+          execute({ username: 'admin', password });
+        }}
+      >
+        Login user
+      </button>
+      {result.data?.message ? <p>{result.data.message}</p> : null}
+    </div>
+  );
+}
+```
+
+2. **Never Return Sensitive Data**
+
+   - Make sure the return value from your server action doesn’t contain secrets,
+     raw DB records with sensitive fields, etc.
+   - Keep the surface area minimal.
+   - Use principles of SOLID design to keep your actions focused and
+     single-purposed.
+
+3. **Enable Strict TS Checking**
+
+   - Use strong TypeScript settings to ensure that your schemas, form data, and
+     server action arguments match precisely. This helps you catch mistakes
+     early.
+
+---
+
+## 4. Error Handling & Reporting
+
+1. **ZodError**
+
+   - Catch Zod validation errors and gracefully return structured error messages
+     to the client.
+   - This might be automatic if next-safe-action handles the error, or you can
+     handle it yourself:
+
+2. **Client-Side Handling**
+
+   - When calling your server action from the client, check for the presence of
+     returned errors (e.g. `success: false`) and display them in the UI.
+
+## 6. Security & Performance Considerations
+
+2. **Use Environment Variables Securely**
+
+   - Keep secrets in `.env` (never in client code).
+   - Access them only within server code that’s guaranteed not to be bundled
+     into the client.
+
+3. **Short-Lived Data**
+   - For data like user session tokens, rely on NextAuth
+   - Avoid passing tokens manually in forms.
+
+## 7. Testing & Linting
+
+1. **Automated Tests**
+
+   - With vitest, write unit tests for each server action to confirm that the
+     Zod validation and business logic produce correct results.
+   - Mock external dependencies (e.g., authentication, databases, third-party
+     APIs).
+   - Use explicit mocks and leverage Vitest’s built-in types (vi.mocked) for
+     better readability and maintainability:
+
+Example:
+
+```ts
+// tests/secureAction.test.ts
+import { describe, it, expect, vi } from 'vitest';
+import { secureAction } from '@/app/actions/secureAction';
+import { getServerSession } from 'next-auth';
+
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn(),
+}));
+
+const mockedSession = vi.mocked(getServerSession);
+
+describe('secureAction', () => {
+  it('throws when user is unauthenticated', async () => {
+    mockedSession.mockResolvedValueOnce(null);
+    await expect(secureAction({ someData: 123 })).rejects.toThrow(
+      'Not authenticated'
+    );
+  });
+
+  it('succeeds when user is authenticated', async () => {
+    mockedSession.mockResolvedValueOnce({ user: { id: '123' } });
+    const result = await secureAction({ someData: 123 });
+    expect(result).toEqual({ success: true });
+  });
+});
+```

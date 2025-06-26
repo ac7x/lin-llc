@@ -50,21 +50,21 @@ const navigationItems: BottomNavigationItem[] = [
     exact: false,
   },
   {
-    href: '/user/account/task',
+    href: '/account/task',
     label: '任務',
     icon: CheckSquare,
     permission: 'navigation:task',
     exact: true,
   },
   {
-    href: '/user/account/notifications',
+    href: '/account/notifications',
     label: '通知',
     icon: Bell,
     permission: 'notification:read',
     exact: true,
   },
   {
-    href: '/user/account',
+    href: '/account',
     label: '帳戶',
     icon: User,
     permission: 'navigation:account',
@@ -147,8 +147,8 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
       'fixed bottom-0 left-0 right-0 z-50',
       'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
       'border-t border-border/50 shadow-lg',
-      'flex items-center justify-around px-2 py-2',
-      'pb-safe-area-inset-bottom',
+      'flex items-center justify-around px-2 py-3',
+      'h-20 pb-safe-area-inset-bottom',
       'transition-all duration-200',
       className
     )}>

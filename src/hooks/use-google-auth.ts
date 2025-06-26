@@ -4,14 +4,15 @@ import {
   GoogleAuthProvider, 
   signInWithPopup,
   signInWithRedirect,
-  AuthError
+  AuthError,
+  User
 } from 'firebase/auth';
 import { getAppCheck } from '@/lib/firebase-init';
 import { permissionService } from '@/app/settings/lib/permission-service';
 import { useAuth } from '@/context/auth-context';
 
 interface UseGoogleAuthReturn {
-  user: any;
+  user: User | null;
   loading: boolean;
   error: string | null;
   signInWithGoogle: () => Promise<void>;

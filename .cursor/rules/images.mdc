@@ -1,0 +1,76 @@
+---
+description: 
+globs: *.tsx
+alwaysApply: false
+---
+# Image Handling in Next.js
+
+## Next.js Image Component Usage
+
+Always use the Next.js Image component for optimal performance. Follow these guidelines:
+
+- Import images using ES6 imports for static assets:
+```tsx
+import myImage from './path/to/image.webp';
+```
+
+- Use WebP format when possible for better compression and quality
+- Always provide descriptive `alt` text for accessibility
+- Include `sizes` prop to help the browser make optimal decisions:
+  - For full-width images: `sizes="100vw"`
+  - For column-based layouts: `sizes="(max-width: 768px) 100vw, 50vw"`
+  - For fixed-width images: `sizes="300px"` (or actual size)
+
+- Use `priority` prop only for LCP (Largest Contentful Paint) images above the fold
+- For dynamic images (from CMS/API), use proper loader configuration
+- Prefer `fill` with parent container dimensions over explicit width/height for responsive images
+
+## Example Implementation
+
+```tsx
+// Good - Static image import
+import heroImage from './hero.webp';
+
+<div className="relative h-[600px] w-full">
+  <Image
+    src={heroImage}
+    alt="Descriptive alt text"
+    fill
+    className="object-cover"
+    sizes="(max-width: 768px) 100vw, 50vw"
+    priority={isHero}
+  />
+</div>
+
+// Good - Dynamic image with proper error handling
+<Image
+  src={dynamicImageUrl}
+  alt={imageDescription}
+  width={400}
+  height={300}
+  className="object-cover"
+  onError={(e) => handleImageError(e)}
+/>
+```
+
+## Performance Considerations
+
+- Use proper image dimensions to avoid layout shift
+- Implement blur placeholder for better UX:
+  ```tsx
+  <Image
+    src={image}
+    placeholder="blur"
+    blurDataURL={blurBase64}
+  />
+  ```
+- Consider lazy loading for below-the-fold images (default behavior)
+- Use responsive images with appropriate breakpoints
+- Implement error boundaries for image failures
+
+## File Organization
+
+- Store static images in the `public` directory only if they're truly public assets
+- Keep component-specific images alongside their components
+- Use descriptive filenames in kebab-case (e.g., `hero-background.webp`)
+- Group related images in subdirectories when needed 

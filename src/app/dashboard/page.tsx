@@ -99,13 +99,13 @@ export default function DashboardPage() {
       title: '未讀通知',
       value: stats.unreadNotifications,
       icon: Bell,
-      href: '/user/account/notifications',
+      href: '/account/notifications',
     },
     {
       title: '待處理任務',
       value: stats.pendingTasks,
       icon: Clock,
-      href: '/user/account/task',
+      href: '/account/task',
     },
   ];
 

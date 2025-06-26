@@ -25,6 +25,9 @@ import {
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { ProjectNodeProps, SelectedItem } from '../../types';
 import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../constants';
+import { getItemInfo, getChildCount } from './tree-utils';
+import { RenameDialog } from './rename-dialog';
+import { SimpleContextMenu } from '../ui/simple-context-menu';
 import ProjectPackageNode from './project-package-node';
 
 /**
@@ -48,6 +51,7 @@ export default function ProjectNode({
   setTaskPackageInputs,
   subInputs,
   setSubInputs,
+  onRename,
 }: ProjectNodeProps & {
   onAddSubpackage?: (projectId: string, pkgIdx: number, subName: string) => Promise<void>;
   onAddTaskPackage?: (projectId: string, pkgIdx: number, subIdx: number, taskPackageName: string) => Promise<void>;
@@ -55,13 +59,35 @@ export default function ProjectNode({
   setTaskPackageInputs?: React.Dispatch<React.SetStateAction<Record<string, Record<number, string>>>>;
   subInputs?: Record<string, Record<number, Record<number, string>>>;
   setSubInputs?: React.Dispatch<React.SetStateAction<Record<string, Record<number, Record<number, string>>>>>;
+  onRename?: (projectItem: SelectedItem, newName: string) => void;
 }) {
   const [expanded, setExpanded] = useState(selectedProject?.id === project.id);
   const [showInput, setShowInput] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
   
   const projectItem: SelectedItem = {
     type: 'project',
     projectId: project.id,
+  };
+
+  const isSelected = selectedProject?.id === project.id;
+  const itemInfo = getItemInfo('project', isSelected);
+
+  // 右鍵菜單處理
+  const handleRename = () => {
+    setShowRenameDialog(true);
+  };
+
+  const handleRenameConfirm = (newName: string) => {
+    if (onRename) {
+      onRename(projectItem, newName);
+    }
+  };
+
+  const contextMenuProps = {
+    itemType: 'project' as const,
+    itemName: project.name,
+    onRename: handleRename,
   };
 
   const handleAddPackageClick = () => {
@@ -83,44 +109,47 @@ export default function ProjectNode({
   };
 
   return (
-    <SidebarMenuItem>
-      <Collapsible
-        className="group/collapsible"
-        defaultOpen={selectedProject?.id === project.id}
-        onOpenChange={(open) => setExpanded(open)}
-      >
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            isActive={selectedProject?.id === project.id}
-            onClick={() => onSelectProject(project)}
-            className="pl-2"
-          >
-            {expanded ? (
-              <FolderOpenIcon className="transition-transform h-4 w-4" />
-            ) : (
-              <FolderIcon className="transition-transform h-4 w-4" />
-            )}
-            <span className="ml-1 text-xs text-muted-foreground">{project.packages?.length || 0}</span>
-            <div 
-              onClick={(e) => {
-                e.stopPropagation();
-                onItemClick(projectItem);
-              }}
-              className={`${ITEM_SELECT_STYLE} ${
-                isItemSelected(projectItem) ? 'bg-accent' : ''
-              }`}
+    <>
+      <SidebarMenuItem>
+        <Collapsible
+          className="group/collapsible"
+          defaultOpen={selectedProject?.id === project.id}
+          onOpenChange={(open) => setExpanded(open)}
+        >
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+              isActive={isSelected}
+              onClick={() => onSelectProject(project)}
+              className="pl-2"
             >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="truncate">{project.name}</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{project.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
+              {expanded ? (
+                <FolderOpenIcon className={`transition-transform h-4 w-4 ${itemInfo.color}`} />
+              ) : (
+                <FolderIcon className={`transition-transform h-4 w-4 ${itemInfo.color}`} />
+              )}
+              <span className="ml-1 text-xs text-muted-foreground">{getChildCount(project)}</span>
+              <SimpleContextMenu {...contextMenuProps}>
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onItemClick(projectItem);
+                  }}
+                  className={`${ITEM_SELECT_STYLE} ${
+                    isItemSelected(projectItem) ? 'bg-accent' : ''
+                  }`}
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={`truncate ${itemInfo.color}`}>{project.name}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{project.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </SimpleContextMenu>
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub className="mx-1 border-l border-border/30">
             {/* 工作包列表 */}
@@ -189,5 +218,15 @@ export default function ProjectNode({
         </CollapsibleContent>
       </Collapsible>
     </SidebarMenuItem>
+
+    {/* 重新命名對話框 */}
+    <RenameDialog
+      isOpen={showRenameDialog}
+      onClose={() => setShowRenameDialog(false)}
+      currentName={project.name}
+      itemType="project"
+      onRename={handleRenameConfirm}
+    />
+  </>
   );
 }

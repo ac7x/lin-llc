@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { PermissionProvider } from '@/context/permission-context';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { ThemeProvider } from '@/components/ui/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,10 +25,15 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <PermissionProvider>
-              <div className="pb-20">
-                {children}
+              <div style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+                <div className="w-full min-h-[calc(100vh-5rem-env(safe-area-inset-bottom))]">
+                  <div className="h-full">
+                    {children}
+                  </div>
+                </div>
               </div>
               <BottomNavigation />
+              <Toaster />
             </PermissionProvider>
           </AuthProvider>
         </ThemeProvider>

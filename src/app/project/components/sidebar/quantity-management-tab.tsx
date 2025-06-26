@@ -214,9 +214,9 @@ export function QuantityManagementTab({
   }, [flattenedItems, handleToggleExpand, handleDistributeQuantity]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 h-full flex flex-col">
       {/* 緊湊統計信息 */}
-      <Card className="border-0 shadow-none bg-muted/20">
+      <Card className="border-0 shadow-none bg-muted/20 flex-shrink-0">
         <CardHeader className="pb-2 px-3 pt-3">
           <CardTitle className="text-xs flex items-center gap-1">
             <Calculator className="h-3 w-3" />
@@ -255,12 +255,12 @@ export function QuantityManagementTab({
       </Card>
 
       {/* 緊湊的專案樹 */}
-      <Card className="border-0 shadow-none bg-muted/20">
-        <CardHeader className="pb-2 px-3 pt-3">
+      <Card className="border-0 shadow-none bg-muted/20 flex-1 min-h-0">
+        <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0">
           <CardTitle className="text-xs">階層式分配</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="border border-muted/50 rounded-md overflow-hidden bg-background">
+        <CardContent className="p-0 flex-1 min-h-0">
+          <div className="border border-muted/50 rounded-md overflow-hidden bg-background h-full">
             {flattenedItems.length === 0 ? (
               <div className="flex items-center justify-center h-16 text-xs text-muted-foreground">
                 暫無數據
@@ -268,7 +268,7 @@ export function QuantityManagementTab({
             ) : (
               <List
                 ref={listRef}
-                height={200}
+                height={160}
                 width="100%"
                 itemCount={flattenedItems.length}
                 itemSize={24}
@@ -282,12 +282,12 @@ export function QuantityManagementTab({
       </Card>
 
       {/* 緊湊狀態摘要 */}
-      <Card className="border-0 shadow-none bg-muted/20">
-        <CardHeader className="pb-2 px-3 pt-3">
+      <Card className="border-0 shadow-none bg-muted/20 flex-shrink-0">
+        <CardHeader className="pb-1 px-3 pt-2">
           <CardTitle className="text-xs">狀態摘要</CardTitle>
         </CardHeader>
-        <CardContent className="px-3 pb-3">
-          <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-2 text-center border">
+        <CardContent className="px-3 pb-2">
+          <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 text-center border">
             總進度: {stats.totalCompleted}/{stats.totalQuantity} ({stats.progress}%)
           </div>
         </CardContent>

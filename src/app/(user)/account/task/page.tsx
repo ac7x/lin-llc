@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Drawer,
   DrawerClose,
@@ -22,8 +23,6 @@ import {
 import { 
   CheckSquareIcon, 
   UserIcon, 
-  EyeIcon,
-  EditIcon,
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -32,6 +31,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { removeUndefinedValues } from '@/lib/utils';
+import type { Project } from '@/app/project/types';
+
+interface UserInfo {
+  uid: string;
+  name: string;
+  email: string;
+  photoURL?: string;
+}
 
 interface UserTask {
   id: string;
@@ -49,6 +56,8 @@ interface UserTask {
   assignedAt?: string;
   submittedAt?: string;
   approvedAt?: string;
+  submitters: UserInfo[];
+  reviewers: UserInfo[];
 }
 
 export default function UserTaskPage() {
@@ -62,6 +71,45 @@ export default function UserTaskPage() {
   const [completedInput, setCompletedInput] = useState('');
   const [totalInput, setTotalInput] = useState('');
 
+  // 載入用戶信息
+  const loadUserInfo = async (uids: string[]): Promise<UserInfo[]> => {
+    const userInfos: UserInfo[] = [];
+    
+    for (const uid of uids) {
+      try {
+        const userRef = doc(db, 'users', uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          userInfos.push({
+            uid,
+            name: userData.name || userData.displayName || '未知用戶',
+            email: userData.email || '',
+            photoURL: userData.photoURL,
+          });
+        } else {
+          // 用戶不存在
+          userInfos.push({
+            uid,
+            name: '未知用戶',
+            email: '',
+          });
+        }
+      } catch (error) {
+        console.error(`載入用戶信息失敗 ${uid}:`, error);
+        // 如果載入失敗，添加預設信息
+        userInfos.push({
+          uid,
+          name: '未知用戶',
+          email: '',
+        });
+      }
+    }
+    
+    return userInfos;
+  };
+
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -74,63 +122,78 @@ export default function UserTaskPage() {
         const projectsSnapshot = await getDocs(collection(db, 'projects'));
         const userTasks: UserTask[] = [];
         
-        projectsSnapshot.forEach(projectDoc => {
-          const projectData = projectDoc.data();
+        for (const projectDoc of projectsSnapshot.docs) {
+          const projectData = projectDoc.data() as Project;
           const projectId = projectDoc.id;
           
           // 遍歷所有工作包、子工作包、任務包
-          projectData.packages?.forEach((pkg: any, packageIndex: number) => {
-            pkg.subpackages?.forEach((subpkg: any, subpackageIndex: number) => {
-              subpkg.taskpackages?.forEach((task: any, taskIndex: number) => {
+          for (const [packageIndex, pkg] of (projectData.packages || []).entries()) {
+            for (const [subpackageIndex, subpkg] of (pkg.subpackages || []).entries()) {
+              for (const [taskIndex, task] of (subpkg.taskpackages || []).entries()) {
                 // 檢查當前用戶是否為提交者或審核者
                 const isSubmitter = task.submitters?.includes(user.uid);
                 const isReviewer = task.reviewers?.includes(user.uid);
                 
-                // 如果是提交者，創建提交者任務記錄
-                if (isSubmitter) {
-                  userTasks.push({
-                    id: `${projectId}_${packageIndex}_${subpackageIndex}_${taskIndex}_submitter`,
-                    name: task.name,
-                    projectName: projectData.name,
-                    projectId,
-                    packageIndex,
-                    subpackageIndex,
-                    taskIndex,
-                    role: 'submitter' as const,
-                    status: task.status,
-                    completed: task.completed || 0,
-                    total: task.total || 0,
-                    progress: task.progress || 0,
-                    assignedAt: task.assignedAt,
-                    submittedAt: task.submittedAt,
-                    approvedAt: task.approvedAt,
-                  });
+                if (isSubmitter || isReviewer) {
+                  // 載入提交者和審核者的用戶信息
+                  const submitterUids = task.submitters || [];
+                  const reviewerUids = task.reviewers || [];
+                  
+                  const [submitters, reviewers] = await Promise.all([
+                    loadUserInfo(submitterUids),
+                    loadUserInfo(reviewerUids)
+                  ]);
+                  
+                  // 如果是提交者，創建提交者任務記錄
+                  if (isSubmitter) {
+                    userTasks.push({
+                      id: `${projectId}_${packageIndex}_${subpackageIndex}_${taskIndex}_submitter`,
+                      name: task.name,
+                      projectName: projectData.name,
+                      projectId,
+                      packageIndex,
+                      subpackageIndex,
+                      taskIndex,
+                      role: 'submitter' as const,
+                      status: task.status,
+                      completed: task.completed || 0,
+                      total: task.total || 0,
+                      progress: task.progress || 0,
+                      assignedAt: task.time?.createdAt,
+                      submittedAt: task.submittedAt,
+                      approvedAt: task.approvedAt,
+                      submitters,
+                      reviewers,
+                    });
+                  }
+                  
+                  // 如果是審核者，創建審核者任務記錄
+                  if (isReviewer) {
+                    userTasks.push({
+                      id: `${projectId}_${packageIndex}_${subpackageIndex}_${taskIndex}_reviewer`,
+                      name: task.name,
+                      projectName: projectData.name,
+                      projectId,
+                      packageIndex,
+                      subpackageIndex,
+                      taskIndex,
+                      role: 'reviewer' as const,
+                      status: task.status,
+                      completed: task.completed || 0,
+                      total: task.total || 0,
+                      progress: task.progress || 0,
+                      assignedAt: task.time?.createdAt,
+                      submittedAt: task.submittedAt,
+                      approvedAt: task.approvedAt,
+                      submitters,
+                      reviewers,
+                    });
+                  }
                 }
-                
-                // 如果是審核者，創建審核者任務記錄
-                if (isReviewer) {
-                  userTasks.push({
-                    id: `${projectId}_${packageIndex}_${subpackageIndex}_${taskIndex}_reviewer`,
-                    name: task.name,
-                    projectName: projectData.name,
-                    projectId,
-                    packageIndex,
-                    subpackageIndex,
-                    taskIndex,
-                    role: 'reviewer' as const,
-                    status: task.status,
-                    completed: task.completed || 0,
-                    total: task.total || 0,
-                    progress: task.progress || 0,
-                    assignedAt: task.assignedAt,
-                    submittedAt: task.submittedAt,
-                    approvedAt: task.approvedAt,
-                  });
-                }
-              });
-            });
-          });
-        });
+              }
+            }
+          }
+        }
         
         setTasks(userTasks);
       } catch (error) {
@@ -167,20 +230,15 @@ export default function UserTaskPage() {
       // 直接更新專案數據
       const projectRef = doc(db, 'projects', selectedTask.projectId);
       
-      // 獲取當前專案數據
-      const projectSnapshot = await getDocs(collection(db, 'projects'));
-      let projectData: any = null;
+      // 直接獲取特定專案數據
+      const projectDoc = await getDoc(projectRef);
       
-      projectSnapshot.forEach(doc => {
-        if (doc.id === selectedTask.projectId) {
-          projectData = doc.data();
-        }
-      });
-      
-      if (!projectData) {
+      if (!projectDoc.exists()) {
         toast.error('找不到專案數據');
         return;
       }
+
+      const projectData = projectDoc.data() as Project;
 
       // 更新任務數據
       const task = projectData.packages[selectedTask.packageIndex]
@@ -204,7 +262,8 @@ export default function UserTaskPage() {
 
       // 清理undefined值並更新到Firestore
       const cleanedProject = removeUndefinedValues(projectData);
-      await updateDoc(projectRef, cleanedProject);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await updateDoc(projectRef, cleanedProject as any);
 
       // 更新本地任務列表
       setTasks(prev => prev.map(t => 
@@ -265,16 +324,10 @@ export default function UserTaskPage() {
       case 'submitter':
         return { text: '提交者', color: 'bg-blue-100 text-blue-800', icon: UserIcon };
       case 'reviewer':
-        return { text: '審核者', color: 'bg-purple-100 text-purple-800', icon: EyeIcon };
+        return { text: '審核者', color: 'bg-purple-100 text-purple-800', icon: UserIcon };
       default:
         return { text: '未知', color: 'bg-gray-100 text-gray-800', icon: UserIcon };
     }
-  };
-
-  const handleViewProject = (task: UserTask) => {
-    // 導航到專案頁面的特定任務
-    const url = `/project?projectId=${task.projectId}&packageIndex=${task.packageIndex}&subpackageIndex=${task.subpackageIndex}&taskIndex=${task.taskIndex}`;
-    window.open(url, '_blank');
   };
 
   // 按狀態分組任務
@@ -283,6 +336,35 @@ export default function UserTaskPage() {
     review: tasks.filter(task => task.role === 'reviewer' && task.status === 'submitted'),
     completed: tasks.filter(task => task.status === 'approved'),
     all: tasks,
+  };
+
+  // 用戶頭像組件
+  const UserAvatarGroup = ({ users, label }: { users: UserInfo[], label: string }) => {
+    if (users.length === 0) return null;
+    
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">{label}：</span>
+        <div className="flex items-center -space-x-2">
+          {users.slice(0, 3).map((user) => (
+            <Avatar key={user.uid} className="h-8 w-8 border-2 border-background">
+              <AvatarImage src={user.photoURL} alt={user.name} />
+              <AvatarFallback className="text-xs">
+                {user.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          ))}
+          {users.length > 3 && (
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted border-2 border-background text-xs text-muted-foreground">
+              +{users.length - 3}
+            </div>
+          )}
+        </div>
+        {users.length === 1 && (
+          <span className="text-sm text-muted-foreground">{users[0].name}</span>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -375,6 +457,12 @@ export default function UserTaskPage() {
                         <span>專案：{task.projectName}</span>
                       </div>
 
+                      {/* 提交者和審核者信息 */}
+                      <div className="space-y-3">
+                        <UserAvatarGroup users={task.submitters} label="提交者" />
+                        <UserAvatarGroup users={task.reviewers} label="審核者" />
+                      </div>
+
                       {/* 進度條 */}
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
@@ -397,15 +485,6 @@ export default function UserTaskPage() {
 
                         {/* 操作按鈕 */}
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewProject(task)}
-                          >
-                            <EyeIcon className="h-4 w-4 mr-1" />
-                            查看專案
-                          </Button>
-                          
                           {task.role === 'submitter' && (task.status === 'in-progress' || task.status === 'rejected') && (
                             <>
                               {/* 快速提交按鈕 - 使用Drawer */}
@@ -479,27 +558,7 @@ export default function UserTaskPage() {
                                   </DrawerFooter>
                                 </DrawerContent>
                               </Drawer>
-                              
-                              {/* 原有的專案頁面按鈕 */}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleViewProject(task)}
-                              >
-                                <EditIcon className="h-4 w-4 mr-1" />
-                                專案頁面
-                              </Button>
                             </>
-                          )}
-                          
-                          {task.role === 'reviewer' && task.status === 'submitted' && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleViewProject(task)}
-                            >
-                              <CheckCircleIcon className="h-4 w-4 mr-1" />
-                              審核任務
-                            </Button>
                           )}
                         </div>
                       </div>

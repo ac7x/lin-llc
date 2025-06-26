@@ -115,14 +115,14 @@ export default function HomePage() {
                   <span className="text-sm text-muted-foreground">
                     歡迎，{user.displayName || user.email}
                   </span>
-                  <Link href="/user/account">
+                  <Link href="/account">
                     <Button variant="outline" size="sm">
                       我的帳戶
                     </Button>
                   </Link>
                 </>
               ) : (
-                <Link href="/user/account/signin">
+                <Link href="/account/signin">
                   <Button size="sm">
                     登入
                   </Button>
@@ -291,7 +291,7 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   立即登入開始使用我們的企業管理系統
                 </p>
-                <Link href="/user/account/signin">
+                <Link href="/account/signin">
                   <Button className="w-full">
                     立即登入
                   </Button>

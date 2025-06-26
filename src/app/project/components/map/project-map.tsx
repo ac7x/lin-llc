@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { mapService, type LatLng, type AddressInfo } from './map-service';
+import { GOOGLE_MAPS_MAP_ID } from '@/lib/firebase-config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -81,6 +82,7 @@ export function ProjectMap({
         center: initialLocation,
         zoom: address ? 16 : 12,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
+        mapId: GOOGLE_MAPS_MAP_ID, // Google Maps Map ID for advanced features
         disableDefaultUI: !showControls,
         gestureHandling: interactive ? 'auto' : 'none',
         zoomControl: showControls,
@@ -139,23 +141,43 @@ export function ProjectMap({
       markerRef.current.setMap(null);
     }
 
-    // 創建新標記
-    markerRef.current = new google.maps.Marker({
-      position: location,
-      map: mapInstanceRef.current,
-      title: title,
-      animation: google.maps.Animation.DROP,
-    });
+    // 優先使用 AdvancedMarkerElement，降級使用標準 Marker
+    if (google.maps.marker?.AdvancedMarkerElement) {
+      // 使用新的 AdvancedMarkerElement
+      markerRef.current = new google.maps.marker.AdvancedMarkerElement({
+        position: location,
+        map: mapInstanceRef.current,
+        title: title,
+      });
 
-    // 創建資訊窗口
-    const infoWindow = new google.maps.InfoWindow({
-      content: `<div class="p-2"><strong>${title}</strong></div>`,
-    });
+      // 創建資訊窗口
+      const infoWindow = new google.maps.InfoWindow({
+        content: `<div class="p-2"><strong>${title}</strong></div>`,
+      });
 
-    // 點擊標記顯示資訊
-    markerRef.current.addListener('click', () => {
-      infoWindow.open(mapInstanceRef.current, markerRef.current);
-    });
+      // 點擊標記顯示資訊
+      markerRef.current.addListener('click', () => {
+        infoWindow.open(mapInstanceRef.current, markerRef.current);
+      });
+    } else {
+      // 降級使用標準 Marker
+      markerRef.current = new google.maps.Marker({
+        position: location,
+        map: mapInstanceRef.current,
+        title: title,
+        animation: google.maps.Animation.DROP,
+      });
+
+      // 創建資訊窗口
+      const infoWindow = new google.maps.InfoWindow({
+        content: `<div class="p-2"><strong>${title}</strong></div>`,
+      });
+
+      // 點擊標記顯示資訊
+      markerRef.current.addListener('click', () => {
+        infoWindow.open(mapInstanceRef.current, markerRef.current);
+      });
+    }
   }, []);
 
   /**

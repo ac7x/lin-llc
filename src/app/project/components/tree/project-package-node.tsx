@@ -25,6 +25,9 @@ import {
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import { ProjectPackageNodeProps, SelectedItem } from '../../types';
 import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../constants';
+import { getItemInfo, getChildCount } from './tree-utils';
+import { RenameDialog } from './rename-dialog';
+import { SimpleContextMenu } from '../ui/simple-context-menu';
 import ProjectSubpackageNode from './project-subpackage-node';
 
 /**
@@ -44,9 +47,13 @@ export default function ProjectPackageNode({
   subInputs,
   setSubInputs,
   onAddTaskPackage,
-}: ProjectPackageNodeProps) {
+  onRename,
+}: ProjectPackageNodeProps & {
+  onRename?: (packageItem: SelectedItem, newName: string) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [showInput, setShowInput] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
   
   const package_ = project.packages[packageIndex];
   
@@ -58,6 +65,30 @@ export default function ProjectPackageNode({
     type: 'package',
     projectId: project.id,
     packageIndex,
+  };
+
+  const isSelected = isItemSelected(packageItem);
+  const itemInfo = getItemInfo('package', isSelected);
+
+  // 右鍵菜單處理
+  const handleRename = () => {
+    setShowRenameDialog(true);
+  };
+
+  const handleRenameConfirm = (newName: string) => {
+    if (onRename) {
+      onRename(packageItem, newName);
+    }
+  };
+
+  const contextMenuProps = {
+    itemType: 'package' as const,
+    itemName: package_.name,
+    currentQuantity: package_.total !== undefined ? {
+      completed: package_.completed || 0,
+      total: package_.total || 0,
+    } : undefined,
+    onRename: handleRename,
   };
 
   const handleAddSubpackageClick = () => {
@@ -79,43 +110,46 @@ export default function ProjectPackageNode({
   };
 
   return (
-    <SidebarMenuItem>
-      <Collapsible
-        className="group/collapsible"
-        defaultOpen={expanded}
-        onOpenChange={setExpanded}
-      >
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            onClick={() => setExpanded(!expanded)}
-            className="pl-2"
-          >
-            {expanded ? (
-              <PackageOpenIcon className="transition-transform h-3 w-3" />
-            ) : (
-              <PackageIcon className="transition-transform h-3 w-3" />
-            )}
-            <span className="ml-1 text-xs text-muted-foreground">{package_.subpackages?.length || 0}</span>
-            <div 
-              onClick={(e) => {
-                e.stopPropagation();
-                onItemClick(packageItem);
-              }}
-              className={`${ITEM_SELECT_STYLE} ${
-                isItemSelected(packageItem) ? 'bg-accent' : ''
-              }`}
+    <>
+      <SidebarMenuItem>
+        <Collapsible
+          className="group/collapsible"
+          defaultOpen={expanded}
+          onOpenChange={setExpanded}
+        >
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+              onClick={() => setExpanded(!expanded)}
+              className="pl-2"
             >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="truncate text-sm">{package_.name}</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{package_.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
+              {expanded ? (
+                <PackageOpenIcon className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
+              ) : (
+                <PackageIcon className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
+              )}
+              <span className="ml-1 text-xs text-muted-foreground">{getChildCount(package_)}</span>
+              <SimpleContextMenu {...contextMenuProps}>
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onItemClick(packageItem);
+                  }}
+                  className={`${ITEM_SELECT_STYLE} ${
+                    isSelected ? 'bg-accent' : ''
+                  }`}
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={`truncate text-sm ${itemInfo.color}`}>{package_.name}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{package_.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </SimpleContextMenu>
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub className="mx-1 border-l border-border/20">
             {/* 子工作包列表 */}
@@ -185,5 +219,15 @@ export default function ProjectPackageNode({
         </CollapsibleContent>
       </Collapsible>
     </SidebarMenuItem>
+
+    {/* 重新命名對話框 */}
+    <RenameDialog
+      isOpen={showRenameDialog}
+      onClose={() => setShowRenameDialog(false)}
+      currentName={package_.name}
+      itemType="package"
+      onRename={handleRenameConfirm}
+    />
+  </>
   );
 }
