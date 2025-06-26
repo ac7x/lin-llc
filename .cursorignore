@@ -37,7 +37,6 @@ tsconfig.json
 # IDE 和編輯器
 .vscode/
 .idea/
-.cursor/
 
 # Git 和版本控制
 .gitignore
@@ -60,4 +59,3 @@ public/
 
 # 文檔文件
 *.md
-VIRTUALIZATION_GUIDE.md
