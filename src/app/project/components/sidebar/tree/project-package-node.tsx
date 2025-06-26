@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { 
-  BookOpen,
-  BookOpenCheck,
+  PackageIcon,
+  PackageOpenIcon,
   PlusIcon,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -23,51 +23,52 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/(system)';
-import { ProjectSubpackageNodeProps, SelectedItem } from '../../types';
-import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../constants';
+import { ProjectPackageNodeProps, SelectedItem } from '../../../types';
+import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../../constants';
 import { getItemInfo, getChildCount } from './tree-utils';
 import { RenameDialog } from './rename-dialog';
-import { SimpleContextMenu } from '../ui/simple-context-menu';
-import ProjectTaskNode from './project-task-node';
+import { SimpleContextMenu } from '../../ui/simple-context-menu';
+import ProjectSubpackageNode from './project-subpackage-node';
 
 /**
- * 子工作包節點組件 - 顯示子工作包資訊並包含任務列表
- * 負責渲染子工作包名稱、可展開的任務列表和新增任務功能
+ * 工作包節點組件 - 顯示工作包資訊並包含子工作包列表
+ * 負責渲染工作包名稱、可展開的子工作包列表和新增子工作包功能
  */
-export default function ProjectSubpackageNode({
+export default function ProjectPackageNode({
   project,
   packageIndex,
-  subpackageIndex,
   selectedItem,
   onItemClick,
-  onAddTaskPackage,
+  onAddSubpackage,
   loading,
   isItemSelected,
+  taskPackageInputs,
+  setTaskPackageInputs,
   subInputs,
   setSubInputs,
+  onAddTaskPackage,
   onRename,
-}: ProjectSubpackageNodeProps & {
-  onRename?: (subpackageItem: SelectedItem, newName: string) => void;
+}: ProjectPackageNodeProps & {
+  onRename?: (packageItem: SelectedItem, newName: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showInput, setShowInput] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   
-  const subpackage = project.packages[packageIndex]?.subpackages[subpackageIndex];
+  const package_ = project.packages[packageIndex];
   
-  if (!subpackage) {
+  if (!package_) {
     return null;
   }
 
-  const subpackageItem: SelectedItem = {
-    type: 'subpackage',
+  const packageItem: SelectedItem = {
+    type: 'package',
     projectId: project.id,
     packageIndex,
-    subpackageIndex,
   };
 
-  const isSelected = isItemSelected(subpackageItem);
-  const itemInfo = getItemInfo('subpackage', isSelected);
+  const isSelected = isItemSelected(packageItem);
+  const itemInfo = getItemInfo('package', isSelected);
 
   // 右鍵菜單處理
   const handleRename = () => {
@@ -76,35 +77,35 @@ export default function ProjectSubpackageNode({
 
   const handleRenameConfirm = (newName: string) => {
     if (onRename) {
-      onRename(subpackageItem, newName);
+      onRename(packageItem, newName);
     }
   };
 
   const contextMenuProps = {
-    itemType: 'subpackage' as const,
-    itemName: subpackage.name,
-    currentQuantity: subpackage.total !== undefined ? {
-      completed: subpackage.completed || 0,
-      total: subpackage.total || 0,
+    itemType: 'package' as const,
+    itemName: package_.name,
+    currentQuantity: package_.total !== undefined ? {
+      completed: package_.completed || 0,
+      total: package_.total || 0,
     } : undefined,
     onRename: handleRename,
   };
 
-  const handleAddTaskClick = () => {
+  const handleAddSubpackageClick = () => {
     setShowInput(true);
   };
 
-  const handleAddTask = () => {
-    const taskName = subInputs[project.id]?.[packageIndex]?.[subpackageIndex] || '';
-    if (taskName.trim()) {
-      void onAddTaskPackage(project.id, packageIndex, subpackageIndex, taskName);
+  const handleAddSubpackage = () => {
+    const subpackageName = taskPackageInputs[project.id]?.[packageIndex] || '';
+    if (subpackageName.trim()) {
+      void onAddSubpackage(project.id, packageIndex, subpackageName);
       setShowInput(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleAddTask();
+      handleAddSubpackage();
     }
   };
 
@@ -122,16 +123,16 @@ export default function ProjectSubpackageNode({
               className="pl-2"
             >
               {expanded ? (
-                <BookOpenCheck className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
+                <PackageOpenIcon className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
               ) : (
-                <BookOpen className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
+                <PackageIcon className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
               )}
-              <span className="ml-1 text-xs text-muted-foreground">{getChildCount(subpackage)}</span>
+              <span className="ml-1 text-xs text-muted-foreground">{getChildCount(package_)}</span>
               <SimpleContextMenu {...contextMenuProps}>
                 <div 
                   onClick={(e) => {
                     e.stopPropagation();
-                    onItemClick(subpackageItem);
+                    onItemClick(packageItem);
                   }}
                   className={`${ITEM_SELECT_STYLE} ${
                     isSelected ? 'bg-accent' : ''
@@ -139,10 +140,10 @@ export default function ProjectSubpackageNode({
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={`truncate text-xs ${itemInfo.color}`}>{subpackage.name}</span>
+                      <span className={`truncate text-sm ${itemInfo.color}`}>{package_.name}</span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{subpackage.name}</p>
+                      <p>{package_.name}</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -150,40 +151,36 @@ export default function ProjectSubpackageNode({
             </SidebarMenuButton>
           </CollapsibleTrigger>
         <CollapsibleContent>
-          <SidebarMenuSub className="mx-1 border-l border-border/10">
-            {/* 任務列表 */}
-            {subpackage.taskpackages?.map((task, taskIndex) => (
-              <ProjectTaskNode
-                key={taskIndex}
+          <SidebarMenuSub className="mx-1 border-l border-border/20">
+            {/* 子工作包列表 */}
+            {package_.subpackages?.map((subpackage, subpackageIndex) => (
+              <ProjectSubpackageNode
+                key={subpackageIndex}
                 project={project}
                 packageIndex={packageIndex}
                 subpackageIndex={subpackageIndex}
-                taskIndex={taskIndex}
                 selectedItem={selectedItem}
                 onItemClick={onItemClick}
+                onAddTaskPackage={onAddTaskPackage || (async () => {})}
                 loading={loading}
                 isItemSelected={isItemSelected}
+                subInputs={subInputs || {}}
+                setSubInputs={setSubInputs || (() => {})}
               />
             ))}
             
-            {/* 新增任務按鈕 - 只有有權限的用戶才能看到 */}
-            <ProjectActionGuard action="create" resource="task">
+            {/* 新增子工作包按鈕 - 只有有權限的用戶才能看到 */}
+            <ProjectActionGuard action="create" resource="subpackage">
               <SidebarMenuItem>
-                <div className="pl-2 pr-1 py-1">
+                <div className="pl-1 pr-1 py-1">
                   {showInput ? (
                     <div className="flex gap-1">
                       <Input
-                        placeholder="任務名稱"
-                        value={subInputs[project.id]?.[packageIndex]?.[subpackageIndex] || ''}
-                        onChange={e => setSubInputs(prev => ({
+                        placeholder="子工作包名稱"
+                        value={taskPackageInputs[project.id]?.[packageIndex] || ''}
+                        onChange={e => setTaskPackageInputs(prev => ({
                           ...prev,
-                          [project.id]: {
-                            ...prev[project.id],
-                            [packageIndex]: {
-                              ...prev[project.id]?.[packageIndex],
-                              [subpackageIndex]: e.target.value
-                            }
-                          }
+                          [project.id]: { ...prev[project.id], [packageIndex]: e.target.value }
                         }))}
                         className={COMPACT_INPUT_STYLE}
                         onKeyDown={handleKeyDown}
@@ -192,15 +189,15 @@ export default function ProjectSubpackageNode({
                         <TooltipTrigger asChild>
                           <Button
                             size="sm"
-                            onClick={handleAddTask}
-                            disabled={loading || !(subInputs[project.id]?.[packageIndex]?.[subpackageIndex] || '').trim()}
+                            onClick={handleAddSubpackage}
+                            disabled={loading || !(taskPackageInputs[project.id]?.[packageIndex] || '').trim()}
                             className={SMALL_BUTTON_STYLE}
                           >
                             <PlusIcon className="h-3 w-3" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>建立任務</p>
+                          <p>建立子工作包</p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -208,11 +205,11 @@ export default function ProjectSubpackageNode({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleAddTaskClick}
+                      onClick={handleAddSubpackageClick}
                       className={COMPACT_BUTTON_STYLE}
                     >
                       <PlusIcon className="h-3 w-3 mr-1" />
-                      新增任務
+                      新增子工作包
                     </Button>
                   )}
                 </div>
@@ -227,8 +224,8 @@ export default function ProjectSubpackageNode({
     <RenameDialog
       isOpen={showRenameDialog}
       onClose={() => setShowRenameDialog(false)}
-      currentName={subpackage.name}
-      itemType="subpackage"
+      currentName={package_.name}
+      itemType="package"
       onRename={handleRenameConfirm}
     />
   </>

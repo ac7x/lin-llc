@@ -9,7 +9,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from 'lucide-react';
-import { Project, Package, Subpackage, TaskPackage } from '../../types';
+import { Project, Package, Subpackage, TaskPackage } from '../../../types';
 
 /**
  * 項目信息接口

@@ -8,7 +8,7 @@ import {
   EyeIcon,
 } from 'lucide-react';
 import { getUserPermissions, getStatusInfo } from './tree-utils';
-import { TaskPackage } from '../../types';
+import { TaskPackage } from '../../../types';
 
 interface TaskActionButtonsProps {
   task: TaskPackage;

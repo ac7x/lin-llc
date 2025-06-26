@@ -33,7 +33,7 @@ import {
   RefreshCwIcon,
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/(system)';
-import ProjectTree from '../tree/project-tree';
+import ProjectTree from './tree/project-tree';
 import { CreateProjectWizard } from '../create/create-project-wizard';
 import { ProjectTemplates } from '../template';
 import { QuantityManagementTab } from './quantity-management-tab';

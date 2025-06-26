@@ -23,11 +23,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/(system)';
-import { ProjectNodeProps, SelectedItem } from '../../types';
-import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../constants';
+import { ProjectNodeProps, SelectedItem } from '../../../types';
+import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../../constants';
 import { getItemInfo, getChildCount } from './tree-utils';
 import { RenameDialog } from './rename-dialog';
-import { SimpleContextMenu } from '../ui/simple-context-menu';
+import { SimpleContextMenu } from '../../ui/simple-context-menu';
 import ProjectPackageNode from './project-package-node';
 
 /**

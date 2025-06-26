@@ -14,12 +14,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useGoogleAuth } from '@/app/(system)';
-import { ProjectTaskNodeProps, SelectedItem } from '../../types';
-import { ITEM_SELECT_STYLE } from '../../constants';
+import { ProjectTaskNodeProps, SelectedItem } from '../../../types';
+import { ITEM_SELECT_STYLE } from '../../../constants';
 import { getItemInfo } from './tree-utils';
 import { TaskActionButtons } from './task-action-buttons';
 import { RenameDialog } from './rename-dialog';
-import { SimpleContextMenu } from '../ui/simple-context-menu';
+import { SimpleContextMenu } from '../../ui/simple-context-menu';
 
 /**
  * 任務節點組件 - 顯示單一任務的資訊

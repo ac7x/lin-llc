@@ -36,16 +36,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/(system)';
-import { useTaskManagement } from '../../hooks';
+import { useTaskManagement } from '../../../hooks';
 import { 
   FlatItem, 
   ExpandedState, 
   TreeFlattener, 
   TreeBatchOperations 
-} from '../../utils/tree-flattener';
-import { TaskAssignmentDialog, TaskSubmissionDialog, TaskReviewDialog } from '../task';
-import { ProjectTreeProps, SelectedItem, Project } from '../../types';
-import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../constants';
+} from '../../../utils/tree-flattener';
+import { TaskAssignmentDialog, TaskSubmissionDialog, TaskReviewDialog } from '../../task';
+import { ProjectTreeProps, SelectedItem, Project } from '../../../types';
+import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../../constants';
 import { 
   getItemInfo, 
   getStatusInfo, 
@@ -55,7 +55,7 @@ import {
   getIndentStyle 
 } from './tree-utils';
 import { RenameDialog } from './rename-dialog';
-import { SimpleContextMenu } from '../ui/simple-context-menu';
+import { SimpleContextMenu } from '../../ui/simple-context-menu';
 import { useGoogleAuth } from '@/app/(system)';
 import {
   ChevronRightIcon,
