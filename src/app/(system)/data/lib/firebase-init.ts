@@ -25,7 +25,7 @@ let servicesInitialized = false;
 
 /**
  * 初始化客戶端服務
- * 包括 Analytics 和 Emulator 連接（開發環境）
+ * 包括 Analytics、App Check 和 Emulator 連接（開發環境）
  */
 export async function initializeClientServices(): Promise<void> {
   if (servicesInitialized || typeof window === 'undefined') {
@@ -33,19 +33,30 @@ export async function initializeClientServices(): Promise<void> {
   }
 
   try {
+    // 設定 Auth 穩定性選項
+    auth.useDeviceLanguage();
+    auth.settings.appVerificationDisabledForTesting = false;
+
     // 初始化 Analytics（如果支援）
     if (await isSupported()) {
       analytics = getAnalytics(app);
+      console.log('✅ Analytics 已初始化');
     }
 
     // 初始化 App Check
-    appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
-      isTokenAutoRefreshEnabled: true,
-    });
+    try {
+      appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(APP_CHECK_CONFIG.SITE_KEY),
+        isTokenAutoRefreshEnabled: true,
+      });
+      console.log('✅ App Check 已初始化');
+    } catch (appCheckError) {
+      console.warn('⚠️ App Check 初始化失敗，但不影響主要功能:', appCheckError);
+      appCheck = null;
+    }
 
-    // 開發環境連接 Emulator
-    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
+    // 開發環境模擬器連接（可選）
+    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_EMULATORS === 'true') {
       try {
         // 檢查是否已經連接過 emulator（避免重複連接）
         const authEmulator = auth as unknown as { _delegate?: { config?: { emulator?: boolean } } };
@@ -63,17 +74,18 @@ export async function initializeClientServices(): Promise<void> {
         
         connectStorageEmulator(storage, 'localhost', 9199);
         
-        console.log('🔧 Firebase Emulator 已連接');
-      } catch (error) {
-        console.warn('Firebase Emulator 連接失敗（可能已連接）:', error);
+        console.log('🔧 已連接到 Firebase 模擬器');
+      } catch (emulatorError) {
+        console.warn('模擬器連接失敗:', emulatorError);
       }
     }
 
     servicesInitialized = true;
-    console.log('✅ Firebase 客戶端服務已初始化');
+    console.log('✅ Firebase 客戶端服務初始化完成');
   } catch (error) {
     console.error('❌ Firebase 客戶端服務初始化失敗:', error);
-    throw error;
+    // 不拋出錯誤，允許應用程式繼續運行
+    servicesInitialized = true; // 標記為已初始化，避免重複嘗試
   }
 }
 
@@ -103,7 +115,14 @@ export function getFirebaseConfig() {
  */
 export function isEmulatorEnvironment(): boolean {
   return process.env.NODE_ENV === 'development' && 
-         process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true';
+         process.env.NEXT_PUBLIC_USE_EMULATORS === 'true';
+}
+
+/**
+ * 檢查客戶端服務是否已初始化
+ */
+export function isClientServicesReady(): boolean {
+  return servicesInitialized;
 }
 
 /**

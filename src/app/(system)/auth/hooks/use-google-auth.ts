@@ -72,10 +72,12 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       setAuthLoading(true);
       setError(null);
 
-      // 初始化 App Check
+      // 嘗試初始化 App Check（可選，不強制要求）
       const appCheck = await getAppCheck();
-      if (!appCheck) {
-        throw new Error('App Check 初始化失敗');
+      if (appCheck) {
+        console.log('✅ App Check 已啟用，提供額外安全保護');
+      } else {
+        console.log('⚠️ App Check 未啟用，但不影響登入功能');
       }
 
       // 創建 Google 提供者

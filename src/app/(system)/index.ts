@@ -63,6 +63,7 @@ export {
   isFirebaseInitialized,
   getFirebaseConfig,
   isEmulatorEnvironment,
+  isClientServicesReady,
   firebaseConfig,
   RECAPTCHA_CONFIG,
   APP_CHECK_CONFIG,
