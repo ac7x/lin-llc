@@ -40,7 +40,18 @@ export function useTaskManagement() {
       // 更新任務指派
       task.submitters = submitters;
       task.reviewers = reviewers;
-      task.status = 'in-progress';
+      
+      // 根據指派情況設定任務狀態
+      if (submitters.length > 0) {
+        // 有提交者時，任務可以開始進行
+        task.status = 'in-progress';
+      } else if (reviewers.length > 0 && submitters.length === 0) {
+        // 只有審核者沒有提交者時，保持為草稿狀態
+        task.status = task.status || 'draft';
+      } else {
+        // 都沒有指派時，保持草稿狀態
+        task.status = 'draft';
+      }
 
       // 清理 undefined 值並更新 Firestore
       const cleanedProject = removeUndefinedValues(updatedProject);
@@ -118,22 +129,14 @@ export function useTaskManagement() {
 
       // 如果任務完成，自動提交審核並獎勵積分
       if (task.progress === 100) {
-        task.status = 'submitted';
-        task.submittedAt = new Date().toISOString();
-        task.submittedBy = user.uid;
-
-        // 🎯 獎勵任務完成積分給所有提交者
-        if (task.submitters && task.submitters.length > 0) {
-          await PointsRewardService.rewardTaskCompletion(
-            task.submitters,
-            task.name,
-            completed,
-            total
-          );
-        }
-
-        // 發送審核通知給審核者
+        // 檢查是否有審核者
         if (task.reviewers && task.reviewers.length > 0) {
+          // 有審核者時，提交等待審核
+          task.status = 'submitted';
+          task.submittedAt = new Date().toISOString();
+          task.submittedBy = user.uid;
+
+          // 發送審核通知給審核者
           await NotificationService.sendTaskSubmissionNotification(
             task.reviewers,
             task.name,
@@ -145,6 +148,29 @@ export function useTaskManagement() {
               subpackageIndex,
               taskIndex,
             }
+          );
+        } else {
+          // 沒有審核者時，直接標記為已核准
+          task.status = 'approved';
+          task.submittedAt = new Date().toISOString();
+          task.submittedBy = user.uid;
+          task.approvedAt = new Date().toISOString();
+          task.approvedBy = 'system'; // 系統自動核准
+          
+          // 提示用戶任務已自動核准
+          console.log('任務已完成且無需審核，自動核准:', task.name);
+          
+          // 檢查是否需要向上層提交
+          await checkAndSubmitParentLevel(updatedProject, 'system', packageIndex, subpackageIndex);
+        }
+
+        // 🎯 獎勵任務完成積分給所有提交者
+        if (task.submitters && task.submitters.length > 0) {
+          await PointsRewardService.rewardTaskCompletion(
+            task.submitters,
+            task.name,
+            completed,
+            total
           );
         }
       }

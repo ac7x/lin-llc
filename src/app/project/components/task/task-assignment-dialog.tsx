@@ -44,13 +44,9 @@ export function TaskAssignmentDialog({
   };
 
   const handleAssign = async () => {
-    if (submitters.length === 0) {
-      toast.error('請至少指派一位提交者');
-      return;
-    }
-    
-    if (reviewers.length === 0) {
-      toast.error('請至少指派一位審核者');
+    // 檢查是否至少指派了提交者或審核者中的一個
+    if (submitters.length === 0 && reviewers.length === 0) {
+      toast.error('請至少指派一位提交者或審核者');
       return;
     }
 
@@ -58,7 +54,13 @@ export function TaskAssignmentDialog({
     try {
       const success = await onAssign(submitters, reviewers);
       if (success) {
-        toast.success('任務指派成功');
+        if (submitters.length > 0 && reviewers.length === 0) {
+          toast.success('已指派提交者，可稍後再指派審核者');
+        } else if (submitters.length === 0 && reviewers.length > 0) {
+          toast.success('已指派審核者，請確保已有提交者完成任務');
+        } else {
+          toast.success('任務指派成功');
+        }
         onClose();
         resetForm();
       } else {
@@ -81,14 +83,14 @@ export function TaskAssignmentDialog({
             任務指派
           </DialogTitle>
           <DialogDescription>
-            為任務「{taskName}」指派提交者和審核者
+            為任務「{taskName}」指派人員。可以先指派提交者開始工作，稍後再指派審核者。
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* 提交者設定 */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">提交者 (Submitters)</Label>
+            <Label className="text-sm font-medium">提交者 (Submitters) <span className="text-xs text-muted-foreground">- 可選</span></Label>
             <UserSelector
               value={submitters}
               onValueChange={setSubmitters}
@@ -97,13 +99,13 @@ export function TaskAssignmentDialog({
               disabled={loading}
             />
             <p className="text-xs text-muted-foreground">
-              提交者負責執行任務並提交完成結果
+              提交者負責執行任務並提交完成結果。可以先指派提交者開始工作。
             </p>
           </div>
 
           {/* 審核者設定 */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">審核者 (Reviewers)</Label>
+            <Label className="text-sm font-medium">審核者 (Reviewers) <span className="text-xs text-muted-foreground">- 可選</span></Label>
             <UserSelector
               value={reviewers}
               onValueChange={setReviewers}
@@ -112,7 +114,7 @@ export function TaskAssignmentDialog({
               disabled={loading}
             />
             <p className="text-xs text-muted-foreground">
-              審核者負責檢查和批准任務完成結果
+              審核者負責檢查和批准任務完成結果。可以在提交者完成工作後再指派。
             </p>
           </div>
         </div>
