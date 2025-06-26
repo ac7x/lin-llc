@@ -1,0 +1,1 @@
+export { default as ProjectAIAssistant } from './project-ai-assistant'; 
