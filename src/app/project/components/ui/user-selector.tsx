@@ -25,7 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckIcon, UsersIcon, XIcon } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { permissionService } from '@/app/(system)';
-import type { UserProfile } from '@/app/settings/types';
+import type { UserProfile } from '@/app/(system)';
 
 export interface User {
   uid: string;

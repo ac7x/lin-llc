@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useGoogleAuth } from '@/app/(system)';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
+import { db } from '@/app/(system)/data/lib/firebase-init';
 import { NotificationService } from '@/app/project/utils/notification-service';
 import { 
   BellIcon, 

@@ -5,8 +5,8 @@ import {
   doc, 
   setDoc 
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { db } from '@/app/(system)/data/lib/firebase-init';
+import { useGoogleAuth } from '@/app/(system)';
 import { Project, Package, Subpackage, TaskPackage } from '../types';
 
 interface ProjectWizardConfig {
