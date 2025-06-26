@@ -35,6 +35,7 @@ const eslintConfig = [
       'src/app/(safety)',
       'src/app/(supervisor)',
       'src/app/(user)',
+      'src/app/(subcontractor)',
     ],
   },
   {
