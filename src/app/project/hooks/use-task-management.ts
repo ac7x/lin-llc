@@ -37,21 +37,10 @@ export function useTaskManagement() {
       const updatedProject = { ...project };
       const task = updatedProject.packages[packageIndex].subpackages[subpackageIndex].taskpackages[taskIndex];
       
-      console.log('🎯 開始指派任務:', task.name);
-      console.log('📝 提交者列表:', submitters);
-      console.log('👥 審核者列表:', reviewers);
-      
       // 更新任務指派
       task.submitters = submitters;
       task.reviewers = reviewers;
       task.status = 'in-progress';
-      
-      console.log('✅ 任務指派完成，更新後的任務:', {
-        name: task.name,
-        submitters: task.submitters,
-        reviewers: task.reviewers,
-        status: task.status
-      });
 
       // 清理 undefined 值並更新 Firestore
       const cleanedProject = removeUndefinedValues(updatedProject);

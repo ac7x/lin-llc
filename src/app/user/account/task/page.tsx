@@ -43,45 +43,32 @@ export default function UserTaskPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-    void (async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
+    const loadUserTasks = async () => {
       try {
-        console.log('🔍 開始查詢用戶任務，用戶ID:', user.uid);
-        
-        // 查詢所有專案
+        // 直接查詢所有專案
         const projectsSnapshot = await getDocs(collection(db, 'projects'));
         const userTasks: UserTask[] = [];
-        
-        console.log('📁 找到專案數量:', projectsSnapshot.size);
         
         projectsSnapshot.forEach(projectDoc => {
           const projectData = projectDoc.data();
           const projectId = projectDoc.id;
           
-          console.log('📂 檢查專案:', projectData.name, '(ID:', projectId, ')');
-          
           // 遍歷所有工作包、子工作包、任務包
           projectData.packages?.forEach((pkg: any, packageIndex: number) => {
-            console.log('📦 檢查工作包:', pkg.name, '(index:', packageIndex, ')');
-            
             pkg.subpackages?.forEach((subpkg: any, subpackageIndex: number) => {
-              console.log('📋 檢查子工作包:', subpkg.name, '(index:', subpackageIndex, ')');
-              
               subpkg.taskpackages?.forEach((task: any, taskIndex: number) => {
-                console.log('📝 檢查任務:', task.name, '(index:', taskIndex, ')');
-                console.log('  - 提交者列表:', task.submitters);
-                console.log('  - 審核者列表:', task.reviewers);
-                
                 // 檢查當前用戶是否為提交者或審核者
                 const isSubmitter = task.submitters?.includes(user.uid);
                 const isReviewer = task.reviewers?.includes(user.uid);
                 
-                console.log('  - 是否為提交者:', isSubmitter);
-                console.log('  - 是否為審核者:', isReviewer);
-                
                 // 如果是提交者，創建提交者任務記錄
                 if (isSubmitter) {
-                  const submitterTask = {
+                  userTasks.push({
                     id: `${projectId}_${packageIndex}_${subpackageIndex}_${taskIndex}_submitter`,
                     name: task.name,
                     projectName: projectData.name,
@@ -97,14 +84,12 @@ export default function UserTaskPage() {
                     assignedAt: task.assignedAt,
                     submittedAt: task.submittedAt,
                     approvedAt: task.approvedAt,
-                  };
-                  userTasks.push(submitterTask);
-                  console.log('  ✅ 添加提交者任務:', submitterTask.id);
+                  });
                 }
                 
                 // 如果是審核者，創建審核者任務記錄
                 if (isReviewer) {
-                  const reviewerTask = {
+                  userTasks.push({
                     id: `${projectId}_${packageIndex}_${subpackageIndex}_${taskIndex}_reviewer`,
                     name: task.name,
                     projectName: projectData.name,
@@ -120,17 +105,12 @@ export default function UserTaskPage() {
                     assignedAt: task.assignedAt,
                     submittedAt: task.submittedAt,
                     approvedAt: task.approvedAt,
-                  };
-                  userTasks.push(reviewerTask);
-                  console.log('  ✅ 添加審核者任務:', reviewerTask.id);
+                  });
                 }
               });
             });
           });
         });
-        
-        console.log('📊 總共找到用戶任務數量:', userTasks.length);
-        console.log('📋 所有任務列表:', userTasks);
         
         setTasks(userTasks);
       } catch (error) {
@@ -139,7 +119,9 @@ export default function UserTaskPage() {
       } finally {
         setLoading(false);
       }
-    })();
+    };
+    
+    void loadUserTasks();
   }, [user]);
 
   if (!user) {
