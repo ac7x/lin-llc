@@ -24,6 +24,10 @@
     "rb": "git fetch origin && git reset --hard origin/main",
     "script": "bash script/script.sh",
     "reset": "bash script/reset.sh",
+    "debug": "bash script/debug.sh",
+    "git-reset": "bash script/git-reset.sh",
+    "install-pkg": "bash script/install.sh",
+    "uninstall-pkg": "bash script/uninstall.sh",
     "lint:case": "eslint --rule 'unicorn/filename-case: error' src/",
     "check-case": "npm run lint:case && npm run type-check"
   },

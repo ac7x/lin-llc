@@ -31,11 +31,12 @@ options=(
     "部署到 Firebase (fd)"
     "僅部署 Hosting (fdb)"
     "專案重置 (reset)"
-    "除錯流程 (debug.sh)"
+    "除錯流程 (debug)"
+    "Git 重置到指定 commit (git-reset)"
     "手動清除 .next 資料夾"
     "手動清除 node_modules 資料夾"
-    "互動安裝依賴 (install.sh)"
-    "互動卸載依賴 (uninstall.sh)"
+    "互動安裝依賴 (install-pkg)"
+    "互動卸載依賴 (uninstall-pkg)"
     "強制推送到 main (pfm)"
     "重設本地為遠端 main (rb)"
     "離開"
@@ -109,18 +110,19 @@ case $current in
     11) npm run fd ;;
     12) npm run fdb ;;
     13) npm run reset ;;
-    14) bash script/debug.sh ;;
-    15) 
+    14) npm run debug ;;
+    15) npm run git-reset ;;
+    16) 
         echo "清除 .next 資料夾..."
         rm -rf .next && echo ".next 資料夾已移除。" 
         ;;
-    16) 
+    17) 
         echo "清除 node_modules 資料夾..."
         rm -rf node_modules && echo "node_modules 資料夾已移除。" 
         ;;
-    17) bash script/install.sh ;;
-    18) bash script/uninstall.sh ;;
-    19) 
+    18) npm run install-pkg ;;
+    19) npm run uninstall-pkg ;;
+    20) 
         echo "警告：這將強制推送到 main 分支！"
         read -p "確定要繼續嗎？(y/N): " confirm
         if [[ $confirm =~ ^[Yy]$ ]]; then
@@ -129,7 +131,7 @@ case $current in
             echo "已取消操作。"
         fi
         ;;
-    20) 
+    21) 
         echo "警告：這將重設本地 main 分支為遠端版本！"
         read -p "確定要繼續嗎？(y/N): " confirm
         if [[ $confirm =~ ^[Yy]$ ]]; then
@@ -138,7 +140,7 @@ case $current in
             echo "已取消操作。"
         fi
         ;;
-    21) echo "已離開。"; exit 0 ;;
+    22) echo "已離開。"; exit 0 ;;
 esac
 
 echo "============================================="
