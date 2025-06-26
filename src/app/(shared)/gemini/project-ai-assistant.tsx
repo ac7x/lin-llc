@@ -9,7 +9,32 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, Upload, X } from 'lucide-react';
 import { useAuth } from '@/app/(system)';
-import { getErrorMessage, logError, safeAsync } from '@/lib/error-utils';
+
+// 錯誤處理工具函數
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return '發生未知錯誤';
+}
+
+function logError(error: unknown, context?: Record<string, unknown>): void {
+  console.error('錯誤:', error, context ? { context } : '');
+}
+
+async function safeAsync<T>(
+  operation: () => Promise<T>,
+  onError: (error: unknown) => void
+): Promise<T | void> {
+  try {
+    return await operation();
+  } catch (error) {
+    onError(error);
+  }
+}
 
 interface ChatMessage {
   id: string;
