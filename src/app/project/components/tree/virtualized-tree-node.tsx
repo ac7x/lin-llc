@@ -3,19 +3,9 @@ import React, { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   ChevronRightIcon,
   ChevronDownIcon,
-  FolderIcon,
-  PackageIcon,
-  BookOpen,
-  CheckSquareIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   UserPlusIcon,
   EditIcon,
   EyeIcon,
@@ -24,6 +14,15 @@ import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { FlatItem } from '../../utils/tree-flattener';
 import { Project, Package, Subpackage, TaskPackage } from '../../types';
 import { SimpleContextMenu } from '../ui/simple-context-menu';
+import { 
+  getItemInfo, 
+  getStatusInfo, 
+  getUserPermissions, 
+  getBorderColor, 
+  getChildCount as utilGetChildCount, 
+  getIndentStyle 
+} from './tree-utils';
+import { RenameDialog } from './rename-dialog';
 
 interface VirtualizedTreeNodeProps {
   item: FlatItem;
@@ -63,101 +62,17 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
 }) => {
   const { user } = useGoogleAuth();
 
-  // 根據項目類型獲取圖標和樣式
-  const getItemInfo = () => {
-    switch (item.type) {
-      case 'project':
-        return {
-          icon: FolderIcon,
-          color: isSelected ? 'text-blue-800' : 'text-blue-600',
-          bgColor: isSelected ? 'bg-blue-100 border-blue-300' : 'hover:bg-blue-50',
-        };
-      case 'package':
-        return {
-          icon: PackageIcon,
-          color: isSelected ? 'text-green-800' : 'text-green-600',
-          bgColor: isSelected ? 'bg-green-100 border-green-300' : 'hover:bg-green-50',
-        };
-      case 'subpackage':
-        return {
-          icon: BookOpen,
-          color: isSelected ? 'text-purple-800' : 'text-purple-600',
-          bgColor: isSelected ? 'bg-purple-100 border-purple-300' : 'hover:bg-purple-50',
-        };
-      case 'task':
-        return {
-          icon: CheckSquareIcon,
-          color: isSelected ? 'text-orange-800' : 'text-orange-600',
-          bgColor: isSelected ? 'bg-orange-100 border-orange-300' : 'hover:bg-orange-50',
-        };
-      default:
-        return {
-          icon: BookOpen,
-          color: isSelected ? 'text-gray-800' : 'text-gray-600',
-          bgColor: isSelected ? 'bg-gray-100 border-gray-300' : 'hover:bg-gray-50',
-        };
-    }
-  };
+  // 使用工具函數獲取項目信息
+  const itemInfo = getItemInfo(item.type, isSelected);
 
-  // 獲取狀態信息
-  const getStatusInfo = (data: any) => {
-    if (!data.status) return null;
-    
-    switch (data.status) {
-      case 'in-progress':
-        return { text: '進行中', color: 'bg-blue-100 text-blue-800', icon: ClockIcon };
-      case 'submitted':
-        return { text: '待審核', color: 'bg-yellow-100 text-yellow-800', icon: ClockIcon };
-      case 'approved':
-        return { text: '已核准', color: 'bg-green-100 text-green-800', icon: CheckCircleIcon };
-      case 'rejected':
-        return { text: '已駁回', color: 'bg-red-100 text-red-800', icon: XCircleIcon };
-      default:
-        return { text: '草稿', color: 'bg-gray-100 text-gray-800', icon: ClockIcon };
-    }
-  };
-
-  // 檢查用戶權限
-  const getUserPermissions = (data: any) => {
-    if (item.type !== 'task') return { canAssign: false, canSubmit: false, canReview: false };
-    
-    const taskData = data as TaskPackage;
-    const isSubmitter = taskData.submitters?.includes(user?.uid || '') || false;
-    const isReviewer = taskData.reviewers?.includes(user?.uid || '') || false;
-    
-    return {
-      canAssign: user?.uid, // 簡化權限檢查
-      canSubmit: isSubmitter && (taskData.status === 'in-progress' || taskData.status === 'rejected'),
-      canReview: isReviewer && taskData.status === 'submitted',
-    };
-  };
-
-  const itemInfo = getItemInfo();
+  // 使用工具函數獲取狀態和權限信息
   const ItemIcon = itemInfo.icon;
   const statusInfo = getStatusInfo(item.data);
   const StatusIcon = statusInfo?.icon;
-  const permissions = getUserPermissions(item.data);
+  const permissions = getUserPermissions(item.data, user?.uid);
 
-  // 根據項目類型獲取邊框顏色
-  const getBorderColor = (type: string) => {
-    switch (type) {
-      case 'project':
-        return 'border-l-blue-500';
-      case 'package':
-        return 'border-l-green-500';
-      case 'subpackage':
-        return 'border-l-purple-500';
-      case 'task':
-        return 'border-l-orange-500';
-      default:
-        return 'border-l-gray-500';
-    }
-  };
-
-  // 縮排樣式
-  const indentStyle = {
-    paddingLeft: `${item.level * 20 + 8}px`,
-  };
+  // 使用工具函數獲取樣式
+  const indentStyle = getIndentStyle(item.level);
 
     // 🎯 右鍵菜單回調處理
   const [showRenameDialog, setShowRenameDialog] = useState(false);
@@ -303,48 +218,20 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
         {/* 子項目計數 */}
         {item.hasChildren && (
           <div className={`text-xs ml-2 ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
-            {getChildCount(item.data)}
+            {utilGetChildCount(item.data)}
           </div>
         )}
         </div>
       </SimpleContextMenu>
 
       {/* 重新命名對話框 */}
-      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>重新命名</DialogTitle>
-            <DialogDescription>
-              為 {item.type === 'package' ? '工作包' : item.type === 'subpackage' ? '子工作包' : '任務'} 輸入新名稱
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="rename-input">新名稱</Label>
-              <Input
-                id="rename-input"
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleRenameConfirm();
-                  }
-                }}
-                className="mt-1"
-                autoFocus
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
-              取消
-            </Button>
-            <Button onClick={handleRenameConfirm}>
-              確認
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RenameDialog
+        isOpen={showRenameDialog}
+        onClose={() => setShowRenameDialog(false)}
+        currentName={(item.data as any).name || ''}
+        itemType={item.type as 'project' | 'package' | 'subpackage' | 'task'}
+        onRename={handleRenameConfirm}
+      />
     </div>
   );
 });
@@ -352,18 +239,4 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
 // 設置 displayName 用於調試
 VirtualizedTreeNode.displayName = 'VirtualizedTreeNode';
 
-/**
- * 獲取子項目數量
- */
-function getChildCount(data: Project | Package | Subpackage | TaskPackage): string {
-  if ('packages' in data) {
-    return `${data.packages.length} 包`;
-  }
-  if ('subpackages' in data) {
-    return `${data.subpackages.length} 子包`;
-  }
-  if ('taskpackages' in data) {
-    return `${data.taskpackages.length} 任務`;
-  }
-  return '';
-} 
+ 

@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { 
   SquareIcon,
   SquareCheckIcon,
@@ -12,12 +13,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { ProjectTaskNodeProps, SelectedItem } from '../../types';
 import { ITEM_SELECT_STYLE } from '../../constants';
+import { getItemInfo } from './tree-utils';
+import { TaskActionButtons } from './task-action-buttons';
+import { RenameDialog } from './rename-dialog';
+import { SimpleContextMenu } from '../ui/simple-context-menu';
 
 /**
  * 任務節點組件 - 顯示單一任務的資訊
- * 負責渲染任務名稱、完成狀態和進度資訊
+ * 負責渲染任務名稱、完成狀態和進度資訊，支援右鍵菜單和操作按鈕
  */
 export default function ProjectTaskNode({
   project,
@@ -26,7 +32,19 @@ export default function ProjectTaskNode({
   taskIndex,
   onItemClick,
   isItemSelected,
-}: ProjectTaskNodeProps) {
+  onAssignTask,
+  onSubmitTask,
+  onReviewTask,
+  onRename,
+}: ProjectTaskNodeProps & {
+  onAssignTask?: (taskItem: SelectedItem) => void;
+  onSubmitTask?: (taskItem: SelectedItem) => void;
+  onReviewTask?: (taskItem: SelectedItem) => void;
+  onRename?: (taskItem: SelectedItem, newName: string) => void;
+}) {
+  const { user } = useGoogleAuth();
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+
   const task = project.packages[packageIndex]?.subpackages[subpackageIndex]?.taskpackages[taskIndex];
   
   if (!task) {
@@ -41,33 +59,80 @@ export default function ProjectTaskNode({
     taskIndex,
   };
 
+  const isSelected = isItemSelected(taskItem);
+  const itemInfo = getItemInfo('task', isSelected);
+
+  // 右鍵菜單處理
+  const handleRename = () => {
+    setShowRenameDialog(true);
+  };
+
+  const handleRenameConfirm = (newName: string) => {
+    if (onRename) {
+      onRename(taskItem, newName);
+    }
+  };
+
+  const contextMenuProps = {
+    itemType: 'task' as const,
+    itemName: task.name,
+    currentQuantity: {
+      completed: task.completed || 0,
+      total: task.total || 0,
+    },
+    onRename: handleRename,
+  };
+
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton className="pl-2">
-        <div 
-          onClick={() => onItemClick(taskItem)}
-          className={`${ITEM_SELECT_STYLE} ${
-            isItemSelected(taskItem) ? 'bg-accent' : ''
-          }`}
-        >
-          {isItemSelected(taskItem) ? (
-            <SquareCheckIcon className="h-3 w-3" />
-          ) : (
-            <SquareIcon className="h-3 w-3" />
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="truncate text-xs">{task.name}</span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{task.name}</p>
-            </TooltipContent>
-          </Tooltip>
-          <span className={`text-xs ${isItemSelected(taskItem) ? 'text-orange-600' : 'text-blue-600'}`}>
-            {task.completed || 0}/{task.total || 0}
-          </span>
-        </div>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+    <>
+      <SidebarMenuItem>
+        <SimpleContextMenu {...contextMenuProps}>
+          <SidebarMenuButton className="pl-2">
+            <div 
+              onClick={() => onItemClick(taskItem)}
+              className={`${ITEM_SELECT_STYLE} ${
+                isSelected ? 'bg-accent' : ''
+              }`}
+            >
+              {isSelected ? (
+                <SquareCheckIcon className={`h-3 w-3 ${itemInfo.color}`} />
+              ) : (
+                <SquareIcon className={`h-3 w-3 ${itemInfo.color}`} />
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className={`truncate text-xs flex-1 ${itemInfo.color}`}>{task.name}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{task.name}</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              {/* 任務操作按鈕 */}
+              <TaskActionButtons
+                task={task}
+                userUid={user?.uid}
+                isSelected={isSelected}
+                itemColor={itemInfo.color}
+                onAssignTask={onAssignTask ? () => onAssignTask(taskItem) : undefined}
+                onSubmitTask={onSubmitTask ? () => onSubmitTask(taskItem) : undefined}
+                onReviewTask={onReviewTask ? () => onReviewTask(taskItem) : undefined}
+                showStatus={false}
+                showProgress={false}
+              />
+            </div>
+          </SidebarMenuButton>
+        </SimpleContextMenu>
+      </SidebarMenuItem>
+
+      {/* 重新命名對話框 */}
+      <RenameDialog
+        isOpen={showRenameDialog}
+        onClose={() => setShowRenameDialog(false)}
+        currentName={task.name}
+        itemType="task"
+        onRename={handleRenameConfirm}
+      />
+    </>
   );
 }
