@@ -1,12 +1,24 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import { 
   CheckSquareIcon, 
   UserIcon, 
@@ -15,9 +27,11 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  FolderIcon
+  FolderIcon,
+  SendIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { removeUndefinedValues } from '@/lib/utils';
 
 interface UserTask {
   id: string;
@@ -41,6 +55,12 @@ export default function UserTaskPage() {
   const { user } = useGoogleAuth();
   const [tasks, setTasks] = useState<UserTask[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // 任務提交相關狀態
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
+  const [completedInput, setCompletedInput] = useState('');
+  const [totalInput, setTotalInput] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -123,6 +143,95 @@ export default function UserTaskPage() {
     
     void loadUserTasks();
   }, [user]);
+
+  // 直接提交任務進度（不需要專案權限）
+  const handleDirectSubmit = async () => {
+    if (!selectedTask || !user) return;
+
+    const completed = parseInt(completedInput) || 0;
+    const total = parseInt(totalInput) || 0;
+
+    if (total <= 0) {
+      toast.error('總數量必須大於0');
+      return;
+    }
+
+    if (completed > total) {
+      toast.error('完成數量不能大於總數量');
+      return;
+    }
+
+    setSubmitLoading(true);
+    
+    try {
+      // 直接更新專案數據
+      const projectRef = doc(db, 'projects', selectedTask.projectId);
+      
+      // 獲取當前專案數據
+      const projectSnapshot = await getDocs(collection(db, 'projects'));
+      let projectData: any = null;
+      
+      projectSnapshot.forEach(doc => {
+        if (doc.id === selectedTask.projectId) {
+          projectData = doc.data();
+        }
+      });
+      
+      if (!projectData) {
+        toast.error('找不到專案數據');
+        return;
+      }
+
+      // 更新任務數據
+      const task = projectData.packages[selectedTask.packageIndex]
+        .subpackages[selectedTask.subpackageIndex]
+        .taskpackages[selectedTask.taskIndex];
+      
+      task.completed = completed;
+      task.total = total;
+      task.progress = Math.round((completed / total) * 100);
+      
+      // 如果任務完成，自動提交審核
+      if (task.progress === 100) {
+        task.status = 'submitted';
+        task.submittedAt = new Date().toISOString();
+        task.submittedBy = user.uid;
+        
+        toast.success('任務已完成並提交審核！');
+      } else {
+        toast.success('任務進度已更新！');
+      }
+
+      // 清理undefined值並更新到Firestore
+      const cleanedProject = removeUndefinedValues(projectData);
+      await updateDoc(projectRef, cleanedProject);
+
+      // 更新本地任務列表
+      setTasks(prev => prev.map(t => 
+        t.id === selectedTask.id 
+          ? { ...t, completed, total, progress: task.progress, status: task.status }
+          : t
+      ));
+
+      // 重置表單
+      setSelectedTask(null);
+      setCompletedInput('');
+      setTotalInput('');
+      
+    } catch (error) {
+      console.error('提交任務失敗:', error);
+      toast.error('提交任務失敗');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  // 開啟提交drawer
+  const openSubmitDrawer = (task: UserTask) => {
+    setSelectedTask(task);
+    setCompletedInput(task.completed.toString());
+    setTotalInput(task.total.toString());
+  };
 
   if (!user) {
     return (
@@ -298,13 +407,89 @@ export default function UserTaskPage() {
                           </Button>
                           
                           {task.role === 'submitter' && (task.status === 'in-progress' || task.status === 'rejected') && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleViewProject(task)}
-                            >
-                              <EditIcon className="h-4 w-4 mr-1" />
-                              更新進度
-                            </Button>
+                            <>
+                              {/* 快速提交按鈕 - 使用Drawer */}
+                              <Drawer>
+                                <DrawerTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => openSubmitDrawer(task)}
+                                  >
+                                    <SendIcon className="h-4 w-4 mr-1" />
+                                    快速提交
+                                  </Button>
+                                </DrawerTrigger>
+                                <DrawerContent>
+                                  <DrawerHeader>
+                                    <DrawerTitle>提交任務進度</DrawerTitle>
+                                    <DrawerDescription>
+                                      更新任務「{selectedTask?.name}」的完成進度
+                                    </DrawerDescription>
+                                  </DrawerHeader>
+                                  <div className="p-4 space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="completed">完成數量</Label>
+                                        <Input
+                                          id="completed"
+                                          type="number"
+                                          min="0"
+                                          value={completedInput}
+                                          onChange={(e) => setCompletedInput(e.target.value)}
+                                          placeholder="已完成數量"
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="total">總數量</Label>
+                                        <Input
+                                          id="total"
+                                          type="number"
+                                          min="1"
+                                          value={totalInput}
+                                          onChange={(e) => setTotalInput(e.target.value)}
+                                          placeholder="總數量"
+                                        />
+                                      </div>
+                                    </div>
+                                    
+                                    {/* 進度預覽 */}
+                                    {completedInput && totalInput && (
+                                      <div className="space-y-2">
+                                        <Label>進度預覽</Label>
+                                        <Progress 
+                                          value={Math.round((parseInt(completedInput) / parseInt(totalInput)) * 100)} 
+                                          className="h-2" 
+                                        />
+                                        <p className="text-sm text-muted-foreground">
+                                          {Math.round((parseInt(completedInput) / parseInt(totalInput)) * 100)}% 完成
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <DrawerFooter>
+                                    <Button 
+                                      onClick={handleDirectSubmit}
+                                      disabled={submitLoading || !completedInput || !totalInput}
+                                    >
+                                      {submitLoading ? '提交中...' : '確認提交'}
+                                    </Button>
+                                    <DrawerClose asChild>
+                                      <Button variant="outline">取消</Button>
+                                    </DrawerClose>
+                                  </DrawerFooter>
+                                </DrawerContent>
+                              </Drawer>
+                              
+                              {/* 原有的專案頁面按鈕 */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleViewProject(task)}
+                              >
+                                <EditIcon className="h-4 w-4 mr-1" />
+                                專案頁面
+                              </Button>
+                            </>
                           )}
                           
                           {task.role === 'reviewer' && task.status === 'submitted' && (
