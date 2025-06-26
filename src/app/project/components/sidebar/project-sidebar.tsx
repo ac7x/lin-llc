@@ -34,7 +34,6 @@ import {
 } from 'lucide-react';
 import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
 import ProjectTree from '../tree/project-tree';
-import { VirtualizedProjectTree } from '../tree/virtualized-project-tree';
 import { CreateProjectWizard } from '../create/create-project-wizard';
 import { ProjectTemplates } from '../template';
 import { QuantityManagementTab } from './quantity-management-tab';
@@ -278,37 +277,28 @@ export function ProjectSidebar({
                           {/* 選中專案的樹狀結構 */}
                           {selectedProject && (
                             <div className="mt-4 border-t pt-4">
-                              {shouldUseVirtualization ? (
-                                <div className="bg-muted/20 rounded-lg p-1">
-                                  <VirtualizedProjectTree
-                                    project={selectedProject}
-                                    onProjectUpdate={onProjectUpdate}
-                                    onItemSelect={onItemClick}
-                                    selectedItem={selectedItem}
-                                    height={400}
-                                    searchTerm={searchTerm}
-                                  />
-                                </div>
-                              ) : (
-                                <ProjectTree 
-                                  project={selectedProject}
-                                  selectedProject={selectedProject}
-                                  selectedItem={selectedItem}
-                                  onSelectProject={onSelectProject}
-                                  onItemClick={onItemClick}
-                                  onAddPackage={onAddPackage}
-                                  onAddTaskPackage={onAddTaskPackage}
-                                  onAddSubpackage={onAddSubpackage}
-                                  pkgInputs={pkgInputs}
-                                  setPkgInputs={setPkgInputs}
-                                  taskPackageInputs={taskPackageInputs}
-                                  setTaskPackageInputs={setTaskPackageInputs}
-                                  subInputs={subInputs}
-                                  setSubInputs={setSubInputs}
-                                  loading={loading}
-                                  isItemSelected={isItemSelected}
-                                />
-                              )}
+                              <ProjectTree 
+                                project={selectedProject}
+                                selectedProject={selectedProject}
+                                selectedItem={selectedItem}
+                                onSelectProject={onSelectProject}
+                                onItemClick={onItemClick}
+                                onAddPackage={onAddPackage}
+                                onAddTaskPackage={onAddTaskPackage}
+                                onAddSubpackage={onAddSubpackage}
+                                pkgInputs={pkgInputs}
+                                setPkgInputs={setPkgInputs}
+                                taskPackageInputs={taskPackageInputs}
+                                setTaskPackageInputs={setTaskPackageInputs}
+                                subInputs={subInputs}
+                                setSubInputs={setSubInputs}
+                                loading={loading}
+                                isItemSelected={isItemSelected}
+                                useVirtualization={shouldUseVirtualization}
+                                searchTerm={searchTerm}
+                                virtualizedHeight={400}
+                                onProjectUpdate={onProjectUpdate}
+                              />
                             </div>
                           )}
                           
