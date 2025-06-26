@@ -29,6 +29,7 @@ interface VirtualizedProjectTreeProps {
   onItemSelect?: (item: SelectedItem) => void;
   selectedItem?: SelectedItem;
   height?: number;
+  searchTerm?: string; // 外部搜索詞
   // 🎯 數量分配相關回調
   onDistributeQuantity?: (item: FlatItem) => void;
   onAddChild?: (item: FlatItem) => void;
@@ -51,6 +52,7 @@ export function VirtualizedProjectTree({
   onItemSelect,
   selectedItem,
   height = DEFAULT_HEIGHT,
+  searchTerm,
   onDistributeQuantity,
   onAddChild,
   onRename,
@@ -58,7 +60,6 @@ export function VirtualizedProjectTree({
   onDuplicate,
 }: VirtualizedProjectTreeProps) {
   // 狀態管理
-  const [searchTerm, setSearchTerm] = useState('');
   const [expandedState] = useState(() => new ExpandedState());
   const [selectedFlatItem, setSelectedFlatItem] = useState<FlatItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -80,7 +81,7 @@ export function VirtualizedProjectTree({
 
   // 扁平化數據
   const flattenedItems = useMemo(() => {
-    const items = flattener.flattenProject(project, searchTerm);
+    const items = flattener.flattenProject(project, searchTerm || '');
     return items.filter(item => item.isVisible);
   }, [flattener, project, searchTerm, refreshKey]);
 
@@ -303,17 +304,6 @@ export function VirtualizedProjectTree({
           
           {/* 控制面板 */}
           <div className="flex items-center gap-2">
-            {/* 搜索框 */}
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索專案、包、任務..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
             {/* 操作按鈕 */}
             <Button
               variant="outline"

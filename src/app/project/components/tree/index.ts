@@ -10,7 +10,7 @@ export { default as ProjectPackageNode } from './project-package-node';
 export { default as ProjectSubpackageNode } from './project-subpackage-node';
 export { default as ProjectTaskNode } from './project-task-node';
 
-// 虛擬化樹狀組件導出
+// 虛擬化樹狀組件導出 - 已整合到主側邊欄
 export { VirtualizedProjectTree } from './virtualized-project-tree';
 export { VirtualizedTreeNode } from './virtualized-tree-node';
 
