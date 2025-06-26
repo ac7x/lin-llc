@@ -18,7 +18,7 @@ import {
   CheckCircleIcon,
   XCircleIcon
 } from 'lucide-react';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { useGoogleAuth } from '@/app/(system)';
 import { useTaskManagement } from '../../hooks';
 import { TaskAssignmentDialog, TaskSubmissionDialog, TaskReviewDialog } from '../task';
 import { Project, SelectedItem } from '../../types';

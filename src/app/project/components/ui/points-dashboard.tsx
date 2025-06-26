@@ -6,8 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { usePermissionContext } from '@/context/permission-context';
-import { useAuth } from '@/context/auth-context';
+import { usePermissionContext, useAuth } from '@/app/(system)';
 import { POINTS_CONFIG } from '../../utils/points-system';
 import { 
   Trophy, 

@@ -35,7 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ProjectActionGuard } from '@/app/settings/components/permission-guard';
+import { ProjectActionGuard } from '@/app/(system)';
 import { useTaskManagement } from '../../hooks';
 import { 
   FlatItem, 
@@ -56,7 +56,7 @@ import {
 } from './tree-utils';
 import { RenameDialog } from './rename-dialog';
 import { SimpleContextMenu } from '../ui/simple-context-menu';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { useGoogleAuth } from '@/app/(system)';
 import {
   ChevronRightIcon,
   ChevronDownIcon,

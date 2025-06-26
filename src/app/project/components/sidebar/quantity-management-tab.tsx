@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calculator, Lightbulb, ChevronRight, ChevronDown } from 'lucide-react';
 import { QuantityDistributionDialog } from '../dialogs/quantity-distribution-dialog';
 import { useProjectOperations } from '../../hooks';
-import { usePermissionContext } from '@/context/permission-context';
+import { usePermissionContext } from '@/app/(system)';
 import { Project, Package, Subpackage } from '../../types';
 import { FlatItem, ExpandedState, TreeFlattener } from '../../utils/tree-flattener';
 
