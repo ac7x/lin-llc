@@ -1,678 +1,213 @@
 ---
-description:
-globs:
-alwaysApply: false
----
----
-rule_type: auto_attached
-title: React Development Rules
-description: React component patterns and best practices
-patterns: ["**/*.{jsx,tsx}", "**/components/**/*.{js,ts}", "**/hooks/**/*.{js,ts}"]
+description: prompt for React with tsx, in a NextJS React Server Component environment
+globs: *.tsx
 ---
 
-# React Development Rules
+# Your rule content
 
-## Component Patterns
+You are an expert in TypeScript, NextJS, Node.js, React, Tailwind,  and Daisy UI.
 
-### Functional Components
-```typescript
-// Basic functional component
-interface Props {
-  title: string
-  count?: number
-  onIncrement: () => void
+## Code Style and Structure
+
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading,
+  hasError).
+- Structure files with clearly defined sections: exported component,
+  subcomponents, helpers, static content, and types.
+
+## Functional Components
+
+Use functional components without using React.FC. However, NEVER refactor
+existing code—you would explode the commit length.
+
+```tsx
+// Define the props interface explicitly
+interface MyComponentProps {
+  title: string;
 }
 
-export function Counter({ title, count = 0, onIncrement }: Props) {
-  return (
-    <div>
-      <h2>{title}</h2>
-      <p>Count: {count}</p>
-      <button onClick={onIncrement}>Increment</button>
-    </div>
-  )
-}
-
-// With children
-interface ContainerProps {
-  children: React.ReactNode
-  className?: string
-}
-
-export function Container({ children, className }: ContainerProps) {
-  return (
-    <div className={`container ${className || ''}`}>
-      {children}
-    </div>
-  )
+// Create the component as a plain function
+export function MyComponent({ title }: MyComponentProps): JSX.Element {
+  return <div>{title}</div>;
 }
 ```
 
-### Component Composition
-```typescript
-// Compound component pattern
-interface CardProps {
-  children: React.ReactNode
-  className?: string
-}
+In this example, the component is defined with clear types:
 
-interface CardHeaderProps {
-  children: React.ReactNode
-}
+- `MyComponentProps`: Explicitly defines the expected props.
+- `JSX.Element`: Specifies the component's return type.
 
-interface CardBodyProps {
-  children: React.ReactNode
-}
+This approach gives you precise control over the component's props and return
+type, making your code more predictable and easier to maintain.
 
-function Card({ children, className }: CardProps) {
-  return (
-    <div className={`card ${className || ''}`}>
-      {children}
-    </div>
-  )
-}
+## Naming Conventions
 
-Card.Header = function CardHeader({ children }: CardHeaderProps) {
-  return <div className="card-header">{children}</div>
-}
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Favor named exports for components.
+- Use the name of the main componenent as name for the file, using upper camel case. Ex: Header.tsx for Header component. Avoid to use index.tsx, except if it's a collection of exported components (usually for packages lib in monorepo)
 
-Card.Body = function CardBody({ children }: CardBodyProps) {
-  return <div className="card-body">{children}</div>
-}
+## TypeScript Usage
 
-// Usage
-<Card>
-  <Card.Header>Title</Card.Header>
-  <Card.Body>Content</Card.Body>
-</Card>
-```
+- Use TypeScript for all code; prefer interfaces over types.
+- Avoid enums; use maps instead.
+- Use functional components with TypeScript interfaces.
 
-### Render Props Pattern
-```typescript
-interface RenderProps<T> {
-  children: (data: T, loading: boolean, error?: Error) => React.ReactNode
-}
+## Syntax and Formatting
 
-function DataFetcher<T>({ url, children }: { url: string } & RenderProps<T>) {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error>()
+- Use the "function" keyword for pure functions.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple
+  statements.
+- Write declarative JSX.
 
-  useEffect(() => {
-    fetch(url)
-      .then(res => res.json())
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false))
-  }, [url])
+## UI and Styling
 
-  return <>{children(data, loading, error)}</>
-}
+- Use Tailwind CSS and DaisyUI for component styling.
+- Implement responsive design with Tailwind CSS; adopt a mobile-first approach.
+- avoid margins for spacing in a lists or collection of items. Use gaps. Use margins only to place a high level component into another one, rarely between two "small" component like buttons.
+- with tailwing avoid at maximum to use colors, like bg-red-500. It should be one of the primary, secondary ...
 
-// Usage
-<DataFetcher<User> url="/api/user">
-  {(user, loading, error) => {
-    if (loading) return <div>Loading...</div>
-    if (error) return <div>Error: {error.message}</div>
-    return <div>Hello {user?.name}</div>
-  }}
-</DataFetcher>
-```
+- Primary: main action and UI position
+- Secondary: brand color, aka violet for Robusta
+    - rarely second possible action
+- Accent: CTA
+- Neutral:  cancel, close
+- base:
 
-## Custom Hooks
 
-### Data Fetching Hook
-```typescript
-interface UseFetchResult<T> {
-  data: T | null
-  loading: boolean
-  error: Error | null
-  refetch: () => void
-}
 
-function useFetch<T>(url: string): UseFetchResult<T> {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const result = await response.json()
-      setData(result)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
-    } finally {
-      setLoading(false)
-    }
-  }, [url])
-
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
-
-  return { data, loading, error, refetch: fetchData }
-}
-```
-
-### Local Storage Hook
-```typescript
-function useLocalStorage<T>(
-  key: string,
-  initialValue: T
-): [T, (value: T | ((val: T) => T)) => void] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue
-    }
-    
-    try {
-      const item = window.localStorage.getItem(key)
-      return item ? JSON.parse(item) : initialValue
-    } catch (error) {
-      console.log(error)
-      return initialValue
-    }
-  })
-
-  const setValue = (value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value
-      setStoredValue(valueToStore)
-      
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore))
-      }
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  return [storedValue, setValue]
-}
-```
-
-### Debounce Hook
-```typescript
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(handler)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
-
-// Usage
-function SearchInput() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const debouncedSearchTerm = useDebounce(searchTerm, 300)
-
-  useEffect(() => {
-    if (debouncedSearchTerm) {
-      // Perform search
-      console.log('Searching for:', debouncedSearchTerm)
-    }
-  }, [debouncedSearchTerm])
-
-  return (
-    <input
-      type="text"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      placeholder="Search..."
-    />
-  )
-}
-```
 
 ## Performance Optimization
 
-### React.memo
-```typescript
-interface ExpensiveComponentProps {
-  data: ComplexData[]
-  onItemClick: (id: string) => void
+- Optimize React performance by minimizing unnecessary re-renders and reducing
+  heavy client-side state management.
+- Use dynamic loading for non-critical components.
+- Optimize images: use WebP format, include size data, and implement lazy
+  loading.
+
+## Key Conventions
+
+- Use 'nuqs' for URL search parameter state management.
+- Optimize Web Vitals (LCP, CLS, FID).
+- Limit client-side code where possible; favor server-side rendering or static
+  generation when applicable.
+- Use ReactElement instead of JSX.Element
+
+## NextJS
+
+When working in a NextJS environment that supports React Server Components
+(RSC), leverage their capabilities for improved server-side rendering and
+performance. However, favor Incremental Static Regeneration (ISR) for pages that
+do not require frequent updates, as it combines the benefits of static
+generation with the flexibility to update content over time. This approach
+ensures optimal performance, enhanced scalability, and a better user experience
+by pre-rendering pages while still allowing for on-demand regeneration when
+necessary.
+
+
+## Effector for Complex State Management
+
+Cursor must use Effector when a single user action requires coordinating more than three related useState hooks or when multiple components need to interact with shared state without passing dispatch functions via props.
+
+This centralizes state logic and simplifies inter-component communication.
+
+
+
+
+## Apply extra style to a component
+
+When a component is not trivial, it usually makes sense to add some extraClasses to it.
+
+The right way is this one:
+twCss is exported in the file [merge-css.ts](mdc:libs/styles/merge-css.ts)
+
+```tsx
+interface TitleLinkProps {
+  children: string;
+  href: string;
+  extraClasses?: string;
 }
-
-const ExpensiveComponent = React.memo<ExpensiveComponentProps>(
-  ({ data, onItemClick }) => {
-    console.log('ExpensiveComponent rendered')
-    
-    return (
-      <div>
-        {data.map(item => (
-          <div key={item.id} onClick={() => onItemClick(item.id)}>
-            {item.name}
-          </div>
-        ))}
-      </div>
-    )
-  },
-  (prevProps, nextProps) => {
-    // Custom comparison function
-    return (
-      prevProps.data.length === nextProps.data.length &&
-      prevProps.onItemClick === nextProps.onItemClick
-    )
-  }
-)
-```
-
-### useMemo and useCallback
-```typescript
-function ProductList({ products, searchTerm, onProductSelect }: Props) {
-  // Memoize expensive calculations
-  const filteredProducts = useMemo(() => {
-    return products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [products, searchTerm])
-
-  const sortedProducts = useMemo(() => {
-    return [...filteredProducts].sort((a, b) => a.name.localeCompare(b.name))
-  }, [filteredProducts])
-
-  // Memoize callback functions
-  const handleProductClick = useCallback((productId: string) => {
-    onProductSelect(productId)
-  }, [onProductSelect])
-
-  const handleAddToCart = useCallback((product: Product) => {
-    // Add to cart logic
-  }, [])
-
+export function TitleLink  ({ children, href, extraClasses }: TitleLinkProps){
   return (
-    <div>
-      {sortedProducts.map(product => (
-        <ProductItem
-          key={product.id}
-          product={product}
-          onClick={handleProductClick}
-          onAddToCart={handleAddToCart}
-        />
-      ))}
-    </div>
-  )
-}
-```
-
-### Code Splitting with Lazy
-```typescript
-// Lazy load components
-const LazyDashboard = React.lazy(() => import('./Dashboard'))
-const LazyProfile = React.lazy(() => import('./Profile'))
-
-function App() {
-  return (
-    <Router>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          <Route path="/dashboard" element={<LazyDashboard />} />
-          <Route path="/profile" element={<LazyProfile />} />
-        </Routes>
-      </Suspense>
-    </Router>
-  )
-}
-```
-
-## State Management
-
-### useReducer for Complex State
-```typescript
-interface State {
-  count: number
-  history: number[]
-  status: 'idle' | 'loading' | 'success' | 'error'
-}
-
-type Action =
-  | { type: 'increment' }
-  | { type: 'decrement' }
-  | { type: 'reset' }
-  | { type: 'set'; payload: number }
-  | { type: 'set_status'; payload: State['status'] }
-
-function counterReducer(state: State, action: Action): State {
-  switch (action.type) {
-    case 'increment':
-      return {
-        ...state,
-        count: state.count + 1,
-        history: [...state.history, state.count + 1],
-      }
-    case 'decrement':
-      return {
-        ...state,
-        count: state.count - 1,
-        history: [...state.history, state.count - 1],
-      }
-    case 'reset':
-      return {
-        count: 0,
-        history: [0],
-        status: 'idle',
-      }
-    case 'set':
-      return {
-        ...state,
-        count: action.payload,
-        history: [...state.history, action.payload],
-      }
-    case 'set_status':
-      return {
-        ...state,
-        status: action.payload,
-      }
-    default:
-      return state
-  }
-}
-
-function Counter() {
-  const [state, dispatch] = useReducer(counterReducer, {
-    count: 0,
-    history: [0],
-    status: 'idle',
-  })
-
-  return (
-    <div>
-      <p>Count: {state.count}</p>
-      <p>Status: {state.status}</p>
-      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
-      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
-      <button onClick={() => dispatch({ type: 'reset' })}>Reset</button>
-    </div>
-  )
-}
-```
-
-### Context Pattern
-```typescript
-// Create context with type safety
-interface AuthContextType {
-  user: User | null
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
-  loading: boolean
-}
-
-const AuthContext = createContext<AuthContextType | null>(null)
-
-// Provider component
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  const login = async (email: string, password: string) => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-      const user = await response.json()
-      setUser(user)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const logout = () => {
-    setUser(null)
-  }
-
-  const value = {
-    user,
-    login,
-    logout,
-    loading,
-  }
-
-  return (
-    <AuthContext.Provider value={value}>
+    <SimpleLink
+      href={href}
+      className={twCss(
+        'text-primary font-bold ',
+        extraClasses,
+      )}
+    >
       {children}
-    </AuthContext.Provider>
-  )
-}
-
-// Custom hook
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+    </SimpleLink>
+  );
+};
 ```
 
-## Error Boundaries
 
-### Error Boundary Component
-```typescript
-interface ErrorBoundaryState {
-  hasError: boolean
-  error?: Error
-}
+## Daisy UI
 
-class ErrorBoundary extends Component<
-  React.PropsWithChildren<{}>,
-  ErrorBoundaryState
-> {
-  constructor(props: React.PropsWithChildren<{}>) {
-    super(props)
-    this.state = { hasError: false }
-  }
+Almost never add additional colors. Always refer to the daisy UI theme:
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error }
-  }
+- Primary: main action and UI position
+- Secondary: brand color, aka violet for Robusta
+    - rarely second possible action
+- Accent: CTA
+- Neutral:  cancel, close
+- base:
+  'base-100': '#FFFFFF',  white
+  'base-200': '#F3F4F6',  light grey 
+  'base-300': '#CCCCCC',  grey
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo)
-    // Log to error reporting service
-  }
+It's important to match the text content with the component color. So a btn-primary goes with text-primary-content
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="error-fallback">
-          <h2>Something went wrong.</h2>
-          <p>{this.state.error?.message}</p>
-          <button onClick={() => this.setState({ hasError: false })}>
-            Try again
-          </button>
-        </div>
-      )
-    }
+```tsx
+<div className="bg-base-200 text-base-content">text base content</div>
 
-    return this.props.children
-  }
-}
+<button className="btn btn-primary text-primary-content">Button with primary-content text</div>
 
-// Functional error boundary (React 18+)
-function ErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
-  return (
-    <div role="alert">
-      <h2>Something went wrong:</h2>
-      <pre>{error.message}</pre>
-      <button onClick={resetError}>Try again</button>
-    </div>
-  )
-}
 ```
 
-## Form Handling
+For this project, here are the refference colors:
 
-### Controlled Components
-```typescript
-interface FormData {
-  name: string
-  email: string
-  age: number
-}
+    primary: '#921514',
+    secondary: '#00F4CF',
+    accent: '#02284c',
+    'accent-content': '#FFFFFF',
+    'base-100': '#FFFFFF',
+    'base-200': '#F3F4F6',
+    'base-300': '#CCCCCC',
 
-function ContactForm() {
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    age: 0,
-  })
-  const [errors, setErrors] = useState<Partial<FormData>>({})
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? Number(value) : value,
-    }))
-    
-    // Clear error when user starts typing
-    if (errors[name as keyof FormData]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }))
-    }
-  }
+## When working on responsive design:
 
-  const validate = (): boolean => {
-    const newErrors: Partial<FormData> = {}
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required'
-    }
-    
-    if (!formData.email.includes('@')) {
-      newErrors.email = 'Valid email is required'
-    }
-    
-    if (formData.age < 0 || formData.age > 120) {
-      newErrors.age = 'Age must be between 0 and 120'
-    }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+Tailwind has sm, md, lg, xl, 2xl breakpoints.
+We will use mostly sm and lg, you can ignore tmd, xl and 2xl. Sometime I will add those manually, don't erase them except if expressed.
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (validate()) {
-      console.log('Form submitted:', formData)
-    }
-  }
+But most importantly, you will prefer to use my tab breakpoint, which is sm iin reverse:
 
-  return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="Name"
-        />
-        {errors.name && <span className="error">{errors.name}</span>}
-      </div>
-      
-      <div>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="Email"
-        />
-        {errors.email && <span className="error">{errors.email}</span>}
-      </div>
-      
-      <div>
-        <input
-          type="number"
-          name="age"
-          value={formData.age}
-          onChange={handleChange}
-          placeholder="Age"
-        />
-        {errors.age && <span className="error">{errors.age}</span>}
-      </div>
-      
-      <button type="submit">Submit</button>
-    </form>
-  )
-}
+In [tailwind.config.js](mdc:tailwind.config.js), I added mob - which stands for mobile
+
+```  
+  screens: {
+      mob: { max: defaultTheme.screens.md },
+      ...defaultTheme.screens,
+    },
 ```
 
-## Testing Patterns
+and `mob` can be used like this:
 
-### Component Testing
-```typescript
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { Counter } from './Counter'
+We hide if it's a mobile display
 
-describe('Counter Component', () => {
-  test('renders initial count', () => {
-    render(<Counter initialCount={5} />)
-    expect(screen.getByText('Count: 5')).toBeInTheDocument()
-  })
-
-  test('increments count when button clicked', () => {
-    render(<Counter initialCount={0} />)
-    const button = screen.getByRole('button', { name: /increment/i })
-    
-    fireEvent.click(button)
-    expect(screen.getByText('Count: 1')).toBeInTheDocument()
-  })
-
-  test('calls onCountChange prop', () => {
-    const mockOnCountChange = jest.fn()
-    render(<Counter initialCount={0} onCountChange={mockOnCountChange} />)
-    
-    const button = screen.getByRole('button', { name: /increment/i })
-    fireEvent.click(button)
-    
-    expect(mockOnCountChange).toHaveBeenCalledWith(1)
-  })
-})
-
-// Hook testing
-import { renderHook, act } from '@testing-library/react'
-import { useCounter } from './useCounter'
-
-describe('useCounter Hook', () => {
-  test('should increment counter', () => {
-    const { result } = renderHook(() => useCounter(0))
-    
-    act(() => {
-      result.current.increment()
-    })
-    
-    expect(result.current.count).toBe(1)
-  })
-})
+```
+<div className={'mob:hidden flex justify-start gap-8'}>
+....
+</div>
 ```
 
-## Best Practices
+Or : we display as columns
 
-1. **Use TypeScript for better development experience**
-2. **Keep components small and focused**
-3. **Use custom hooks to share logic**
-4. **Memoize expensive calculations with useMemo**
-5. **Memoize callback functions with useCallback**
-6. **Use React.memo for expensive components**
-7. **Implement proper error boundaries**
-8. **Use context sparingly - prefer prop drilling for simple cases**
-9. **Write comprehensive tests for components and hooks**
-10. **Follow the principle of single responsibility**
+```
+<ul className="mob:flex-col flex>...</ul>
+```
+
+

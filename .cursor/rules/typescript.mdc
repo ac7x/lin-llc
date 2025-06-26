@@ -1,380 +1,127 @@
 ---
-description:
-globs:
+description: Typescriptclient and server
+globs: *.ts,*.tsx
 alwaysApply: false
 ---
----
-rule_type: always
-title: TypeScript Development Rules
-description: Core TypeScript configuration and development patterns
+
 ---
 
-# TypeScript Development Rules
+description: prompt for TypeScript best practices for writing maintainable,
+robust, and efficient code globs:
 
-## Core Configuration
+- "\*.ts"
+- "\*.tsx"
 
-### tsconfig.json Setup
-```json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [{ "name": "next" }],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/lib/*": ["./src/lib/*"],
-      "@/types/*": ["./src/types/*"]
-    },
-    "forceConsistentCasingInFileNames": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+---
+
+# Your rule content
+
+You are an expert in TypeScript and modern JavaScript practices.
+
+## Code Style and Structure
+
+- Write concise, maintainable TypeScript code with explicit type annotations.
+- Organize code into modular functions, classes, and interfaces.
+- Group related logic and types together in dedicated files or modules.
+- Keep code blocks small, focused, and single-purposed.
+
+## Naming Conventions
+
+- Use camelCase for variables, functions, and object properties.
+- Use PascalCase for classes, interfaces, and type aliases.
+- Use UPPER_SNAKE_CASE for constants.
+- Avoid redundant prefixes; prefer descriptive names over Hungarian notation.
+
+## TypeScript Specific Usage
+
+- Leverage TypeScript's static type system to catch errors during compile-time.
+- Prefer interfaces for object type definitions unless union types are required.
+- Use union and intersection types to model complex data accurately.
+- Avoid the any type; use unknown or properly defined types to maintain type
+  safety.
+- Utilize generics to build reusable, type-safe utilities and components.
+
+## Syntax and Formatting
+
+- For styling, read first the .prettierc : it makes the right rules.
+- Enforce consistent indentation and spacing ( 2 spaces per indent).
+- Prefer arrow functions for concise callbacks and anonymous functions.
+- Use semicolons consistently if mandated by your project style.
+- Maintain line lengths within 80 characters for improved readability.
+- Employ linting (ESLint with TypeScript plugins) and formatting tools
+  (Prettier) to automate style consistency.
+- However, DO NOT MODIFY existing code for ESLint improvement; I will ask
+  specifically for that.
+- If nested property is accessed at least 3 times, assign it to a const (ex: const
+  email=session.user.email)
+
+## Performance Optimization
+
+- Write pure functions wherever possible to simplify testing and enable
+  memoization.
+- Optimize complex type declarations to prevent slow type-checking in large
+  projects.
+- Use lazy initialization for expensive computations to avoid unnecessary
+  performance costs.
+- Regularly profile and refactor code to identify and eliminate performance
+  bottlenecks.
+
+## Example
+
+```ts
+// Define a generic function with explicit type annotations
+function merge<T, U>(obj1: T, obj2: U): T & U {
+  return { ...obj1, ...obj2 };
 }
+
+// Example usage:
+const merged = merge({ name: 'Alice' }, { age: 30 });
+console.log(merged);
 ```
 
-## Type Definitions
+## Open telemetry
 
-### API Response Types
-```typescript
-// Base API response structure
-type ApiResponse<T> = {
-  data: T
-  success: boolean
-  message?: string
-  error?: string
-}
+I have added a personal Telemtery wrapper in /src/libs/telemetry
 
-// Paginated response
-type PaginatedResponse<T> = ApiResponse<{
-  items: T[]
-  total: number
-  page: number
-  limit: number
-  hasNext: boolean
-  hasPrev: boolean
-}>
+Add some consistent logs, warnings and errors with Open Telemetry
 
-// Error response
-type ErrorResponse = {
-  success: false
-  error: string
-  details?: Record<string, string[]>
-}
-```
+Create a component at the start of a page, react component, function...
 
-### Database Entity Types
-```typescript
-// Base entity with common fields
-type BaseEntity = {
-  id: string
-  createdAt: Date
-  updatedAt: Date
-}
+const component = Telemetry.component(...)
 
-// User entity
-type User = BaseEntity & {
-  email: string
-  name: string | null
-  role: 'user' | 'admin'
-  settings: UserSettings
-}
-
-type UserSettings = {
-  theme: 'light' | 'dark' | 'system'
-  notifications: boolean
-  language: string
-}
-```
-
-## Advanced Type Patterns
-
-### Utility Types
-```typescript
-// Deep partial for nested objects
-type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P]
-}
-
-// Deep required
-type DeepRequired<T> = {
-  [P in keyof T]-?: T[P] extends object ? DeepRequired<T[P]> : T[P]
-}
-
-// Pick nested properties
-type NestedPick<T, K extends keyof T> = {
-  [P in K]: T[P] extends object ? Partial<T[P]> : T[P]
-}
-
-// Extract array type
-type ArrayElement<ArrayType extends readonly unknown[]> = 
-  ArrayType extends readonly (infer ElementType)[] ? ElementType : never
-```
-
-### Conditional Types
-```typescript
-// Check if type has property
-type HasProperty<T, K extends string> = K extends keyof T ? true : false
-
-// Extract functions from object
-type FunctionKeys<T> = {
-  [K in keyof T]: T[K] extends Function ? K : never
-}[keyof T]
-
-// Non-function properties
-type NonFunctionKeys<T> = {
-  [K in keyof T]: T[K] extends Function ? never : K
-}[keyof T]
-
-// Extract return type from promise
-type UnwrapPromise<T> = T extends Promise<infer U> ? U : T
-```
-
-## Type Guards
-
-### Runtime Type Checking
-```typescript
-// Check if value is not null/undefined
-function isDefined<T>(value: T | null | undefined): value is T {
-  return value !== null && value !== undefined
-}
-
-// Check if string is not empty
-function isNonEmptyString(value: string | null | undefined): value is string {
-  return typeof value === 'string' && value.length > 0
-}
-
-// Check if array has items
-function hasItems<T>(array: T[] | null | undefined): array is T[] {
-  return Array.isArray(array) && array.length > 0
-}
-
-// Type guard for object with required keys
-function hasRequiredKeys<T extends Record<string, any>, K extends keyof T>(
-  obj: T,
-  keys: K[]
-): obj is T & Required<Pick<T, K>> {
-  return keys.every(key => key in obj && obj[key] !== undefined)
-}
-```
-
-### API Response Guards
-```typescript
-function isSuccessResponse<T>(
-  response: ApiResponse<T> | ErrorResponse
-): response is ApiResponse<T> {
-  return response.success === true && 'data' in response
-}
-
-function isErrorResponse(
-  response: ApiResponse<any> | ErrorResponse
-): response is ErrorResponse {
-  return response.success === false && 'error' in response
-}
-```
-
-## Generic Utilities
-
-### Form Handling Types
-```typescript
-// Form field configuration
-type FormField<T> = {
-  name: keyof T
-  label: string
-  type: 'text' | 'email' | 'password' | 'number' | 'select' | 'textarea'
-  required?: boolean
-  validation?: (value: any) => string | undefined
-  options?: Array<{ label: string; value: string }>
-}
-
-// Form state
-type FormState<T> = {
-  values: T
-  errors: Partial<Record<keyof T, string>>
-  touched: Partial<Record<keyof T, boolean>>
-  isSubmitting: boolean
-  isValid: boolean
-}
-
-// Form action types
-type FormAction<T> = 
-  | { type: 'SET_VALUE'; field: keyof T; value: any }
-  | { type: 'SET_ERROR'; field: keyof T; error: string }
-  | { type: 'SET_TOUCHED'; field: keyof T }
-  | { type: 'SET_SUBMITTING'; isSubmitting: boolean }
-  | { type: 'RESET' }
-```
-
-### Database Query Types
-```typescript
-// Where clause builder
-type WhereClause<T> = {
-  [K in keyof T]?: T[K] | {
-    equals?: T[K]
-    not?: T[K]
-    in?: T[K][]
-    notIn?: T[K][]
-    lt?: T[K]
-    lte?: T[K]
-    gt?: T[K]
-    gte?: T[K]
-    contains?: string
-    startsWith?: string
-    endsWith?: string
-  }
-}
-
-// Order by clause
-type OrderBy<T> = {
-  [K in keyof T]?: 'asc' | 'desc'
-}
-
-// Query options
-type QueryOptions<T> = {
-  where?: WhereClause<T>
-  orderBy?: OrderBy<T>
-  limit?: number
-  offset?: number
-  include?: string[]
-}
-```
-
-## Error Handling Types
-
-### Custom Error Classes
-```typescript
-// Base application error
-abstract class AppError extends Error {
-  abstract readonly statusCode: number
-  abstract readonly isOperational: boolean
-
-  constructor(message: string, public readonly context?: Record<string, any>) {
-    super(message)
-    this.name = this.constructor.name
-    Error.captureStackTrace(this, this.constructor)
-  }
-}
-
-// Validation error
-class ValidationError extends AppError {
-  readonly statusCode = 400
-  readonly isOperational = true
-
-  constructor(
+```ts
+export class Telemetry {
+  // Logging methods
+  /**
+   * Log an informational message
+   * @param message - The main log message
+   * @param component - Source component (e.g., "Component: LoginForm")
+   * @param data - Optional additional data to include in the log
+   */
+  static log(
     message: string,
-    public readonly field?: string,
-    context?: Record<string, any>
-  ) {
-    super(message, context)
+    component: string,
+    data?: Record<string, any>
+  ): void {
+    Logger.log(message, component, data);
   }
-}
 
-// Not found error
-class NotFoundError extends AppError {
-  readonly statusCode = 404
-  readonly isOperational = true
-}
-
-// Authentication error
-class AuthenticationError extends AppError {
-  readonly statusCode = 401
-  readonly isOperational = true
-}
-```
-
-### Result Type Pattern
-```typescript
-// Result type for error handling without exceptions
-type Result<T, E = Error> = 
-  | { success: true; data: T }
-  | { success: false; error: E }
-
-// Result utilities
-const ok = <T>(data: T): Result<T, never> => ({ success: true, data })
-const err = <E>(error: E): Result<never, E> => ({ success: false, error })
-
-// Async result wrapper
-async function wrapAsync<T>(
-  promise: Promise<T>
-): Promise<Result<T, Error>> {
-  try {
-    const data = await promise
-    return ok(data)
-  } catch (error) {
-    return err(error instanceof Error ? error : new Error(String(error)))
+  /**
+   * Log an error message
+   * @param message - The main error message
+   * @param component - Source component (e.g., "API: /user/me")
+   * @param error - Optional Error object to extract message and stack from
+   */
+  static error(
+    message: string,
+    component: string,
+    error?: Error | unknown
+  ): void {
+    Logger.error(message, component, error);
   }
 }
 ```
 
-## Environment & Configuration
+### MongoDB
 
-### Environment Variables
-```typescript
-// Environment schema
-const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']),
-  DATABASE_URL: z.string().url(),
-  NEXTAUTH_SECRET: z.string().min(1),
-  NEXTAUTH_URL: z.string().url(),
-  REDIS_URL: z.string().url().optional(),
-  SENTRY_DSN: z.string().url().optional(),
-})
-
-type Env = z.infer<typeof envSchema>
-
-// Validate environment at startup
-const env = envSchema.parse(process.env)
-
-export { env }
-```
-
-### Configuration Types
-```typescript
-type DatabaseConfig = {
-  url: string
-  maxConnections: number
-  timeout: number
-  retries: number
-}
-
-type AuthConfig = {
-  secret: string
-  tokenExpiry: number
-  refreshTokenExpiry: number
-  providers: AuthProvider[]
-}
-
-type AppConfig = {
-  database: DatabaseConfig
-  auth: AuthConfig
-  redis: RedisConfig
-  logging: LoggingConfig
-}
-```
-
-## Best Practices
-
-1. **Always use strict TypeScript configuration**
-2. **Prefer type over interface for unions and primitives**
-3. **Use interface for object shapes that might be extended**
-4. **Create utility types for common patterns**
-5. **Use type guards for runtime type checking**
-6. **Implement proper error handling with Result types**
-7. **Validate environment variables at startup**
-8. **Use const assertions for immutable data**
-9. **Prefer branded types for IDs and unique values**
-10. **Use satisfies operator for type checking without widening**
+Never write methods for Mongoose models. We will use separate Domain Objects.
