@@ -11,7 +11,7 @@ export { default as ProjectSubpackageNode } from './project-subpackage-node';
 export { default as ProjectTaskNode } from './project-task-node';
 
 // 虛擬化支持組件 - 已整合到 ProjectTree 中
-export { VirtualizedTreeNode } from './virtualized-tree-node';
+// VirtualizedTreeNode 已被整合到 ProjectTree 中，不再需要單獨導出
 
 // 工具函數導出
 export * from './tree-utils';
