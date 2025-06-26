@@ -18,7 +18,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import { usePermission } from '@/app/settings/hooks/use-permission';
+import { usePermissionContext } from '@/context/permission-context';
 import { ProjectSidebar } from './components/sidebar/project-sidebar';
 import { ProjectViewer } from './components/viewer/project-viewer';
 
@@ -33,7 +33,7 @@ import {
 import { SelectedItem } from './types';
 
 export default function ProjectListPage() {
-  const { hasPermission, loading: permissionLoading, userRole, userProfile } = usePermission();
+  const { hasPermission, loading: permissionLoading, userRole, userProfile } = usePermissionContext();
   
   // 等待權限檢查完成
   if (permissionLoading) {
@@ -87,7 +87,7 @@ export default function ProjectListPage() {
 
 // 已授權的專案頁面組件
 function AuthorizedProjectPage() {
-  const { hasPermission } = usePermission();
+  const { hasPermission } = usePermissionContext();
   
   // 使用專案數據管理 hook
   const projectData = useProjectData(hasPermission);

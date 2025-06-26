@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
-import { usePermission } from '@/app/settings/hooks/use-permission';
+import { usePermissionContext } from '@/context/permission-context';
 import { PermissionGuard } from '@/app/settings/components/permission-guard';
 import { Role, Permission } from '@/app/settings/types';
 import { isOwner, validateEnvConfig } from '@/app/settings/lib/env-config';
@@ -40,7 +40,7 @@ export default function SettingsPage() {
     loadAllUsers,
     assignUserRole,
     isUserOnline,
-  } = usePermission();
+  } = usePermissionContext();
 
   const [initializing, setInitializing] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);

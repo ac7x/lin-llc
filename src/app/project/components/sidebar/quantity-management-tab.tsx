@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calculator, Lightbulb, ChevronRight, ChevronDown } from 'lucide-react';
 import { QuantityDistributionDialog } from '../dialogs/quantity-distribution-dialog';
 import { useProjectOperations } from '../../hooks';
-import { usePermission } from '@/app/settings/hooks/use-permission';
+import { usePermissionContext } from '@/context/permission-context';
 import { Project, Package, Subpackage } from '../../types';
 import { FlatItem, ExpandedState, TreeFlattener } from '../../utils/tree-flattener';
 
@@ -90,7 +90,7 @@ export function QuantityManagementTab({
   project,
   onProjectUpdate,
 }: QuantityManagementTabProps) {
-  const { hasPermission } = usePermission();
+  const { hasPermission } = usePermissionContext();
   const { distributeQuantity, loading } = useProjectOperations(
     hasPermission,
     onProjectUpdate,

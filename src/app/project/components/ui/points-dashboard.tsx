@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { usePermission } from '@/app/settings/hooks/use-permission';
+import { usePermissionContext } from '@/context/permission-context';
 import { useAuth } from '@/context/auth-context';
 import { POINTS_CONFIG } from '../../utils/points-system';
 import { 
@@ -31,7 +31,7 @@ export function PointsDashboard({ className }: PointsDashboardProps) {
     loadUserPoints,
     loadPointsHistory,
     loadPointsLeaderboard
-  } = usePermission();
+  } = usePermissionContext();
 
   const [loading, setLoading] = useState(true);
 

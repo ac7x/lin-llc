@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 import { AuthProvider } from '@/context/auth-context';
+import { PermissionProvider } from '@/context/permission-context';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 
@@ -22,10 +23,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <div className="pb-20">
-              {children}
-            </div>
-            <BottomNavigation />
+            <PermissionProvider>
+              <div className="pb-20">
+                {children}
+              </div>
+              <BottomNavigation />
+            </PermissionProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
