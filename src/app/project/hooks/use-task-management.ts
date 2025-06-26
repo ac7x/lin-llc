@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { removeUndefinedValues } from '@/lib/utils';
 import { NotificationService } from '../utils/notification-service';
 import { updateAllProgress } from '../utils/progress-calculator';
 import { PointsRewardService } from '../utils/points-system';
@@ -41,8 +42,9 @@ export function useTaskManagement() {
       task.reviewers = reviewers;
       task.status = 'in-progress';
 
-      // 更新 Firestore
-      await updateDoc(doc(db, 'projects', project.id), updatedProject);
+      // 清理 undefined 值並更新 Firestore
+      const cleanedProject = removeUndefinedValues(updatedProject);
+      await updateDoc(doc(db, 'projects', project.id), cleanedProject);
 
       // 發送通知給提交者
       for (const uid of submitters) {
@@ -150,8 +152,9 @@ export function useTaskManagement() {
       // 重新計算所有層級進度
       updateAllProgress(updatedProject);
 
-      // 更新 Firestore
-      await updateDoc(doc(db, 'projects', project.id), updatedProject);
+      // 清理 undefined 值並更新 Firestore
+      const cleanedProject = removeUndefinedValues(updatedProject);
+      await updateDoc(doc(db, 'projects', project.id), cleanedProject);
 
       onUpdate(updatedProject);
       return true;
@@ -216,8 +219,9 @@ export function useTaskManagement() {
         );
       }
 
-      // 更新 Firestore
-      await updateDoc(doc(db, 'projects', project.id), updatedProject);
+      // 清理 undefined 值並更新 Firestore
+      const cleanedProject = removeUndefinedValues(updatedProject);
+      await updateDoc(doc(db, 'projects', project.id), cleanedProject);
 
       onUpdate(updatedProject);
       return true;
