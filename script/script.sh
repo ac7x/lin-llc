@@ -18,18 +18,26 @@ echo "請選擇要執行的腳本："
 # 定義選項陣列
 options=(
     "開發模式 (dev)"
-    "建置 (build)"
-    "啟動伺服器 (start)"
+    "建置專案 (build)"
+    "啟動生產伺服器 (start)"
     "程式碼檢查 (lint)"
+    "自動修復 ESLint 問題 (lint:fix)"
+    "格式化程式碼 (format)"
+    "檢查程式碼格式 (format:check)"
+    "TypeScript 型別檢查 (type-check)"
+    "完整檢查 (check)"
+    "檔名大小寫檢查 (check-case)"
     "啟動 Firebase 模擬器 (fes)"
-    "Firebase deploy (fd)"
-    "重設到指定 commit (reset)"
-    "強制推送 main (pfm)"
-    "重設本地 main 為遠端 (rb)"
-    "移除 .next 資料夾"
-    "移除 node_modules 資料夾"
-    "互動卸載依賴 (uninstall.sh)"
+    "部署到 Firebase (fd)"
+    "僅部署 Hosting (fdb)"
+    "專案重置 (reset)"
+    "除錯流程 (debug.sh)"
+    "手動清除 .next 資料夾"
+    "手動清除 node_modules 資料夾"
     "互動安裝依賴 (install.sh)"
+    "互動卸載依賴 (uninstall.sh)"
+    "強制推送到 main (pfm)"
+    "重設本地為遠端 main (rb)"
     "離開"
 )
 
@@ -43,7 +51,7 @@ clear
 # 顯示選項的函式
 show_menu() {
     local i=0
-    echo "請使用上下鍵選擇要執行的指令（按Enter確認）："
+    echo "請使用上下鍵選擇要執行的指令（按 Enter 確認）："
     echo "============================================="
     for opt in "${options[@]}"; do
         if [ $i -eq $current ]; then
@@ -53,6 +61,8 @@ show_menu() {
         fi
         ((i++))
     done
+    echo "============================================="
+    echo "提示：使用 ↑↓ 鍵導航，Enter 確認，Ctrl+C 退出"
 }
 
 # 主循環
@@ -80,20 +90,56 @@ while true; do
     clear
 done
 
+echo "執行選擇的指令..."
+echo "============================================="
+
 # 執行選擇的指令
 case $current in
     0) npm run dev ;;
     1) npm run build ;;
     2) npm run start ;;
     3) npm run lint ;;
-    4) npm run fes ;;
-    5) npm run fd ;;
-    6) npm run reset ;;
-    7) npm run pfm ;;
-    8) npm run rb ;;
-    9) rm -rf .next && echo ".next 資料夾已移除。" ;;
-    10) rm -rf node_modules && echo "node_modules 資料夾已移除。" ;;
-    11) bash script/uninstall.sh ;;
-    12) bash script/install.sh ;;
-    13) echo "已離開。"; exit 0 ;;
+    4) npm run lint:fix ;;
+    5) npm run format ;;
+    6) npm run format:check ;;
+    7) npm run type-check ;;
+    8) npm run check ;;
+    9) npm run check-case ;;
+    10) npm run fes ;;
+    11) npm run fd ;;
+    12) npm run fdb ;;
+    13) npm run reset ;;
+    14) bash script/debug.sh ;;
+    15) 
+        echo "清除 .next 資料夾..."
+        rm -rf .next && echo ".next 資料夾已移除。" 
+        ;;
+    16) 
+        echo "清除 node_modules 資料夾..."
+        rm -rf node_modules && echo "node_modules 資料夾已移除。" 
+        ;;
+    17) bash script/install.sh ;;
+    18) bash script/uninstall.sh ;;
+    19) 
+        echo "警告：這將強制推送到 main 分支！"
+        read -p "確定要繼續嗎？(y/N): " confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            npm run pfm
+        else
+            echo "已取消操作。"
+        fi
+        ;;
+    20) 
+        echo "警告：這將重設本地 main 分支為遠端版本！"
+        read -p "確定要繼續嗎？(y/N): " confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            npm run rb
+        else
+            echo "已取消操作。"
+        fi
+        ;;
+    21) echo "已離開。"; exit 0 ;;
 esac
+
+echo "============================================="
+echo "指令執行完成！"
