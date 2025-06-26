@@ -84,32 +84,32 @@ export function ProjectDetails({ project, onProjectUpdate }: ProjectDetailsProps
   };
 
   // 安全的日期格式化
-  const formatDate = (dateString: string | undefined): string => {
-    if (!dateString) return '未設定';
+  const formatDate = (dateValue: string | any | undefined): string => {
+    if (!dateValue) return '未設定';
     
     try {
-      // 嘗試解析不同格式的日期
       let date: Date;
       
-      if (typeof dateString === 'string') {
-        // 檢查是否為 Firestore Timestamp 字符串格式
-        if (dateString.includes('T') || dateString.includes('Z')) {
-          date = new Date(dateString);
-        } else {
-          // 嘗試解析數字時間戳
-          const timestamp = parseInt(dateString);
-          if (!isNaN(timestamp)) {
-            date = new Date(timestamp);
-          } else {
-            date = new Date(dateString);
-          }
-        }
-      } else {
-        date = new Date(dateString);
+      // 處理 Firestore Timestamp 對象
+      if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
+        date = dateValue.toDate();
+      }
+      // 處理 ISO 字符串或其他字符串格式
+      else if (typeof dateValue === 'string') {
+        date = new Date(dateValue);
+      }
+      // 處理數字時間戳
+      else if (typeof dateValue === 'number') {
+        date = new Date(dateValue);
+      }
+      // 處理其他情況
+      else {
+        date = new Date(dateValue);
       }
       
       // 檢查日期是否有效
       if (isNaN(date.getTime())) {
+        console.warn('無效的日期值:', dateValue);
         return '日期格式錯誤';
       }
       
@@ -119,10 +119,9 @@ export function ProjectDetails({ project, onProjectUpdate }: ProjectDetailsProps
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
       });
     } catch (error) {
-      console.error('日期格式化錯誤:', error, dateString);
+      console.error('日期格式化錯誤:', error, dateValue);
       return '日期格式錯誤';
     }
   };

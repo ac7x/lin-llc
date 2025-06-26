@@ -3,8 +3,7 @@ import {
   collection, 
   addDoc, 
   doc, 
-  setDoc, 
-  serverTimestamp 
+  setDoc 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
 import { useGoogleAuth } from '@/hooks/use-google-auth';
@@ -105,8 +104,7 @@ export function useProjectWizard() {
       const projectsRef = collection(db, 'projects');
       const docRef = await addDoc(projectsRef, {
         ...project,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: now,
       });
 
       const createdProject: Project = {

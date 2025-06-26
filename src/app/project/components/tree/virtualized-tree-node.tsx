@@ -11,7 +11,7 @@ import {
   ChevronDownIcon,
   FolderIcon,
   PackageIcon,
-  FileIcon,
+  BookOpen,
   CheckSquareIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -80,7 +80,7 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
         };
       case 'subpackage':
         return {
-          icon: FileIcon,
+          icon: BookOpen,
           color: isSelected ? 'text-purple-800' : 'text-purple-600',
           bgColor: isSelected ? 'bg-purple-100 border-purple-300' : 'hover:bg-purple-50',
         };
@@ -92,7 +92,7 @@ export const VirtualizedTreeNode = memo<VirtualizedTreeNodeProps>(({
         };
       default:
         return {
-          icon: FileIcon,
+          icon: BookOpen,
           color: isSelected ? 'text-gray-800' : 'text-gray-600',
           bgColor: isSelected ? 'bg-gray-100 border-gray-300' : 'hover:bg-gray-50',
         };
