@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { useGoogleAuth } from '@/app/(system)';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase-init';
 import { NotificationService } from '@/app/project/utils/notification-service';

@@ -29,8 +29,7 @@
       "@/components/*": ["./src/components/*"],
       "@/constants/*": ["./src/constants/*"],
       "@/hooks/*": ["./src/hooks/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/providers/*": ["./src/providers/*"]
+      "@/types/*": ["./src/types/*"]
     }
   },
   "include": [

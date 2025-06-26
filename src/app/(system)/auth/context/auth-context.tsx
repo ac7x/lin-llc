@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, getRedirectResult } from 'firebase/auth';
-import { permissionService } from '@/app/settings/lib/permission-service';
+import { permissionService } from '@/app/(system)/permissions/lib/permission-service';
 
 interface AuthContextType {
   user: User | null;
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         // 動態導入 Firebase 初始化
-        const { initializeClientServices } = await import('@/lib/firebase-init');
+        const { initializeClientServices } = await import('@/app/(system)/data/lib/firebase-init');
         await initializeClientServices();
         
         // 動態導入 auth

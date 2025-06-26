@@ -1,6 +1,6 @@
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
-import { Permission, Role } from '@/app/settings/types';
+import { db } from '@/app/(system)/data/lib/firebase-init';
+import { Permission, Role } from '@/app/(system)/permissions/types';
 
 /**
  * 預設權限定義

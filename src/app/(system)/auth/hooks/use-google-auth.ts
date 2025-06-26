@@ -7,9 +7,9 @@ import {
   AuthError,
   User
 } from 'firebase/auth';
-import { getAppCheck } from '@/lib/firebase-init';
-import { permissionService } from '@/app/settings/lib/permission-service';
-import { useAuth } from '@/context/auth-context';
+import { getAppCheck } from '@/app/(system)/data/lib/firebase-init';
+import { permissionService } from '@/app/(system)/permissions/lib/permission-service';
+import { useAuth } from '@/app/(system)/auth/context/auth-context';
 
 interface UseGoogleAuthReturn {
   user: User | null;

@@ -8,20 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
-import { usePermissionContext } from '@/context/permission-context';
-import { PermissionGuard } from '@/app/settings/components/permission-guard';
-import { Role, Permission } from '@/app/settings/types';
-import { isOwner, validateEnvConfig } from '@/app/settings/lib/env-config';
-import { initializePermissions, checkInitialization } from '@/app/settings/lib/permission-init';
+import { usePermissionContext, PermissionGuard, Role, Permission, UserProfile, isOwner, validateEnvConfig, db } from '@/app/(system)';
+import { initializePermissions, checkInitialization } from '@/app/(system)';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import type { UserProfile } from '@/app/settings/types';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
 import { Label } from '@/components/ui/label';
 import { SkillTagsInput } from '@/components/ui/skill-tags-input';
-import { PermissionMatrixAnalyzer } from '@/app/settings/components/permission-matrix-analyzer';
+import { PermissionMatrixAnalyzer } from '@/app/(system)';
 
 export default function SettingsPage() {
   const {

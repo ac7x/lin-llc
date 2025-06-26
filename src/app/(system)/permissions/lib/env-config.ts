@@ -1,4 +1,4 @@
-import { EnvironmentConfig } from '@/app/settings/types';
+import { EnvironmentConfig } from '@/app/(system)/permissions/types';
 
 /**
  * 環境變數配置

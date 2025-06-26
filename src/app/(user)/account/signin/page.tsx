@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
-import { useAuthRedirect } from '@/hooks/use-auth-redirect';
+import { useGoogleAuth } from '@/app/(system)';
+import { useAuthRedirect } from '@/app/(system)';
 
 export default function SignInPage() {
   const { user, loading, error, signInWithGoogle, signOut } = useGoogleAuth();

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, Upload, X } from 'lucide-react';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from '@/app/(system)';
 import { getErrorMessage, logError, safeAsync } from '@/lib/error-utils';
 
 interface ChatMessage {

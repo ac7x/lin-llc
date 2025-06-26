@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { usePermissionContext } from '@/context/permission-context';
-import { isOwner } from '@/app/settings/lib/env-config';
+import { usePermissionContext } from '@/app/(system)/permissions/context/permission-context';
+import { isOwner } from '@/app/(system)/permissions/lib/env-config';
 
 interface PermissionGuardProps {
   permission: string;

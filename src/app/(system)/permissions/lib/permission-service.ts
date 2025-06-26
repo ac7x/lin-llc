@@ -11,7 +11,7 @@ import {
   orderBy,
   limit
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
+import { db } from '@/app/(system)/data/lib/firebase-init';
 import { 
   Permission, 
   Role, 
@@ -19,8 +19,8 @@ import {
   UserProfile, 
   PermissionCheck,
   DataScope
-} from '@/app/settings/types';
-import { isOwner, getDefaultRoleId, envConfig } from '@/app/settings/lib/env-config';
+} from '@/app/(system)/permissions/types';
+import { isOwner, getDefaultRoleId, envConfig } from '@/app/(system)/permissions/lib/env-config';
 
 /**
  * 權限管理服務

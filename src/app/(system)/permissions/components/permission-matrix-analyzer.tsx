@@ -9,7 +9,7 @@ import {
   PermissionMatrixGenerator, 
   PERMISSION_CATEGORIES, 
   ROLE_PERMISSION_MAPPING 
-} from '@/app/settings/lib/permission-matrix';
+} from '@/app/(system)/permissions/lib/permission-matrix';
 
 interface PermissionMatrixAnalyzerProps {
   className?: string;

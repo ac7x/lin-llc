@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { usePermission } from '@/app/settings/hooks/use-permission';
-import type { Role, Permission, UserProfile } from '@/app/settings/types';
+import { usePermission } from '@/app/(system)/permissions/hooks/use-permission';
+import type { Role, Permission, UserProfile } from '@/app/(system)/permissions/types';
 
 interface PermissionContextType {
   // 權限檢查
@@ -56,7 +56,7 @@ interface PermissionProviderProps {
 }
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
-  // 使用原有的 usePermission hook，但只在這裡初始化一次
+  // 使用權限 hook
   const permissionData = usePermission();
 
   return (
