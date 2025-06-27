@@ -4,8 +4,6 @@ import { FixedSizeList as List } from 'react-window';
 import { 
   FolderIcon,
   FolderOpenIcon,
-  PackageIcon,
-  PackageOpenIcon,
   ListIcon,
   PlusIcon,
   ExpandIcon,
@@ -99,9 +97,7 @@ export default function ProjectTree({
   onProjectUpdate,
 }: EnhancedProjectTreeProps) {
   // 傳統模式狀態
-  const [expandedPackages, setExpandedPackages] = useState<Set<number>>(new Set());
   const [showPackageInput, setShowPackageInput] = useState(false);
-  const [showTaskPackageInputs, setShowTaskPackageInputs] = useState<Record<number, boolean>>({});
   const [expandedProject, setExpandedProject] = useState(selectedProject?.id === project.id);
 
   // 虛擬化模式狀態
@@ -378,26 +374,8 @@ export default function ProjectTree({
   }, [flattenedItems, handleVirtualizedToggleExpand, handleVirtualizedItemClick, isVirtualizedItemSelected, onProjectUpdate, renameDialogStates, setRenameDialogStates]);
 
   // 傳統模式事件處理
-  const togglePackageExpanded = (pkgIdx: number) => {
-    setExpandedPackages(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(pkgIdx)) {
-        newSet.delete(pkgIdx);
-      } else {
-        newSet.add(pkgIdx);
-      }
-      return newSet;
-    });
-  };
-
-
-
   const handleAddPackageClick = () => {
     setShowPackageInput(true);
-  };
-
-  const handleAddTaskPackageClick = (pkgIdx: number) => {
-    setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: true }));
   };
 
 

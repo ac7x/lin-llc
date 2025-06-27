@@ -23,21 +23,21 @@ import { useTaskManagement } from '../../hooks';
 import { TaskAssignmentDialog, TaskSubmissionDialog, TaskReviewDialog } from '../task';
 import { Project, SelectedItem } from '../../types';
 
-interface TaskDetailsProps {
+interface TaskpackageDetailsProps {
   project: Project;
   selectedItem: SelectedItem;
   onProjectUpdate: (updatedProject: Project) => void;
 }
 
 /**
- * 任務詳情組件
- * 顯示任務的詳細資訊和管理功能
+ * 任務包詳情組件
+ * 顯示任務包的詳細資訊和管理功能
  */
-export function TaskDetails({ 
+export function TaskpackageDetails({ 
   project, 
   selectedItem,
   onProjectUpdate
-}: TaskDetailsProps) {
+}: TaskpackageDetailsProps) {
   const { user } = useGoogleAuth();
   const { assignTask, submitTaskProgress, reviewTask, loading } = useTaskManagement();
   
@@ -54,7 +54,7 @@ export function TaskDetails({
     return (
       <Card className="border-0 shadow-sm">
         <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">任務不存在</p>
+          <p className="text-center text-muted-foreground">任務包不存在</p>
         </CardContent>
       </Card>
     );
@@ -134,11 +134,11 @@ export function TaskDetails({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="truncate max-w-[400px]">
-                  任務：{task.name}
+                  任務包：{task.name}
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>任務：{task.name}</p>
+                <p>任務包：{task.name}</p>
               </TooltipContent>
             </Tooltip>
           </CardTitle>
@@ -190,10 +190,10 @@ export function TaskDetails({
               </div>
             </div>
 
-            {/* 任務進度 */}
+            {/* 任務包進度 */}
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span>任務進度</span>
+                <span>任務包進度</span>
                 <span>
                   {task.completed || 0} / {task.total || 0} 
                   ({task.progress || 0}%)
@@ -235,9 +235,9 @@ export function TaskDetails({
               </div>
             )}
 
-            {/* 任務詳情 */}
+            {/* 任務包詳情 */}
             <div>
-              <h4 className="font-medium mb-2">任務詳情</h4>
+              <h4 className="font-medium mb-2">任務包詳情</h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">所屬工作包：</span>
@@ -262,7 +262,7 @@ export function TaskDetails({
                   </Tooltip>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">任務名稱：</span>
+                  <span className="font-medium">任務包名稱：</span>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="truncate max-w-[200px]">{task.name}</span>
