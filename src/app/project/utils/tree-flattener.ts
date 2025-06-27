@@ -282,15 +282,19 @@ export class TreeFlattener {
  */
 export class TreeBatchOperations {
   /**
-   * 批量展開到指定層級
+   * 漸進式展開到指定層級
+   * @param expandedState 展開狀態管理器
+   * @param items 扁平化項目列表  
+   * @param targetLevel 目標層級（1=展開專案、2=展開到工作包、3=展開到子工作包）
    */
   static expandToLevel(
     expandedState: ExpandedState, 
     items: FlatItem[], 
-    maxLevel: number
+    targetLevel: number
   ): void {
+    // 獲取需要展開的項目（層級小於目標層級且有子項目）
     const idsToExpand = items
-      .filter(item => item.level < maxLevel && item.hasChildren)
+      .filter(item => item.level < targetLevel && item.hasChildren)
       .map(item => item.id);
     
     expandedState.expandAll(idsToExpand);

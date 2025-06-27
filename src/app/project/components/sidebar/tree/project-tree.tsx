@@ -4,7 +4,6 @@ import { FixedSizeList as List } from 'react-window';
 import { 
   ExpandIcon,
   ListCollapseIcon,
-  RefreshCwIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -170,6 +169,7 @@ function VirtualizedProjectTree({
   const [expandedState] = useState(() => new ExpandedState());
   const [refreshKey, setRefreshKey] = useState(0);
   const [renameDialogStates, setRenameDialogStates] = useState<Record<string, boolean>>({});
+  const [expandClickCount, setExpandClickCount] = useState(0);
 
   // === refs ===
   const listRef = useRef<List>(null);
@@ -229,15 +229,32 @@ function VirtualizedProjectTree({
     onItemClick(selectedItem);
   }, [onItemClick]);
 
-  const handleExpandAll = useCallback(() => {
-    TreeBatchOperations.smartExpand(expandedState, flattenedItems, 200);
-    setRefreshKey(prev => prev + 1);
-  }, [expandedState, flattenedItems]);
+  // 智能展開/收起循環按鈕
+  const handleExpandToggle = useCallback(() => {
+    const nextCount = (expandClickCount + 1) % 4;
+    setExpandClickCount(nextCount);
 
-  const handleCollapseAll = useCallback(() => {
-    expandedState.collapseAll();
+    switch (nextCount) {
+      case 1:
+        // 第一次點擊：智能展開到第一層
+        TreeBatchOperations.expandToLevel(expandedState, flattenedItems, 1);
+        break;
+      case 2:
+        // 第二次點擊：智能展開到第二層
+        TreeBatchOperations.expandToLevel(expandedState, flattenedItems, 2);
+        break;
+      case 3:
+        // 第三次點擊：智能展開到第三層
+        TreeBatchOperations.expandToLevel(expandedState, flattenedItems, 3);
+        break;
+      case 0:
+        // 第四次點擊（回到0）：全部收起
+        expandedState.collapseAll();
+        break;
+    }
+    
     setRefreshKey(prev => prev + 1);
-  }, [expandedState]);
+  }, [expandedState, flattenedItems, expandClickCount]);
 
   // === 工具函數 ===
   const isVirtualizedItemSelected = useCallback((item: FlatItem): boolean => {
@@ -331,56 +348,83 @@ function VirtualizedProjectTree({
     }
   }, [flattenedItems, handleToggleExpand, handleItemClick, isVirtualizedItemSelected, onProjectUpdate, renameDialogStates, setRenameDialogStates]);
 
-  const renderControlPanel = () => (
-    <div className="mb-2 pb-2 border-b">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {stats && (
-            <>
-              <Badge variant="outline" className="text-xs">
-                {stats.total} 項目
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {stats.byType.task} 任務
-              </Badge>
-            </>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExpandAll}
-            title="智能展開"
-            className="h-6 px-2 text-xs"
-          >
-            <ExpandIcon className="h-3 w-3" />
-          </Button>
+  // 獲取展開按鈕的狀態
+  const getExpandButtonState = () => {
+    const expandedCount = stats.expanded;
+    const totalExpandable = flattenedItems.filter(item => item.hasChildren).length;
+    
+    switch (expandClickCount) {
+      case 0:
+        return {
+          icon: ExpandIcon,
+          title: '智能展開 (第一層)',
+          variant: 'outline' as const,
+        };
+      case 1:
+        return {
+          icon: ExpandIcon,
+          title: '智能展開 (第二層)',
+          variant: 'secondary' as const,
+        };
+      case 2:
+        return {
+          icon: ExpandIcon,
+          title: '智能展開 (第三層)',
+          variant: 'default' as const,
+        };
+      case 3:
+        return {
+          icon: ListCollapseIcon,
+          title: '全部收起',
+          variant: 'destructive' as const,
+        };
+      default:
+        return {
+          icon: ExpandIcon,
+          title: '智能展開',
+          variant: 'outline' as const,
+        };
+    }
+  };
+
+  const renderControlPanel = () => {
+    const buttonState = getExpandButtonState();
+    const ButtonIcon = buttonState.icon;
+
+    return (
+      <div className="mb-2 pb-2 border-b">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {stats && (
+              <>
+                <Badge variant="outline" className="text-xs">
+                  {stats.total} 項目
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {stats.byType.task} 任務
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {stats.expanded} 展開
+                </Badge>
+              </>
+            )}
+          </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCollapseAll}
-            title="全部收起"
-            className="h-6 px-2 text-xs"
-          >
-            <ListCollapseIcon className="h-3 w-3" />
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setRefreshKey(prev => prev + 1)}
-            title="重新整理"
-            className="h-6 px-2 text-xs"
-          >
-            <RefreshCwIcon className="h-3 w-3" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant={buttonState.variant}
+              size="sm"
+              onClick={handleExpandToggle}
+              title={buttonState.title}
+              className="h-6 px-2 text-xs"
+            >
+              <ButtonIcon className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderVirtualizedList = () => (
     <div className="border rounded-md overflow-hidden bg-background">
