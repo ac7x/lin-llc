@@ -365,41 +365,50 @@ export default function ProjectTaskpackageNode({
     <>
       <SidebarMenuItem className="overflow-hidden">
         <SimpleContextMenu {...contextMenuProps}>
-          <SidebarMenuButton className="pl-2 min-h-0 h-5">
-            <div 
-              onClick={() => onItemClick(taskItem)}
-              className={`${ITEM_SELECT_STYLE} ${
-                isSelected ? 'bg-accent' : ''
-              }`}
-            >
-              {isSelected ? (
-                <SquareCheckIcon className={`h-3 w-3 ${itemInfo.color}`} />
-              ) : (
-                <SquareIcon className={`h-3 w-3 ${itemInfo.color}`} />
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className={`truncate text-xs flex-1 ${itemInfo.color}`}>{task.name}</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{task.name}</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              {/* 任務操作按鈕和進度顯示 */}
-              <TaskActionButtons
-                task={task}
-                userUid={user?.uid}
-                isSelected={isSelected}
-                itemColor={itemInfo.color}
-                onAssignTask={handleAssignTask}
-                onSubmitTask={handleSubmitTask}
-                onReviewTask={handleReviewTask}
-                showStatus={false}
-                showProgress={false}
-              />
-            </div>
-          </SidebarMenuButton>
+          <div className="flex items-center">
+            <SidebarMenuButton className="pl-2 min-h-0 h-5 flex-1">
+              <div 
+                onClick={() => onItemClick(taskItem)}
+                className={`${ITEM_SELECT_STYLE} ${
+                  isSelected ? 'bg-accent' : ''
+                }`}
+              >
+                {isSelected ? (
+                  <SquareCheckIcon className={`h-3 w-3 ${itemInfo.color}`} />
+                ) : (
+                  <SquareIcon className={`h-3 w-3 ${itemInfo.color}`} />
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={`truncate text-xs flex-1 ${itemInfo.color}`}>{task.name}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{task.name}</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                {/* 數量顯示 */}
+                <span className={`text-xs ml-2 ${
+                  isSelected ? 'text-orange-600' : 'text-blue-600'
+                }`}>
+                  {task.completed || 0}/{task.total || 0}
+                </span>
+              </div>
+            </SidebarMenuButton>
+            
+            {/* 任務操作按鈕 - 移出 SidebarMenuButton */}
+            <TaskActionButtons
+              task={task}
+              userUid={user?.uid}
+              isSelected={isSelected}
+              itemColor={itemInfo.color}
+              onAssignTask={handleAssignTask}
+              onSubmitTask={handleSubmitTask}
+              onReviewTask={handleReviewTask}
+              showStatus={false}
+              showProgress={false}
+            />
+          </div>
         </SimpleContextMenu>
       </SidebarMenuItem>
 

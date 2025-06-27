@@ -22,9 +22,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import * as Checkbox from '@radix-ui/react-checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusIcon, PackageIcon, FolderIcon, CheckSquareIcon } from 'lucide-react';
+import { PlusIcon, PackageIcon, FolderIcon, CheckSquareIcon, CheckIcon } from 'lucide-react';
 
 // 表單驗證 schema
 const projectFormSchema = z.object({
@@ -153,42 +153,43 @@ export function CreateProjectWizard({
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox
+                        <Checkbox.Root
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                        />
+                          className="flex h-5 w-5 items-center justify-center rounded border border-gray-300 hover:bg-gray-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                        >
+                          <Checkbox.Indicator>
+                            <CheckIcon className="h-3 w-3 text-white" />
+                          </Checkbox.Indicator>
+                        </Checkbox.Root>
                       </FormControl>
-                      <div className="space-y-1 leading-none">
+                      <div className="flex-1 space-y-1 leading-none">
                         <FormLabel>自動建立工作包</FormLabel>
                         <p className="text-sm text-muted-foreground">
                           為專案自動建立指定數量的工作包
                         </p>
                       </div>
+                      {createPackages && (
+                        <FormField
+                          control={form.control}
+                          name="packageCount"
+                          render={({ field }) => (
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={50}
+                                className="w-20"
+                                {...field}
+                                onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                          )}
+                        />
+                      )}
                     </FormItem>
                   )}
                 />
-
-                {createPackages && (
-                  <FormField
-                    control={form.control}
-                    name="packageCount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>工作包數量</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={50}
-                            {...field}
-                            onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </CardContent>
             </Card>
 
@@ -207,13 +208,18 @@ export function CreateProjectWizard({
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox
+                        <Checkbox.Root
                           checked={field.value}
                           onCheckedChange={field.onChange}
                           disabled={!createPackages}
-                        />
+                          className="flex h-5 w-5 items-center justify-center rounded border border-gray-300 hover:bg-gray-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Checkbox.Indicator>
+                            <CheckIcon className="h-3 w-3 text-white" />
+                          </Checkbox.Indicator>
+                        </Checkbox.Root>
                       </FormControl>
-                      <div className="space-y-1 leading-none">
+                      <div className="flex-1 space-y-1 leading-none">
                         <FormLabel className={!createPackages ? 'text-muted-foreground' : ''}>
                           自動建立子包
                         </FormLabel>
@@ -221,31 +227,27 @@ export function CreateProjectWizard({
                           為每個工作包自動建立子包 {!createPackages && '(需先啟用工作包)'}
                         </p>
                       </div>
+                      {createSubpackages && createPackages && (
+                        <FormField
+                          control={form.control}
+                          name="subpackageCount"
+                          render={({ field }) => (
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={20}
+                                className="w-20"
+                                {...field}
+                                onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                          )}
+                        />
+                      )}
                     </FormItem>
                   )}
                 />
-
-                {createSubpackages && createPackages && (
-                  <FormField
-                    control={form.control}
-                    name="subpackageCount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>每個工作包的子包數量</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={20}
-                            {...field}
-                            onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </CardContent>
             </Card>
 
@@ -264,13 +266,18 @@ export function CreateProjectWizard({
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox
+                        <Checkbox.Root
                           checked={field.value}
                           onCheckedChange={field.onChange}
                           disabled={!createSubpackages || !createPackages}
-                        />
+                          className="flex h-5 w-5 items-center justify-center rounded border border-gray-300 hover:bg-gray-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Checkbox.Indicator>
+                            <CheckIcon className="h-3 w-3 text-white" />
+                          </Checkbox.Indicator>
+                        </Checkbox.Root>
                       </FormControl>
-                      <div className="space-y-1 leading-none">
+                      <div className="flex-1 space-y-1 leading-none">
                         <FormLabel className={!createSubpackages || !createPackages ? 'text-muted-foreground' : ''}>
                           自動建立任務包
                         </FormLabel>
@@ -278,31 +285,27 @@ export function CreateProjectWizard({
                           為每個子包自動建立任務包 {(!createSubpackages || !createPackages) && '(需先啟用子包)'}
                         </p>
                       </div>
+                      {createTaskpackages && createSubpackages && createPackages && (
+                        <FormField
+                          control={form.control}
+                          name="taskpackageCount"
+                          render={({ field }) => (
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={10}
+                                className="w-20"
+                                {...field}
+                                onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                          )}
+                        />
+                      )}
                     </FormItem>
                   )}
                 />
-
-                {createTaskpackages && createSubpackages && createPackages && (
-                  <FormField
-                    control={form.control}
-                    name="taskpackageCount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>每個子包的任務包數量</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={10}
-                            {...field}
-                            onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </CardContent>
             </Card>
 
