@@ -45,7 +45,6 @@ import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SEL
 import { 
   getItemInfo, 
   getStatusInfo, 
-  getUserPermissions, 
   getBorderColor, 
   getChildCount, 
   getIndentStyle 
@@ -53,8 +52,9 @@ import {
 import { RenameDialog } from './rename-dialog';
 import { SimpleContextMenu } from '../../ui/simple-context-menu';
 import { useGoogleAuth } from '@/app/(system)';
-import ProjectTaskpackageNode from './project-taskpackage-node';
-import ProjectSubpackageNode from './project-subpackage-node';
+import ProjectTaskpackageNode, { VirtualizedTaskpackageItem } from './project-taskpackage-node';
+import ProjectSubpackageNode, { VirtualizedSubpackageItem } from './project-subpackage-node';
+import ProjectPackageNode, { VirtualizedPackageItem } from './project-package-node';
 import {
   ChevronRightIcon,
   ChevronDownIcon,
@@ -212,17 +212,66 @@ export default function ProjectTree({
     }
   }, [selectedItem]);
 
-  // 虛擬化渲染項目 - 直接嵌入邏輯
+  // 虛擬化渲染項目 - 將不同類型委託給專門組件
   const renderVirtualizedItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const item = flattenedItems[index];
     if (!item) return null;
 
     const isSelected = isVirtualizedItemSelected(item);
+
+    // 如果是任務包，使用專門的 VirtualizedTaskpackageItem 組件
+    if (item.type === 'task') {
+      return (
+        <VirtualizedTaskpackageItem
+          item={item}
+          style={style}
+          isSelected={isSelected}
+          onToggleExpand={handleVirtualizedToggleExpand}
+          onItemClick={handleVirtualizedItemClick}
+          onProjectUpdate={onProjectUpdate}
+          renameDialogStates={renameDialogStates}
+          setRenameDialogStates={setRenameDialogStates}
+        />
+      );
+    }
+
+    // 如果是子工作包，使用專門的 VirtualizedSubpackageItem 組件
+    if (item.type === 'subpackage') {
+      return (
+        <VirtualizedSubpackageItem
+          item={item}
+          style={style}
+          isSelected={isSelected}
+          onToggleExpand={handleVirtualizedToggleExpand}
+          onItemClick={handleVirtualizedItemClick}
+          onProjectUpdate={onProjectUpdate}
+          renameDialogStates={renameDialogStates}
+          setRenameDialogStates={setRenameDialogStates}
+        />
+      );
+    }
+
+    // 如果是工作包，使用專門的 VirtualizedPackageItem 組件
+    if (item.type === 'package') {
+      return (
+        <VirtualizedPackageItem
+          item={item}
+          style={style}
+          isSelected={isSelected}
+          onToggleExpand={handleVirtualizedToggleExpand}
+          onItemClick={handleVirtualizedItemClick}
+          onProjectUpdate={onProjectUpdate}
+          renameDialogStates={renameDialogStates}
+          setRenameDialogStates={setRenameDialogStates}
+        />
+      );
+    }
+
+    // 處理專案項目（project）
     const itemInfo = getItemInfo(item.type, isSelected);
     const ItemIcon = itemInfo.icon;
     const statusInfo = getStatusInfo(item.data);
     const StatusIcon = statusInfo?.icon;
-    const permissions = getUserPermissions(item.data, user?.uid);
     const indentStyle = getIndentStyle(item.level);
 
     // 右鍵菜單處理
@@ -307,8 +356,6 @@ export default function ProjectTree({
               </Badge>
             )}
 
-
-
             {/* 子項目計數 */}
             {item.hasChildren && (
               <div className={`text-xs ml-2 ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
@@ -328,7 +375,7 @@ export default function ProjectTree({
         />
       </div>
     );
-  }, [flattenedItems, handleVirtualizedToggleExpand, handleVirtualizedItemClick, isVirtualizedItemSelected, user?.uid, renameDialogStates]);
+  }, [flattenedItems, handleVirtualizedToggleExpand, handleVirtualizedItemClick, isVirtualizedItemSelected, onProjectUpdate, renameDialogStates, setRenameDialogStates]);
 
   // 傳統模式事件處理
   const togglePackageExpanded = (pkgIdx: number) => {
@@ -477,121 +524,24 @@ export default function ProjectTree({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub className="mx-1 border-l border-border/30">
-            {/* 工作包列表 */}
-            {project.packages?.map((pkg, pkgIdx) => (
-              <SidebarMenuItem key={pkgIdx} className="overflow-hidden">
-                <Collapsible
-                  className="group/collapsible"
-                  defaultOpen={expandedPackages.has(pkgIdx)}
-                >
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      onClick={() => togglePackageExpanded(pkgIdx)}
-                      className="pl-2 min-h-0 h-6"
-                    >
-                      {expandedPackages.has(pkgIdx) ? (
-                        <PackageOpenIcon className="transition-transform h-3 w-3" />
-                      ) : (
-                        <PackageIcon className="transition-transform h-3 w-3" />
-                      )}
-                      <span className="ml-1 text-xs text-muted-foreground">{pkg.subpackages?.length || 0}</span>
-                      <div 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onItemClick({ type: 'package', projectId: project.id, packageIndex: pkgIdx });
-                        }}
-                        className={`${ITEM_SELECT_STYLE} ${
-                          isItemSelected({ type: 'package', projectId: project.id, packageIndex: pkgIdx }) ? 'bg-accent' : ''
-                        }`}
-                      >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="truncate text-xs">{pkg.name}</span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{pkg.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub className="mx-1 border-l border-border/20">
-                      {/* 子工作包列表 - 使用 ProjectSubpackageNode 組件 */}
-                      {pkg.subpackages?.map((sub, taskIdx) => (
-                        <ProjectSubpackageNode
-                          key={taskIdx}
-                          project={project}
-                          packageIndex={pkgIdx}
-                          subpackageIndex={taskIdx}
-                          selectedItem={selectedItem}
-                          onItemClick={onItemClick}
-                          onAddTaskPackage={onAddTaskPackage}
-                          loading={loading}
-                          isItemSelected={isItemSelected}
-                          subInputs={subInputs}
-                          setSubInputs={setSubInputs}
-                          onProjectUpdate={onProjectUpdate}
-                        />
-                      ))}
-                      {/* 新增子工作包按鈕 - 只有有權限的用戶才能看到 */}
-                      <ProjectActionGuard action="create" resource="subpackage">
-                        <SidebarMenuItem className="overflow-hidden">
-                          <div className="pl-1 pr-1 py-1">
-                            {showTaskPackageInputs[pkgIdx] ? (
-                              <div className="flex gap-1">
-                                <Input
-                                  placeholder="子工作包名稱"
-                                  value={taskPackageInputs[project.id]?.[pkgIdx] || ''}
-                                  onChange={e => setTaskPackageInputs(prev => ({
-                                    ...prev,
-                                    [project.id]: { ...prev[project.id], [pkgIdx]: e.target.value }
-                                  }))}
-                                  className={COMPACT_INPUT_STYLE}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      void onAddSubpackage(project.id, pkgIdx, taskPackageInputs[project.id]?.[pkgIdx] || '');
-                                      setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: false }));
-                                    }
-                                  }}
-                                />
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      onClick={() => {
-                                        void onAddSubpackage(project.id, pkgIdx, taskPackageInputs[project.id]?.[pkgIdx] || '');
-                                        setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: false }));
-                                      }}
-                                      disabled={loading || !(taskPackageInputs[project.id]?.[pkgIdx] || '').trim()}
-                                      className={SMALL_BUTTON_STYLE}
-                                    >
-                                      <PlusIcon className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>建立子工作包</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </div>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleAddTaskPackageClick(pkgIdx)}
-                                className={COMPACT_BUTTON_STYLE}
-                              >
-                                <PlusIcon className="h-3 w-3 mr-1" />
-                                新增子工作包
-                              </Button>
-                            )}
-                          </div>
-                        </SidebarMenuItem>
-                      </ProjectActionGuard>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </Collapsible>
-              </SidebarMenuItem>
+            {/* 工作包列表 - 使用 ProjectPackageNode 組件 */}
+            {project.packages?.map((package_, packageIndex) => (
+              <ProjectPackageNode
+                key={packageIndex}
+                project={project}
+                packageIndex={packageIndex}
+                selectedItem={selectedItem}
+                onItemClick={onItemClick}
+                onAddSubpackage={onAddSubpackage || (async () => {})}
+                loading={loading}
+                isItemSelected={isItemSelected}
+                taskPackageInputs={taskPackageInputs || {}}
+                setTaskPackageInputs={setTaskPackageInputs || (() => {})}
+                subInputs={subInputs || {}}
+                setSubInputs={setSubInputs || (() => {})}
+                onAddTaskPackage={onAddTaskPackage || (async () => {})}
+                onProjectUpdate={onProjectUpdate}
+              />
             ))}
             {/* 新增工作包按鈕 - 只有有權限的用戶才能看到 */}
             <ProjectActionGuard action="create" resource="package">
