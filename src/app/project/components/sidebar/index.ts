@@ -5,7 +5,6 @@
 
 // 主要 Sidebar 組件
 export { ProjectSidebar } from './project-sidebar';
-export { QuantityManagementTab } from './quantity-management-tab';
 
 // 樹狀組件導出 - 容器組件
 export { default as ProjectTree } from './tree/project-tree';
