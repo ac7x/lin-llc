@@ -39,7 +39,7 @@ import { useProjectOperations } from '../../hooks';
 import { usePermissionContext } from '@/app/(system)';
 import ProjectTree from './tree/project-tree';
 import { CreateProjectWizard } from './create/project-wizard';
-import { ProjectTemplates } from './template';
+import { ProjectTemplates } from './template/project-templates';
 import { QuantityDistributionDialog } from './dialogs/project-quantity-dialog';
 import { Project, SelectedItem, Package, SubPackage } from '../../types';
 import { FlatItem, ExpandedState, TreeFlattener } from './tree/tree-flattener';
