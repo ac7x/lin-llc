@@ -205,6 +205,30 @@ export function ProjectSidebar({
     await onCreateProject(config);
   };
 
+  // 處理模板創建專案
+  const handleCreateProjectFromTemplate = async (config: {
+    name: string;
+    selectedTemplates: {
+      packages: string[];
+      subpackages: string[];
+      taskpackages: string[];
+    };
+  }) => {
+    // 將模板配置轉換為舊的格式，這裡需要實現模板到結構的轉換邏輯
+    // 暫時先使用基本轉換
+    const convertedConfig = {
+      name: config.name,
+      createPackages: config.selectedTemplates.packages.length > 0,
+      packageCount: config.selectedTemplates.packages.length,
+      createSubpackages: config.selectedTemplates.subpackages.length > 0,
+      subpackageCount: config.selectedTemplates.subpackages.length,
+      createTaskpackages: config.selectedTemplates.taskpackages.length > 0,
+      taskpackageCount: config.selectedTemplates.taskpackages.length,
+    };
+    
+    await onCreateProject(convertedConfig);
+  };
+
   // === 元件 ===
   const ProjectListSkeleton = () => (
     <div className="space-y-2">
@@ -349,7 +373,7 @@ export function ProjectSidebar({
                           }
                         />
                         <ProjectTemplates
-                          onCreateProject={handleCreateProject}
+                          onCreateProject={handleCreateProjectFromTemplate}
                           loading={loading}
                           trigger={
                             <Button

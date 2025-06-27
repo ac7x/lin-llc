@@ -374,3 +374,66 @@ export interface UserTask {
   submittedAt?: string;            // 提交時間
   approvedAt?: string;             // 核准時間
 }
+
+/**
+ * 任務包模板介面 - 代表可重複使用的任務包範本
+ */
+export interface TaskPackageTemplate {
+  id: string;                      // 模板 ID
+  name: string;                    // 模板名稱
+  description?: string;            // 模板描述
+  defaultTotal: number;            // 預設工作項目總數量
+  createdAt: string;               // 建立時間
+  createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 子工作包模板介面 - 代表可重複使用的子工作包範本
+ */
+export interface SubPackageTemplate {
+  id: string;                      // 模板 ID
+  name: string;                    // 模板名稱
+  description?: string;            // 模板描述
+  taskPackageTemplates: string[];  // 預設包含的任務包模板 ID 清單
+  createdAt: string;               // 建立時間
+  createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 工作包模板介面 - 代表可重複使用的工作包範本
+ */
+export interface PackageTemplate {
+  id: string;                      // 模板 ID
+  name: string;                    // 模板名稱
+  description?: string;            // 模板描述
+  subPackageTemplates: string[];   // 預設包含的子工作包模板 ID 清單
+  createdAt: string;               // 建立時間
+  createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 專案模板介面 - 代表可重複使用的專案範本
+ */
+export interface ProjectTemplate {
+  id: string;                      // 模板 ID
+  name: string;                    // 模板名稱
+  description?: string;            // 模板描述
+  packageTemplates: string[];      // 預設包含的工作包模板 ID 清單
+  createdAt: string;               // 建立時間
+  createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 模板類型聯合型別
+ */
+export type TemplateType = 'project' | 'package' | 'subpackage' | 'taskpackage';
+
+/**
+ * 模板管理操作介面
+ */
+export interface TemplateOperations {
+  createTemplate: (type: TemplateType, template: Omit<PackageTemplate | SubPackageTemplate | TaskPackageTemplate | ProjectTemplate, 'id' | 'createdAt' | 'createdBy'>) => Promise<string>;
+  updateTemplate: (type: TemplateType, id: string, updates: Partial<PackageTemplate | SubPackageTemplate | TaskPackageTemplate | ProjectTemplate>) => Promise<void>;
+  deleteTemplate: (type: TemplateType, id: string) => Promise<void>;
+  getTemplates: (type: TemplateType) => Promise<(PackageTemplate | SubPackageTemplate | TaskPackageTemplate | ProjectTemplate)[]>;
+}
