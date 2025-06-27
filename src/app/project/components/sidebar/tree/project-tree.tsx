@@ -7,8 +7,6 @@ import {
   PackageIcon,
   PackageOpenIcon,
   ListIcon,
-  BookOpen,
-  BookOpenCheck,
   PlusIcon,
   ExpandIcon,
   ListCollapseIcon,
@@ -56,6 +54,7 @@ import { RenameDialog } from './rename-dialog';
 import { SimpleContextMenu } from '../../ui/simple-context-menu';
 import { useGoogleAuth } from '@/app/(system)';
 import ProjectTaskpackageNode from './project-taskpackage-node';
+import ProjectSubpackageNode from './project-subpackage-node';
 import {
   ChevronRightIcon,
   ChevronDownIcon,
@@ -101,10 +100,8 @@ export default function ProjectTree({
 }: EnhancedProjectTreeProps) {
   // 傳統模式狀態
   const [expandedPackages, setExpandedPackages] = useState<Set<number>>(new Set());
-  const [expandedTasks, setExpandedTasks] = useState<Record<number, Set<number>>>({});
   const [showPackageInput, setShowPackageInput] = useState(false);
   const [showTaskPackageInputs, setShowTaskPackageInputs] = useState<Record<number, boolean>>({});
-  const [showSubInputs, setShowSubInputs] = useState<Record<number, Record<number, boolean>>>({});
   const [expandedProject, setExpandedProject] = useState(selectedProject?.id === project.id);
 
   // 虛擬化模式狀態
@@ -346,22 +343,7 @@ export default function ProjectTree({
     });
   };
 
-  const toggleTaskExpanded = (pkgIdx: number, taskIdx: number) => {
-    setExpandedTasks(prev => {
-      const newTasks = { ...prev };
-      if (!newTasks[pkgIdx]) {
-        newTasks[pkgIdx] = new Set();
-      }
-      const taskSet = new Set(newTasks[pkgIdx]);
-      if (taskSet.has(taskIdx)) {
-        taskSet.delete(taskIdx);
-      } else {
-        taskSet.add(taskIdx);
-      }
-      newTasks[pkgIdx] = taskSet;
-      return newTasks;
-    });
-  };
+
 
   const handleAddPackageClick = () => {
     setShowPackageInput(true);
@@ -371,12 +353,7 @@ export default function ProjectTree({
     setShowTaskPackageInputs(prev => ({ ...prev, [pkgIdx]: true }));
   };
 
-  const handleAddSubClick = (pkgIdx: number, taskIdx: number) => {
-    setShowSubInputs(prev => ({
-      ...prev,
-      [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: true }
-    }));
-  };
+
 
   // 渲染虛擬化模式
   if (useVirtualization) {
@@ -540,131 +517,22 @@ export default function ProjectTree({
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub className="mx-1 border-l border-border/20">
-                      {/* 子工作包列表 */}
+                      {/* 子工作包列表 - 使用 ProjectSubpackageNode 組件 */}
                       {pkg.subpackages?.map((sub, taskIdx) => (
-                        <SidebarMenuItem key={taskIdx} className="overflow-hidden">
-                          <Collapsible
-                            className="group/collapsible"
-                            defaultOpen={expandedTasks[pkgIdx]?.has(taskIdx)}
-                          >
-                            <CollapsibleTrigger asChild>
-                              <SidebarMenuButton
-                                onClick={() => toggleTaskExpanded(pkgIdx, taskIdx)}
-                                className="pl-2 min-h-0 h-5"
-                              >
-                                {expandedTasks[pkgIdx]?.has(taskIdx) ? (
-                                  <BookOpenCheck className="transition-transform h-3 w-3" />
-                                ) : (
-                                  <BookOpen className="transition-transform h-3 w-3" />
-                                )}
-                                <span className="ml-1 text-xs text-muted-foreground">{sub.taskpackages?.length || 0}</span>
-                                <div 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onItemClick({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx });
-                                  }}
-                                  className={`${ITEM_SELECT_STYLE} ${
-                                    isItemSelected({ type: 'subpackage', projectId: project.id, packageIndex: pkgIdx, subpackageIndex: taskIdx }) ? 'bg-accent' : ''
-                                  }`}
-                                >
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="truncate text-xs">{sub.name}</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>{sub.name}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                              </SidebarMenuButton>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <SidebarMenuSub className="mx-1 border-l border-border/10">
-                                {/* 任務列表 - 使用 ProjectTaskpackageNode 組件 */}
-                                {sub.taskpackages?.map((task, subIdx) => (
-                                  <ProjectTaskpackageNode
-                                    key={subIdx}
-                                    project={project}
-                                    packageIndex={pkgIdx}
-                                    subpackageIndex={taskIdx}
-                                    taskIndex={subIdx}
-                                    selectedItem={selectedItem}
-                                    onItemClick={onItemClick}
-                                    loading={loading}
-                                    isItemSelected={isItemSelected}
-                                    onProjectUpdate={onProjectUpdate}
-                                  />
-                                ))}
-                                {/* 新增任務按鈕 - 只有有權限的用戶才能看到 */}
-                                <ProjectActionGuard action="create" resource="task">
-                                  <SidebarMenuItem className="overflow-hidden">
-                                    <div className="pl-2 pr-1 py-1">
-                                      {showSubInputs[pkgIdx]?.[taskIdx] ? (
-                                        <div className="flex gap-1">
-                                          <Input
-                                            placeholder="任務名稱"
-                                            value={subInputs[project.id]?.[pkgIdx]?.[taskIdx] || ''}
-                                            onChange={e => setSubInputs(prev => ({
-                                              ...prev,
-                                              [project.id]: {
-                                                ...prev[project.id],
-                                                [pkgIdx]: {
-                                                  ...prev[project.id]?.[pkgIdx],
-                                                  [taskIdx]: e.target.value
-                                                }
-                                              }
-                                            }))}
-                                            className={COMPACT_INPUT_STYLE}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                void onAddTaskPackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
-                                                setShowSubInputs(prev => ({
-                                                  ...prev,
-                                                  [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
-                                                }));
-                                              }
-                                            }}
-                                          />
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <Button
-                                                size="sm"
-                                                onClick={() => {
-                                                  void onAddTaskPackage(project.id, pkgIdx, taskIdx, subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '');
-                                                  setShowSubInputs(prev => ({
-                                                    ...prev,
-                                                    [pkgIdx]: { ...prev[pkgIdx], [taskIdx]: false }
-                                                  }));
-                                                }}
-                                                disabled={loading || !(subInputs[project.id]?.[pkgIdx]?.[taskIdx] || '').trim()}
-                                                className={SMALL_BUTTON_STYLE}
-                                              >
-                                                <PlusIcon className="h-3 w-3" />
-                                              </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <p>建立任務</p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        </div>
-                                      ) : (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleAddSubClick(pkgIdx, taskIdx)}
-                                          className={COMPACT_BUTTON_STYLE}
-                                        >
-                                          <PlusIcon className="h-3 w-3 mr-1" />
-                                          新增任務
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </SidebarMenuItem>
-                                </ProjectActionGuard>
-                              </SidebarMenuSub>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        </SidebarMenuItem>
+                        <ProjectSubpackageNode
+                          key={taskIdx}
+                          project={project}
+                          packageIndex={pkgIdx}
+                          subpackageIndex={taskIdx}
+                          selectedItem={selectedItem}
+                          onItemClick={onItemClick}
+                          onAddTaskPackage={onAddTaskPackage}
+                          loading={loading}
+                          isItemSelected={isItemSelected}
+                          subInputs={subInputs}
+                          setSubInputs={setSubInputs}
+                          onProjectUpdate={onProjectUpdate}
+                        />
                       ))}
                       {/* 新增子工作包按鈕 - 只有有權限的用戶才能看到 */}
                       <ProjectActionGuard action="create" resource="subpackage">

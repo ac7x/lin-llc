@@ -33,6 +33,7 @@ import ProjectTaskpackageNode from './project-taskpackage-node';
 /**
  * 子工作包節點組件 - 顯示子工作包資訊並包含任務列表
  * 負責渲染子工作包名稱、可展開的任務列表和新增任務功能
+ * 已從 project-tree.tsx 移動完整的子工作包相關邏輯
  */
 export default function ProjectSubpackageNode({
   project,
@@ -110,9 +111,14 @@ export default function ProjectSubpackageNode({
     }
   };
 
+  // 切換展開/收起狀態
+  const handleToggleExpand = () => {
+    setExpanded(!expanded);
+  };
+
   return (
     <>
-      <SidebarMenuItem>
+      <SidebarMenuItem className="overflow-hidden">
         <Collapsible
           className="group/collapsible"
           defaultOpen={expanded}
@@ -120,8 +126,8 @@ export default function ProjectSubpackageNode({
         >
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
-              onClick={() => setExpanded(!expanded)}
-              className="pl-2"
+              onClick={handleToggleExpand}
+              className="pl-2 min-h-0 h-5"
             >
               {expanded ? (
                 <BookOpenCheck className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
@@ -151,89 +157,89 @@ export default function ProjectSubpackageNode({
               </SimpleContextMenu>
             </SidebarMenuButton>
           </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub className="mx-1 border-l border-border/10">
-            {/* 任務列表 */}
-            {subpackage.taskpackages?.map((task, taskIndex) => (
-              <ProjectTaskpackageNode
-                key={taskIndex}
-                project={project}
-                packageIndex={packageIndex}
-                subpackageIndex={subpackageIndex}
-                taskIndex={taskIndex}
-                selectedItem={selectedItem}
-                onItemClick={onItemClick}
-                loading={loading}
-                isItemSelected={isItemSelected}
-                onProjectUpdate={onProjectUpdate}
-              />
-            ))}
-            
-            {/* 新增任務按鈕 - 只有有權限的用戶才能看到 */}
-            <ProjectActionGuard action="create" resource="task">
-              <SidebarMenuItem>
-                <div className="pl-2 pr-1 py-1">
-                  {showInput ? (
-                    <div className="flex gap-1">
-                      <Input
-                        placeholder="任務名稱"
-                        value={subInputs[project.id]?.[packageIndex]?.[subpackageIndex] || ''}
-                        onChange={e => setSubInputs(prev => ({
-                          ...prev,
-                          [project.id]: {
-                            ...prev[project.id],
-                            [packageIndex]: {
-                              ...prev[project.id]?.[packageIndex],
-                              [subpackageIndex]: e.target.value
+          <CollapsibleContent>
+            <SidebarMenuSub className="mx-1 border-l border-border/10">
+              {/* 任務包列表 - 使用 ProjectTaskpackageNode 組件 */}
+              {subpackage.taskpackages?.map((task, taskIndex) => (
+                <ProjectTaskpackageNode
+                  key={taskIndex}
+                  project={project}
+                  packageIndex={packageIndex}
+                  subpackageIndex={subpackageIndex}
+                  taskIndex={taskIndex}
+                  selectedItem={selectedItem}
+                  onItemClick={onItemClick}
+                  loading={loading}
+                  isItemSelected={isItemSelected}
+                  onProjectUpdate={onProjectUpdate}
+                />
+              ))}
+              
+              {/* 新增任務包按鈕 - 只有有權限的用戶才能看到 */}
+              <ProjectActionGuard action="create" resource="task">
+                <SidebarMenuItem className="overflow-hidden">
+                  <div className="pl-2 pr-1 py-1">
+                    {showInput ? (
+                      <div className="flex gap-1">
+                        <Input
+                          placeholder="任務名稱"
+                          value={subInputs[project.id]?.[packageIndex]?.[subpackageIndex] || ''}
+                          onChange={e => setSubInputs(prev => ({
+                            ...prev,
+                            [project.id]: {
+                              ...prev[project.id],
+                              [packageIndex]: {
+                                ...prev[project.id]?.[packageIndex],
+                                [subpackageIndex]: e.target.value
+                              }
                             }
-                          }
-                        }))}
-                        className={COMPACT_INPUT_STYLE}
-                        onKeyDown={handleKeyDown}
-                      />
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            onClick={handleAddTask}
-                            disabled={loading || !(subInputs[project.id]?.[packageIndex]?.[subpackageIndex] || '').trim()}
-                            className={SMALL_BUTTON_STYLE}
-                          >
-                            <PlusIcon className="h-3 w-3" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>建立任務</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleAddTaskClick}
-                      className={COMPACT_BUTTON_STYLE}
-                    >
-                      <PlusIcon className="h-3 w-3 mr-1" />
-                      新增任務
-                    </Button>
-                  )}
-                </div>
-              </SidebarMenuItem>
-            </ProjectActionGuard>
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarMenuItem>
+                          }))}
+                          className={COMPACT_INPUT_STYLE}
+                          onKeyDown={handleKeyDown}
+                        />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              onClick={handleAddTask}
+                              disabled={loading || !(subInputs[project.id]?.[packageIndex]?.[subpackageIndex] || '').trim()}
+                              className={SMALL_BUTTON_STYLE}
+                            >
+                              <PlusIcon className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>建立任務</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleAddTaskClick}
+                        className={COMPACT_BUTTON_STYLE}
+                      >
+                        <PlusIcon className="h-3 w-3 mr-1" />
+                        新增任務
+                      </Button>
+                    )}
+                  </div>
+                </SidebarMenuItem>
+              </ProjectActionGuard>
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarMenuItem>
 
-    {/* 重新命名對話框 */}
-    <RenameDialog
-      isOpen={showRenameDialog}
-      onClose={() => setShowRenameDialog(false)}
-      currentName={subpackage.name}
-      itemType="subpackage"
-      onRename={handleRenameConfirm}
-    />
-  </>
+      {/* 重新命名對話框 */}
+      <RenameDialog
+        isOpen={showRenameDialog}
+        onClose={() => setShowRenameDialog(false)}
+        currentName={subpackage.name}
+        itemType="subpackage"
+        onRename={handleRenameConfirm}
+      />
+    </>
   );
 }
