@@ -325,9 +325,9 @@ export interface ProjectSubpackageNodeProps extends TreeComponentProps {
 }
 
 /**
- * 任務節點組件屬性介面 - 定義任務節點組件所需的屬性
+ * 任務包節點組件屬性介面 - 定義任務包節點組件所需的屬性
  */
-export interface ProjectTaskNodeProps extends TreeComponentProps {
+export interface ProjectTaskpackageNodeProps extends TreeComponentProps {
   project: Project;                                                                             // 專案資料 - 要顯示的專案物件
   packageIndex: number;                                                                         // 工作包索引 - 當前工作包在專案中的索引位置
   subpackageIndex: number;                                                                      // 子工作包索引 - 當前子工作包在工作包中的索引位置

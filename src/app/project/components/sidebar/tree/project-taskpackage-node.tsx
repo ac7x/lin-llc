@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useGoogleAuth } from '@/app/(system)';
 import { useTaskManagement } from '../../../hooks';
-import { ProjectTaskNodeProps, SelectedItem } from '../../../types';
+import { ProjectTaskpackageNodeProps, SelectedItem } from '../../../types';
 import { ITEM_SELECT_STYLE } from '../../../constants';
 import { getItemInfo } from './tree-utils';
 import { TaskActionButtons } from './task-action-buttons';
@@ -35,7 +35,7 @@ export default function ProjectTaskpackageNode({
   onItemClick,
   isItemSelected,
   onProjectUpdate,
-}: ProjectTaskNodeProps & {
+}: ProjectTaskpackageNodeProps & {
   onProjectUpdate?: (updatedProject: any) => void;
 }) {
   const { user } = useGoogleAuth();
