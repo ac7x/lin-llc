@@ -115,8 +115,8 @@ interface ProjectTemplatesProps {
     packageCount: number;
     createSubpackages: boolean;
     subpackageCount: number;
-    createTasks: boolean;
-    taskCount: number;
+    createTaskpackages: boolean;
+    taskpackageCount: number;
   }) => Promise<void>;
   loading?: boolean;
   trigger?: React.ReactNode;
@@ -157,8 +157,8 @@ export function ProjectTemplates({
         packageCount: selectedTemplate.structure.packageCount,
         createSubpackages: true,
         subpackageCount: selectedTemplate.structure.subpackageCount,
-        createTasks: true,
-        taskCount: selectedTemplate.structure.taskCount,
+        createTaskpackages: true,
+        taskpackageCount: selectedTemplate.structure.taskCount,
       });
       
       setIsOpen(false);
@@ -218,7 +218,7 @@ export function ProjectTemplates({
                         ))}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        結構：{template.structure.packageCount} 包 × {template.structure.subpackageCount} 子包 × {template.structure.taskCount} 任務
+                        結構：{template.structure.packageCount} 包 × {template.structure.subpackageCount} 子包 × {template.structure.taskCount} 任務包
                       </div>
                     </div>
                   </CardContent>
