@@ -36,140 +36,6 @@ import { SimpleContextMenu } from '../../ui/simple-context-menu';
 import ProjectTaskpackageNode from './project-taskpackage-node';
 
 /**
- * 虛擬化子工作包渲染組件
- * 專門處理虛擬化模式下的子工作包項目渲染
- */
-export function VirtualizedSubpackageItem({
-  item,
-  style,
-  isSelected,
-  onToggleExpand,
-  onItemClick,
-  onProjectUpdate,
-  renameDialogStates,
-  setRenameDialogStates,
-}: {
-  item: FlatItem;
-  style: React.CSSProperties;
-  isSelected: boolean;
-  onToggleExpand: (id: string) => void;
-  onItemClick: (item: FlatItem) => void;
-  onProjectUpdate?: (updatedProject: any) => void;
-  renameDialogStates: Record<string, boolean>;
-  setRenameDialogStates: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-}) {
-  if (item.type !== 'subpackage') return null;
-
-  const subpackage = item.data as any;
-  const itemInfo = getItemInfo(item.type, isSelected);
-  const ItemIcon = itemInfo.icon;
-  const statusInfo = getStatusInfo(item.data);
-  const StatusIcon = statusInfo?.icon;
-  const indentStyle = getIndentStyle(item.level);
-
-  // 右鍵菜單處理
-  const handleRename = useCallback(() => {
-    setRenameDialogStates(prev => ({ ...prev, [item.id]: true }));
-  }, [item.id, setRenameDialogStates]);
-
-  const handleRenameConfirm = useCallback((newName: string) => {
-    console.log('Rename subpackage:', subpackage.name, 'to:', newName);
-    setRenameDialogStates(prev => ({ ...prev, [item.id]: false }));
-  }, [item.id, subpackage.name, setRenameDialogStates]);
-
-  const contextMenuProps = {
-    itemType: 'subpackage' as const,
-    itemName: subpackage.name || '',
-    currentQuantity: subpackage.total !== undefined ? {
-      completed: subpackage.completed || 0,
-      total: subpackage.total || 0,
-    } : undefined,
-    onRename: handleRename,
-  };
-
-  return (
-    <div key={item.id} style={style}>
-      <SimpleContextMenu {...contextMenuProps}>
-        <div
-          className={`flex items-center gap-2 py-2 px-2 cursor-pointer transition-colors ${itemInfo.bgColor} border-l-2 ${
-            isSelected ? getBorderColor(item.type) : 'border-l-transparent'
-          }`}
-          style={indentStyle}
-          onClick={() => onItemClick(item)}
-        >
-          {/* 展開/收起按鈕 */}
-          {item.hasChildren && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleExpand(item.id);
-              }}
-            >
-              {item.isExpanded ? (
-                <ChevronDownIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
-              ) : (
-                <ChevronRightIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
-              )}
-            </Button>
-          )}
-
-          {/* 空白佔位（無子項目時） */}
-          {!item.hasChildren && <div className="w-6" />}
-
-          {/* 項目圖標 */}
-          <ItemIcon className={`h-4 w-4 ${itemInfo.color}`} />
-
-          {/* 項目名稱 */}
-          <span className={`flex-1 text-sm font-medium truncate ${itemInfo.color}`}>
-            {subpackage.name}
-          </span>
-
-          {/* 進度信息 */}
-          {subpackage.progress !== undefined && (
-            <div className="flex items-center gap-2 min-w-[120px]">
-              <div className={`w-16 text-xs ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
-                {subpackage.progress || 0}%
-              </div>
-              <Progress 
-                value={subpackage.progress || 0} 
-                className="w-16 h-2" 
-              />
-            </div>
-          )}
-
-          {/* 狀態 Badge */}
-          {statusInfo && StatusIcon && (
-            <Badge className={`${statusInfo.color} text-xs`}>
-              <StatusIcon className="h-3 w-3 mr-1" />
-              {statusInfo.text}
-            </Badge>
-          )}
-
-          {/* 子項目計數 */}
-          {item.hasChildren && (
-            <div className={`text-xs ml-2 ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
-              {subpackage.taskpackages?.length || 0} 任務
-            </div>
-          )}
-        </div>
-      </SimpleContextMenu>
-
-      {/* 重新命名對話框 */}
-      <RenameDialog
-        isOpen={renameDialogStates[item.id] || false}
-        onClose={() => setRenameDialogStates(prev => ({ ...prev, [item.id]: false }))}
-        currentName={subpackage.name || ''}
-        itemType="subpackage"
-        onRename={handleRenameConfirm}
-      />
-    </div>
-  );
-}
-
-/**
  * 子工作包節點組件 - 顯示子工作包資訊並包含任務列表
  * 負責渲染子工作包名稱、可展開的任務列表和新增任務功能
  * 已從 project-tree.tsx 移動完整的子工作包相關邏輯
@@ -191,10 +57,12 @@ export default function ProjectSubpackageNode({
   onRename?: (subpackageItem: SelectedItem, newName: string) => void;
   onProjectUpdate?: (updatedProject: any) => void;
 }) {
+  // === 狀態管理 ===
   const [expanded, setExpanded] = useState(false);
   const [showInput, setShowInput] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   
+  // === 計算邏輯 ===
   const subpackage = project.packages[packageIndex]?.subpackages[subpackageIndex];
   
   if (!subpackage) {
@@ -211,7 +79,7 @@ export default function ProjectSubpackageNode({
   const isSelected = isItemSelected(subpackageItem);
   const itemInfo = getItemInfo('subpackage', isSelected);
 
-  // 右鍵菜單處理
+  // === 事件處理 ===
   const handleRename = () => {
     setShowRenameDialog(true);
   };
@@ -220,16 +88,6 @@ export default function ProjectSubpackageNode({
     if (onRename) {
       onRename(subpackageItem, newName);
     }
-  };
-
-  const contextMenuProps = {
-    itemType: 'subpackage' as const,
-    itemName: subpackage.name,
-    currentQuantity: subpackage.total !== undefined ? {
-      completed: subpackage.completed || 0,
-      total: subpackage.total || 0,
-    } : undefined,
-    onRename: handleRename,
   };
 
   const handleAddTaskClick = () => {
@@ -250,11 +108,22 @@ export default function ProjectSubpackageNode({
     }
   };
 
-  // 切換展開/收起狀態
   const handleToggleExpand = () => {
     setExpanded(!expanded);
   };
 
+  // === 配置 ===
+  const contextMenuProps = {
+    itemType: 'subpackage' as const,
+    itemName: subpackage.name,
+    currentQuantity: subpackage.total !== undefined ? {
+      completed: subpackage.completed || 0,
+      total: subpackage.total || 0,
+    } : undefined,
+    onRename: handleRename,
+  };
+
+  // === 渲染 ===
   return (
     <>
       <SidebarMenuItem className="overflow-hidden">
@@ -380,5 +249,142 @@ export default function ProjectSubpackageNode({
         onRename={handleRenameConfirm}
       />
     </>
+  );
+}
+
+/**
+ * 虛擬化子工作包渲染組件
+ * 專門處理虛擬化模式下的子工作包項目渲染
+ */
+export function VirtualizedSubpackageItem({
+  item,
+  style,
+  isSelected,
+  onToggleExpand,
+  onItemClick,
+  onProjectUpdate,
+  renameDialogStates,
+  setRenameDialogStates,
+}: {
+  item: FlatItem;
+  style: React.CSSProperties;
+  isSelected: boolean;
+  onToggleExpand: (id: string) => void;
+  onItemClick: (item: FlatItem) => void;
+  onProjectUpdate?: (updatedProject: any) => void;
+  renameDialogStates: Record<string, boolean>;
+  setRenameDialogStates: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}) {
+  if (item.type !== 'subpackage') return null;
+
+  // === 計算邏輯 ===
+  const subpackage = item.data as any;
+  const itemInfo = getItemInfo(item.type, isSelected);
+  const ItemIcon = itemInfo.icon;
+  const statusInfo = getStatusInfo(item.data);
+  const StatusIcon = statusInfo?.icon;
+  const indentStyle = getIndentStyle(item.level);
+
+  // === 事件處理 ===
+  const handleRename = useCallback(() => {
+    setRenameDialogStates(prev => ({ ...prev, [item.id]: true }));
+  }, [item.id, setRenameDialogStates]);
+
+  const handleRenameConfirm = useCallback((newName: string) => {
+    console.log('Rename subpackage:', subpackage.name, 'to:', newName);
+    setRenameDialogStates(prev => ({ ...prev, [item.id]: false }));
+  }, [item.id, subpackage.name, setRenameDialogStates]);
+
+  // === 配置 ===
+  const contextMenuProps = {
+    itemType: 'subpackage' as const,
+    itemName: subpackage.name || '',
+    currentQuantity: subpackage.total !== undefined ? {
+      completed: subpackage.completed || 0,
+      total: subpackage.total || 0,
+    } : undefined,
+    onRename: handleRename,
+  };
+
+  // === 渲染 ===
+  return (
+    <div key={item.id} style={style}>
+      <SimpleContextMenu {...contextMenuProps}>
+        <div
+          className={`flex items-center gap-2 py-2 px-2 cursor-pointer transition-colors ${itemInfo.bgColor} border-l-2 ${
+            isSelected ? getBorderColor(item.type) : 'border-l-transparent'
+          }`}
+          style={indentStyle}
+          onClick={() => onItemClick(item)}
+        >
+          {/* 展開/收起按鈕 */}
+          {item.hasChildren && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand(item.id);
+              }}
+            >
+              {item.isExpanded ? (
+                <ChevronDownIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
+              ) : (
+                <ChevronRightIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
+              )}
+            </Button>
+          )}
+
+          {/* 空白佔位（無子項目時） */}
+          {!item.hasChildren && <div className="w-6" />}
+
+          {/* 項目圖標 */}
+          <ItemIcon className={`h-4 w-4 ${itemInfo.color}`} />
+
+          {/* 項目名稱 */}
+          <span className={`flex-1 text-sm font-medium truncate ${itemInfo.color}`}>
+            {subpackage.name}
+          </span>
+
+          {/* 進度信息 */}
+          {subpackage.progress !== undefined && (
+            <div className="flex items-center gap-2 min-w-[120px]">
+              <div className={`w-16 text-xs ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
+                {subpackage.progress || 0}%
+              </div>
+              <Progress 
+                value={subpackage.progress || 0} 
+                className="w-16 h-2" 
+              />
+            </div>
+          )}
+
+          {/* 狀態 Badge */}
+          {statusInfo && StatusIcon && (
+            <Badge className={`${statusInfo.color} text-xs`}>
+              <StatusIcon className="h-3 w-3 mr-1" />
+              {statusInfo.text}
+            </Badge>
+          )}
+
+          {/* 子項目計數 */}
+          {item.hasChildren && (
+            <div className={`text-xs ml-2 ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
+              {subpackage.taskpackages?.length || 0} 任務
+            </div>
+          )}
+        </div>
+      </SimpleContextMenu>
+
+      {/* 重新命名對話框 */}
+      <RenameDialog
+        isOpen={renameDialogStates[item.id] || false}
+        onClose={() => setRenameDialogStates(prev => ({ ...prev, [item.id]: false }))}
+        currentName={subpackage.name || ''}
+        itemType="subpackage"
+        onRename={handleRenameConfirm}
+      />
+    </div>
   );
 }

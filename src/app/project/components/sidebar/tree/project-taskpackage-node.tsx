@@ -228,8 +228,6 @@ export function VirtualizedTaskpackageItem({
         currentSubmitters={task.submitters || []}
         currentReviewers={task.reviewers || []}
         onAssign={async (submitters: string[], reviewers: string[]) => {
-          // 這裡需要重新構建完整的項目對象來使用 assignTask
-          // 由於虛擬化項目只有扁平數據，我們需要另一種方式處理
           console.log('Assign task in virtualized mode:', submitters, reviewers);
           return true;
         }}
