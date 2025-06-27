@@ -30,9 +30,6 @@ import {
   BookTemplateIcon,
   SearchIcon,
   ZapIcon,
-  ExpandIcon,
-  ListCollapseIcon,
-  RefreshCwIcon,
   Lightbulb,
   ChevronRight,
   ChevronDown,
@@ -255,7 +252,7 @@ export function ProjectSidebar({
           </SidebarGroupLabel>
 
           {selectedProject && (
-            <div className="px-4 pb-2 space-y-2">
+            <div className="px-4 pb-2">
               <div className="relative">
                 <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                 <Input
@@ -265,29 +262,6 @@ export function ProjectSidebar({
                   className="pl-7 h-7 text-xs"
                 />
               </div>
-
-              {shouldUseVirtualization && (
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={() => setForceVirtualization(false)}
-                    title="傳統模式"
-                  >
-                    <ListCollapseIcon className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={() => setForceVirtualization(true)}
-                    title="強制虛擬化"
-                  >
-                    <ZapIcon className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
             </div>
           )}
         </SidebarGroup>
