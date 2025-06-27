@@ -11,12 +11,12 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, Calculator, Shuffle, Equal, TrendingUp } from 'lucide-react';
-import { Package, Subpackage, TaskPackage } from '../../../types';
+import { Package, SubPackage, TaskPackage } from '../../../types';
 
 interface QuantityDistributionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  item: Package | Subpackage;
+  item: Package | SubPackage;
   itemType: 'package' | 'subpackage';
   onDistribute: (distributionData: DistributionData) => Promise<boolean>;
 }
@@ -53,7 +53,7 @@ export function QuantityDistributionDialog({
     if (itemType === 'package') {
       return (item as Package).subpackages || [];
     } else {
-      return (item as Subpackage).taskpackages || [];
+      return (item as SubPackage).taskpackages || [];
     }
   };
 

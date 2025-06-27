@@ -1,4 +1,4 @@
-import { Project, Package, Subpackage, TaskPackage } from '../../../types';
+import { Project, Package, SubPackage, TaskPackage } from '../../../types';
 
 /**
  * 扁平化項目類型
@@ -11,7 +11,7 @@ export type FlatItemType = 'project' | 'package' | 'subpackage' | 'task';
 export interface FlatItem {
   id: string;                    // 唯一標識符
   type: FlatItemType;           // 項目類型
-  data: Project | Package | Subpackage | TaskPackage; // 原始數據
+  data: Project | Package | SubPackage | TaskPackage; // 原始數據
   level: number;                // 層級深度 (0=專案, 1=包, 2=子包, 3=任務)
   parentId?: string;            // 父級ID
   projectId: string;            // 專案ID
@@ -158,7 +158,7 @@ export class TreeFlattener {
    * 扁平化子工作包
    */
   private flattenSubpackage(
-    subpkg: Subpackage,
+    subpkg: SubPackage,
     projectId: string,
     packageIndex: number,
     subpackageIndex: number,

@@ -27,7 +27,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/(system)';
-import { ProjectSubpackageNodeProps, SelectedItem } from '../../../types';
+import { ProjectSubPackageNodeProps, SelectedItem } from '../../../types';
 import { FlatItem } from './tree-flattener';
 import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../../constants';
 import { getItemInfo, getChildCount, getStatusInfo, getBorderColor, getIndentStyle } from './tree-utils';
@@ -53,7 +53,7 @@ export default function ProjectSubpackageNode({
   setSubInputs,
   onRename,
   onProjectUpdate,
-}: ProjectSubpackageNodeProps & {
+}: ProjectSubPackageNodeProps & {
   onRename?: (subpackageItem: SelectedItem, newName: string) => void;
   onProjectUpdate?: (updatedProject: any) => void;
 }) {
