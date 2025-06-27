@@ -42,7 +42,7 @@ import { CreateProjectWizard } from '../create/create-project-wizard';
 import { ProjectTemplates } from '../template';
 import { QuantityDistributionDialog } from '../dialogs/quantity-distribution-dialog';
 import { Project, SelectedItem, Package, Subpackage } from '../../types';
-import { FlatItem, ExpandedState, TreeFlattener } from '../../utils/tree-flattener';
+import { FlatItem, ExpandedState, TreeFlattener } from './tree/tree-flattener';
 
 interface ProjectSidebarProps {
   projects: Project[];

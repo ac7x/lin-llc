@@ -35,6 +35,7 @@ export { TaskActionButtons } from './tree/task-action-buttons';
 
 // === 工具函數 ===
 export * from './tree/tree-utils';
+export * from './tree/tree-flattener';
 
 // === 類型定義 ===
 export * from '../../types';

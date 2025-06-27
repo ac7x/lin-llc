@@ -1,4 +1,4 @@
-import { Project, Package, Subpackage, TaskPackage } from '../types';
+import { Project, Package, Subpackage, TaskPackage } from '../../../types';
 
 /**
  * 扁平化項目類型

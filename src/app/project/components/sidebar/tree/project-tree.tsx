@@ -13,7 +13,7 @@ import {
   ExpandedState, 
   TreeFlattener, 
   TreeBatchOperations 
-} from '../../../utils/tree-flattener';
+} from './tree-flattener';
 
 import { ProjectTreeProps, SelectedItem, Project } from '../../../types';
 import { useGoogleAuth } from '@/app/(system)';

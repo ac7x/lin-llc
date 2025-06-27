@@ -21,7 +21,7 @@ import {
 import { useGoogleAuth } from '@/app/(system)';
 import { useTaskManagement } from '../../../hooks';
 import { ProjectTaskpackageNodeProps, SelectedItem } from '../../../types';
-import { FlatItem } from '../../../utils/tree-flattener';
+import { FlatItem } from './tree-flattener';
 import { ITEM_SELECT_STYLE } from '../../../constants';
 import { getItemInfo, getStatusInfo, getUserPermissions, getBorderColor, getIndentStyle } from './tree-utils';
 import { TaskActionButtons } from './task-action-buttons';

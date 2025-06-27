@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/tooltip';
 import { ProjectActionGuard } from '@/app/(system)';
 import { ProjectNodeProps, SelectedItem } from '../../../types';
-import { FlatItem } from '../../../utils/tree-flattener';
+import { FlatItem } from './tree-flattener';
 import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SELECT_STYLE } from '../../../constants';
 import { getItemInfo, getChildCount, getStatusInfo, getBorderColor, getIndentStyle } from './tree-utils';
 import { RenameDialog } from './rename-dialog';
