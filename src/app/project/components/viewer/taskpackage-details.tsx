@@ -321,23 +321,46 @@ export function TaskpackageDetails({
       <TaskSubmissionDialog
         isOpen={showSubmissionDialog}
         onClose={() => setShowSubmissionDialog(false)}
-        taskName={task.name}
-        currentCompleted={task.completed}
-        currentTotal={task.total}
-        onSubmit={handleSubmitTask}
+        task={showSubmissionDialog ? {
+          id: `${project.id}-${packageIndex}-${subpackageIndex}-${taskIndex}`,
+          name: task.name,
+          projectName: project.name,
+          projectId: project.id,
+          packageIndex,
+          subpackageIndex,
+          taskIndex,
+          completed: task.completed || 0,
+          total: task.total || 0,
+        } : null}
+        onUpdateTask={(taskId, updates) => {
+          // 更新本地狀態或觸發重新載入
+          console.log('Task updated:', taskId, updates);
+          // 可以在這裡觸發專案更新
+        }}
       />
 
       <TaskReviewDialog
         isOpen={showReviewDialog}
         onClose={() => setShowReviewDialog(false)}
-        taskName={task.name}
-        projectName={project.name}
-        submittedBy={task.submittedBy}
-        submittedAt={task.submittedAt}
-        completed={task.completed}
-        total={task.total}
-        currentStatus={task.status}
-        onReview={handleReviewTask}
+        task={showReviewDialog ? {
+          id: `${project.id}-${packageIndex}-${subpackageIndex}-${taskIndex}`,
+          name: task.name,
+          projectName: project.name,
+          projectId: project.id,
+          packageIndex,
+          subpackageIndex,
+          taskIndex,
+          completed: task.completed || 0,
+          total: task.total || 0,
+          status: task.status,
+          submittedAt: task.submittedAt,
+          approvedAt: task.approvedAt,
+        } : null}
+        onUpdateTask={(taskId, updates) => {
+          // 更新本地狀態或觸發重新載入
+          console.log('Task updated:', taskId, updates);
+          // 可以在這裡觸發專案更新
+        }}
       />
     </>
   );
