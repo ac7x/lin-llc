@@ -111,10 +111,14 @@ function AuthorizedProjectPage() {
     packageCount: number;
     createSubpackages: boolean;
     subpackageCount: number;
-    createTasks: boolean;
-    taskCount: number;
+    createTaskpackages: boolean;
+    taskpackageCount: number;
   }) => {
-    const createdProject = await createProjectWithWizard(config);
+    const createdProject = await createProjectWithWizard({
+      ...config,
+      createTasks: config.createTaskpackages,
+      taskCount: config.taskpackageCount,
+    });
     projectData.addProject(createdProject);
     projectSelection.selectProject(createdProject);
   };
