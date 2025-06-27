@@ -34,14 +34,18 @@ import {
   PackageIcon,
   FolderIcon,
   CheckSquareIcon,
-  FileIcon
+  FileIcon,
+  XIcon
 } from 'lucide-react';
 import {
   PackageTemplate,
   SubPackageTemplate,
   TaskPackageTemplate,
   ProjectTemplate,
-  TemplateType
+  TemplateType,
+  TaskPackageItem,
+  SubPackageItem,
+  PackageItem
 } from '../../../types';
 
 interface ProjectTemplatesProps {
@@ -86,9 +90,9 @@ export function ProjectTemplates({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    defaultTotal: 1,
-    selectedSubTemplates: [] as string[],
-    selectedTaskTemplates: [] as string[],
+    taskPackages: [] as TaskPackageItem[],
+    subPackages: [] as SubPackageItem[],
+    packages: [] as PackageItem[],
     selectedPackageTemplates: [] as string[]
   });
 
@@ -166,13 +170,91 @@ export function ProjectTemplates({
     setFormData({
       name: '',
       description: '',
-      defaultTotal: 1,
-      selectedSubTemplates: [],
-      selectedTaskTemplates: [],
+      taskPackages: [],
+      subPackages: [],
+      packages: [],
       selectedPackageTemplates: []
     });
     setEditingTemplate(null);
     setIsEditMode(false);
+  };
+
+  // 添加項目到當前模板
+  const addItemToCurrentTemplate = () => {
+    switch (activeTab) {
+      case 'taskpackage':
+        setFormData(prev => ({
+          ...prev,
+          taskPackages: [...prev.taskPackages, { name: '', defaultTotal: 1 }]
+        }));
+        break;
+      case 'subpackage':
+        setFormData(prev => ({
+          ...prev,
+          subPackages: [...prev.subPackages, { name: '', taskPackageTemplates: [] }]
+        }));
+        break;
+      case 'package':
+        setFormData(prev => ({
+          ...prev,
+          packages: [...prev.packages, { name: '', subPackageTemplates: [] }]
+        }));
+        break;
+    }
+  };
+
+  // 刪除項目
+  const removeItemFromCurrentTemplate = (index: number) => {
+    switch (activeTab) {
+      case 'taskpackage':
+        setFormData(prev => ({
+          ...prev,
+          taskPackages: prev.taskPackages.filter((_, i) => i !== index)
+        }));
+        break;
+      case 'subpackage':
+        setFormData(prev => ({
+          ...prev,
+          subPackages: prev.subPackages.filter((_, i) => i !== index)
+        }));
+        break;
+      case 'package':
+        setFormData(prev => ({
+          ...prev,
+          packages: prev.packages.filter((_, i) => i !== index)
+        }));
+        break;
+    }
+  };
+
+  // 更新項目
+  const updateItem = (index: number, field: string, value: any) => {
+    switch (activeTab) {
+      case 'taskpackage':
+        setFormData(prev => ({
+          ...prev,
+          taskPackages: prev.taskPackages.map((item, i) => 
+            i === index ? { ...item, [field]: value } : item
+          )
+        }));
+        break;
+      case 'subpackage':
+        setFormData(prev => ({
+          ...prev,
+          subPackages: prev.subPackages.map((item, i) => 
+            i === index ? { ...item, [field]: value } : item
+          )
+        }));
+        break;
+      case 'package':
+        setFormData(prev => ({
+          ...prev,
+          packages: prev.packages.map((item, i) => 
+            i === index ? { ...item, [field]: value } : item
+          )
+        }));
+        break;
+    }
   };
 
   // 創建模板
@@ -195,7 +277,7 @@ export function ProjectTemplates({
         case 'taskpackage':
           templateData = {
             ...newTemplate,
-            defaultTotal: formData.defaultTotal
+            taskPackages: formData.taskPackages
           };
           collectionName = 'taskPackageTemplates';
           break;
@@ -203,7 +285,7 @@ export function ProjectTemplates({
         case 'subpackage':
           templateData = {
             ...newTemplate,
-            taskPackageTemplates: formData.selectedTaskTemplates
+            subPackages: formData.subPackages
           };
           collectionName = 'subPackageTemplates';
           break;
@@ -211,7 +293,7 @@ export function ProjectTemplates({
         case 'package':
           templateData = {
             ...newTemplate,
-            subPackageTemplates: formData.selectedSubTemplates
+            packages: formData.packages
           };
           collectionName = 'packageTemplates';
           break;
@@ -259,9 +341,9 @@ export function ProjectTemplates({
     setFormData({
       name: template.name,
       description: template.description || '',
-      defaultTotal: template.defaultTotal || 1,
-      selectedSubTemplates: template.subPackageTemplates || [],
-      selectedTaskTemplates: template.taskPackageTemplates || [],
+      taskPackages: template.taskPackages || [],
+      subPackages: template.subPackages || [],
+      packages: template.packages || [],
       selectedPackageTemplates: template.packageTemplates || []
     });
   };
@@ -280,17 +362,17 @@ export function ProjectTemplates({
 
       switch (activeTab) {
         case 'taskpackage':
-          updateData.defaultTotal = formData.defaultTotal;
+          updateData.taskPackages = formData.taskPackages;
           collectionName = 'taskPackageTemplates';
           break;
 
         case 'subpackage':
-          updateData.taskPackageTemplates = formData.selectedTaskTemplates;
+          updateData.subPackages = formData.subPackages;
           collectionName = 'subPackageTemplates';
           break;
 
         case 'package':
-          updateData.subPackageTemplates = formData.selectedSubTemplates;
+          updateData.packages = formData.packages;
           collectionName = 'packageTemplates';
           break;
 
@@ -429,6 +511,35 @@ export function ProjectTemplates({
     }));
   };
 
+  // 切換包模板選擇
+  const togglePackageTemplateSelection = (templateId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedPackageTemplates: prev.selectedPackageTemplates.includes(templateId)
+        ? prev.selectedPackageTemplates.filter(id => id !== templateId)
+        : [...prev.selectedPackageTemplates, templateId]
+    }));
+  };
+
+  // 切換子模板選擇
+  const toggleSubTemplateSelection = (itemIndex: number, templateId: string) => {
+    if (activeTab === 'subpackage') {
+      const item = formData.subPackages[itemIndex];
+      const templates = item.taskPackageTemplates.includes(templateId)
+        ? item.taskPackageTemplates.filter(id => id !== templateId)
+        : [...item.taskPackageTemplates, templateId];
+      
+      updateItem(itemIndex, 'taskPackageTemplates', templates);
+    } else if (activeTab === 'package') {
+      const item = formData.packages[itemIndex];
+      const templates = item.subPackageTemplates.includes(templateId)
+        ? item.subPackageTemplates.filter(id => id !== templateId)
+        : [...item.subPackageTemplates, templateId];
+      
+      updateItem(itemIndex, 'subPackageTemplates', templates);
+    }
+  };
+
   // 取得當前分頁的模板清單
   const getCurrentTemplates = () => {
     switch (activeTab) {
@@ -440,8 +551,6 @@ export function ProjectTemplates({
     }
   };
 
-
-
   // 取得分頁標題
   const getTabTitle = (type: TemplateType) => {
     switch (type) {
@@ -450,6 +559,169 @@ export function ProjectTemplates({
       case 'package': return '工作包';
       case 'project': return '專案';
       default: return '';
+    }
+  };
+
+  // 渲染項目編輯表單
+  const renderItemForm = () => {
+    switch (activeTab) {
+      case 'taskpackage':
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Label>任務包項目</Label>
+              <Button type="button" size="sm" onClick={addItemToCurrentTemplate}>
+                <PlusIcon className="h-4 w-4 mr-1" />
+                添加任務包
+              </Button>
+            </div>
+            {formData.taskPackages.map((item, index) => (
+              <Card key={index} className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="任務包名稱"
+                      value={item.name}
+                      onChange={(e) => updateItem(index, 'name', e.target.value)}
+                    />
+                  </div>
+                  <div className="w-24">
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="數量"
+                      value={item.defaultTotal}
+                      onChange={(e) => updateItem(index, 'defaultTotal', parseInt(e.target.value) || 1)}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeItemFromCurrentTemplate(index)}
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        );
+
+      case 'subpackage':
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Label>子工作包項目</Label>
+              <Button type="button" size="sm" onClick={addItemToCurrentTemplate}>
+                <PlusIcon className="h-4 w-4 mr-1" />
+                添加子工作包
+              </Button>
+            </div>
+            {formData.subPackages.map((item, index) => (
+              <Card key={index} className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="子工作包名稱"
+                        value={item.name}
+                        onChange={(e) => updateItem(index, 'name', e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => removeItemFromCurrentTemplate(index)}
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {taskTemplates.length > 0 && (
+                    <div>
+                      <Label className="text-sm">包含的任務包模板</Label>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        {taskTemplates.map((template) => (
+                          <div key={template.id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`sub-${index}-task-${template.id}`}
+                              checked={item.taskPackageTemplates.includes(template.id)}
+                              onChange={() => toggleSubTemplateSelection(index, template.id)}
+                            />
+                            <Label htmlFor={`sub-${index}-task-${template.id}`} className="text-sm">
+                              {template.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        );
+
+      case 'package':
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Label>工作包項目</Label>
+              <Button type="button" size="sm" onClick={addItemToCurrentTemplate}>
+                <PlusIcon className="h-4 w-4 mr-1" />
+                添加工作包
+              </Button>
+            </div>
+            {formData.packages.map((item, index) => (
+              <Card key={index} className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="工作包名稱"
+                        value={item.name}
+                        onChange={(e) => updateItem(index, 'name', e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => removeItemFromCurrentTemplate(index)}
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {subTemplates.length > 0 && (
+                    <div>
+                      <Label className="text-sm">包含的子工作包模板</Label>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        {subTemplates.map((template) => (
+                          <div key={template.id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`pkg-${index}-sub-${template.id}`}
+                              checked={item.subPackageTemplates.includes(template.id)}
+                              onChange={() => toggleSubTemplateSelection(index, template.id)}
+                            />
+                            <Label htmlFor={`pkg-${index}-sub-${template.id}`} className="text-sm">
+                              {template.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        );
+
+      default:
+        return null;
     }
   };
 
@@ -516,19 +788,6 @@ export function ProjectTemplates({
                         placeholder="模板名稱"
                       />
                     </div>
-                    
-                    {tabType === 'taskpackage' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="default-total">預設工作項目數量</Label>
-                        <Input
-                          id="default-total"
-                          type="number"
-                          min="1"
-                          value={formData.defaultTotal}
-                          onChange={(e) => setFormData(prev => ({ ...prev, defaultTotal: parseInt(e.target.value) || 1 }))}
-                        />
-                      </div>
-                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -542,63 +801,10 @@ export function ProjectTemplates({
                     />
                   </div>
 
-                  {/* 子模板選擇 */}
-                  {tabType === 'subpackage' && taskTemplates.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>包含的任務包模板</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {taskTemplates.map((template) => (
-                          <div key={template.id} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`task-${template.id}`}
-                              checked={formData.selectedTaskTemplates.includes(template.id)}
-                              onChange={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  selectedTaskTemplates: prev.selectedTaskTemplates.includes(template.id)
-                                    ? prev.selectedTaskTemplates.filter(id => id !== template.id)
-                                    : [...prev.selectedTaskTemplates, template.id]
-                                }));
-                              }}
-                            />
-                            <Label htmlFor={`task-${template.id}`} className="text-sm">
-                              {template.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* 動態項目編輯 */}
+                  {tabType !== 'project' && renderItemForm()}
 
-                  {tabType === 'package' && subTemplates.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>包含的子工作包模板</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {subTemplates.map((template) => (
-                          <div key={template.id} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`sub-${template.id}`}
-                              checked={formData.selectedSubTemplates.includes(template.id)}
-                              onChange={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  selectedSubTemplates: prev.selectedSubTemplates.includes(template.id)
-                                    ? prev.selectedSubTemplates.filter(id => id !== template.id)
-                                    : [...prev.selectedSubTemplates, template.id]
-                                }));
-                              }}
-                            />
-                            <Label htmlFor={`sub-${template.id}`} className="text-sm">
-                              {template.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
+                  {/* 專案模板的工作包選擇 */}
                   {tabType === 'project' && packageTemplates.length > 0 && (
                     <div className="space-y-2">
                       <Label>包含的工作包模板</Label>
@@ -607,18 +813,11 @@ export function ProjectTemplates({
                           <div key={template.id} className="flex items-center space-x-2">
                             <input
                               type="checkbox"
-                              id={`pkg-${template.id}`}
+                              id={`project-pkg-${template.id}`}
                               checked={formData.selectedPackageTemplates.includes(template.id)}
-                              onChange={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  selectedPackageTemplates: prev.selectedPackageTemplates.includes(template.id)
-                                    ? prev.selectedPackageTemplates.filter(id => id !== template.id)
-                                    : [...prev.selectedPackageTemplates, template.id]
-                                }));
-                              }}
+                              onChange={() => togglePackageTemplateSelection(template.id)}
                             />
-                            <Label htmlFor={`pkg-${template.id}`} className="text-sm">
+                            <Label htmlFor={`project-pkg-${template.id}`} className="text-sm">
                               {template.name}
                             </Label>
                           </div>

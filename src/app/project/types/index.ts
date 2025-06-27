@@ -376,15 +376,31 @@ export interface UserTask {
 }
 
 /**
+ * 任務包項目介面 - 任務包模板中的單個任務包項目
+ */
+export interface TaskPackageItem {
+  name: string;                    // 任務包名稱
+  defaultTotal: number;            // 預設工作項目總數量
+}
+
+/**
  * 任務包模板介面 - 代表可重複使用的任務包範本
  */
 export interface TaskPackageTemplate {
   id: string;                      // 模板 ID
   name: string;                    // 模板名稱
   description?: string;            // 模板描述
-  defaultTotal: number;            // 預設工作項目總數量
+  taskPackages: TaskPackageItem[]; // 包含的任務包項目清單
   createdAt: string;               // 建立時間
   createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 子工作包項目介面 - 子工作包模板中的單個子工作包項目
+ */
+export interface SubPackageItem {
+  name: string;                    // 子工作包名稱
+  taskPackageTemplates: string[];  // 包含的任務包模板 ID 清單
 }
 
 /**
@@ -394,9 +410,17 @@ export interface SubPackageTemplate {
   id: string;                      // 模板 ID
   name: string;                    // 模板名稱
   description?: string;            // 模板描述
-  taskPackageTemplates: string[];  // 預設包含的任務包模板 ID 清單
+  subPackages: SubPackageItem[];   // 包含的子工作包項目清單
   createdAt: string;               // 建立時間
   createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 工作包項目介面 - 工作包模板中的單個工作包項目
+ */
+export interface PackageItem {
+  name: string;                    // 工作包名稱
+  subPackageTemplates: string[];   // 包含的子工作包模板 ID 清單
 }
 
 /**
@@ -406,7 +430,7 @@ export interface PackageTemplate {
   id: string;                      // 模板 ID
   name: string;                    // 模板名稱
   description?: string;            // 模板描述
-  subPackageTemplates: string[];   // 預設包含的子工作包模板 ID 清單
+  packages: PackageItem[];         // 包含的工作包項目清單
   createdAt: string;               // 建立時間
   createdBy: string;               // 建立者 UID
 }
