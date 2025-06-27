@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, Calculator, Shuffle, Equal, TrendingUp } from 'lucide-react';
-import { Package, Subpackage, TaskPackage } from '../../types';
+import { Package, Subpackage, TaskPackage } from '../../../types';
 
 interface QuantityDistributionDialogProps {
   isOpen: boolean;
@@ -140,6 +140,12 @@ export function QuantityDistributionDialog({
     }
 
     setDistributions(newDistributions);
+    
+    // 檢查是否需要自動調整總數量
+    const newTotalAllocated = newDistributions.reduce((sum, dist) => sum + dist.allocated, 0);
+    if (newTotalAllocated > total && mode !== 'manual') {
+      setParentTotal(newTotalAllocated);
+    }
   };
 
   // 處理總數量變更
@@ -158,6 +164,12 @@ export function QuantityDistributionDialog({
       allocated: Math.max(0, newValue),
     };
     setDistributions(newDistributions);
+    
+    // 自動調整總數量以避免超出分配
+    const newTotalAllocated = newDistributions.reduce((sum, dist) => sum + dist.allocated, 0);
+    if (newTotalAllocated > parentTotal) {
+      setParentTotal(newTotalAllocated);
+    }
   };
 
   // 驗證分配
@@ -166,10 +178,6 @@ export function QuantityDistributionDialog({
     
     if (parentTotal <= 0) {
       errors.push('總數量必須大於 0');
-    }
-    
-    if (stats.totalAllocated !== parentTotal) {
-      errors.push(`分配總數 (${stats.totalAllocated}) 與設定總數 (${parentTotal}) 不一致`);
     }
     
     distributions.forEach((dist, index) => {
@@ -332,7 +340,19 @@ export function QuantityDistributionDialog({
           {/* 統計信息 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">分配統計</CardTitle>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>分配統計</span>
+                {stats.totalAllocated !== parentTotal && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setParentTotal(stats.totalAllocated)}
+                    className="text-xs"
+                  >
+                    同步總數量
+                  </Button>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -357,11 +377,20 @@ export function QuantityDistributionDialog({
               </div>
               
               {stats.remaining !== 0 && (
-                <div className="mt-4 p-3 rounded bg-orange-50 border border-orange-200">
-                  <div className="flex items-center gap-2 text-orange-800">
+                <div className={`mt-4 p-3 rounded border ${
+                  stats.remaining > 0 
+                    ? 'bg-orange-50 border-orange-200' 
+                    : 'bg-blue-50 border-blue-200'
+                }`}>
+                  <div className={`flex items-center gap-2 ${
+                    stats.remaining > 0 ? 'text-orange-800' : 'text-blue-800'
+                  }`}>
                     <AlertCircle className="h-4 w-4" />
                     <span className="text-sm font-medium">
-                      {stats.remaining > 0 ? `還有 ${stats.remaining} 未分配` : `超出分配 ${Math.abs(stats.remaining)}`}
+                      {stats.remaining > 0 
+                        ? `還有 ${stats.remaining} 未分配` 
+                        : `自動調整了總數量 (+${Math.abs(stats.remaining)})`
+                      }
                     </span>
                   </div>
                 </div>

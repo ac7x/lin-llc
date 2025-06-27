@@ -126,7 +126,7 @@ export default function AccountPage() {
               </Alert>
             )}
 
-            <Link href="/account/signin">
+            <Link href="/signin">
               <Button className="w-full">
                 前往登入
               </Button>
@@ -282,7 +282,7 @@ export default function AccountPage() {
                   🤖 AI 助手
                 </Button>
               </Link>
-              <Link href="/account/notifications">
+              <Link href="/notifications">
                 <Button variant="ghost" className="w-full justify-start">
                   🔔 通知設定
                 </Button>

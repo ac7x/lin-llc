@@ -38,9 +38,9 @@ import { ProjectActionGuard } from '@/app/(system)';
 import { useProjectOperations } from '../../hooks';
 import { usePermissionContext } from '@/app/(system)';
 import ProjectTree from './tree/project-tree';
-import { CreateProjectWizard } from '../create/create-project-wizard';
-import { ProjectTemplates } from '../template';
-import { QuantityDistributionDialog } from '../dialogs/quantity-distribution-dialog';
+import { CreateProjectWizard } from './create/project-wizard';
+import { ProjectTemplates } from './template';
+import { QuantityDistributionDialog } from './dialogs/project-quantity-dialog';
 import { Project, SelectedItem, Package, Subpackage } from '../../types';
 import { FlatItem, ExpandedState, TreeFlattener } from './tree/tree-flattener';
 

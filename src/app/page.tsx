@@ -121,7 +121,7 @@ export default function HomePage() {
                   </Link>
                 </>
               ) : (
-                <Link href="/account/signin">
+                <Link href="/signin">
                   <Button size="sm">
                     登入
                   </Button>
@@ -290,7 +290,7 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   立即登入開始使用我們的企業管理系統
                 </p>
-                <Link href="/account/signin">
+                <Link href="/signin">
                   <Button className="w-full">
                     立即登入
                   </Button>

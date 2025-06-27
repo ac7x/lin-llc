@@ -14,6 +14,13 @@
 // === 主要容器組件 ===
 export { ProjectSidebar } from './project-sidebar';
 
+// === 專案建立和範本組件 ===
+export { CreateProjectWizard } from './create/project-wizard';
+export { ProjectTemplates } from './template/project-templates';
+
+// === 對話框組件 ===
+export { QuantityDistributionDialog } from './dialogs/project-quantity-dialog';
+
 // === 樹狀渲染組件 ===
 export { default as ProjectTree } from './tree/project-tree';
 

@@ -53,7 +53,7 @@ const navigationItems: BottomNavigationItem[] = [
     exact: true,
   },
   {
-    href: '/account/notifications',
+    href: '/notifications',
     label: '通知',
     icon: Bell,
     permission: 'notification:read',

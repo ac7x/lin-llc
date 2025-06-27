@@ -99,7 +99,7 @@ export default function DashboardPage() {
       title: '未讀通知',
       value: stats.unreadNotifications,
       icon: Bell,
-      href: '/account/notifications',
+      href: '/notifications',
     },
     {
       title: '待處理任務',
