@@ -1,0 +1,58 @@
+# 依賴和構建產物
+node_modules/
+.next/
+out/
+dist/
+build/
+# package-lock.json
+
+# 緩存和臨時文件
+.eslintcache
+tsconfig.tsbuildinfo
+*.log
+logs/
+coverage/
+
+# 環境配置文件
+# .env
+.firebaserc
+.nvmrc
+.prettierrc
+.prettierignore
+
+# Firebase 和部署配置
+apphosting.yaml
+firebase.json
+firestore.rules
+storage.rules
+
+# 開發工具配置
+# next-env.d.ts
+# next.config.ts
+# postcss.config.mjs
+# eslint.config.mjs
+# components.json
+# tsconfig.json
+
+# IDE 和編輯器
+.vscode/
+.idea/
+
+# Git 和版本控制
+.gitignore
+.github/
+
+# 腳本文件
+script/
+
+# 靜態資源和媒體文件
+public/
+*.ttf
+*.woff
+*.woff2
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
