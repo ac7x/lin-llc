@@ -133,37 +133,70 @@ export default function ProjectSubpackageNode({
           onOpenChange={setExpanded}
         >
           <CollapsibleTrigger asChild>
-            <SidebarMenuButton
-              onClick={handleToggleExpand}
-              className="pl-2 min-h-0 h-5"
-            >
-              {expanded ? (
-                <BookOpenCheck className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
-              ) : (
-                <BookOpen className={`transition-transform h-3 w-3 ${itemInfo.color}`} />
-              )}
-              <span className="ml-1 text-xs text-muted-foreground">{getChildCount(subpackage)}</span>
-              <SimpleContextMenu {...contextMenuProps}>
+            <SimpleContextMenu {...contextMenuProps}>
+              <div
+                className={`flex items-center gap-2 py-2 px-2 cursor-pointer transition-colors ${itemInfo.bgColor} border-l-2 ${
+                  isSelected ? getBorderColor('subpackage') : 'border-l-transparent'
+                }`}
+                onClick={handleToggleExpand}
+              >
+                {/* 展開/收起按鈕 */}
+                {subpackage.taskpackages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleExpand();
+                    }}
+                  >
+                    {expanded ? (
+                      <ChevronDownIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
+                    ) : (
+                      <ChevronRightIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
+                    )}
+                  </Button>
+                )}
+
+                {/* 空白佔位（無子項目時） */}
+                {subpackage.taskpackages.length === 0 && <div className="w-6" />}
+
+                {/* 項目圖標 */}
+                {expanded ? (
+                  <BookOpenCheck className={`h-4 w-4 ${itemInfo.color}`} />
+                ) : (
+                  <BookOpen className={`h-4 w-4 ${itemInfo.color}`} />
+                )}
+
+                {/* 項目名稱 */}
                 <div 
                   onClick={(e) => {
                     e.stopPropagation();
                     onItemClick(subpackageItem);
                   }}
-                  className={`${ITEM_SELECT_STYLE} ${
-                    isSelected ? 'bg-accent' : ''
-                  }`}
+                  className="flex-1 min-w-0"
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={`truncate text-xs ${itemInfo.color}`}>{subpackage.name}</span>
+                      <span className={`text-sm font-medium truncate ${itemInfo.color}`}>
+                        {subpackage.name}
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>{subpackage.name}</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
-              </SimpleContextMenu>
-            </SidebarMenuButton>
+
+                {/* 子項目計數 */}
+                {subpackage.taskpackages.length > 0 && (
+                  <div className={`text-xs ml-2 ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
+                    {subpackage.taskpackages.length} 任務
+                  </div>
+                )}
+              </div>
+            </SimpleContextMenu>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <SidebarMenuSub className="mx-1 border-l border-border/10">

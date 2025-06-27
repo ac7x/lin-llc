@@ -1,5 +1,17 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { 
+  collection, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  getDocs, 
+  query, 
+  orderBy 
+} from 'firebase/firestore';
+import { useGoogleAuth } from '@/app/(system)';
+import { db } from '@/app/(system)/data/lib/firebase-init';
 import {
   Dialog,
   DialogContent,
@@ -56,6 +68,7 @@ export function ProjectTemplates({
   loading = false, 
   trigger 
 }: ProjectTemplatesProps) {
+  const { user } = useGoogleAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TemplateType>('taskpackage');
   
@@ -96,80 +109,53 @@ export function ProjectTemplates({
   // 載入所有模板
   const loadTemplates = async () => {
     try {
-      // 這裡應該從 Firebase 或其他數據源載入模板
-      // 暫時使用示例數據
-      setTaskTemplates([
-        {
-          id: '1',
-          name: '儲存液態丁烷',
-          description: '處理液態丁烷的儲存任務',
-          defaultTotal: 5,
-          createdAt: new Date().toISOString(),
-          createdBy: 'user1'
-        },
-        {
-          id: '2',
-          name: '組裝鋼輪',
-          description: '鋼輪組裝相關任務',
-          defaultTotal: 3,
-          createdAt: new Date().toISOString(),
-          createdBy: 'user1'
-        }
-      ]);
-      
-      setSubTemplates([
-        {
-          id: '1',
-          name: '外殼（塑膠殼）',
-          description: '塑膠外殼相關的子工作包',
-          taskPackageTemplates: ['1'],
-          createdAt: new Date().toISOString(),
-          createdBy: 'user1'
-        },
-        {
-          id: '2',
-          name: '壓板（按鈕）',
-          description: '按鈕壓板相關的子工作包',
-          taskPackageTemplates: ['2'],
-          createdAt: new Date().toISOString(),
-          createdBy: 'user1'
-        }
-      ]);
-      
-      setPackageTemplates([
-        {
-          id: '1',
-          name: '機械加工',
-          description: '機械加工相關工作',
-          subPackageTemplates: ['1'],
-          createdAt: new Date().toISOString(),
-          createdBy: 'user1'
-        },
-        {
-          id: '2',
-          name: '注塑成型',
-          description: '注塑成型相關工作',
-          subPackageTemplates: ['1', '2'],
-          createdAt: new Date().toISOString(),
-          createdBy: 'user1'
-        },
-        {
-          id: '3',
-          name: '組裝',
-          description: '產品組裝相關工作',
-          subPackageTemplates: ['2'],
-          createdAt: new Date().toISOString(),
-          createdBy: 'user1'
-        },
-        {
-          id: '4',
-          name: '檢測',
-          description: '品質檢測相關工作',
-          subPackageTemplates: [],
-          createdAt: new Date().toISOString(),
-          createdBy: 'user1'
-        }
-      ]);
+      // 從 Firebase 載入任務包模板
+      const taskTemplatesQuery = query(
+        collection(db, 'taskPackageTemplates'),
+        orderBy('createdAt', 'desc')
+      );
+      const taskTemplatesSnapshot = await getDocs(taskTemplatesQuery);
+      const taskTemplatesData = taskTemplatesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as TaskPackageTemplate[];
+      setTaskTemplates(taskTemplatesData);
+
+      // 從 Firebase 載入子工作包模板
+      const subTemplatesQuery = query(
+        collection(db, 'subPackageTemplates'),
+        orderBy('createdAt', 'desc')
+      );
+      const subTemplatesSnapshot = await getDocs(subTemplatesQuery);
+      const subTemplatesData = subTemplatesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as SubPackageTemplate[];
+      setSubTemplates(subTemplatesData);
+
+      // 從 Firebase 載入工作包模板
+      const packageTemplatesQuery = query(
+        collection(db, 'packageTemplates'),
+        orderBy('createdAt', 'desc')
+      );
+      const packageTemplatesSnapshot = await getDocs(packageTemplatesQuery);
+      const packageTemplatesData = packageTemplatesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as PackageTemplate[];
+      setPackageTemplates(packageTemplatesData);
+
+      // 從 Firebase 載入專案模板
+      const projectTemplatesQuery = query(
+        collection(db, 'projectTemplates'),
+        orderBy('createdAt', 'desc')
+      );
+      const projectTemplatesSnapshot = await getDocs(projectTemplatesQuery);
+      const projectTemplatesData = projectTemplatesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ProjectTemplate[];
+      setProjectTemplates(projectTemplatesData);
     } catch (error) {
       console.error('載入模板失敗:', error);
     }
@@ -191,7 +177,7 @@ export function ProjectTemplates({
 
   // 創建模板
   const handleCreateTemplate = async () => {
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim() || !user) return;
 
     try {
       const now = new Date().toISOString();
@@ -199,10 +185,11 @@ export function ProjectTemplates({
         name: formData.name,
         description: formData.description,
         createdAt: now,
-        createdBy: 'current-user-id' // 應該從 auth context 獲取
+        createdBy: user.uid
       };
 
       let templateData: any = newTemplate;
+      let collectionName = '';
 
       switch (activeTab) {
         case 'taskpackage':
@@ -210,11 +197,7 @@ export function ProjectTemplates({
             ...newTemplate,
             defaultTotal: formData.defaultTotal
           };
-          const newTaskTemplate: TaskPackageTemplate = {
-            id: Date.now().toString(),
-            ...templateData
-          };
-          setTaskTemplates(prev => [...prev, newTaskTemplate]);
+          collectionName = 'taskPackageTemplates';
           break;
 
         case 'subpackage':
@@ -222,11 +205,7 @@ export function ProjectTemplates({
             ...newTemplate,
             taskPackageTemplates: formData.selectedTaskTemplates
           };
-          const newSubTemplate: SubPackageTemplate = {
-            id: Date.now().toString(),
-            ...templateData
-          };
-          setSubTemplates(prev => [...prev, newSubTemplate]);
+          collectionName = 'subPackageTemplates';
           break;
 
         case 'package':
@@ -234,11 +213,7 @@ export function ProjectTemplates({
             ...newTemplate,
             subPackageTemplates: formData.selectedSubTemplates
           };
-          const newPackageTemplate: PackageTemplate = {
-            id: Date.now().toString(),
-            ...templateData
-          };
-          setPackageTemplates(prev => [...prev, newPackageTemplate]);
+          collectionName = 'packageTemplates';
           break;
 
         case 'project':
@@ -246,11 +221,28 @@ export function ProjectTemplates({
             ...newTemplate,
             packageTemplates: formData.selectedPackageTemplates
           };
-          const newProjectTemplate: ProjectTemplate = {
-            id: Date.now().toString(),
-            ...templateData
-          };
-          setProjectTemplates(prev => [...prev, newProjectTemplate]);
+          collectionName = 'projectTemplates';
+          break;
+      }
+
+      // 寫入到 Firebase
+      const docRef = await addDoc(collection(db, collectionName), templateData);
+      
+      // 更新本地狀態
+      const createdTemplate = { id: docRef.id, ...templateData };
+      
+      switch (activeTab) {
+        case 'taskpackage':
+          setTaskTemplates(prev => [createdTemplate as TaskPackageTemplate, ...prev]);
+          break;
+        case 'subpackage':
+          setSubTemplates(prev => [createdTemplate as SubPackageTemplate, ...prev]);
+          break;
+        case 'package':
+          setPackageTemplates(prev => [createdTemplate as PackageTemplate, ...prev]);
+          break;
+        case 'project':
+          setProjectTemplates(prev => [createdTemplate as ProjectTemplate, ...prev]);
           break;
       }
 
@@ -279,36 +271,65 @@ export function ProjectTemplates({
     if (!editingTemplate || !formData.name.trim()) return;
 
     try {
-      const updatedTemplate = {
-        ...editingTemplate,
+      let updateData: any = {
         name: formData.name,
         description: formData.description
+      };
+      
+      let collectionName = '';
+
+      switch (activeTab) {
+        case 'taskpackage':
+          updateData.defaultTotal = formData.defaultTotal;
+          collectionName = 'taskPackageTemplates';
+          break;
+
+        case 'subpackage':
+          updateData.taskPackageTemplates = formData.selectedTaskTemplates;
+          collectionName = 'subPackageTemplates';
+          break;
+
+        case 'package':
+          updateData.subPackageTemplates = formData.selectedSubTemplates;
+          collectionName = 'packageTemplates';
+          break;
+
+        case 'project':
+          updateData.packageTemplates = formData.selectedPackageTemplates;
+          collectionName = 'projectTemplates';
+          break;
+      }
+
+      // 更新 Firebase 中的模板
+      const templateRef = doc(db, collectionName, editingTemplate.id);
+      await updateDoc(templateRef, updateData);
+
+      // 更新本地狀態
+      const updatedTemplate = {
+        ...editingTemplate,
+        ...updateData
       };
 
       switch (activeTab) {
         case 'taskpackage':
-          updatedTemplate.defaultTotal = formData.defaultTotal;
           setTaskTemplates(prev => 
             prev.map(t => t.id === editingTemplate.id ? updatedTemplate : t)
           );
           break;
 
         case 'subpackage':
-          updatedTemplate.taskPackageTemplates = formData.selectedTaskTemplates;
           setSubTemplates(prev => 
             prev.map(t => t.id === editingTemplate.id ? updatedTemplate : t)
           );
           break;
 
         case 'package':
-          updatedTemplate.subPackageTemplates = formData.selectedSubTemplates;
           setPackageTemplates(prev => 
             prev.map(t => t.id === editingTemplate.id ? updatedTemplate : t)
           );
           break;
 
         case 'project':
-          updatedTemplate.packageTemplates = formData.selectedPackageTemplates;
           setProjectTemplates(prev => 
             prev.map(t => t.id === editingTemplate.id ? updatedTemplate : t)
           );
@@ -324,6 +345,28 @@ export function ProjectTemplates({
   // 刪除模板
   const handleDeleteTemplate = async (templateId: string) => {
     try {
+      let collectionName = '';
+
+      switch (activeTab) {
+        case 'taskpackage':
+          collectionName = 'taskPackageTemplates';
+          break;
+        case 'subpackage':
+          collectionName = 'subPackageTemplates';
+          break;
+        case 'package':
+          collectionName = 'packageTemplates';
+          break;
+        case 'project':
+          collectionName = 'projectTemplates';
+          break;
+      }
+
+      // 從 Firebase 刪除模板
+      const templateRef = doc(db, collectionName, templateId);
+      await deleteDoc(templateRef);
+
+      // 更新本地狀態
       switch (activeTab) {
         case 'taskpackage':
           setTaskTemplates(prev => prev.filter(t => t.id !== templateId));
@@ -397,16 +440,7 @@ export function ProjectTemplates({
     }
   };
 
-  // 取得範例名稱
-  const getExampleName = (type: TemplateType) => {
-    switch (type) {
-      case 'taskpackage': return '儲存液態丁烷';
-      case 'subpackage': return '外殼（塑膠殼）';
-      case 'package': return '機械加工';
-      case 'project': return '標準專案';
-      default: return '';
-    }
-  };
+
 
   // 取得分頁標題
   const getTabTitle = (type: TemplateType) => {
@@ -434,10 +468,10 @@ export function ProjectTemplates({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookTemplateIcon className="h-5 w-5" />
-            專案模板管理系統
+            模板管理
           </DialogTitle>
           <DialogDescription>
-            創建和管理可重複使用的工作包、子工作包和任務包模板
+            創建和管理模板
           </DialogDescription>
         </DialogHeader>
 
@@ -479,7 +513,7 @@ export function ProjectTemplates({
                         id={`${tabType}-name`}
                         value={formData.name}
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder={`例如：${getExampleName(tabType)}`}
+                        placeholder="模板名稱"
                       />
                     </div>
                     
@@ -503,7 +537,7 @@ export function ProjectTemplates({
                       id={`${tabType}-description`}
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="描述此模板的用途和內容..."
+                      placeholder="模板描述"
                       rows={2}
                     />
                   </div>
@@ -619,7 +653,7 @@ export function ProjectTemplates({
                 <CardContent>
                   {getCurrentTemplates().length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      還沒有任何模板，開始創建第一個模板吧！
+                      暫無模板
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -688,7 +722,7 @@ export function ProjectTemplates({
                     id="project-name"
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
-                    placeholder="輸入新專案名稱..."
+                    placeholder="專案名稱"
                   />
                 </div>
 
@@ -711,7 +745,7 @@ export function ProjectTemplates({
                         </div>
                       ))}
                       {packageTemplates.length === 0 && (
-                        <p className="text-sm text-muted-foreground">尚無工作包模板</p>
+                        <p className="text-sm text-muted-foreground">暫無模板</p>
                       )}
                     </div>
                   </div>
@@ -734,7 +768,7 @@ export function ProjectTemplates({
                         </div>
                       ))}
                       {subTemplates.length === 0 && (
-                        <p className="text-sm text-muted-foreground">尚無子工作包模板</p>
+                        <p className="text-sm text-muted-foreground">暫無模板</p>
                       )}
                     </div>
                   </div>
@@ -757,7 +791,7 @@ export function ProjectTemplates({
                         </div>
                       ))}
                       {taskTemplates.length === 0 && (
-                        <p className="text-sm text-muted-foreground">尚無任務包模板</p>
+                        <p className="text-sm text-muted-foreground">暫無模板</p>
                       )}
                     </div>
                   </div>

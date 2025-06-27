@@ -365,38 +365,35 @@ export default function ProjectTaskpackageNode({
     <>
       <SidebarMenuItem className="overflow-hidden">
         <SimpleContextMenu {...contextMenuProps}>
-          <div className="flex items-center">
-            <SidebarMenuButton className="pl-2 min-h-0 h-5 flex-1">
-              <div 
-                onClick={() => onItemClick(taskItem)}
-                className={`${ITEM_SELECT_STYLE} ${
-                  isSelected ? 'bg-accent' : ''
-                }`}
-              >
-                {isSelected ? (
-                  <SquareCheckIcon className={`h-3 w-3 ${itemInfo.color}`} />
-                ) : (
-                  <SquareIcon className={`h-3 w-3 ${itemInfo.color}`} />
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={`truncate text-xs flex-1 ${itemInfo.color}`}>{task.name}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{task.name}</p>
-                  </TooltipContent>
-                </Tooltip>
-                
-                {/* 數量顯示 */}
-                <span className={`text-xs ml-2 ${
-                  isSelected ? 'text-orange-600' : 'text-blue-600'
-                }`}>
-                  {task.completed || 0}/{task.total || 0}
+          <div 
+            className={`flex items-center gap-2 py-2 px-2 cursor-pointer transition-colors ${itemInfo.bgColor} border-l-2 ${
+              isSelected ? getBorderColor('task') : 'border-l-transparent'
+            }`}
+            onClick={() => onItemClick(taskItem)}
+          >
+            {/* 空白佔位（任務沒有子項目） */}
+            <div className="w-6" />
+
+            {/* 項目圖標 */}
+            {isSelected ? (
+              <SquareCheckIcon className={`h-4 w-4 ${itemInfo.color}`} />
+            ) : (
+              <SquareIcon className={`h-4 w-4 ${itemInfo.color}`} />
+            )}
+
+            {/* 項目名稱 */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`flex-1 text-sm font-medium truncate ${itemInfo.color}`}>
+                  {task.name}
                 </span>
-              </div>
-            </SidebarMenuButton>
-            
-            {/* 任務操作按鈕 - 移出 SidebarMenuButton */}
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{task.name}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* 任務操作按鈕 */}
             <TaskActionButtons
               task={task}
               userUid={user?.uid}
@@ -408,6 +405,11 @@ export default function ProjectTaskpackageNode({
               showStatus={false}
               showProgress={false}
             />
+
+            {/* 數量顯示 */}
+            <div className={`text-xs ml-2 ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
+              {task.completed || 0}/{task.total || 0}
+            </div>
           </div>
         </SimpleContextMenu>
       </SidebarMenuItem>

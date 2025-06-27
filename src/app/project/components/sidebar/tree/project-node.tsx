@@ -128,38 +128,70 @@ export default function ProjectNode({
           onOpenChange={(open) => setExpanded(open)}
         >
           <CollapsibleTrigger asChild>
-            <SidebarMenuButton
-              isActive={isSelected}
-              onClick={() => onSelectProject(project)}
-              className="pl-2"
-            >
-              {expanded ? (
-                <FolderOpenIcon className={`transition-transform h-4 w-4 ${itemInfo.color}`} />
-              ) : (
-                <FolderIcon className={`transition-transform h-4 w-4 ${itemInfo.color}`} />
-              )}
-              <span className="ml-1 text-xs text-muted-foreground">{getChildCount(project)}</span>
-              <SimpleContextMenu {...contextMenuProps}>
+            <SimpleContextMenu {...contextMenuProps}>
+              <div
+                className={`flex items-center gap-2 py-2 px-2 cursor-pointer transition-colors ${itemInfo.bgColor} border-l-2 ${
+                  isSelected ? getBorderColor('project') : 'border-l-transparent'
+                }`}
+                onClick={() => onSelectProject(project)}
+              >
+                {/* 展開/收起按鈕 */}
+                {project.packages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpanded(!expanded);
+                    }}
+                  >
+                    {expanded ? (
+                      <ChevronDownIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
+                    ) : (
+                      <ChevronRightIcon className={`h-4 w-4 ${isSelected ? itemInfo.color : ''}`} />
+                    )}
+                  </Button>
+                )}
+
+                {/* 空白佔位（無子項目時） */}
+                {project.packages.length === 0 && <div className="w-6" />}
+
+                {/* 項目圖標 */}
+                {expanded ? (
+                  <FolderOpenIcon className={`h-4 w-4 ${itemInfo.color}`} />
+                ) : (
+                  <FolderIcon className={`h-4 w-4 ${itemInfo.color}`} />
+                )}
+
+                {/* 項目名稱 */}
                 <div 
                   onClick={(e) => {
                     e.stopPropagation();
                     onItemClick(projectItem);
                   }}
-                  className={`${ITEM_SELECT_STYLE} ${
-                    isItemSelected(projectItem) ? 'bg-accent' : ''
-                  }`}
+                  className="flex-1 min-w-0"
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={`truncate ${itemInfo.color}`}>{project.name}</span>
+                      <span className={`text-sm font-medium truncate ${itemInfo.color}`}>
+                        {project.name}
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>{project.name}</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
-              </SimpleContextMenu>
-            </SidebarMenuButton>
+
+                {/* 子項目計數 */}
+                {project.packages.length > 0 && (
+                  <div className={`text-xs ml-2 ${isSelected ? itemInfo.color : 'text-muted-foreground'}`}>
+                    {getChildCount(project)}
+                  </div>
+                )}
+              </div>
+            </SimpleContextMenu>
           </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub className="mx-1 border-l border-border/30">
