@@ -3,7 +3,7 @@
  * 實現階層式的進度計算邏輯：任務包 -> 子工作包 -> 工作包 -> 專案
  */
 
-import { Project, Package, Subpackage, TaskPackage } from '../types';
+import { Project, Package, SubPackage, TaskPackage } from '../types';
 
 /**
  * 進度計算結果介面
@@ -51,7 +51,7 @@ export function calculateTaskPackageProgress(taskPackage: TaskPackage): Progress
  * @param subpackage 子工作包物件
  * @returns 進度計算結果
  */
-export function calculateSubpackageProgress(subpackage: Subpackage): ProgressResult {
+export function calculateSubpackageProgress(subpackage: SubPackage): ProgressResult {
   const taskPackages = subpackage.taskpackages || [];
   
   // 如果沒有任務包，返回預設值

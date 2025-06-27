@@ -41,7 +41,7 @@ import ProjectTree from './tree/project-tree';
 import { CreateProjectWizard } from './create/project-wizard';
 import { ProjectTemplates } from './template';
 import { QuantityDistributionDialog } from './dialogs/project-quantity-dialog';
-import { Project, SelectedItem, Package, Subpackage } from '../../types';
+import { Project, SelectedItem, Package, SubPackage } from '../../types';
 import { FlatItem, ExpandedState, TreeFlattener } from './tree/tree-flattener';
 
 interface ProjectSidebarProps {
@@ -71,6 +71,11 @@ interface ProjectSidebarProps {
   }) => Promise<void>;
   onProjectUpdate: (updatedProject: Project) => void;
   isItemSelected: (item: SelectedItem) => boolean;
+}
+
+interface DistributionDialogData {
+  data: Package | SubPackage;
+  itemType: 'package' | 'subpackage';
 }
 
 // 簡化的樹狀節點組件 - 專為 sidebar 設計
@@ -446,7 +451,7 @@ function QuantityManagementTab({
   const [showDistributionDialog, setShowDistributionDialog] = useState(false);
   const [activeDistributionItem, setActiveDistributionItem] = useState<{
     item: FlatItem;
-    data: Package | Subpackage;
+    data: Package | SubPackage;
     itemType: 'package' | 'subpackage';
   } | null>(null);
 
@@ -490,7 +495,7 @@ function QuantityManagementTab({
     if (item.type === 'package' || item.type === 'subpackage') {
       setActiveDistributionItem({
         item,
-        data: item.data as Package | Subpackage,
+        data: item.data as Package | SubPackage,
         itemType: item.type,
       });
       setShowDistributionDialog(true);

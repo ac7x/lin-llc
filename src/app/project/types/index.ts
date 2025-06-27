@@ -187,7 +187,7 @@ export interface TaskPackage {
 /**
  * 子工作包介面 - 代表工作包下的子分類，包含多個任務包
  */
-export interface Subpackage { 
+export interface SubPackage { 
   name: string;                    // 子工作包名稱 - 子工作包的識別名稱
   time?: ScheduleTime;             // 時間排程 - 子工作包的時間規劃和實際執行時間
   assigness?: string[];            // 指派人員 - 負責此子工作包的人員清單
@@ -213,7 +213,7 @@ export interface Package {
   assigness?: string[];            // 指派人員 - 負責此工作包的人員清單
   reviewers?: string[];            // 審核者 - 此工作包的審核者（用戶 UID 陣列）
   submitters?: string[];           // 提交者 - 此工作包的提交者（用戶 UID 陣列）
-  subpackages: Subpackage[];       // 子工作包清單 - 此工作包包含的所有子工作包
+  subpackages: SubPackage[];       // 子工作包清單 - 此工作包包含的所有子工作包
   completed: number;               // 已完成數量 - 已完成的工作項目總數量
   total: number;                   // 總數量 - 此工作包包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
@@ -315,7 +315,7 @@ export interface ProjectPackageNodeProps extends TreeComponentProps {
 /**
  * 子工作包節點組件屬性介面 - 定義子工作包節點組件所需的屬性
  */
-export interface ProjectSubpackageNodeProps extends TreeComponentProps {
+export interface ProjectSubPackageNodeProps extends TreeComponentProps {
   project: Project;                                                                             // 專案資料 - 要顯示的專案物件
   packageIndex: number;                                                                         // 工作包索引 - 當前工作包在專案中的索引位置
   subpackageIndex: number;                                                                      // 子工作包索引 - 當前子工作包在工作包中的索引位置
@@ -327,7 +327,7 @@ export interface ProjectSubpackageNodeProps extends TreeComponentProps {
 /**
  * 任務包節點組件屬性介面 - 定義任務包節點組件所需的屬性
  */
-export interface ProjectTaskpackageNodeProps extends TreeComponentProps {
+export interface ProjectTaskPackageNodeProps extends TreeComponentProps {
   project: Project;                                                                             // 專案資料 - 要顯示的專案物件
   packageIndex: number;                                                                         // 工作包索引 - 當前工作包在專案中的索引位置
   subpackageIndex: number;                                                                      // 子工作包索引 - 當前子工作包在工作包中的索引位置

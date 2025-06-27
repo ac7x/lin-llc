@@ -263,7 +263,7 @@ export function ProjectTemplates({
                     </div>
                     <div>
                       <div className="font-semibold text-lg">{selectedTemplate.structure.taskCount}</div>
-                      <div className="text-xs text-muted-foreground">任務/子包</div>
+                      <div className="text-xs text-muted-foreground">任務包/子包</div>
                     </div>
                   </div>
                 </CardContent>
