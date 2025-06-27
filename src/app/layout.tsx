@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
-import { AuthProvider } from '@/context/auth-context';
-import { PermissionProvider } from '@/context/permission-context';
+import { AuthProvider, PermissionProvider } from '@/app/(system)';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { Toaster } from '@/components/ui/sonner';

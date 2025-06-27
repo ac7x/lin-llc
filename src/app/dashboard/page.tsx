@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { useGoogleAuth } from '@/app/(system)';
 import { 
   FolderOpen, 
   CheckSquare, 
@@ -99,7 +99,7 @@ export default function DashboardPage() {
       title: '未讀通知',
       value: stats.unreadNotifications,
       icon: Bell,
-      href: '/account/notifications',
+      href: '/notifications',
     },
     {
       title: '待處理任務',

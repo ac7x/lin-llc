@@ -2,7 +2,7 @@ import { Project, SelectedItem } from '../../types';
 import { ProjectDetails } from './project-details';
 import { PackageDetails } from './package-details';
 import { SubpackageDetails } from './subpackage-details';
-import { TaskDetails } from './task-details';
+import { TaskpackageDetails } from './taskpackage-details';
 
 interface ProjectViewerProps {
   selectedProject: Project | null;
@@ -54,7 +54,7 @@ export function ProjectViewer({ selectedProject, selectedItem, onProjectUpdate, 
       )}
 
       {selectedItem.type === 'task' && (
-        <TaskDetails 
+        <TaskpackageDetails 
           project={selectedProject} 
           selectedItem={selectedItem} 
           onProjectUpdate={onProjectUpdate || (() => {})}

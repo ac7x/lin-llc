@@ -2,11 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/context/auth-context';
+import { useAuth, usePermissionContext } from '@/app/(system)';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { usePermissionContext } from '@/context/permission-context';
 import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
@@ -19,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ProjectAIAssistant } from '@/app/project/components/gemini';
+import { ProjectAIAssistant } from '@/app/(shared)/gemini';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 function ModeToggle() {
@@ -122,7 +121,7 @@ export default function HomePage() {
                   </Link>
                 </>
               ) : (
-                <Link href="/account/signin">
+                <Link href="/signin">
                   <Button size="sm">
                     登入
                   </Button>
@@ -291,7 +290,7 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   立即登入開始使用我們的企業管理系統
                 </p>
-                <Link href="/account/signin">
+                <Link href="/signin">
                   <Button className="w-full">
                     立即登入
                   </Button>

@@ -2,7 +2,7 @@
  * Google Maps API 服務
  */
 
-import { GOOGLE_MAPS_API_KEY } from '@/lib/firebase-config';
+import { GOOGLE_MAPS_API_KEY } from '@/app/(system)/data/lib/firebase-config';
 
 /**
  * 地理座標介面

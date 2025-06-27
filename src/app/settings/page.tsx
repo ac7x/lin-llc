@@ -8,17 +8,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
-import { usePermissionContext } from '@/context/permission-context';
-import { PermissionGuard } from '@/app/settings/components/permission-guard';
-import { Role, Permission } from '@/app/settings/types';
-import { isOwner, validateEnvConfig } from '@/app/settings/lib/env-config';
-import { initializePermissions, checkInitialization } from '@/app/settings/lib/permission-init';
+import { 
+  usePermissionContext, 
+  PermissionGuard, 
+  Role, 
+  Permission, 
+  UserProfile, 
+  isOwner, 
+  validateEnvConfig, 
+  db,
+  initializePermissions, 
+  checkInitialization,
+  PermissionMatrixAnalyzer
+} from '@/app/(system)';
+import { SettingsPermissionAlert } from '@/app/(system)/permissions/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import type { UserProfile } from '@/app/settings/types';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
 import { Label } from '@/components/ui/label';
 import { SkillTagsInput } from '@/components/ui/skill-tags-input';
 
@@ -359,14 +366,9 @@ export default function SettingsPage() {
     
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>權限不足</CardTitle>
-            <CardDescription>
-              您沒有權限訪問此頁面
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div className="w-full max-w-md">
+          <SettingsPermissionAlert />
+          <div className="mt-4 p-3 bg-muted rounded-lg">
             <div className="text-sm text-muted-foreground space-y-2">
               <p>用戶 ID: {userProfile?.uid || '未載入'}</p>
               <p>擁有者 ID: {process.env.NEXT_PUBLIC_OWNER_UID || '未設定'}</p>
@@ -374,8 +376,8 @@ export default function SettingsPage() {
               <p>用戶角色: {userRole?.name || '未載入'}</p>
               <p>權限數量: {userRole?.permissions.length || 0}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -389,10 +391,11 @@ export default function SettingsPage() {
         </div>
 
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">概覽</TabsTrigger>
             <TabsTrigger value="roles">角色管理</TabsTrigger>
             <TabsTrigger value="permissions">權限矩陣</TabsTrigger>
+            <TabsTrigger value="analysis">權限分析</TabsTrigger>
             <TabsTrigger value="users">用戶管理</TabsTrigger>
           </TabsList>
 
@@ -487,7 +490,7 @@ export default function SettingsPage() {
                 <CardDescription>快速存取常用管理功能</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                   <Button
                     variant="outline"
                     className="h-20 flex flex-col items-center justify-center space-y-2"
@@ -504,6 +507,15 @@ export default function SettingsPage() {
                   >
                     <div className="text-2xl">🔐</div>
                     <span className="text-sm">權限矩陣</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-20 flex flex-col items-center justify-center space-y-2"
+                    onClick={() => setCurrentTab('analysis')}
+                  >
+                    <div className="text-2xl">📊</div>
+                    <span className="text-sm">權限分析</span>
                   </Button>
                   
                   <Button
@@ -917,6 +929,22 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* 權限分析頁面 */}
+          <TabsContent value="analysis" className="space-y-6">
+            <PermissionGuard permission="settings:read">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">權限矩陣分析</h2>
+                    <p className="text-muted-foreground">深入分析權限配置和角色覆蓋率</p>
+                  </div>
+                </div>
+                
+                <PermissionMatrixAnalyzer />
+              </div>
+            </PermissionGuard>
           </TabsContent>
 
           {/* 用戶管理頁面 */}

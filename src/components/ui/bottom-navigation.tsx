@@ -13,11 +13,7 @@ import {
   BarChart3,
   Bell
 } from 'lucide-react';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
-import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
-import type { UserProfile, Role } from '@/app/settings/types';
+import { useAuth, usePermissionContext } from '@/app/(system)';
 
 interface BottomNavigationItem {
   href: string;
@@ -57,7 +53,7 @@ const navigationItems: BottomNavigationItem[] = [
     exact: true,
   },
   {
-    href: '/account/notifications',
+    href: '/notifications',
     label: '通知',
     icon: Bell,
     permission: 'notification:read',
@@ -85,50 +81,8 @@ interface BottomNavigationProps {
 
 export function BottomNavigation({ className }: BottomNavigationProps) {
   const pathname = usePathname();
-  const { user } = useGoogleAuth();
-  const [userRole, setUserRole] = useState<Role | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // 載入用戶資料和角色
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const loadUserData = async () => {
-      try {
-        // 載入用戶資料
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-        
-        if (userSnap.exists()) {
-          const profile = userSnap.data() as UserProfile;
-          
-          // 載入角色資料
-          const roleRef = doc(db, 'roles', profile.roleId);
-          const roleSnap = await getDoc(roleRef);
-          
-          if (roleSnap.exists()) {
-            const role = roleSnap.data() as Role;
-            setUserRole(role);
-          }
-        }
-      } catch (error) {
-        console.error('載入用戶資料失敗:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadUserData();
-  }, [user]);
-
-  // 檢查是否有權限
-  const hasPermission = (permissionId: string): boolean => {
-    if (!userRole) return false;
-    return userRole.permissions.includes(permissionId);
-  };
+  const { user } = useAuth();
+  const { hasPermission, loading } = usePermissionContext();
 
   // 過濾有權限的導航項目
   const authorizedItems = navigationItems.filter(item => hasPermission(item.permission));
@@ -137,8 +91,8 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
     return null; // 載入時不顯示導航
   }
 
-  // 如果沒有任何權限，不顯示導航
-  if (authorizedItems.length === 0) {
+  // 如果沒有登入用戶或沒有任何權限，不顯示導航
+  if (!user || authorizedItems.length === 0) {
     return null;
   }
 

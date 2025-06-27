@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { db } from '@/app/(system)';
+import { useGoogleAuth } from '@/app/(system)';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

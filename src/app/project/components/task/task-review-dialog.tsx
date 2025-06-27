@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/app/(system)';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,36 +17,42 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircleIcon, XCircleIcon, ClockIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTaskManagement } from '@/app/project/hooks/use-task-management';
+import type { Project } from '@/app/project/types';
 
 interface TaskReviewDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  taskName: string;
-  projectName: string;
-  submittedBy?: string;
-  submittedAt?: string;
-  completed: number;
-  total: number;
-  currentStatus?: 'draft' | 'in-progress' | 'submitted' | 'approved' | 'rejected';
-  onReview: (approved: boolean, comment?: string) => Promise<boolean>;
+  task: {
+    id: string;
+    name: string;
+    projectName: string;
+    projectId: string;
+    packageIndex: number;
+    subpackageIndex: number;
+    taskIndex: number;
+    completed: number;
+    total: number;
+    status?: 'draft' | 'in-progress' | 'submitted' | 'approved' | 'rejected';
+    submittedAt?: string;
+    approvedAt?: string;
+  } | null;
+  onUpdateTask: (taskId: string, updates: { status?: string; approvedAt?: string }) => void;
 }
 
 export function TaskReviewDialog({
   isOpen,
   onClose,
-  taskName,
-  projectName,
-  submittedBy,
-  submittedAt,
-  completed,
-  total,
-  currentStatus,
-  onReview,
+  task,
+  onUpdateTask,
 }: TaskReviewDialogProps) {
+  const { reviewTask } = useTaskManagement();
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+  if (!task) return null;
+
+  const progress = task.total > 0 ? Math.round((task.completed / task.total) * 100) : 0;
   const isComplete = progress === 100;
 
   const getStatusInfo = (status?: string) => {
@@ -60,51 +68,74 @@ export function TaskReviewDialog({
     }
   };
 
-  const statusInfo = getStatusInfo(currentStatus);
+  const statusInfo = getStatusInfo(task.status);
   const StatusIcon = statusInfo.icon;
 
-  const handleApprove = async () => {
-    setLoading(true);
-    try {
-      const success = await onReview(true, comment);
-      if (success) {
-        toast.success('任務審核通過');
-        onClose();
-      } else {
-        toast.error('審核失敗');
-      }
-    } catch (error) {
-      console.error('審核錯誤:', error);
-      toast.error('審核失敗');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!comment.trim()) {
+  const handleReview = async (approved: boolean) => {
+    if (!approved && !comment.trim()) {
       toast.error('駁回時請提供理由');
       return;
     }
 
     setLoading(true);
+    
     try {
-      const success = await onReview(false, comment);
+      // 獲取專案數據
+      const projectRef = doc(db, 'projects', task.projectId);
+      const projectDoc = await getDoc(projectRef);
+      
+      if (!projectDoc.exists()) {
+        toast.error('找不到專案數據');
+        return;
+      }
+
+      const projectData = projectDoc.data() as Project;
+
+      const success = await reviewTask(
+        projectData,
+        {
+          packageIndex: task.packageIndex,
+          subpackageIndex: task.subpackageIndex,
+          taskIndex: task.taskIndex,
+        },
+        approved,
+        () => {}, // 空的更新回調
+        comment
+      );
+
       if (success) {
-        toast.success('任務已駁回');
+        // 重新獲取更新後的專案數據
+        const updatedProjectDoc = await getDoc(projectRef);
+        if (updatedProjectDoc.exists()) {
+          const updatedProjectData = updatedProjectDoc.data() as Project;
+          const updatedTask = updatedProjectData.packages[task.packageIndex]
+            .subpackages[task.subpackageIndex]
+            .taskpackages[task.taskIndex];
+
+          // 更新本地任務狀態
+          onUpdateTask(task.id, {
+            status: updatedTask.status,
+            approvedAt: updatedTask.approvedAt,
+          });
+
+          toast.success(approved ? '任務審核通過' : '任務已駁回');
+        }
+
+        setComment('');
         onClose();
       } else {
         toast.error('審核失敗');
       }
+      
     } catch (error) {
-      console.error('審核錯誤:', error);
+      console.error('審核任務失敗:', error);
       toast.error('審核失敗');
     } finally {
       setLoading(false);
     }
   };
 
-  const canReview = currentStatus === 'submitted';
+  const canReview = task.status === 'submitted';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -115,7 +146,7 @@ export function TaskReviewDialog({
             任務審核
           </DialogTitle>
           <DialogDescription>
-            審核任務「{taskName}」的提交內容
+            審核任務「{task.name}」的提交內容
           </DialogDescription>
         </DialogHeader>
 
@@ -124,7 +155,7 @@ export function TaskReviewDialog({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">專案：</span>
-              <span className="text-sm text-muted-foreground">{projectName}</span>
+              <span className="text-sm text-muted-foreground">{task.projectName}</span>
             </div>
             
             <div className="flex items-center justify-between">
@@ -135,18 +166,11 @@ export function TaskReviewDialog({
               </Badge>
             </div>
 
-            {submittedBy && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">提交者：</span>
-                <span className="text-sm text-muted-foreground">{submittedBy}</span>
-              </div>
-            )}
-
-            {submittedAt && (
+            {task.submittedAt && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">提交時間：</span>
                 <span className="text-sm text-muted-foreground">
-                  {new Date(submittedAt).toLocaleString('zh-TW')}
+                  {new Date(task.submittedAt).toLocaleString('zh-TW')}
                 </span>
               </div>
             )}
@@ -157,7 +181,7 @@ export function TaskReviewDialog({
             <div className="flex justify-between items-center">
               <Label>任務進度</Label>
               <span className="text-sm text-muted-foreground">
-                {completed} / {total} ({progress}%)
+                {task.completed} / {task.total} ({progress}%)
               </span>
             </div>
             <Progress value={progress} className="w-full" />
@@ -194,12 +218,12 @@ export function TaskReviewDialog({
             <>
               <Button 
                 variant="destructive" 
-                onClick={handleReject}
+                onClick={() => handleReview(false)}
                 disabled={loading || !comment.trim()}
               >
                 {loading ? '處理中...' : '駁回'}
               </Button>
-              <Button onClick={handleApprove} disabled={loading}>
+              <Button onClick={() => handleReview(true)} disabled={loading}>
                 {loading ? '處理中...' : '核准'}
               </Button>
             </>

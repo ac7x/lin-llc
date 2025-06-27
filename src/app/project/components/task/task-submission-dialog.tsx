@@ -1,5 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/app/(system)';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,32 +16,51 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircleIcon, AlertCircleIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTaskManagement } from '@/app/project/hooks/use-task-management';
+import type { Project } from '@/app/project/types';
 
 interface TaskSubmissionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  taskName: string;
-  currentCompleted: number;
-  currentTotal: number;
-  onSubmit: (completed: number, total: number) => Promise<boolean>;
+  task: {
+    id: string;
+    name: string;
+    projectName: string;
+    projectId: string;
+    packageIndex: number;
+    subpackageIndex: number;
+    taskIndex: number;
+    completed: number;
+    total: number;
+  } | null;
+  onUpdateTask: (taskId: string, updates: { completed: number; total: number; progress: number; status?: string }) => void;
 }
 
 export function TaskSubmissionDialog({
   isOpen,
   onClose,
-  taskName,
-  currentCompleted,
-  currentTotal,
-  onSubmit,
+  task,
+  onUpdateTask,
 }: TaskSubmissionDialogProps) {
-  const [completed, setCompleted] = useState(currentCompleted);
-  const [total, setTotal] = useState(currentTotal);
+  const { submitTaskProgress } = useTaskManagement();
+  const [completed, setCompleted] = useState(task?.completed || 0);
+  const [total, setTotal] = useState(task?.total || 0);
   const [loading, setLoading] = useState(false);
+
+  // 當任務改變時更新狀態
+  useEffect(() => {
+    if (task) {
+      setCompleted(task.completed);
+      setTotal(task.total);
+    }
+  }, [task]);
 
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
   const isComplete = progress === 100;
 
   const handleSubmit = async () => {
+    if (!task) return;
+
     if (completed < 0 || total < 0) {
       toast.error('數量不能為負數');
       return;
@@ -50,15 +71,70 @@ export function TaskSubmissionDialog({
       return;
     }
 
+    if (total <= 0) {
+      toast.error('總數量必須大於0');
+      return;
+    }
+
     setLoading(true);
+    
     try {
-      const success = await onSubmit(completed, total);
+      // 獲取專案數據
+      const projectRef = doc(db, 'projects', task.projectId);
+      const projectDoc = await getDoc(projectRef);
+      
+      if (!projectDoc.exists()) {
+        toast.error('找不到專案數據');
+        return;
+      }
+
+      const projectData = projectDoc.data() as Project;
+
+      // 使用 submitTaskProgress 函數來正確處理審核流程
+      const success = await submitTaskProgress(
+        projectData,
+        {
+          packageIndex: task.packageIndex,
+          subpackageIndex: task.subpackageIndex,
+          taskIndex: task.taskIndex,
+        },
+        completed,
+        total,
+        () => {} // 空的更新回調，因為我們會手動更新本地狀態
+      );
+
       if (success) {
-        toast.success('進度提交成功');
+        // 重新獲取更新後的專案數據來取得正確的任務狀態
+        const updatedProjectDoc = await getDoc(projectRef);
+        if (updatedProjectDoc.exists()) {
+          const updatedProjectData = updatedProjectDoc.data() as Project;
+          const updatedTask = updatedProjectData.packages[task.packageIndex]
+            .subpackages[task.subpackageIndex]
+            .taskpackages[task.taskIndex];
+
+          // 更新本地任務狀態
+          onUpdateTask(task.id, {
+            completed,
+            total,
+            progress: updatedTask.progress,
+            status: updatedTask.status,
+          });
+
+          // 根據狀態顯示適當的訊息
+          if (updatedTask.status === 'submitted') {
+            toast.success('任務已提交審核，等待審核者審核');
+          } else if (updatedTask.status === 'approved') {
+            toast.success('任務已完成並自動核准');
+          } else {
+            toast.success('任務進度已更新');
+          }
+        }
+
         onClose();
       } else {
         toast.error('進度提交失敗');
       }
+      
     } catch (error) {
       console.error('提交進度錯誤:', error);
       toast.error('進度提交失敗');
@@ -66,6 +142,8 @@ export function TaskSubmissionDialog({
       setLoading(false);
     }
   };
+
+  if (!task) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -76,7 +154,7 @@ export function TaskSubmissionDialog({
             更新任務進度
           </DialogTitle>
           <DialogDescription>
-            更新任務「{taskName}」的完成進度
+            更新任務「{task.name}」的完成進度
           </DialogDescription>
         </DialogHeader>
 

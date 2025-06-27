@@ -187,7 +187,7 @@ export interface TaskPackage {
 /**
  * 子工作包介面 - 代表工作包下的子分類，包含多個任務包
  */
-export interface Subpackage { 
+export interface SubPackage { 
   name: string;                    // 子工作包名稱 - 子工作包的識別名稱
   time?: ScheduleTime;             // 時間排程 - 子工作包的時間規劃和實際執行時間
   assigness?: string[];            // 指派人員 - 負責此子工作包的人員清單
@@ -213,7 +213,7 @@ export interface Package {
   assigness?: string[];            // 指派人員 - 負責此工作包的人員清單
   reviewers?: string[];            // 審核者 - 此工作包的審核者（用戶 UID 陣列）
   submitters?: string[];           // 提交者 - 此工作包的提交者（用戶 UID 陣列）
-  subpackages: Subpackage[];       // 子工作包清單 - 此工作包包含的所有子工作包
+  subpackages: SubPackage[];       // 子工作包清單 - 此工作包包含的所有子工作包
   completed: number;               // 已完成數量 - 已完成的工作項目總數量
   total: number;                   // 總數量 - 此工作包包含的總工作項目數量
   progress: number;                // 進度百分比 - 完成進度的百分比值 (0-100)
@@ -315,7 +315,7 @@ export interface ProjectPackageNodeProps extends TreeComponentProps {
 /**
  * 子工作包節點組件屬性介面 - 定義子工作包節點組件所需的屬性
  */
-export interface ProjectSubpackageNodeProps extends TreeComponentProps {
+export interface ProjectSubPackageNodeProps extends TreeComponentProps {
   project: Project;                                                                             // 專案資料 - 要顯示的專案物件
   packageIndex: number;                                                                         // 工作包索引 - 當前工作包在專案中的索引位置
   subpackageIndex: number;                                                                      // 子工作包索引 - 當前子工作包在工作包中的索引位置
@@ -325,9 +325,9 @@ export interface ProjectSubpackageNodeProps extends TreeComponentProps {
 }
 
 /**
- * 任務節點組件屬性介面 - 定義任務節點組件所需的屬性
+ * 任務包節點組件屬性介面 - 定義任務包節點組件所需的屬性
  */
-export interface ProjectTaskNodeProps extends TreeComponentProps {
+export interface ProjectTaskPackageNodeProps extends TreeComponentProps {
   project: Project;                                                                             // 專案資料 - 要顯示的專案物件
   packageIndex: number;                                                                         // 工作包索引 - 當前工作包在專案中的索引位置
   subpackageIndex: number;                                                                      // 子工作包索引 - 當前子工作包在工作包中的索引位置
@@ -373,4 +373,67 @@ export interface UserTask {
   assignedAt?: string;             // 指派時間
   submittedAt?: string;            // 提交時間
   approvedAt?: string;             // 核准時間
+}
+
+/**
+ * 任務包模板介面 - 代表可重複使用的任務包範本
+ */
+export interface TaskPackageTemplate {
+  id: string;                      // 模板 ID
+  name: string;                    // 模板名稱
+  description?: string;            // 模板描述
+  defaultTotal: number;            // 預設工作項目總數量
+  createdAt: string;               // 建立時間
+  createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 子工作包模板介面 - 代表可重複使用的子工作包範本
+ */
+export interface SubPackageTemplate {
+  id: string;                      // 模板 ID
+  name: string;                    // 模板名稱
+  description?: string;            // 模板描述
+  taskPackageTemplates: string[];  // 預設包含的任務包模板 ID 清單
+  createdAt: string;               // 建立時間
+  createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 工作包模板介面 - 代表可重複使用的工作包範本
+ */
+export interface PackageTemplate {
+  id: string;                      // 模板 ID
+  name: string;                    // 模板名稱
+  description?: string;            // 模板描述
+  subPackageTemplates: string[];   // 預設包含的子工作包模板 ID 清單
+  createdAt: string;               // 建立時間
+  createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 專案模板介面 - 代表可重複使用的專案範本
+ */
+export interface ProjectTemplate {
+  id: string;                      // 模板 ID
+  name: string;                    // 模板名稱
+  description?: string;            // 模板描述
+  packageTemplates: string[];      // 預設包含的工作包模板 ID 清單
+  createdAt: string;               // 建立時間
+  createdBy: string;               // 建立者 UID
+}
+
+/**
+ * 模板類型聯合型別
+ */
+export type TemplateType = 'project' | 'package' | 'subpackage' | 'taskpackage';
+
+/**
+ * 模板管理操作介面
+ */
+export interface TemplateOperations {
+  createTemplate: (type: TemplateType, template: Omit<PackageTemplate | SubPackageTemplate | TaskPackageTemplate | ProjectTemplate, 'id' | 'createdAt' | 'createdBy'>) => Promise<string>;
+  updateTemplate: (type: TemplateType, id: string, updates: Partial<PackageTemplate | SubPackageTemplate | TaskPackageTemplate | ProjectTemplate>) => Promise<void>;
+  deleteTemplate: (type: TemplateType, id: string) => Promise<void>;
+  getTemplates: (type: TemplateType) => Promise<(PackageTemplate | SubPackageTemplate | TaskPackageTemplate | ProjectTemplate)[]>;
 }

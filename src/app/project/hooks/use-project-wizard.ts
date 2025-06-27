@@ -5,9 +5,9 @@ import {
   doc, 
   setDoc 
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
-import { Project, Package, Subpackage, TaskPackage } from '../types';
+import { db } from '@/app/(system)';
+import { useGoogleAuth } from '@/app/(system)';
+import { Project, Package, SubPackage, TaskPackage } from '../types';
 
 interface ProjectWizardConfig {
   name: string;
@@ -62,7 +62,7 @@ export function useProjectWizard() {
           // 如果需要建立子包
           if (config.createSubpackages) {
             for (let j = 0; j < config.subpackageCount; j++) {
-              const subpackage: Subpackage = {
+              const subpackage: SubPackage = {
                 name: `子工作包 ${i + 1}-${j + 1}`,
                 taskpackages: [],
                 completed: 0,

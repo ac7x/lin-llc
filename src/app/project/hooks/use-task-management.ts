@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { db } from '@/app/(system)';
+import { useGoogleAuth } from '@/app/(system)';
 import { removeUndefinedValues } from '@/lib/utils';
 import { NotificationService } from '../utils/notification-service';
 import { updateAllProgress } from '../utils/progress-calculator';

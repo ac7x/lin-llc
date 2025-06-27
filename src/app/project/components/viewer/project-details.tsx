@@ -10,8 +10,8 @@ import { ProjectOverviewCards } from './project-overview-cards';
 import { ProjectEditDialog } from './project-edit-dialog';
 import { CurrentWeather, WeatherForecast } from '../../../(shared)/weather';
 import { SimpleProjectMap } from '../../../(shared)/map';
-import { permissionService } from '@/app/settings/lib/permission-service';
-import type { UserProfile } from '@/app/settings/types';
+import { permissionService } from '@/app/(system)';
+import type { UserProfile } from '@/app/(system)';
 
 interface ProjectDetailsProps {
   project: Project;

@@ -8,5 +8,5 @@ export * from './project-details';
 export * from './project-overview-cards';
 export * from './package-details';
 export * from './subpackage-details';
-export * from './task-details';
+export * from './taskpackage-details';
 export * from './project-edit-dialog'; 

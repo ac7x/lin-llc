@@ -5,13 +5,12 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
-import { useAuthRedirect } from '@/hooks/use-auth-redirect';
+import { useGoogleAuth, useAuthRedirect } from '@/app/(system)';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-init';
-import type { UserProfile } from '@/app/settings/types';
+import { db } from '@/app/(system)';
+import type { UserProfile } from '@/app/(system)';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { SkillTagsInput } from '@/components/ui/skill-tags-input';
@@ -30,7 +29,7 @@ export default function AccountPage() {
   useEffect(() => {
     const initializeServices = async () => {
       try {
-        const { initializeClientServices } = await import('@/lib/firebase-init');
+        const { initializeClientServices } = await import('@/app/(system)');
         await initializeClientServices();
       } catch (error) {
         console.error('初始化客戶端服務失敗:', error);
@@ -127,7 +126,7 @@ export default function AccountPage() {
               </Alert>
             )}
 
-            <Link href="/account/signin">
+            <Link href="/signin">
               <Button className="w-full">
                 前往登入
               </Button>
@@ -283,7 +282,7 @@ export default function AccountPage() {
                   🤖 AI 助手
                 </Button>
               </Link>
-              <Link href="/account/notifications">
+              <Link href="/notifications">
                 <Button variant="ghost" className="w-full justify-start">
                   🔔 通知設定
                 </Button>
