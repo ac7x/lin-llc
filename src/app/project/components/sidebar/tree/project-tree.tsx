@@ -55,7 +55,7 @@ import {
 import { RenameDialog } from './rename-dialog';
 import { SimpleContextMenu } from '../../ui/simple-context-menu';
 import { useGoogleAuth } from '@/app/(system)';
-import ProjectTaskNode from './project-task-node';
+import ProjectTaskpackageNode from './project-taskpackage-node';
 import {
   ChevronRightIcon,
   ChevronDownIcon,
@@ -580,9 +580,9 @@ export default function ProjectTree({
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <SidebarMenuSub className="mx-1 border-l border-border/10">
-                                {/* 任務列表 - 使用 ProjectTaskNode 組件 */}
+                                {/* 任務列表 - 使用 ProjectTaskpackageNode 組件 */}
                                 {sub.taskpackages?.map((task, subIdx) => (
-                                  <ProjectTaskNode
+                                  <ProjectTaskpackageNode
                                     key={subIdx}
                                     project={project}
                                     packageIndex={pkgIdx}

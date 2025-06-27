@@ -28,7 +28,7 @@ import { COMPACT_INPUT_STYLE, COMPACT_BUTTON_STYLE, SMALL_BUTTON_STYLE, ITEM_SEL
 import { getItemInfo, getChildCount } from './tree-utils';
 import { RenameDialog } from './rename-dialog';
 import { SimpleContextMenu } from '../../ui/simple-context-menu';
-import ProjectTaskNode from './project-task-node';
+import ProjectTaskpackageNode from './project-taskpackage-node';
 
 /**
  * 子工作包節點組件 - 顯示子工作包資訊並包含任務列表
@@ -155,7 +155,7 @@ export default function ProjectSubpackageNode({
           <SidebarMenuSub className="mx-1 border-l border-border/10">
             {/* 任務列表 */}
             {subpackage.taskpackages?.map((task, taskIndex) => (
-              <ProjectTaskNode
+              <ProjectTaskpackageNode
                 key={taskIndex}
                 project={project}
                 packageIndex={packageIndex}

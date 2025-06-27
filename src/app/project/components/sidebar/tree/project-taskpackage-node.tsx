@@ -24,10 +24,10 @@ import { RenameDialog } from './rename-dialog';
 import { SimpleContextMenu } from '../../ui/simple-context-menu';
 
 /**
- * 任務節點組件 - 顯示單一任務的資訊
- * 負責渲染任務名稱、完成狀態和進度資訊，支援右鍵菜單和操作按鈕
+ * 任務包節點組件 - 顯示單一任務包的資訊
+ * 負責渲染任務包名稱、完成狀態和進度資訊，支援右鍵菜單和操作按鈕
  */
-export default function ProjectTaskNode({
+export default function ProjectTaskpackageNode({
   project,
   packageIndex,
   subpackageIndex,
@@ -222,4 +222,4 @@ export default function ProjectTaskNode({
       />
     </>
   );
-}
+} 
