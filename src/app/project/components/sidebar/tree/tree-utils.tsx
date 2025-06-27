@@ -9,7 +9,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from 'lucide-react';
-import { Project, Package, Subpackage, TaskPackage } from '../../../types';
+import { Project, Package, SubPackage, TaskPackage } from '../../../types';
 
 /**
  * 項目信息接口
@@ -136,7 +136,7 @@ export function getBorderColor(type: string): string {
 /**
  * 獲取子項目數量
  */
-export function getChildCount(data: Project | Package | Subpackage | TaskPackage): string {
+export function getChildCount(data: Project | Package | SubPackage | TaskPackage): string {
   if ('packages' in data) {
     return `${data.packages.length} 包`;
   }
